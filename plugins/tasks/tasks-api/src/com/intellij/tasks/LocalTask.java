@@ -44,12 +44,23 @@ public abstract class LocalTask extends Task {
     return false;
   }
 
+  // VCS interface
+
   @NotNull
   public abstract List<ChangeListInfo> getChangeLists();
 
   public abstract void addChangelist(ChangeListInfo info);
 
   public abstract void removeChangelist(final ChangeListInfo info);
+
+  @NotNull
+  public abstract List<BranchInfo> getBranches();
+
+  public abstract void addBranch(BranchInfo info);
+
+  public abstract void removeBranch(final BranchInfo info);
+
+  // time tracking interface
 
   public abstract long getTotalTimeSpent();
 

@@ -163,7 +163,7 @@ class Browser extends JPanel {
     showPageFromHistory(newEntity.getRefManager().getRefinedElement(newEntity));
   }
 
-  public Browser(InspectionResultsView view) {
+  public Browser(@NotNull InspectionResultsView view) {
     super(new BorderLayout());
     myView = view;
 
@@ -323,8 +323,8 @@ class Browser extends JPanel {
     return buf.toString();
   }
 
-  private static InspectionToolPresentation getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
-    return ((GlobalInspectionContextImpl)toolWrapper.getContext()).getPresentation(toolWrapper);
+  private InspectionToolPresentation getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
+    return myView.getGlobalInspectionContext().getPresentation(toolWrapper);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -459,10 +459,7 @@ class Browser extends JPanel {
 
   @Nullable
   private InspectionToolWrapper getToolWrapper() {
-    if (myView != null){
-      return myView.getTree().getSelectedToolWrapper();
-    }
-    return null;
+    return myView.getTree().getSelectedToolWrapper();
   }
 
   public void invokeLocalFix(int idx) {

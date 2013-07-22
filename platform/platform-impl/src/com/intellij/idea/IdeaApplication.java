@@ -36,6 +36,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Comparing;
@@ -142,29 +143,37 @@ public class IdeaApplication {
     JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
       @Override
       public void run() {
-        if (!reported.get() && file.getUsableSpace() < lowDiskSpaceThreshold) {
-          reported.compareAndSet(false, true);
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              boolean writable = file.canWrite();
-              String fullProductName = ApplicationNamesInfo.getInstance().getFullProductName();
-              String title = writable
-                             ? "Low disk space on disk where system directory of " + fullProductName + " is located"
-                             : "System directory of " + fullProductName + " is read only";
-              new NotificationGroup("System", NotificationDisplayType.STICKY_BALLOON, false)
-                .createNotification(title, file.getPath(), NotificationType.INFORMATION, null).whenExpired(new Runnable() {
-                @Override
-                public void run() {
+        if (!reported.get()) {
+          final long fileUsableSpace = file.getUsableSpace();
+          if (fileUsableSpace < lowDiskSpaceThreshold) {
+            reported.compareAndSet(false, true);
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                boolean writable = file.canWrite();
+                String fullProductName = ApplicationNamesInfo.getInstance().getFullProductName();
+                String title = writable
+                               ? "Low disk space on disk where system directory of " + fullProductName + " is located"
+                               : "System directory of " + fullProductName + " is read only";
+                if (!writable || fileUsableSpace < 100 * 1024) {
+                  Messages.showErrorDialog(title, "Fatal Configuration Problem");
                   reported.compareAndSet(true, false);
+                } else {
+                  new NotificationGroup("System", NotificationDisplayType.STICKY_BALLOON, false)
+                    .createNotification(title, file.getPath(), NotificationType.ERROR, null).whenExpired(new Runnable() {
+                    @Override
+                    public void run() {
+                      reported.compareAndSet(true, false);
+                    }
+                  }).notify(null);
                 }
-              }).notify(null);
-            }
-          });
+              }
+            });
+          }
         }
       }
-    }, 10, 30, TimeUnit.SECONDS);
+    }, 1, 5, TimeUnit.SECONDS);
   }
 
   protected ApplicationStarter getStarter() {

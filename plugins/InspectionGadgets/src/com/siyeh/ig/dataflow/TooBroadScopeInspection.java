@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -56,7 +55,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
       final PsiElement variableIdentifier = descriptor.getPsiElement();
       if (!(variableIdentifier instanceof PsiIdentifier)) {
         return;
@@ -89,7 +88,15 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
         return;
       }
       PsiDeclarationStatement newDeclaration;
-      if (firstReferenceScope.equals(commonParent)) {
+      if (commonParent instanceof PsiForStatement) {
+        final PsiForStatement forStatement = (PsiForStatement)commonParent;
+        newDeclaration = createNewDeclaration(variable, initializer);
+        final PsiStatement initialization = forStatement.getInitialization();
+        if (initialization == null) {
+          return;
+        }
+        newDeclaration = (PsiDeclarationStatement)initialization.replace(newDeclaration);
+      } else if (firstReferenceScope.equals(commonParent)) {
         newDeclaration = moveDeclarationToLocation(variable, referenceElement);
       }
       else {
@@ -109,7 +116,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       }
     }
 
-    private void removeOldVariable(@NotNull PsiVariable variable) throws IncorrectOperationException {
+    private void removeOldVariable(@NotNull PsiVariable variable) {
       final PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
       if (declaration == null) {
         return;
@@ -123,8 +130,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       }
     }
 
-    private PsiDeclarationStatement createNewDeclaration(@NotNull PsiVariable variable, @Nullable PsiExpression initializer)
-      throws IncorrectOperationException {
+    private PsiDeclarationStatement createNewDeclaration(@NotNull PsiVariable variable, @Nullable PsiExpression initializer) {
       final Project project = variable.getProject();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -175,8 +181,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       return lastChild.getText();
     }
 
-    private PsiDeclarationStatement moveDeclarationToLocation(@NotNull PsiVariable variable, @NotNull PsiElement location)
-      throws IncorrectOperationException {
+    private PsiDeclarationStatement moveDeclarationToLocation(@NotNull PsiVariable variable, @NotNull PsiElement location) {
       PsiStatement statement = PsiTreeUtil.getParentOfType(location, PsiStatement.class, false);
       assert statement != null;
       PsiElement statementParent = statement.getParent();
@@ -215,8 +220,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
         return newDeclaration;
       }
       else {
-        return (PsiDeclarationStatement)
-          statementParent.addBefore(newDeclaration, statement);
+        return (PsiDeclarationStatement)statementParent.addBefore(newDeclaration, statement);
       }
     }
   }

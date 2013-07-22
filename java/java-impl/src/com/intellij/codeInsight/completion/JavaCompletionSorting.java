@@ -68,7 +68,7 @@ public class JavaCompletionSorting {
     CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
     if (!smart && afterNew) {
       sorter = sorter.weighBefore("liftShorter", new PreferExpected(true, expectedTypes));
-    } else {
+    } else if (PsiTreeUtil.getParentOfType(position, PsiReferenceList.class) == null) {
       sorter = ((CompletionSorterImpl)sorter).withClassifier("liftShorterClasses", true, new LiftShorterClasses(position));
     }
     if (smart) {
@@ -124,7 +124,7 @@ public class JavaCompletionSorting {
       public Comparable weigh(@NotNull LookupElement element) {
         final Object o = element.getObject();
         if (o instanceof PsiKeyword) return -3;
-        if (!(o instanceof PsiMember) || element.getUserData(JavaOverrideCompletionContributor.OVERRIDE_ELEMENT) != null) {
+        if (!(o instanceof PsiMember) || element.getUserData(JavaGenerateMemberCompletionContributor.GENERATE_ELEMENT) != null) {
           return 0;
         }
 

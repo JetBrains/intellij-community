@@ -48,6 +48,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
   @Nullable private final RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
   @Nullable private RunContentDescriptor myContentToReuse;
+  @Nullable private String myRunnerId;
   private long myExecutionId = 0;
 
   @TestOnly
@@ -66,7 +67,8 @@ public class ExecutionEnvironment extends UserDataHolderBase {
          configuration.getRunnerSettings(runner),
          configuration.getConfigurationSettings(runner),
          null,
-         null);
+         null,
+         runner.getRunnerId());
   }
 
   /**
@@ -83,7 +85,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
          configuration.getRunnerSettings(runner),
          configuration.getConfigurationSettings(runner),
          contentToReuse,
-         configuration);
+         configuration, runner.getRunnerId());
   }
 
   /**
@@ -100,18 +102,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
          configuration.getRunnerSettings(runner),
          configuration.getConfigurationSettings(runner),
          null,
-         configuration);
-  }
-
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  @Deprecated
-  public ExecutionEnvironment(@NotNull final RunProfile runProfile,
-                              @Nullable final RunnerSettings runnerSettings,
-                              @Nullable final ConfigurationPerRunnerSettings configurationSettings,
-                              @NotNull final DataContext dataContext) {
-    this(runProfile, DefaultExecutionTarget.INSTANCE, PlatformDataKeys.PROJECT.getData(dataContext), runnerSettings, configurationSettings, null, null);
+         configuration, runner.getRunnerId());
   }
 
   /**
@@ -119,34 +110,8 @@ public class ExecutionEnvironment extends UserDataHolderBase {
    */
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
                               @Nullable Project project,
-                              @Nullable RunnerSettings runnerSettings,
-                              @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                              @Nullable RunContentDescriptor contentToReuse) {
-    this(runProfile, DefaultExecutionTarget.INSTANCE, project, runnerSettings, configurationSettings, contentToReuse, null);
-  }
-
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  public ExecutionEnvironment(@NotNull RunProfile runProfile,
-                              @NotNull ExecutionTarget target,
-                              @Nullable Project project,
-                              @Nullable RunnerSettings runnerSettings,
-                              @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                              @Nullable RunContentDescriptor contentToReuse) {
-    this(runProfile, target, project, runnerSettings, configurationSettings, contentToReuse, null);
-  }
-
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  public ExecutionEnvironment(@NotNull RunProfile runProfile,
-                              @Nullable Project project,
-                              @Nullable RunnerSettings runnerSettings,
-                              @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                              @Nullable RunContentDescriptor contentToReuse,
-                              @Nullable RunnerAndConfigurationSettings settings) {
-    this(runProfile, DefaultExecutionTarget.INSTANCE, project, runnerSettings, configurationSettings, contentToReuse, settings);
+                              @Nullable RunnerSettings runnerSettings) {
+    this(runProfile, DefaultExecutionTarget.INSTANCE, project, runnerSettings, null, null, null, null);
   }
 
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
@@ -155,7 +120,8 @@ public class ExecutionEnvironment extends UserDataHolderBase {
                               @Nullable RunnerSettings runnerSettings,
                               @Nullable ConfigurationPerRunnerSettings configurationSettings,
                               @Nullable RunContentDescriptor contentToReuse,
-                              @Nullable RunnerAndConfigurationSettings settings) {
+                              @Nullable RunnerAndConfigurationSettings settings,
+                              @Nullable String runnerId) {
     myTarget = target;
     myRunProfile = runProfile;
     myRunnerSettings = runnerSettings;
@@ -163,6 +129,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
     myProject = project;
     myContentToReuse = contentToReuse;
     myRunnerAndConfigurationSettings = settings;
+    myRunnerId = runnerId;
     if (myContentToReuse != null) {
       Disposer.register(myContentToReuse, new Disposable() {
         @Override
@@ -186,22 +153,14 @@ public class ExecutionEnvironment extends UserDataHolderBase {
          configuration.getRunnerSettings(runner),
          configuration.getConfigurationSettings(runner),
          null,
-         configuration);
-  }
-
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  public ExecutionEnvironment(@NotNull final RunProfile profile,
-                              @NotNull final DataContext dataContext) {
-    this(profile, PlatformDataKeys.PROJECT.getData(dataContext), null, null, null);
+         configuration,
+         runner.getRunnerId());
   }
 
   @Nullable
   public Project getProject() {
     return myProject;
   }
-
 
   @NotNull
   public ExecutionTarget getExecutionTarget() {
@@ -238,7 +197,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
 
   @Nullable
   public String getRunnerId() {
-    return myConfigurationSettings == null ? null : myConfigurationSettings.getRunnerId();
+    return myRunnerId;
   }
 
   @Nullable

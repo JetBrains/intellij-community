@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.preloader;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSerializer;
 
@@ -26,6 +27,7 @@ import java.util.List;
  * Date: 3/13/13
  */
 public class JpsJavaFxPreloaderModelSerializerExtension extends JpsModelSerializerExtension {
+  @NotNull
   @Override
   public List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
     return Collections.singletonList(new JpsJavaFxPreloaderArtifactPropertiesSerializer());

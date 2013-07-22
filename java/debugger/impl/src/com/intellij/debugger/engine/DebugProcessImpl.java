@@ -42,15 +42,12 @@ import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -1634,23 +1631,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
   public GlobalSearchScope getSearchScope() {
     LOG.assertTrue(mySession != null, "Accessing debug session before its initialization");
     return mySession.getSearchScope();
-  }
-
-  @Nullable
-  public ExecutionResult attachVirtualMachine(final Executor executor,
-                                              final ProgramRunner runner,
-                                              final DebuggerSession session,
-                                              final RunProfileState state,
-                                              final RemoteConnection remoteConnection,
-                                              boolean pollConnection) throws ExecutionException {
-    return attachVirtualMachine(new DefaultDebugEnvironment(myProject,
-                                                        executor,
-                                                        runner,
-                                                        state.getRunnerSettings().getRunProfile(),
-                                                        state,
-                                                        remoteConnection,
-                                                        pollConnection),
-                                session);
   }
 
   @Nullable

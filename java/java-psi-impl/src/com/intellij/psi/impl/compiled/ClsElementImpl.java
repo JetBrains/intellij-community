@@ -288,7 +288,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
       throw new InvalidMirrorException(element.getElementType() + " != " + type);
     }
 
-    element.putUserData(COMPILED_ELEMENT, this);
+    element.getPsi().putUserData(COMPILED_ELEMENT, this);
     myMirror = element;
   }
 

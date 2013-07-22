@@ -1,6 +1,7 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -119,6 +120,7 @@ public class SimpleDuplicatesFinder {
   private static boolean matchPattern(@Nullable final PsiElement pattern,
                                       @Nullable final PsiElement candidate,
                                       @NotNull final SimpleMatch match) {
+    ProgressManager.checkCanceled();
     if (pattern == null || candidate == null) return pattern == candidate;
     final PsiElement[] children1 = PsiEquivalenceUtil.getFilteredChildren(pattern, null, true);
     final PsiElement[] children2 = PsiEquivalenceUtil.getFilteredChildren(candidate, null, true);

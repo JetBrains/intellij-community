@@ -131,7 +131,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     RunnerSettings<JDOMExternalizable> runnerSettings = new RunnerSettings<JDOMExternalizable>(debuggerRunnerSettings, null);
 
     final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(new ExecutionEnvironment(new MockConfiguration(), myProject,
-                                                                                                        runnerSettings, null, null)){
+                                                                                                        runnerSettings)){
       @Override
       protected JavaParameters createJavaParameters() {
         return javaParameters;
@@ -189,7 +189,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     RunnerSettings<JDOMExternalizable> runnerSettings = new RunnerSettings<JDOMExternalizable>(debuggerRunnerSettings, null);
 
     final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(new ExecutionEnvironment(new MockConfiguration(), myProject,
-                                                                                                        runnerSettings, null, null)) {
+                                                                                                        runnerSettings)) {
       @Override
       protected JavaParameters createJavaParameters() {
         return javaParameters;
@@ -483,7 +483,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     }
 
     @Override
-    public JDOMExternalizable createRunnerSettings(final ConfigurationInfoProvider provider) {
+    public ConfigurationPerRunnerSettings createRunnerSettings(final ConfigurationInfoProvider provider) {
       return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

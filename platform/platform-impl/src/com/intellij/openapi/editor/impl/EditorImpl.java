@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
 import com.intellij.application.options.OptionsConstants;
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.TooltipController;
@@ -351,7 +352,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
         int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
         repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
-        GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
+        GutterMark renderer = highlighter.getGutterIconRenderer();
 
         // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
         if (renderer != null || highlighter.getErrorStripeMarkColor() != null) {

@@ -374,7 +374,8 @@ public class BreakpointManager implements JDOMExternalizable {
     DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
       @Override
       public void run() {
-        final GutterIconRenderer renderer = ((BreakpointWithHighlighter)breakpoint).getHighlighter().getGutterIconRenderer();
+        final GutterIconRenderer renderer =
+          (GutterIconRenderer)((BreakpointWithHighlighter)breakpoint).getHighlighter().getGutterIconRenderer();
         if (renderer != null) {
           DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction()
             .editBreakpoint(myProject, editor, breakpoint, renderer);

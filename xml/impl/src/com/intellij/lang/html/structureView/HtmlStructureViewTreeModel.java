@@ -54,7 +54,11 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
   @Override
   @NotNull
   public Sorter[] getSorters() {
-    return Sorter.EMPTY_ARRAY;
+    if (ViewStructureAction.isInStructureViewPopup(this)) {
+      return Sorter.EMPTY_ARRAY;  // because in popup there's no option to disable sorter
+    }
+
+    return super.getSorters(); // alpha-sort
   }
 
   @Override

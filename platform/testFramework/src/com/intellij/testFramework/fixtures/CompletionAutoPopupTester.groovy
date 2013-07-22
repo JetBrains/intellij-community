@@ -56,8 +56,9 @@ class CompletionAutoPopupTester {
 
   private void waitPhase(Closure condition) {
     for (j in 1..1000) {
-      if (condition(CompletionServiceImpl.phaseRaw)) {
-        UsefulTestCase.edt { } // ensure the current EDT activity passes and brings completion into a consistent state
+      def phase = null
+      UsefulTestCase.edt { phase = CompletionServiceImpl.completionPhase }
+      if (condition(phase)) {
         return
       }
       Thread.sleep(10)

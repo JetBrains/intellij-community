@@ -203,6 +203,9 @@ public class GithubRebaseAction extends DumbAwareAction {
           }
         });
     }
+    catch (GithubAuthenticationCanceledException e) {
+      return null;
+    }
     catch (IOException e) {
       GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Can't load repository info: " + e.getMessage());
       return null;

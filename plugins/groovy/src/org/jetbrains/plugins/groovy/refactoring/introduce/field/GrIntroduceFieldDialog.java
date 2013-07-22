@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
-import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -43,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -57,7 +55,7 @@ import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -94,7 +92,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
   private final GrIntroduceContext myContext;
 
-  public GrIntroduceFieldDialog(GrIntroduceContext context) {
+  public GrIntroduceFieldDialog(GrIntroduceContext context, EnumSet<Init> initPlaces) {
     super(context.getProject(), true);
     myContext = context;
 
@@ -105,17 +103,16 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     initVisibility();
 
     ButtonGroup initialization = new ButtonGroup();
-    initialization.add(myCurrentMethodRadioButton);
-    initialization.add(myFieldDeclarationRadioButton);
-    initialization.add(myClassConstructorSRadioButton);
-    if (TestFrameworks.getInstance().isTestClass(clazz)) {
-      initialization.add(mySetUpMethodRadioButton);
-      new RadioUpDownListener(myCurrentMethodRadioButton, myFieldDeclarationRadioButton, myClassConstructorSRadioButton, mySetUpMethodRadioButton);
+    ArrayList<JRadioButton> inits = ContainerUtil.newArrayList();
+    if (initPlaces.contains(Init.CUR_METHOD))        inits.add(myCurrentMethodRadioButton);     else myCurrentMethodRadioButton.setVisible(false);
+    if (initPlaces.contains(Init.FIELD_DECLARATION)) inits.add(myFieldDeclarationRadioButton);  else myFieldDeclarationRadioButton.setVisible(false);
+    if (initPlaces.contains(Init.CONSTRUCTOR))       inits.add(myClassConstructorSRadioButton); else myClassConstructorSRadioButton.setVisible(false);
+    if (initPlaces.contains(Init.SETUP_METHOD))      inits.add(mySetUpMethodRadioButton);       else mySetUpMethodRadioButton.setVisible(false);
+
+    for (JRadioButton init : inits) {
+      initialization.add(init);
     }
-    else {
-      mySetUpMethodRadioButton.setVisible(false);
-      new RadioUpDownListener(myCurrentMethodRadioButton, myFieldDeclarationRadioButton, myClassConstructorSRadioButton);
-    }
+    new RadioUpDownListener(inits.toArray(new JRadioButton[inits.size()]));
 
     if (clazz instanceof GroovyScriptClass) {
       myClassConstructorSRadioButton.setEnabled(false);
@@ -274,20 +271,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   @NotNull
   @Override
   public LinkedHashSet<String> suggestNames() {
-    final GroovyFieldValidator validator = new GroovyFieldValidator(myContext);
-    final GrExpression expression = myContext.getExpression();
-    final GrVariable var = myContext.getVar();
-    final StringPartInfo stringPart = myContext.getStringPart();
-    if (expression != null) {
-      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expression, validator, false)));
-    }
-    else if (stringPart != null) {
-      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(stringPart.getLiteral(), validator, false)));
-    }
-    else {
-      assert var != null;
-      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), validator)));
-    }
+    return new GrFieldNameSuggester(myContext, new GroovyFieldValidator(myContext)).suggestNames();
   }
 
   private void createUIComponents() {

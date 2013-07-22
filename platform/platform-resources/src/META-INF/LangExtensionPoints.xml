@@ -785,6 +785,8 @@
 
     <extensionPoint name="defaultHighlightingSettingProvider"
                     interface="com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider"/>
+
+    <extensionPoint name="sdkResolveScopeProvider" interface="com.intellij.psi.SdkResolveScopeProvider"/>
   </extensionPoints>
 </idea-plugin>
 

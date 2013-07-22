@@ -110,13 +110,6 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
   @SuppressWarnings("deprecation")
   @Nullable
   @Override
-  public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
-    return null;
-  }
-
-  @SuppressWarnings("deprecation")
-  @Nullable
-  @Override
   public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner) {
     return null;
   }

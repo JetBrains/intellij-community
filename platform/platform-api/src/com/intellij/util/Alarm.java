@@ -248,9 +248,9 @@ public class Alarm implements Disposable {
   }
 
   private class Request implements Runnable {
-    private Runnable myTask;
+    private Runnable myTask; // guarded by LOCK
     private final ModalityState myModalityState;
-    private Future<?> myFuture;
+    private Future<?> myFuture; // guarded by LOCK
     private final long myDelay;
 
     private Request(@NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
@@ -281,6 +281,7 @@ public class Alarm implements Disposable {
               myTask = null;
 
               myRequests.remove(Request.this);
+              myFuture = null;
             }
 
             if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
@@ -303,15 +304,18 @@ public class Alarm implements Disposable {
         };
 
         if (myModalityState == null) {
-          myFuture = myExecutorService.submit(scheduledTask);
+          Future<?> future = myExecutorService.submit(scheduledTask);
+          synchronized (LOCK) {
+            myFuture = future;
+          }
         }
         else {
           final Application app = ApplicationManager.getApplication();
-          if (app != null) {
-            app.invokeLater(scheduledTask, myModalityState);
+          if (app == null) {
+            SwingUtilities.invokeLater(scheduledTask);
           }
           else {
-            SwingUtilities.invokeLater(scheduledTask);
+            app.invokeLater(scheduledTask, myModalityState);
           }
         }
       }
@@ -327,7 +331,9 @@ public class Alarm implements Disposable {
     }
 
     public void setFuture(@NotNull ScheduledFuture<?> future) {
-      myFuture = future;
+      synchronized (LOCK) {
+        myFuture = future;
+      }
     }
 
     public ModalityState getModalityState() {
@@ -340,6 +346,7 @@ public class Alarm implements Disposable {
           myFuture.cancel(false);
           // TODO Use java.util.concurrent.ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true) when on jdk 1.7
           ((ScheduledThreadPoolExecutor)JobScheduler.getScheduler()).remove((Runnable)myFuture);
+          myFuture = null;
         }
         myTask = null;
       }

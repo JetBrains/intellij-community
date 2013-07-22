@@ -199,7 +199,6 @@ public abstract class ProgressManager {
 
     boolean set = progress != null && progress != (oldIndicator = myThreadIndicator.get());
     if (set) {
-      progress.checkCanceled();
       myThreadIndicator.set(progress);
     }
 

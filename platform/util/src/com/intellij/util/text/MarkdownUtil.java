@@ -1,6 +1,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,54 +132,198 @@ public class MarkdownUtil {
   }
 
   public static void replaceCodeBlock(@NotNull List<String> lines) {
-    boolean insideQuotedBlock = false;
-    boolean started = false;
-    for (int i = 0; i < lines.size(); i++) {
-      String line = lines.get(i);
-      boolean codeBlock = false;
-      if (line.startsWith("```")) {
-        insideQuotedBlock = !insideQuotedBlock;
-        if (insideQuotedBlock) {
-          if (started) {
-            String lastCodeBlockLine = lines.get(lines.size() - 1);
-            lastCodeBlockLine += "</code></pre>";
-            lines.set(lines.size() - 1, lastCodeBlockLine);
-            started = false;
-          }
-          line = "<pre><code>";
+    new CodeBlockProcessor(lines).process();
+  }
+
+  private static class CodeBlockProcessor {
+
+    private static final String START_TAGS = "<pre><code>";
+    private static final String END_TAGS = "</code></pre>";
+
+    private final List<String> myLines;
+
+    private boolean myGlobalCodeBlockStarted = false;
+    private boolean myCodeBlockStarted = false;
+
+    private CodeBlockProcessor(@NotNull List<String> lines) {
+      myLines = lines;
+    }
+
+    public void process() {
+      for (int i = 0; i < myLines.size(); i++) {
+        final String line = myLines.get(i);
+        if (line.startsWith("```")) {
+          finishCodeBlock(i - 1);
+          myGlobalCodeBlockStarted = !myGlobalCodeBlockStarted;
+          String out = myGlobalCodeBlockStarted ? START_TAGS : END_TAGS;
+          myLines.set(i, out);
         }
         else {
-          line = "</code></pre>";
+          if (!myGlobalCodeBlockStarted) {
+            handleLocalCodeBlock(i, line);
+          }
         }
       }
-      if (!insideQuotedBlock) {
-        if (line.startsWith("    ")) {
-          line = line.substring(4);
-          codeBlock = true;
-        }
-        else if (line.startsWith("\t")) {
-          line = line.substring(1);
-          codeBlock = true;
-        }
-        if (!started && codeBlock) {
-          started = true;
-          line = "<pre><code>" + line;
+      finishCodeBlock(myLines.size() - 1);
+    }
+
+    private void handleLocalCodeBlock(int ind, @NotNull String line) {
+      boolean codeBlock = false;
+      if (line.startsWith("    ")) {
+        line = line.substring(4);
+        codeBlock = true;
+      }
+      else if (line.startsWith("\t")) {
+        line = line.substring(1);
+        codeBlock = true;
+      }
+
+      if (!myCodeBlockStarted) {
+        if (codeBlock) {
+          myCodeBlockStarted = true;
+          myLines.set(ind, START_TAGS + line);
         }
       }
-      lines.set(i, line);
-      if (!insideQuotedBlock) {
-        if (started && !codeBlock) {
-          String lastCodeBlockLine = lines.get(i - 1);
-          lastCodeBlockLine += "</code></pre>";
-          lines.set(i - 1, lastCodeBlockLine);
-          started = false;
+      else {
+        if (codeBlock) {
+          myLines.set(ind, line);
+        }
+        else {
+          finishCodeBlock(ind - 1);
         }
       }
     }
-    if (started) {
-      String lastCodeBlockLine = lines.get(lines.size() - 1);
-      lastCodeBlockLine += "</code></pre>";
-      lines.set(lines.size() - 1, lastCodeBlockLine);
+
+    private void finishCodeBlock(int lastCodeBlockLineInd) {
+      if (myCodeBlockStarted) {
+        myLines.set(lastCodeBlockLineInd, myLines.get(lastCodeBlockLineInd) + END_TAGS);
+        myCodeBlockStarted = false;
+      }
+    }
+  }
+
+  public static void generateLists(@NotNull List<String> lines) {
+    new ListItemProcessor(lines).process();
+  }
+
+  private static class ListItemProcessor {
+
+    private final List<String> myLines;
+
+    private boolean myInsideBlockQuote = false;
+    private ListItem myFirstListItem = null;
+    private int myLastListItemLineInd = -1;
+
+    private ListItemProcessor(@NotNull List<String> lines) {
+      myLines = lines;
+    }
+
+    public void process() {
+      for (int i = 0; i < myLines.size(); i++) {
+        final String line = myLines.get(i);
+        if (line.startsWith("```")) {
+          myInsideBlockQuote = !myInsideBlockQuote;
+        }
+        if (!myInsideBlockQuote) {
+          handle(i, line);
+        }
+      }
+      finishLastListItem(true);
+    }
+
+    private void handle(int ind, @NotNull String line) {
+      ListItem listItem = toListItem(line);
+      if (listItem != null) {
+        finishLastListItem(false);
+        String out = "<li>" + listItem.getBody();
+        if (myFirstListItem == null) {
+          myFirstListItem = listItem;
+          if (listItem.isUnordered()) {
+            out = "<ul>" + out;
+          }
+          else {
+            out = "<ol>" + out;
+          }
+        }
+        myLines.set(ind, out);
+        myLastListItemLineInd = ind;
+      }
+      else if (myFirstListItem != null &&
+          !line.isEmpty() &&
+          !StringUtil.isEmptyOrSpaces(line)) {
+        if (ind - 1 >= 0
+            && StringUtil.isEmptyOrSpaces(myLines.get(ind - 1))
+            && !Character.isWhitespace(line.charAt(0))) {
+          finishLastListItem(true);
+        }
+        else {
+          String m = StringUtil.trimLeading(line);
+          myLines.set(ind, m);
+          myLastListItemLineInd = ind;
+        }
+      }
+    }
+
+    private void finishLastListItem(boolean finishList) {
+      if (myLastListItemLineInd != -1) {
+        String l = myLines.get(myLastListItemLineInd);
+        l += "</li>";
+        if (finishList) {
+          if (myFirstListItem.isUnordered()) {
+            l += "</ul>";
+          }
+          else {
+            l += "</ol>";
+          }
+          myFirstListItem = null;
+        }
+        myLines.set(myLastListItemLineInd, l);
+        myLastListItemLineInd = -1;
+      }
+    }
+  }
+
+  @Nullable
+  private static ListItem toListItem(@NotNull String line) {
+    line = StringUtil.trimLeading(line);
+    if (line.length() >= 2) {
+      char firstChar = line.charAt(0);
+      char secondChar = line.charAt(1);
+      if (firstChar == '*' || firstChar == '+' || firstChar == '-') {
+        if (Character.isWhitespace(secondChar)) {
+          return new ListItem(true, StringUtil.trimLeading(line.substring(1)));
+        }
+      }
+    }
+    int i = 0;
+    while (i < line.length() && Character.isDigit(line.charAt(i))) {
+      i++;
+    }
+    if (i > 0 && i < line.length() - 1) {
+      if (line.charAt(i) == '.' && Character.isWhitespace(line.charAt(i + 1))) {
+        return new ListItem(false, StringUtil.trimLeading(line.substring(i + 1)));
+      }
+    }
+    return null;
+  }
+
+  private static class ListItem {
+
+    private final boolean myUnordered;
+    private final String myBody;
+
+    private ListItem(boolean unordered, @NotNull String body) {
+      myUnordered = unordered;
+      myBody = body;
+    }
+
+    private boolean isUnordered() {
+      return myUnordered;
+    }
+
+    @NotNull
+    private String getBody() {
+      return myBody;
     }
   }
 

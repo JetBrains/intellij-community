@@ -27,6 +27,10 @@ import java.util.Set;
 public abstract class ExternalSystemSettingsListenerAdapter<S extends ExternalProjectSettings> implements ExternalSystemSettingsListener<S> {
 
   @Override
+  public void onProjectRenamed(@NotNull String oldName, @NotNull String newName) {
+  }
+
+  @Override
   public void onProjectsLinked(@NotNull Collection<S> settings) {
   }
 

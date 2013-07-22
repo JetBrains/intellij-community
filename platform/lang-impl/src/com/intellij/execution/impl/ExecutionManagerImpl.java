@@ -131,10 +131,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       final List<BeforeRunTask> activeTasks = new ArrayList<BeforeRunTask>();
       activeTasks.addAll(runManager.getBeforeRunTasks(runConfiguration));
 
-      ConfigurationPerRunnerSettings configurationSettings = state != null ? state.getConfigurationSettings() : null;
       final DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
-      final DataContext dataContext = configurationSettings != null ? SimpleDataContext
-        .getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, configurationSettings.getRunnerId(), projectContext) : projectContext;
+      final DataContext dataContext = SimpleDataContext.getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, env.getRunnerId(), projectContext);
 
       if (!activeTasks.isEmpty()) {
         final long finalId = id;
@@ -156,7 +154,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                                                                               env.getRunnerSettings(),
                                                                               env.getConfigurationSettings(),
                                                                               null,
-                                                                              env.getRunnerAndConfigurationSettings());
+                                                                              env.getRunnerAndConfigurationSettings(),
+                                                                              env.getRunnerId());
               taskEnvironment.setExecutionId(finalId);
               if (!provider.executeTask(dataContext, runConfiguration, taskEnvironment, task)) {
                 if (onCancelRunnable != null) {
@@ -371,7 +370,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                                                               runnerSettings,
                                                               configurationPerRunnerSettings,
                                                               descriptor,
-                                                              configuration));
+                                                              configuration,
+                                                              runner.getRunnerId()));
       }
       catch (RunCanceledByUserException ignore) {
       }

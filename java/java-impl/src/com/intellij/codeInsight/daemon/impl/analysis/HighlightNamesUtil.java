@@ -28,6 +28,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -51,14 +52,14 @@ public class HighlightNamesUtil {
   public static HighlightInfo highlightMethodName(@NotNull PsiMethod method,
                                                   final PsiElement elementToHighlight,
                                                   final boolean isDeclaration,
-                                                  @NotNull EditorColorsScheme colorsScheme) {
+                                                  @NotNull TextAttributesScheme colorsScheme) {
     return highlightMethodName(method, elementToHighlight, elementToHighlight.getTextRange(), colorsScheme, isDeclaration);
   }
 
   @Nullable
   public static HighlightInfo highlightMethodName(@NotNull PsiMethod method,
                                                   final PsiElement elementToHighlight,
-                                                  TextRange range, @NotNull EditorColorsScheme colorsScheme, final boolean isDeclaration) {
+                                                  TextRange range, @NotNull TextAttributesScheme colorsScheme, final boolean isDeclaration) {
     boolean isInherited = false;
 
     if (!isDeclaration) {
@@ -93,7 +94,7 @@ public class HighlightNamesUtil {
 
   private static TextAttributes mergeWithScopeAttributes(final PsiElement element,
                                                          @NotNull HighlightInfoType type,
-                                                         @NotNull EditorColorsScheme colorsScheme) {
+                                                         @NotNull TextAttributesScheme colorsScheme) {
     TextAttributes regularAttributes = HighlightInfo.getAttributesByType(element, type, colorsScheme);
     if (element == null) return regularAttributes;
     TextAttributes scopeAttributes = getScopeAttributes(element, colorsScheme);
@@ -101,7 +102,7 @@ public class HighlightNamesUtil {
   }
 
   @Nullable
-  public static HighlightInfo highlightClassName(PsiClass aClass, PsiElement elementToHighlight, @NotNull EditorColorsScheme colorsScheme) {
+  public static HighlightInfo highlightClassName(PsiClass aClass, PsiElement elementToHighlight, @NotNull TextAttributesScheme colorsScheme) {
     HighlightInfoType type = getClassNameHighlightType(aClass, elementToHighlight);
     if (elementToHighlight != null) {
       TextAttributes attributes = mergeWithScopeAttributes(aClass, type, colorsScheme);
@@ -136,7 +137,7 @@ public class HighlightNamesUtil {
   @Nullable
   public static HighlightInfo highlightVariableName(final PsiVariable variable,
                                                     final PsiElement elementToHighlight,
-                                                    @NotNull EditorColorsScheme colorsScheme) {
+                                                    @NotNull TextAttributesScheme colorsScheme) {
     HighlightInfoType varType = getVariableNameHighlightType(variable);
     if (varType != null) {
       if (variable instanceof PsiField) {
@@ -154,7 +155,7 @@ public class HighlightNamesUtil {
 
   @Nullable
   public static HighlightInfo highlightClassNameInQualifier(final PsiJavaCodeReferenceElement element,
-                                                            @NotNull EditorColorsScheme colorsScheme) {
+                                                            @NotNull TextAttributesScheme colorsScheme) {
     PsiExpression qualifierExpression = null;
     if (element instanceof PsiReferenceExpression) {
       qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
@@ -228,7 +229,7 @@ public class HighlightNamesUtil {
     return null;
   }
 
-  private static TextAttributes getScopeAttributes(@NotNull PsiElement element, @NotNull EditorColorsScheme colorsScheme) {
+  private static TextAttributes getScopeAttributes(@NotNull PsiElement element, @NotNull TextAttributesScheme colorsScheme) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     TextAttributes result = null;

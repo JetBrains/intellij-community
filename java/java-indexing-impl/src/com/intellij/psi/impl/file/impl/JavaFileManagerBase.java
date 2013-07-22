@@ -121,7 +121,7 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
   @Override
   @Nullable
   public PsiPackage findPackage(@NotNull String packageName) {
-    Query<VirtualFile> dirs = myPackageIndex.getDirsByPackageName(packageName, false);
+    Query<VirtualFile> dirs = myPackageIndex.getDirsByPackageName(packageName, true);
     if (dirs.findFirst() == null) return null;
     return new PsiPackageImpl(myManager, packageName);
   }

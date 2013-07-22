@@ -321,14 +321,7 @@ public class ImportUtils {
     if (filePackage == null) {
       return false;
     }
-    final PsiClass[] classes = filePackage.getClasses();
-    for (PsiClass aClass : classes) {
-      final String className = aClass.getName();
-      if (shortName.equals(className)) {
-        return true;
-      }
-    }
-    return false;
+    return filePackage.containsClassNamed(shortName);
   }
 
   public static boolean hasJavaLangImportConflict(String fqName, PsiJavaFile file) {
@@ -343,14 +336,7 @@ public class ImportUtils {
     if (javaLangPackage == null) {
       return false;
     }
-    final PsiClass[] classes = javaLangPackage.getClasses();
-    for (final PsiClass aClass : classes) {
-      final String className = aClass.getName();
-      if (shortName.equals(className)) {
-        return true;
-      }
-    }
-    return false;
+    return javaLangPackage.containsClassNamed(shortName);
   }
 
   private static boolean containsConflictingClass(String fqName, PsiJavaFile file) {

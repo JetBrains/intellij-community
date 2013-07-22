@@ -300,8 +300,8 @@ public class MavenResumeAction extends AnAction {
         goals.add(myResumeModuleId);
       }
 
-      myRunner.execute(myExecutor, new ExecutionEnvironment(runConfiguration, project, myEnvironment.getRunnerSettings(),
-                                                            myEnvironment.getConfigurationSettings(), null));
+      myRunner.execute(myExecutor, new ExecutionEnvironment(runConfiguration, myEnvironment.getExecutionTarget(), project, myEnvironment.getRunnerSettings(),
+                                                            myEnvironment.getConfigurationSettings(), null, null, myEnvironment.getRunnerId()));
     }
     catch (RunCanceledByUserException ignore) {
     }

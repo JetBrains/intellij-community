@@ -1589,4 +1589,15 @@ public abstract class Base {
 }
 ''')
   }
+
+  void testInjectedLiterals() {
+    testHighlighting("""\
+//language=Groovy
+def groovy1 = '''print 'abc\\' '''
+
+//language=Groovy
+def groovy2 = '''print <error descr="String end expected">'abc\\\\' </error>'''
+
+""")
+  }
 }

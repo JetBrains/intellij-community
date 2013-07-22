@@ -100,7 +100,11 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     if (a instanceof OutputFileObject || b instanceof OutputFileObject) {
       return a.equals(b);
     }
-    return super.isSameFile(a, b);
+    return super.isSameFile(unwrapFileObject(a), unwrapFileObject(b));
+  }
+
+  private static FileObject unwrapFileObject(FileObject a) {
+    return a instanceof TransformableJavaFileObject ? ((TransformableJavaFileObject)a).getOriginal() : a;
   }
 
   @Override

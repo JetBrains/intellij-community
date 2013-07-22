@@ -19,6 +19,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiJavaToken;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
@@ -40,6 +41,6 @@ class IfToSwitchPredicate implements PsiElementPredicate {
     if (ErrorUtil.containsError(statement)) {
       return false;
     }
-    return SwitchUtils.getSwitchExpression(statement) != null;
+    return SwitchUtils.getSwitchExpression(statement, 0) != null;
   }
 }

@@ -46,7 +46,9 @@ import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -58,14 +60,15 @@ public class Messages {
   public static final int NO = 1;
   public static final int CANCEL = 2;
 
+  public static final String OK_BUTTON = CommonBundle.getOkButtonText();
+  public static final String YES_BUTTON = CommonBundle.getYesButtonText();
+  public static final String NO_BUTTON = CommonBundle.getNoButtonText();
+  public static final String CANCEL_BUTTON = CommonBundle.getCancelButtonText();
+
   private static TestDialog ourTestImplementation = TestDialog.DEFAULT;
   private static TestInputDialog ourTestInputImplementation = TestInputDialog.DEFAULT;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Messages");
-  protected static final String OK_BUTTON = CommonBundle.getOkButtonText();
-  protected static final String YES_BUTTON = CommonBundle.getYesButtonText();
-  protected static final String NO_BUTTON = CommonBundle.getNoButtonText();
-  protected static final String CANCEL_BUTTON = CommonBundle.getCancelButtonText();
 
   @TestOnly
   public static TestDialog setTestDialog(TestDialog newValue) {
@@ -144,7 +147,7 @@ public class Messages {
   }
 
   public static boolean isMacSheetEmulation() {
-    return SystemInfo.isMac && !Registry.is("ide.mac.message.dialogs.as.sheets");
+    return SystemInfo.isMac && Registry.is("ide.mac.message.dialogs.as.sheets") && Registry.is("ide.mac.message.sheets.java.emulation");
   }
 
   public static int showDialog(Project project, String message, String title, String moreInfo, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {

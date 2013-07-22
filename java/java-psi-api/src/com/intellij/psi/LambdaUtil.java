@@ -574,7 +574,7 @@ public class LambdaUtil {
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
     for (PsiTypeParameter typeParameter : typeParameters) {
       final PsiType constraint = resolveHelper.getSubstitutionForTypeParameter(typeParameter, returnType, interfaceMethodReturnType, false, languageLevel);
-      if (constraint != PsiType.NULL) {
+      if (constraint != PsiType.NULL && constraint != null) {
         PsiType inferredType = null;
         final PsiClassType[] bounds = typeParameter.getExtendsListTypes();
         for (PsiClassType classTypeBound : bounds) {

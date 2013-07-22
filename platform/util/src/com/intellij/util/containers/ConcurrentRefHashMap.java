@@ -24,6 +24,7 @@ package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
@@ -56,7 +57,7 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
 
     private void setKey(K key) {
       myKey = key;
-      myHash = key != null ? key.hashCode() : 0;
+      myHash = key == null ? 0 : key.hashCode();
     }
 
     @Override
@@ -84,7 +85,7 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
     }
   }
 
-  private final ConcurrentMap<Key<K, V>, V> myMap;
+  private final ConcurrentHashMap<Key<K, V>, V> myMap;
   private static final Key NULL_KEY = new Key() {
     @Override
     public Object get() { return null; }
@@ -94,12 +95,15 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
 
   protected final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
 
-  private void processQueue() {
+  boolean processQueue() {
     Key<K,V> wk;
+    boolean processed = false;
     while((wk = (Key)myReferenceQueue.poll()) != null){
       V value = wk.getValue();
-      myMap.remove(wk, value);
+      myMap.remove(wk, wk.hashCode(), value);
+      processed = true;
     }
+    return processed;
   }
 
   public ConcurrentRefHashMap(int initialCapacity, float loadFactor) {
@@ -114,8 +118,8 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
     myMap = new ConcurrentHashMap<Key<K, V>, V>();
   }
 
-  public ConcurrentRefHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, TObjectHashingStrategy<Key<K, V>> hashingStrategy) {
-    myMap = new ConcurrentHashMap<Key<K, V>, V>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  public ConcurrentRefHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    myMap = new ConcurrentHashMap<Key<K, V>, V>(initialCapacity, loadFactor, concurrencyLevel, ConcurrentRefHashMap.<K,V>convertKToKeyK(hashingStrategy));
   }
 
   public ConcurrentRefHashMap(Map<? extends K, ? extends V> t) {
@@ -124,7 +128,12 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
   }
 
   public ConcurrentRefHashMap(@NotNull final TObjectHashingStrategy<K> hashingStrategy) {
-    myMap = new ConcurrentHashMap<Key<K, V>, V>(new TObjectHashingStrategy<Key<K, V>>() {
+    myMap = new ConcurrentHashMap<Key<K, V>, V>(ConcurrentRefHashMap.<K,V>convertKToKeyK(hashingStrategy));
+  }
+
+  @NotNull
+  private static <K,V> TObjectHashingStrategy<Key<K, V>> convertKToKeyK(@NotNull final TObjectHashingStrategy<K> hashingStrategy) {
+    return new TObjectHashingStrategy<Key<K, V>>() {
       @Override
       public int computeHashCode(final Key<K, V> object) {
         return hashingStrategy.computeHashCode(object.get());
@@ -134,7 +143,7 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
       public boolean equals(final Key<K, V> o1, final Key<K, V> o2) {
         return hashingStrategy.equals(o1.get(), o2.get());
       }
-    } );
+    };
   }
 
 
@@ -154,16 +163,13 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
     if (key == null){
       return myMap.containsKey(NULL_KEY);
     }
-    else{
-      HardKey<K,V> hardKey = createHardKey((K)key);
-      boolean result = myMap.containsKey(hardKey);
-      releaseHardKey(hardKey);
-      return result;
-    }
-    //return myMap.containsKey(WeakKey.create(key));
+    HardKey<K,V> hardKey = createHardKey((K)key);
+    boolean result = myMap.containsKey(hardKey);
+    releaseHardKey(hardKey);
+    return result;
   }
 
-  private static final ThreadLocal<HardKey> myHardKey = new ThreadLocal<HardKey>(){
+  private static final ThreadLocal<HardKey> HARD_KEY = new ThreadLocal<HardKey>(){
     @Override
     protected HardKey initialValue() {
       return new HardKey(null, null);
@@ -171,7 +177,7 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
   };
 
   private static <K,V> HardKey<K,V> createHardKey(K key) {
-    HardKey hardKey = myHardKey.get();
+    HardKey hardKey = HARD_KEY.get();
     hardKey.setKey(key);
     return hardKey;
   }
@@ -187,12 +193,10 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
     if (key == null){
       return myMap.get(NULL_KEY);
     }
-    else{
-      HardKey<K,V> hardKey = createHardKey((K)key);
-      V result = myMap.get(hardKey);
-      releaseHardKey(hardKey);
-      return result;
-    }
+    HardKey<K,V> hardKey = createHardKey((K)key);
+    V result = myMap.get(hardKey);
+    releaseHardKey(hardKey);
+    return result;
   }
 
   @Override
@@ -210,12 +214,10 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
     if (key == null){
       return myMap.remove(NULL_KEY);
     }
-    else{
-      HardKey hardKey = createHardKey(key);
-      V result = myMap.remove(hardKey);
-      releaseHardKey(hardKey);
-      return result;
-    }
+    HardKey hardKey = createHardKey(key);
+    V result = myMap.remove(hardKey);
+    releaseHardKey(hardKey);
+    return result;
   }
 
   @Override
@@ -270,6 +272,7 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
   private class EntrySet extends AbstractSet<Map.Entry<K,V>> {
     Set<Map.Entry<Key<K, V>,V>> hashEntrySet = myMap.entrySet();
 
+    @NotNull
     @Override
     public Iterator<Map.Entry<K,V>> iterator() {
       return new Iterator<Map.Entry<K,V>>() {
@@ -356,6 +359,7 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
 
   private Set<Map.Entry<K,V>> entrySet = null;
 
+  @NotNull
   @Override
   public Set<Map.Entry<K,V>> entrySet() {
     if (entrySet == null) entrySet = new EntrySet();
@@ -384,5 +388,10 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
   public V replace(@NotNull final K key, @NotNull final V value) {
     processQueue();
     return myMap.replace(createKey(key, value), value);
+  }
+
+  @TestOnly
+  int underlyingMapSize() {
+    return myMap.size();
   }
 }

@@ -15,28 +15,21 @@
  */
 package com.intellij.openapi.externalSystem.service.vcs;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtilRt;
-import git4idea.GitPlatformFacade;
-import git4idea.GitVcs;
-import git4idea.roots.GitRootDetector;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.Collection;
 import java.util.List;
 
@@ -60,73 +53,47 @@ public class ExternalSystemVcsRegistrar {
 
   @SuppressWarnings("unchecked")
   public static void handle(@NotNull final Project project) {
-
-    // VCS api doesn't offer generic ability to detect and configure VCS roots at the moment(see IDEA-102703 for more details).
-    // That's why we have only git support here.
-
-    final Ref<GitPlatformFacade> gitFacade = new Ref<GitPlatformFacade>();
-    try {
-      gitFacade.set(ServiceManager.getService(GitPlatformFacade.class));
-    }
-    catch (Throwable e) {
-      // Assuming that git integration is disabled
-    }
-
-    if (gitFacade.get() == null) {
-      // Assuming that git integration is disabled
-      return;
-    }
-    
     for (final ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
       final AbstractExternalSystemSettings settings = manager.getSettingsProvider().fun(project);
       settings.subscribe(new ExternalSystemSettingsListenerAdapter() {
         @Override
         public void onProjectsLinked(@NotNull final Collection linked) {
+          List<VcsDirectoryMapping> newMappings = ContainerUtilRt.newArrayList();
           final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
           ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
           for (Object o : linked) {
             final ExternalProjectSettings settings = (ExternalProjectSettings)o;
-            
-            // Hack into git processing.
-            Project projectProxy = (Project)Proxy.newProxyInstance(
-              getClass().getClassLoader(),
-              new Class[]{Project.class},
-              new InvocationHandler() {
-                @SuppressWarnings("ConstantConditions")
-                @Override
-                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                  if ("getBaseDir".equals(method.getName())) {
-                    return fileSystem.refreshAndFindFileByPath(settings.getExternalProjectPath());
-                  }
-                  return method.invoke(project, args);
-                }
-              }
-            );
+            VirtualFile dir = fileSystem.refreshAndFindFileByPath(settings.getExternalProjectPath());
+            if (dir == null) {
+              continue;
+            }
+            if (!dir.isDirectory()) {
+              dir = dir.getParent();
+            }
+            newMappings.addAll(VcsUtil.findRoots(dir, project));
+          }
 
-            Collection<VirtualFile> roots = new GitRootDetector(projectProxy, gitFacade.get()).detect().getRoots();
-            if (!roots.isEmpty()) {
-              List<VcsDirectoryMapping> mappings = ContainerUtilRt.newArrayList(vcsManager.getDirectoryMappings());
-              
-              // There is a possible case that no VCS mappings are configured for the current project. There is a single
-              // mapping like <Project> - <No VCS> then. We want to replace it if only one mapping to the project root dir
-              // has been detected then.
-              if (roots.size() == 1
-                  && mappings.size() == 1
-                  && StringUtil.isEmpty(mappings.get(0).getVcs())
-                  && roots.iterator().next().equals(project.getBaseDir()))
-              {
-                mappings.clear();
-                mappings.add(new VcsDirectoryMapping("", GitVcs.getKey().getName()));
-              }
-              else {
-                for (VirtualFile root : roots) {
-                  mappings.add(new VcsDirectoryMapping(root.getPath(), GitVcs.getKey().getName()));
-                }
-              }
-              
-              vcsManager.setDirectoryMappings(mappings);
+          // There is a possible case that no VCS mappings are configured for the current project. There is a single
+          // mapping like <Project> - <No VCS> then. We want to replace it if only one mapping to the project root dir
+          // has been detected then.
+          List<VcsDirectoryMapping> oldMappings = vcsManager.getDirectoryMappings();
+          if (oldMappings.size() == 1
+              && newMappings.size() == 1
+              && StringUtil.isEmpty(oldMappings.get(0).getVcs()))
+          {
+            VcsDirectoryMapping newMapping = newMappings.iterator().next();
+            String detectedDirPath = newMapping.getDirectory();
+            VirtualFile detectedDir = fileSystem.findFileByPath(detectedDirPath);
+            if (detectedDir != null && detectedDir.equals(project.getBaseDir())) {
+              newMappings.clear();
+              newMappings.add(new VcsDirectoryMapping("", newMapping.getVcs()));
+              vcsManager.setDirectoryMappings(newMappings);
+              return;
             }
           }
+
+          newMappings.addAll(oldMappings);
+          vcsManager.setDirectoryMappings(newMappings);
         }
       });
     }

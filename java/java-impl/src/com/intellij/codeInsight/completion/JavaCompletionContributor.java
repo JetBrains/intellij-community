@@ -39,6 +39,7 @@ import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
@@ -74,6 +75,9 @@ public class JavaCompletionContributor extends CompletionContributor {
     ourCompletionData.put(LanguageLevel.JDK_1_5, new Java15CompletionData());
     ourCompletionData.put(LanguageLevel.JDK_1_3, new JavaCompletionData());
   }
+
+  public static final ElementPattern<PsiElement> ANNOTATION_NAME = psiElement().
+    withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).afterLeaf("@");
 
   private static JavaCompletionData getCompletionData(LanguageLevel level) {
     final Set<Map.Entry<LanguageLevel, JavaCompletionData>> entries = ourCompletionData.entrySet();
@@ -111,6 +115,10 @@ public class JavaCompletionContributor extends CompletionContributor {
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class, false, PsiCodeBlock.class, PsiMethod.class, PsiExpressionList.class, PsiVariable.class, PsiAnnotation.class);
     if (containingClass != null && psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS, ",", "&").accepts(position)) {
       return new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter()));
+    }
+
+    if (ANNOTATION_NAME.accepts(position)) {
+      return new AnnotationTypeFilter();
     }
 
     if (JavaCompletionData.DECLARATION_START.accepts(position) ||
@@ -234,7 +242,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
     }
 
-    JavaOverrideCompletionContributor.fillCompletionVariants(parameters, result);
+    JavaGenerateMemberCompletionContributor.fillCompletionVariants(parameters, result);
 
     addAllClasses(parameters, result, inheritors);
 

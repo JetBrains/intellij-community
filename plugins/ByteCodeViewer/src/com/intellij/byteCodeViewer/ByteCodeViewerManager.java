@@ -225,6 +225,9 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
 
   private static PsiClass getContainingClass(PsiElement psiElement) {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class, false);
+    while (containingClass instanceof PsiTypeParameter) {
+      containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class); 
+    }
     if (containingClass == null) return null;
 
     return containingClass;

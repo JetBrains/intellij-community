@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;

@@ -457,13 +457,6 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
             removeDeletedMethods(OverridingMethodsSearch.search(psiMethod, true).toArray(PsiMethod.EMPTY_ARRAY),
                                  allElementsToDelete);
 
-    for (PsiReference reference : references) {
-      final PsiElement element = reference.getElement();
-      if (!isInside(element, allElementsToDelete) && !isInside(element, overridingMethods)) {
-        usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiMethod, PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class) != null));
-      }
-    }
-
     final HashMap<PsiMethod, Collection<PsiReference>> methodToReferences = new HashMap<PsiMethod, Collection<PsiReference>>();
     for (PsiMethod overridingMethod : overridingMethods) {
       final Collection<PsiReference> overridingReferences = ReferencesSearch.search(overridingMethod).findAll();
@@ -472,6 +465,12 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     final Set<PsiMethod> validOverriding =
       validateOverridingMethods(psiMethod, references, Arrays.asList(overridingMethods), methodToReferences, usages,
                                 allElementsToDelete);
+    for (PsiReference reference : references) {
+      final PsiElement element = reference.getElement();
+      if (!isInside(element, allElementsToDelete) && !isInside(element, validOverriding)) {
+        usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiMethod, PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class) != null));
+      }
+    }
     return new Condition<PsiElement>() {
       public boolean value(PsiElement usage) {
         if(usage instanceof PsiFile) return false;
@@ -594,12 +593,12 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
 
     for (PsiMethod method : overridingMethods) {
-      if (!validOverriding.contains(method) && !multipleInterfaceImplementations.contains(method)) {
-        final boolean methodCanBePrivate =
-          canBePrivate(method, methodToReferences.get(method), validOverriding, allElementsToDelete);
-        if (methodCanBePrivate) {
-          usages.add(new SafeDeletePrivatizeMethod(method, originalMethod));
-        }
+      if (!validOverriding.contains(method) &&
+          !multipleInterfaceImplementations.contains(method) &&
+          canBePrivate(method, methodToReferences.get(method), validOverriding, allElementsToDelete)) {
+        usages.add(new SafeDeletePrivatizeMethod(method, originalMethod));
+      } else {
+        usages.add(new SafeDeleteOverrideAnnotation(method, originalMethod));
       }
     }
     return validOverriding;

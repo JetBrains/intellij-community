@@ -175,7 +175,8 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
                                                         myEnvironment.getRunnerSettings(),
                                                         myEnvironment.getConfigurationSettings(),
                                                         myEnvironment.getContentToReuse(),
-                                                        null));
+                                                        null,
+                                                        myEnvironment.getRunnerId()));
     }
     catch (ExecutionException e1) {
       LOG.error(e1);
@@ -245,7 +246,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       return myConfiguration.getType();
     }
 
-    public JDOMExternalizable createRunnerSettings(final ConfigurationInfoProvider provider) {
+    public ConfigurationPerRunnerSettings createRunnerSettings(final ConfigurationInfoProvider provider) {
       return myConfiguration.createRunnerSettings(provider);
     }
 

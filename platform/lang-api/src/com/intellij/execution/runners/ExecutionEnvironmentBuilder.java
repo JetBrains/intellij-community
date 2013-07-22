@@ -41,6 +41,7 @@ public final class ExecutionEnvironmentBuilder {
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
   @Nullable private RunContentDescriptor myContentToReuse;
   @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
+  @Nullable private String myRunnerId;
   private boolean myAssignNewId;
 
   public ExecutionEnvironmentBuilder() {
@@ -64,6 +65,7 @@ public final class ExecutionEnvironmentBuilder {
     setRunProfile(settings.getConfiguration());
     setRunnerSettings(settings.getRunnerSettings(programRunner));
     setConfigurationSettings(settings.getConfigurationSettings(programRunner));
+    setRunnerId(programRunner.getRunnerId());
     return this;
   }
 
@@ -91,6 +93,11 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  public ExecutionEnvironmentBuilder setRunnerId(String runnerId) {
+    myRunnerId = runnerId;
+    return this;
+  }
+
   public ExecutionEnvironmentBuilder assignNewId() {
     myAssignNewId = true;
     return this;
@@ -100,7 +107,7 @@ public final class ExecutionEnvironmentBuilder {
   public ExecutionEnvironment build() {
     ExecutionEnvironment environment =
       new ExecutionEnvironment(myRunProfile, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,
-                               myRunnerAndConfigurationSettings);
+                               myRunnerAndConfigurationSettings, myRunnerId);
     if (myAssignNewId) {
       environment.assignNewExecutionId();
     }

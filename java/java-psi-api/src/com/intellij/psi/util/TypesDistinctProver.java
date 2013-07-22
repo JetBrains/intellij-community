@@ -36,8 +36,8 @@ public class TypesDistinctProver {
   }
 
   protected static boolean provablyDistinct(PsiType type1, PsiType type2, int level) {
-    if (type1 instanceof PsiClassType && ((PsiClassType)type1).resolve() instanceof PsiTypeParameter) return false;
-    if (type2 instanceof PsiClassType && ((PsiClassType)type2).resolve() instanceof PsiTypeParameter) return false;
+    if (type1 instanceof PsiClassType && ((PsiClassType)type1).resolve() instanceof PsiTypeParameter && level < 2) return false;
+    if (type2 instanceof PsiClassType && ((PsiClassType)type2).resolve() instanceof PsiTypeParameter && level < 2) return false;
     if (type1 instanceof PsiWildcardType) {
       if (type2 instanceof PsiWildcardType) {
         return provablyDistinct((PsiWildcardType)type1, (PsiWildcardType)type2);

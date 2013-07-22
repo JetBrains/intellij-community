@@ -48,8 +48,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -57,7 +55,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
@@ -134,6 +135,10 @@ public abstract class TestObject implements JavaCommandLine {
   @Override
   public ConfigurationPerRunnerSettings getConfigurationSettings() {
     return myEnvironment.getConfigurationSettings();
+  }
+
+  public String getRunnerId() {
+    return myEnvironment.getRunnerId();
   }
 
   public abstract RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration);

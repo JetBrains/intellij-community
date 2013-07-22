@@ -42,7 +42,7 @@ public interface RunnerAndConfigurationSettings {
   @NotNull
   RunnerSettings getRunnerSettings(@NotNull ProgramRunner runner);
 
-  @NotNull
+  @Nullable
   ConfigurationPerRunnerSettings getConfigurationSettings(@NotNull ProgramRunner runner);
 
   @Nullable

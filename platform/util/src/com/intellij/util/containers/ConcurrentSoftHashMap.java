@@ -79,7 +79,7 @@ public final class ConcurrentSoftHashMap<K,V> extends ConcurrentRefHashMap<K,V> 
   public ConcurrentSoftHashMap(int initialCapacity,
                                float loadFactor,
                                int concurrencyLevel,
-                               TObjectHashingStrategy<Key<K, V>> hashingStrategy) {
+                               @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 

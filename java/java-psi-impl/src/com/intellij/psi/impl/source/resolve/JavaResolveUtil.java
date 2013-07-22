@@ -148,7 +148,7 @@ public class JavaResolveUtil {
     }
 
     if (!facade.arePackagesTheSame(member, place)) return false;
-    if (modifierList.hasModifierProperty(PsiModifier.STATIC)) return true;
+    //if (modifierList.hasModifierProperty(PsiModifier.STATIC)) return true;
     // maybe inheritance lead through package local class in other package ?
     final PsiClass placeClass = getContextClass(place);
     if (memberClass == null || placeClass == null) return true;

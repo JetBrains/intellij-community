@@ -193,6 +193,10 @@ public final class HgCommandExecutor {
     if (arguments != null && arguments.size() != 0) {
       cmdLine.addAll(arguments);
     }
+    if (HgVcs.HGENCODING == null) {
+      cmdLine.add("--encoding");
+      cmdLine.add(myCharset.name());
+    }
     ShellCommand shellCommand = new ShellCommand(myVcs.getGlobalSettings().isRunViaBash());
     HgCommandResult result;
     try {
@@ -402,13 +406,10 @@ public final class HgCommandExecutor {
       DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
       String command = new String(readDataBlock(dataInputStream));
+      assert "getpass".equals(command) : "Invalid command: " + command;
       String uri = new String(readDataBlock(dataInputStream));
       String path = new String(readDataBlock(dataInputStream));
       String proposedLogin = new String(readDataBlock(dataInputStream));
-      assert "getpass".equals(command) : "Invalid command: " + command +
-                                         ", with appropriate data, uri: " + uri +
-                                         ", path: " + path +
-                                         ", proposed login: " + proposedLogin;
 
       HgCommandAuthenticator authenticator = new HgCommandAuthenticator(myProject, myForceAuthorization);
       boolean ok = authenticator.promptForAuthentication(myProject, proposedLogin, uri, path, myState);

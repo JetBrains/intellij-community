@@ -230,6 +230,9 @@
     <localInspection language="JAVA" shortName="InfiniteRecursion" bundle="com.siyeh.InspectionGadgetsBundle" key="infinite.recursion.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.InfiniteRecursionInspection"/>
+    <localInspection language="JAVA" shortName="InnerClassReferencedViaSubclass" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="inner.class.referenced.via.subclass.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.bugs.InnerClassReferencedViaSubclassInspection"/>
     <localInspection language="JAVA" shortName="InstanceofIncompatibleInterface" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="instanceof.with.incompatible.interface.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"

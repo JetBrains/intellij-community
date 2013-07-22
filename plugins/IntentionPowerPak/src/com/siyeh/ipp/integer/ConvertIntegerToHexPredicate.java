@@ -20,7 +20,6 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ClassUtil;
 import org.jetbrains.annotations.NonNls;
 
 class ConvertIntegerToHexPredicate implements PsiElementPredicate {
@@ -36,9 +35,6 @@ class ConvertIntegerToHexPredicate implements PsiElementPredicate {
       return !(text.startsWith("0x") || text.startsWith("0X"));
     }
     if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
-      if (!ClassUtil.classExists("javax.xml.xpath.XPath")) {
-        return false;
-      }
       if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
         return false;
       }

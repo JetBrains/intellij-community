@@ -2,6 +2,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -16,7 +17,7 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   public DelegatingGlobalSearchScope(@NotNull GlobalSearchScope baseScope) {
     super(baseScope.getProject());
     myBaseScope = baseScope;
-    myEquality = new Object();
+    myEquality = ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   public DelegatingGlobalSearchScope(GlobalSearchScope baseScope, Object... equality) {

@@ -350,6 +350,9 @@ public class FileReferenceSet {
       final Project project = file.getProject();
       for (FileReferenceHelper helper : helpers) {
         if (helper.isMine(project, virtualFile)) {
+          if (list.size() > 0 && helper.isFallback()) {
+            continue;
+          }
           list.addAll(helper.getContexts(project, virtualFile));
         }
       }

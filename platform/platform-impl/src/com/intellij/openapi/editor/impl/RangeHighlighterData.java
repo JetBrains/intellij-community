@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -119,7 +120,7 @@ abstract class RangeHighlighterData {
   }
 
   public void setGutterIconRenderer(GutterIconRenderer renderer) {
-    GutterIconRenderer old = myGutterIconRenderer;
+    GutterMark old = myGutterIconRenderer;
     myGutterIconRenderer = renderer;
     if (!Comparing.equal(old, renderer)) {
       fireChanged();

@@ -316,6 +316,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     final List<Tools> localTools = new ArrayList<Tools>();
     final List<Tools> globalSimpleTools = new ArrayList<Tools>();
     initializeTools(globalTools, localTools, globalSimpleTools);
+    appendPairedInspectionsForUnfairTools(globalTools, localTools, globalSimpleTools);
+
     final List<InspectionToolWrapper> needRepeatSearchRequest = new ArrayList<InspectionToolWrapper>();
     ((RefManagerImpl)getRefManager()).initializeAnnotators();
 
@@ -386,13 +388,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0,
                                                                    file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true);
         try {
-          final List<LocalInspectionToolWrapper> lTools = new ArrayList<LocalInspectionToolWrapper>();
-          for (Tools tool : localTools) {
-            final LocalInspectionToolWrapper enabledTool = (LocalInspectionToolWrapper)tool.getEnabledTool(file);
-            if (enabledTool != null) {
-              lTools.add(enabledTool);
-            }
-          }
+          final List<LocalInspectionToolWrapper> lTools = getWrappersFromTools(localTools, file);
           pass.doInspectInBatch(inspectionManager, lTools);
 
           JobLauncher.getInstance().invokeConcurrentlyUnderProgress(globalSimpleTools, myProgressIndicator, false, new Processor<Tools>() {
@@ -433,6 +429,43 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, map);
       tool.inspectionFinished(inspectionManager, this, problemDescriptionProcessor);
     }
+  }
+
+  private void appendPairedInspectionsForUnfairTools(List<Tools> globalTools, List<Tools> localTools, List<Tools> globalSimpleTools) {
+    Tools[] larray = localTools.toArray(new Tools[localTools.size()]);
+    for (Tools tool : larray) {
+      LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)tool.getTool();
+      LocalInspectionTool localTool = toolWrapper.getTool();
+      if (localTool instanceof PairedUnfairLocalInspectionTool) {
+        String batchShortName = ((PairedUnfairLocalInspectionTool)localTool).getInspectionForBatchShortName();
+        InspectionProfile currentProfile = getCurrentProfile();
+        if (currentProfile != null) {
+          InspectionToolWrapper batchInspection = currentProfile.getInspectionTool(batchShortName, getProject());
+          if (batchInspection != null) {
+            // add to existing inspections to run
+            InspectionProfileEntry batchTool = batchInspection.getTool();
+            Tools newTool = new ToolsImpl(batchInspection, batchInspection.getDefaultLevel(), true);
+            if (batchTool instanceof LocalInspectionTool) localTools.add(newTool);
+            else if (batchTool instanceof GlobalSimpleInspectionTool) globalSimpleTools.add(newTool);
+            else if (batchTool instanceof GlobalInspectionTool) globalTools.add(newTool);
+            else throw new AssertionError(batchTool);
+            myTools.put(batchShortName, newTool);
+            batchInspection.initialize(this);
+          }
+        }
+      }
+    }
+  }
+
+  private static List<LocalInspectionToolWrapper> getWrappersFromTools(List<Tools> localTools, PsiFile file) {
+    final List<LocalInspectionToolWrapper> lTools = new ArrayList<LocalInspectionToolWrapper>();
+    for (Tools tool : localTools) {
+      final LocalInspectionToolWrapper enabledTool = (LocalInspectionToolWrapper)tool.getEnabledTool(file);
+      if (enabledTool != null) {
+        lTools.add(enabledTool);
+      }
+    }
+    return lTools;
   }
 
   @NotNull

@@ -31,12 +31,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -91,7 +89,7 @@ public class HighlightInfo implements Segment {
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 
-  private GutterIconRenderer gutterIconRenderer;
+  private GutterMark gutterIconRenderer;
   private ProblemGroup myProblemGroup;
 
   private volatile byte myFlags; // bit packed flags below:
@@ -188,7 +186,7 @@ public class HighlightInfo implements Segment {
 
   public static TextAttributes getAttributesByType(@Nullable final PsiElement element,
                                                    @NotNull HighlightInfoType type,
-                                                   @NotNull EditorColorsScheme colorsScheme) {
+                                                   @NotNull TextAttributesScheme colorsScheme) {
     final SeverityRegistrar severityRegistrar = SeverityUtil
       .getSeverityRegistrar(element != null ? element.getProject() : null);
     final TextAttributes textAttributes = severityRegistrar.getTextAttributesBySeverity(type.getSeverity(element));
@@ -611,11 +609,11 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  public GutterIconRenderer getGutterIconRenderer() {
+  public GutterMark getGutterIconRenderer() {
     return gutterIconRenderer;
   }
 
-  public void setGutterIconRenderer(final GutterIconRenderer gutterIconRenderer) {
+  public void setGutterIconRenderer(final GutterMark gutterIconRenderer) {
     this.gutterIconRenderer = gutterIconRenderer;
   }
 

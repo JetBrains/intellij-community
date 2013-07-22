@@ -65,7 +65,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -857,14 +857,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @Nullable
-  public GutterIconRenderer findGutter(final String filePath) {
+  public GutterMark findGutter(final String filePath) {
     configureByFilesInner(filePath);
     int offset = myEditor.getCaretModel().getOffset();
 
     final Collection<HighlightInfo> infos = doHighlighting();
     for (HighlightInfo info : infos) {
       if (info.endOffset >= offset && info.startOffset <= offset) {
-        final GutterIconRenderer renderer = info.getGutterIconRenderer();
+        final GutterMark renderer = info.getGutterIconRenderer();
         if (renderer != null) {
           return renderer;
         }
@@ -873,7 +873,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     RangeHighlighter[] highlighters = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true).getAllHighlighters();
     for (RangeHighlighter highlighter : highlighters) {
       if (highlighter.getEndOffset() >= offset && highlighter.getStartOffset() <= offset) {
-        GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
+        GutterMark renderer = highlighter.getGutterIconRenderer();
         if (renderer != null) {
           return renderer;
         }
@@ -884,9 +884,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @NotNull
-  public Collection<GutterIconRenderer> findAllGutters(final String filePath) {
+  public Collection<GutterMark> findAllGutters(final String filePath) {
     final Project project = getProject();
-    final SortedMap<Integer, List<GutterIconRenderer>> result = new TreeMap<Integer, List<GutterIconRenderer>>();
+    final SortedMap<Integer, List<GutterMark>> result = new TreeMap<Integer, List<GutterMark>>();
     configureByFilesInner(filePath);
 
     List<HighlightInfo> infos = doHighlighting();
@@ -902,14 +902,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return ContainerUtil.concat(result.values());
   }
 
-  private static void addGutterIconRenderer(final GutterIconRenderer renderer,
+  private static void addGutterIconRenderer(final GutterMark renderer,
                                             final int offset,
-                                            SortedMap<Integer, List<GutterIconRenderer>> result) {
+                                            SortedMap<Integer, List<GutterMark>> result) {
     if (renderer == null) return;
 
-    List<GutterIconRenderer> renderers = result.get(offset);
+    List<GutterMark> renderers = result.get(offset);
     if (renderers == null) {
-      result.put(offset, renderers = new SmartList<GutterIconRenderer>());
+      result.put(offset, renderers = new SmartList<GutterMark>());
     }
     renderers.add(renderer);
   }

@@ -758,7 +758,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                                  @Override
                                                  public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
                                                    String res =
-                                                     embedder.evaluateEffectivePom(mavenProject.getFile(), getExplicitProfiles());
+                                                     embedder.evaluateEffectivePom(mavenProject.getFile(), mavenProject.getActivatedProfilesIds());
                                                    consumer.consume(res);
                                                  }
                                                });

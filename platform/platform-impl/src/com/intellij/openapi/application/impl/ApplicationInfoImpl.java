@@ -54,6 +54,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private Color myProgressColor = null;
   private Color myAboutForeground = Color.black;
   private Color myAboutLinkColor = null;
+  private String myProgressTailIconName = null;
   private Icon myProgressTailIcon = null;
 
   private int myProgressY = 350;
@@ -251,6 +252,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   @Nullable
   public Icon getProgressTailIcon() {
+    if (myProgressTailIcon == null && myProgressTailIconName != null) {
+      myProgressTailIcon = IconLoader.getIcon(myProgressTailIconName);
+    }
     return myProgressTailIcon;
   }
 
@@ -500,7 +504,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_TAIL_ICON);
       if (v != null) {
-        myProgressTailIcon = IconLoader.getIcon(v);
+        myProgressTailIconName = v;
       }
 
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);

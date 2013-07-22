@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -323,32 +323,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       int o1Weight = isCompiledWithoutSource(o1) ? 1 : 0;
       int o2Weight = isCompiledWithoutSource(o2) ? 1 : 0;
       return o1Weight - o2Weight;
-    }
-  }
-
-  protected static class MatchResult implements Comparable<MatchResult> {
-    public final String elementName;
-    final int matchingDegree;
-    final boolean startMatch;
-
-    private MatchResult(String elementName, int matchingDegree, boolean startMatch) {
-      this.elementName = elementName;
-      this.matchingDegree = matchingDegree;
-      this.startMatch = startMatch;
-    }
-
-    @Override
-    public int compareTo(@NotNull MatchResult that) {
-      boolean start1 = startMatch;
-      boolean start2 = that.startMatch;
-      if (start1 != start2) return start1 ? -1 : 1;
-
-      int degree1 = matchingDegree;
-      int degree2 = that.matchingDegree;
-      if (degree2 < degree1) return -1;
-      if (degree2 > degree1) return 1;
-
-      return elementName.compareToIgnoreCase(that.elementName);
     }
   }
 }

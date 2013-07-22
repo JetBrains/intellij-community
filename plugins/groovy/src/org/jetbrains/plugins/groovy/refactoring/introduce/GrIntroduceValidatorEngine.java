@@ -61,29 +61,41 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
   }
 
   private MultiMap<PsiElement, String> isOKImpl(String varName, boolean replaceAllOccurrences) {
-    PsiElement firstOccurence;
-    if (replaceAllOccurrences) {
-      if (myContext.getOccurrences().length > 0) {
-        GroovyRefactoringUtil.sortOccurrences(myContext.getOccurrences());
-        firstOccurence = myContext.getOccurrences()[0];
-      }
-      else {
-        firstOccurence = myContext.getPlace();
-      }
-    }
-    else {
-      final GrExpression expression = myContext.getExpression();
-      firstOccurence = expression != null ? expression : myContext.getStringPart().getLiteral();
-    }
+    PsiElement firstOccurrence = getFirstOccurrence(replaceAllOccurrences);
+
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     assert varName != null;
 
-    final int offset = firstOccurence.getTextRange().getStartOffset();
+    final int offset = firstOccurrence.getTextRange().getStartOffset();
+
     validateOccurrencesDown(myContext.getScope(), conflicts, varName, offset);
     if (!(myContext.getScope() instanceof GroovyFileBase)) {
       validateVariableOccurrencesUp(myContext.getScope(), conflicts, varName, offset);
     }
+
+    if (replaceAllOccurrences) {
+      for (PsiElement element : myContext.getOccurrences()) {
+        if (element == firstOccurrence) continue;
+        validateVariableOccurrencesUp(element, conflicts, varName, element.getTextRange().getStartOffset());
+      }
+    }
     return conflicts;
+  }
+
+  private PsiElement getFirstOccurrence(boolean replaceAllOccurrences) {
+    if (replaceAllOccurrences) {
+      if (myContext.getOccurrences().length > 0) {
+        GroovyRefactoringUtil.sortOccurrences(myContext.getOccurrences());
+        return myContext.getOccurrences()[0];
+      }
+      else {
+        return myContext.getPlace();
+      }
+    }
+    else {
+      final GrExpression expression = myContext.getExpression();
+      return expression != null ? expression : myContext.getStringPart().getLiteral();
+    }
   }
 
 

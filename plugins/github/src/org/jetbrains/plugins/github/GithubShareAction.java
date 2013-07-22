@@ -185,7 +185,7 @@ public class GithubShareAction extends DumbAwareAction {
           return;
         }
 
-        GithubNotifications.showInfoURL(project, "Successfully created project on GitHub", name, url);
+        GithubNotifications.showInfoURL(project, "Successfully shared project on GitHub", name, url);
       }
     }.queue();
   }
@@ -221,6 +221,9 @@ public class GithubShareAction extends DumbAwareAction {
       }
     });
     if (!exceptionRef.isNull()) {
+      if (exceptionRef.get() instanceof GithubAuthenticationCanceledException) {
+        return null;
+      }
       GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", exceptionRef.get().getMessage());
       return null;
     }
@@ -312,8 +315,7 @@ public class GithubShareAction extends DumbAwareAction {
 
       final Collection<VirtualFile> files2add = dialog.getSelectedFiles();
       if (!dialog.isOK() || files2add.isEmpty()) {
-        GithubNotifications
-          .showWarningURL(project, "Can't finish GitHub sharing process", "No files to commit. ", "'" + name + "'", " on GitHub", url);
+        GithubNotifications.showInfoURL(project, "Successfully created empty repository on GitHub", name, url);
         return false;
       }
       GitFileUtils.addFiles(project, root, files2add);

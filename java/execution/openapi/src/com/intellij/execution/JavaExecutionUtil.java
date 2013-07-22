@@ -59,7 +59,7 @@ public class JavaExecutionUtil {
     final DefaultRunProfile profile = new DefaultRunProfile(project, cmdLine, contentName, icon, filters);
     final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
     if (runner != null) {
-      runner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, project, null, null, null));
+      runner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, project, null));
       return true;
     }
 

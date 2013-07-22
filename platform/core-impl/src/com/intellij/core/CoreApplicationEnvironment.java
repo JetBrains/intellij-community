@@ -267,6 +267,10 @@ public class CoreApplicationEnvironment {
     });
   }
 
+  public void registerParserDefinition(Language language, ParserDefinition parserDefinition) {
+    addExplicitExtension(LanguageParserDefinitions.INSTANCE, language, parserDefinition);
+  }
+
   public <T> void addExplicitExtension(final FileTypeExtension<T> instance, final FileType fileType, final T object) {
     instance.addExplicitExtension(fileType, object);
     Disposer.register(myParentDisposable, new Disposable() {

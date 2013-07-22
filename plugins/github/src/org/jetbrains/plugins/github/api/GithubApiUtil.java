@@ -23,18 +23,15 @@ import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubAuthData;
-import org.jetbrains.plugins.github.GithubSslSupport;
-import org.jetbrains.plugins.github.GithubUrlUtil;
-import org.jetbrains.plugins.github.GithubUtil;
+import org.jetbrains.plugins.github.*;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -54,6 +51,7 @@ public class GithubApiUtil {
 
   private static Gson initGson() {
     GsonBuilder builder = new GsonBuilder();
+    builder.setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
     builder.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
     return builder.create();
   }
@@ -63,18 +61,18 @@ public class GithubApiUtil {
   }
 
   @Nullable
-  public static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
+  private static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
     return request(auth, path, null, HttpVerb.GET);
   }
 
   @Nullable
-  public static JsonElement postRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable String requestBody)
+  private static JsonElement postRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable String requestBody)
     throws IOException {
     return request(auth, path, requestBody, HttpVerb.POST);
   }
 
   @Nullable
-  public static JsonElement deleteRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
+  private static JsonElement deleteRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
     return request(auth, path, null, HttpVerb.DELETE);
   }
 
@@ -189,14 +187,14 @@ public class GithubApiUtil {
     return client;
   }
 
-  private static void checkStatusCode(@NotNull HttpMethod method) throws AuthenticationException {
+  private static void checkStatusCode(@NotNull HttpMethod method) throws GithubAuthenticationException {
     switch (method.getStatusCode()) {
       case 400: // HTTP_BAD_REQUEST
       case 401: // HTTP_UNAUTHORIZED
       case 402: // HTTP_PAYMENT_REQUIRED
       case 403: // HTTP_FORBIDDEN
       case 404: // HTTP_NOT_FOUND
-        throw new AuthenticationException("Request response - \"" + getErrorMessage(method) + '"');
+        throw new GithubAuthenticationException("Request response - \"" + getErrorMessage(method) + '"');
     }
   }
 
@@ -376,4 +374,124 @@ public class GithubApiUtil {
 
     return GithubRepo.create(fromJson(postRequest(auth, path, gson.toJson(request)), GithubRepoRaw.class));
   }
+
+  @NotNull
+  public static List<GithubIssue> getIssues(@NotNull GithubAuthData auth,
+                                            @NotNull String user,
+                                            @NotNull String repo,
+                                            @Nullable String query) throws IOException {
+    String path;
+    boolean noQuery = StringUtil.isEmpty(query);
+    if (!noQuery) {
+      query = URLEncoder.encode(query, "UTF-8");
+      path = "/legacy/issues/search/" + user + "/" + repo + "/open/" + query;
+    }
+    else {
+      path = "/repos/" + user + "/" + repo + "/issues";
+    }
+
+    JsonElement result = getRequest(auth, path);
+
+    List<GithubIssueRaw> rawIssues = fromJson(result, new TypeToken<List<GithubIssueRaw>>() {
+    }.getType());
+
+    List<GithubIssue> issues = new ArrayList<GithubIssue>();
+    for (GithubIssueRaw raw : rawIssues) {
+      issues.add(GithubIssue.create(raw));
+    }
+    return issues;
+  }
+
+  @NotNull
+  public static GithubIssue getIssue(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, @NotNull String id)
+    throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/issues/" + id;
+
+    JsonElement result = getRequest(auth, path);
+
+    return GithubIssue.create(fromJson(result, GithubIssueRaw.class));
+  }
+
+  @NotNull
+  public static List<GithubIssueComment> getIssueComments(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
+    throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments";
+
+    JsonElement result = getRequest(auth, path);
+
+    List<GithubIssueCommentRaw> rawComments = fromJson(result, new TypeToken<List<GithubIssueCommentRaw>>() {
+    }.getType());
+
+    List<GithubIssueComment> comments = new ArrayList<GithubIssueComment>();
+    for (GithubIssueCommentRaw raw : rawComments) {
+      comments.add(GithubIssueComment.create(raw));
+    }
+    return comments;
+  }
+
+  public static GithubCommitDetailed getCommit(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, String sha)
+    throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/commits/" + sha;
+
+    JsonElement result = getRequest(auth, path);
+    return GithubCommitDetailed.createDetailed(fromJson(result, GithubCommitRaw.class));
+  }
+
+  @NotNull
+  public static GithubPullRequest getPullRequest(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, int id)
+    throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/pulls/" + id;
+    return GithubPullRequest.create(fromJson(getRequest(auth, path), GithubPullRequestRaw.class));
+  }
+
+  @NotNull
+  public static List<GithubPullRequest> getPullRequests(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo)
+    throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/pulls";
+
+    JsonElement result = getRequest(auth, path);
+
+    List<GithubPullRequestRaw> rawRequests = fromJson(result, new TypeToken<List<GithubPullRequestRaw>>() {
+    }.getType());
+
+    List<GithubPullRequest> requests = new ArrayList<GithubPullRequest>();
+    for (GithubPullRequestRaw raw : rawRequests) {
+      requests.add(GithubPullRequest.create(raw));
+    }
+    return requests;
+  }
+
+  public static List<GithubCommit> getPullRequestCommits(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
+    throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/commits";
+
+    JsonElement result = getRequest(auth, path);
+
+    List<GithubCommitRaw> rawCommits = fromJson(result, new TypeToken<List<GithubCommitRaw>>() {
+    }.getType());
+
+    List<GithubCommit> commits = new ArrayList<GithubCommit>();
+    for (GithubCommitRaw raw : rawCommits) {
+      commits.add(GithubCommit.create(raw));
+    }
+    return commits;
+  }
+
+  public static List<GithubFile> getPullRequestFiles(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
+    throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/files";
+
+    JsonElement result = getRequest(auth, path);
+
+    List<GithubFileRaw> rawFiles = fromJson(result, new TypeToken<List<GithubFileRaw>>() {
+    }.getType());
+
+    List<GithubFile> files = new ArrayList<GithubFile>();
+    for (GithubFileRaw raw : rawFiles) {
+      files.add(GithubFile.create(raw));
+    }
+    return files;
+  }
+
+
 }

@@ -82,10 +82,7 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> 
       return;
     }
 
-    RunnerSettings runnerSettings = env.getRunnerSettings();
-    if (runnerSettings != null) {
-      RunManager.getInstance(project).refreshUsagesList(runnerSettings.getRunProfile());
-    }
+    RunManager.getInstance(project).refreshUsagesList(env.getRunProfile());
 
     ExecutionManager.getInstance(project).startRunProfile(new RunProfileStarter() {
       @Override

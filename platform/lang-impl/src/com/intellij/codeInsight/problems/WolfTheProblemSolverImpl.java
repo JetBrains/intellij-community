@@ -298,7 +298,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false) {
         @Override
         protected HighlightInfoHolder createInfoHolder(@NotNull final PsiFile file) {
-          return new HighlightInfoHolder(file, HighlightInfoFilter.EMPTY_ARRAY) {
+          return new HighlightInfoHolder(file) {
             @Override
             public boolean add(@Nullable HighlightInfo info) {
               if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {

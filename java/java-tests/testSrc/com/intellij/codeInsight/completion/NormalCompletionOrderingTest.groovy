@@ -257,7 +257,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferInterfacesInImplements() {
-    checkPreferredItems(0, "FooIntf", "FooClass");
+    checkPreferredItems(0, "FooIntf", "Foo", "FooClass");
   }
 
   public void testPreferClassesInExtends() {

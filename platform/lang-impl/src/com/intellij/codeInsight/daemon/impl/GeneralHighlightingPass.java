@@ -20,6 +20,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.analysis.CustomHighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.problems.ProblemImpl;
@@ -821,7 +822,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   protected HighlightInfoHolder createInfoHolder(final PsiFile file) {
     final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
-    return new HighlightInfoHolder(file, getColorsScheme(), filters);
+    return new CustomHighlightInfoHolder(file, getColorsScheme(), filters);
   }
 
   private static void highlightTodos(@NotNull PsiFile file,
