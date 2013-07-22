@@ -52,7 +52,6 @@ public abstract class CommandLineState implements RunProfileState {
     return myEnvironment.getRunnerSettings();
   }
 
-  @Override
   public ConfigurationPerRunnerSettings getConfigurationSettings() {
     return myEnvironment.getConfigurationSettings();
   }

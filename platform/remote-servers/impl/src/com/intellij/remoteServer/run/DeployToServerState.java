@@ -18,7 +18,6 @@ package com.intellij.remoteServer.run;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -59,10 +58,5 @@ public class DeployToServerState<C extends ServerConfiguration> implements RunPr
   @Override
   public RunnerSettings getRunnerSettings() {
     return myExecutionEnvironment.getRunnerSettings();
-  }
-
-  @Override
-  public ConfigurationPerRunnerSettings getConfigurationSettings() {
-    return myExecutionEnvironment.getConfigurationSettings();
   }
 }

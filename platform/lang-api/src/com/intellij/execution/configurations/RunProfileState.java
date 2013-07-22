@@ -27,6 +27,4 @@ public interface RunProfileState {
   ExecutionResult execute(final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException;
 
   RunnerSettings getRunnerSettings();
-
-  ConfigurationPerRunnerSettings getConfigurationSettings();
 }

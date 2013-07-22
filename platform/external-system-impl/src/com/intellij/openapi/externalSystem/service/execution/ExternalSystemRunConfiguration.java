@@ -212,11 +212,6 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
     public RunnerSettings getRunnerSettings() {
       return null;
     }
-
-    @Override
-    public ConfigurationPerRunnerSettings getConfigurationSettings() {
-      return null;
-    }
   }
   
   private static class MyProcessHandler extends ProcessHandler {

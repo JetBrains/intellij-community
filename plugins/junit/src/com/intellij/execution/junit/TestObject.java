@@ -132,7 +132,6 @@ public abstract class TestObject implements JavaCommandLine {
     return myEnvironment.getRunnerSettings();
   }
 
-  @Override
   public ConfigurationPerRunnerSettings getConfigurationSettings() {
     return myEnvironment.getConfigurationSettings();
   }

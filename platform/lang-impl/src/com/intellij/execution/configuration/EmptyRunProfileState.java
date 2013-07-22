@@ -3,7 +3,6 @@ package com.intellij.execution.configuration;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ProgramRunner;
@@ -24,11 +23,6 @@ public final class EmptyRunProfileState implements RunProfileState {
 
   @Override
   public RunnerSettings getRunnerSettings() {
-    return null;
-  }
-
-  @Override
-  public ConfigurationPerRunnerSettings getConfigurationSettings() {
     return null;
   }
 }
