@@ -27,8 +27,10 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.HashMap;
 import junit.framework.Assert;
 
@@ -130,12 +132,8 @@ public class OutputChecker {
       LOG.error("Test file created " + outFile.getPath() + "\n" + "**************** Don't forget to put it into VCS! *******************");
     }
     else {
-      String originalText = FileUtil.loadFile(outFile);
-      String expected = originalText;
-
-      expected = StringUtil.replace(expected, "\r\n", "\n");
-      expected = StringUtil.replace(expected, "\r", "\n");
-
+      String originalText = FileUtilRt.loadFile(outFile, CharsetToolkit.UTF8);
+      String expected = StringUtilRt.convertLineSeparators(originalText);
       if (!expected.equals(actual)) {
         System.out.println("expected:");
         System.out.println(originalText);
