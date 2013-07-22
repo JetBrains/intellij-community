@@ -312,6 +312,9 @@ public class GithubShareAction extends DumbAwareAction {
         @Override
         public void run() {
           GithubUntrackedFilesDialog dialog = new GithubUntrackedFilesDialog(project, allFiles);
+          if (!trackedFiles.isEmpty()) {
+            dialog.setSelectedFiles(trackedFiles);
+          }
           DialogManager.show(dialog);
           dialogRef.set(dialog);
         }
