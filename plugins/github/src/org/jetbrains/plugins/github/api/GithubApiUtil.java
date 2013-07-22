@@ -214,7 +214,7 @@ public class GithubApiUtil {
     try {
       String resp = method.getResponseBodyAsString();
       if (resp != null) {
-        GithubErrorMessage error = fromJson(parseResponse(resp), GithubErrorMessage.class);
+        GithubErrorMessageRaw error = fromJson(parseResponse(resp), GithubErrorMessageRaw.class);
         message = error.getMessage();
       }
     }

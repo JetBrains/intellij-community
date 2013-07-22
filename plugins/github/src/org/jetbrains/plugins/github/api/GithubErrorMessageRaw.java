@@ -23,7 +23,7 @@ import java.io.Serializable;
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-public class GithubErrorMessage implements Serializable {
+class GithubErrorMessageRaw implements Serializable {
   private String message;
 
   @Nullable
