@@ -25,6 +25,4 @@ import org.jetbrains.annotations.Nullable;
 public interface RunProfileState {
   @Nullable
   ExecutionResult execute(final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException;
-
-  RunnerSettings getRunnerSettings();
 }

@@ -207,11 +207,6 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
       });
       return new DefaultExecutionResult(console, processHandler);
     }
-
-    @Override
-    public RunnerSettings getRunnerSettings() {
-      return null;
-    }
   }
   
   private static class MyProcessHandler extends ProcessHandler {

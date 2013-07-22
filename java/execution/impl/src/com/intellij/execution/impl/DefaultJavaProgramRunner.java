@@ -74,7 +74,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     boolean shouldAddDefaultActions = true;
     if (state instanceof JavaCommandLine) {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
-      patch(parameters, state.getRunnerSettings(), true);
+      patch(parameters, env.getRunnerSettings(), true);
       final ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
       executionResult = state.execute(executor, this);
       if (proxy != null && executionResult != null) {

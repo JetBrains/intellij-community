@@ -127,7 +127,6 @@ public abstract class TestObject implements JavaCommandLine {
 
   public abstract String suggestActionName();
 
-  @Override
   public RunnerSettings getRunnerSettings() {
     return myEnvironment.getRunnerSettings();
   }
