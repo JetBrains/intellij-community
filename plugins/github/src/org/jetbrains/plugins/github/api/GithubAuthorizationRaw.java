@@ -17,13 +17,14 @@ package org.jetbrains.plugins.github.api;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-class GithubAuthorizationRaw {
+class GithubAuthorizationRaw implements Serializable {
   @Nullable public Long id;
   @Nullable public String url;
   @Nullable public String token;
