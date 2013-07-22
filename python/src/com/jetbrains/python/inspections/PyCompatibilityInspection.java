@@ -202,7 +202,8 @@ public class PyCompatibilityInspection extends PyInspection {
       if (tryExceptStatement != null) {
         PyExceptPart[] parts = tryExceptStatement.getExceptParts();
         for (PyExceptPart part : parts) {
-          if (part.getExceptClass() != null && part.getExceptClass().getText().equals("ImportError")) {
+          final PyExpression exceptClass = part.getExceptClass();
+          if (exceptClass != null && exceptClass.getText().equals("ImportError")) {
             return;
           }
         }
