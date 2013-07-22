@@ -1417,6 +1417,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       if (checker != null) {
         ValueConstraint[] constraints = getAnyArgConstraints(params);
         int checkedParam = checker.getCheckedParameterIndex();
+        if (checkedParam >= constraints.length) {
+          return null;
+        }
 
         ConditionChecker.Type type = checker.getConditionCheckType();
         if (type == ASSERT_IS_NULL_METHOD || type == ASSERT_IS_NOT_NULL_METHOD) {
