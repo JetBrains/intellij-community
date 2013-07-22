@@ -77,31 +77,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     });
   }
 
+
+
   private void createSearchField() {
-    field = new SearchTextField() {
-      @Override
-      public void paint(Graphics g) {
-        super.paint(g);
-        final JTextField editor = field.getTextEditor();
-        if (StringUtil.isEmpty(editor.getText()) && !editor.hasFocus()) {
-          final int baseline = editor.getUI().getBaseline(editor, editor.getWidth(), editor.getHeight());
-          final Color color = UIUtil.getInactiveTextColor();
-          final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-          g.setColor(color);
-          final Font font = editor.getFont();
-          g.setFont(new Font(font.getName(), Font.ITALIC, font.getSize()));
-          //final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(SearchEverywhereAction.this); //todo[kb]
-          final String shortcut = "Ctrl + F10";
-          if (UIUtil.isUnderDarcula()) {
-            g.drawString(shortcut, 30, baseline + 2);
-          }
-          else {
-            g.drawString(shortcut, 20, baseline + 4);
-          }
-          config.restore();
-        }
-      }
-    };
+    field = new MySearchTextField();
     int columns = 20;
     if (UIUtil.isUnderDarcula() || UIUtil.isUnderAquaLookAndFeel()) {
       columns = 7;
@@ -182,7 +161,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myList.setModel(listModel);
 
     if (myPopup == null || !myPopup.isVisible()) {
-      myPopup = JBPopupFactory.getInstance().createListPopupBuilder(myList).createPopup();
+      myPopup = JBPopupFactory.getInstance()
+        .createListPopupBuilder(myList)
+        .setRequestFocus(false)
+        .createPopup();
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
@@ -231,5 +213,34 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
     return field;
+  }
+
+  private class MySearchTextField extends SearchTextField {
+    public MySearchTextField() {
+      super(false);
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      super.paint(g);
+      final JTextField editor = field.getTextEditor();
+      if (StringUtil.isEmpty(editor.getText()) && !editor.hasFocus()) {
+        final int baseline = editor.getUI().getBaseline(editor, editor.getWidth(), editor.getHeight());
+        final Color color = UIUtil.getInactiveTextColor();
+        final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+        g.setColor(color);
+        final Font font = editor.getFont();
+        g.setFont(new Font(font.getName(), Font.ITALIC, font.getSize()));
+        //final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(SearchEverywhereAction.this); //todo[kb]
+        final String shortcut = "Ctrl + F10";
+        if (UIUtil.isUnderDarcula()) {
+          g.drawString(shortcut, 30, baseline + 2);
+        }
+        else {
+          g.drawString(shortcut, 20, baseline + 4);
+        }
+        config.restore();
+      }
+    }
   }
 }
