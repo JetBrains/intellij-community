@@ -1178,6 +1178,15 @@ public class ContainerUtil extends ContainerUtilRt {
     return items == null || items.isEmpty() ? def : items.iterator().next();
   }
 
+  /**
+   * The main difference from <code>subList</code> is that <code>getFirstItems</code> does not
+   * throw any exceptions, even if maxItems is greater than size of the list
+   *
+   * @param items list
+   * @param maxItems size of the result will be equal or less than <code>maxItems</code>
+   * @param <T> type of list
+   * @return new list with no more than <code>maxItems</code> first elements
+   */
   @NotNull
   public static <T> List<T> getFirstItems(@NotNull final List<T> items, int maxItems) {
     final List<T> result = new ArrayList<T>();
