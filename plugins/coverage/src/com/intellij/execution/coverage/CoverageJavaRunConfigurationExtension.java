@@ -70,7 +70,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     //noinspection ConstantConditions
     coverageConfig.setCurrentCoverageSuite(null);
     final CoverageRunner coverageRunner = coverageConfig.getCoverageRunner();
-    if (runnerSettings.getData() instanceof CoverageRunnerData && coverageRunner != null) {
+    if (runnerSettings instanceof CoverageRunnerData && coverageRunner != null) {
       final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
       coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
       coverageConfig.appendCoverageArgument(params);
@@ -199,7 +199,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   @Override
   public boolean isListenerDisabled(RunConfigurationBase configuration, Object listener, RunnerSettings runnerSettings) {
     if (listener instanceof CoverageListener) {
-      if (!(runnerSettings.getData() instanceof CoverageRunnerData)) return true;
+      if (!(runnerSettings instanceof CoverageRunnerData)) return true;
       final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
       return !(coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner);
     }

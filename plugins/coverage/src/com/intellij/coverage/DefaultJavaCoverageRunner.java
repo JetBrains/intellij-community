@@ -18,10 +18,10 @@ package com.intellij.coverage;
 import com.intellij.execution.configurations.ConfigurationInfoProvider;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.runners.RunConfigurationWithSuppressedDefaultRunAction;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultJavaCoverageRunner extends DefaultJavaProgramRunner {
@@ -39,7 +39,7 @@ public class DefaultJavaCoverageRunner extends DefaultJavaProgramRunner {
   }
 
   @Override
-  public JDOMExternalizable createConfigurationData(ConfigurationInfoProvider settingsProvider) {
+  public RunnerSettings createConfigurationData(ConfigurationInfoProvider settingsProvider) {
     return new CoverageRunnerData();
   }
 
