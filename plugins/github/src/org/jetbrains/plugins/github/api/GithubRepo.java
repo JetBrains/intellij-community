@@ -23,25 +23,25 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubRepo {
-  private long id;
-  @NotNull private String name;
-  @NotNull private String fullName;
-  @NotNull private String description;
+  private long myId;
+  @NotNull private String myName;
+  @NotNull private String myFullName;
+  @NotNull private String myDescription;
 
-  private boolean isPrivate;
-  private boolean isFork;
+  private boolean myIsPrivate;
+  private boolean myIsFork;
 
-  @NotNull private String url;
-  @NotNull private String htmlUrl;
-  @NotNull private String cloneUrl;
-  @NotNull private String gitUrl;
-  @NotNull private String sshUrl;
-  @Nullable private String mirrorUrl;
+  @NotNull private String myUrl;
+  @NotNull private String myHtmlUrl;
+  @NotNull private String myCloneUrl;
+  @NotNull private String myGitUrl;
+  @NotNull private String mySshUrl;
+  @Nullable private String myMirrorUrl;
 
-  private int size;
-  @Nullable private String masterBranch;
+  private int mySize;
+  @Nullable private String myMasterBranch;
 
-  @NotNull private GithubUser owner;
+  @NotNull private GithubUser myOwner;
 
   @NotNull
   public static GithubRepo create(@Nullable GithubRepoRaw raw) throws JsonException {
@@ -86,97 +86,97 @@ public class GithubRepo {
                        int size,
                        @Nullable String masterBranch,
                        @NotNull GithubUser owner) {
-    this.id = id;
-    this.name = name;
-    this.fullName = fullName;
-    this.description = description;
-    isPrivate = aPrivate;
-    isFork = fork;
-    this.url = url;
-    this.htmlUrl = htmlUrl;
-    this.cloneUrl = cloneUrl;
-    this.gitUrl = gitUrl;
-    this.sshUrl = sshUrl;
-    this.mirrorUrl = mirrorUrl;
-    this.size = size;
-    this.masterBranch = masterBranch;
-    this.owner = owner;
+    this.myId = id;
+    this.myName = name;
+    this.myFullName = fullName;
+    this.myDescription = description;
+    myIsPrivate = aPrivate;
+    myIsFork = fork;
+    this.myUrl = url;
+    this.myHtmlUrl = htmlUrl;
+    this.myCloneUrl = cloneUrl;
+    this.myGitUrl = gitUrl;
+    this.mySshUrl = sshUrl;
+    this.myMirrorUrl = mirrorUrl;
+    this.mySize = size;
+    this.myMasterBranch = masterBranch;
+    this.myOwner = owner;
   }
 
   protected GithubRepo(@NotNull GithubRepo repo) {
-    this(repo.id, repo.name, repo.fullName, repo.description, repo.isPrivate, repo.isFork, repo.url, repo.htmlUrl, repo.cloneUrl,
-         repo.gitUrl, repo.sshUrl, repo.mirrorUrl, repo.size, repo.masterBranch, repo.owner);
+    this(repo.myId, repo.myName, repo.myFullName, repo.myDescription, repo.myIsPrivate, repo.myIsFork, repo.myUrl, repo.myHtmlUrl, repo.myCloneUrl,
+         repo.myGitUrl, repo.mySshUrl, repo.myMirrorUrl, repo.mySize, repo.myMasterBranch, repo.myOwner);
   }
 
   public long getId() {
-    return id;
+    return myId;
   }
 
   @NotNull
   public String getName() {
-    return name;
+    return myName;
   }
 
   @NotNull
   public String getFullName() {
-    return fullName;
+    return myFullName;
   }
 
   @NotNull
   public String getDescription() {
-    return description;
+    return myDescription;
   }
 
   public boolean isPrivate() {
-    return isPrivate;
+    return myIsPrivate;
   }
 
   public boolean isFork() {
-    return isFork;
+    return myIsFork;
   }
 
   @NotNull
   public String getUrl() {
-    return url;
+    return myUrl;
   }
 
   @NotNull
   public String getHtmlUrl() {
-    return htmlUrl;
+    return myHtmlUrl;
   }
 
   @NotNull
   public String getCloneUrl() {
-    return cloneUrl;
+    return myCloneUrl;
   }
 
   @NotNull
   public String getGitUrl() {
-    return gitUrl;
+    return myGitUrl;
   }
 
   @NotNull
   public String getSshUrl() {
-    return sshUrl;
+    return mySshUrl;
   }
 
   @Nullable
   public String getMirrorUrl() {
-    return mirrorUrl;
+    return myMirrorUrl;
   }
 
   public int getSize() {
-    return size;
+    return mySize;
   }
 
   @Nullable
   public String getMasterBranch() {
-    return masterBranch;
+    return myMasterBranch;
   }
 
   @NotNull
   public GithubUser getOwner() {
-    return owner;
+    return myOwner;
   }
 }
 

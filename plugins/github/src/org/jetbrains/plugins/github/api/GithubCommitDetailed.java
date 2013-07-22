@@ -27,13 +27,13 @@ import java.util.List;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubCommitDetailed extends GithubCommit {
-  @NotNull private CommitStats stats;
-  @NotNull private List<GithubFile> files;
+  @NotNull private CommitStats myStats;
+  @NotNull private List<GithubFile> myFiles;
 
   public static class CommitStats implements Serializable {
-    private int additions;
-    private int deletions;
-    private int total;
+    private int myAdditions;
+    private int myDeletions;
+    private int myTotal;
 
     @NotNull
     public static CommitStats create(@Nullable GithubCommitRaw.CommitStatsRaw raw) throws JsonException {
@@ -51,21 +51,21 @@ public class GithubCommitDetailed extends GithubCommit {
     }
 
     private CommitStats(int additions, int deletions, int total) {
-      this.additions = additions;
-      this.deletions = deletions;
-      this.total = total;
+      this.myAdditions = additions;
+      this.myDeletions = deletions;
+      this.myTotal = total;
     }
 
     public int getAdditions() {
-      return additions;
+      return myAdditions;
     }
 
     public int getDeletions() {
-      return deletions;
+      return myDeletions;
     }
 
     public int getTotal() {
-      return total;
+      return myTotal;
     }
   }
 
@@ -92,17 +92,17 @@ public class GithubCommitDetailed extends GithubCommit {
 
   protected GithubCommitDetailed(@NotNull GithubCommit commit, @NotNull CommitStats stats, @NotNull List<GithubFile> files) {
     super(commit);
-    this.stats = stats;
-    this.files = files;
+    this.myStats = stats;
+    this.myFiles = files;
   }
 
   @NotNull
   public CommitStats getStats() {
-    return stats;
+    return myStats;
   }
 
   @NotNull
   public List<GithubFile> getFiles() {
-    return files;
+    return myFiles;
   }
 }

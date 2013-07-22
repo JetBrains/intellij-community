@@ -23,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubCommitSha {
-  @NotNull private String url;
-  @NotNull private String sha;
+  @NotNull private String myUrl;
+  @NotNull private String mySha;
 
   @NotNull
   public static GithubCommitSha createSha(@Nullable GithubCommitRaw raw) throws JsonException {
@@ -41,22 +41,22 @@ public class GithubCommitSha {
   }
 
   protected GithubCommitSha(@NotNull String url, @NotNull String sha) {
-    this.url = url;
-    this.sha = sha;
+    this.myUrl = url;
+    this.mySha = sha;
   }
 
   protected GithubCommitSha(@NotNull GithubCommitSha sha) {
-    this.url = sha.getUrl();
-    this.sha = sha.getSha();
+    this.myUrl = sha.getUrl();
+    this.mySha = sha.getSha();
   }
 
   @NotNull
   public String getUrl() {
-    return url;
+    return myUrl;
   }
 
   @NotNull
   public String getSha() {
-    return sha;
+    return mySha;
   }
 }

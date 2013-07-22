@@ -26,12 +26,12 @@ import java.util.List;
 @SuppressWarnings("UnusedDeclaration")
 public class GithubAuthorization {
   private long id;
-  @NotNull private String token;
+  @NotNull private String myToken;
 
-  @Nullable private String note;
-  @Nullable private String noteUrl;
+  @Nullable private String myNote;
+  @Nullable private String myNoteUrl;
 
-  @NotNull private List<String> scopes;
+  @NotNull private List<String> myScopes;
 
   @NotNull
   public static GithubAuthorization create(GithubAuthorizationRaw raw) throws JsonException {
@@ -54,10 +54,10 @@ public class GithubAuthorization {
                               @Nullable String noteUrl,
                               @NotNull List<String> scopes) {
     this.id = id;
-    this.token = token;
-    this.note = note;
-    this.noteUrl = noteUrl;
-    this.scopes = scopes;
+    this.myToken = token;
+    this.myNote = note;
+    this.myNoteUrl = noteUrl;
+    this.myScopes = scopes;
   }
 
   public long getId() {
@@ -66,21 +66,21 @@ public class GithubAuthorization {
 
   @NotNull
   public String getToken() {
-    return token;
+    return myToken;
   }
 
   @Nullable
   public String getNote() {
-    return note;
+    return myNote;
   }
 
   @Nullable
   public String getNoteUrl() {
-    return noteUrl;
+    return myNoteUrl;
   }
 
   @NotNull
   public List<String> getScopes() {
-    return scopes;
+    return myScopes;
   }
 }

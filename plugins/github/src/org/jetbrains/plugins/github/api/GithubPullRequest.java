@@ -25,34 +25,34 @@ import java.util.Date;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubPullRequest {
-  private long number;
-  @NotNull private String state;
-  @NotNull private String title;
-  @NotNull private String body;
+  private long myNumber;
+  @NotNull private String myState;
+  @NotNull private String myTitle;
+  @NotNull private String myBody;
 
-  @NotNull private String url;
-  @NotNull private String htmlUrl;
-  @NotNull private String diffUrl;
-  @NotNull private String patchUrl;
-  @NotNull private String issueUrl;
+  @NotNull private String myUrl;
+  @NotNull private String myHtmlUrl;
+  @NotNull private String myDiffUrl;
+  @NotNull private String myPatchUrl;
+  @NotNull private String myIssueUrl;
 
-  @NotNull private Date createdAt;
-  @NotNull private Date updatedAt;
-  @Nullable private Date closedAt;
-  @Nullable private Date mergedAt;
+  @NotNull private Date myCreatedAt;
+  @NotNull private Date myUpdatedAt;
+  @Nullable private Date myClosedAt;
+  @Nullable private Date myMergedAt;
 
-  @NotNull private GithubUser user;
+  @NotNull private GithubUser myUser;
 
-  @NotNull private Link head;
-  @NotNull private Link base;
+  @NotNull private Link myHead;
+  @NotNull private Link myBase;
 
   public static class Link {
-    @NotNull private String label;
-    @NotNull private String ref;
-    @NotNull private String sha;
+    @NotNull private String myLabel;
+    @NotNull private String myRef;
+    @NotNull private String mySha;
 
-    @NotNull private GithubRepo repo;
-    @NotNull private GithubUser user;
+    @NotNull private GithubRepo myRepo;
+    @NotNull private GithubUser myUser;
 
     @NotNull
     public static Link create(@Nullable GithubPullRequestRaw.LinkRaw raw) throws JsonException {
@@ -73,36 +73,36 @@ public class GithubPullRequest {
     }
 
     private Link(@NotNull String label, @NotNull String ref, @NotNull String sha, @NotNull GithubRepo repo, @NotNull GithubUser user) {
-      this.label = label;
-      this.ref = ref;
-      this.sha = sha;
-      this.repo = repo;
-      this.user = user;
+      this.myLabel = label;
+      this.myRef = ref;
+      this.mySha = sha;
+      this.myRepo = repo;
+      this.myUser = user;
     }
 
     @NotNull
     public String getLabel() {
-      return label;
+      return myLabel;
     }
 
     @NotNull
     public String getRef() {
-      return ref;
+      return myRef;
     }
 
     @NotNull
     public String getSha() {
-      return sha;
+      return mySha;
     }
 
     @NotNull
     public GithubRepo getRepo() {
-      return repo;
+      return myRepo;
     }
 
     @NotNull
     public GithubUser getUser() {
-      return user;
+      return myUser;
     }
   }
 
@@ -150,100 +150,100 @@ public class GithubPullRequest {
                             @NotNull GithubUser user,
                             @NotNull Link head,
                             @NotNull Link base) {
-    this.number = number;
-    this.state = state;
-    this.title = title;
-    this.body = body;
-    this.url = url;
-    this.htmlUrl = htmlUrl;
-    this.diffUrl = diffUrl;
-    this.patchUrl = patchUrl;
-    this.issueUrl = issueUrl;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
-    this.closedAt = closedAt;
-    this.mergedAt = mergedAt;
-    this.user = user;
-    this.head = head;
-    this.base = base;
+    this.myNumber = number;
+    this.myState = state;
+    this.myTitle = title;
+    this.myBody = body;
+    this.myUrl = url;
+    this.myHtmlUrl = htmlUrl;
+    this.myDiffUrl = diffUrl;
+    this.myPatchUrl = patchUrl;
+    this.myIssueUrl = issueUrl;
+    this.myCreatedAt = createdAt;
+    this.myUpdatedAt = updatedAt;
+    this.myClosedAt = closedAt;
+    this.myMergedAt = mergedAt;
+    this.myUser = user;
+    this.myHead = head;
+    this.myBase = base;
   }
 
   public long getNumber() {
-    return number;
+    return myNumber;
   }
 
   @NotNull
   public String getState() {
-    return state;
+    return myState;
   }
 
   @NotNull
   public String getTitle() {
-    return title;
+    return myTitle;
   }
 
   @NotNull
   public String getBody() {
-    return body;
+    return myBody;
   }
 
   @NotNull
   public String getUrl() {
-    return url;
+    return myUrl;
   }
 
   @NotNull
   public String getHtmlUrl() {
-    return htmlUrl;
+    return myHtmlUrl;
   }
 
   @NotNull
   public String getDiffUrl() {
-    return diffUrl;
+    return myDiffUrl;
   }
 
   @NotNull
   public String getPatchUrl() {
-    return patchUrl;
+    return myPatchUrl;
   }
 
   @NotNull
   public String getIssueUrl() {
-    return issueUrl;
+    return myIssueUrl;
   }
 
   @NotNull
   public Date getCreatedAt() {
-    return createdAt;
+    return myCreatedAt;
   }
 
   @NotNull
   public Date getUpdatedAt() {
-    return updatedAt;
+    return myUpdatedAt;
   }
 
   @Nullable
   public Date getClosedAt() {
-    return closedAt;
+    return myClosedAt;
   }
 
   @Nullable
   public Date getMergedAt() {
-    return mergedAt;
+    return myMergedAt;
   }
 
   @NotNull
   public GithubUser getUser() {
-    return user;
+    return myUser;
   }
 
   @NotNull
   public Link getHead() {
-    return head;
+    return myHead;
   }
 
   @NotNull
   public Link getBase() {
-    return base;
+    return myBase;
   }
 }

@@ -25,19 +25,19 @@ import java.util.Date;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubIssue {
-  @NotNull private String url;
-  @NotNull private String htmlUrl;
-  private long number;
-  @NotNull private String state;
-  @NotNull private String title;
-  @NotNull private String body;
+  @NotNull private String myUrl;
+  @NotNull private String myHtmlUrl;
+  private long myNumber;
+  @NotNull private String myState;
+  @NotNull private String myTitle;
+  @NotNull private String myBody;
 
-  @NotNull private GithubUser user;
-  @Nullable private GithubUser assignee;
+  @NotNull private GithubUser myUser;
+  @Nullable private GithubUser myAssignee;
 
-  @Nullable Date closedAt;
-  @NotNull Date createdAt;
-  @NotNull Date updatedAt;
+  @Nullable Date myClosedAt;
+  @NotNull Date myCreatedAt;
+  @NotNull Date myUpdatedAt;
 
   @NotNull
   public static GithubIssue create(@Nullable GithubIssueRaw raw) throws JsonException {
@@ -75,70 +75,70 @@ public class GithubIssue {
                       @Nullable Date closedAt,
                       @NotNull Date createdAt,
                       @NotNull Date updatedAt) {
-    this.url = url;
-    this.htmlUrl = htmlUrl;
-    this.number = number;
-    this.state = state;
-    this.title = title;
-    this.body = body;
-    this.user = user;
-    this.assignee = assignee;
-    this.closedAt = closedAt;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
+    this.myUrl = url;
+    this.myHtmlUrl = htmlUrl;
+    this.myNumber = number;
+    this.myState = state;
+    this.myTitle = title;
+    this.myBody = body;
+    this.myUser = user;
+    this.myAssignee = assignee;
+    this.myClosedAt = closedAt;
+    this.myCreatedAt = createdAt;
+    this.myUpdatedAt = updatedAt;
   }
 
   @NotNull
   public String getUrl() {
-    return url;
+    return myUrl;
   }
 
   @NotNull
   public String getHtmlUrl() {
-    return htmlUrl;
+    return myHtmlUrl;
   }
 
   public long getNumber() {
-    return number;
+    return myNumber;
   }
 
   @NotNull
   public String getState() {
-    return state;
+    return myState;
   }
 
   @NotNull
   public String getTitle() {
-    return title;
+    return myTitle;
   }
 
   @NotNull
   public String getBody() {
-    return body;
+    return myBody;
   }
 
   @NotNull
   public GithubUser getUser() {
-    return user;
+    return myUser;
   }
 
   @Nullable
   public GithubUser getAssignee() {
-    return assignee;
+    return myAssignee;
   }
 
   @Nullable
   public Date getClosedAt() {
-    return closedAt;
+    return myClosedAt;
   }
 
   @NotNull
   public Date getCreatedAt() {
-    return createdAt;
+    return myCreatedAt;
   }
 
   @NotNull
   public Date getUpdatedAt() {
-    return updatedAt;
+    return myUpdatedAt;
   }
 }

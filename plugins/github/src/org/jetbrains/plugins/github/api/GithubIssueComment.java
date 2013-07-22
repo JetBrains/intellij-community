@@ -25,16 +25,16 @@ import java.util.Date;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubIssueComment {
-  @NotNull private Long id;
+  @NotNull private Long myId;
 
-  @NotNull private String url;
-  @NotNull private String htmlUrl;
-  @NotNull private String body;
+  @NotNull private String myUrl;
+  @NotNull private String myHtmlUrl;
+  @NotNull private String myBody;
 
-  @NotNull private Date createdAt;
-  @NotNull private Date updatedAt;
+  @NotNull private Date myCreatedAt;
+  @NotNull private Date myUpdatedAt;
 
-  @NotNull private GithubUser user;
+  @NotNull private GithubUser myUser;
 
   @NotNull
   public static GithubIssueComment create(@Nullable GithubIssueCommentRaw raw) throws JsonException {
@@ -64,47 +64,47 @@ public class GithubIssueComment {
                              @NotNull Date createdAt,
                              @NotNull Date updatedAt,
                              @NotNull GithubUser user) {
-    this.id = id;
-    this.url = url;
-    this.htmlUrl = htmlUrl;
-    this.body = body;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
-    this.user = user;
+    this.myId = id;
+    this.myUrl = url;
+    this.myHtmlUrl = htmlUrl;
+    this.myBody = body;
+    this.myCreatedAt = createdAt;
+    this.myUpdatedAt = updatedAt;
+    this.myUser = user;
   }
 
   @NotNull
   public Long getId() {
-    return id;
+    return myId;
   }
 
   @NotNull
   public String getUrl() {
-    return url;
+    return myUrl;
   }
 
   @NotNull
   public String getHtmlUrl() {
-    return htmlUrl;
+    return myHtmlUrl;
   }
 
   @NotNull
   public String getBody() {
-    return body;
+    return myBody;
   }
 
   @NotNull
   public Date getCreatedAt() {
-    return createdAt;
+    return myCreatedAt;
   }
 
   @NotNull
   public Date getUpdatedAt() {
-    return updatedAt;
+    return myUpdatedAt;
   }
 
   @NotNull
   public GithubUser getUser() {
-    return user;
+    return myUser;
   }
 }

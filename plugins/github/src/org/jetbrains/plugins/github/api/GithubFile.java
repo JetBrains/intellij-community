@@ -25,16 +25,16 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubFile implements Serializable {
-  @NotNull private String filename;
+  @NotNull private String myFilename;
 
-  private int additions;
-  private int deletions;
-  private int changes;
-  @NotNull private String status;
+  private int myAdditions;
+  private int myDeletions;
+  private int myChanges;
+  @NotNull private String myStatus;
 
-  @NotNull private String rawUrl;
-  @NotNull private String blobUrl;
-  @NotNull private String patch;
+  @NotNull private String myRawUrl;
+  @NotNull private String myBlobUrl;
+  @NotNull private String myPatch;
 
   @NotNull
   public static GithubFile create(@Nullable GithubFileRaw raw) throws JsonException {
@@ -64,50 +64,50 @@ public class GithubFile implements Serializable {
                      @NotNull String rawUrl,
                      @NotNull String blobUrl,
                      @NotNull String patch) {
-    this.filename = filename;
-    this.additions = additions;
-    this.deletions = deletions;
-    this.changes = changes;
-    this.status = status;
-    this.rawUrl = rawUrl;
-    this.blobUrl = blobUrl;
-    this.patch = patch;
+    this.myFilename = filename;
+    this.myAdditions = additions;
+    this.myDeletions = deletions;
+    this.myChanges = changes;
+    this.myStatus = status;
+    this.myRawUrl = rawUrl;
+    this.myBlobUrl = blobUrl;
+    this.myPatch = patch;
   }
 
   @NotNull
   public String getFilename() {
-    return filename;
+    return myFilename;
   }
 
   public int getAdditions() {
-    return additions;
+    return myAdditions;
   }
 
   public int getDeletions() {
-    return deletions;
+    return myDeletions;
   }
 
   public int getChanges() {
-    return changes;
+    return myChanges;
   }
 
   @NotNull
   public String getStatus() {
-    return status;
+    return myStatus;
   }
 
   @NotNull
   public String getRawUrl() {
-    return rawUrl;
+    return myRawUrl;
   }
 
   @NotNull
   public String getBlobUrl() {
-    return blobUrl;
+    return myBlobUrl;
   }
 
   @NotNull
   public String getPatch() {
-    return patch;
+    return myPatch;
   }
 }

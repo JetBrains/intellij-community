@@ -25,26 +25,26 @@ import java.io.Serializable;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubUserDetailed extends GithubUser {
-  @Nullable private String name;
-  @Nullable private String email;
-  @Nullable private String company;
-  @Nullable private String location;
+  @Nullable private String myName;
+  @Nullable private String myEmail;
+  @Nullable private String myCompany;
+  @Nullable private String myLocation;
 
-  private int publicRepos;
-  private int publicGists;
-  private int totalPrivateRepos;
-  private int ownedPrivateRepos;
-  private int privateGists;
-  private long diskUsage;
+  private int myPublicRepos;
+  private int myPublicGists;
+  private int myTotalPrivateRepos;
+  private int myOwnedPrivateRepos;
+  private int myPrivateGists;
+  private long myDiskUsage;
 
-  @NotNull private String type;
-  @NotNull private UserPlan plan;
+  @NotNull private String myType;
+  @NotNull private UserPlan myPlan;
 
   public static class UserPlan implements Serializable {
-    @NotNull private String name;
-    private long space;
-    private long collaborators;
-    private long privateRepos;
+    @NotNull private String myName;
+    private long mySpace;
+    private long myCollaborators;
+    private long myPrivateRepos;
 
     @NotNull
     public static UserPlan create(@Nullable GithubUserRaw.GithubUserPlanRaw raw) throws JsonException {
@@ -63,27 +63,27 @@ public class GithubUserDetailed extends GithubUser {
     }
 
     private UserPlan(@NotNull String name, long space, long collaborators, long privateRepos) {
-      this.name = name;
-      this.space = space;
-      this.collaborators = collaborators;
-      this.privateRepos = privateRepos;
+      this.myName = name;
+      this.mySpace = space;
+      this.myCollaborators = collaborators;
+      this.myPrivateRepos = privateRepos;
     }
 
     @NotNull
     public String getName() {
-      return name;
+      return myName;
     }
 
     public long getSpace() {
-      return space;
+      return mySpace;
     }
 
     public long getCollaborators() {
-      return collaborators;
+      return myCollaborators;
     }
 
     public long getPrivateRepos() {
-      return privateRepos;
+      return myPrivateRepos;
     }
   }
 
@@ -127,71 +127,71 @@ public class GithubUserDetailed extends GithubUser {
                                long diskUsage,
                                @NotNull UserPlan plan) {
     super(user);
-    this.name = name;
-    this.email = email;
-    this.company = company;
-    this.location = location;
-    this.type = type;
-    this.publicRepos = publicRepos;
-    this.publicGists = publicGists;
-    this.totalPrivateRepos = totalPrivateRepos;
-    this.ownedPrivateRepos = ownedPrivateRepos;
-    this.privateGists = privateGists;
-    this.diskUsage = diskUsage;
-    this.plan = plan;
+    this.myName = name;
+    this.myEmail = email;
+    this.myCompany = company;
+    this.myLocation = location;
+    this.myType = type;
+    this.myPublicRepos = publicRepos;
+    this.myPublicGists = publicGists;
+    this.myTotalPrivateRepos = totalPrivateRepos;
+    this.myOwnedPrivateRepos = ownedPrivateRepos;
+    this.myPrivateGists = privateGists;
+    this.myDiskUsage = diskUsage;
+    this.myPlan = plan;
   }
 
   @Nullable
   public String getName() {
-    return name;
+    return myName;
   }
 
   @Nullable
   public String getEmail() {
-    return email;
+    return myEmail;
   }
 
   @Nullable
   public String getCompany() {
-    return company;
+    return myCompany;
   }
 
   @Nullable
   public String getLocation() {
-    return location;
+    return myLocation;
   }
 
   @NotNull
   public String getType() {
-    return type;
+    return myType;
   }
 
   public int getPublicRepos() {
-    return publicRepos;
+    return myPublicRepos;
   }
 
   public int getPublicGists() {
-    return publicGists;
+    return myPublicGists;
   }
 
   public int getTotalPrivateRepos() {
-    return totalPrivateRepos;
+    return myTotalPrivateRepos;
   }
 
   public int getOwnedPrivateRepos() {
-    return ownedPrivateRepos;
+    return myOwnedPrivateRepos;
   }
 
   public int getPrivateGists() {
-    return privateGists;
+    return myPrivateGists;
   }
 
   public long getDiskUsage() {
-    return diskUsage;
+    return myDiskUsage;
   }
 
   @NotNull
   public UserPlan getPlan() {
-    return plan;
+    return myPlan;
   }
 }

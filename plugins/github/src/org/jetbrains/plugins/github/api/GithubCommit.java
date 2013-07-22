@@ -28,12 +28,12 @@ import java.util.List;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubCommit extends GithubCommitSha {
-  @Nullable private GithubUser author;
-  @Nullable private GithubUser committer;
+  @Nullable private GithubUser myAuthor;
+  @Nullable private GithubUser myCommitter;
 
-  @NotNull private List<GithubCommitSha> parents;
+  @NotNull private List<GithubCommitSha> myParents;
 
-  @NotNull private GitCommit commit;
+  @NotNull private GitCommit myCommit;
 
   @NotNull
   public static GithubCommit create(@Nullable GithubCommitRaw raw) throws JsonException {
@@ -58,11 +58,11 @@ public class GithubCommit extends GithubCommitSha {
   }
 
   public static class GitCommit implements Serializable {
-    @NotNull private String url;
-    @NotNull private String message;
+    @NotNull private String myUrl;
+    @NotNull private String myMessage;
 
-    @NotNull private GitUser author;
-    @NotNull private GitUser committer;
+    @NotNull private GitUser myAuthor;
+    @NotNull private GitUser myCommitter;
 
     @NotNull
     public static GitCommit create(@Nullable GithubCommitRaw.GitCommitRaw raw) throws JsonException {
@@ -82,30 +82,30 @@ public class GithubCommit extends GithubCommitSha {
     }
 
     private GitCommit(@NotNull String url, @NotNull String message, @NotNull GitUser author, @NotNull GitUser committer) {
-      this.url = url;
-      this.message = message;
-      this.author = author;
-      this.committer = committer;
+      this.myUrl = url;
+      this.myMessage = message;
+      this.myAuthor = author;
+      this.myCommitter = committer;
     }
 
     @NotNull
     public String getUrl() {
-      return url;
+      return myUrl;
     }
 
     @NotNull
     public String getMessage() {
-      return message;
+      return myMessage;
     }
 
     @NotNull
     public GitUser getAuthor() {
-      return author;
+      return myAuthor;
     }
 
     @NotNull
     public GitUser getCommitter() {
-      return committer;
+      return myCommitter;
     }
   }
 
@@ -157,37 +157,37 @@ public class GithubCommit extends GithubCommitSha {
                          @NotNull List<GithubCommitSha> parents,
                          @NotNull GitCommit commit) {
     super(sha);
-    this.author = author;
-    this.committer = committer;
-    this.parents = parents;
-    this.commit = commit;
+    this.myAuthor = author;
+    this.myCommitter = committer;
+    this.myParents = parents;
+    this.myCommit = commit;
   }
 
   protected GithubCommit(GithubCommit commit) {
     super(commit.getUrl(), commit.getSha());
-    this.author = commit.author;
-    this.committer = commit.committer;
-    this.parents = commit.parents;
-    this.commit = commit.commit;
+    this.myAuthor = commit.myAuthor;
+    this.myCommitter = commit.myCommitter;
+    this.myParents = commit.myParents;
+    this.myCommit = commit.myCommit;
   }
 
   @Nullable
   public GithubUser getAuthor() {
-    return author;
+    return myAuthor;
   }
 
   @Nullable
   public GithubUser getCommitter() {
-    return committer;
+    return myCommitter;
   }
 
   @NotNull
   public List<GithubCommitSha> getParents() {
-    return parents;
+    return myParents;
   }
 
   @NotNull
   public GitCommit getCommit() {
-    return commit;
+    return myCommit;
   }
 }

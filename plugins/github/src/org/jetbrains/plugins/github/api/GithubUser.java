@@ -23,13 +23,13 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubUser {
-  @NotNull private String login;
-  private long id;
+  @NotNull private String myLogin;
+  private long myId;
 
-  @NotNull private String url;
-  @NotNull private String htmlUrl;
+  @NotNull private String myUrl;
+  @NotNull private String myHtmlUrl;
 
-  @Nullable private String gravatarId;
+  @Nullable private String myGravatarId;
 
   @NotNull
   public static GithubUser create(@Nullable GithubUserRaw raw) throws JsonException {
@@ -48,41 +48,41 @@ public class GithubUser {
   }
 
   protected GithubUser(@NotNull String login, long id, @NotNull String url, @NotNull String htmlUrl, @Nullable String gravatarId) {
-    this.login = login;
-    this.id = id;
-    this.url = url;
-    this.htmlUrl = htmlUrl;
-    this.gravatarId = gravatarId;
+    this.myLogin = login;
+    this.myId = id;
+    this.myUrl = url;
+    this.myHtmlUrl = htmlUrl;
+    this.myGravatarId = gravatarId;
   }
 
   protected GithubUser(@NotNull GithubUser user) {
-    this.login = user.login;
-    this.id = user.id;
-    this.url = user.url;
-    this.htmlUrl = user.htmlUrl;
+    this.myLogin = user.myLogin;
+    this.myId = user.myId;
+    this.myUrl = user.myUrl;
+    this.myHtmlUrl = user.myHtmlUrl;
   }
 
   @NotNull
   public String getLogin() {
-    return login;
+    return myLogin;
   }
 
   public long getId() {
-    return id;
+    return myId;
   }
 
   @NotNull
   public String getUrl() {
-    return url;
+    return myUrl;
   }
 
   @NotNull
   public String getHtmlUrl() {
-    return htmlUrl;
+    return myHtmlUrl;
   }
 
   @Nullable
   public String getGravatarId() {
-    return gravatarId;
+    return myGravatarId;
   }
 }

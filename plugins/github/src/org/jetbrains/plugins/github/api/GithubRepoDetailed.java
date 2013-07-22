@@ -23,12 +23,12 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubRepoDetailed extends GithubRepo {
-  @Nullable private GithubRepo parent;
-  @Nullable private GithubRepo source;
+  @Nullable private GithubRepo myParent;
+  @Nullable private GithubRepo mySource;
 
-  private boolean hasIssues;
-  private boolean hasWiki;
-  private boolean hasDownloads;
+  private boolean myHasIssues;
+  private boolean myHasWiki;
+  private boolean myHasDownloads;
 
   @NotNull
   public static GithubRepoDetailed createDetailed(@Nullable GithubRepoRaw raw) throws JsonException {
@@ -57,32 +57,32 @@ public class GithubRepoDetailed extends GithubRepo {
                                boolean hasWiki,
                                boolean hasDownloads) {
     super(repo);
-    this.parent = parent;
-    this.source = source;
-    this.hasIssues = hasIssues;
-    this.hasWiki = hasWiki;
-    this.hasDownloads = hasDownloads;
+    this.myParent = parent;
+    this.mySource = source;
+    this.myHasIssues = hasIssues;
+    this.myHasWiki = hasWiki;
+    this.myHasDownloads = hasDownloads;
   }
 
   @Nullable
   public GithubRepo getParent() {
-    return parent;
+    return myParent;
   }
 
   @Nullable
   public GithubRepo getSource() {
-    return source;
+    return mySource;
   }
 
   public boolean hasIssues() {
-    return hasIssues;
+    return myHasIssues;
   }
 
   public boolean hasWiki() {
-    return hasWiki;
+    return myHasWiki;
   }
 
   public boolean hasDownloads() {
-    return hasDownloads;
+    return myHasDownloads;
   }
 }

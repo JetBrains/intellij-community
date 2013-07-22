@@ -28,26 +28,26 @@ import static org.jetbrains.plugins.github.api.GithubGistRaw.GistFileRaw;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubGist {
-  @NotNull private String id;
-  @NotNull private String description;
+  @NotNull private String myId;
+  @NotNull private String myDescription;
 
-  private boolean isPublic;
+  private boolean myIsPublic;
 
-  @NotNull private String url;
-  @NotNull private String htmlUrl;
+  @NotNull private String myUrl;
+  @NotNull private String myHtmlUrl;
 
-  @NotNull private Map<String, GistFile> files;
+  @NotNull private Map<String, GistFile> myFiles;
 
-  @Nullable private GithubUser user;
+  @Nullable private GithubUser myUser;
 
   public static class GistFile {
-    private long size;
-    @NotNull private String filename;
-    @NotNull private String content;
+    private long mySize;
+    @NotNull private String myFilename;
+    @NotNull private String myContent;
 
-    @NotNull private String raw_url;
+    @NotNull private String myRawUrl;
 
-    @NotNull private String type;
+    @NotNull private String myType;
 
     @NotNull
     public static GistFile create(@Nullable GistFileRaw raw) throws JsonException {
@@ -68,37 +68,37 @@ public class GithubGist {
 
     private GistFile(long size, @NotNull String filename,
                        @NotNull String content,
-                       @NotNull String raw_url,
+                       @NotNull String myRawUrl,
                        @NotNull String type) {
-      this.size = size;
-      this.filename = filename;
-      this.content = content;
-      this.raw_url = raw_url;
-      this.type = type;
+      this.mySize = size;
+      this.myFilename = filename;
+      this.myContent = content;
+      this.myRawUrl = myRawUrl;
+      this.myType = type;
     }
 
     public long getSize() {
-      return size;
+      return mySize;
     }
 
     @NotNull
     public String getFilename() {
-      return filename;
+      return myFilename;
     }
 
     @NotNull
     public String getContent() {
-      return content;
+      return myContent;
     }
 
     @NotNull
     public String getRawUrl() {
-      return raw_url;
+      return myRawUrl;
     }
 
     @NotNull
     public String getType() {
-      return type;
+      return myType;
     }
   }
 
@@ -142,46 +142,46 @@ public class GithubGist {
                        @NotNull String htmlUrl,
                        @NotNull Map<String, GistFile> files,
                        @Nullable GithubUser user) {
-    this.id = id;
-    this.description = description;
-    this.isPublic = isPublic;
-    this.url = url;
-    this.htmlUrl = htmlUrl;
-    this.files = files;
-    this.user = user;
+    this.myId = id;
+    this.myDescription = description;
+    this.myIsPublic = isPublic;
+    this.myUrl = url;
+    this.myHtmlUrl = htmlUrl;
+    this.myFiles = files;
+    this.myUser = user;
   }
 
   @NotNull
   public String getId() {
-    return id;
+    return myId;
   }
 
   @NotNull
   public String getDescription() {
-    return description;
+    return myDescription;
   }
 
   public boolean isPublic() {
-    return isPublic;
+    return myIsPublic;
   }
 
   @NotNull
   public String getUrl() {
-    return url;
+    return myUrl;
   }
 
   @NotNull
   public String getHtmlUrl() {
-    return htmlUrl;
+    return myHtmlUrl;
   }
 
   @NotNull
   public Map<String, GistFile> getFiles() {
-    return files;
+    return myFiles;
   }
 
   @Nullable
   public GithubUser getUser() {
-    return user;
+    return myUser;
   }
 }
