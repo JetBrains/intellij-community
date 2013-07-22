@@ -67,7 +67,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
 
         if (parameters.getInvocationCount() > 0) return; //only in autopopups for now
 
-        String templatePrefix = findLiveTemplatePrefix(file, parameters.getLookup().getEditor(), result.getPrefixMatcher().getPrefix());
+        String templatePrefix = findLiveTemplatePrefix(file, parameters.getEditor(), result.getPrefixMatcher().getPrefix());
         final TemplateImpl template = findApplicableTemplate(file, offset, templatePrefix);
         if (template != null) {
           result = result.withPrefixMatcher(template.getKey());
