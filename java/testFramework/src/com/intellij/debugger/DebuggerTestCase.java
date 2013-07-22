@@ -483,7 +483,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     }
 
     @Override
-    public JDOMExternalizable createRunnerSettings(final ConfigurationInfoProvider provider) {
+    public ConfigurationPerRunnerSettings createRunnerSettings(final ConfigurationInfoProvider provider) {
       return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
