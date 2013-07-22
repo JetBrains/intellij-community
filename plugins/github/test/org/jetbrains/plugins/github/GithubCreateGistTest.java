@@ -18,14 +18,16 @@ package org.jetbrains.plugins.github;
 import com.intellij.notification.NotificationType;
 
 import java.util.Collections;
-import java.util.Map;
+import java.util.List;
+
+import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
 
 /**
  * @author Aleksey Pivovarov
  */
 public class GithubCreateGistTest extends GithubCreateGistTestBase {
   public void testSimple() throws Throwable {
-    Map<String, String> expected = createContent();
+    List<FileContent> expected = createContent();
 
     String url = GithubCreateGistAction.createGist(myProject, myGitHubSettings.getAuthData(), expected, true, GIST_DESCRIPTION, null);
     assertNotNull(url);
@@ -39,7 +41,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   }
 
   public void testAnonymous() throws Throwable {
-    Map<String, String> expected = createContent();
+    List<FileContent> expected = createContent();
 
     String url = GithubCreateGistAction.createGist(myProject, GithubAuthData.createAnonymous(myHost), expected, true, GIST_DESCRIPTION, null);
     assertNotNull(url);
@@ -57,7 +59,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   }
 
   public void testUnusedFilenameField() throws Throwable {
-    Map<String, String> expected = createContent();
+    List<FileContent> expected = createContent();
 
     String url = GithubCreateGistAction.createGist(myProject, myGitHubSettings.getAuthData(), expected, true, GIST_DESCRIPTION, "filename");
     assertNotNull(url);
@@ -71,8 +73,8 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   }
 
   public void testUsedFilenameField() throws Throwable {
-    Map<String, String> content = Collections.singletonMap("file.txt", "file.txt content");
-    Map<String, String> expected = Collections.singletonMap("filename", "file.txt content");
+    List<FileContent> content = Collections.singletonList(new FileContent("file.txt", "file.txt content"));
+    List<FileContent> expected = Collections.singletonList(new FileContent("filename", "file.txt content"));
 
     String url = GithubCreateGistAction.createGist(myProject, myGitHubSettings.getAuthData(), content, true, GIST_DESCRIPTION, "filename");
     assertNotNull(url);
@@ -86,7 +88,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   }
 
   public void testPublic() throws Throwable {
-    Map<String, String> expected = createContent();
+    List<FileContent> expected = createContent();
 
     String url = GithubCreateGistAction.createGist(myProject, myGitHubSettings.getAuthData(), expected, false, GIST_DESCRIPTION, null);
     assertNotNull(url);
@@ -100,7 +102,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   }
 
   public void testEmpty() throws Throwable {
-    Map<String, String> expected = Collections.emptyMap();
+    List<FileContent> expected = Collections.emptyList();
 
     String url = GithubCreateGistAction.createGist(myProject, myGitHubSettings.getAuthData(), expected, true, GIST_DESCRIPTION, null);
     assertNull("Gist was created", url);
@@ -109,7 +111,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   }
 
   public void testWrongLogin() throws Throwable {
-    Map<String, String> expected = createContent();
+    List<FileContent> expected = createContent();
 
     GithubAuthData auth = myGitHubSettings.getAuthData();
     GithubAuthData myAuth = GithubAuthData.createBasicAuth(auth.getHost(), myLogin1 + "some_suffix", myPassword);
@@ -120,7 +122,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   }
 
   public void testWrongPassword() throws Throwable {
-    Map<String, String> expected = createContent();
+    List<FileContent> expected = createContent();
 
     GithubAuthData auth = myGitHubSettings.getAuthData();
     GithubAuthData myAuth = GithubAuthData.createBasicAuth(auth.getHost(), myLogin1, myPassword + "some_suffix");

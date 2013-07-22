@@ -358,7 +358,7 @@ public class GithubApiUtil {
 
   @NotNull
   public static GithubGist createGist(@NotNull GithubAuthData auth,
-                                      @NotNull Map<String, String> contents,
+                                      @NotNull List<GithubGist.FileContent> contents,
                                       @NotNull String description,
                                       boolean isPrivate) throws IOException {
     String request = gson.toJson(new GithubGistRequest(contents, description, !isPrivate));

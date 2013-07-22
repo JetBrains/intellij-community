@@ -19,6 +19,7 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,13 +41,13 @@ class GithubGistRequest {
     }
   }
 
-  public GithubGistRequest(@NotNull Map<String, String> files, @NotNull String description, boolean isPublic) {
+  public GithubGistRequest(@NotNull List<GithubGist.FileContent> files, @NotNull String description, boolean isPublic) {
     this.description = description;
     this.isPublic = isPublic;
 
     this.files = new HashMap<String, GistFile>();
-    for (Map.Entry<String, String> file : files.entrySet()) {
-      this.files.put(file.getKey(), new GistFile(file.getValue()));
+    for (GithubGist.FileContent file : files) {
+      this.files.put(file.getFileName(), new GistFile(file.getContent()));
     }
   }
 }
