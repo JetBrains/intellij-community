@@ -43,7 +43,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   // todo: drop unless J. will insist to keep old style look
   private static final boolean FRAMED_STYLE = SystemInfo.isMac || !SystemProperties.getBooleanProperty("idea.ui.old.mem.use", false);
 
-  @NonNls private static final String SAMPLE_STRING = "0000M of 0000M";
+  @NonNls private static final String SAMPLE_STRING = "0000M";
   private static final int MEGABYTE = 1024 * 1024;
   private static final int HEIGHT = 16;
   private static final Color USED_COLOR_1 = new JBColor(Gray._185, Gray._150);
@@ -172,9 +172,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
       // label
       g2.setFont(getFont());
-      final long used = usedMem / MEGABYTE;
-      final long total = maxMem / MEGABYTE;
-      final String info = UIBundle.message("memory.usage.panel.message.text", used, total);
+      final String info = (usedMem / MEGABYTE) + "M";
       final FontMetrics fontMetrics = g.getFontMetrics();
       final int infoWidth = fontMetrics.charsWidth(info.toCharArray(), 0, info.length());
       final int infoHeight = fontMetrics.getAscent();
