@@ -140,7 +140,9 @@ public class IdeaApplication {
     final AtomicBoolean reported = new AtomicBoolean();
     final long lowDiskSpaceThreshold = 50 * 1024 * 1024;
 
-    JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+    JobScheduler.getScheduler().schedule(new Runnable() {
+      public static final long MAX_WRITE_SPEED_IN_BYTES_PER_SECOND = 1024 * 1024 * 500; // 500Mb/sec
+
       @Override
       public void run() {
         if (!reported.get()) {
@@ -159,7 +161,8 @@ public class IdeaApplication {
                 if (!writable || fileUsableSpace < 100 * 1024) {
                   Messages.showErrorDialog(title, "Fatal Configuration Problem");
                   reported.compareAndSet(true, false);
-                } else {
+                }
+                else {
                   new NotificationGroup("System", NotificationDisplayType.STICKY_BALLOON, false)
                     .createNotification(title, file.getPath(), NotificationType.ERROR, null).whenExpired(new Runnable() {
                     @Override
@@ -171,9 +174,13 @@ public class IdeaApplication {
               }
             });
           }
+          else {
+            long timeout = (fileUsableSpace - lowDiskSpaceThreshold) % MAX_WRITE_SPEED_IN_BYTES_PER_SECOND;
+            JobScheduler.getScheduler().schedule(this, Math.max(5, timeout), TimeUnit.SECONDS);
+          }
         }
       }
-    }, 1, 5, TimeUnit.SECONDS);
+    }, 5, TimeUnit.SECONDS);
   }
 
   protected ApplicationStarter getStarter() {
