@@ -47,7 +47,7 @@ public class GithubUserDetailed extends GithubUser {
     private long myPrivateRepos;
 
     @NotNull
-    public static UserPlan create(@Nullable GithubUserRaw.GithubUserPlanRaw raw) throws JsonException {
+    public static UserPlan create(@Nullable GithubUserRaw.UserPlanRaw raw) throws JsonException {
       try {
         if (raw == null) throw new JsonException("raw is null");
         if (raw.name == null) throw new JsonException("name is null");

@@ -54,11 +54,11 @@ class GithubUserRaw implements Serializable {
   @Nullable public Integer collaborators;
   @Nullable public String blog;
 
-  @Nullable public GithubUserPlanRaw plan;
+  @Nullable public UserPlanRaw plan;
 
   @Nullable public Date createdAt;
 
-  public static class GithubUserPlanRaw implements Serializable {
+  public static class UserPlanRaw implements Serializable {
     @Nullable public String name;
     @Nullable public Long space;
     @Nullable public Long collaborators;
