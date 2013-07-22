@@ -287,7 +287,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @SuppressWarnings("deprecation")
   @Override
-  public ConfigurationPerRunnerSettings createRunnerSettings(ConfigurationInfoProvider provider) {
+  public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
     return null;
   }
 

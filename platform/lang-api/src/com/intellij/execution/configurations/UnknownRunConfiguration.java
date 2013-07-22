@@ -93,7 +93,7 @@ public class UnknownRunConfiguration implements RunConfiguration {
   }
 
   @Override
-  public ConfigurationPerRunnerSettings createRunnerSettings(final ConfigurationInfoProvider provider) {
+  public JDOMExternalizable createRunnerSettings(final ConfigurationInfoProvider provider) {
     return null;
   }
 

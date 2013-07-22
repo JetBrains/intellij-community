@@ -246,7 +246,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       return myConfiguration.getType();
     }
 
-    public ConfigurationPerRunnerSettings createRunnerSettings(final ConfigurationInfoProvider provider) {
+    public JDOMExternalizable createRunnerSettings(final ConfigurationInfoProvider provider) {
       return myConfiguration.createRunnerSettings(provider);
     }
 
