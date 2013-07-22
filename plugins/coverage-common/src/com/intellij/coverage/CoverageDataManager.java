@@ -145,6 +145,6 @@ public abstract class CoverageDataManager implements ProjectComponent, JDOMExter
   public abstract void attachToProcess(@NotNull final ProcessHandler handler,
                                        @NotNull final RunConfigurationBase configuration, RunnerSettings runnerSettings);
 
-  public abstract void processGatheredCoverage(@NotNull RunConfigurationBase configuration, @NotNull RunnerSettings runnerSettings);
+  public abstract void processGatheredCoverage(@NotNull RunConfigurationBase configuration, RunnerSettings runnerSettings);
 
 }

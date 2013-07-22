@@ -339,7 +339,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
   public void attachToProcess(@NotNull final ProcessHandler handler,
                               @NotNull final RunConfigurationBase configuration,
-                              @NotNull final RunnerSettings runnerSettings) {
+                              final RunnerSettings runnerSettings) {
     handler.addProcessListener(new ProcessAdapter() {
       public void processTerminated(final ProcessEvent event) {
         processGatheredCoverage(configuration, runnerSettings);
@@ -348,8 +348,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   @Override
-  public void processGatheredCoverage(@NotNull RunConfigurationBase configuration, @NotNull RunnerSettings runnerSettings) {
-    if (runnerSettings.getData() instanceof CoverageRunnerData) {
+  public void processGatheredCoverage(@NotNull RunConfigurationBase configuration, RunnerSettings runnerSettings) {
+    if (runnerSettings instanceof CoverageRunnerData) {
       processGatheredCoverage(configuration);
     }
   }
