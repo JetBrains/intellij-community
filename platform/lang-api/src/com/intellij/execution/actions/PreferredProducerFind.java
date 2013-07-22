@@ -16,16 +16,13 @@
 
 package com.intellij.execution.actions;
 
-import com.intellij.execution.LocatableConfigurationType;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,18 +67,6 @@ class PreferredProducerFind {
         producers.add(producer);
       }
     }
-    if (producers.isEmpty()) { //try to find by locatable type
-      final ConfigurationType[] factories = RunManager.getInstance(location.getProject()).getConfigurationFactories();
-      for (final ConfigurationType type : factories) {
-        if (type instanceof LocatableConfigurationType) {
-          final DefaultRuntimeConfigurationProducer prototype = new DefaultRuntimeConfigurationProducer(((LocatableConfigurationType)type));
-          final RuntimeConfigurationProducer producer = prototype.createProducer(location, context);
-          if (producer.getConfiguration() != null) {
-            producers.add(producer);
-          }
-        }
-      }
-    }
     if (producers.isEmpty()) return null;
     Collections.sort(producers, RuntimeConfigurationProducer.COMPARATOR);
 
@@ -105,47 +90,5 @@ class PreferredProducerFind {
       return producers.get(0);
     }
     return null;
-  }
-
-  private static class DefaultRuntimeConfigurationProducer extends RuntimeConfigurationProducer implements Cloneable {
-    private PsiElement myPsiElement;
-
-    public DefaultRuntimeConfigurationProducer(final LocatableConfigurationType configurationType) {
-      super(configurationType);
-    }
-
-    @Override
-    public PsiElement getSourceElement() {
-      return myPsiElement;
-    }
-
-    @Override
-    @Nullable
-    protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
-      myPsiElement = location.getPsiElement();
-      return ((LocatableConfigurationType)getConfigurationType()).createConfigurationByLocation(location);
-    }
-
-    @Override
-    protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                   @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
-                                                                   ConfigurationContext context) {
-      if (existingConfigurations.length > 0) {
-        ConfigurationType type = existingConfigurations[0].getType();
-        if (type instanceof LocatableConfigurationType) {
-          for (final RunnerAndConfigurationSettings configuration : existingConfigurations) {
-            if (((LocatableConfigurationType)type).isConfigurationByLocation(configuration.getConfiguration(), location)) {
-              return configuration;
-            }
-          }
-        }
-      }
-      return null;
-    }
-
-    @Override
-    public int compareTo(final Object o) {
-      return PREFERED;
-    }
   }
 }
