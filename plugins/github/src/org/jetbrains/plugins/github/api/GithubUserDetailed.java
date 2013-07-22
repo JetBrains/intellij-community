@@ -30,11 +30,11 @@ public class GithubUserDetailed extends GithubUser {
   @Nullable private String company;
   @Nullable private String location;
 
-  @NotNull private Integer publicRepos;
-  @NotNull private Integer publicGists;
-  @NotNull private Integer totalPrivateRepos;
-  @NotNull private Integer ownedPrivateRepos;
-  @NotNull private Integer privateGists;
+  private int publicRepos;
+  private int publicGists;
+  private int totalPrivateRepos;
+  private int ownedPrivateRepos;
+  private int privateGists;
   private long diskUsage;
 
   @NotNull private String type;
@@ -87,7 +87,7 @@ public class GithubUserDetailed extends GithubUser {
     }
   }
 
-  public Boolean canCreatePrivateRepo() {
+  public boolean canCreatePrivateRepo() {
     return getPlan().getPrivateRepos() > getOwnedPrivateRepos();
   }
 
@@ -119,11 +119,11 @@ public class GithubUserDetailed extends GithubUser {
                                @Nullable String company,
                                @Nullable String location,
                                @NotNull String type,
-                               @NotNull Integer publicRepos,
-                               @NotNull Integer publicGists,
-                               @NotNull Integer totalPrivateRepos,
-                               @NotNull Integer ownedPrivateRepos,
-                               @NotNull Integer privateGists,
+                               int publicRepos,
+                               int publicGists,
+                               int totalPrivateRepos,
+                               int ownedPrivateRepos,
+                               int privateGists,
                                long diskUsage,
                                @NotNull UserPlan plan) {
     super(user);
@@ -166,28 +166,23 @@ public class GithubUserDetailed extends GithubUser {
     return type;
   }
 
-  @NotNull
-  public Integer getPublicRepos() {
+  public int getPublicRepos() {
     return publicRepos;
   }
 
-  @NotNull
-  public Integer getPublicGists() {
+  public int getPublicGists() {
     return publicGists;
   }
 
-  @NotNull
-  public Integer getTotalPrivateRepos() {
+  public int getTotalPrivateRepos() {
     return totalPrivateRepos;
   }
 
-  @NotNull
-  public Integer getOwnedPrivateRepos() {
+  public int getOwnedPrivateRepos() {
     return ownedPrivateRepos;
   }
 
-  @NotNull
-  public Integer getPrivateGists() {
+  public int getPrivateGists() {
     return privateGists;
   }
 

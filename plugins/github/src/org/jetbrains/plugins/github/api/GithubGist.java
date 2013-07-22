@@ -41,7 +41,7 @@ public class GithubGist {
   @Nullable private GithubUser user;
 
   public static class GistFile {
-    @NotNull private Long size;
+    private long size;
     @NotNull private String filename;
     @NotNull private String content;
 
@@ -66,7 +66,7 @@ public class GithubGist {
       }
     }
 
-    private GistFile(@NotNull Long size, @NotNull String filename,
+    private GistFile(long size, @NotNull String filename,
                        @NotNull String content,
                        @NotNull String raw_url,
                        @NotNull String type) {
@@ -77,8 +77,7 @@ public class GithubGist {
       this.type = type;
     }
 
-    @NotNull
-    public Long getSize() {
+    public long getSize() {
       return size;
     }
 
