@@ -83,7 +83,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
   private static RemoteConnection createRemoteDebugConnection(RemoteState connection, final RunnerSettings settings) {
     final RemoteConnection remoteConnection = connection.getRemoteConnection();
 
-    GenericDebuggerRunnerSettings debuggerRunnerSettings = ((GenericDebuggerRunnerSettings)settings.getData());
+    GenericDebuggerRunnerSettings debuggerRunnerSettings = (GenericDebuggerRunnerSettings)settings;
 
     if (debuggerRunnerSettings != null) {
       remoteConnection.setUseSockets(debuggerRunnerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT);
@@ -103,7 +103,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
   }
 
   private static RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings) throws ExecutionException {
-    final GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings.getData());
+    final GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings);
     if (StringUtil.isEmpty(debuggerSettings.getDebugPort())) {
       debuggerSettings.setDebugPort(DebuggerUtils.getInstance().findAvailableDebugAddress(debuggerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT));
     }

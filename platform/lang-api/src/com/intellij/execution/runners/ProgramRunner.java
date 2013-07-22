@@ -23,7 +23,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @param <Settings>
  */
-public interface ProgramRunner<Settings extends JDOMExternalizable> {
+public interface ProgramRunner<Settings extends RunnerSettings> {
   ExtensionPointName<ProgramRunner> PROGRAM_RUNNER_EP = ExtensionPointName.create("com.intellij.programRunner");
 
   interface Callback {

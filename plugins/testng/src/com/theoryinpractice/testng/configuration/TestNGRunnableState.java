@@ -51,16 +51,12 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -80,7 +76,6 @@ import org.testng.RemoteTestNGStarter;
 import org.testng.annotations.AfterClass;
 import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
-import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.SerializedMessageSender;
 
 import javax.swing.*;
@@ -112,8 +107,8 @@ public class TestNGRunnableState extends JavaCommandLineState {
     //setModulesToCompile(ModuleManager.getInstance(config.getProject()).getModules());
     client = new IDEARemoteTestRunnerClient();
     // Want debugging?
-    if (runnerSettings.getData() instanceof DebuggingRunnerData) {
-      DebuggingRunnerData debuggingRunnerData = ((DebuggingRunnerData)runnerSettings.getData());
+    if (runnerSettings instanceof DebuggingRunnerData) {
+      DebuggingRunnerData debuggingRunnerData = ((DebuggingRunnerData)runnerSettings);
       debugPort = debuggingRunnerData.getDebugPort();
       if (debugPort.length() == 0) {
         try {
@@ -400,7 +395,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       LOG.error(e);
     }
     // Configure for debugging
-    if (runnerSettings.getData() instanceof DebuggingRunnerData) {
+    if (runnerSettings instanceof DebuggingRunnerData) {
       ParametersList params = javaParameters.getVMParametersList();
 
       String hostname = "localhost";

@@ -20,12 +20,11 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.openapi.util.JDOMExternalizable;
 
 /**
  * @author spleaner
  */
-public abstract class JavaPatchableProgramRunner<Settings extends JDOMExternalizable> extends GenericProgramRunner<Settings> {
+public abstract class JavaPatchableProgramRunner<Settings extends RunnerSettings> extends GenericProgramRunner<Settings> {
 
   public abstract void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, final boolean beforeExecution) throws ExecutionException;
 

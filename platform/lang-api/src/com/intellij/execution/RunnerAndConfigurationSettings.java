@@ -39,7 +39,7 @@ public interface RunnerAndConfigurationSettings {
 
   String getName();
 
-  @NotNull
+  @Nullable
   RunnerSettings getRunnerSettings(@NotNull ProgramRunner runner);
 
   @Nullable
