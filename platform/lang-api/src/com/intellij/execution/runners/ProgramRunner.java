@@ -52,7 +52,7 @@ public interface ProgramRunner<Settings extends JDOMExternalizable> {
   @Nullable
   Settings createConfigurationData(ConfigurationInfoProvider settingsProvider);
 
-  void checkConfiguration(RunnerSettings settings, ConfigurationPerRunnerSettings configurationPerRunnerSettings)
+  void checkConfiguration(RunnerSettings settings, @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings)
     throws RuntimeConfigurationException;
 
   void onProcessStarted(RunnerSettings settings, ExecutionResult executionResult);
