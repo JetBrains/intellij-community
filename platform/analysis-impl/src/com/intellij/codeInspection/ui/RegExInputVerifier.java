@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.ui;
+package com.intellij.codeInspection.ui;
 
 import com.intellij.openapi.ui.Messages;
 
@@ -29,16 +29,14 @@ public class RegExInputVerifier extends InputVerifier {
   public boolean shouldYieldFocus(JComponent input) {
     if (input instanceof JFormattedTextField) {
       final JFormattedTextField ftf = (JFormattedTextField) input;
-      final JFormattedTextField.AbstractFormatter formatter =
-          ftf.getFormatter();
+      final JFormattedTextField.AbstractFormatter formatter = ftf.getFormatter();
       if (formatter != null) {
         try {
           formatter.stringToValue(ftf.getText());
         } catch (final ParseException e) {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              Messages.showErrorDialog(e.getMessage(),
-                  "Malformed Naming Pattern");
+              Messages.showErrorDialog(e.getMessage(), "Malformed Naming Pattern");
             }
           });
         }
