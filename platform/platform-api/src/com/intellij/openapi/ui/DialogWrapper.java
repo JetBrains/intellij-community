@@ -18,6 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -1922,6 +1923,9 @@ public abstract class DialogWrapper {
     return myDisposable;
   }
 
+  /**
+   * @see PropertyDoNotAskOption
+   */
   public interface DoNotAskOption {
 
     boolean isToBeShown();
@@ -1936,6 +1940,40 @@ public abstract class DialogWrapper {
     boolean shouldSaveOptionsOnCancel();
 
     String getDoNotShowMessage();
+  }
+
+  public static class PropertyDoNotAskOption implements DoNotAskOption {
+
+    private final String myProperty;
+
+    public PropertyDoNotAskOption(String property) {
+      myProperty = property;
+    }
+
+    @Override
+    public boolean isToBeShown() {
+      return PropertiesComponent.getInstance().getBoolean(myProperty, false);
+    }
+
+    @Override
+    public void setToBeShown(boolean value, int exitCode) {
+      PropertiesComponent.getInstance().setValue(myProperty, Boolean.toString(value));
+    }
+
+    @Override
+    public boolean canBeHidden() {
+      return false;
+    }
+
+    @Override
+    public boolean shouldSaveOptionsOnCancel() {
+      return false;
+    }
+
+    @Override
+    public String getDoNotShowMessage() {
+      return CommonBundle.message("dialog.options.do.not.ask");
+    }
   }
 
   private ErrorPaintingType getErrorPaintingType() {

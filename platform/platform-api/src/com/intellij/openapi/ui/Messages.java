@@ -60,14 +60,15 @@ public class Messages {
   public static final int NO = 1;
   public static final int CANCEL = 2;
 
+  public static final String OK_BUTTON = CommonBundle.getOkButtonText();
+  public static final String YES_BUTTON = CommonBundle.getYesButtonText();
+  public static final String NO_BUTTON = CommonBundle.getNoButtonText();
+  public static final String CANCEL_BUTTON = CommonBundle.getCancelButtonText();
+
   private static TestDialog ourTestImplementation = TestDialog.DEFAULT;
   private static TestInputDialog ourTestInputImplementation = TestInputDialog.DEFAULT;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Messages");
-  protected static final String OK_BUTTON = CommonBundle.getOkButtonText();
-  protected static final String YES_BUTTON = CommonBundle.getYesButtonText();
-  protected static final String NO_BUTTON = CommonBundle.getNoButtonText();
-  protected static final String CANCEL_BUTTON = CommonBundle.getCancelButtonText();
 
   @TestOnly
   public static TestDialog setTestDialog(TestDialog newValue) {

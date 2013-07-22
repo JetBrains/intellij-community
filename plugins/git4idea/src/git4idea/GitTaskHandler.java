@@ -15,7 +15,12 @@
  */
 package git4idea;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,22 +41,53 @@ public class GitTaskHandler extends VcsTaskHandler {
 
   private final GitBrancher myBrancher;
   private final GitRepositoryManager myRepositoryManager;
+  private final Project myProject;
 
-  public GitTaskHandler(GitBrancher brancher, GitRepositoryManager repositoryManager) {
+  public GitTaskHandler(GitBrancher brancher, GitRepositoryManager repositoryManager, Project project) {
     myBrancher = brancher;
     myRepositoryManager = repositoryManager;
+    myProject = project;
   }
 
   @Override
   public TaskInfo startNewTask(final String taskName) {
     List<GitRepository> repositories = myRepositoryManager.getRepositories();
-    myBrancher.checkoutNewBranch(taskName, repositories);
-
+    List<GitRepository> problems = ContainerUtil.filter(repositories, new Condition<GitRepository>() {
+      @Override
+      public boolean value(GitRepository repository) {
+        return (ContainerUtil.find(repository.getBranches().getLocalBranches(), new Condition<GitLocalBranch>() {
+          @Override
+          public boolean value(GitLocalBranch branch) {
+            return branch.getName().equals(taskName);
+          }
+        }) != null);
+      }
+    });
     MultiMap<String, String> map = new MultiMap<String, String>();
+    if (!problems.isEmpty()) {
+      if (ApplicationManager.getApplication().isUnitTestMode() ||
+          Messages.showDialog("<html>The following repositories already have specified branch <b>" + taskName + "</b>:<br>" +
+                                  StringUtil.join(problems, "<br>") + ".<br>" +
+                                  "Do you want to checkout existing branch?", "Branch Already Exists",
+                                  new String[]{Messages.YES_BUTTON, Messages.NO_BUTTON}, 0,
+                                  Messages.getWarningIcon(), new DialogWrapper.PropertyDoNotAskOption("git.checkout.existing.branch")) == 0) {
+        myBrancher.checkout(taskName, problems, null);
+        fillMap(taskName, problems, map);
+      }
+    }
+    repositories.removeAll(problems);
+    if (!repositories.isEmpty()) {
+      myBrancher.checkoutNewBranch(taskName, repositories);
+    }
+
+    fillMap(taskName, repositories, map);
+    return new TaskInfo(map);
+  }
+
+  private static void fillMap(String taskName, List<GitRepository> repositories, MultiMap<String, String> map) {
     for (GitRepository repository : repositories) {
       map.putValue(taskName, repository.getPresentableUrl());
     }
-    return new TaskInfo(map);
   }
 
   @Override

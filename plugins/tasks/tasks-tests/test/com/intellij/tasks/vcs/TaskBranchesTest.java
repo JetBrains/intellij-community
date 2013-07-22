@@ -83,6 +83,11 @@ public class TaskBranchesTest extends TaskManagerTestCase {
 
     myTaskManager.activateTask(defaultTask, false);
     assertEquals("master", repositories.get(0).getCurrentBranch().getName());
+
+    foo = myTaskManager.createLocalTask("foo");
+    localTask = myTaskManager.activateTask(foo, false);
+    myTaskManager.activateInVcs(localTask, defaultTask, TaskManager.VcsOperation.CREATE_BRANCH);
+    assertEquals("foo", repositories.get(0).getCurrentBranch().getName());
   }
 
   private List<GitRepository> initRepositories(String... names) {
