@@ -38,7 +38,6 @@ public class GitHubRepository extends BaseRepositoryImpl {
   private String myRepoAuthor = "";
   private String myRepoName = "";
   private String myToken = "";
-  private GithubAuthData myAuthData;
 
   {
     setUrl(GithubApiUtil.DEFAULT_GITHUB_HOST);
@@ -249,14 +248,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
   }
 
   private GithubAuthData getAuthData() {
-    if (myAuthData == null) {
-      myAuthData = GithubAuthData.createTokenAuth(getUrl(), getToken());
-    }
-    return myAuthData;
-  }
-
-  public void clearAuthData() {
-    myAuthData = null;
+      return GithubAuthData.createTokenAuth(getUrl(), getToken());
   }
 
   @Override

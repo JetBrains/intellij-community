@@ -84,7 +84,6 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
 
   @Override
   public void apply() {
-    myRepository.clearAuthData();
     myRepository.setRepoName(myRepoName.getText().trim());
     myRepository.setRepoAuthor(myRepoAuthor.getText().trim());
     myRepository.setToken(myToken.getText().trim());
