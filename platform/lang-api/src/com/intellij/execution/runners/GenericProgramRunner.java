@@ -52,11 +52,6 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> impl
   }
 
   @Override
-  public AnAction[] createActions(final ExecutionResult executionResult) {
-    return AnAction.EMPTY_ARRAY;
-  }
-
-  @Override
   @Nullable
   public SettingsEditor<Settings> getSettingsEditor(final Executor executor, final RunConfiguration configuration) {
     return null;

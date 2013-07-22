@@ -111,6 +111,10 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     return runContent;
   }
 
+  protected AnAction[] createActions(final ExecutionResult executionResult) {
+    return AnAction.EMPTY_ARRAY;
+  }
+
   protected static void addDefaultActions(final RunContentBuilder contentBuilder) {
     final ExecutionResult executionResult = contentBuilder.getExecutionResult();
     final ExecutionConsole executionConsole = executionResult.getExecutionConsole();

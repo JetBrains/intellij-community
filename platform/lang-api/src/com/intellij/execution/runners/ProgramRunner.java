@@ -20,7 +20,6 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.SettingsEditor;
 import org.jetbrains.annotations.NonNls;
@@ -78,8 +77,6 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
     throws RuntimeConfigurationException;
 
   void onProcessStarted(RunnerSettings settings, ExecutionResult executionResult);
-
-  AnAction[] createActions(ExecutionResult executionResult);
 
   @Nullable
   SettingsEditor<Settings> getSettingsEditor(Executor executor, RunConfiguration configuration);
