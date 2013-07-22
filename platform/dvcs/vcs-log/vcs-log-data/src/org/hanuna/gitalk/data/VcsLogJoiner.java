@@ -20,13 +20,9 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
-import com.intellij.vcs.log.VcsCommitDetails;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.
@@ -48,11 +44,20 @@ public class VcsLogJoiner {
                                                   @NotNull List<? extends CommitParents> firstBlock, @NotNull Collection<Ref> refs,
                                                   @NotNull Computable<List<CommitParents>> wholeLogGetter) {
     int unsafeBlockSize = getFirstSafeIndex(savedLog, firstBlock, refs);
+    if (unsafeBlockSize == -1) {
+      savedLog = wholeLogGetter.compute();
+      unsafeBlockSize = getFirstSafeIndex(savedLog, firstBlock, refs);
+    }
     if (unsafeBlockSize == -1) { // firstBlock not enough
       //TODO
+      throw new IllegalStateException();
     }
 
-    // TODO
+    List<CommitParents> unsafePartSavedLog = new ArrayList<CommitParents>(savedLog.subList(0, unsafeBlockSize));
+    Set<CommitParents> allNewsCommits = getAllNewCommits(unsafePartSavedLog, firstBlock);
+    unsafePartSavedLog = new NewCommitIntegrator(unsafePartSavedLog, allNewsCommits).getResultList();
+
+    // TODO: concatenation unsafePartSaveLog & old part
     return firstBlock;
   }
 
@@ -76,10 +81,10 @@ public class VcsLogJoiner {
     for (CommitParents commit : firstBlock) {
       allUnresolvedLinkedHashes.remove(commit.getHash());
     }
-    return getLastSearchIndex(savedLog, allUnresolvedLinkedHashes);
+    return getFirstUnTrackedIndex(savedLog, allUnresolvedLinkedHashes);
   }
 
-  private static int getLastSearchIndex(@NotNull List<CommitParents> commits, @NotNull Set<Hash> searchHashes) {
+  private static int getFirstUnTrackedIndex(@NotNull List<CommitParents> commits, @NotNull Set<Hash> searchHashes) {
     int lastIndex = 0;
     for (CommitParents commit : commits) {
       if (searchHashes.size() == 0) {
@@ -90,5 +95,79 @@ public class VcsLogJoiner {
     }
     return -1;
   }
+
+  private static Set<CommitParents> getAllNewCommits(@NotNull List<CommitParents> unsafePartSavedLog,
+                                                     @NotNull List<? extends CommitParents> firstBlock) {
+    Set<Hash> existedCommitHashes = new HashSet<Hash>();
+    for (CommitParents commit : unsafePartSavedLog) {
+      existedCommitHashes.add(commit.getHash());
+    }
+    Set<CommitParents> allNewsCommits = new HashSet<CommitParents>();
+    for (CommitParents newCommit : firstBlock) {
+      if (!existedCommitHashes.contains(newCommit.getHash())) {
+        allNewsCommits.add(newCommit);
+      }
+    }
+    return allNewsCommits;
+  }
+
+
+  private static class NewCommitIntegrator {
+    private final List<CommitParents> list;
+    private final Map<Hash, CommitParents> newCommitsMap;
+
+    private NewCommitIntegrator(@NotNull List<CommitParents> list, @NotNull Set<CommitParents> newCommits) {
+      this.list = list;
+      newCommitsMap = new HashMap<Hash, CommitParents>();
+      for (CommitParents commit : newCommits) {
+        newCommitsMap.put(commit.getHash(), commit);
+      }
+    }
+
+    // return insert Index
+    private int insertToList(@NotNull CommitParents commit) {
+      if (!newCommitsMap.containsKey(commit.getHash())) {
+        throw new IllegalStateException("Commit was inserted, but insert call again. Commit hash: " + commit.getHash());
+      }
+      //insert all parents commits
+      for (Hash parentHash : commit.getParents()) {
+        CommitParents parentCommit = newCommitsMap.get(parentHash);
+        if (parentCommit != null) {
+          insertToList(parentCommit);
+        }
+      }
+
+      int insertIndex = getInsertIndex(commit.getParents());
+      list.add(insertIndex, commit);
+      newCommitsMap.remove(commit.getHash());
+      return insertIndex;
+    }
+
+    private int getInsertIndex(@NotNull Collection<Hash> parentHashes) {
+      if (parentHashes.size() == 0) {
+        return 0;
+      }
+      for (int i = 0; i < list.size(); i++) {
+        if (parentHashes.contains(list.get(i).getHash())) {
+          return i;
+        }
+      }
+      throw new IllegalStateException("Not found parent Hash in list.");
+    }
+
+    private void insertAllCommits() {
+      Iterator<CommitParents> iterator = newCommitsMap.values().iterator();
+      while (iterator.hasNext()) {
+        insertToList(iterator.next());
+        iterator = newCommitsMap.values().iterator();
+      }
+    }
+
+    private List<CommitParents> getResultList() {
+      insertAllCommits();
+      return list;
+    }
+  }
+
 
 }
