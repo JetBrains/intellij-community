@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.DefaultLibraryRootsComponentDescriptor;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -77,16 +78,18 @@ public class MarkLibraryRootAction extends AnAction {
     if (project != null && ModuleManager.getInstance(project).getModules().length > 0) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       for (VirtualFile root : getRoots(e)) {
-        if (!root.isInLocalFileSystem() && !fileIndex.isInLibraryClasses(root)) {
+        if (!root.isInLocalFileSystem() && FileUtilRt.extensionEquals(root.getName(), "jar") && !fileIndex.isInLibraryClasses(root)) {
           visible = true;
           break;
         }
         if (root.isInLocalFileSystem() && root.isDirectory()) {
           for (VirtualFile child : root.getChildren()) {
-            final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(child);
-            if (jarRoot != null && !fileIndex.isInLibraryClasses(child)) {
-              visible = true;
-              break;
+            if (FileUtilRt.extensionEquals(child.getName(), "jar")) {
+              final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(child);
+              if (jarRoot != null && !fileIndex.isInLibraryClasses(child)) {
+                visible = true;
+                break;
+              }
             }
           }
         }
