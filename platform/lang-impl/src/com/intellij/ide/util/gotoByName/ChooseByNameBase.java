@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import com.intellij.Patches;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -32,6 +34,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -82,7 +86,10 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -1203,6 +1210,15 @@ public abstract class ChooseByNameBase {
       backStroke = getShortcut(IdeActions.ACTION_GOTO_BACK);
       setFocusTraversalKeysEnabled(false);
       putClientProperty("JTextField.variant", "search");
+      setDocument(new PlainDocument() {
+        @Override
+        public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
+          super.insertString(offs, str, a);
+          if (str != null && str.length() > 1) {
+            handlePaste(str);
+          }
+        }
+      });
     }
 
     @Nullable
@@ -1358,6 +1374,37 @@ public abstract class ChooseByNameBase {
     public boolean isCompletionKeyStroke() {
       return completionKeyStrokeHappened;
     }
+  }
+
+  protected void handlePaste(String str) {
+    if (myModel instanceof GotoClassModel2 && isFileName(str)) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          final GotoFileAction gotoFile = new GotoFileAction();
+          AnActionEvent event = new AnActionEvent(null,
+                                                  DataManager.getInstance().getDataContext(myTextField),
+                                                  ActionPlaces.UNKNOWN,
+                                                  gotoFile.getTemplatePresentation(),
+                                                  ActionManager.getInstance(),
+                                                  0);
+          event.setInjectedContext(gotoFile.isInInjectedContext());
+          gotoFile.actionPerformed(event);
+        }
+      });
+    }
+  }
+
+  private static boolean isFileName(String name) {
+    final int index = name.lastIndexOf('.');
+    if (index > 0) {
+      final String ext = name.substring(index + 1);
+      if (FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(ext) != UnknownFileType.INSTANCE) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static final String EXTRA_ELEM = "...";
