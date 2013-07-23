@@ -118,20 +118,15 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @NonNls public static final String PROP_CACHED_ENCODING_CHANGED = "cachedEncoding";
 
   private void handleDocument(@NotNull final Document document) {
-    ApplicationManager.getApplication().runReadAction(new Runnable(){
-      @Override
-      public void run() {
-        VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-        if (virtualFile == null) return;
-        Project project = guessProject(virtualFile);
-        if (project != null && project.isDisposed()) return;
-        Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
-        Charset oldCached = getCachedCharsetFromContent(document);
-        if (!Comparing.equal(charset, oldCached)) {
-          setCachedCharsetFromContent(charset, oldCached, document);
-        }
-      }
-    });
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile == null) return;
+    Project project = guessProject(virtualFile);
+    if (project != null && project.isDisposed()) return;
+    Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
+    Charset oldCached = getCachedCharsetFromContent(document);
+    if (!Comparing.equal(charset, oldCached)) {
+      setCachedCharsetFromContent(charset, oldCached, document);
+    }
   }
 
   private void setCachedCharsetFromContent(Charset charset, Charset oldCached, @NotNull Document document) {
