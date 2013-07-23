@@ -491,9 +491,17 @@ public class CodeFormatterFacade {
       editor.getCaretModel().moveToOffset(wrapOffset);
       emulateEnter(editor, project, shifts);
 
-      // We know that number of lines is just increased, hence, update the data accordingly.
-      maxLine += shifts[0];
-      endOffsetToUse += shifts[1];
+      //If number of inserted symbols on new line after wrapping more or equal then symbols left on previous line
+      //there was no point to wrapping it, so reverting to before wrapping version
+      if (shifts[1] - 1 >= wrapOffset - startLineOffset) {
+        document.deleteString(wrapOffset, wrapOffset + shifts[1]);
+      }
+      else {
+        // We know that number of lines is just increased, hence, update the data accordingly.
+        maxLine += shifts[0];
+        endOffsetToUse += shifts[1];
+      }
+
     }
   }
 
@@ -504,7 +512,7 @@ public class CodeFormatterFacade {
    * @param project      target project
    * @param shifts       two-elements array which is expected to be filled with the following info:
    *                       1. The first element holds added lines number;
-   *                       2. The second element holds added symbols number;  
+   *                       2. The second element holds added symbols number;
    */
   private static void emulateEnter(@NotNull final Editor editor, @NotNull Project project, int[] shifts) {
     final DataContext dataContext = prepareContext(editor.getComponent(), project);
