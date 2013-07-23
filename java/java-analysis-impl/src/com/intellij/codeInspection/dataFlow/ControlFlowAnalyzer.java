@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ConditionCheckManager;
 import com.intellij.codeInsight.ConditionChecker;
 import com.intellij.codeInsight.ExceptionUtil;
@@ -22,6 +23,8 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -1373,6 +1376,27 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private static MethodContract getCallContract(PsiMethodCallExpression expression) {
     PsiMethod resolved = expression.resolveMethod();
     if (resolved != null) {
+      final PsiAnnotation contractAnno = AnnotationUtil.findAnnotation(resolved, "org.jetbrains.annotations.Contract");
+      if (contractAnno != null) {
+        final Project project = expression.getProject();
+        return CachedValuesManager.getManager(project).getCachedValue(contractAnno, new CachedValueProvider<MethodContract>() {
+          @Nullable
+          @Override
+          public Result<MethodContract> compute() {
+            PsiAnnotationMemberValue value = contractAnno.findAttributeValue(null);
+            Object text = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper().computeConstantExpression(value);
+            if (text instanceof String) {
+              try {
+                return Result.create(parseContract((String)text), contractAnno);
+              }
+              catch (Exception ignored) {
+              }
+            }
+            return Result.create(null, contractAnno);
+          }
+        });
+      }
+
       @NonNls String methodName = resolved.getName();
 
       PsiExpression[] params = expression.getArgumentList().getExpressions();
@@ -1436,6 +1460,37 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     return null;
+  }
+
+  private static MethodContract parseContract(String text) throws ParseException {
+    text = StringUtil.replace(text, " ", "");
+    String arrow = "->";
+    int arrowIndex = text.indexOf(arrow);
+    if (arrowIndex < 0) throw new ParseException("A contract must be in form arg1, ..., argN -> return-value");
+    String[] argStrings = text.substring(0, arrowIndex).split(",");
+    ValueConstraint[] args = new ValueConstraint[argStrings.length];
+    for (int i = 0; i < args.length; i++) {
+      args[i] = parseConstraint(argStrings[i]);
+    }
+    return new MethodContract(args, parseConstraint(text.substring(arrowIndex + arrow.length())));
+  }
+  
+  private static ValueConstraint parseConstraint(String name) throws ParseException {
+    if (StringUtil.isEmpty(name)) throw new ParseException("Constraint should not be empty");
+    if ("null".equals(name)) return ValueConstraint.NULL_VALUE;
+    if ("!null".equals(name)) return ValueConstraint.NOT_NULL_VALUE;
+    if ("true".equals(name)) return ValueConstraint.TRUE_VALUE;
+    if ("false".equals(name)) return ValueConstraint.FALSE_VALUE;
+    if ("exit".equals(name)) return ValueConstraint.SYSTEM_EXIT;
+    if ("fail".equals(name)) return ValueConstraint.THROW_EXCEPTION;
+    if ("any".equals(name)) return ValueConstraint.ANY_VALUE;
+    throw new ParseException("Constraint should be one of: null, !null, true, false, exit, fail, any. Found: " + name);
+  }
+  
+  private static class ParseException extends Exception {
+    private ParseException(String message) {
+      super(message);
+    }
   }
 
   private static ValueConstraint[] getAnyArgConstraints(PsiExpression[] params) {
