@@ -39,7 +39,6 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   protected T myTool;
   protected final E myEP;
-  private GlobalInspectionContext myContext;
 
   protected InspectionToolWrapper(@NotNull E ep) {
     this(null, ep);
@@ -64,13 +63,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   public void initialize(@NotNull GlobalInspectionContext context) {
-    myContext = context;
     projectOpened(context.getProject());
-  }
-
-  @NotNull
-  public GlobalInspectionContext getContext() {
-    return myContext;
   }
 
   @NotNull
@@ -221,7 +214,6 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   public void cleanup(Project project) {
-    myContext = null;
     T tool = myTool;
     if (tool != null) {
       tool.cleanup(project);

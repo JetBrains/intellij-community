@@ -36,21 +36,32 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   protected RefEntity myElement;
   private final CommonProblemDescriptor myDescriptor;
   protected final InspectionToolWrapper myToolWrapper;
+  @NotNull
+  protected final InspectionToolPresentation myPresentation;
 
-  public ProblemDescriptionNode(final Object userObject, @NotNull InspectionToolWrapper toolWrapper) {
-    super(userObject);
-    myToolWrapper = toolWrapper;
-    myDescriptor = null;
-    myElement = null;
+  public ProblemDescriptionNode(@NotNull Object userObject,
+                                @NotNull InspectionToolWrapper toolWrapper,
+                                @NotNull InspectionToolPresentation presentation) {
+    this(userObject, null, null, toolWrapper, presentation);
   }
 
-  public ProblemDescriptionNode(RefEntity element,
+  public ProblemDescriptionNode(@NotNull RefEntity element,
+                                @NotNull CommonProblemDescriptor descriptor,
+                                @NotNull InspectionToolWrapper toolWrapper,
+                                @NotNull InspectionToolPresentation presentation) {
+    this(descriptor, element, descriptor, toolWrapper, presentation);
+  }
+
+  private ProblemDescriptionNode(@NotNull Object userObject,
+                                RefEntity element,
                                 CommonProblemDescriptor descriptor,
-                                @NotNull InspectionToolWrapper toolWrapper) {
-    super(descriptor);
+                                @NotNull InspectionToolWrapper toolWrapper,
+                                @NotNull InspectionToolPresentation presentation) {
+    super(userObject);
     myElement = element;
     myDescriptor = descriptor;
     myToolWrapper = toolWrapper;
+    myPresentation = presentation;
   }
 
   @Nullable
@@ -109,7 +120,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
 
   @NotNull
   private InspectionToolPresentation getPresentation() {
-    return ((GlobalInspectionContextImpl)myToolWrapper.getContext()).getPresentation(myToolWrapper);
+    return myPresentation;
   }
 
   @Override

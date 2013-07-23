@@ -126,7 +126,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
 
-    myTree = new InspectionTree(project);
+    myTree = new InspectionTree(project, globalInspectionContext);
     initTreeListeners();
 
     myOccurenceNavigator = initOccurenceNavigator();

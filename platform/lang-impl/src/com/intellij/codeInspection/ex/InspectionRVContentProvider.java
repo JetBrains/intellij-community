@@ -54,6 +54,7 @@ public abstract class InspectionRVContentProvider {
     @NotNull
     RefElementNode createNode(@NotNull InspectionToolPresentation presentation);
 
+    @NotNull
     T getUserObject();
 
     @Nullable

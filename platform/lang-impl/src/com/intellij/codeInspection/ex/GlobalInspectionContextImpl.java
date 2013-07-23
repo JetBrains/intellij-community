@@ -347,7 +347,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                                                                    file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true);
         try {
           final List<LocalInspectionToolWrapper> lTools = getWrappersFromTools(localTools, file);
-          pass.doInspectInBatch(inspectionManager, lTools);
+          pass.doInspectInBatch(GlobalInspectionContextImpl.this, inspectionManager, lTools);
 
           JobLauncher.getInstance().invokeConcurrentlyUnderProgress(globalSimpleTools, myProgressIndicator, false, new Processor<Tools>() {
             @Override
@@ -577,12 +577,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       DefaultInspectionToolPresentation.class.getName());
 
       try {
-        presentation = (InspectionToolPresentation)Class.forName(presentationClass).getConstructor(InspectionToolWrapper.class).newInstance(toolWrapper);
+        presentation = (InspectionToolPresentation)Class.forName(presentationClass).getConstructor(InspectionToolWrapper.class, GlobalInspectionContextImpl.class).newInstance(toolWrapper, this);
       }
       catch (Exception e) {
         LOG.error(e);
       }
-      presentation.initialize(this);
       myPresentationMap.put(toolWrapper, presentation);
     }
     return presentation;

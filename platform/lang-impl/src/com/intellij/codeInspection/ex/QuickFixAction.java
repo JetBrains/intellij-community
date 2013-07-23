@@ -109,7 +109,7 @@ public class QuickFixAction extends AnAction {
     if (isProblemDescriptorsAcceptable()) {
       final CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
       if (descriptors.length > 0) {
-        doApplyFix(view.getProject(), descriptors);
+        doApplyFix(view.getProject(), descriptors, tree.getContext());
         return;
       }
     }
@@ -119,11 +119,14 @@ public class QuickFixAction extends AnAction {
 
 
   protected void applyFix(@NotNull Project project,
+                          @NotNull GlobalInspectionContextImpl context,
                           @NotNull CommonProblemDescriptor[] descriptors,
                           @NotNull Set<PsiElement> ignoredElements) {
   }
 
-  private void doApplyFix(@NotNull final Project project, @NotNull final CommonProblemDescriptor[] descriptors) {
+  private void doApplyFix(@NotNull final Project project,
+                          @NotNull final CommonProblemDescriptor[] descriptors,
+                          @NotNull final GlobalInspectionContextImpl context) {
     final Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
     for (CommonProblemDescriptor descriptor : descriptors) {
       final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
@@ -134,7 +137,7 @@ public class QuickFixAction extends AnAction {
 
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
 
-    final RefManagerImpl refManager = (RefManagerImpl)myToolWrapper.getContext().getRefManager();
+    final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
 
     final boolean initial = refManager.isInProcess();
 
@@ -153,7 +156,7 @@ public class QuickFixAction extends AnAction {
               final SequentialModalProgressTask progressTask =
                 new SequentialModalProgressTask(project, getTemplatePresentation().getText(), false);
               progressTask.setMinIterationTime(200);
-              progressTask.setTask(new PerformFixesTask(project, descriptors, ignoredElements, progressTask));
+              progressTask.setTask(new PerformFixesTask(project, descriptors, ignoredElements, progressTask, context));
               ProgressManager.getInstance().run(progressTask);
             }
           });
@@ -302,16 +305,19 @@ public class QuickFixAction extends AnAction {
     @NotNull
     private final Set<PsiElement> myIgnoredElements;
     private final SequentialModalProgressTask myTask;
+    @NotNull private final GlobalInspectionContextImpl myContext;
     private int myCount = 0;
 
     public PerformFixesTask(@NotNull Project project,
                             @NotNull CommonProblemDescriptor[] descriptors,
                             @NotNull Set<PsiElement> ignoredElements,
-                            @NotNull SequentialModalProgressTask task) {
+                            @NotNull SequentialModalProgressTask task,
+                            @NotNull GlobalInspectionContextImpl context) {
       myProject = project;
       myDescriptors = descriptors;
       myIgnoredElements = ignoredElements;
       myTask = task;
+      myContext = context;
     }
 
     @Override
@@ -336,7 +342,7 @@ public class QuickFixAction extends AnAction {
           }
         }
       }
-      applyFix(myProject, new CommonProblemDescriptor[]{descriptor}, myIgnoredElements);
+      applyFix(myProject, myContext, new CommonProblemDescriptor[]{descriptor}, myIgnoredElements);
       return isDone();
     }
 

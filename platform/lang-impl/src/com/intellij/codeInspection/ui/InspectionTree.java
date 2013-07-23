@@ -56,13 +56,15 @@ import java.util.*;
 
 public class InspectionTree extends Tree {
   private final HashSet<Object> myExpandedUserObjects;
+  @NotNull private final GlobalInspectionContextImpl myContext;
   private SelectionPath mySelectionPath;
   private static final ProblemDescriptor[] EMPTY_DESCRIPTORS = new ProblemDescriptor[0];
 
-  public InspectionTree(final Project project) {
+  public InspectionTree(@NotNull Project project, @NotNull GlobalInspectionContextImpl context) {
     super(new InspectionRootNode(project));
+    myContext = context;
 
-    setCellRenderer(new CellRenderer());//project));
+    setCellRenderer(new CellRenderer());
     setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(this);
     addTreeWillExpandListener(new ExpandListener());
@@ -375,5 +377,10 @@ public class InspectionTree extends Tree {
         }
       }
     }
+  }
+
+  @NotNull
+  public GlobalInspectionContextImpl getContext() {
+    return myContext;
   }
 }
