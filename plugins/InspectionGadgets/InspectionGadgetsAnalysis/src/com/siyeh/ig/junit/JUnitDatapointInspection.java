@@ -1,13 +1,8 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -47,14 +42,25 @@ public class JUnitDatapointInspection extends BaseInspection {
   public BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
+      public void visitMethod(PsiMethod method) {
+        visitMember(method, "method");
+      }
+
+      @Override
       public void visitField(PsiField field) {
-        final boolean dataPointAnnotated = AnnotationUtil.isAnnotated(field, DATAPOINT_FQN, false);
+        visitMember(field, "field");
+      }
+
+      private <T extends PsiMember & PsiNameIdentifierOwner> void visitMember(T member,
+                                                                              final String memberDescription) {
+        final boolean dataPointAnnotated = AnnotationUtil.isAnnotated(member, DATAPOINT_FQN, false);
         if (dataPointAnnotated) {
-          final String errorMessage = JUnitRuleInspection.getPublicStaticErrorMessage(field, false, true);
+          final String errorMessage = JUnitRuleInspection.getPublicStaticErrorMessage(member, false, true);
           if (errorMessage != null) {
-            registerError(field.getNameIdentifier(),
-                          InspectionGadgetsBundle.message("junit.datapoint.problem.descriptor", errorMessage),
-                          "Make field " + errorMessage, DATAPOINT_FQN);
+            final PsiElement identifier = member.getNameIdentifier();
+            registerError(identifier != null ? identifier : member,
+                          InspectionGadgetsBundle.message("junit.datapoint.problem.descriptor", errorMessage, StringUtil.capitalize(memberDescription)),
+                          "Make " + memberDescription + " " + errorMessage, DATAPOINT_FQN);
           }
         }
       }

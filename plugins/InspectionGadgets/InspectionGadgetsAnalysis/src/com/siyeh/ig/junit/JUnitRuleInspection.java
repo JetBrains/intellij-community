@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -90,7 +91,7 @@ public class JUnitRuleInspection extends BaseInspection {
     };
   }
 
-  static String getPublicStaticErrorMessage(PsiField field, boolean shouldBeNonStatic, boolean shouldBeStatic) {
+  static String getPublicStaticErrorMessage(PsiModifierListOwner field, boolean shouldBeNonStatic, boolean shouldBeStatic) {
     String errorMessage = null;
     final boolean hasStatic = field.hasModifierProperty(PsiModifier.STATIC);
     final boolean hasPublic = field.hasModifierProperty(PsiModifier.PUBLIC);
