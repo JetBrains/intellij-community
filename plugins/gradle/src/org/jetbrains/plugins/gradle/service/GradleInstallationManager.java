@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -53,6 +54,7 @@ public class GradleInstallationManager {
   }
   
   @NotNull private final PlatformFacade myPlatformFacade;
+  @Nullable private Ref<File> myCachedGradleHomeFromPath;
 
   public GradleInstallationManager(@NotNull PlatformFacade facade) {
     myPlatformFacade = facade;
@@ -246,6 +248,10 @@ public class GradleInstallationManager {
    */
   @Nullable
   public File getGradleHomeFromPath() {
+    Ref<File> ref = myCachedGradleHomeFromPath;
+    if (ref != null) {
+      return ref.get();
+    }
     String path = System.getenv("PATH");
     if (path == null) {
       return null;
@@ -260,6 +266,7 @@ public class GradleInstallationManager {
         if (startFile.isFile()) {
           File candidate = dir.getParentFile();
           if (isGradleSdkHome(candidate)) {
+            myCachedGradleHomeFromPath = new Ref<File>(candidate);
             return candidate;
           }
         }
