@@ -77,7 +77,14 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           if (!AnnotationUtil.isAnnotatingApplicable(field, anno)) {
             final PsiAnnotation notNull = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
             final PsiAnnotation nullable = AnnotationUtil.findAnnotation(field, manager.getNullables());
-            holder.registerProblem(field.getNameIdentifier(), "Nullable/NotNull defaults are not accessible in current context",
+            String message = "";
+            if (annotated.isDeclaredNullable) {
+              message += nullable.getQualifiedName();
+            } else {
+              message += notNull.getQualifiedName();
+            }
+            message += " contradicts to configured defaults";
+            holder.registerProblem(field.getNameIdentifier(), message,
                                    new ChangeNullableDefaultsFix(notNull, nullable, manager));
             return;
           }
