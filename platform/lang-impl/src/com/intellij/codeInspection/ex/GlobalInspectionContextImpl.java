@@ -195,7 +195,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                     InspectionToolPresentation presentation = getPresentation(toolWrapper);
                     presentation.exportResults(element, refEntity);
                   }
-                  catch (Exception e) {
+                  catch (Throwable e) {
                     LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
                   }
                 }
@@ -370,10 +370,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         catch (IndexNotReadyException e) {
           throw e;
         }
-        catch (Exception e) {
-          LOG.error("In file: " + file, e);
-        }
-        catch (AssertionError e) {
+        catch (Throwable e) {
           LOG.error("In file: " + file, e);
         }
         finally {
@@ -412,7 +409,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         catch (IndexNotReadyException e) {
           throw e;
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           LOG.error(e);
         }
       }
@@ -427,7 +424,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       catch (IndexNotReadyException e) {
         throw e;
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         LOG.error(e);
       }
     }

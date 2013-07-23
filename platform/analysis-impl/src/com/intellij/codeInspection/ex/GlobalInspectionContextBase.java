@@ -298,7 +298,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       DumbService.getInstance(myProject).showDumbModeNotification("Usage search is not available until indices are ready");
       throw new ProcessCanceledException();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.error(e);
     }
     finally {
