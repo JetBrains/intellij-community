@@ -33,6 +33,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -174,5 +175,10 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   @Override
   public boolean isValid() {
     return getDescriptor() != null && super.isValid();
+  }
+
+  @Override
+  public FileStatus getNodeStatus() {
+    return FileStatus.NOT_CHANGED;
   }
 }
