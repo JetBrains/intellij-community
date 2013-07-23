@@ -33,6 +33,12 @@ public class PyFunctionType implements PyCallableType {
     return myCallable.getReturnType(context, callSite);
   }
 
+  @Nullable
+  @Override
+  public List<PyType> getParameterTypes(@NotNull TypeEvalContext context) {
+    return null;
+  }
+
   @Override
   public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
                                                           @Nullable PyExpression location,

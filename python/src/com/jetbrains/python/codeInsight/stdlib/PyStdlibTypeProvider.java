@@ -33,6 +33,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @NotNull private Properties myStdlibTypes = new Properties();
 
   private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("__builtin__.open", "io.open", "os.fdopen");
+  private static final String BINARY_FILE_TYPE = "io.FileIO[bytes]";
+  private static final String TEXT_FILE_TYPE = "io.TextIOWrapper[unicode]";
 
   @Nullable
   public static PyStdlibTypeProvider getInstance() {
@@ -78,12 +80,12 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   public PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
     final String qname = getQualifiedName(function, callSite);
     if (qname != null) {
-      if (callSite != null) {
-        PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
+      if (OPEN_FUNCTIONS.contains(qname) && callSite != null) {
+        final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
         if (results != null) {
-          final PyType overloaded = getOverloadedReturnTypeByQName(results.getArguments(), qname, function, context);
-          if (overloaded != null) {
-            return overloaded;
+          final PyType type = getOpenFunctionType(qname, results.getArguments(), callSite);
+          if (type != null) {
+            return type;
           }
         }
       }
@@ -167,56 +169,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private PyType getOverloadedReturnTypeByQName(@NotNull Map<PyExpression, PyNamedParameter> arguments,
-                                                @NotNull String qname,
-                                                @NotNull PsiElement anchor,
-                                                @NotNull TypeEvalContext context) {
-    int i = 1;
-    PyType rtype;
-    do {
-      final String overloadedQName = String.format("%s.%d", qname, i);
-      rtype = getReturnTypeByQName(overloadedQName, anchor, context);
-      if (rtype != null) {
-        boolean matched = true;
-        boolean notNullParameterMatch = false;
-        // Special case for the 'mode' argument of the '*open()' functions
-        if (OPEN_FUNCTIONS.contains(qname)) {
-          matched = matchOpenFunctionType(qname, overloadedQName, arguments, anchor, context);
-          notNullParameterMatch = true;
-        }
-        else {
-          for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
-            final PyNamedParameter p = entry.getValue();
-            final String name = p.getName();
-            if (p.isPositionalContainer() || p.isKeywordContainer() || name == null) {
-              continue;
-            }
-            final PyType argType = context.getType(entry.getKey());
-            final PyType paramType = getParameterTypeByQName(overloadedQName, name, anchor, context);
-            if (PyTypeChecker.match(paramType, argType, context)) {
-              if (paramType != null && !PyTypeChecker.isUnknown(argType)) {
-                notNullParameterMatch = true;
-              }
-            }
-            else {
-              matched = false;
-              break;
-            }
-          }
-        }
-        if (matched && notNullParameterMatch) {
-          return rtype;
-        }
-      }
-      i++;
-    } while (rtype != null);
-    return null;
-  }
-
-  private boolean matchOpenFunctionType(@NotNull String callQName,
-                                        @NotNull String overloadedQName,
-                                        @NotNull Map<PyExpression, PyNamedParameter> arguments,
-                                        @NotNull PsiElement anchor, @NotNull TypeEvalContext context) {
+  private static PyType getOpenFunctionType(@NotNull String callQName,
+                                            @NotNull Map<PyExpression, PyNamedParameter> arguments,
+                                            @NotNull PsiElement anchor) {
     String mode = "r";
     for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
       final PyNamedParameter parameter = entry.getValue();
@@ -228,24 +183,20 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         }
       }
     }
-    final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
     final LanguageLevel level = LanguageLevel.forElement(anchor);
-    final PyType paramType = getParameterTypeByQName(overloadedQName, "mode", anchor, context);
-    final PyType argType;
     // Binary mode
     if (mode.contains("b")) {
-      argType = cache.getBytesType(level);
+      return PyTypeParser.getTypeByName(anchor, BINARY_FILE_TYPE);
     }
     // Text mode
     else {
       if (level.isPy3K() || "io.open".equals(callQName)) {
-        argType = cache.getUnicodeType(level);
+        return PyTypeParser.getTypeByName(anchor, TEXT_FILE_TYPE);
       }
       else {
-        argType = cache.getBytesType(level);
+        return PyTypeParser.getTypeByName(anchor, BINARY_FILE_TYPE);
       }
     }
-    return PyTypeChecker.match(paramType, argType, context);
   }
 
   @Nullable

@@ -564,7 +564,7 @@ public class PyTypeTest extends PyTestCase {
     doTest("int or str",
            "def foo(x):\n" +
            "    '''\n" +
-           "    :type x: T (int or str)\n" +
+           "    :type x: T <= int or str\n" +
            "    :rtype: T\n" +
            "    '''\n" +
            "def bar(x):\n" +
@@ -580,6 +580,53 @@ public class PyTypeTest extends PyTestCase {
            "        return 10\n" +
            "for expr in C():\n" +
            "    pass\n");
+  }
+
+  public void testFunctionTypeAsUnificationArgument() {
+    doTest("int",
+           "def map2(f, xs):\n" +
+           "    '''\n" +
+           "    :type f: (T) -> V | None\n" +
+           "    :type xs: collections.Iterable[T] | bytes | unicode\n" +
+           "    :rtype: list[V] | bytes | unicode\n" +
+           "    '''\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = map2(lambda x: 10, ['1', '2', '3'])[0]\n");
+  }
+
+  public void testFunctionTypeAsUnificationResult() {
+    doTest("int",
+           "def f(x):\n" +
+           "    '''\n" +
+           "    :type x: T\n" +
+           "    :rtype: () -> T\n" +
+           "    '''\n" +
+           "    pass\n" +
+           "\n" +
+           "g = f(10)\n" +
+           "expr = g()\n");
+  }
+
+  public void testUnionIteration() {
+    final String text = "def f(c):\n" +
+                        "    if c < 0:\n" +
+                        "        return [1, 2, 3]\n" +
+                        "    elif c == 0:\n" +
+                        "        return 0.0\n" +
+                        "    else:\n" +
+                        "        return 'foo'\n" +
+                        "\n" +
+                        "def g(c):\n" +
+                        "    for expr in f(c):\n" +
+                        "        pass\n";
+    final PyExpression expr = parseExpr(text);
+    final TypeEvalContext context = getTypeEvalContext(expr);
+    final PyType type = context.getType(expr);
+    assertInstanceOf(type, PyUnionType.class);
+    assertTrue(PyTypeChecker.match(PyTypeParser.getTypeByName(expr, "int"), type, context));
+    assertTrue(PyTypeChecker.match(PyTypeParser.getTypeByName(expr, "str"), type, context));
+    assertTrue(PyTypeChecker.isUnknown(type));
   }
 
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {

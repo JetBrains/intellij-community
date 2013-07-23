@@ -177,7 +177,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   public void testBoundedGeneric() {
     myFixture.configureByFile("typeParser/typeParser.py");
-    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T (str or unicode)");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T <= str or unicode");
     assertNotNull(type);
     assertInstanceOf(type, PyGenericType.class);
     final PyGenericType genericType = (PyGenericType)type;
@@ -226,5 +226,34 @@ public class PyTypeParserTest extends PyTestCase {
     assertClassType(list.get(0), "MyObject");
     assertClassType(list.get(1), "str");
     assertClassType(list.get(2), "unicode");
+  }
+
+  public void testCallableType() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "(int, T) -> T");
+    assertInstanceOf(type, PyCallableType.class);
+    final PyCallableType callableType = (PyCallableType)type;
+    assertNotNull(callableType);
+    final PyType returnType = callableType.getCallType(getTypeEvalContext(), null);
+    assertInstanceOf(returnType, PyGenericType.class);
+    final List<PyType> parameterTypes = callableType.getParameterTypes(getTypeEvalContext());
+    assertNotNull(parameterTypes);
+    assertEquals(2, parameterTypes.size());
+    assertEquals("int", parameterTypes.get(0).getName());
+    assertEquals("T", parameterTypes.get(1).getName());
+  }
+
+  public void testCallableWithoutArgs() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "() -> int");
+    assertInstanceOf(type, PyCallableType.class);
+    final PyCallableType callableType = (PyCallableType)type;
+    assertNotNull(callableType);
+    final PyType returnType = callableType.getCallType(getTypeEvalContext(), null);
+    assertNotNull(returnType);
+    assertEquals("int", returnType.getName());
+    final List<PyType> parameterTypes = callableType.getParameterTypes(getTypeEvalContext());
+    assertNotNull(parameterTypes);
+    assertEquals(0, parameterTypes.size());
   }
 }

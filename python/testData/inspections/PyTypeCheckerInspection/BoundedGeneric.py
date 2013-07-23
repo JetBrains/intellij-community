@@ -1,7 +1,7 @@
 def test():
     def f(x):
         """
-        :type x: T (int or str)
+        :type x: T <= int or str
         :rtype: T
         """
         pass

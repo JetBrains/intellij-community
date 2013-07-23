@@ -140,6 +140,27 @@ public class PyTypeChecker {
         return true;
       }
     }
+    if (actual instanceof PyCallableType && expected instanceof PyCallableType) {
+      final PyCallableType expectedCallable = (PyCallableType)expected;
+      final PyCallableType actualCallable = (PyCallableType)actual;
+      if (expectedCallable.isCallable() && actualCallable.isCallable()) {
+        final List<PyType> expectedParameters = expectedCallable.getParameterTypes(context);
+        final List<PyType> actualParameters = actualCallable.getParameterTypes(context);
+        if (expectedParameters != null && actualParameters != null) {
+          final int size = Math.min(expectedParameters.size(), actualParameters.size());
+          for (int i = 0; i < size; i++) {
+            if (!match(expectedParameters.get(i), actualParameters.get(i), context, substitutions, recursive)) {
+              return false;
+            }
+          }
+        }
+        if (!match(expectedCallable.getCallType(context, null), actualCallable.getCallType(context, null), context, substitutions,
+                   recursive)) {
+          return false;
+        }
+        return true;
+      }
+    }
     final String superName = expected.getName();
     final String subName = actual.getName();
     // TODO: No inheritance check for builtin numerics at this moment
