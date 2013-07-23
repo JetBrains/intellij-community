@@ -147,40 +147,48 @@ public class IdeaApplication {
       public void run() {
         if (!reported.get()) {
           final long fileUsableSpace = file.getUsableSpace();
+          final long timeout = Math.max(5, (fileUsableSpace - lowDiskSpaceThreshold) / MAX_WRITE_SPEED_IN_BYTES_PER_SECOND);
+
           if (fileUsableSpace < lowDiskSpaceThreshold) {
             reported.compareAndSet(false, true);
+
             //noinspection SSBasedInspection
             SwingUtilities.invokeLater(new Runnable() {
               @Override
               public void run() {
                 boolean writable = file.canWrite();
                 String fullProductName = ApplicationNamesInfo.getInstance().getFullProductName();
-                String title = writable
+                String message = writable
                                ? "Low disk space on disk where system directory of " + fullProductName + " is located"
                                : "System directory of " + fullProductName + " is read only";
                 if (!writable || fileUsableSpace < 100 * 1024) {
-                  Messages.showErrorDialog(title, "Fatal Configuration Problem");
+                  Messages.showErrorDialog(message, "Fatal Configuration Problem");
                   reported.compareAndSet(true, false);
+                  restart(timeout);
                 }
                 else {
                   new NotificationGroup("System", NotificationDisplayType.STICKY_BALLOON, false)
-                    .createNotification(title, file.getPath(), NotificationType.ERROR, null).whenExpired(new Runnable() {
+                    .createNotification(message, file.getPath(), NotificationType.ERROR, null).whenExpired(new Runnable() {
                     @Override
                     public void run() {
                       reported.compareAndSet(true, false);
+                      restart(timeout);
                     }
                   }).notify(null);
                 }
               }
             });
-          }
-          else {
-            long timeout = (fileUsableSpace - lowDiskSpaceThreshold) % MAX_WRITE_SPEED_IN_BYTES_PER_SECOND;
-            JobScheduler.getScheduler().schedule(this, Math.max(5, timeout), TimeUnit.SECONDS);
+          } else {
+            restart(timeout);
           }
         }
       }
-    }, 5, TimeUnit.SECONDS);
+
+      private void restart(long timeout) {
+        JobScheduler.getScheduler().schedule(this, timeout, TimeUnit.SECONDS);
+      }
+
+    }, 1, TimeUnit.SECONDS);
   }
 
   protected ApplicationStarter getStarter() {
