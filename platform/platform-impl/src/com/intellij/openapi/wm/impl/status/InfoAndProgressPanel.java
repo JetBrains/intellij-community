@@ -469,11 +469,15 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
       final Dimension size = parent.getSize();
       int maxProgressWidth = (int) (size.width * 0.8);
+      int minProgressWidth = (int) (size.width * 0.5);
       if (progressPrefWidth > myProgressWidth) {
         myProgressWidth = progressPrefWidth;
       }
       if (myProgressWidth > maxProgressWidth) {
         myProgressWidth = maxProgressWidth;
+      }
+      if (myProgressWidth < minProgressWidth) {
+        myProgressWidth = minProgressWidth;
       }
       infoPanel.setBounds(0, 0, size.width - myProgressWidth, size.height);
       progressPanel.setBounds(size.width - myProgressWidth, 0, myProgressWidth, size.height);

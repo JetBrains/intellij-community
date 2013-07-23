@@ -278,7 +278,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   private static class MyProgressBar extends JProgressBar {
-    private static final int MAX_COMPACT_PROGRESS_SIZE = 80;
+    private static final int MAX_COMPACT_PROGRESS_SIZE = 100;
     private boolean myActive = true;
     private final boolean myCompact;
 
@@ -294,6 +294,13 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       super.paint(g);
     }
 
+    @Override
+    public void setIndeterminate(boolean newValue) {
+      super.setIndeterminate(newValue);
+      if (myCompact) {
+        setVisible(!newValue);
+      }
+    }
 
     public boolean isActive() {
       return myActive;
