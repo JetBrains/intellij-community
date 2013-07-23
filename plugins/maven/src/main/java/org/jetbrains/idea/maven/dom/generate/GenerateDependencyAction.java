@@ -19,7 +19,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementAction;
@@ -27,12 +29,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencyManagement;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.List;
 
@@ -42,21 +44,30 @@ public class GenerateDependencyAction extends GenerateDomElementAction {
         @Nullable
         @Override
         protected MavenDomDependency doGenerate(@NotNull final MavenDomProjectModel mavenModel, final Editor editor) {
-          MavenProjectsManager manager = MavenProjectsManager.getInstance(editor.getProject());
-          MavenProject project = manager.findProject(mavenModel.getModule());
-          if (project == null) return null;
+          Project project = mavenModel.getManager().getProject();
 
-          final List<MavenId> ids = MavenArtifactSearchDialog.searchForArtifact(editor.getProject());
+          final List<MavenId> ids = MavenArtifactSearchDialog.searchForArtifact(project);
           if (ids.isEmpty()) return null;
 
-          PsiDocumentManager.getInstance(mavenModel.getManager().getProject()).commitAllDocuments();
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
 
           XmlFile psiFile = DomUtil.getFile(mavenModel);
           return new WriteCommandAction<MavenDomDependency>(psiFile.getProject(), "Generate Dependency", psiFile) {
             @Override
             protected void run(Result<MavenDomDependency> result) throws Throwable {
+              MavenDomDependencies deps;
+
+              MavenDomDependencyManagement dependencyManagement = mavenModel.getDependencyManagement();
+              XmlElement managetDependencyXml = dependencyManagement.getXmlElement();
+              if (managetDependencyXml != null && managetDependencyXml.getTextRange().contains(editor.getCaretModel().getOffset())) {
+                deps = dependencyManagement.getDependencies();
+              }
+              else {
+                deps = mavenModel.getDependencies();
+              }
+
               for (MavenId each : ids) {
-                result.setResult(MavenDomUtil.createDomDependency(mavenModel, editor, each));
+                result.setResult(MavenDomUtil.createDomDependency(deps, editor, each));
               }
             }
           }.execute().getResultObject();
