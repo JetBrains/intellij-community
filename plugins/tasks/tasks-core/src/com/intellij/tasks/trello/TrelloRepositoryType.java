@@ -18,8 +18,8 @@ package com.intellij.tasks.trello;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskRepositoryEditor;
+import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,7 @@ import javax.swing.*;
 /**
  * @author Mikhail Golubev
  */
-public class TrelloRepositoryType extends TaskRepositoryType<TrelloRepository> {
+public class TrelloRepositoryType extends BaseRepositoryType<TrelloRepository> {
   public static final String DEVELOPER_KEY = "d6ec3709f7141007e150de64d4701181";
   public static final String CLIENT_AUTHORIZATION_URL =
     "https://trello.com/1/authorize?key=" + DEVELOPER_KEY +"&name=JetBrains&expiration=never&response_type=token";
