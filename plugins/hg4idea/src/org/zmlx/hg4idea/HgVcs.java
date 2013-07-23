@@ -56,6 +56,7 @@ import org.zmlx.hg4idea.status.ui.HgHideableWidget;
 import org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget;
 import org.zmlx.hg4idea.status.ui.HgStatusWidget;
 import org.zmlx.hg4idea.util.HgUtil;
+import org.zmlx.hg4idea.util.HgVersionUtil;
 
 import java.io.File;
 import java.util.Collections;
@@ -122,6 +123,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     commitedChangesProvider = new HgCachingCommitedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
+    HgVersionUtil.updateHgVersion(globalSettings.getHgExecutable(), globalSettings.isRunViaBash());
   }
 
   public String getDisplayName() {
