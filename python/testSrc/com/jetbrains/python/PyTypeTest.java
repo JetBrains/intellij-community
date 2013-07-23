@@ -608,6 +608,27 @@ public class PyTypeTest extends PyTestCase {
            "expr = g()\n");
   }
 
+  public void testUnionIteration() {
+    final String text = "def f(c):\n" +
+                        "    if c < 0:\n" +
+                        "        return [1, 2, 3]\n" +
+                        "    elif c == 0:\n" +
+                        "        return 0.0\n" +
+                        "    else:\n" +
+                        "        return 'foo'\n" +
+                        "\n" +
+                        "def g(c):\n" +
+                        "    for expr in f(c):\n" +
+                        "        pass\n";
+    final PyExpression expr = parseExpr(text);
+    final TypeEvalContext context = getTypeEvalContext(expr);
+    final PyType type = context.getType(expr);
+    assertInstanceOf(type, PyUnionType.class);
+    assertTrue(PyTypeChecker.match(PyTypeParser.getTypeByName(expr, "int"), type, context));
+    assertTrue(PyTypeChecker.match(PyTypeParser.getTypeByName(expr, "str"), type, context));
+    assertTrue(PyTypeChecker.isUnknown(type));
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
