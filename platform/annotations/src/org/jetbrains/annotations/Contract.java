@@ -21,8 +21,9 @@ import java.lang.annotation.*;
  * Specifies some aspects of the method behavior depending on the arguments. Can be used by tools for advanced data flow analysis.<p>
  * 
  * Method contract has the following syntax:<br/>
- *  contract ::= args '->' effect<br/>
- *  args ::= ((arg ,)* arg )?<br/>
+ *  contract ::= (clause ';')* clause<br/>
+ *  clause ::= args '->' effect<br/>
+ *  args ::= ((arg ',')* arg )?<br/>
  *  arg ::= value-constraint<br/>
  *  value-constraint ::= 'any' | 'null' | '!null' | 'false' | 'true'<br/>
  *  effect ::= value-constraint | 'fail' | 'exit'<p/>
@@ -39,6 +40,7 @@ import java.lang.annotation.*;
  * </ul>
  * Examples:<p/>
  * <code>@Contract("any, null -> null")</code> - method returns null if its second argument is null<br/>
+ * <code>@Contract("any, null -> null; any, !null -> !null")</code> - method returns null if its second argument is null and not-null otherwise<br/>
  * <code>@Contract("true -> fail")</code> - a typical assertFalse method which throws an exception if <code>true</code> is passed to it<br/> 
  * 
  * @author peter

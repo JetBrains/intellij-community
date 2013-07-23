@@ -31,6 +31,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1248,9 +1249,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     try {
       startElement(expression);
 
-      MethodContract contract = getCallContract(expression);
-      if (contract != null) {
-        handleContract(expression, contract);
+      List<MethodContract> contracts = getCallContract(expression);
+      if (!contracts.isEmpty()) {
+        handleContracts(expression, contracts);
         return;
       }
 
@@ -1301,28 +1302,36 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private void handleContract(PsiMethodCallExpression expression, MethodContract contract) {
-    PsiExpression[] params = expression.getArgumentList().getExpressions();
-    if (params.length != contract.arguments.length) {
-      return;
+  private void handleContracts(PsiMethodCallExpression expression, List<MethodContract> contracts) {
+    PsiExpression[] args = expression.getArgumentList().getExpressions();
+    for (PsiExpression arg : args) {
+      arg.accept(this);
     }
+    if (contracts.size() > 1) {
+      addInstruction(new DupInstruction(args.length, contracts.size() - 1));
+    }
+    for (MethodContract contract : contracts) {
+      if (args.length == contract.arguments.length) {
+        handleContract(expression, contract);
+      }
+    }                                        
+    pushUnknown(); // goto here if all contracts are false
+  }
+  
+  private void handleContract(PsiMethodCallExpression expression, MethodContract contract) {
+    PsiExpression[] args = expression.getArgumentList().getExpressions();
 
     final int exitPoint = getEndOffset(expression);
 
     List<ConditionalGotoInstruction> gotoContractFalse = new SmartList<ConditionalGotoInstruction>();
-    for (int i = 0; i < params.length; i++) {
-      params[i].accept(this);
-      if (contract.arguments[i] == ValueConstraint.ANY_VALUE) {
-        addInstruction(new PopInstruction());
-      }
-    }
-    for (int i = params.length - 1; i >= 0; i--) {
+    for (int i = args.length - 1; i >= 0; i--) {
       ValueConstraint arg = contract.arguments[i];
       if (arg == ValueConstraint.NULL_VALUE || arg == ValueConstraint.NOT_NULL_VALUE) {
         addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
         addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, expression.getProject()));
       }
       else if (arg != ValueConstraint.TRUE_VALUE && arg != ValueConstraint.FALSE_VALUE) {
+        addInstruction(new PopInstruction());
         continue;
       }
 
@@ -1372,19 +1381,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     for (ConditionalGotoInstruction instruction : gotoContractFalse) {
       instruction.setOffset(myCurrentFlow.getInstructionCount());
     }
-    pushUnknown();
   }
 
-  private static MethodContract getCallContract(PsiMethodCallExpression expression) {
+  private static List<MethodContract> getCallContract(PsiMethodCallExpression expression) {
     PsiMethod resolved = expression.resolveMethod();
     if (resolved != null) {
       final PsiAnnotation contractAnno = AnnotationUtil.findAnnotation(resolved, "org.jetbrains.annotations.Contract");
       if (contractAnno != null) {
         final Project project = expression.getProject();
-        return CachedValuesManager.getManager(project).getCachedValue(contractAnno, new CachedValueProvider<MethodContract>() {
+        return CachedValuesManager.getManager(project).getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
           @Nullable
           @Override
-          public Result<MethodContract> compute() {
+          public Result<List<MethodContract>> compute() {
             PsiAnnotationMemberValue value = contractAnno.findAttributeValue(null);
             Object text = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper().computeConstantExpression(value);
             if (text instanceof String) {
@@ -1394,7 +1402,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
               catch (Exception ignored) {
               }
             }
-            return Result.create(null, contractAnno);
+            return Result.create(Collections.<MethodContract>emptyList(), contractAnno);
           }
         });
       }
@@ -1407,35 +1415,35 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         final String className = owner.getQualifiedName();
         if ("java.lang.System".equals(className)) {
           if ("exit".equals(methodName)) {
-            return new MethodContract(getAnyArgConstraints(params), ValueConstraint.SYSTEM_EXIT);
+            return Arrays.asList(new MethodContract(getAnyArgConstraints(params), ValueConstraint.SYSTEM_EXIT));
           }
         }
         else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) ||
                  "junit.framework.TestCase".equals(className) || "org.testng.Assert".equals(className)) {
           boolean testng = "org.testng.Assert".equals(className);
           if ("fail".equals(methodName)) {
-            return new MethodContract(getAnyArgConstraints(params), ValueConstraint.THROW_EXCEPTION);
+            return Arrays.asList(new MethodContract(getAnyArgConstraints(params), ValueConstraint.THROW_EXCEPTION));
           }
 
           int checkedParam = testng ? 0 : params.length - 1;
           ValueConstraint[] constraints = getAnyArgConstraints(params);
           if ("assertTrue".equals(methodName)) {
             constraints[checkedParam] = ValueConstraint.FALSE_VALUE;
-            return new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION);
+            return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
           }
           if ("assertFalse".equals(methodName)) {
             constraints[checkedParam] = ValueConstraint.TRUE_VALUE;
-            return new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION);
+            return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
           }
           if ("assertNull".equals(methodName)) {
             constraints[checkedParam] = ValueConstraint.NOT_NULL_VALUE;
-            return new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION);
+            return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
           }
           if ("assertNotNull".equals(methodName)) {
             constraints[checkedParam] = ValueConstraint.NULL_VALUE;
-            return new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION);
+            return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
           }
-          return null;
+          return Collections.emptyList();
         }
       }
 
@@ -1444,37 +1452,43 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         ValueConstraint[] constraints = getAnyArgConstraints(params);
         int checkedParam = checker.getCheckedParameterIndex();
         if (checkedParam >= constraints.length) {
-          return null;
+          return Collections.emptyList();
         }
 
         ConditionChecker.Type type = checker.getConditionCheckType();
         if (type == ASSERT_IS_NULL_METHOD || type == ASSERT_IS_NOT_NULL_METHOD) {
           constraints[checkedParam] = type == ASSERT_IS_NOT_NULL_METHOD ? ValueConstraint.NULL_VALUE : ValueConstraint.NOT_NULL_VALUE;
-          return new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION);
+          return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
         } else if (type == IS_NULL_METHOD || type == IS_NOT_NULL_METHOD) {
           constraints[checkedParam] = type == IS_NULL_METHOD ? ValueConstraint.NOT_NULL_VALUE : ValueConstraint.NULL_VALUE;
-          return new MethodContract(constraints, ValueConstraint.FALSE_VALUE);
+          return Arrays.asList(new MethodContract(constraints, ValueConstraint.FALSE_VALUE));
         } else { //assertTrue or assertFalse
           constraints[checkedParam] = type == ASSERT_FALSE_METHOD ? ValueConstraint.TRUE_VALUE : ValueConstraint.FALSE_VALUE;
-          return new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION);
+          return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
         }
       }
     }
 
-    return null;
+    return Collections.emptyList();
   }
 
-  private static MethodContract parseContract(String text) throws ParseException {
-    text = StringUtil.replace(text, " ", "");
-    String arrow = "->";
-    int arrowIndex = text.indexOf(arrow);
-    if (arrowIndex < 0) throw new ParseException("A contract must be in form arg1, ..., argN -> return-value");
-    String[] argStrings = text.substring(0, arrowIndex).split(",");
-    ValueConstraint[] args = new ValueConstraint[argStrings.length];
-    for (int i = 0; i < args.length; i++) {
-      args[i] = parseConstraint(argStrings[i]);
+  private static List<MethodContract> parseContract(String text) throws ParseException {
+    List<MethodContract> result = ContainerUtil.newArrayList();
+    for (String clause : StringUtil.replace(text, " ", "").split(";")) {
+      String arrow = "->";
+      int arrowIndex = clause.indexOf(arrow);
+      if (arrowIndex < 0) {
+        throw new ParseException("A contract clause must be in form arg1, ..., argN -> return-value");
+      }
+      
+      String[] argStrings = clause.substring(0, arrowIndex).split(",");
+      ValueConstraint[] args = new ValueConstraint[argStrings.length];
+      for (int i = 0; i < args.length; i++) {
+        args[i] = parseConstraint(argStrings[i]);
+      }
+      result.add(new MethodContract(args, parseConstraint(clause.substring(arrowIndex + arrow.length()))));
     }
-    return new MethodContract(args, parseConstraint(text.substring(arrowIndex + arrow.length())));
+    return result;
   }
   
   private static ValueConstraint parseConstraint(String name) throws ParseException {
