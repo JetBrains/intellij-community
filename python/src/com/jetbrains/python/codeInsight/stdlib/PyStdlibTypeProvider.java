@@ -78,7 +78,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   public PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
     final String qname = getQualifiedName(function, callSite);
     if (qname != null) {
-      if (callSite != null) {
+      if (OPEN_FUNCTIONS.contains(qname) && callSite != null) {
         PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
         if (results != null) {
           final PyType overloaded = getOverloadedReturnTypeByQName(results.getArguments(), qname, function, context);
