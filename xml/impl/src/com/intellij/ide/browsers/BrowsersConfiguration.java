@@ -111,6 +111,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
 
   private final Map<BrowserFamily, WebBrowserSettings> myBrowserToSettingsMap = new HashMap<BrowserFamily, WebBrowserSettings>();
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState() {
     @NonNls Element element = new Element("WebBrowsersConfiguration");
@@ -132,20 +133,18 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     return element;
   }
 
-  @SuppressWarnings({"unchecked"})
+  @Override
   public void loadState(@NonNls Element element) {
-    for (@NonNls Element child : (Iterable<? extends Element>)element.getChildren("browser")) {
+    for (@NonNls Element child : element.getChildren("browser")) {
       String family = child.getAttributeValue("family");
       final String path = child.getAttributeValue("path");
       final String active = child.getAttributeValue("active");
       final BrowserFamily browserFamily;
       Element settingsElement = child.getChild("settings");
-
       try {
         browserFamily = BrowserFamily.valueOf(family);
-        BrowserSpecificSettings specificSettings = null;
-        if (settingsElement != null) {
-          specificSettings = browserFamily.createBrowserSpecificSettings();
+        BrowserSpecificSettings specificSettings = settingsElement == null ? null : browserFamily.createBrowserSpecificSettings();
+        if (specificSettings != null) {
           XmlSerializer.deserializeInto(specificSettings, settingsElement);
         }
         myBrowserToSettingsMap.put(browserFamily, new WebBrowserSettings(path, Boolean.parseBoolean(active), specificSettings));

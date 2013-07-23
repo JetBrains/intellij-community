@@ -521,7 +521,7 @@ public class HtmlUtil {
            url.startsWith("ftp://");
   }
 
-  public static boolean isHtmlFile(PsiElement element) {
+  public static boolean isHtmlFile(@NotNull PsiElement element) {
     Language language = element.getLanguage();
     return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE;
   }
