@@ -646,5 +646,23 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     assertEquals("src", strings.get(1));
     assertEquals("align", strings.get(2));
   }
+
+  public void testDoNotProcessAnyInRestrictions() throws Exception {
+    myFixture.configureByText("foo.xsd", "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
+                                         "    <<caret>\n" +
+                                         "</xs:schema>");
+    myFixture.completeBasic();
+    assertSameElements(myFixture.getLookupElementStrings(), "xs:annotation",
+                                                            "xs:attribute",
+                                                            "xs:attributeGroup",
+                                                            "xs:complexType",
+                                                            "xs:element",
+                                                            "xs:group",
+                                                            "xs:import",
+                                                            "xs:include",
+                                                            "xs:notation",
+                                                            "xs:redefine",
+                                                            "xs:simpleType");
+  }
 }
 
