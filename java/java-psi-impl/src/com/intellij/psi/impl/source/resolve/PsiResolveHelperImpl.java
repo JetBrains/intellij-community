@@ -902,8 +902,11 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                   PsiType substituted = argResult.getSubstitutor().substitute(typeParameter);
                   if (substituted != null) {
                     Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(
-                      superSubstitutor.substitute(typeParameter), substituted, patternType, ConstraintType.EQUALS, depth);
-                    if (res != null) return res;
+                      superSubstitutor.substitute(typeParameter), substituted, patternType, ConstraintType.EQUALS, depth + 1);
+                    if (res != null) {
+                      if (res == FAILED_INFERENCE) continue;
+                      return res;
+                    }
                   }
                 }
               }
