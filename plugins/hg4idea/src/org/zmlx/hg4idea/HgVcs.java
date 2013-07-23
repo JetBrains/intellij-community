@@ -123,7 +123,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     commitedChangesProvider = new HgCachingCommitedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
-    HgVersionUtil.updateHgVersion(globalSettings.getHgExecutable(), globalSettings.isRunViaBash());
   }
 
   public String getDisplayName() {
