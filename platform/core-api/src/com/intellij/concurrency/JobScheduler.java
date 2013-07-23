@@ -57,7 +57,7 @@ public abstract class JobScheduler {
           Object unwrapped;
           if (elapsed > TASK_LIMIT && (unwrapped = info(r)) != null) {
             @NonNls String msg = TASK_LIMIT + " ms execution limit failed for: " + unwrapped + "; elapsed time was " + elapsed +"ms";
-            LOG.warn(msg);
+            LOG.info(msg);
           }
         }
       }
