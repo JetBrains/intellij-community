@@ -14,17 +14,17 @@ import java.util.concurrent.TimeUnit;
  */
 public class GradleConstants {
 
-  @NotNull public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("GRADLE");
+  @NotNull @NonNls public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("GRADLE");
 
-  @NonNls public static final String EXTENSION           = "gradle";
-  @NonNls public static final String DEFAULT_SCRIPT_NAME = "build.gradle";
-  @NonNls public static final String SETTINGS_FILE_NAME  = "settings.gradle";
+  @NotNull @NonNls public static final String EXTENSION           = "gradle";
+  @NotNull @NonNls public static final String DEFAULT_SCRIPT_NAME = "build.gradle";
+  @NotNull @NonNls public static final String SETTINGS_FILE_NAME  = "settings.gradle";
 
-  public static final String SYSTEM_DIRECTORY_PATH_KEY = "GRADLE_USER_HOME";
+  @NotNull @NonNls public static final String SYSTEM_DIRECTORY_PATH_KEY = "GRADLE_USER_HOME";
 
-  @NonNls public static final String TOOL_WINDOW_TOOLBAR_PLACE = "GRADLE_SYNC_CHANGES_TOOLBAR";
+  @NotNull @NonNls public static final String TOOL_WINDOW_TOOLBAR_PLACE = "GRADLE_SYNC_CHANGES_TOOLBAR";
 
-  @NonNls public static final String HELP_TOPIC_TOOL_WINDOW = "reference.toolwindows.gradle";
+  @NotNull @NonNls public static final String HELP_TOPIC_TOOL_WINDOW = "reference.toolwindows.gradle";
 
   private GradleConstants() {
   }
