@@ -88,7 +88,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       textAndProgress.add(myText, BorderLayout.CENTER);
 
       final NonOpaquePanel progressWrapper = new NonOpaquePanel(new GridBagLayout());
-      progressWrapper.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
+      progressWrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
       final GridBagConstraints c = new GridBagConstraints();
       c.weightx = 1;
       c.weighty = 1;
@@ -278,7 +278,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   private static class MyProgressBar extends JProgressBar {
-    private static final int MAX_COMPACT_PROGRESS_SIZE = 100;
     private boolean myActive = true;
     private final boolean myCompact;
 
@@ -309,11 +308,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
     public Dimension getPreferredSize() {
       if (!myActive && myCompact) return new Dimension(0, 0);
-      Dimension preferredSize = super.getPreferredSize();
-      if (myCompact && preferredSize.width > MAX_COMPACT_PROGRESS_SIZE) {
-        return new Dimension(MAX_COMPACT_PROGRESS_SIZE, preferredSize.height);
-      }
-      return preferredSize;
+      return super.getPreferredSize();
     }
 
     public void setActive(final boolean active) {
