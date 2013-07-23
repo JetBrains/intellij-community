@@ -10,6 +10,8 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import icons.TasksIcons;
@@ -85,13 +87,12 @@ public class GitHubRepository extends BaseRepositoryImpl {
   private Task[] getIssues(@Nullable String query) throws Exception {
     List<GithubIssue> issues = GithubApiUtil.getIssues(getAuthData(), getRepoAuthor(), getRepoName(), query);
 
-    int i = 0;
-    Task[] tasks = new Task[issues.size()];
-    for (GithubIssue issue : issues) {
-      tasks[i++] = createTask(issue);
-    }
-
-    return tasks;
+    return ContainerUtil.map2Array(issues, Task.class, new Function<GithubIssue, Task>() {
+      @Override
+      public Task fun(GithubIssue issue) {
+        return createTask(issue);
+      }
+    });
   }
 
   @NotNull
@@ -179,15 +180,13 @@ public class GitHubRepository extends BaseRepositoryImpl {
   private Comment[] fetchComments(final long id) throws Exception {
     List<GithubIssueComment> result = GithubApiUtil.getIssueComments(getAuthData(), getRepoAuthor(), getRepoName(), id);
 
-    int i = 0;
-    Comment[] comments = new Comment[result.size()];
-    for (GithubIssueComment comment : result) {
-      comments[i++] =
-        new GitHubComment(comment.getCreatedAt(), comment.getUser().getLogin(), comment.getBody(), comment.getUser().getGravatarId(),
-                          comment.getUser().getHtmlUrl());
-    }
-
-    return comments;
+    return ContainerUtil.map2Array(result, Comment.class, new Function<GithubIssueComment, Comment>() {
+      @Override
+      public Comment fun(GithubIssueComment comment) {
+        return new GitHubComment(comment.getCreatedAt(), comment.getUser().getLogin(), comment.getBody(), comment.getUser().getGravatarId(),
+                                 comment.getUser().getHtmlUrl());
+      }
+    });
   }
 
   @Nullable

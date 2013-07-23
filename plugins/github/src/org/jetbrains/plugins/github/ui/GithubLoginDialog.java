@@ -33,11 +33,10 @@ public class GithubLoginDialog extends DialogWrapper {
     myGithubLoginPanel.setAuthType(mySettings.getAuthType());
 
     if (mySettings.isSavePasswordMakesSense()) {
-      myGithubLoginPanel.setSavePasswordSelected(mySettings.getSavePasswordDefault());
+      myGithubLoginPanel.setSavePasswordSelected(mySettings.isSavePassword());
     }
     else {
       myGithubLoginPanel.setSavePasswordVisibleEnabled(false);
-      myGithubLoginPanel.setSavePasswordSelected(true);
     }
 
     setTitle("Login to GitHub");
@@ -72,7 +71,7 @@ public class GithubLoginDialog extends DialogWrapper {
       GithubUtil.checkAuthData(auth, myGithubLoginPanel.getLogin());
       saveCredentials(auth);
       if (mySettings.isSavePasswordMakesSense()) {
-        mySettings.setSavePasswordDefault(myGithubLoginPanel.isSavePasswordSelected());
+        mySettings.setSavePassword(myGithubLoginPanel.isSavePasswordSelected());
       }
       super.doOKAction();
     }

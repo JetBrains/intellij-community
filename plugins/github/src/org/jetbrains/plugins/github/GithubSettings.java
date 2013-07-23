@@ -106,7 +106,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return myState.PRIVATE_GIST;
   }
 
-  public boolean getSavePasswordDefault() {
+  public boolean isSavePassword() {
     return myState.SAVE_PASSWORD;
   }
 
@@ -123,7 +123,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     myState.PRIVATE_GIST = privateGist;
   }
 
-  public void setSavePasswordDefault(final boolean savePassword) {
+  public void setSavePassword(final boolean savePassword) {
     myState.SAVE_PASSWORD = savePassword;
   }
 

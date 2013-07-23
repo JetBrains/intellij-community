@@ -147,6 +147,9 @@ public class GithubUtil {
     return false;
   }
 
+  /**
+   * @return null if user canceled login dialog. Valid GithubAuthData otherwise.
+   */
   @Nullable
   public static GithubAuthData getValidAuthData(@Nullable Project project, @NotNull ProgressIndicator indicator) {
     final GithubLoginDialog dialog = new GithubLoginDialog(project);
@@ -162,6 +165,9 @@ public class GithubUtil {
     return dialog.getAuthData();
   }
 
+  /**
+   * @return null if user canceled login dialog. Valid GithubAuthData otherwise.
+   */
   @Nullable
   public static GithubAuthData getValidBasicAuthData(@Nullable Project project, @NotNull ProgressIndicator indicator) {
     final GithubLoginDialog dialog = new GithubBasicLoginDialog(project);

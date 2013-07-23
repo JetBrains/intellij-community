@@ -84,7 +84,7 @@ public class GithubLoginPanel {
       }
     });
 
-    java.util.List<Component> order = new ArrayList<Component>();
+    List<Component> order = new ArrayList<Component>();
     order.add(myHostTextField);
     order.add(myLoginTextField);
     order.add(myAuthTypeComboBox);
