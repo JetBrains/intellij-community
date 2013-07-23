@@ -16,12 +16,9 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.browsers.chrome.ChromeSettings;
 import com.intellij.ide.browsers.firefox.FirefoxSettings;
-import com.intellij.ide.browsers.impl.DefaultUrlOpener;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -187,46 +184,6 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
 
   public static BrowsersConfiguration getInstance() {
     return ServiceManager.getService(BrowsersConfiguration.class);
-  }
-
-  /** @deprecated use {@link DefaultUrlOpener} (to remove in IDEA 13) */
-  @SuppressWarnings("unused")
-  public static void launchBrowser(final @Nullable BrowserFamily family, @NotNull final String url) {
-    if (family == null) {
-      BrowserUtil.launchBrowser(url);
-    }
-    else {
-      for (UrlOpener urlOpener : UrlOpener.EP_NAME.getExtensions()) {
-        if (urlOpener.openUrl(family, url)) {
-          return;
-        }
-      }
-    }
-  }
-
-  /** @deprecated use {@link DefaultUrlOpener} (to remove in IDEA 13) */
-  @SuppressWarnings("unused")
-  public static void launchBrowser(final @NotNull BrowserFamily family, @NotNull final String url, String... parameters) {
-    DefaultUrlOpener.launchBrowser(family, url, false, parameters);
-  }
-
-  /** @deprecated use {@link DefaultUrlOpener} (to remove in IDEA 13) */
-  @SuppressWarnings("unused")
-  public static void launchBrowser(final @NotNull BrowserFamily family,
-                                   @Nullable final String url,
-                                   final boolean forceOpenNewInstanceOnMac,
-                                   String... parameters) {
-    DefaultUrlOpener.launchBrowser(family, url, forceOpenNewInstanceOnMac, parameters);
-  }
-
-  /** @deprecated use {@link DefaultUrlOpener} (to remove in IDEA 13) */
-  @SuppressWarnings("unused")
-  public static void launchBrowser(final @NotNull BrowserFamily family,
-                                   @NotNull final String url,
-                                   final boolean forceOpenNewInstanceOnMac,
-                                   final Condition<String> browserSpecificParametersFilter,
-                                   String... parameters) {
-    DefaultUrlOpener.launchBrowser(family, url, forceOpenNewInstanceOnMac, parameters);
   }
 
   @Nullable
