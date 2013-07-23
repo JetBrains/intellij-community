@@ -26,4 +26,14 @@ public abstract class CustomPortServerManagerBase extends CustomPortServerManage
   public void setManager(@Nullable CustomPortService manager) {
     this.manager = manager;
   }
+
+  public boolean isBound() {
+    return manager != null && manager.isBound();
+  }
+
+  public void portChanged() {
+    if (manager != null) {
+      manager.rebind();
+    }
+  }
 }
