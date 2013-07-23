@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.popup.NotificationPopup;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,7 +126,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
           @Override
           protected void updateOnSubmit() {
             super.updateOnSubmit();
-            myIdeFatal.setState(computeState());
+            updateState(computeState());
           }
         };
 
@@ -137,6 +138,16 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
           myDialog.close(0);
           disposeDialog(myDialog);
         }
+      }
+    });
+  }
+
+  private void updateState(final IdeFatalErrorsIcon.State state) {
+    myIdeFatal.setState(state);
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        setVisible(state != IdeFatalErrorsIcon.State.NoErrors);
       }
     });
   }
@@ -198,7 +209,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
 
   void updateFatalErrorsIcon() {
     final IdeFatalErrorsIcon.State state = computeState();
-    myIdeFatal.setState(state);
+    updateState(state);
 
     if (state == IdeFatalErrorsIcon.State.NoErrors) {
       myNotificationPopupAlreadyShown = false;
