@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,18 +78,29 @@ public class GradleInstallationManager {
       return null;
     }
 
+    List<File> result = ContainerUtilRt.newArrayList();
+    
     File libs = new File(gradleHome, "lib");
     File[] files = libs.listFiles();
-    if (files == null) {
-      return null;
-    }
-    List<File> result = new ArrayList<File>();
-    for (File file : files) {
-      if (file.getName().endsWith(".jar")) {
-        result.add(file);
+    if (files != null) {
+      for (File file : files) {
+        if (file.getName().endsWith(".jar")) {
+          result.add(file);
+        }
       }
     }
-    return result;
+
+    File plugins = new File(libs, "plugins");
+    files = plugins.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        if (file.getName().endsWith(".jar")) {
+          result.add(file);
+        }
+      }
+    }
+    
+    return result.isEmpty() ? null : result;
   }
 
   /**
