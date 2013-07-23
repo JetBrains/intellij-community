@@ -41,6 +41,23 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   }
 
+  public void testOneLineCommentWrappedByRightMarginIntoMultiLine() throws Exception {
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 35;
+    doTextTest(
+      "/** Here is one-line java-doc comment */" +
+      "class Foo {\n" +
+      "}",
+      "/**\n" +
+      " * Here is one-line java-doc\n" +
+      " * comment\n" +
+      " */\n" +
+      "class Foo {\n" +
+      "}");
+  }
+
   public void testLineFeedsArePreservedDuringWrap() {
     // Inspired by IDEA-61895
     getSettings().getRootSettings().WRAP_COMMENTS = true;
@@ -587,6 +604,5 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
                   "}";
 
     doTextTest(before, after);
-
   }
 }

@@ -43,7 +43,7 @@ public class CommentFormatter {
   private final JDParser myParser;
   private final Project myProject;
 
-  public CommentFormatter(Project project) {
+  public CommentFormatter(@NotNull Project project) {
     mySettings = CodeStyleSettingsManager.getSettings(project);
     myParser = new JDParser(mySettings);
     myProject = project;
@@ -57,7 +57,7 @@ public class CommentFormatter {
     return myParser;
   }
 
-  public void process(ASTNode element) {
+  public void processComment(@Nullable ASTNode element) {
     if (!getSettings().ENABLE_JAVADOC_FORMATTING) return;
 
     PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
