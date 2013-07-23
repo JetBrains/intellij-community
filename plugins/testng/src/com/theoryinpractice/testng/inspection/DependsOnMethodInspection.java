@@ -15,9 +15,11 @@
  */
 package com.theoryinpractice.testng.inspection;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,8 +124,8 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
             problemDescriptors.add(descriptor);
 
         } else {
+            final String configAnnotation = TestNGUtil.getConfigAnnotation(PsiTreeUtil.getParentOfType(dep, PsiMethod.class));
             PsiMethod[] foundMethods = psiClass.findMethodsByName(methodName, true);
-
             if (foundMethods.length == 0) {
                 LOGGER.debug("dependsOnMethods method doesn't exist:" + methodName);
                 ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
@@ -135,11 +137,17 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
             } else {
               boolean hasTestsOrConfigs = false;
               for (PsiMethod foundMethod : foundMethods) {
-                 hasTestsOrConfigs |= TestNGUtil.hasTest(foundMethod) || TestNGUtil.hasConfig(foundMethod);
+                if (configAnnotation != null) {
+                  hasTestsOrConfigs |= AnnotationUtil.isAnnotated(foundMethod, configAnnotation, true);
+                } else {
+                  hasTestsOrConfigs |= TestNGUtil.hasTest(foundMethod);
+                }
               }
+
               if (!hasTestsOrConfigs) {
                 ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
-                                                                     "Method '" + methodName + "' is not a test or configuration method.",
+                                                                     configAnnotation == null ? "Method '" + methodName + "' is not a test or configuration method." :
+                                                                                                "Method '" + methodName + "' is not annotated with @" + configAnnotation,
                                                                      (LocalQuickFix) null,
                                                                      ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly);
                 problemDescriptors.add(descriptor);

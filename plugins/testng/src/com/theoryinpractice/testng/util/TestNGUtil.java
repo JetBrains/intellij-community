@@ -153,6 +153,15 @@ public class TestNGUtil
     return false;
   }
 
+  public static String getConfigAnnotation(PsiMethod method) {
+    if (method != null) {
+      for (String fqn : CONFIG_ANNOTATIONS_FQN) {
+        if (AnnotationUtil.isAnnotated(method, fqn, false)) return fqn;
+      }
+    }
+    return null;
+  }
+
   public static boolean isTestNGAnnotation(PsiAnnotation annotation) {
     String qName = annotation.getQualifiedName();
     if (qName.equals(TEST_ANNOTATION_FQN)) return true;
