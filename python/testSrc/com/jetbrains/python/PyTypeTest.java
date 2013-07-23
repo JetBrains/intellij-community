@@ -582,6 +582,32 @@ public class PyTypeTest extends PyTestCase {
            "    pass\n");
   }
 
+  public void testFunctionTypeAsUnificationArgument() {
+    doTest("int",
+           "def map2(f, xs):\n" +
+           "    '''\n" +
+           "    :type f: (T) -> V | None\n" +
+           "    :type xs: collections.Iterable[T] | bytes | unicode\n" +
+           "    :rtype: list[V] | bytes | unicode\n" +
+           "    '''\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = map2(lambda x: 10, ['1', '2', '3'])[0]\n");
+  }
+
+  public void testFunctionTypeAsUnificationResult() {
+    doTest("int",
+           "def f(x):\n" +
+           "    '''\n" +
+           "    :type x: T\n" +
+           "    :rtype: () -> T\n" +
+           "    '''\n" +
+           "    pass\n" +
+           "\n" +
+           "g = f(10)\n" +
+           "expr = g()\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }

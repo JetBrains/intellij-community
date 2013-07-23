@@ -108,10 +108,11 @@ public class PyTypeParser {
 
     final ForwardDeclaration<ParseResult, PyElementType> typeExpr = ForwardDeclaration.create();
 
-    final FunctionalParser<ParseResult, PyElementType> simpleType =
+    final FunctionalParser<ParseResult, PyElementType> classType =
       token(IDENTIFIER).then(many(op(".").skipThen(token(IDENTIFIER))))
         .map(new MakeSimpleType(anchor))
-        .named("simple-type");
+        .cached()
+        .named("class-type");
 
     final FunctionalParser<ParseResult, PyElementType> tupleType =
       op("(").skipThen(typeExpr).then(many(op(",").skipThen(typeExpr))).thenSkip(op(")"))
@@ -154,14 +155,13 @@ public class PyTypeParser {
         .named("type-parameter");
 
     final FunctionalParser<ParseResult, PyElementType> simpleExpr =
-      simpleType
+      classType
         .or(tupleType)
         .or(typeParameter)
-        .cached()
         .named("simple-expr");
 
     final FunctionalParser<ParseResult, PyElementType> paramExpr =
-      simpleExpr.thenSkip(op("[")).then(typeExpr).then(many(op(",").skipThen(typeExpr))).thenSkip(op("]"))
+      classType.thenSkip(op("[")).then(typeExpr).then(many(op(",").skipThen(typeExpr))).thenSkip(op("]"))
         .map(new Function<Pair<Pair<ParseResult, ParseResult>, List<ParseResult>>, ParseResult>() {
           @Override
           public ParseResult fun(Pair<Pair<ParseResult, ParseResult>, List<ParseResult>> value) {
@@ -187,7 +187,7 @@ public class PyTypeParser {
             return EMPTY_RESULT;
           }
         })
-        .or(simpleExpr.thenSkip(op("of")).then(simpleExpr)
+        .or(classType.thenSkip(op("of")).then(simpleExpr)
               .map(new Function<Pair<ParseResult, ParseResult>, ParseResult>() {
                 @Override
                 public ParseResult fun(Pair<ParseResult, ParseResult> value) {
@@ -205,7 +205,7 @@ public class PyTypeParser {
                   return EMPTY_RESULT;
                 }
               }))
-        .or(simpleExpr.thenSkip(op("from")).then(simpleExpr).thenSkip(op("to")).then(simpleExpr)
+        .or(classType.thenSkip(op("from")).then(simpleExpr).thenSkip(op("to")).then(simpleExpr)
               .map(new Function<Pair<Pair<ParseResult, ParseResult>, ParseResult>, ParseResult>() {
                 @Override
                 public ParseResult fun(Pair<Pair<ParseResult, ParseResult>, ParseResult> value) {
@@ -222,11 +222,45 @@ public class PyTypeParser {
                   return EMPTY_RESULT;
                 }
               }))
-        .or(simpleExpr)
         .named("param-expr");
 
+    final FunctionalParser<ParseResult, PyElementType> callableExpr =
+      op("(").skipThen(maybe(typeExpr.then(many(op(",").skipThen(typeExpr))))).thenSkip(op(")")).thenSkip(op("->")).then(typeExpr)
+        .map(
+          new Function<Pair<Pair<ParseResult, List<ParseResult>>, ParseResult>, ParseResult>() {
+            @Override
+            public ParseResult fun(Pair<Pair<ParseResult, List<ParseResult>>, ParseResult> value) {
+              final List<PyType> parameterTypes = new ArrayList<PyType>();
+              final ParseResult returnResult = value.getSecond();
+              ParseResult result;
+              final Pair<ParseResult, List<ParseResult>> firstPair = value.getFirst();
+              if (firstPair != null) {
+                final ParseResult first = firstPair.getFirst();
+                final List<ParseResult> second = firstPair.getSecond();
+                result = first;
+                parameterTypes.add(first.getType());
+                for (ParseResult r : second) {
+                  result = result.merge(r);
+                  parameterTypes.add(r.getType());
+                }
+                result = result.merge(returnResult);
+              }
+              else {
+                result = returnResult;
+              }
+              return result.withType(new PyCallableTypeImpl(parameterTypes, returnResult.getType()));
+            }
+          })
+        .named("callable-expr");
+
+    final FunctionalParser<ParseResult, PyElementType> singleExpr =
+      paramExpr
+        .or(callableExpr)
+        .or(simpleExpr)
+        .named("single-expr");
+
     final FunctionalParser<ParseResult, PyElementType> unionExpr =
-      paramExpr.then(many(op("or").or(op("|")).skipThen(paramExpr)))
+      singleExpr.then(many(op("or").or(op("|")).skipThen(singleExpr)))
         .map(new Function<Pair<ParseResult, List<ParseResult>>, ParseResult>() {
           @Override
           public ParseResult fun(Pair<ParseResult, List<ParseResult>> value) {

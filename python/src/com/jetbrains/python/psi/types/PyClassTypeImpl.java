@@ -278,6 +278,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
+  @Override
+  public List<PyType> getParameterTypes(@NotNull TypeEvalContext context) {
+    return null;
+  }
+
+  @Nullable
   private static PsiElement resolveClassMember(@NotNull PyClass cls,
                                                boolean isDefinition,
                                                @NotNull String name,
