@@ -74,7 +74,6 @@ public class MavenArtifactSearchPanel extends JPanel {
   }
 
   private void initComponents(String initialText) {
-    mySearchField = new JTextField(initialText);
     myResultList = new Tree();
     myResultList.getExpandableItemsHandler().setEnabled(false);
     myResultList.getEmptyText().setText("Loading...");
@@ -85,6 +84,30 @@ public class MavenArtifactSearchPanel extends JPanel {
                                                   : new MyArtifactCellRenderer(myResultList);
     myResultList.setCellRenderer(renderer);
     myResultList.setRowHeight(renderer.getPreferredSize().height);
+
+    mySearchField = new JTextField(initialText);
+    mySearchField.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        int d;
+        if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+          d = 1;
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_UP) {
+          d = -1;
+        }
+        else {
+          return;
+        }
+
+        int row = myResultList.getSelectionModel().getLeadSelectionRow();
+        row += d;
+
+        if (row >=0 && row < myResultList.getRowCount()) {
+          myResultList.setSelectionRow(row);
+        }
+      }
+    });
 
     setLayout(new BorderLayout());
     add(mySearchField, BorderLayout.NORTH);
