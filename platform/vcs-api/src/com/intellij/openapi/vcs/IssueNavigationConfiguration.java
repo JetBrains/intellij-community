@@ -36,11 +36,9 @@ import java.util.regex.Pattern;
 @State(
   name = "IssueNavigationConfiguration",
   storages = {
-    @Storage(
-      file = StoragePathMacros.PROJECT_FILE
-    )
-    ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
 )
 public class IssueNavigationConfiguration implements PersistentStateComponent<IssueNavigationConfiguration> {
   @NonNls private static final Pattern ourHtmlPattern =

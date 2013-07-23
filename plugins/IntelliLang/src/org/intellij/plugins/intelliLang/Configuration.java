@@ -104,8 +104,10 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
   }
   @State(
     name = Configuration.COMPONENT_NAME,
-    storages = {@Storage( file = StoragePathMacros.PROJECT_FILE),
-      @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)})
+    storages = {
+      @Storage(file = StoragePathMacros.PROJECT_FILE),
+      @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    })
   public static class Prj extends Configuration {
 
     private final Configuration myParentConfiguration;

@@ -44,9 +44,10 @@ import java.util.Set;
 @State(
   name = "ProjectRunConfigurationManager",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/runConfigurations/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter.class)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/runConfigurations/", scheme = StorageScheme.DIRECTORY_BASED,
+             stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter.class)
+  }
 )
 public class ProjectRunConfigurationManager implements ProjectComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ProjectRunConfigurationManager");

@@ -38,10 +38,9 @@ import java.util.*;
 @State(
   name="DependencyValidationManager",
   storages= {
-    @Storage(
-      file = StoragePathMacros.PROJECT_FILE
-    ), @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/scopes/", scheme = StorageScheme.DIRECTORY_BASED,
-                                       stateSplitter = DependencyValidationManagerImpl.ScopesStateSplitter.class)}
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/scopes/", scheme = StorageScheme.DIRECTORY_BASED,
+             stateSplitter = DependencyValidationManagerImpl.ScopesStateSplitter.class)}
 )
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.DependencyValidationManagerImpl");

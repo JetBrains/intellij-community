@@ -23,9 +23,9 @@ import com.intellij.openapi.components.StorageScheme;
 @State(
   name = "EclipseEmbeddedCompilerSettings",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
 )
 public class EclipseEmbeddedCompilerConfiguration extends EclipseCompilerConfiguration {
 }

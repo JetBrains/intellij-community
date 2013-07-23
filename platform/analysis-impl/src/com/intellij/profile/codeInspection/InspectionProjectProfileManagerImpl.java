@@ -49,11 +49,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @State(
   name = "InspectionProjectProfileManager",
   storages = {
-    @Storage(
-      file = StoragePathMacros.PROJECT_FILE
-    )
-    ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/inspectionProfiles/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = InspectionProjectProfileManagerImpl.ProfileStateSplitter.class)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/inspectionProfiles/", scheme = StorageScheme.DIRECTORY_BASED,
+             stateSplitter = InspectionProjectProfileManagerImpl.ProfileStateSplitter.class)
+  }
 )
 public class InspectionProjectProfileManagerImpl extends InspectionProjectProfileManager implements SeverityProvider, ProjectComponent, PersistentStateComponent<Element> {
   private final Map<String, InspectionProfileWrapper>  myName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
