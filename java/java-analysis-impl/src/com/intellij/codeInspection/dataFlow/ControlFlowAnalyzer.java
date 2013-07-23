@@ -1303,7 +1303,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void handleContract(PsiMethodCallExpression expression, MethodContract contract) {
     PsiExpression[] params = expression.getArgumentList().getExpressions();
-    assert params.length == contract.arguments.length;
+    if (params.length != contract.arguments.length) {
+      return;
+    }
 
     final int exitPoint = getEndOffset(expression);
 
