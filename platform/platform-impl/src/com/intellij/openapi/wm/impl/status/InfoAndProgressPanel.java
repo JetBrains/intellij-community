@@ -80,13 +80,10 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private final Alarm myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final AnimatedIcon myRefreshIcon;
-  private final EmptyIcon myEmptyRefreshIcon;
 
   private String myCurrentRequestor;
-  private final boolean myProgressEnabled;
   
-  public InfoAndProgressPanel(boolean progressEnabled) {
-    myProgressEnabled = progressEnabled;
+  public InfoAndProgressPanel() {
 
     setOpaque(false);
 
@@ -111,7 +108,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     //};
 
     myRefreshIcon.setPaintPassiveIcon(false);
-    myEmptyRefreshIcon = new EmptyIcon(0, myRefreshIcon.getPreferredSize().height);
 
     myRefreshAndInfoPanel.setLayout(new BorderLayout());
     myRefreshAndInfoPanel.setOpaque(false);
@@ -527,40 +523,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     removeAll();
     setLayout(new BorderLayout());
     add(myRefreshAndInfoPanel, BorderLayout.CENTER);
-
-    //long wastedTime = ProgressManagerImpl.getWastedTime();
-    //if (ApplicationManagerEx.getApplicationEx().isInternal() && wastedTime > 10 * 60 * 1000) {
-    //  JPanel wrapper = new JPanel(new BorderLayout());
-    //  wrapper.setOpaque(false);
-    //  JLabel label = new JLabel(" Wasted time: " + formatTime(wastedTime) + " ");
-    //  label.setForeground(UIUtil.getPanelBackground().darker());
-    //  label.setOpaque(false);
-    //  wrapper.add(label, BorderLayout.CENTER);
-    //  wrapper.add(myProgressIcon, BorderLayout.EAST);
-    //
-    //  long time = System.currentTimeMillis() - ApplicationManagerEx.getApplicationEx().getStartTime();
-    //  long percentage = wastedTime * 100 / time;
-    //  String period = new SimpleDateFormat("m 'min' H 'hours'").format(new Date(2000, 0, 1, 0, 0, 0).getTime() + time);
-    //
-    //  List<Pair<String, Long>> list = ProgressManagerImpl.getTimeWasters();
-    //  StringBuilder s = new StringBuilder("<html>Successfully wasted " + percentage +"% of your time in " + period  + ":<br><border>");
-    //  for (Pair<String, Long> each : list) {
-    //    s.append("<tr><td>");
-    //    s.append(each.first);
-    //    s.append(":</td><td>");
-    //    s.append(formatTime(each.second));
-    //    s.append("</td></tr>");
-    //  }
-    //  s.append("</border></html>");
-    //  wrapper.setToolTipText(s.toString());
-    //  add(wrapper, BorderLayout.EAST);
-    //} else {
-
-    if (myProgressEnabled) {
-      add(myProgressIcon, BorderLayout.EAST);
-    }
-
-    //}
 
     myProgressIcon.suspend();
     myRefreshAndInfoPanel.revalidate();
