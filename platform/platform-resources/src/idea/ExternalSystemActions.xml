@@ -10,7 +10,8 @@
     <action id="ExternalSystem.DetachProject"
             class="com.intellij.openapi.externalSystem.action.DetachExternalProjectAction"/>
     <action id="ExternalSystem.OpenConfig"
-            class="com.intellij.openapi.externalSystem.action.OpenExternalConfigAction"/>
+            class="com.intellij.openapi.externalSystem.action.OpenExternalConfigAction"
+            use-shortcut-of="EditSource"/>
 
     <!--Tool window actions-->
     <group id="ExternalSystem.ToolWindow.Toolbar">
