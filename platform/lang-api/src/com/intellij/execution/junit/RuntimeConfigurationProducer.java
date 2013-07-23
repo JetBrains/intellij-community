@@ -31,7 +31,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 
 public abstract class RuntimeConfigurationProducer implements Comparable, Cloneable {
   public static final ExtensionPointName<RuntimeConfigurationProducer> RUNTIME_CONFIGURATION_PRODUCER = ExtensionPointName.create("com.intellij.configurationProducer");
@@ -65,6 +67,12 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
         final RunnerAndConfigurationSettings configuration = result.findExistingByElement(_location, configurations, context);
         if (configuration != null) {
           result.myConfiguration = configuration;
+        } else {
+          final ArrayList<String> currentNames = new ArrayList<String>();
+          for (RunnerAndConfigurationSettings configurationSettings : configurations) {
+            currentNames.add(configurationSettings.getName());
+          }
+          result.myConfiguration.setName(RunManager.suggestUniqueName(result.myConfiguration.getName(), currentNames));
         }
       }
     }

@@ -69,8 +69,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.intellij.execution.impl.RunConfigurable.NodeKind.*;
 import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
@@ -1027,16 +1025,7 @@ class RunConfigurable extends BaseConfigurable {
         currentNames.add((String)userObject);
       }
     }
-    if (!currentNames.contains(str)) return str;
-
-    final Matcher matcher = Pattern.compile("(.*?)\\s*\\(\\d+\\)").matcher(str);
-    final String originalName = (matcher.matches()) ? matcher.group(1) : str;
-    int i = 1;
-    while (true) {
-      final String newName = String.format("%s (%d)", originalName, i);
-      if (!currentNames.contains(newName)) return newName;
-      i++;
-    }
+    return RunManager.suggestUniqueName(str, currentNames);
   }
 
   private SingleConfigurationConfigurable<RunConfiguration> createNewConfiguration(final RunnerAndConfigurationSettings settings, final DefaultMutableTreeNode node) {
