@@ -307,8 +307,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     });
   }
 
-
-
   @Override
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly) {
     final InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
@@ -316,50 +314,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     final List<Tools> localTools = new ArrayList<Tools>();
     final List<Tools> globalSimpleTools = new ArrayList<Tools>();
     initializeTools(globalTools, localTools, globalSimpleTools);
-    appendPairedInspectionsForUnfairTools(globalTools, localTools, globalSimpleTools);
+    appendPairedInspectionsForUnfairTools(globalTools, globalSimpleTools, localTools);
 
-    final List<InspectionToolWrapper> needRepeatSearchRequest = new ArrayList<InspectionToolWrapper>();
     ((RefManagerImpl)getRefManager()).initializeAnnotators();
-
-    for (Tools tools : globalTools) {
-      for (ScopeToolState state : tools.getTools()) {
-        InspectionToolWrapper toolWrapper = state.getTool();
-        GlobalInspectionTool tool = (GlobalInspectionTool)toolWrapper.getTool();
-        InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
-        try {
-          if (tool.isGraphNeeded()) {
-            ((RefManagerImpl)getRefManager()).findAllDeclarations();
-          }
-          tool.runInspection(scope, inspectionManager, this, toolPresentation);
-          if (tool.queryExternalUsagesRequests(inspectionManager, this, toolPresentation)) {
-            needRepeatSearchRequest.add(toolWrapper);
-          }
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (IndexNotReadyException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
-    }
-    for (GlobalInspectionContextExtension extension : myExtensions.values()) {
-      try {
-        extension.performPostRunActivities(needRepeatSearchRequest, this);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (IndexNotReadyException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
+    runGlobalTools(scope, inspectionManager, globalTools);
     if (runGlobalToolsOnly) return;
 
     final PsiManager psiManager = PsiManager.getInstance(getProject());
@@ -431,7 +389,53 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
   }
 
-  private void appendPairedInspectionsForUnfairTools(List<Tools> globalTools, List<Tools> localTools, List<Tools> globalSimpleTools) {
+  private void runGlobalTools(AnalysisScope scope, InspectionManagerEx inspectionManager, List<Tools> globalTools) {
+    final List<InspectionToolWrapper> needRepeatSearchRequest = new ArrayList<InspectionToolWrapper>();
+
+    for (Tools tools : globalTools) {
+      for (ScopeToolState state : tools.getTools()) {
+        InspectionToolWrapper toolWrapper = state.getTool();
+        GlobalInspectionTool tool = (GlobalInspectionTool)toolWrapper.getTool();
+        InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
+        try {
+          if (tool.isGraphNeeded()) {
+            ((RefManagerImpl)getRefManager()).findAllDeclarations();
+          }
+          tool.runInspection(scope, inspectionManager, this, toolPresentation);
+          if (tool.queryExternalUsagesRequests(inspectionManager, this, toolPresentation)) {
+            needRepeatSearchRequest.add(toolWrapper);
+          }
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (IndexNotReadyException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+    }
+    for (GlobalInspectionContextExtension extension : myExtensions.values()) {
+      try {
+        extension.performPostRunActivities(needRepeatSearchRequest, this);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (IndexNotReadyException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  private void appendPairedInspectionsForUnfairTools(@NotNull List<Tools> globalTools,
+                                                     @NotNull List<Tools> globalSimpleTools,
+                                                     @NotNull List<Tools> localTools) {
     Tools[] larray = localTools.toArray(new Tools[localTools.size()]);
     for (Tools tool : larray) {
       LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)tool.getTool();
@@ -439,19 +443,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       if (localTool instanceof PairedUnfairLocalInspectionTool) {
         String batchShortName = ((PairedUnfairLocalInspectionTool)localTool).getInspectionForBatchShortName();
         InspectionProfile currentProfile = getCurrentProfile();
-        if (currentProfile != null) {
-          InspectionToolWrapper batchInspection = currentProfile.getInspectionTool(batchShortName, getProject());
-          if (batchInspection != null) {
-            // add to existing inspections to run
-            InspectionProfileEntry batchTool = batchInspection.getTool();
-            Tools newTool = new ToolsImpl(batchInspection, batchInspection.getDefaultLevel(), true);
-            if (batchTool instanceof LocalInspectionTool) localTools.add(newTool);
-            else if (batchTool instanceof GlobalSimpleInspectionTool) globalSimpleTools.add(newTool);
-            else if (batchTool instanceof GlobalInspectionTool) globalTools.add(newTool);
-            else throw new AssertionError(batchTool);
-            myTools.put(batchShortName, newTool);
-            batchInspection.initialize(this);
-          }
+        InspectionToolWrapper batchInspection = currentProfile == null ? null : currentProfile.getInspectionTool(batchShortName, getProject());
+        if (batchInspection != null && !myTools.containsKey(batchShortName)) {
+          // add to existing inspections to run
+          InspectionProfileEntry batchTool = batchInspection.getTool();
+          Tools newTool = new ToolsImpl(batchInspection, batchInspection.getDefaultLevel(), true);
+          if (batchTool instanceof LocalInspectionTool) localTools.add(newTool);
+          else if (batchTool instanceof GlobalSimpleInspectionTool) globalSimpleTools.add(newTool);
+          else if (batchTool instanceof GlobalInspectionTool) globalTools.add(newTool);
+          else throw new AssertionError(batchTool);
+          myTools.put(batchShortName, newTool);
+          batchInspection.initialize(this);
         }
       }
     }
