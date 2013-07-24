@@ -729,6 +729,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<LocalInspectionToolWrapper> enabled = new ArrayList<LocalInspectionToolWrapper>();
     final InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(element);
     InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
+    Language language = myFile.getLanguage();
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       if (!profile.isToolEnabled(HighlightDisplayKey.find(toolWrapper.getShortName()), element)) continue;
       LocalInspectionToolWrapper wrapper = null;
@@ -736,8 +737,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         wrapper = (LocalInspectionToolWrapper)toolWrapper;
       }
       if (wrapper == null) continue;
-      if (myIgnoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(myFile, wrapper.getTool())) {
-        continue;
+      if (myIgnoreSuppressed) {
+        if (wrapper.isApplicable(language) && InspectionManagerEx.inspectionResultSuppressed(myFile, wrapper.getTool())) {
+          continue;
+        }
       }
       enabled.add(wrapper);
     }

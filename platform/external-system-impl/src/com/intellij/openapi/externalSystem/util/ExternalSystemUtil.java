@@ -17,6 +17,8 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -56,7 +58,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowEP;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -90,8 +91,8 @@ public class ExternalSystemUtil {
   
   @NotNull private static final Map<String, String> RUNNER_IDS = ContainerUtilRt.newHashMap();
   static {
-    RUNNER_IDS.put(ToolWindowId.RUN, ExternalSystemConstants.RUNNER_ID);
-    RUNNER_IDS.put(ToolWindowId.DEBUG, ExternalSystemConstants.DEBUG_RUNNER_ID);
+    RUNNER_IDS.put(DefaultRunExecutor.EXECUTOR_ID, ExternalSystemConstants.RUNNER_ID);
+    RUNNER_IDS.put(DefaultDebugExecutor.EXECUTOR_ID, ExternalSystemConstants.DEBUG_RUNNER_ID);
   }
 
   private ExternalSystemUtil() {

@@ -468,6 +468,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         return true;
       }
     }
+    if (PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null) {
+      return true;
+    }
     return false;
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -85,6 +86,10 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myTool != null;
   }
 
+  /**
+   * @see #applyToDialects()
+   * @see #isApplicable(com.intellij.lang.Language)
+   */
   @Nullable
   public String getLanguage() {
     return myEP == null ? null : myEP.language;
@@ -92,6 +97,11 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   public boolean applyToDialects() {
     return myEP != null && myEP.applyToDialects;
+  }
+
+  public boolean isApplicable(@NotNull Language language) {
+    String langId = getLanguage();
+    return langId == null || language.getID().equals(langId) || applyToDialects() && language.isKindOf(langId);
   }
 
   @NotNull
