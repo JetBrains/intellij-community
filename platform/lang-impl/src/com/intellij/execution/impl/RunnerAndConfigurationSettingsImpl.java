@@ -368,9 +368,14 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   @Override
   public RunnerSettings getRunnerSettings(@NotNull ProgramRunner runner) {
     if (!myRunnerSettings.containsKey(runner)) {
-      RunnerSettings runnerSettings = createRunnerSettings(runner);
-      myRunnerSettings.put(runner, runnerSettings);
-      return runnerSettings;
+      try {
+        RunnerSettings runnerSettings = createRunnerSettings(runner);
+        myRunnerSettings.put(runner, runnerSettings);
+        return runnerSettings;
+      }
+      catch (AbstractMethodError e) {
+        LOG.error("Update failed for: " + myConfiguration.getType().getDisplayName(), e);
+      }
     }
     return myRunnerSettings.get(runner);
   }
