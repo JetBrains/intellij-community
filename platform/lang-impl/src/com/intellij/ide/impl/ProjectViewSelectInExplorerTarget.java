@@ -16,7 +16,7 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInContext;
-import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.SelectInTargetBase;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.actions.ShowFilePathAction;
@@ -28,7 +28,7 @@ import java.io.File;
 /**
  * @author Roman.Chernyatchik
  */
-public class ProjectViewSelectInExplorerTarget implements SelectInTarget, DumbAware {
+public class ProjectViewSelectInExplorerTarget extends SelectInTargetBase implements DumbAware {
   @Override
   public boolean canSelect(SelectInContext context) {
     VirtualFile file = ShowFilePathAction.findLocalFile(context.getVirtualFile());
@@ -41,16 +41,6 @@ public class ProjectViewSelectInExplorerTarget implements SelectInTarget, DumbAw
     if (file != null) {
       ShowFilePathAction.openFile(new File(file.getPresentableUrl()));
     }
-  }
-
-  @Override
-  public String getToolWindowId() {
-    return null;
-  }
-
-  @Override
-  public String getMinorViewId() {
-    return null;
   }
 
   @Override

@@ -725,9 +725,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         myFinalRunnable = new Runnable() {
           @Override
           public void run() {
-            action.actionPerformed(
-              new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
-                                ActionManager.getInstance(), 0));
+            action.actionPerformed(new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(), ActionManager.getInstance(), 0));
           }
         };
         return FINAL_CHOICE;
