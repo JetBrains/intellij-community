@@ -31,7 +31,7 @@ import com.intellij.xml.util.HtmlUtil;
 
 import java.awt.event.InputEvent;
 
-public class OpenFileInBrowserAction extends DumbAwareAction {
+public class SelectInDefaultBrowserTarget extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.browsers.OpenFileInBrowserAction");
 
   @Override
