@@ -236,6 +236,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
 
     builder.advanceLexer();
+    reportParseStatementError(builder, firstToken);
+  }
+
+  protected void reportParseStatementError(PsiBuilder builder, IElementType firstToken) {
     if (firstToken == PyTokenTypes.INCONSISTENT_DEDENT) {
       builder.error("Unindent does not match any outer indentation level");
     }
