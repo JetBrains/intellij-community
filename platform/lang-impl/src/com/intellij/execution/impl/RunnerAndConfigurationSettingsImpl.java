@@ -374,7 +374,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
         return runnerSettings;
       }
       catch (AbstractMethodError e) {
-        LOG.error("Update failed for: " + myConfiguration.getType().getDisplayName(), e);
+        LOG.error("Update failed for: " + myConfiguration.getType().getDisplayName() + ", runner: " + runner.getRunnerId(), e);
       }
     }
     return myRunnerSettings.get(runner);
