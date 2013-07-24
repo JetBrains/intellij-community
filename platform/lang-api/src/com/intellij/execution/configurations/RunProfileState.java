@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * variables, working directory etc.
  *
  * @see CommandLineState
+ * @see RunConfiguration#getState(com.intellij.execution.Executor, com.intellij.execution.runners.ExecutionEnvironment)
  */
 public interface RunProfileState {
   /**

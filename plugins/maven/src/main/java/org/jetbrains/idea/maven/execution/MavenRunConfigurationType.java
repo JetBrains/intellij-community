@@ -185,11 +185,11 @@ public class MavenRunConfigurationType implements ConfigurationType {
                                                                                          project);
 
     ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(DefaultRunExecutor.EXECUTOR_ID);
-    ExecutionEnvironment env = new ExecutionEnvironment(runner, configSettings, project);
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, configSettings, project);
 
     try {
-      runner.execute(executor, env, callback);
+      runner.execute(env, callback);
     }
     catch (ExecutionException e) {
       MavenUtil.showError(project, "Failed to execute Maven goal", e);

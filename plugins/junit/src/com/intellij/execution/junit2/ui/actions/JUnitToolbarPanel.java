@@ -18,11 +18,10 @@ package com.intellij.execution.junit2.ui.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestsUIUtil;
@@ -42,19 +41,16 @@ public class JUnitToolbarPanel extends ToolbarPanel {
   @NonNls protected static final String TEST_SUITE_CLASS_NAME = "junit.framework.TestSuite";
 
   public JUnitToolbarPanel(final TestConsoleProperties properties,
-                      final RunnerSettings runnerSettings,
-                      final ConfigurationPerRunnerSettings configurationSettings,
-                      final JComponent parentComponent) {
-    super(properties, runnerSettings, configurationSettings, parentComponent);
+                           final ExecutionEnvironment environment,
+                           final JComponent parentComponent) {
+    super(properties, environment, parentComponent);
   }
 
   @Override
   protected void appendAdditionalActions(DefaultActionGroup actionGroup,
                                          TestConsoleProperties properties,
-                                         RunnerSettings runnerSettings,
-                                         ConfigurationPerRunnerSettings configurationSettings,
-                                         JComponent parent) {
-    super.appendAdditionalActions(actionGroup, properties, runnerSettings, configurationSettings, parent);
+                                         ExecutionEnvironment environment, JComponent parent) {
+    super.appendAdditionalActions(actionGroup, properties, environment, parent);
     actionGroup.addAction(new ToggleBooleanProperty(
       ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name"),
       null,

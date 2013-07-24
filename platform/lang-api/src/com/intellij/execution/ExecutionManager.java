@@ -43,10 +43,17 @@ public abstract class ExecutionManager {
 
   public abstract ProcessHandler[] getRunningProcesses();
 
+  /**
+   * @deprecated  use {@link #startRunProfile(RunProfileStarter, com.intellij.execution.configurations.RunProfileState, com.intellij.execution.runners.ExecutionEnvironment)}
+   */
   public abstract void startRunProfile(@NotNull RunProfileStarter starter,
                                        @NotNull RunProfileState state,
                                        @NotNull Project project,
                                        @NotNull Executor executor,
+                                       @NotNull ExecutionEnvironment env);
+
+  public abstract void startRunProfile(@NotNull RunProfileStarter starter,
+                                       @NotNull RunProfileState state,
                                        @NotNull ExecutionEnvironment env);
 
   public abstract void restartRunProfile(@NotNull Project project,
@@ -62,9 +69,7 @@ public abstract class ExecutionManager {
                                          @Nullable RunnerAndConfigurationSettings configuration,
                                          @Nullable RunContentDescriptor currentDescriptor);
 
-  public abstract void restartRunProfile(@NotNull Project project,
-                                         @NotNull Executor executor,
-                                         @Nullable ProgramRunner runner,
+  public abstract void restartRunProfile(@Nullable ProgramRunner runner,
                                          @NotNull ExecutionEnvironment environment,
                                          @Nullable RunContentDescriptor currentDescriptor);
 }

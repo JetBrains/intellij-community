@@ -51,10 +51,6 @@ public abstract class CommandLineState implements RunProfileState {
     return myEnvironment.getRunnerSettings();
   }
 
-  public ConfigurationPerRunnerSettings getConfigurationSettings() {
-    return myEnvironment.getConfigurationSettings();
-  }
-
   @NotNull
   public ExecutionTarget getExecutionTarget() {
     return myEnvironment.getExecutionTarget();

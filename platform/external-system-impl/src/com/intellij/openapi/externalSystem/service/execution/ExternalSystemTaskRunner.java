@@ -17,7 +17,6 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -50,15 +49,14 @@ public class ExternalSystemTaskRunner extends GenericProgramRunner {
   @Nullable
   @Override
   protected RunContentDescriptor doExecute(Project project,
-                                           Executor executor,
                                            RunProfileState state,
                                            RunContentDescriptor contentToReuse,
                                            ExecutionEnvironment env) throws ExecutionException
   {
-    ExecutionResult executionResult = state.execute(executor, this);
+    ExecutionResult executionResult = state.execute(env.getExecutor(), this);
     if (executionResult == null) return null;
 
-    final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, executor, executionResult, env);
+    final RunContentBuilder contentBuilder = new RunContentBuilder(this, executionResult, env);
     return contentBuilder.showRunContent(contentToReuse);
   }
 }

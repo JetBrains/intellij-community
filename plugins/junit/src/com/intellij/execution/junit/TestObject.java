@@ -88,7 +88,7 @@ public abstract class TestObject implements JavaCommandLine {
   protected JavaParameters myJavaParameters;
   private final Project myProject;
   protected final JUnitConfiguration myConfiguration;
-  private final ExecutionEnvironment myEnvironment;
+  protected final ExecutionEnvironment myEnvironment;
   protected File myTempFile = null;
   protected File myWorkingDirsFile = null;
   public File myListenersFile;
@@ -129,14 +129,6 @@ public abstract class TestObject implements JavaCommandLine {
 
   public RunnerSettings getRunnerSettings() {
     return myEnvironment.getRunnerSettings();
-  }
-
-  public ConfigurationPerRunnerSettings getConfigurationSettings() {
-    return myEnvironment.getConfigurationSettings();
-  }
-
-  public String getRunnerId() {
-    return myEnvironment.getRunnerId();
   }
 
   public abstract RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration);
@@ -274,7 +266,7 @@ public abstract class TestObject implements JavaCommandLine {
     }
     final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
     final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration, executor);
-    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, runnerSettings, getConfigurationSettings(), unboundOutputRoot);
+    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, myEnvironment, unboundOutputRoot);
     consoleView.initUI();
     consoleView.attachToProcess(handler);
     unboundOutputRoot.setPrinter(consoleView.getPrinter());
@@ -383,8 +375,7 @@ public abstract class TestObject implements JavaCommandLine {
     BaseTestsOutputConsoleView smtConsoleView = SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(
       JUNIT_TEST_FRAMEWORK_NAME,
       testConsoleProperties,
-      myEnvironment.getRunnerSettings(),
-      myEnvironment.getConfigurationSettings(), null);
+      myEnvironment, null);
 
 
     Disposer.register(myProject, smtConsoleView);

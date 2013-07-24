@@ -17,8 +17,6 @@
 package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.actions.JUnitToolbarPanel;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
@@ -27,6 +25,7 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.TestTreeView;
@@ -64,9 +63,9 @@ public class ConsolePanel extends TestResultsPanel {
   public ConsolePanel(final JComponent console,
                       final TestsOutputConsolePrinter printer,
                       final JUnitConsoleProperties properties,
-                      final RunnerSettings runnerSettings,
-                      final ConfigurationPerRunnerSettings configurationSettings, AnAction[] consoleActions) {
-    super(console, consoleActions, properties, runnerSettings, configurationSettings, PROPORTION_PROPERTY, DEFAULT_PROPORTION);
+                      final ExecutionEnvironment environment,
+                      AnAction[] consoleActions) {
+    super(console, consoleActions, properties, environment, PROPORTION_PROPERTY, DEFAULT_PROPORTION);
     myPrinter = printer;
   }
 
@@ -81,7 +80,7 @@ public class ConsolePanel extends TestResultsPanel {
   }
 
   protected ToolbarPanel createToolbarPanel() {
-    return new JUnitToolbarPanel(myProperties, myRunnerSettings, myConfigurationSettings, this);
+    return new JUnitToolbarPanel(myProperties, myEnvironment, this);
   }
 
   protected TestStatusLine createStatusLine() {
