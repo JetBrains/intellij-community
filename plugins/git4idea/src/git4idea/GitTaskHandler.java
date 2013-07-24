@@ -66,7 +66,7 @@ public class GitTaskHandler extends VcsTaskHandler {
     MultiMap<String, String> map = new MultiMap<String, String>();
     if (!problems.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode() ||
-          Messages.showDialog("<html>The following repositories already have specified branch <b>" + taskName + "</b>:<br>" +
+          Messages.showDialog(myProject, "<html>The following repositories already have specified branch <b>" + taskName + "</b>:<br>" +
                                   StringUtil.join(problems, "<br>") + ".<br>" +
                                   "Do you want to checkout existing branch?", "Branch Already Exists",
                                   new String[]{Messages.YES_BUTTON, Messages.NO_BUTTON}, 0,
