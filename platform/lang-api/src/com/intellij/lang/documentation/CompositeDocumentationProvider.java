@@ -132,11 +132,15 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     for ( DocumentationProvider provider : myProviders ) {
       String result = provider.generateDoc(element,originalElement);
-      if ( result != null ) return result;
+      if ( result != null ) {
+        return result;
+      }
     }
     for (DocumentationProvider provider : Extensions.getExtensions(EP_NAME)) {
       final String result = provider.generateDoc(element, originalElement);
-      if (result != null) return result;
+      if (result != null) {
+        return result;
+      }
     }
     return null;
   }

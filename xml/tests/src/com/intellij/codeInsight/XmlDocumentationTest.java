@@ -162,6 +162,10 @@ public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
     }
   }
 
+  public void testScopeAttribute() throws Exception {
+    doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml","spring-beans.xsd");
+  }
+
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/xml/tests/testData/documentation/";
