@@ -16,7 +16,6 @@
 package com.intellij.core;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -30,6 +29,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 
 /**
  * @author yole
@@ -75,7 +77,7 @@ public class CoreJavaFileManager implements JavaFileManager {
     final VirtualFile file = dir.getVirtualFile();
     for (VirtualFile root : myClasspath) {
       if (VfsUtilCore.isAncestor(root, file, false)) {
-        String relativePath = FileUtil.getRelativePath(root.getPath(), file.getPath(), '/');
+        String relativePath = getRelativePath(toSystemIndependentName(root.getPath()), toSystemIndependentName(file.getPath()), '/');
         if (relativePath == null) continue;
         return new PsiPackageImpl(myPsiManager, relativePath.replace('/', '.'));
       }
