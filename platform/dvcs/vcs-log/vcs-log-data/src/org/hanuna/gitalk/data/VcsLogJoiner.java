@@ -16,6 +16,7 @@
 package org.hanuna.gitalk.data;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
@@ -57,8 +58,7 @@ public class VcsLogJoiner {
     Set<CommitParents> allNewsCommits = getAllNewCommits(unsafePartSavedLog, firstBlock);
     unsafePartSavedLog = new NewCommitIntegrator(unsafePartSavedLog, allNewsCommits).getResultList();
 
-    // TODO: concatenation unsafePartSaveLog & old part
-    return firstBlock;
+    return ContainerUtil.concat(unsafePartSavedLog, savedLog.subList(unsafeBlockSize, savedLog.size()));
   }
 
   /**
