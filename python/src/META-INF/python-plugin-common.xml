@@ -835,6 +835,7 @@
 
     <lang.elementManipulator forClass="com.jetbrains.web2py.templates.psi.Web2PyExtendIncludeTag"
                              implementationClass="com.jetbrains.web2py.templates.ref.Web2PyStringLiteralManipulator"/>
+    <annotator language="Web2Py" implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyAnnotator"/>
 
     <!-- Chameleon -->
     <fileTypeFactory implementation="com.jetbrains.pyramid.templates.file.ChameleonFileTypeFactory"/>
