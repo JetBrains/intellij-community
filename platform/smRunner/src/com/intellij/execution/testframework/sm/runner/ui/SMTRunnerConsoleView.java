@@ -15,10 +15,9 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -36,15 +35,13 @@ import java.util.List;
  * @author: Roman Chernyatchik
  */
 public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
+  private final ExecutionEnvironment myEnvironment;
   private SMTestRunnerResultsForm myResultsViewer;
-  private final RunnerSettings myRunnerSettings;
-  private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
   @Nullable private final String mySplitterProperty;
   private final List<AttachToProcessListener> myAttachToProcessListeners = ContainerUtil.createEmptyCOWList();
 
-  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
-                              final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
-    this(consoleProperties, runnerSettings, configurationPerRunnerSettings, null);
+  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final ExecutionEnvironment environment) {
+    this(consoleProperties, environment, null);
   }
 
   /**
@@ -53,12 +50,11 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
    * @param configurationPerRunnerSettings
    * @param splitterProperty               Key to store(project level) latest value of testTree/consoleTab splitter. E.g. "RSpec.Splitter.Proportion"
    */
-  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
-                              final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
+  public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties,
+                              final ExecutionEnvironment environment,
                               @Nullable final String splitterProperty) {
     super(consoleProperties, null);
-    myRunnerSettings = runnerSettings;
-    myConfigurationPerRunnerSettings = configurationPerRunnerSettings;
+    myEnvironment = environment;
     mySplitterProperty = splitterProperty;
   }
 
@@ -68,7 +64,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
                                                   getConsole().getComponent(),
                                                   getConsole().createConsoleActions(),
                                                   myProperties,
-                                                  myRunnerSettings, myConfigurationPerRunnerSettings,
+                                                  myEnvironment,
                                                   mySplitterProperty);
     return myResultsViewer;
   }

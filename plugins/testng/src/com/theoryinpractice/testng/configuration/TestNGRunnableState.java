@@ -88,7 +88,6 @@ import java.net.UnknownHostException;
 public class TestNGRunnableState extends JavaCommandLineState {
   private static final Logger LOG = Logger.getInstance("TestNG Runner");
   private static final String TESTNG_TEST_FRAMEWORK_NAME = "TestNG";
-  private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
   private final TestNGConfiguration config;
   private final RunnerSettings runnerSettings;
   protected final IDEARemoteTestRunnerClient client;
@@ -101,7 +100,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
   public TestNGRunnableState(ExecutionEnvironment environment, TestNGConfiguration config) {
     super(environment);
     this.runnerSettings = environment.getRunnerSettings();
-    myConfigurationPerRunnerSettings = environment.getConfigurationSettings();
     this.config = config;
     //TODO need to narrow this down a bit
     //setModulesToCompile(ModuleManager.getInstance(config.getProject()).getModules());
@@ -131,8 +129,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     }
     OSProcessHandler processHandler = startProcess();
     final TreeRootNode unboundOutputRoot = new TreeRootNode();
-    final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings, unboundOutputRoot,
-                                                            executor);
+    final TestNGConsoleView console = new TestNGConsoleView(config, getEnvironment(), unboundOutputRoot, executor);
     console.initUI();
     unboundOutputRoot.setPrinter(console.getPrinter());
     Disposer.register(console, unboundOutputRoot);
@@ -235,8 +232,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     final BaseTestsOutputConsoleView smtConsoleView = SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(
       TESTNG_TEST_FRAMEWORK_NAME,
       testConsoleProperties,
-      getEnvironment().getRunnerSettings(),
-      getEnvironment().getConfigurationSettings(), null);
+      getEnvironment(), null);
 
 
     Disposer.register(getEnvironment().getProject(), smtConsoleView);

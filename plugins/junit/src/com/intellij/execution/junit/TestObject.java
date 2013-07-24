@@ -131,10 +131,6 @@ public abstract class TestObject implements JavaCommandLine {
     return myEnvironment.getRunnerSettings();
   }
 
-  public ConfigurationPerRunnerSettings getConfigurationSettings() {
-    return myEnvironment.getConfigurationSettings();
-  }
-
   public abstract RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration);
 
   public abstract boolean isConfiguredByElement(JUnitConfiguration configuration,
@@ -270,7 +266,7 @@ public abstract class TestObject implements JavaCommandLine {
     }
     final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
     final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration, executor);
-    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, runnerSettings, getConfigurationSettings(), unboundOutputRoot);
+    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, myEnvironment, unboundOutputRoot);
     consoleView.initUI();
     consoleView.attachToProcess(handler);
     unboundOutputRoot.setPrinter(consoleView.getPrinter());
@@ -379,8 +375,7 @@ public abstract class TestObject implements JavaCommandLine {
     BaseTestsOutputConsoleView smtConsoleView = SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(
       JUNIT_TEST_FRAMEWORK_NAME,
       testConsoleProperties,
-      myEnvironment.getRunnerSettings(),
-      myEnvironment.getConfigurationSettings(), null);
+      myEnvironment, null);
 
 
     Disposer.register(myProject, smtConsoleView);
