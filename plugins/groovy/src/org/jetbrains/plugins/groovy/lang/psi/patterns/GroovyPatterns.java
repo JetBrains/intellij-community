@@ -67,7 +67,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
     return PsiJavaPatterns.psiMethod().with(new PatternCondition<PsiMethod>("GrLightMethodBuilder") {
       @Override
       public boolean accepts(@NotNull PsiMethod method, ProcessingContext context) {
-        return method instanceof GrLightMethodBuilder && key.equals(((GrLightMethodBuilder)method).getMethodKind());
+        return GrLightMethodBuilder.checkKind(method, key);
       }
     });
   }
