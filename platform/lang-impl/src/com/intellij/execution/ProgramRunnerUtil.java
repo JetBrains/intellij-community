@@ -98,7 +98,7 @@ public class ProgramRunnerUtil {
     }
 
     try {
-      runner.execute(executor, new ExecutionEnvironmentBuilder().setRunnerAndSettings(runner, configuration).setTarget(target)
+      runner.execute(new ExecutionEnvironmentBuilder().setRunnerAndSettings(runner, configuration).setTarget(target)
         .setContentToReuse(contentToReuse).setProject(project).assignNewId().build());
     }
     catch (ExecutionException e) {

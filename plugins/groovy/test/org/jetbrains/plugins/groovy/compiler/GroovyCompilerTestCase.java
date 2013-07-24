@@ -219,12 +219,12 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
                                           ProgramRunner runner,
                                           RunProfile configuration) throws ExecutionException {
     final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass);
-    final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, getProject(), null);
+    final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, executor, getProject(), null);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
     final AtomicReference<ProcessHandler> processHandler = new AtomicReference<ProcessHandler>();
-    runner.execute(executor, environment, new ProgramRunner.Callback() {
+    runner.execute(environment, new ProgramRunner.Callback() {
       @Override
       public void processStarted(final RunContentDescriptor descriptor) {
         disposeOnTearDown(new Disposable() {

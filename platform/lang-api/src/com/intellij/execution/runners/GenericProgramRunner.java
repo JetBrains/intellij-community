@@ -19,7 +19,6 @@ package com.intellij.execution.runners;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -58,12 +57,12 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> impl
   }
 
   @Override
-  public void execute(@NotNull final Executor executor, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
-    execute(executor, environment, null);
+  public void execute(@NotNull final ExecutionEnvironment environment) throws ExecutionException {
+    execute(environment, null);
   }
 
   @Override
-  public void execute(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env, @Nullable final Callback callback)
+  public void execute(@NotNull final ExecutionEnvironment env, @Nullable final Callback callback)
       throws ExecutionException {
 
     final Project project = env.getProject();
@@ -71,7 +70,7 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> impl
       return;
     }
 
-    final RunProfileState state = env.getState(executor);
+    final RunProfileState state = env.getState();
     if (state == null) {
       return;
     }
@@ -85,19 +84,19 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> impl
                                           @NotNull RunProfileState state,
                                           @Nullable RunContentDescriptor contentToReuse,
                                           @NotNull ExecutionEnvironment env) throws ExecutionException {
-        final RunContentDescriptor descriptor = doExecute(project, executor, state, contentToReuse, env);
+        final RunContentDescriptor descriptor = doExecute(project, state, contentToReuse, env);
         if (descriptor != null) {
           descriptor.setExecutionId(env.getExecutionId());
         }
         if (callback != null) callback.processStarted(descriptor);
         return descriptor;
       }
-    }, state, project, executor, env);
+    }, state, project, env.getExecutor(), env);
   }
 
   @Nullable
-  protected abstract RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state,
-                                        final RunContentDescriptor contentToReuse,
-                                        final ExecutionEnvironment env) throws ExecutionException;
+  protected abstract RunContentDescriptor doExecute(final Project project, final RunProfileState state,
+                                                    final RunContentDescriptor contentToReuse,
+                                                    final ExecutionEnvironment env) throws ExecutionException;
 
 }

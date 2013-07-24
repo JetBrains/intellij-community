@@ -481,10 +481,10 @@ public class ExternalSystemUtil {
     runConfiguration.getSettings().setTaskNames(taskSettings.getTaskNames());
     
     
-    ExecutionEnvironment env = new ExecutionEnvironment(runner, settings, project);
+    ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, settings, project);
     
     try {
-      runner.execute(executor, env, null);
+      runner.execute(env, null);
     }
     catch (ExecutionException e) {
       LOG.warn("Can't execute task " + taskSettings, e);

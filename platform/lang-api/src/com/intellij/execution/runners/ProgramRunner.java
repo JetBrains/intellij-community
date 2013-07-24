@@ -81,6 +81,6 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
   @Nullable
   SettingsEditor<Settings> getSettingsEditor(Executor executor, RunConfiguration configuration);
 
-  void execute(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException;
-  void execute(@NotNull Executor executor, @NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException;
+  void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException;
+  void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException;
 }

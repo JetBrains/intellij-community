@@ -30,13 +30,15 @@ import com.intellij.openapi.project.Project;
 public abstract class DefaultProgramRunner extends GenericProgramRunner {
 
   @Override
-  protected RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state, final RunContentDescriptor contentToReuse,
+  protected RunContentDescriptor doExecute(final Project project,
+                                           final RunProfileState state,
+                                           final RunContentDescriptor contentToReuse,
                                            final ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-    ExecutionResult executionResult = state.execute(executor, this);
+    ExecutionResult executionResult = state.execute(env.getExecutor(), this);
     if (executionResult == null) return null;
 
-    final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, executor, executionResult, env);
+    final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, env.getExecutor(), executionResult, env);
     return contentBuilder.showRunContent(contentToReuse);
   }
 

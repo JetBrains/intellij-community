@@ -66,7 +66,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   }
 
   @Override
-  protected RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state, final RunContentDescriptor contentToReuse,
+  protected RunContentDescriptor doExecute(final Project project,
+                                           final RunProfileState state,
+                                           final RunContentDescriptor contentToReuse,
                                            final ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -76,7 +78,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       patch(parameters, env.getRunnerSettings(), env.getRunProfile(), true);
       final ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
-      executionResult = state.execute(executor, this);
+      executionResult = state.execute(env.getExecutor(), this);
       if (proxy != null && executionResult != null) {
         proxy.attach(executionResult.getProcessHandler());
       }
@@ -85,7 +87,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       }
     }
     else {
-      executionResult = state.execute(executor, this);
+      executionResult = state.execute(env.getExecutor(), this);
     }
 
     if (executionResult == null) {
@@ -94,7 +96,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     onProcessStarted(env.getRunnerSettings(), executionResult);
 
-    final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, executor, executionResult, env);
+    final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, env.getExecutor(), executionResult, env);
     Disposer.register(project, contentBuilder);
     if (shouldAddDefaultActions) {
       addDefaultActions(contentBuilder);

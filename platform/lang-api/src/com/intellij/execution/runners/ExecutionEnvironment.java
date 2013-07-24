@@ -42,6 +42,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   @Nullable private final Project myProject;
 
   @NotNull private RunProfile myRunProfile;
+  @NotNull private final Executor myExecutor;
   @NotNull private ExecutionTarget myTarget;
 
   @Nullable private RunnerSettings myRunnerSettings;
@@ -56,12 +57,15 @@ public class ExecutionEnvironment extends UserDataHolderBase {
     myProject = null;
     myContentToReuse = null;
     myRunnerAndConfigurationSettings = null;
+    myExecutor = null;
   }
 
-  public ExecutionEnvironment(@NotNull final ProgramRunner runner,
+  public ExecutionEnvironment(@NotNull Executor executor,
+                              @NotNull final ProgramRunner runner,
                               @NotNull final RunnerAndConfigurationSettings configuration,
                               @Nullable Project project) {
     this(configuration.getConfiguration(),
+         executor,
          DefaultExecutionTarget.INSTANCE,
          project,
          configuration.getRunnerSettings(runner),
@@ -75,11 +79,13 @@ public class ExecutionEnvironment extends UserDataHolderBase {
    * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
    */
   @TestOnly
-  public ExecutionEnvironment(@NotNull final ProgramRunner runner,
+  public ExecutionEnvironment(@NotNull Executor executor,
+                              @NotNull final ProgramRunner runner,
                               @NotNull final ExecutionTarget target,
                               @NotNull final RunnerAndConfigurationSettings configuration,
                               Project project) {
     this(configuration.getConfiguration(),
+         executor,
          target,
          project,
          configuration.getRunnerSettings(runner),
@@ -92,12 +98,14 @@ public class ExecutionEnvironment extends UserDataHolderBase {
    * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
    */
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
+                              @NotNull Executor executor,
                               @Nullable Project project,
                               @Nullable RunnerSettings runnerSettings) {
-    this(runProfile, DefaultExecutionTarget.INSTANCE, project, runnerSettings, null, null, null, null);
+    this(runProfile, executor, DefaultExecutionTarget.INSTANCE, project, runnerSettings, null, null, null, null);
   }
 
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
+                              @NotNull Executor executor,
                               @NotNull ExecutionTarget target,
                               @Nullable Project project,
                               @Nullable RunnerSettings runnerSettings,
@@ -105,6 +113,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
                               @Nullable RunContentDescriptor contentToReuse,
                               @Nullable RunnerAndConfigurationSettings settings,
                               @Nullable String runnerId) {
+    myExecutor = executor;
     myTarget = target;
     myRunProfile = runProfile;
     myRunnerSettings = runnerSettings;
@@ -121,23 +130,6 @@ public class ExecutionEnvironment extends UserDataHolderBase {
         }
       });
     }
-  }
-
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
-  @Deprecated
-  public ExecutionEnvironment(@NotNull final ProgramRunner runner,
-                              @NotNull final RunnerAndConfigurationSettings configuration,
-                              @NotNull final DataContext context) {
-    this(configuration.getConfiguration(),
-         DefaultExecutionTarget.INSTANCE,
-         PlatformDataKeys.PROJECT.getData(context),
-         configuration.getRunnerSettings(runner),
-         configuration.getConfigurationSettings(runner),
-         null,
-         configuration,
-         runner.getRunnerId());
   }
 
   @Nullable
@@ -194,8 +186,8 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   }
 
   @Nullable
-  public RunProfileState getState(final Executor executor) throws ExecutionException {
-    return myRunProfile.getState(executor, this);
+  public RunProfileState getState() throws ExecutionException {
+    return myRunProfile.getState(myExecutor, this);
   }
 
   public long assignNewExecutionId() {
@@ -209,6 +201,11 @@ public class ExecutionEnvironment extends UserDataHolderBase {
 
   public long getExecutionId() {
     return myExecutionId;
+  }
+
+  @NotNull
+  public Executor getExecutor() {
+    return myExecutor;
   }
 
   @Override

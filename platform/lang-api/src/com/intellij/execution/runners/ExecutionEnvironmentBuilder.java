@@ -17,6 +17,7 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.DefaultExecutionTarget;
 import com.intellij.execution.ExecutionTarget;
+import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
@@ -43,6 +44,7 @@ public final class ExecutionEnvironmentBuilder {
   @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
   @Nullable private String myRunnerId;
   private boolean myAssignNewId;
+  @NotNull private Executor myExecutor;
 
   public ExecutionEnvironmentBuilder() {
   }
@@ -61,6 +63,11 @@ public final class ExecutionEnvironmentBuilder {
     myConfigurationSettings = copySource.getConfigurationSettings();
     myRunnerId = copySource.getRunnerId();
     setContentToReuse(copySource.getContentToReuse());
+  }
+
+  public ExecutionEnvironmentBuilder setExecutor(@NotNull Executor executor) {
+    myExecutor = executor;
+    return this;
   }
 
   public ExecutionEnvironmentBuilder setTarget(@NotNull ExecutionTarget target) {
@@ -122,7 +129,7 @@ public final class ExecutionEnvironmentBuilder {
   @NotNull
   public ExecutionEnvironment build() {
     ExecutionEnvironment environment =
-      new ExecutionEnvironment(myRunProfile, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,
+      new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,
                                myRunnerAndConfigurationSettings, myRunnerId);
     if (myAssignNewId) {
       environment.assignNewExecutionId();

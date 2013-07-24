@@ -357,14 +357,15 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     Runnable restarter = descriptor != null ? descriptor.getRestarter() : null;
     if (runner != null && runProfile != null) {
       try {
-        runner.execute(executor, new ExecutionEnvironment(runProfile,
-                                                              target,
-                                                              project,
-                                                              runnerSettings,
-                                                              configurationPerRunnerSettings,
-                                                              descriptor,
-                                                              configuration,
-                                                              runner.getRunnerId()));
+        runner.execute(new ExecutionEnvironment(runProfile,
+                                                          executor,
+                                                          target,
+                                                          project,
+                                                          runnerSettings,
+                                                          configurationPerRunnerSettings,
+                                                          descriptor,
+                                                          configuration,
+                                                          runner.getRunnerId()));
       }
       catch (RunCanceledByUserException ignore) {
       }

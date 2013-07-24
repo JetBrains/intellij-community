@@ -281,7 +281,7 @@ public class Tool implements SchemeElement {
 
         ExecutionEnvironment executionEnvironment = new ExecutionEnvironmentBuilder().setRunProfile(profile).setProject(project).build();
         executionEnvironment.setExecutionId(executionId);
-        runner.execute(new DefaultRunExecutor(), executionEnvironment, new ProgramRunner.Callback() {
+        runner.execute(executionEnvironment, new ProgramRunner.Callback() {
           @Override
           public void processStarted(RunContentDescriptor descriptor) {
             ProcessHandler processHandler = descriptor.getProcessHandler();

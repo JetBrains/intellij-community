@@ -52,7 +52,6 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   @Nullable
   @Override
   protected RunContentDescriptor createContentDescriptor(Project project,
-                                                         Executor executor,
                                                          RunProfileState state,
                                                          RunContentDescriptor contentToReuse,
                                                          ExecutionEnvironment env) throws ExecutionException
@@ -61,7 +60,7 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
       int port = ((ExternalSystemRunConfiguration.MyRunnableState)state).getDebugPort();
       if (port > 0) {
         RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(port), false);
-        return attachVirtualMachine(project, executor, state, contentToReuse, env, connection, true);
+        return attachVirtualMachine(project, state, contentToReuse, env, connection, true);
       }
       else {
         LOG.warn("Can't attach debugger to external system task execution. Reason: target debug port is unknown");
