@@ -31,7 +31,6 @@ public class PythonRunner extends DefaultProgramRunner {
   @Override
   protected RunContentDescriptor doExecute(
     Project project,
-    Executor executor,
     RunProfileState state,
     RunContentDescriptor contentToReuse,
     ExecutionEnvironment env
@@ -41,14 +40,14 @@ public class PythonRunner extends DefaultProgramRunner {
     ExecutionResult executionResult;
     RunProfile profile = env.getRunProfile();
     if (state instanceof PythonCommandLineState && profile instanceof CommandLinePatcher) {
-      executionResult = ((PythonCommandLineState)state).execute(executor, (CommandLinePatcher)profile);
+      executionResult = ((PythonCommandLineState)state).execute(env.getExecutor(), (CommandLinePatcher)profile);
     }
     else {
-      executionResult = state.execute(executor, this);
+      executionResult = state.execute(env.getExecutor(), this);
     }
     if (executionResult == null) return null;
 
-    final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, executor, executionResult, env);
+    final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, env.getExecutor(), executionResult, env);
     return contentBuilder.showRunContent(contentToReuse);
   }
 }

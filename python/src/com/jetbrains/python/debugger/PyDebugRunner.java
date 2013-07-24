@@ -64,7 +64,7 @@ public class PyDebugRunner extends GenericProgramRunner {
            ((AbstractPythonRunConfiguration)profile).canRunWithCoverage();
   }
 
-  protected RunContentDescriptor doExecute(final Project project, Executor executor, RunProfileState profileState,
+  protected RunContentDescriptor doExecute(final Project project, RunProfileState profileState,
                                            RunContentDescriptor contentToReuse,
                                            ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -73,7 +73,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
     final int serverLocalPort = serverSocket.getLocalPort();
     RunProfile profile = env.getRunProfile();
-    final ExecutionResult result = pyState.execute(executor, createCommandLinePatchers(project, pyState, profile, serverLocalPort));
+    final ExecutionResult result = pyState.execute(env.getExecutor(), createCommandLinePatchers(project, pyState, profile, serverLocalPort));
 
     final XDebugSession session = XDebuggerManager.getInstance(project).
       startSession(this, env, contentToReuse, new XDebugProcessStarter() {
