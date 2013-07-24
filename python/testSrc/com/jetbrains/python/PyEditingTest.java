@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -65,7 +66,15 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testGreedyBackspace() {  // PY-254
-    doTestBackspace("py254", new LogicalPosition(4, 8));
+    final EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    boolean oldVSpaceValue = settings.isVirtualSpace();
+    try {
+      settings.setVirtualSpace(true);
+      doTestBackspace("py254", new LogicalPosition(4, 8));
+    }
+    finally {
+      settings.setVirtualSpace(oldVSpaceValue);
+    }
   }
 
   public void testUnindentBackspace() {  // PY-853
