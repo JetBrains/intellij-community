@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -31,9 +32,15 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBList;
@@ -48,7 +55,9 @@ import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -75,6 +84,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         createSearchField();
       }
     });
+    myList.setCellRenderer(new MyListRenderer());
   }
 
 
@@ -123,6 +133,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       public void focusLost(FocusEvent e) {
         editor.setColumns(7);
         myAlarm.cancelAllRequests();
+        myList.setModel(new DefaultListModel());
 
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
@@ -151,13 +162,44 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myActions = myActionModel.getNames(true);
     }
 
-    List<MatchResult> classes = ContainerUtil.getFirstItems(collectResults(pattern, myClasses, myClassModel), 20);
-    List<MatchResult> files = ContainerUtil.getFirstItems(collectResults(pattern, myFiles, myFileModel), 20);
-    List<MatchResult> actions = ContainerUtil.getFirstItems(collectResults(pattern, myActions, myActionModel), 20);
+    List<MatchResult> classes = ContainerUtil.getFirstItems(collectResults(pattern, myClasses, myClassModel), 30);
+    List<MatchResult> files = ContainerUtil.getFirstItems(collectResults(pattern, myFiles, myFileModel), 30);
+    List<MatchResult> actions = ContainerUtil.getFirstItems(collectResults(pattern, myActions, myActionModel), 30);
     final DefaultListModel listModel = new DefaultListModel();
-    for (MatchResult o : classes) listModel.addElement(o);
-    for (MatchResult o : files) listModel.addElement(o);
-    for (MatchResult o : actions) listModel.addElement(o);
+    Set<VirtualFile> alreadyAddedFiles = new HashSet<VirtualFile>();
+    for (MatchResult o : classes) {
+      Object[] objects = myClassModel.getElementsByName(o.elementName, false, pattern);
+      for (Object object : objects) {
+        if (!listModel.contains(object)) {
+          listModel.addElement(object);
+          if (object instanceof PsiElement) {
+            VirtualFile file = PsiUtilCore.getVirtualFile((PsiElement)object);
+            if (file != null) {
+              alreadyAddedFiles.add(file);
+            }
+          }
+        }
+      }
+    }
+    for (MatchResult o : files) {
+      Object[] objects = myFileModel.getElementsByName(o.elementName, false, pattern);
+      for (Object object : objects) {
+        if (!listModel.contains(object)) {
+          if (object instanceof PsiFile) {
+            object = ((PsiFile)object).getVirtualFile();
+          }
+          if (!alreadyAddedFiles.contains(object)) {
+            listModel.addElement(object);
+          }
+        }
+      }
+    }
+    for (MatchResult o : actions) {
+      Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
+      for (Object object : objects) {
+        listModel.addElement(object);
+      }
+    }
     myList.setModel(listModel);
 
     if (myPopup == null || !myPopup.isVisible()) {
@@ -240,6 +282,34 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           g.drawString(shortcut, 20, baseline + 4);
         }
         config.restore();
+      }
+    }
+  }
+
+  private class MyListRenderer extends ColoredListCellRenderer {
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    }
+
+    @Override
+    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+      try {
+        if (value instanceof PsiNamedElement) {
+          String name = ((PsiNamedElement)value).getName();
+          assert name != null;
+          append(name);
+        }
+        else if (value instanceof VirtualFile) {
+          append(((VirtualFile)value).getName());
+        }
+        else {
+          append(value.toString());
+        }
+      }
+      finally {
+        token.finish();
       }
     }
   }
