@@ -25,12 +25,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsType;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.ui.RadioButtonEnumModel;
+import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,11 +51,11 @@ public class OpenTaskDialog extends DialogWrapper {
   private JPanel myVcsPanel;
   private JTextField myBranchName;
   private JTextField myChangelistName;
-  private ButtonGroup myVcsGroup;
+  private JBCheckBox myCreateBranchJBCheckBox;
+  private JBCheckBox myCreateChangelistJBCheckBox;
 
   private final Project myProject;
   private final Task myTask;
-  private final RadioButtonEnumModel<TaskManager.VcsOperation> myButtonEnumModel;
 
   public OpenTaskDialog(@NotNull final Project project, @NotNull final Task task) {
     super(project, false);
@@ -81,44 +79,38 @@ public class OpenTaskDialog extends DialogWrapper {
     TaskManagerImpl.Config state = taskManager.getState();
     myClearContext.setSelected(state.clearContext);
 
-    myButtonEnumModel = RadioButtonEnumModel.bindEnum(TaskManager.VcsOperation.class, myVcsGroup);
     AbstractVcs vcs = manager.getActiveVcs();
     if (vcs == null) {
       myVcsPanel.setVisible(false);
     }
     else {
-      if (vcs.getType() != VcsType.distributed) {
-        myButtonEnumModel.getButton(TaskManager.VcsOperation.CREATE_BRANCH).setVisible(false);
-        myBranchName.setVisible(false);
-      }
-      if (state.vcsOperation == -1) {
-        state.vcsOperation = vcs.getType() == VcsType.distributed
-                             ? TaskManager.VcsOperation.CREATE_BRANCH.ordinal()
-                             : TaskManager.VcsOperation.CREATE_CHANGELIST.ordinal();
-      }
-      myVcsPanel.setBorder(IdeBorderFactory.createTitledBorder(vcs.getDisplayName() + " operations", false));
-      myBranchName.setText(taskManager.suggestBranchName(task));
-      myChangelistName.setText(taskManager.getChangelistName(task));
-      myButtonEnumModel.addActionListener(new ActionListener() {
+      ActionListener listener = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          TaskManager.VcsOperation selected = myButtonEnumModel.getSelected();
-          myChangelistName.setEnabled(false);
-          myBranchName.setEnabled(false);
-          if (selected == TaskManager.VcsOperation.CREATE_BRANCH) {
-            myBranchName.setEnabled(true);
-            myBranchName.requestFocus();
-          }
-          else if (selected == TaskManager.VcsOperation.CREATE_CHANGELIST) {
-            myChangelistName.setEnabled(true);
-            IdeFocusManager.getInstance(myProject).requestFocus(myChangelistName, true);
-            myChangelistName.requestFocus();
-          }
+          updateFields();
         }
-      });
-      myButtonEnumModel.setSelected(state.vcsOperation);
+      };
+      myCreateChangelistJBCheckBox.addActionListener(listener);
+      myCreateBranchJBCheckBox.addActionListener(listener);
+      myCreateChangelistJBCheckBox.setSelected(manager.getState().createChangelist);
+      myCreateBranchJBCheckBox.setSelected(manager.getState().createBranch);
+
+      if (vcs.getType() != VcsType.distributed) {
+        myCreateBranchJBCheckBox.setSelected(false);
+        myCreateBranchJBCheckBox.setVisible(false);
+        myBranchName.setVisible(false);
+      }
+
+      myBranchName.setText(taskManager.suggestBranchName(task));
+      myChangelistName.setText(taskManager.getChangelistName(task));
+      updateFields();
     }
     init();
+  }
+
+  private void updateFields() {
+    myBranchName.setEnabled(myCreateBranchJBCheckBox.isSelected());
+    myChangelistName.setEnabled(myCreateChangelistJBCheckBox.isSelected());
   }
 
 
@@ -127,8 +119,8 @@ public class OpenTaskDialog extends DialogWrapper {
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
 
     taskManager.getState().markAsInProgress = isMarkAsInProgress();
-    TaskManager.VcsOperation operation = getVcsOperation();
-    taskManager.getState().vcsOperation = operation.ordinal();
+    taskManager.getState().createChangelist = myCreateChangelistJBCheckBox.isSelected();
+    taskManager.getState().createBranch = myCreateBranchJBCheckBox.isSelected();
 
     TaskRepository repository = myTask.getRepository();
     if (isMarkAsInProgress() && repository != null) {
@@ -142,7 +134,7 @@ public class OpenTaskDialog extends DialogWrapper {
     }
     LocalTask localTask = taskManager.activateTask(myTask, isClearContext());
     LocalTask activeTask = taskManager.getActiveTask();
-    taskManager.activateInVcs(localTask, activeTask, operation, myBranchName.getText());
+    taskManager.createBranch(localTask, activeTask, myBranchName.getText());
     if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
       AnalyzeTaskStacktraceAction.analyzeStacktrace(myTask, myProject);
     }
@@ -152,39 +144,28 @@ public class OpenTaskDialog extends DialogWrapper {
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
-    switch (myButtonEnumModel.getSelected()) {
-      case CREATE_BRANCH:
-        String branchName = myBranchName.getText().trim();
-        if (branchName.isEmpty()) {
-          return new ValidationInfo("Branch name should not be empty", myBranchName);
-        }
-        else if (branchName.contains(" ")) {
-          return new ValidationInfo("Branch name should not contain spaces");
-        }
-        else {
-          return null;
-        }
-      case CREATE_CHANGELIST:
-        if (myChangelistName.getText().trim().isEmpty()) {
-          return new ValidationInfo("Changelist name should not be empty");
-        }
-      case DO_NOTHING:
+    if (myCreateBranchJBCheckBox.isSelected()) {
+      String branchName = myBranchName.getText().trim();
+      if (branchName.isEmpty()) {
+        return new ValidationInfo("Branch name should not be empty", myBranchName);
+      }
+      else if (branchName.contains(" ")) {
+        return new ValidationInfo("Branch name should not contain spaces");
+      }
+      else {
         return null;
+      }
+    }
+    if (myCreateChangelistJBCheckBox.isSelected()) {
+      if (myChangelistName.getText().trim().isEmpty()) {
+        return new ValidationInfo("Changelist name should not be empty");
+      }
     }
     return null;
   }
 
   private boolean isClearContext() {
     return myClearContext.isSelected();
-  }
-
-  private TaskManager.VcsOperation getVcsOperation() {
-    if (myVcsPanel.isVisible()) {
-      return myButtonEnumModel.getSelected();
-    }
-    else {
-      return TaskManager.VcsOperation.DO_NOTHING;
-    }
   }
 
   private boolean isMarkAsInProgress() {
@@ -198,13 +179,10 @@ public class OpenTaskDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    TaskManager.VcsOperation operation = getVcsOperation();
-    if (operation == TaskManager.VcsOperation.CREATE_BRANCH) {
-      myBranchName.setEnabled(true);
+    if (myCreateBranchJBCheckBox.isSelected()) {
       return myBranchName;
     }
-    else if (operation == TaskManager.VcsOperation.CREATE_CHANGELIST) {
-      myChangelistName.setEnabled(true);
+    else if (myCreateChangelistJBCheckBox.isSelected()) {
       return myChangelistName;
     }
     else return null;

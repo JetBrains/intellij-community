@@ -73,22 +73,17 @@
           </component>
         </children>
       </grid>
-      <grid id="637f6" binding="myVcsPanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="637f6" binding="myVcsPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
+        </clientProperties>
         <border type="etched" title="VCS operations"/>
         <children>
-          <component id="55d4e" class="com.intellij.ui.components.JBRadioButton">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Create dedicated &amp;branch"/>
-            </properties>
-          </component>
           <component id="5f744" class="javax.swing.JTextField" binding="myBranchName">
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
@@ -97,14 +92,6 @@
             </constraints>
             <properties>
               <enabled value="false"/>
-            </properties>
-          </component>
-          <component id="c4150" class="com.intellij.ui.components.JBRadioButton">
-            <constraints>
-              <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Do &amp;nothing"/>
             </properties>
           </component>
           <component id="3b431" class="javax.swing.JTextField" binding="myChangelistName">
@@ -117,23 +104,24 @@
               <enabled value="false"/>
             </properties>
           </component>
-          <component id="b1f13" class="com.intellij.ui.components.JBRadioButton">
+          <component id="ff04b" class="com.intellij.ui.components.JBCheckBox" binding="myCreateBranchJBCheckBox" default-binding="true">
             <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Create new change&amp;list"/>
+              <text value="Create &amp;branch"/>
+            </properties>
+          </component>
+          <component id="807e3" class="com.intellij.ui.components.JBCheckBox" binding="myCreateChangelistJBCheckBox" default-binding="true">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Create change&amp;list"/>
             </properties>
           </component>
         </children>
       </grid>
     </children>
   </grid>
-  <buttonGroups>
-    <group name="myVcsGroup" bound="true">
-      <member id="55d4e"/>
-      <member id="b1f13"/>
-      <member id="c4150"/>
-    </group>
-  </buttonGroups>
 </form>

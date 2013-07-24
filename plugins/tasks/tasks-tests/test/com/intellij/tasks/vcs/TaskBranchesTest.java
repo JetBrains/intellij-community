@@ -19,7 +19,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.tasks.BranchInfo;
 import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.util.Function;
@@ -76,7 +75,7 @@ public class TaskBranchesTest extends TaskManagerTestCase {
     assertNotNull(defaultTask);
     LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
     LocalTask localTask = myTaskManager.activateTask(foo, false);
-    myTaskManager.activateInVcs(localTask, defaultTask, TaskManager.VcsOperation.CREATE_BRANCH, myTaskManager.suggestBranchName(localTask));
+    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
     List<BranchInfo> branches = localTask.getBranches();
     assertEquals(2, branches.size());
     assertEquals(2, defaultTask.getBranches().size());
@@ -86,7 +85,7 @@ public class TaskBranchesTest extends TaskManagerTestCase {
 
     foo = myTaskManager.createLocalTask("foo");
     localTask = myTaskManager.activateTask(foo, false);
-    myTaskManager.activateInVcs(localTask, defaultTask, TaskManager.VcsOperation.CREATE_BRANCH, myTaskManager.suggestBranchName(localTask));
+    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
     assertEquals("foo", repositories.get(0).getCurrentBranch().getName());
   }
 

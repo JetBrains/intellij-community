@@ -192,11 +192,9 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   }
 
   private void activateAndCreateChangelist(Task task) {
-    LocalTask activeTask = myTaskManager.getActiveTask();
     LocalTask localTask = myTaskManager.activateTask(task, false);
     if (localTask.getChangeLists().isEmpty()) {
-      myTaskManager.activateInVcs(localTask, activeTask, TaskManager.VcsOperation.CREATE_CHANGELIST,
-                                  myTaskManager.getChangelistName(localTask));
+      myTaskManager.createChangeList(localTask, myTaskManager.getChangelistName(localTask));
     }
   }
 

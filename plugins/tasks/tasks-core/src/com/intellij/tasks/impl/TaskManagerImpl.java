@@ -387,20 +387,13 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return task;
   }
 
-  @Override
-  public void activateInVcs(LocalTask task, LocalTask previousActive, VcsOperation operation, String name) {
-    if (operation == VcsOperation.CREATE_CHANGELIST) {
-      String comment = TaskUtil.getChangeListComment(task);
-      createChangeList(task, name, comment);
-    }
-    else if (operation == VcsOperation.CREATE_BRANCH) {
-      VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
-      for (VcsTaskHandler handler : handlers) {
-        if (previousActive != null) {
-          addBranches(previousActive, handler.getActiveTask());
-        }
-        addBranches(task, handler.startNewTask(name));
+  public void createBranch(LocalTask task, LocalTask previousActive, String name) {
+    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+    for (VcsTaskHandler handler : handlers) {
+      if (previousActive != null) {
+        addBranches(previousActive, handler.getActiveTask());
       }
+      addBranches(task, handler.startNewTask(name));
     }
   }
 
@@ -933,7 +926,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     public boolean clearContext = true;
 
-    public int vcsOperation = -1;
+    public boolean createChangelist = true;
+    public boolean createBranch = true;
 
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = false;
