@@ -4,6 +4,8 @@ import com.jetbrains.python.psi.PyQualifiedExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * A type instances of which can possibly be called. For example, a class definition can be called, and the result of a call is a class
  * instance.
@@ -25,4 +27,12 @@ public interface PyCallableType extends PyType {
    */
   @Nullable
   PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite);
+
+  /**
+   * Returns the list of parameter types.
+   *
+   * @return list of positional parameters or null if not applicable.
+   */
+  @Nullable
+  List<PyType> getParameterTypes(@NotNull TypeEvalContext context);
 }

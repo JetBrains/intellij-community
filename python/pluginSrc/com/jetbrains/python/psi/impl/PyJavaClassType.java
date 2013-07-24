@@ -96,6 +96,12 @@ public class PyJavaClassType implements PyClassLikeType {
     return null;
   }
 
+  @Nullable
+  @Override
+  public List<PyType> getParameterTypes(@NotNull TypeEvalContext context) {
+    return null;
+  }
+
   @Override
   public boolean isDefinition() {
     return myDefinition;

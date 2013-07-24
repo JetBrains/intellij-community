@@ -40,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -314,58 +316,8 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       }
     }
     if (source != null && target != null) {
-      PyType type = null;
       final PyType sourceType = context.getType(source);
-      if (sourceType instanceof PyCollectionType) {
-        type = ((PyCollectionType)sourceType).getElementType(context);
-        if (sourceType instanceof PyClassType) {
-          final PyClass cls = ((PyClassType)sourceType).getPyClass();
-          if (cls != null && type instanceof PyTupleType && PyABCUtil.isSubclass(cls, PyNames.MAPPING)) {
-            final PyTupleType mappingType = (PyTupleType)type;
-            if (mappingType.getElementCount() == 2) {
-              return mappingType.getElementType(0);
-            }
-          }
-        }
-      }
-      else if (sourceType instanceof PyClassType) {
-        final PyClass pyClass = ((PyClassType)sourceType).getPyClass();
-        if (pyClass != null) {
-          for (PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-            final PyType iterType = provider.getIterationType(pyClass);
-            if (iterType != null) {
-              type = iterType;
-              break;
-            }
-          }
-          if (PyABCUtil.isSubclass(pyClass, PyNames.ITERATOR)) {
-            final PyFunction iter = pyClass.findMethodByName(PyNames.ITER, true);
-            PyType iterMethodType = null;
-            if (iter != null) {
-              iterMethodType = getContextSensitiveType(iter, context, source);
-            }
-            if (iterMethodType instanceof PyCollectionType) {
-              final PyCollectionType collectionType = (PyCollectionType)iterMethodType;
-              type = collectionType.getElementType(context);
-            }
-            if (type == null) {
-              PyFunction next = pyClass.findMethodByName(PyNames.NEXT, true);
-              if (next == null) {
-                next = pyClass.findMethodByName(PyNames.DUNDER_NEXT, true);
-              }
-              if (next != null) {
-                type = getContextSensitiveType(next, context, source);
-              }
-            }
-            if (type == null) {
-              final PyFunction getItem = pyClass.findMethodByName(PyNames.GETITEM, true);
-              if (getItem != null) {
-                type = getContextSensitiveType(getItem, context, source);
-              }
-            }
-          }
-        }
-      }
+      final PyType type = getIterationType(sourceType, source, context);
       final PsiElement parent = getParent();
       if (type instanceof PyTupleType && parent instanceof PyTupleExpression) {
         return getTypeFromTupleAssignment((PyTupleExpression)parent, (PyTupleType)type);
@@ -378,8 +330,70 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   @Nullable
+  private static PyType getIterationType(@Nullable PyType iterableType, @Nullable PyExpression source, @NotNull TypeEvalContext context) {
+    PyType result = null;
+    if (iterableType instanceof PyCollectionType) {
+      result = ((PyCollectionType)iterableType).getElementType(context);
+      if (iterableType instanceof PyClassType) {
+        final PyClass cls = ((PyClassType)iterableType).getPyClass();
+        if (result instanceof PyTupleType && PyABCUtil.isSubclass(cls, PyNames.MAPPING)) {
+          final PyTupleType mappingType = (PyTupleType)result;
+          if (mappingType.getElementCount() == 2) {
+            result = mappingType.getElementType(0);
+          }
+        }
+      }
+    }
+    else if (iterableType instanceof PyUnionType) {
+      final Collection<PyType> members = ((PyUnionType)iterableType).getMembers();
+      final List<PyType> iterationTypes = new ArrayList<PyType>();
+      for (PyType member : members) {
+        iterationTypes.add(getIterationType(member, source, context));
+      }
+      return PyUnionType.union(iterationTypes);
+    }
+    else if (iterableType instanceof PyClassType) {
+      final PyClass pyClass = ((PyClassType)iterableType).getPyClass();
+      for (PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+        final PyType iterationType = provider.getIterationType(pyClass);
+        if (iterationType != null) {
+          result = iterationType;
+          break;
+        }
+      }
+      if (PyABCUtil.isSubclass(pyClass, PyNames.ITERATOR)) {
+        final PyFunction iterateMethod = pyClass.findMethodByName(PyNames.ITER, true);
+        PyType iterateMethodType = null;
+        if (iterateMethod != null) {
+          iterateMethodType = getContextSensitiveType(iterateMethod, context, source);
+        }
+        if (iterateMethodType instanceof PyCollectionType) {
+          final PyCollectionType collectionType = (PyCollectionType)iterateMethodType;
+          result = collectionType.getElementType(context);
+        }
+        if (result == null) {
+          PyFunction next = pyClass.findMethodByName(PyNames.NEXT, true);
+          if (next == null) {
+            next = pyClass.findMethodByName(PyNames.DUNDER_NEXT, true);
+          }
+          if (next != null) {
+            result = getContextSensitiveType(next, context, source);
+          }
+        }
+        if (result == null) {
+          final PyFunction getItem = pyClass.findMethodByName(PyNames.GETITEM, true);
+          if (getItem != null) {
+            result = getContextSensitiveType(getItem, context, source);
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  @Nullable
   private static PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
-                                                @NotNull PyExpression source) {
+                                                @Nullable PyExpression source) {
     if (function instanceof PyFunctionImpl) {
       return ((PyFunctionImpl)function).getReturnTypeWithoutCallSite(context, source);
     }

@@ -193,4 +193,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testForLoopIteration() {
     doTest();
   }
+
+  // PY-4285
+  public void testMapReturnElementType() {
+    doTest();
+  }
 }

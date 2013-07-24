@@ -14,7 +14,9 @@ import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.debugger.PydevXmlUtils;
-import org.apache.xmlrpc.*;
+import org.apache.xmlrpc.WebServer;
+import org.apache.xmlrpc.XmlRpcException;
+import org.apache.xmlrpc.XmlRpcHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
@@ -78,7 +80,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     super(project);
 
     //start the server that'll handle input requests
-    myWebServer = new IdeaAwareWebServer(clientPort, null, new IdeaAwareXmlRpcServer());
+    myWebServer = new WebServer(clientPort, null);
     myWebServer.addHandler("$default", this);
     this.myWebServer.start();
 

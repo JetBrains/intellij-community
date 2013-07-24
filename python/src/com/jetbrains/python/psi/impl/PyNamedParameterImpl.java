@@ -220,6 +220,10 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
             return PyTypeParser.getTypeByName(this, typeName);
           }
         }
+        for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          PyType result = provider.getParameterType(this, func, context);
+          if (result != null) return result;
+        }
         if (context.maySwitchToAST(this)) {
           final PyExpression defaultValue = getDefaultValue();
           if (defaultValue != null) {
@@ -228,10 +232,6 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
               return type;
             }
           }
-        }
-        for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-          PyType result = provider.getParameterType(this, func, context);
-          if (result != null) return result;
         }
         // Guess the type from file-local usages
         if (context.allowLocalUsages(this)) {
