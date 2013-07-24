@@ -38,35 +38,16 @@ public class GithubCommit extends GithubCommitSha {
 
   @NotNull private GitCommit myCommit;
 
-  @NotNull
-  @SuppressWarnings("ConstantConditions")
-  public static GithubCommit create(@Nullable GithubCommitRaw raw) throws JsonException {
-    try {
-      return new GithubCommit(raw);
-    }
-    catch (IllegalArgumentException e) {
-      throw new JsonException("GithubCommit parse error", e);
-    }
-    catch (JsonException e) {
-      throw new JsonException("GithubCommit parse error", e);
-    }
-  }
-
   public static class GitCommit implements Serializable {
     @NotNull private String myMessage;
 
     @NotNull private GitUser myAuthor;
     @NotNull private GitUser myCommitter;
 
-    @SuppressWarnings("ConstantConditions")
-    protected GitCommit(@NotNull GitCommitRaw raw) {
-      this(raw.message, raw.author, raw.committer);
-    }
-
-    private GitCommit(@NotNull String message, @NotNull GitUserRaw author, @NotNull GitUserRaw committer) {
+    public GitCommit(@NotNull String message, @NotNull GitUser author, @NotNull GitUser committer) {
       myMessage = message;
-      myAuthor = new GitUser(author);
-      myCommitter = new GitUser(committer);
+      myAuthor = author;
+      myCommitter = committer;
     }
 
     @NotNull
@@ -90,12 +71,7 @@ public class GithubCommit extends GithubCommitSha {
     @NotNull private String myEmail;
     @NotNull private Date myDate;
 
-    @SuppressWarnings("ConstantConditions")
-    protected GitUser(@NotNull GitUserRaw raw) {
-      this(raw.name, raw.email, raw.date);
-    }
-
-    private GitUser(@NotNull String name, @NotNull String email, @NotNull Date date) {
+    public GitUser(@NotNull String name, @NotNull String email, @NotNull Date date) {
       myName = name;
       myEmail = email;
       myDate = date;
@@ -117,25 +93,17 @@ public class GithubCommit extends GithubCommitSha {
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
-  protected GithubCommit(@NotNull GithubCommitRaw raw) throws JsonException {
-    this(raw, raw.author, raw.committer, raw.parents, raw.commit);
-  }
-
-  private GithubCommit(@NotNull GithubCommitRaw raw,
-                       @Nullable GithubUserRaw author,
-                       @Nullable GithubUserRaw committer,
-                       @NotNull List<GithubCommitRaw> parents,
-                       @NotNull GitCommitRaw commit) throws JsonException {
-    super(raw);
-    myAuthor = author == null ? null : GithubUser.create(author);
-    myCommitter = committer == null ? null : GithubUser.create(committer);
-    myCommit = new GitCommit(commit);
-
-    myParents = new ArrayList<GithubCommitSha>();
-    for (GithubCommitRaw rawCommit : parents) {
-      myParents.add(GithubCommitSha.createSha(rawCommit));
-    }
+  public GithubCommit(@NotNull String url,
+                      @NotNull String sha,
+                      @Nullable GithubUser author,
+                      @Nullable GithubUser committer,
+                      @NotNull List<GithubCommitSha> parents,
+                      @NotNull GitCommit commit) {
+    super(url, sha);
+    myAuthor = author;
+    myCommitter = committer;
+    myParents = parents;
+    myCommit = commit;
   }
 
   @Nullable

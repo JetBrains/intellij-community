@@ -37,12 +37,7 @@ public class GithubCommitDetailed extends GithubCommit {
     private int myDeletions;
     private int myTotal;
 
-    @SuppressWarnings("ConstantConditions")
-    protected CommitStats(@NotNull CommitStatsRaw raw) {
-      this(raw.additions, raw.deletions, raw.total);
-    }
-
-    private CommitStats(int additions, int deletions, int total) {
+    public CommitStats(int additions, int deletions, int total) {
       myAdditions = additions;
       myDeletions = deletions;
       myTotal = total;
@@ -61,34 +56,17 @@ public class GithubCommitDetailed extends GithubCommit {
     }
   }
 
-  @NotNull
-  @SuppressWarnings("ConstantConditions")
-  public static GithubCommitDetailed createDetailed(@Nullable GithubCommitRaw raw) throws JsonException {
-    try {
-      return new GithubCommitDetailed(raw);
-    }
-    catch (IllegalArgumentException e) {
-      throw new JsonException("GithubCommitDetailed parse error", e);
-    }
-    catch (JsonException e) {
-      throw new JsonException("GithubCommitDetailed parse error", e);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  protected GithubCommitDetailed(@NotNull GithubCommitRaw raw) throws JsonException {
-    this(raw, raw.stats, raw.files);
-  }
-
-  private GithubCommitDetailed(@NotNull GithubCommitRaw raw, @NotNull CommitStatsRaw stats, @NotNull List<GithubFileRaw> files)
-    throws JsonException {
-    super(raw);
-    myStats = new CommitStats(stats);
-
-    myFiles = new ArrayList<GithubFile>();
-    for (GithubFileRaw rawFile : files) {
-      myFiles.add(GithubFile.create(rawFile));
-    }
+  public GithubCommitDetailed(@NotNull String url,
+                              @NotNull String sha,
+                              @Nullable GithubUser author,
+                              @Nullable GithubUser committer,
+                              @NotNull List<GithubCommitSha> parents,
+                              @NotNull GitCommit commit,
+                              @NotNull CommitStats stats,
+                              @NotNull List<GithubFile> files) {
+    super(url, sha, author, committer, parents, commit);
+    myStats = stats;
+    myFiles = files;
   }
 
   @NotNull

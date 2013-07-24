@@ -36,34 +36,15 @@ public class GithubRepo {
 
   @NotNull private GithubUser myOwner;
 
-  @NotNull
-  @SuppressWarnings("ConstantConditions")
-  public static GithubRepo create(@Nullable GithubRepoRaw raw) throws JsonException {
-    try {
-      return new GithubRepo(raw);
-    }
-    catch (IllegalArgumentException e) {
-      throw new JsonException("GithubRepo parse error", e);
-    }
-    catch (JsonException e) {
-      throw new JsonException("GithubRepo parse error", e);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  protected GithubRepo(@NotNull GithubRepoRaw raw) throws JsonException {
-    this(raw.name, raw.fullName, raw.description, raw.isPrivate, raw.isFork, raw.htmlUrl, raw.cloneUrl, raw.defaultBranch, raw.owner);
-  }
-
-  private GithubRepo(@NotNull String name,
-                     @NotNull String fullName,
-                     @NotNull String description,
-                     boolean isPrivate,
-                     boolean isFork,
-                     @NotNull String htmlUrl,
-                     @NotNull String cloneUrl,
-                     @Nullable String defaultBranch,
-                     @NotNull GithubUserRaw owner) throws JsonException {
+  public GithubRepo(@NotNull String name,
+                    @NotNull String fullName,
+                    @NotNull String description,
+                    boolean isPrivate,
+                    boolean isFork,
+                    @NotNull String htmlUrl,
+                    @NotNull String cloneUrl,
+                    @Nullable String defaultBranch,
+                    @NotNull GithubUser owner) {
     myName = name;
     myFullName = fullName;
     myDescription = description;
@@ -72,7 +53,7 @@ public class GithubRepo {
     myHtmlUrl = htmlUrl;
     myCloneUrl = cloneUrl;
     myDefaultBranch = defaultBranch;
-    myOwner = GithubUser.create(owner);
+    myOwner = owner;
   }
 
   @NotNull

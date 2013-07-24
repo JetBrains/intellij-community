@@ -37,46 +37,26 @@ public class GithubIssue {
   @NotNull Date myCreatedAt;
   @NotNull Date myUpdatedAt;
 
-  @NotNull
-  @SuppressWarnings("ConstantConditions")
-  public static GithubIssue create(@Nullable GithubIssueRaw raw) throws JsonException {
-    try {
-      return new GithubIssue(raw);
-    }
-    catch (IllegalArgumentException e) {
-      throw new JsonException("GithubIssue parse error", e);
-    }
-    catch (JsonException e) {
-      throw new JsonException("GithubIssue parse error", e);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  protected GithubIssue(@NotNull GithubIssueRaw raw) throws JsonException {
-    this(raw.htmlUrl, raw.number, raw.state, raw.title, raw.body, raw.user, raw.assignee, raw.closedAt, raw.createdAt, raw.updatedAt);
-  }
-
-  private GithubIssue(@NotNull String htmlUrl,
-                      long number,
-                      @NotNull String state,
-                      @NotNull String title,
-                      @NotNull String body,
-                      @NotNull GithubUserRaw user,
-                      @Nullable GithubUserRaw assignee,
-                      @Nullable Date closedAt,
-                      @NotNull Date createdAt,
-                      @NotNull Date updatedAt) throws JsonException {
+  public GithubIssue(@NotNull String htmlUrl,
+                     long number,
+                     @NotNull String state,
+                     @NotNull String title,
+                     @NotNull String body,
+                     @NotNull GithubUser user,
+                     @Nullable GithubUser assignee,
+                     @Nullable Date closedAt,
+                     @NotNull Date createdAt,
+                     @NotNull Date updatedAt) {
     myHtmlUrl = htmlUrl;
     myNumber = number;
     myState = state;
     myTitle = title;
     myBody = body;
+    myUser = user;
+    myAssignee = assignee;
     myClosedAt = closedAt;
     myCreatedAt = createdAt;
     myUpdatedAt = updatedAt;
-
-    myUser = GithubUser.create(user);
-    myAssignee = assignee == null ? null : GithubUser.create(assignee);
   }
 
   @NotNull

@@ -45,12 +45,7 @@ public class GithubGist {
 
     @NotNull private String myRawUrl;
 
-    @SuppressWarnings("ConstantConditions")
-    protected GistFile(@NotNull GistFileRaw raw) {
-      this(raw.filename, raw.content, raw.raw_url);
-    }
-
-    private GistFile(@NotNull String filename, @NotNull String content, @NotNull String rawUrl) {
+    public GistFile(@NotNull String filename, @NotNull String content, @NotNull String rawUrl) {
       myFilename = filename;
       myContent = content;
       myRawUrl = rawUrl;
@@ -81,41 +76,18 @@ public class GithubGist {
     return ret;
   }
 
-  @NotNull
-  @SuppressWarnings("ConstantConditions")
-  public static GithubGist create(@Nullable GithubGistRaw raw) throws JsonException {
-    try {
-      return new GithubGist(raw);
-    }
-    catch (IllegalArgumentException e) {
-      throw new JsonException("GithubGist parse error", e);
-    }
-    catch (JsonException e) {
-      throw new JsonException("GithubGist parse error", e);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  protected GithubGist(@NotNull GithubGistRaw raw) throws JsonException {
-    this(raw.id, raw.description, raw.isPublic, raw.htmlUrl, raw.files, raw.user);
-  }
-
-  private GithubGist(@NotNull String id,
-                     @NotNull String description,
-                     boolean isPublic,
-                     @NotNull String htmlUrl,
-                     @NotNull Map<String, GistFileRaw> files,
-                     @Nullable GithubUserRaw user) throws JsonException {
+  public GithubGist(@NotNull String id,
+                    @NotNull String description,
+                    boolean isPublic,
+                    @NotNull String htmlUrl,
+                    @NotNull List<GistFile> files,
+                    @Nullable GithubUser user) {
     myId = id;
     myDescription = description;
     myIsPublic = isPublic;
     myHtmlUrl = htmlUrl;
-
-    myFiles = new ArrayList<GistFile>();
-    for (Map.Entry<String, GistFileRaw> rawFile : files.entrySet()) {
-      myFiles.add(new GistFile(rawFile.getValue()));
-    }
-    myUser = user == null ? null : GithubUser.create(user);
+    myFiles = files;
+    myUser = user;
   }
 
   @NotNull

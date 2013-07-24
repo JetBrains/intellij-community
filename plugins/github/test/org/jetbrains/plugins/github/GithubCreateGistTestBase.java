@@ -81,7 +81,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
     if (GIST == null) {
       try {
-        GIST = GithubGist.create(GithubApiUtil.getGist(myGitHubSettings.getAuthData(), GIST_ID));
+        GIST = GithubApiUtil.getGist(myGitHubSettings.getAuthData(), GIST_ID);
       }
       catch (IOException e) {
         System.err.println(e.getMessage());

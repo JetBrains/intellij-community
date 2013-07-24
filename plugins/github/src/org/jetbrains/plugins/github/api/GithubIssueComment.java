@@ -34,37 +34,18 @@ public class GithubIssueComment {
 
   @NotNull private GithubUser myUser;
 
-  @NotNull
-  @SuppressWarnings("ConstantConditions")
-  public static GithubIssueComment create(@Nullable GithubIssueCommentRaw raw) throws JsonException {
-    try {
-      return new GithubIssueComment(raw);
-    }
-    catch (IllegalArgumentException e) {
-      throw new JsonException("GithubIssueComment parse error", e);
-    }
-    catch (JsonException e) {
-      throw new JsonException("GithubIssueComment parse error", e);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  protected GithubIssueComment(@NotNull GithubIssueCommentRaw raw) throws JsonException {
-    this(raw.id, raw.htmlUrl, raw.body, raw.createdAt, raw.updatedAt, raw.user);
-  }
-
-  private GithubIssueComment(long id,
-                             @NotNull String htmlUrl,
-                             @NotNull String body,
-                             @NotNull Date createdAt,
-                             @NotNull Date updatedAt,
-                             @NotNull GithubUserRaw user) throws JsonException {
+  public GithubIssueComment(long id,
+                            @NotNull String htmlUrl,
+                            @NotNull String body,
+                            @NotNull Date createdAt,
+                            @NotNull Date updatedAt,
+                            @NotNull GithubUser user) {
     myId = id;
     myHtmlUrl = htmlUrl;
     myBody = body;
     myCreatedAt = createdAt;
     myUpdatedAt = updatedAt;
-    myUser = GithubUser.create(user);
+    myUser = user;
   }
 
   public long getId() {

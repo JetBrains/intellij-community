@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
@@ -23,8 +24,8 @@ import java.util.Date;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
-class GithubPullRequestRaw implements Serializable {
+@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
+class GithubPullRequestRaw implements DataConstructor<GithubPullRequest> {
   @Nullable public Long number;
   @Nullable public String state;
   @Nullable public String title;
@@ -55,12 +56,25 @@ class GithubPullRequestRaw implements Serializable {
   @Nullable public LinkRaw head;
   @Nullable public LinkRaw base;
 
-  public static class LinkRaw {
+  public static class LinkRaw implements DataConstructor<GithubPullRequest.Link> {
     @Nullable public String label;
     @Nullable public String ref;
     @Nullable public String sha;
 
     @Nullable public GithubRepoRaw repo;
     @Nullable public GithubUserRaw user;
+
+    @NotNull
+    @Override
+    public GithubPullRequest.Link create() {
+      return new GithubPullRequest.Link(label, ref, sha, repo.create(), user.create());
+    }
+  }
+
+  @NotNull
+  @Override
+  public GithubPullRequest create() {
+    return new GithubPullRequest(number, state, title, body, htmlUrl, diffUrl, patchUrl, issueUrl, createdAt, updatedAt, closedAt, mergedAt,
+                                 user.create(), head.create(), base.create());
   }
 }

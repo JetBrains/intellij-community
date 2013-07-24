@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
@@ -23,12 +24,18 @@ import java.util.List;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
-class GithubAuthorizationRaw implements Serializable {
+@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
+class GithubAuthorizationRaw implements DataConstructor<GithubAuthorization> {
   @Nullable public Long id;
   @Nullable public String url;
   @Nullable public String token;
   @Nullable public String note;
   @Nullable public String noteUrl;
   @Nullable public List<String> scopes;
+
+  @NotNull
+  @Override
+  public GithubAuthorization create() {
+    return new GithubAuthorization(token, scopes);
+  }
 }

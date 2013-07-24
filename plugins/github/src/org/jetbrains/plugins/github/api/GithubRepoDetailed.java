@@ -24,28 +24,18 @@ import org.jetbrains.annotations.Nullable;
 public class GithubRepoDetailed extends GithubRepo {
   @Nullable private GithubRepo myParent;
 
-  @NotNull
-  @SuppressWarnings("ConstantConditions")
-  public static GithubRepoDetailed createDetailed(@Nullable GithubRepoRaw raw) throws JsonException {
-    try {
-      return new GithubRepoDetailed(raw);
-    }
-    catch (IllegalArgumentException e) {
-      throw new JsonException("GithubRepoDetailed parse error", e);
-    }
-    catch (JsonException e) {
-      throw new JsonException("GithubRepoDetailed parse error", e);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  protected GithubRepoDetailed(@NotNull GithubRepoRaw raw) throws JsonException {
-    this(raw, raw.parent);
-  }
-
-  private GithubRepoDetailed(@NotNull GithubRepoRaw raw, @Nullable GithubRepoRaw parent) throws JsonException {
-    super(raw);
-    myParent = parent == null ? null : GithubRepo.create(parent);
+  public GithubRepoDetailed(@NotNull String name,
+                            @NotNull String fullName,
+                            @NotNull String description,
+                            boolean isPrivate,
+                            boolean isFork,
+                            @NotNull String htmlUrl,
+                            @NotNull String cloneUrl,
+                            @Nullable String defaultBranch,
+                            @NotNull GithubUser owner,
+                            @Nullable GithubRepo parent) {
+    super(name, fullName, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner);
+    myParent = parent;
   }
 
   @Nullable

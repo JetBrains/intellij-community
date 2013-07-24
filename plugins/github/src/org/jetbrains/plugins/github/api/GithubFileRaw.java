@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
@@ -22,8 +23,8 @@ import java.io.Serializable;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
-public class GithubFileRaw implements Serializable {
+@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
+public class GithubFileRaw implements DataConstructor<GithubFile> {
   @Nullable public String filename;
 
   @Nullable public Integer additions;
@@ -33,4 +34,10 @@ public class GithubFileRaw implements Serializable {
   @Nullable public String rawUrl;
   @Nullable public String blobUrl;
   @Nullable public String patch;
+
+  @NotNull
+  @Override
+  public GithubFile create() {
+    return new GithubFile(filename, additions, deletions, changes, status, rawUrl, patch);
+  }
 }

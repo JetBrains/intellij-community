@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
@@ -23,8 +24,8 @@ import java.util.Date;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
-class GithubIssueCommentRaw implements Serializable {
+@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
+class GithubIssueCommentRaw implements DataConstructor<GithubIssueComment> {
   @Nullable public Long id;
 
   @Nullable public String url;
@@ -35,4 +36,10 @@ class GithubIssueCommentRaw implements Serializable {
   @Nullable public Date updatedAt;
 
   @Nullable public GithubUserRaw user;
+
+  @NotNull
+  @Override
+  public GithubIssueComment create() {
+    return new GithubIssueComment(id, htmlUrl, body, createdAt, updatedAt, user.create());
+  }
 }

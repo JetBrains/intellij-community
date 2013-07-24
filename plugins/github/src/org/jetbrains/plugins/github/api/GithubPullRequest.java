@@ -55,18 +55,12 @@ public class GithubPullRequest {
     @NotNull private GithubRepo myRepo;
     @NotNull private GithubUser myUser;
 
-    @SuppressWarnings("ConstantConditions")
-    protected Link(@NotNull LinkRaw raw) throws JsonException {
-      this(raw.label, raw.ref, raw.sha, raw.repo, raw.user);
-    }
-
-    private Link(@NotNull String label, @NotNull String ref, @NotNull String sha, @NotNull GithubRepoRaw repo, @NotNull GithubUserRaw user)
-      throws JsonException {
+    public Link(@NotNull String label, @NotNull String ref, @NotNull String sha, @NotNull GithubRepo repo, @NotNull GithubUser user) {
       myLabel = label;
       myRef = ref;
       mySha = sha;
-      myRepo = GithubRepo.create(repo);
-      myUser = GithubUser.create(user);
+      myRepo = repo;
+      myUser = user;
     }
 
     @NotNull
@@ -95,40 +89,21 @@ public class GithubPullRequest {
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
-  public static GithubPullRequest create(GithubPullRequestRaw raw) throws JsonException {
-    try {
-      return new GithubPullRequest(raw);
-    }
-    catch (IllegalArgumentException e) {
-      throw new JsonException("GithubPullRequest parse error", e);
-    }
-    catch (JsonException e) {
-      throw new JsonException("GithubPullRequest parse error", e);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  protected GithubPullRequest(@NotNull GithubPullRequestRaw raw) throws JsonException {
-    this(raw.number, raw.state, raw.title, raw.body, raw.htmlUrl, raw.diffUrl, raw.patchUrl, raw.issueUrl, raw.createdAt, raw.updatedAt,
-         raw.closedAt, raw.mergedAt, raw.user, raw.head, raw.base);
-  }
-
-  private GithubPullRequest(long number,
-                            @NotNull String state,
-                            @NotNull String title,
-                            @NotNull String body,
-                            @NotNull String htmlUrl,
-                            @NotNull String diffUrl,
-                            @NotNull String patchUrl,
-                            @NotNull String issueUrl,
-                            @NotNull Date createdAt,
-                            @NotNull Date updatedAt,
-                            @Nullable Date closedAt,
-                            @Nullable Date mergedAt,
-                            @NotNull GithubUserRaw user,
-                            @NotNull LinkRaw head,
-                            @NotNull LinkRaw base) throws JsonException {
+  public GithubPullRequest(long number,
+                           @NotNull String state,
+                           @NotNull String title,
+                           @NotNull String body,
+                           @NotNull String htmlUrl,
+                           @NotNull String diffUrl,
+                           @NotNull String patchUrl,
+                           @NotNull String issueUrl,
+                           @NotNull Date createdAt,
+                           @NotNull Date updatedAt,
+                           @Nullable Date closedAt,
+                           @Nullable Date mergedAt,
+                           @NotNull GithubUser user,
+                           @NotNull Link head,
+                           @NotNull Link base) {
     myNumber = number;
     myState = state;
     myTitle = title;
@@ -141,9 +116,9 @@ public class GithubPullRequest {
     myUpdatedAt = updatedAt;
     myClosedAt = closedAt;
     myMergedAt = mergedAt;
-    myUser = GithubUser.create(user);
-    myHead = new Link(head);
-    myBase = new Link(base);
+    myUser = user;
+    myHead = head;
+    myBase = base;
   }
 
   public long getNumber() {

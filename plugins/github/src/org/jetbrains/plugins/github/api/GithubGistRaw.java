@@ -16,17 +16,20 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.annotations.SerializedName;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
-class GithubGistRaw implements Serializable {
+@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
+class GithubGistRaw implements DataConstructor<GithubGist> {
   @Nullable public String id;
   @Nullable public String description;
 
@@ -44,7 +47,7 @@ class GithubGistRaw implements Serializable {
 
   @Nullable public Date createdAt;
 
-  public static class GistFileRaw {
+  public static class GistFileRaw implements DataConstructor<GithubGist.GistFile> {
     @Nullable public Long size;
     @Nullable public String filename;
     @Nullable public String content;
@@ -53,5 +56,24 @@ class GithubGistRaw implements Serializable {
 
     @Nullable public String type;
     @Nullable public String language;
+
+    @NotNull
+    @Override
+    public GithubGist.GistFile create() {
+      return new GithubGist.GistFile(filename, content, raw_url);
+    }
+  }
+
+  @NotNull
+  @Override
+  public GithubGist create() {
+    GithubUser user = this.user == null ? null : this.user.create();
+
+    List<GithubGist.GistFile> files = new ArrayList<GithubGist.GistFile>();
+    for (Map.Entry<String, GistFileRaw> entry : this.files.entrySet()) {
+      files.add(entry.getValue().create());
+    }
+
+    return new GithubGist(id, description, isPublic, htmlUrl, files, user);
   }
 }

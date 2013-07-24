@@ -20,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
-import static org.jetbrains.plugins.github.api.GithubUserRaw.UserPlanRaw;
-
 /**
  * @author Aleksey Pivovarov
  */
@@ -38,12 +36,7 @@ public class GithubUserDetailed extends GithubUser {
     @NotNull private String myName;
     private long myPrivateRepos;
 
-    @SuppressWarnings("ConstantConditions")
-    protected UserPlan(@NotNull UserPlanRaw raw) {
-      this(raw.name, raw.privateRepos);
-    }
-
-    private UserPlan(@NotNull String name, long privateRepos) {
+    public UserPlan(@NotNull String name, long privateRepos) {
       myName = name;
       myPrivateRepos = privateRepos;
     }
@@ -62,34 +55,20 @@ public class GithubUserDetailed extends GithubUser {
     return getPlan().getPrivateRepos() > getOwnedPrivateRepos();
   }
 
-  @NotNull
-  @SuppressWarnings("ConstantConditions")
-  public static GithubUserDetailed createDetailed(@Nullable GithubUserRaw raw) throws JsonException {
-    try {
-      return new GithubUserDetailed(raw);
-    }
-    catch (IllegalArgumentException e) {
-      throw new JsonException("GithubUserDetailed parse error", e);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  private GithubUserDetailed(@NotNull GithubUserRaw raw) {
-    this(raw, raw.name, raw.email, raw.ownedPrivateRepos, raw.type, raw.plan);
-  }
-
-  private GithubUserDetailed(@NotNull GithubUserRaw raw,
-                             @Nullable String name,
-                             @Nullable String email,
-                             int ownedPrivateRepos,
-                             @NotNull String type,
-                             @NotNull UserPlanRaw plan) {
-    super(raw);
+  public GithubUserDetailed(@NotNull String login,
+                            @NotNull String htmlUrl,
+                            @Nullable String gravatarId,
+                            @Nullable String name,
+                            @Nullable String email,
+                            int ownedPrivateRepos,
+                            @NotNull String type,
+                            @NotNull UserPlan plan) {
+    super(login, htmlUrl, gravatarId);
     myName = name;
     myEmail = email;
     myOwnedPrivateRepos = ownedPrivateRepos;
     myType = type;
-    myPlan = new UserPlan(plan);
+    myPlan = plan;
   }
 
   @Nullable

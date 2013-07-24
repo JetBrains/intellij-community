@@ -16,16 +16,16 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.annotations.SerializedName;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
 import java.util.Date;
 
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
-class GithubRepoRaw implements Serializable {
+@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
+class GithubRepoRaw implements DataConstructor<GithubRepo>, DataConstructorDetailed<GithubRepoDetailed> {
   @Nullable public Long id;
   @Nullable public String name;
   @Nullable public String fullName;
@@ -71,4 +71,17 @@ class GithubRepoRaw implements Serializable {
   @Nullable public Date pushedAt;
   @Nullable public Date createdAt;
   @Nullable public Date updatedAt;
+
+  @NotNull
+  @Override
+  public GithubRepo create() {
+    return new GithubRepo(name, fullName, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.create());
+  }
+
+  @NotNull
+  @Override
+  public GithubRepoDetailed createDetailed() {
+    GithubRepo parent = this.parent == null ? null : this.parent.create();
+    return new GithubRepoDetailed(name, fullName, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.create(), parent);
+  }
 }

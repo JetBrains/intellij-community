@@ -35,24 +35,7 @@ public class GithubFile implements Serializable {
   @NotNull private String myRawUrl;
   @NotNull private String myPatch;
 
-  @NotNull
-  @SuppressWarnings("ConstantConditions")
-  public static GithubFile create(@Nullable GithubFileRaw raw) throws JsonException {
-    try {
-      return new GithubFile(raw);
-    }
-    catch (IllegalArgumentException e) {
-      throw new JsonException("CommitFile parse error", e);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  protected GithubFile(@NotNull GithubFileRaw raw) {
-    this(raw.filename, raw.additions, raw.deletions, raw.changes, raw.status, raw.rawUrl, raw.patch);
-  }
-
-  private GithubFile(@NotNull String filename,
-                     int additions,
+  public GithubFile(@NotNull String filename, int additions,
                      int deletions,
                      int changes,
                      @NotNull String status,

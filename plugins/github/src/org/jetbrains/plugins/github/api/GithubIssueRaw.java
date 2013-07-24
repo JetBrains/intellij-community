@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
@@ -23,8 +24,8 @@ import java.util.Date;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
-class GithubIssueRaw implements Serializable {
+@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
+class GithubIssueRaw implements DataConstructor<GithubIssue> {
   @Nullable public String url;
   @Nullable public String htmlUrl;
   @Nullable public Long number;
@@ -38,4 +39,11 @@ class GithubIssueRaw implements Serializable {
   @Nullable public Date closedAt;
   @Nullable public Date createdAt;
   @Nullable public Date updatedAt;
+
+  @NotNull
+  @Override
+  public GithubIssue create() {
+    GithubUser assignee = this.assignee == null ? null : this.assignee.create();
+    return new GithubIssue(htmlUrl, number, state, title, body, user.create(), assignee, closedAt, createdAt, updatedAt);
+  }
 }

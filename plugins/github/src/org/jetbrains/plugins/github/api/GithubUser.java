@@ -28,23 +28,7 @@ public class GithubUser {
 
   @Nullable private String myGravatarId;
 
-  @NotNull
-  @SuppressWarnings("ConstantConditions")
-  public static GithubUser create(@Nullable GithubUserRaw raw) throws JsonException {
-    try {
-      return new GithubUser(raw);
-    }
-    catch (IllegalArgumentException e) {
-      throw new JsonException("GithubUser parse error", e);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  protected GithubUser(@NotNull GithubUserRaw raw) {
-    this(raw.login, raw.htmlUrl, raw.gravatarId);
-  }
-
-  private GithubUser(@NotNull String login, @NotNull String htmlUrl, @Nullable String gravatarId) {
+  public GithubUser(@NotNull String login, @NotNull String htmlUrl, @Nullable String gravatarId) {
     myLogin = login;
     myHtmlUrl = htmlUrl;
     myGravatarId = gravatarId;

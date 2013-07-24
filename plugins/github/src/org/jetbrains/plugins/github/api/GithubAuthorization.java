@@ -27,23 +27,7 @@ public class GithubAuthorization {
   @NotNull private String myToken;
   @NotNull private List<String> myScopes;
 
-  @NotNull
-  @SuppressWarnings("ConstantConditions")
-  public static GithubAuthorization create(@Nullable GithubAuthorizationRaw raw) throws JsonException {
-    try {
-      return new GithubAuthorization(raw);
-    }
-    catch (IllegalArgumentException e) {
-      throw new JsonException("GithubAuthorization parse error", e);
-    }
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  protected GithubAuthorization(@NotNull GithubAuthorizationRaw raw) {
-    this(raw.token, raw.scopes);
-  }
-
-  private GithubAuthorization(@NotNull String token, @NotNull List<String> scopes) {
+  public GithubAuthorization(@NotNull String token, @NotNull List<String> scopes) {
     myToken = token;
     myScopes = scopes;
   }
