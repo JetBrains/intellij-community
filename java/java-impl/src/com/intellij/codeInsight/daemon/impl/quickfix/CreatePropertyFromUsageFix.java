@@ -242,10 +242,6 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     }
     accessor.setName(callText);
     PsiUtil.setModifierProperty(accessor, PsiModifier.STATIC, isStatic);
-    final String modifier = PsiUtil.getMaximumModifierForMember(targetClass);
-    if (modifier != null) {
-      PsiUtil.setModifierProperty(accessor, modifier, true);
-    }
 
     TemplateBuilderImpl builder = new TemplateBuilderImpl(accessor);
     builder.replaceElement(typeReference, TYPE_VARIABLE, new TypeExpression(project, expectedTypes), true);

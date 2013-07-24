@@ -122,10 +122,6 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
       methods.add(PropertyUtil.generateSetterPrototype(myField));
     }
     for (PsiMethod method : methods) {
-      String modifier = PsiUtil.getMaximumModifierForMember(aClass);
-      if (modifier != null) {
-        PsiUtil.setModifierProperty(method, modifier, true);
-      }
       aClass.add(method);
     }
   }

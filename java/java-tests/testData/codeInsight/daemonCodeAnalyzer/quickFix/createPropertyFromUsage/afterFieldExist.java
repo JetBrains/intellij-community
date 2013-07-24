@@ -6,7 +6,7 @@ class Calculator {
         setI(0);
     }
 
-    void setI(int i) {
+    public void setI(int i) {
         this.i = i;
     }
 

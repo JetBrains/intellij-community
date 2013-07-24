@@ -2,11 +2,11 @@
 class A {
   private String s;
 
-    String getS() {
+    public String getS() {
         return s;
     }
 
-    void setS(String s) {
+    public void setS(String s) {
         this.s = s;
     }
 }
