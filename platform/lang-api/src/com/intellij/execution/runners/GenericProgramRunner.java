@@ -66,9 +66,6 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> impl
       throws ExecutionException {
 
     final Project project = env.getProject();
-    if (project == null) {
-      return;
-    }
 
     final RunProfileState state = env.getState();
     if (state == null) {
@@ -91,7 +88,7 @@ public abstract class GenericProgramRunner<Settings extends RunnerSettings> impl
         if (callback != null) callback.processStarted(descriptor);
         return descriptor;
       }
-    }, state, project, env.getExecutor(), env);
+    }, state, env);
   }
 
   @Nullable

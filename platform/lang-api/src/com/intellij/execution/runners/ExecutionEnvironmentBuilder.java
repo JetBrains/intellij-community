@@ -75,7 +75,7 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
-  public ExecutionEnvironmentBuilder setProject(@Nullable Project project) {
+  public ExecutionEnvironmentBuilder setProject(@NotNull Project project) {
     check(myProject, "Project");
     myProject = project;
     return this;

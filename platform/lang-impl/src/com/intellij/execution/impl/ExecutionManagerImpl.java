@@ -183,7 +183,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   public void startRunProfile(@NotNull final RunProfileStarter starter, @NotNull final RunProfileState state,
                               @NotNull final Project project, @NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     final RunContentDescriptor reuseContent =
-      ExecutionManager.getInstance(project).getContentManager().getReuseContent(executor, env);
+      ExecutionManager.getInstance(project).getContentManager().getReuseContent(env);
     if (reuseContent != null) {
       reuseContent.setExecutionId(env.getExecutionId());
     }
@@ -249,6 +249,11 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   }
 
   @Override
+  public void startRunProfile(@NotNull RunProfileStarter starter, @NotNull RunProfileState state, @NotNull ExecutionEnvironment env) {
+    startRunProfile(starter, state, env.getProject(), env.getExecutor(), env);
+  }
+
+  @Override
   public void restartRunProfile(@NotNull final Project project,
                                 @NotNull final Executor executor,
                                 @NotNull final ExecutionTarget target,
@@ -276,17 +281,15 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   }
 
   @Override
-  public void restartRunProfile(@NotNull Project project,
-                                @NotNull Executor executor,
-                                @Nullable ProgramRunner runner,
+  public void restartRunProfile(@Nullable ProgramRunner runner,
                                 @NotNull ExecutionEnvironment environment,
                                 @Nullable RunContentDescriptor currentDescriptor) {
-    restartRunProfile(project,
+    restartRunProfile(environment.getProject(),
                       runner,
                       environment.getRunProfile(),
                       environment.getRunnerSettings(),
                       environment.getConfigurationSettings(),
-                      executor,
+                      environment.getExecutor(),
                       environment.getExecutionTarget(),
                       environment.getRunnerAndConfigurationSettings(), currentDescriptor);
   }

@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ExecutionEnvironment extends UserDataHolderBase {
   private static final AtomicLong myIdHolder = new AtomicLong(1L);
 
-  @Nullable private final Project myProject;
+  @NotNull private final Project myProject;
 
   @NotNull private RunProfile myRunProfile;
   @NotNull private final Executor myExecutor;
@@ -63,7 +63,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   public ExecutionEnvironment(@NotNull Executor executor,
                               @NotNull final ProgramRunner runner,
                               @NotNull final RunnerAndConfigurationSettings configuration,
-                              @Nullable Project project) {
+                              @NotNull Project project) {
     this(configuration.getConfiguration(),
          executor,
          DefaultExecutionTarget.INSTANCE,
@@ -83,7 +83,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
                               @NotNull final ProgramRunner runner,
                               @NotNull final ExecutionTarget target,
                               @NotNull final RunnerAndConfigurationSettings configuration,
-                              Project project) {
+                              @NotNull Project project) {
     this(configuration.getConfiguration(),
          executor,
          target,
@@ -99,7 +99,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
    */
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
                               @NotNull Executor executor,
-                              @Nullable Project project,
+                              @NotNull Project project,
                               @Nullable RunnerSettings runnerSettings) {
     this(runProfile, executor, DefaultExecutionTarget.INSTANCE, project, runnerSettings, null, null, null, null);
   }
@@ -132,7 +132,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
     }
   }
 
-  @Nullable
+  @NotNull
   public Project getProject() {
     return myProject;
   }

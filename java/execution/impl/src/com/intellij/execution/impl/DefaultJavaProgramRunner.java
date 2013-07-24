@@ -96,7 +96,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     onProcessStarted(env.getRunnerSettings(), executionResult);
 
-    final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, env.getExecutor(), executionResult, env);
+    final RunContentBuilder contentBuilder = new RunContentBuilder(this, executionResult, env);
     Disposer.register(project, contentBuilder);
     if (shouldAddDefaultActions) {
       addDefaultActions(contentBuilder);
