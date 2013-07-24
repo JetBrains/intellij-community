@@ -63,6 +63,7 @@ public final class ExecutionEnvironmentBuilder {
     myConfigurationSettings = copySource.getConfigurationSettings();
     myRunnerId = copySource.getRunnerId();
     setContentToReuse(copySource.getContentToReuse());
+    setExecutor(copySource.getExecutor());
   }
 
   public ExecutionEnvironmentBuilder setExecutor(@NotNull Executor executor) {
