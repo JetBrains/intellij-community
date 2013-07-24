@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.util.gotoByName.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -31,6 +32,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -40,9 +43,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.SearchTextField;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -106,6 +107,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myAlarm.addRequest(new Runnable() {
           @Override
           public void run() {
+            if (StringUtil.isEmpty(pattern)) {
+              //noinspection SSBasedInspection
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  myPopup.cancel();
+                }
+              });
+              return;
+            }
             rebuildList(pattern);
           }
         }, 300);
@@ -157,68 +168,91 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myClassModel = new GotoClassModel2(project);
       myFileModel = new GotoFileModel(project);
       myActionModel = new GotoActionModel(project, myFocusComponent);
-      myClasses = myClassModel.getNames(false);
-      myFiles = myFileModel.getNames(false);
+      myClasses = myClassModel.getNames(true);
+      myFiles = myFileModel.getNames(true);
       myActions = myActionModel.getNames(true);
     }
-
-    List<MatchResult> classes = ContainerUtil.getFirstItems(collectResults(pattern, myClasses, myClassModel), 30);
-    List<MatchResult> files = ContainerUtil.getFirstItems(collectResults(pattern, myFiles, myFileModel), 30);
-    List<MatchResult> actions = ContainerUtil.getFirstItems(collectResults(pattern, myActions, myActionModel), 30);
-    final DefaultListModel listModel = new DefaultListModel();
-    Set<VirtualFile> alreadyAddedFiles = new HashSet<VirtualFile>();
-    for (MatchResult o : classes) {
-      Object[] objects = myClassModel.getElementsByName(o.elementName, false, pattern);
-      for (Object object : objects) {
-        if (!listModel.contains(object)) {
-          listModel.addElement(object);
-          if (object instanceof PsiElement) {
-            VirtualFile file = PsiUtilCore.getVirtualFile((PsiElement)object);
-            if (file != null) {
-              alreadyAddedFiles.add(file);
+    final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      List<MatchResult> classes = ContainerUtil.getFirstItems(collectResults(pattern, myClasses, myClassModel), 30);
+      List<MatchResult> files = ContainerUtil.getFirstItems(collectResults(pattern, myFiles, myFileModel), 30);
+      List<MatchResult> actions = ContainerUtil.getFirstItems(collectResults(pattern, myActions, myActionModel), 30);
+      final DefaultListModel listModel = new DefaultListModel();
+      Set<VirtualFile> alreadyAddedFiles = new HashSet<VirtualFile>();
+      for (MatchResult o : classes) {
+        Object[] objects = myClassModel.getElementsByName(o.elementName, true, pattern);
+        for (Object object : objects) {
+          if (!listModel.contains(object)) {
+            listModel.addElement(object);
+            if (object instanceof PsiElement) {
+              VirtualFile file = PsiUtilCore.getVirtualFile((PsiElement)object);
+              if (file != null) {
+                alreadyAddedFiles.add(file);
+              }
             }
           }
         }
       }
-    }
-    for (MatchResult o : files) {
-      Object[] objects = myFileModel.getElementsByName(o.elementName, false, pattern);
-      for (Object object : objects) {
-        if (!listModel.contains(object)) {
-          if (object instanceof PsiFile) {
-            object = ((PsiFile)object).getVirtualFile();
-          }
-          if (!alreadyAddedFiles.contains(object)) {
-            listModel.addElement(object);
+      for (MatchResult o : files) {
+        Object[] objects = myFileModel.getElementsByName(o.elementName, true, pattern);
+        for (Object object : objects) {
+          if (!listModel.contains(object)) {
+            if (object instanceof PsiFile) {
+              object = ((PsiFile)object).getVirtualFile();
+            }
+            if (!alreadyAddedFiles.contains(object)) {
+              listModel.addElement(object);
+            }
           }
         }
       }
-    }
-    for (MatchResult o : actions) {
-      Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
-      for (Object object : objects) {
-        listModel.addElement(object);
+      for (MatchResult o : actions) {
+        Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
+        for (Object object : objects) {
+          listModel.addElement(object);
+        }
       }
-    }
-    myList.setModel(listModel);
 
-    if (myPopup == null || !myPopup.isVisible()) {
-      myPopup = JBPopupFactory.getInstance()
-        .createListPopupBuilder(myList)
-        .setRequestFocus(false)
-        .createPopup();
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          myPopup.showUnderneathOf(field.getTextEditor());
+          myList.setModel(listModel);
+          ListScrollingUtil.ensureSelectionExists(myList);
+          if (myPopup == null || !myPopup.isVisible()) {
+            final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(field.getTextEditor(), myList);
+            myPopup = JBPopupFactory.getInstance()
+              .createListPopupBuilder(myList)
+              .setRequestFocus(false)
+              .createPopup();
+            Disposer.register(myPopup, new Disposable() {
+              @Override
+              public void dispose() {
+                callback.setDone();
+              }
+            });
+            myPopup.showUnderneathOf(field);
+          } else {
+            myList.revalidate();
+            myList.repaint();
+          }
+
+          if (myList.getModel().getSize() == 0) {
+            myPopup.cancel();
+          } else {
+            final Dimension size = myList.getPreferredSize();
+            myPopup.setSize(new Dimension(Math.min(400, Math.max(field.getWidth(), size.width + 2)), Math.min(600, size.height + 2)));
+            final Point screen = field.getLocationOnScreen();
+            final int x = screen.x + field.getWidth() - myPopup.getSize().width;
+
+            myPopup.setLocation(new Point(x, myPopup.getLocationOnScreen().y));
+          }
         }
       });
-    } else {
-      myList.revalidate();
-      myList.repaint();
     }
-
+    finally {
+      token.finish();
+    }
   }
 
   private static List<MatchResult> collectResults(String pattern, String[] names, ChooseByNameModel model) {
@@ -260,6 +294,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private class MySearchTextField extends SearchTextField {
     public MySearchTextField() {
       super(false);
+    }
+
+    @Override
+    protected void showPopup() {
     }
 
     @Override
