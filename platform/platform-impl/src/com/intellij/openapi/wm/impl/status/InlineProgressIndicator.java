@@ -88,15 +88,15 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       textAndProgress.add(myText, BorderLayout.CENTER);
 
       final NonOpaquePanel progressWrapper = new NonOpaquePanel(new GridBagLayout());
-      progressWrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+      progressWrapper.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
       final GridBagConstraints c = new GridBagConstraints();
       c.weightx = 1;
       c.weighty = 1;
-      c.insets = new Insets(SystemInfo.isMacOSLion ? 1 : 0, 0, 1, 4);
+      c.insets = new Insets(SystemInfo.isMacOSLion ? 1 : 0, 0, 1, myInfo.isCancellable() ? 0 : 4);
       c.fill = GridBagConstraints.HORIZONTAL;
       progressWrapper.add(myProgress, c);
 
-      textAndProgress.add(progressWrapper, BorderLayout.WEST);
+      textAndProgress.add(progressWrapper, BorderLayout.EAST);
       myComponent.add(textAndProgress, BorderLayout.CENTER);
       myComponent.add(myCancelButton, BorderLayout.EAST);
       myComponent.setToolTipText(processInfo.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
