@@ -620,6 +620,9 @@ public class JavaCompletionUtil {
     if (element instanceof PsiJavaCodeReferenceElement) {
       return mayHaveSideEffects(((PsiJavaCodeReferenceElement)element).getQualifier());
     }
+    if (element instanceof PsiParenthesizedExpression) {
+      return mayHaveSideEffects(((PsiParenthesizedExpression)element).getExpression());
+    }
     return true;
   }
 
