@@ -78,7 +78,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     debuggerSettings.LOCAL = false;
     debuggerSettings.setDebugPort(USE_SOCKET_TRANSPORT ? PORT : SHMEM_ADDRESS);
     debuggerSettings.setTransport(USE_SOCKET_TRANSPORT ? DebuggerSettings.SOCKET_TRANSPORT : DebuggerSettings.SHMEM_TRANSPORT);
-    return new RemoteStateState(getProject(), createRemoteConnection(), env.getRunnerSettings(), env.getConfigurationSettings());
+    return new RemoteStateState(getProject(), createRemoteConnection());
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {

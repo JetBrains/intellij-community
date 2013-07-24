@@ -276,7 +276,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
   protected DebuggerSession attachVM(final RemoteConnection remoteConnection, final boolean pollConnection)
           throws InvocationTargetException, InterruptedException {
-    final RemoteState remoteState = new RemoteStateState(myProject, remoteConnection, null, null);
+    final RemoteState remoteState = new RemoteStateState(myProject, remoteConnection);
 
     final DebuggerSession[] debuggerSession = new DebuggerSession[1];
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
