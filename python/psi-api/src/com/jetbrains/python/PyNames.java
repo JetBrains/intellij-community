@@ -214,7 +214,6 @@ public class PyNames {
     .put("__delitem__", _self_key_descr)
     .put("__delslice__", new BuiltinDescription("(self, i, j)"))
     //_BuiltinMethods.put("__dict__", _only_self_descr);
-    .put("__div__", _self_other_descr)
     .put("__divmod__", _self_other_descr)
     //_BuiltinMethods.put("__doc__", _only_self_descr);
     //_BuiltinMethods.put("__docformat__", _only_self_descr);
@@ -306,6 +305,7 @@ public class PyNames {
   public static ImmutableMap<String, BuiltinDescription> PY2_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
     .putAll(BuiltinMethods)
     .put("__nonzero__", _only_self_descr)
+    .put("__div__", _self_other_descr)
     .build();
 
   public static ImmutableMap<String, BuiltinDescription> PY3_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
