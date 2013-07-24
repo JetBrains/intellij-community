@@ -144,8 +144,8 @@ public class ChangeList {
         process(fragment);
         String text1 = fragment.getText1();
         String text2 = fragment.getText2();
-        myContext.myStarts[0] += DiffUtil.getTextLength(text1);
-        myContext.myStarts[1] += DiffUtil.getTextLength(text2);
+        myContext.myStarts[0] += StringUtil.length(text1);
+        myContext.myStarts[1] += StringUtil.length(text2);
         myContext.myLines[0] += countLines(text1);
         myContext.myLines[1] += countLines(text2);
       }
@@ -177,7 +177,7 @@ public class ChangeList {
     }
 
     public int getEnd(FragmentSide side) {
-      return getStart(side) + DiffUtil.getTextLength(side.getText(myFragment));
+      return getStart(side) + StringUtil.length(side.getText(myFragment));
     }
 
     public TextRange createRange(FragmentSide side) {

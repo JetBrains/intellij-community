@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.impl.processing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
-import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.Util;
 import com.intellij.openapi.util.TextRange;
@@ -66,7 +65,7 @@ class ByWord implements DiffPolicy{
     result.addTails();
     DiffFragment[] fragments = result.getFragments();
     DiffFragment firstFragment = fragments[0];
-    if (DiffUtil.isEmpty(firstFragment)) {
+    if (DiffFragment.isEmpty(firstFragment)) {
       DiffFragment[] newFragments = new DiffFragment[fragments.length - 1];
       System.arraycopy(fragments, 1, newFragments, 0, newFragments.length);
       fragments = newFragments;
