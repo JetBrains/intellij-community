@@ -76,8 +76,8 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
     final PyDebugRunner runner = (PyDebugRunner)ProgramRunnerUtil.getRunner(DefaultDebugExecutor.EXECUTOR_ID, settings);
     Assert.assertTrue(runner.canRun(DefaultDebugExecutor.EXECUTOR_ID, myRunConfiguration));
 
-    final ExecutionEnvironment env = new ExecutionEnvironment(runner, settings, project);
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
+    final ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, settings, project);
 
 
     final PythonCommandLineState pyState = (PythonCommandLineState)myRunConfiguration.getState(executor, env);

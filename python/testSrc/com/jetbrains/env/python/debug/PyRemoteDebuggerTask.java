@@ -71,8 +71,8 @@ public class PyRemoteDebuggerTask extends PyBaseDebuggerTask {
     final PyRemoteDebugRunner runner = (PyRemoteDebugRunner)ProgramRunnerUtil.getRunner(DefaultDebugExecutor.EXECUTOR_ID, settings);
     Assert.assertTrue(runner.canRun(DefaultDebugExecutor.EXECUTOR_ID, config));
 
-    final ExecutionEnvironment env = new ExecutionEnvironment(runner, settings, project);
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
+    final ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, settings, project);
 
 
     final PyRemoteDebugCommandLineState pyState = (PyRemoteDebugCommandLineState)config.getState(executor, env);

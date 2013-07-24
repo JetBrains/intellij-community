@@ -152,8 +152,8 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
     Assert.assertTrue(runner.canRun(DefaultRunExecutor.EXECUTOR_ID, config));
 
-    final ExecutionEnvironment env = new ExecutionEnvironment(runner, settings, project);
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    final ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, settings, project);
 
     before();
 
@@ -165,7 +165,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
         try {
-          runner.execute(executor, env, new ProgramRunner.Callback() {
+          runner.execute(env, new ProgramRunner.Callback() {
             @Override
             public void processStarted(RunContentDescriptor descriptor) {
               myDescriptor = descriptor;
