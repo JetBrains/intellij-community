@@ -12,6 +12,7 @@ import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.actions.CreatePackageAction;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
@@ -32,7 +33,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
 
   @Override
   public boolean canProcessElement(PsiFile element) {
-    return element instanceof PyFile;
+    return element.getFileType() == PythonFileType.INSTANCE;
   }
 
   @Override
