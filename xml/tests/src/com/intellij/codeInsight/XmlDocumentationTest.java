@@ -18,6 +18,7 @@ import java.io.File;
 /**
  * @by maxim
  */
+@SuppressWarnings("ConstantConditions")
 public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
 
   public void testXmlDoc() throws Exception {
@@ -27,9 +28,9 @@ public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
     doOneTest("3_2.xml", null, false, "web-app_2_4.xsd", "j2ee_1_4.xsd");
     doOneTest("3_3.xml", null, false, "web-app_2_4.xsd", "j2ee_1_4.xsd");
 
-    testOne("4.xml", "context-param", false, false, "web-app_2_4.xsd");
-    testOne("5.xml", "aaa:context-param", false, false, "web-app_2_4.xsd");
-    testOne("6.xsd", "xs:complexType", true, true);
+    doOneTest("4.xml", "context-param", false, false, "web-app_2_4.xsd");
+    doOneTest("5.xml", "aaa:context-param", false, false, "web-app_2_4.xsd");
+    doOneTest("6.xsd", "xs:complexType", true, true);
     doOneTest("7.xml", "bbb", false);
     doOneTest("8.xml", "bbb", false);
     doOneTest("9.xml", "laquo", false);
@@ -91,15 +92,16 @@ public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDtdDoc() throws Exception {
-    testOne("dtd.dtd", "foo", false, true, "web-app_2_4.xsd");
-    testOne("dtd.xml", "foo", false, true, "web-app_2_4.xsd");
+    doOneTest("dtd.dtd", "foo", false, true, "web-app_2_4.xsd");
+    doOneTest("dtd.xml", "foo", false, true, "web-app_2_4.xsd");
   }
 
   private void doOneTest(String fileName, String lookupObject, boolean testExternal, String... additional) throws Exception {
     configureByFiles(null, additional);
-    testOne(fileName, lookupObject, testExternal, true, "web-app_2_4.xsd");
+    doOneTest(fileName, lookupObject, testExternal, true, "web-app_2_4.xsd");
   }
 
+  @SuppressWarnings("ConstantConditions")
   public class DocumentationTestContext {
     final DocumentationProvider documentationProvider;
     final PsiElement originalElement;
@@ -137,7 +139,7 @@ public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  private void testOne(String fileName, String lookupObject, boolean testExternal, boolean testForElementUnderCaret, String... additional) throws Exception {
+  private void doOneTest(String fileName, String lookupObject, boolean testExternal, boolean testForElementUnderCaret, String... additional) throws Exception {
 
     configureByFiles(null, additional);
     final DocumentationTestContext context = new DocumentationTestContext(fileName);
