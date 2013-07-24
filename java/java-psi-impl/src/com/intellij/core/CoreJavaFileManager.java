@@ -31,6 +31,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.util.io.FileUtilRt.toSystemIndependentName;
+
 /**
  * @author yole
  */
@@ -75,7 +77,7 @@ public class CoreJavaFileManager implements JavaFileManager {
     final VirtualFile file = dir.getVirtualFile();
     for (VirtualFile root : myClasspath) {
       if (VfsUtilCore.isAncestor(root, file, false)) {
-        String relativePath = FileUtil.getRelativePath(root.getPath(), file.getPath(), '/');
+        String relativePath = FileUtil.getRelativePath(toSystemIndependentName(root.getPath()), toSystemIndependentName(file.getPath()), '/');
         if (relativePath == null) continue;
         return new PsiPackageImpl(myPsiManager, relativePath.replace('/', '.'));
       }
