@@ -284,7 +284,9 @@ public class ReferenceExpressionCompletionContributor {
       final PsiType expectedType = parameters.getExpectedType();
       if (!OBJECT_METHOD_PATTERN.accepts(object) || allowGetClass(object, parameters)) {
         if (parameters.getParameters().getInvocationCount() >= 3 || !itemType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-          addChainedCallVariants(element, baseItem, result, itemType, expectedType, parameters);
+          if (!(object instanceof PsiMethod && ((PsiMethod)object).getParameterList().getParametersCount() > 0)) {
+            addChainedCallVariants(element, baseItem, result, itemType, expectedType, parameters);
+          }
         }
       }
 
