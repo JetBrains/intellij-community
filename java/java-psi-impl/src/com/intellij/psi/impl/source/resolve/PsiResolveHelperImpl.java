@@ -522,7 +522,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   private static Pair<PsiType, ConstraintType> processArgType(PsiType arg, final ConstraintType constraintType,
                                                               final boolean captureWildcard) {
     if (arg instanceof PsiWildcardType && !captureWildcard) return FAILED_INFERENCE;
-    if (arg != PsiType.NULL) return new Pair<PsiType, ConstraintType>(arg, constraintType);
+    if (arg != PsiType.NULL) {
+      if (arg instanceof PsiWildcardType) {
+        final PsiType bound = ((PsiWildcardType)arg).getBound();
+        if (bound instanceof PsiClassType && ((PsiClassType)bound).isRaw()) return Pair.create(null, constraintType);
+      }
+      return new Pair<PsiType, ConstraintType>(arg, constraintType);
+    }
     return null;
   }
 
