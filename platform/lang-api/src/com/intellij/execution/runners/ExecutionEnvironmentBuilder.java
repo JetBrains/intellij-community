@@ -47,6 +47,22 @@ public final class ExecutionEnvironmentBuilder {
   public ExecutionEnvironmentBuilder() {
   }
 
+  /**
+   * Creates an execution environment builder initialized with a copy of the specified environment.
+   *
+   * @param copySource the environment to copy from.
+   */
+  public ExecutionEnvironmentBuilder(@NotNull ExecutionEnvironment copySource) {
+    setTarget(copySource.getExecutionTarget());
+    setProject(copySource.getProject());
+    myRunnerAndConfigurationSettings = copySource.getRunnerAndConfigurationSettings();
+    myRunProfile = copySource.getRunProfile();
+    myRunnerSettings = copySource.getRunnerSettings();
+    myConfigurationSettings = copySource.getConfigurationSettings();
+    myRunnerId = copySource.getRunnerId();
+    setContentToReuse(copySource.getContentToReuse());
+  }
+
   public ExecutionEnvironmentBuilder setTarget(@NotNull ExecutionTarget target) {
     myTarget = target;
     return this;

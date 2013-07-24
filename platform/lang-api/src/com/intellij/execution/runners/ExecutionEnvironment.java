@@ -74,23 +74,6 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   /**
    * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
    */
-  public ExecutionEnvironment(@NotNull final ProgramRunner runner,
-                              @NotNull final ExecutionTarget target,
-                              @NotNull final RunnerAndConfigurationSettings configuration,
-                              @Nullable RunContentDescriptor contentToReuse,
-                              Project project) {
-    this(configuration.getConfiguration(),
-         target,
-         project,
-         configuration.getRunnerSettings(runner),
-         configuration.getConfigurationSettings(runner),
-         contentToReuse,
-         configuration, runner.getRunnerId());
-  }
-
-  /**
-   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
-   */
   @TestOnly
   public ExecutionEnvironment(@NotNull final ProgramRunner runner,
                               @NotNull final ExecutionTarget target,

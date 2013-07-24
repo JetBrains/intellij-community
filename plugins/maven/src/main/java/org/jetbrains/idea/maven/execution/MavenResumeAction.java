@@ -25,6 +25,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -300,8 +301,7 @@ public class MavenResumeAction extends AnAction {
         goals.add(myResumeModuleId);
       }
 
-      myRunner.execute(myExecutor, new ExecutionEnvironment(runConfiguration, myEnvironment.getExecutionTarget(), project, myEnvironment.getRunnerSettings(),
-                                                            myEnvironment.getConfigurationSettings(), null, null, myEnvironment.getRunnerId()));
+      myRunner.execute(myExecutor, new ExecutionEnvironmentBuilder(myEnvironment).setContentToReuse(null).build());
     }
     catch (RunCanceledByUserException ignore) {
     }

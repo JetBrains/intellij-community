@@ -23,6 +23,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -147,14 +148,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                 LOG.warn("Cannot find BeforeRunTaskProvider for id='" + task.getProviderId() + "'");
                 continue;
               }
-              ExecutionEnvironment taskEnvironment = new ExecutionEnvironment(env.getRunProfile(),
-                                                                              env.getExecutionTarget(),
-                                                                              env.getProject(),
-                                                                              env.getRunnerSettings(),
-                                                                              env.getConfigurationSettings(),
-                                                                              null,
-                                                                              env.getRunnerAndConfigurationSettings(),
-                                                                              env.getRunnerId());
+              ExecutionEnvironment taskEnvironment = new ExecutionEnvironmentBuilder(env).setContentToReuse(null).build();
               taskEnvironment.setExecutionId(finalId);
               if (!provider.executeTask(projectContext, runConfiguration, taskEnvironment, task)) {
                 if (onCancelRunnable != null) {

@@ -27,6 +27,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
@@ -39,7 +40,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -169,14 +173,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       final Executor executor = isDebug ? DefaultDebugExecutor.getDebugExecutorInstance() : DefaultRunExecutor.getRunExecutorInstance();
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), profile);
       assert runner != null;
-      runner.execute(executor, new ExecutionEnvironment(profile,
-                                                        myEnvironment.getExecutionTarget(),
-                                                        profile.getProject(),
-                                                        myEnvironment.getRunnerSettings(),
-                                                        myEnvironment.getConfigurationSettings(),
-                                                        myEnvironment.getContentToReuse(),
-                                                        null,
-                                                        myEnvironment.getRunnerId()));
+      runner.execute(executor, new ExecutionEnvironmentBuilder(myEnvironment).build());
     }
     catch (ExecutionException e1) {
       LOG.error(e1);
