@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 public class GitHubRepository extends BaseRepositoryImpl {
   private static final Logger LOG = GithubUtil.LOG;
 
-  private Pattern myPattern = Pattern.compile("");
+  private Pattern myPattern = Pattern.compile("($^)");
   private String myRepoAuthor = "";
   private String myRepoName = "";
   private String myToken = "";
@@ -212,7 +212,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
 
   public void setRepoName(String repoName) {
     myRepoName = repoName;
-    myPattern = Pattern.compile("(" + repoName + "\\-\\d+):\\s+");
+    myPattern = Pattern.compile("(" + StringUtil.escapeToRegexp(repoName) + "\\-\\d+):\\s+");
   }
 
   public String getRepoAuthor() {
