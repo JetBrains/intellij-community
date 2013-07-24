@@ -132,7 +132,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       activeTasks.addAll(runManager.getBeforeRunTasks(runConfiguration));
 
       final DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
-      final DataContext dataContext = SimpleDataContext.getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, env.getRunnerId(), projectContext);
 
       if (!activeTasks.isEmpty()) {
         final long finalId = id;
@@ -157,7 +156,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                                                                               env.getRunnerAndConfigurationSettings(),
                                                                               env.getRunnerId());
               taskEnvironment.setExecutionId(finalId);
-              if (!provider.executeTask(dataContext, runConfiguration, taskEnvironment, task)) {
+              if (!provider.executeTask(projectContext, runConfiguration, taskEnvironment, task)) {
                 if (onCancelRunnable != null) {
                   SwingUtilities.invokeLater(onCancelRunnable);
                 }
