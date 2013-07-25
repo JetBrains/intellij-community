@@ -38,21 +38,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-interface DataConstructor<T> {
-  @NotNull
-  T create() throws IllegalArgumentException, NullPointerException;
-}
-
-interface DataConstructorDetailed<T> {
-  @NotNull
-  T createDetailed() throws IllegalArgumentException, NullPointerException;
-}
-
-interface DataConstructorSimplified<T> {
-  @NotNull
-  T createSimplified() throws IllegalArgumentException, NullPointerException;
-}
-
 /**
  * @author Kirill Likhodedov
  */
