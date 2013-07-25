@@ -20,34 +20,30 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -55,6 +51,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -75,7 +73,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private JBPopup myPopup;
 
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
-  private JBList myList = new JBList();
+  private JList myList = new JList(); //don't use JBList here!!! todo[kb]
 
   public SearchEverywhereAction() {
     createSearchField();
@@ -86,19 +84,25 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     });
     myList.setCellRenderer(new MyListRenderer());
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        onFocusLost(field.getTextEditor());
+      }
+    });
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(Registry.is("search.everywhere.enabled"));
+  }
 
 
   private void createSearchField() {
     field = new MySearchTextField();
-    int columns = 20;
-    if (UIUtil.isUnderDarcula() || UIUtil.isUnderAquaLookAndFeel()) {
-      columns = 7;
-    }
 
     final JTextField editor = field.getTextEditor();
-    editor.setColumns(columns);
+    onFocusLost(editor);
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -112,7 +116,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                  myPopup.cancel();
+                  if (myPopup != null && myPopup.isVisible()) {
+                    myPopup.cancel();
+                  }
                 }
               });
               return;
@@ -126,6 +132,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       public void focusGained(FocusEvent e) {
         final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor));
+        field.setText("");
+        field.getTextEditor().setForeground(UIUtil.getLabelForeground());
 
         editor.setColumns(25);
         myFocusComponent = e.getOppositeComponent();
@@ -142,21 +150,45 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       @Override
       public void focusLost(FocusEvent e) {
-        editor.setColumns(7);
-        myAlarm.cancelAllRequests();
-        myList.setModel(new DefaultListModel());
-
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final JComponent parent = (JComponent)editor.getParent();
-            parent.revalidate();
-            parent.repaint();
-          }
-        });
+        onFocusLost(editor);
       }
     });
+
+    editor.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        int keyCode = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_ESCAPE && StringUtil.isEmpty(editor.getText())) {
+          IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(editor);
+          focusManager.requestDefaultFocus(true);
+        } else if (keyCode == KeyEvent.VK_ENTER) {
+          doNavigate();
+        }
+      }
+    });
+  }
+
+  private void onFocusLost(final JTextField editor) {
+    editor.setColumns(SystemInfo.isMac ? 5 : 7);
+    field.getTextEditor().setForeground(UIUtil.getLabelDisabledForeground());
+    field.setText(" " + KeymapUtil.getFirstKeyboardShortcutText(this));
+
+    myAlarm.cancelAllRequests();
+    myList.setModel(new DefaultListModel());
+
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        final JComponent parent = (JComponent)editor.getParent();
+        parent.revalidate();
+        parent.repaint();
+      }
+    });
+  }
+
+  private void doNavigate() {
+
   }
 
   private void rebuildList(String pattern) {
@@ -168,19 +200,20 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myClassModel = new GotoClassModel2(project);
       myFileModel = new GotoFileModel(project);
       myActionModel = new GotoActionModel(project, myFocusComponent);
-      myClasses = myClassModel.getNames(true);
-      myFiles = myFileModel.getNames(true);
+      myClasses = myClassModel.getNames(false);
+      myFiles = myFileModel.getNames(false);
       myActions = myActionModel.getNames(true);
     }
     final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      List<MatchResult> classes = ContainerUtil.getFirstItems(collectResults(pattern, myClasses, myClassModel), 30);
-      List<MatchResult> files = ContainerUtil.getFirstItems(collectResults(pattern, myFiles, myFileModel), 30);
-      List<MatchResult> actions = ContainerUtil.getFirstItems(collectResults(pattern, myActions, myActionModel), 30);
+      List<MatchResult> classes = collectResults(pattern, myClasses, myClassModel);
+      List<MatchResult> files = collectResults(pattern, myFiles, myFileModel);
+      List<MatchResult> actions = collectResults(pattern, myActions, myActionModel);
       final DefaultListModel listModel = new DefaultListModel();
       Set<VirtualFile> alreadyAddedFiles = new HashSet<VirtualFile>();
+
       for (MatchResult o : classes) {
-        Object[] objects = myClassModel.getElementsByName(o.elementName, true, pattern);
+        Object[] objects = myClassModel.getElementsByName(o.elementName, false, pattern);
         for (Object object : objects) {
           if (!listModel.contains(object)) {
             listModel.addElement(object);
@@ -194,7 +227,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       }
       for (MatchResult o : files) {
-        Object[] objects = myFileModel.getElementsByName(o.elementName, true, pattern);
+        Object[] objects = myFileModel.getElementsByName(o.elementName, false, pattern);
         for (Object object : objects) {
           if (!listModel.contains(object)) {
             if (object instanceof PsiFile) {
@@ -218,7 +251,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         @Override
         public void run() {
           myList.setModel(listModel);
-          ListScrollingUtil.ensureSelectionExists(myList);
           if (myPopup == null || !myPopup.isVisible()) {
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(field.getTextEditor(), myList);
             myPopup = JBPopupFactory.getInstance()
@@ -236,12 +268,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             myList.revalidate();
             myList.repaint();
           }
-
+          ListScrollingUtil.ensureSelectionExists(myList);
           if (myList.getModel().getSize() == 0) {
             myPopup.cancel();
           } else {
             final Dimension size = myList.getPreferredSize();
-            myPopup.setSize(new Dimension(Math.min(400, Math.max(field.getWidth(), size.width + 2)), Math.min(600, size.height + 2)));
+            myPopup.setSize(new Dimension(Math.min(600, Math.max(field.getWidth(), size.width + 2)), Math.min(600, size.height + 2)));
             final Point screen = field.getLocationOnScreen();
             final int x = screen.x + field.getWidth() - myPopup.getSize().width;
 
@@ -283,7 +315,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    IdeFocusManager.getInstance(e.getProject()).requestFocus(field.getTextEditor(), true);
+    IdeFocusManager focusManager = IdeFocusManager.getInstance(e.getProject());
+    focusManager.requestFocus(field.getTextEditor(), true);
   }
 
   @Override
@@ -294,56 +327,68 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private class MySearchTextField extends SearchTextField {
     public MySearchTextField() {
       super(false);
+      setOpaque(false);
+      getTextEditor().setOpaque(false);
     }
 
     @Override
     protected void showPopup() {
-    }
-
-    @Override
-    public void paint(Graphics g) {
-      super.paint(g);
-      final JTextField editor = field.getTextEditor();
-      if (StringUtil.isEmpty(editor.getText()) && !editor.hasFocus()) {
-        final int baseline = editor.getUI().getBaseline(editor, editor.getWidth(), editor.getHeight());
-        final Color color = UIUtil.getInactiveTextColor();
-        final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-        g.setColor(color);
-        final Font font = editor.getFont();
-        g.setFont(new Font(font.getName(), Font.ITALIC, font.getSize()));
-        //final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(SearchEverywhereAction.this); //todo[kb]
-        final String shortcut = "Ctrl + F10";
-        if (UIUtil.isUnderDarcula()) {
-          g.drawString(shortcut, 30, baseline + 2);
-        }
-        else {
-          g.drawString(shortcut, 20, baseline + 4);
-        }
-        config.restore();
-      }
     }
   }
 
   private class MyListRenderer extends ColoredListCellRenderer {
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      Component cmp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+      String title = getTitle(value, index == 0 ? null : list.getModel().getElementAt(index -1));
+      if (title == null) {
+        return cmp;
+      } else {
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        JBLabel titleLabel = new JBLabel();
+        titlePanel.add(titleLabel, BorderLayout.NORTH);
+        titlePanel.add(this, BorderLayout.CENTER);
+        titlePanel.setBackground(UIUtil.getListBackground());
+        titleLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.ITALIC, UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
+        titleLabel.setForeground(UIUtil.getLabelDisabledForeground());
+        titleLabel.setText(" " + title);
+        return titlePanel;
+      }
+    }
+
+    private String getTitle(Object value, Object prevValue) {
+      String gotoClass = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoClass"));
+      gotoClass = StringUtil.isEmpty(gotoClass) ? "Classes" : "Classes (" + gotoClass + ")";
+      String gotoFile = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoFile"));
+      gotoFile = StringUtil.isEmpty(gotoFile) ? "Files" : "Files (" + gotoFile + ")";
+      String gotoAction = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoAction"));
+      gotoAction = StringUtil.isEmpty(gotoAction) ? "Actions" : "Actions (" + gotoAction + ")";
+      if (prevValue == null) { // firstElement
+        if (value instanceof PsiElement)return gotoClass;
+        if (value instanceof VirtualFile)return gotoClass;
+        return gotoAction;
+      } else {
+        if (!(prevValue instanceof VirtualFile) && value instanceof VirtualFile) return gotoFile;
+        if ((prevValue instanceof PsiElement || prevValue instanceof VirtualFile) && !(value instanceof PsiElement || value instanceof VirtualFile)) return gotoAction;
+      }
+      return null;
     }
 
     @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
       try {
-        if (value instanceof PsiNamedElement) {
-          String name = ((PsiNamedElement)value).getName();
+        if (value instanceof PsiElement) {
+          String name = myClassModel.getElementName(value);
           assert name != null;
-          append(name);
+          append("    " + name);
         }
         else if (value instanceof VirtualFile) {
-          append(((VirtualFile)value).getName());
+          append("    " + ((VirtualFile)value).getName());
         }
         else {
-          append(value.toString());
+          append("    " + value.toString());
         }
       }
       finally {
