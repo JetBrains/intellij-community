@@ -36,7 +36,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
 
     @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
-      return new PythonUnitTestRunConfiguration(project, this, "");
+      return new PythonUnitTestRunConfiguration(project, this);
     }
 
     @Override
@@ -52,7 +52,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
 
     @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
-      return new PythonDocTestRunConfiguration(project, this, "");
+      return new PythonDocTestRunConfiguration(project, this);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
 
     @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
-      return new PyTestRunConfiguration("", project, this);
+      return new PyTestRunConfiguration(project, this);
     }
 
     @Override
@@ -84,7 +84,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
 
     @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
-      return new PythonNoseTestRunConfiguration(project, this, "");
+      return new PythonNoseTestRunConfiguration(project, this);
     }
 
     @Override
@@ -100,7 +100,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
 
     @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
-      return new PythonAtTestRunConfiguration(project, this, "");
+      return new PythonAtTestRunConfiguration(project, this);
     }
 
     @Override

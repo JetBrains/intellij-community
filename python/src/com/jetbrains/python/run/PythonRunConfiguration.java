@@ -38,8 +38,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   private String myScriptName;
   private String myScriptParameters;
 
-  protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory, String name) {
-    super(name, new RunConfigurationModule(project), configurationFactory);
+  protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
+    super(project, configurationFactory);
     setUnbufferedEnv();
   }
 

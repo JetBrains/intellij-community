@@ -20,9 +20,8 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
   protected String myPluralTitle = "Doctests";
   protected String myTitle = "Doctest";
   public PythonDocTestRunConfiguration(Project project,
-                                       ConfigurationFactory configurationFactory,
-                                       String name) {
-    super(new RunConfigurationModule(project), configurationFactory, name);
+                                       ConfigurationFactory configurationFactory) {
+    super(project, configurationFactory);
   }
 
   @Override

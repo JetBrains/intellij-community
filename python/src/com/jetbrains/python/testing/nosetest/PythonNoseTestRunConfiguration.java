@@ -29,9 +29,8 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
   private boolean useParam = false;
 
   public PythonNoseTestRunConfiguration(Project project,
-                                        ConfigurationFactory configurationFactory,
-                                        String name) {
-    super(new RunConfigurationModule(project), configurationFactory, name);
+                                        ConfigurationFactory configurationFactory) {
+    super(project, configurationFactory);
   }
 
   @Override

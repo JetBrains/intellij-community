@@ -1,7 +1,7 @@
 package com.jetbrains.rest.run;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -24,10 +24,9 @@ public abstract class RestRunConfiguration extends AbstractPythonRunConfiguratio
   private static final String TASK = "docutils_task";
   private static final String OPEN_IN_BROWSER = "docutils_open_in_browser";
 
-  public RestRunConfiguration(final String name,
-                              final RunConfigurationModule module,
+  public RestRunConfiguration(Project project,
                               final ConfigurationFactory factory) {
-    super(name, module, factory);
+    super(project, factory);
   }
 
   public String getInputFile() {

@@ -43,9 +43,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   private boolean myAddSourceRoots = true;
   protected PathMappingSettings myMappingSettings;
 
-  public AbstractPythonRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
-    super(name, module, factory);
-    module.init();
+  public AbstractPythonRunConfiguration(Project project, final ConfigurationFactory factory) {
+    super(project, factory);
+    getConfigurationModule().init();
   }
 
   public List<Module> getValidModules() {

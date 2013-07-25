@@ -34,7 +34,7 @@ public class PythonConfigurationType implements ConfigurationType {
     }
 
     public RunConfiguration createTemplateConfiguration(Project project) {
-      return new PythonRunConfiguration(project, this, "");
+      return new PythonRunConfiguration(project, this);
     }
   }
 

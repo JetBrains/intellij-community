@@ -2,7 +2,7 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.configuration.AbstractRunConfiguration;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -16,8 +16,8 @@ abstract public class AbstractServerPythonRunConfiguration<T extends AbstractRun
   @NonNls private static final String LAUNCH_JAVASCRIPT_DEBUGGER = "launchJavascriptDebuger";
   private boolean myLaunchJavascriptDebugger;
 
-  public AbstractServerPythonRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
-    super(name, module, factory);
+  public AbstractServerPythonRunConfiguration(final Project project, final ConfigurationFactory factory) {
+    super(project, factory);
   }
 
   @Override
