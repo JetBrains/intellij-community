@@ -76,7 +76,12 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
   }
 
-  protected abstract ModuleBasedConfiguration createInstance();
+  protected ModuleBasedConfiguration createInstance() {
+    ModuleBasedConfiguration<ConfigurationModule> configuration =
+      (ModuleBasedConfiguration<ConfigurationModule>)getFactory().createTemplateConfiguration(getProject());
+    configuration.setName(getName());
+    return configuration;
+  }
 
   @Override
   public ModuleBasedConfiguration clone() {

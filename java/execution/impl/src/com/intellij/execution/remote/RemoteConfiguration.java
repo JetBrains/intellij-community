@@ -88,10 +88,6 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return group;
   }
 
-  protected ModuleBasedConfiguration createInstance() {
-    return new RemoteConfiguration(getName(), getProject(), RemoteConfigurationType.getInstance().getConfigurationFactories()[0]);
-  }
-
   public Collection<Module> getValidModules() {
     return getAllModules();
   }

@@ -221,10 +221,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return JavaRunConfigurationModule.getModulesForClass(getProject(), MAIN_CLASS_NAME);
   }
 
-  protected ModuleBasedConfiguration createInstance() {
-    return new ApplicationConfiguration(getName(), getProject(), ApplicationConfigurationType.getInstance());
-  }
-
   public void readExternal(final Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);

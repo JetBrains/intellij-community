@@ -204,10 +204,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     }
   }
 
-  protected ModuleBasedConfiguration createInstance() {
-    return new AppletConfiguration(getName(), getProject(), AppletConfigurationType.getInstance().getConfigurationFactories()[0]);
-  }
-
   public String getGeneratedName() {
     if (MAIN_CLASS_NAME == null) return null;
     return JavaExecutionUtil.getPresentableClassName(MAIN_CLASS_NAME, getConfigurationModule());

@@ -84,11 +84,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     workDir = PathUtil.getLocalPath(project.getBaseDir());
   }
 
-  @Override
-  protected ModuleBasedConfiguration createInstance() {
-    return new GroovyScriptRunConfiguration(getName(), getProject(), getFactory());
-  }
-
   public void setWorkDir(String dir) {
     workDir = dir;
   }
