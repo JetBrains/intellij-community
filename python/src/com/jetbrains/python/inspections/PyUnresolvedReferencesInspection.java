@@ -21,6 +21,7 @@ import com.jetbrains.cython.types.CythonType;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
@@ -652,6 +653,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (isDecoratedAsDynamic(cls, true)) {
           return true;
         }
+        if (hasUnresolvedDynamicMember((PyClassType)qtype, refText)) return true;
       }
       if (qtype instanceof CythonBuiltinType ||
           (qtype instanceof CythonType && reference instanceof PyOperatorReference)) {
@@ -661,6 +663,16 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         final Callable callable = ((PyFunctionType)qtype).getCallable();
         if (callable instanceof PyFunction && ((PyFunction)callable).getDecoratorList() != null) {
           return true;
+        }
+      }
+      return false;
+    }
+
+    private static boolean hasUnresolvedDynamicMember(@NotNull final PyClassType qtype, @NotNull final String refText) {
+      for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+        final Collection<PyDynamicMember> resolveResult = provider.getMembers(qtype);
+        for (PyDynamicMember member : resolveResult) {
+          if (member.getName().equals(refText)) return true;
         }
       }
       return false;
@@ -881,7 +893,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       PyQualifiedName packageQName = null;
       List<String> dunderAll = null;
 
-      for (NameDefiner unusedImport : unusedImports) {
+          for (NameDefiner unusedImport : unusedImports) {
         if (packageQName == null) {
           final PsiFile file = unusedImport.getContainingFile();
           if (file instanceof PyFile) {

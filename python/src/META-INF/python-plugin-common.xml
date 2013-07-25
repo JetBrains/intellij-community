@@ -956,6 +956,7 @@
     <!-- SQLAlchemy -->
     <typeProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyTypeProvider"/>
     <knownDecoratorProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyKnownDecoratorProvider"/>
+    <pyClassMembersProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyClassMembersProvider"/>
 
     <!-- Web2Py -->
     <pyReferenceResolveProvider implementation="com.jetbrains.web2py.psi.Web2PyReferenceResolveProvider"/>
