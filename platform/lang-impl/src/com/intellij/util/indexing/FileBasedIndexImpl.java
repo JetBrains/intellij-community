@@ -2413,6 +2413,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         finally {
           FileTypeManagerImpl.cacheFileType(file, null);
         }
+
+        if (myProgressIndicator != null && file.isDirectory()) { // once for dir is cheap enough
+          myProgressIndicator.checkCanceled();
+          myProgressIndicator.setText("Scanning files to index");
+          myProgressIndicator.setText2(file.getPresentableUrl());
+        }
       }
       return true;
     }
