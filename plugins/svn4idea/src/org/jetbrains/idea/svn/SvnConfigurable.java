@@ -83,6 +83,7 @@ public class SvnConfigurable implements Configurable {
       public void actionPerformed(final ActionEvent e) {
         boolean enabled = !myUseDefaultCheckBox.isSelected();
         myConfigurationDirectoryText.setEnabled(enabled);
+        myConfigurationDirectoryText.setEditable(enabled);
         myConfigurationDirectoryLabel.setEnabled(enabled);
         SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
         String path = configuration.getConfigurationDirectory();
@@ -116,7 +117,6 @@ public class SvnConfigurable implements Configurable {
         }, myProject, myComponent);
       }
     });
-    myConfigurationDirectoryText.setEditable(false);
 
     myConfigurationDirectoryLabel.setLabelFor(myConfigurationDirectoryText);
 
@@ -326,6 +326,7 @@ public class SvnConfigurable implements Configurable {
 
     boolean enabled = !myUseDefaultCheckBox.isSelected();
     myConfigurationDirectoryText.setEnabled(enabled);
+    myConfigurationDirectoryText.setEditable(enabled);
     myConfigurationDirectoryLabel.setEnabled(enabled);
     myLockOnDemand.setSelected(configuration.UPDATE_LOCK_ON_DEMAND);
     myIgnoreWhitespaceDifferenciesInCheckBox.setSelected(configuration.IGNORE_SPACES_IN_ANNOTATE);
