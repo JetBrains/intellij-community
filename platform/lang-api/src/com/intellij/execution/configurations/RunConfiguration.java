@@ -102,4 +102,14 @@ public interface RunConfiguration extends RunProfile, JDOMExternalizable, Clonea
    * @return the unique ID of the configuration.
    */
   int getUniqueID();
+
+  /**
+   * Checks whether the run configuration settings are valid.
+   *
+   * @throws RuntimeConfigurationException if the configuration settings contain a non-fatal problem which the user should be warned about
+   * but the execution should still be allowed
+   * @throws RuntimeConfigurationError if the configuration settings contain a fatal problem which makes it impossible to execute the run
+   * configuration.
+   */
+  void checkConfiguration() throws RuntimeConfigurationException;
 }
