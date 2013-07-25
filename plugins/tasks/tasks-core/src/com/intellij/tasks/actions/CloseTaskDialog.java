@@ -41,6 +41,7 @@ public class CloseTaskDialog extends DialogWrapper {
   public CloseTaskDialog(Project project, LocalTask task) {
     super(project, false);
 
+    setTitle("Close Task");
     myTaskLabel.setText(task.getSummary());
     myTaskLabel.setIcon(task.getIcon());
 

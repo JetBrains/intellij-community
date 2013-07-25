@@ -157,7 +157,14 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     String uri = getUrl() + request;
     HttpMethod method = post ? new PostMethod(uri) : new GetMethod(uri);
     configureHttpMethod(method);
-    client.executeMethod(method);
+    int status = client.executeMethod(method);
+    if (status == 400) {
+      InputStream string = method.getResponseBodyAsStream();
+      Element element = new SAXBuilder(false).build(string).getRootElement();
+      if ("error".equals(element.getName())) {
+        throw new Exception(element.getText());
+      }
+    }
     return method;
   }
 
@@ -167,6 +174,9 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     switch (state) {
       case IN_PROGRESS:
         s = "In+Progress";
+        break;
+      case RESOLVED:
+        s = "fixed";
         break;
       default:
         s = state.name();
