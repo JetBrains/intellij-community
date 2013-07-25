@@ -62,7 +62,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
   @Override
   public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, final boolean beforeExecution) throws ExecutionException {
-    runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultRunExecutor.class), runProfile);
+    runCustomPatchers(javaParameters, DefaultRunExecutor.getRunExecutorInstance(), runProfile);
   }
 
   @Override
