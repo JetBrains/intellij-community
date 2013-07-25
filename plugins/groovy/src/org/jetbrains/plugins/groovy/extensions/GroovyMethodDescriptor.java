@@ -124,8 +124,6 @@ public class GroovyMethodDescriptor {
       return null;
     }
 
-    assert namedArgsProvider == null;
-
     Map<String, NamedArgumentDescriptor> res =
       new HashMap<String, NamedArgumentDescriptor>();
 

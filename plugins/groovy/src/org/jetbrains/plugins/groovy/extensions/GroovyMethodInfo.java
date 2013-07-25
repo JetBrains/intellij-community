@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.util.ClassInstanceCache;
 
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 /**
@@ -133,7 +135,6 @@ public class GroovyMethodInfo {
 
     myNamedArguments = method.getArgumentsMap();
     myNamedArgProviderClassName = method.namedArgsProvider;
-    assert myNamedArguments == null || myNamedArgProviderClassName == null;
 
     myNamedArgReferenceProviderClassNames = method.getNamedArgumentsReferenceProviders();
 
@@ -142,22 +143,31 @@ public class GroovyMethodInfo {
     if (ApplicationManager.getApplication().isInternal()) {
       // Check classes to avoid typo.
 
-      try {
-        if (myReturnTypeCalculatorClassName != null) {
-          classLoader.loadClass(myReturnTypeCalculatorClassName);
-        }
-        if (myNamedArgProviderClassName != null) {
-          classLoader.loadClass(myNamedArgProviderClassName);
-        }
+      assertClassExists(myNamedArgProviderClassName, GroovyNamedArgumentProvider.class);
 
-        for (String className : myNamedArgReferenceProviderClassNames.values()) {
-          Class<?> aClass = classLoader.loadClass(className);
-          assert PsiReferenceProvider.class.isAssignableFrom(aClass) || GroovyNamedArgumentReferenceProvider.class.isAssignableFrom(aClass);
-        }
+      assertClassExists(myReturnTypeCalculatorClassName, PairFunction.class);
+
+      for (String className : myNamedArgReferenceProviderClassNames.values()) {
+        assertClassExists(className, PsiReferenceProvider.class, GroovyNamedArgumentReferenceProvider.class);
       }
-      catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
+    }
+  }
+
+  private void assertClassExists(@Nullable String className, Class<?> ... types) {
+    if (className == null) return;
+
+    try {
+      Class<?> aClass = myClassLoader.loadClass(className);
+      for (Class<?> t : types) {
+        if (t.isAssignableFrom(aClass)) return;
       }
+
+      assert false : "Incorrect class type: " + aClass + " must be one of " + Arrays.asList(types);
+
+      assert Modifier.isPublic(aClass.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY).getModifiers());
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -215,6 +225,8 @@ public class GroovyMethodInfo {
   }
 
   public static Set<String> getAllSupportedNamedArguments() {
+    ensureInit();
+
     return myAllSupportedNamedArguments;
   }
 
