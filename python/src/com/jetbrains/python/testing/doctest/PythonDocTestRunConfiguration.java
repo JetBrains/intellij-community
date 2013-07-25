@@ -26,11 +26,6 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
   }
 
   @Override
-  protected ModuleBasedConfiguration createInstance() {
-    return new PythonDocTestRunConfiguration(getProject(), getFactory(), getName());
-  }
-
-  @Override
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     return new PythonDocTestRunConfigurationEditor(getProject(), this);
   }

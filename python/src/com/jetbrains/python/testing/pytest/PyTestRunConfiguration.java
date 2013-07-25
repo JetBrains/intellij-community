@@ -41,10 +41,6 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
     super(new RunConfigurationModule(project), factory, name);
   }
 
-  protected ModuleBasedConfiguration createInstance() {
-    return new PyTestRunConfiguration(getName(), getProject(), getFactory());
-  }
-
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     return new PyTestConfigurationEditor(getProject(), this);
   }
