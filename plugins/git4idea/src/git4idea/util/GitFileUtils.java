@@ -99,23 +99,42 @@ public class GitFileUtils {
   }
 
   /**
+   * Delete files from cache (mark untracked)
+   *
+   * @param project the project
+   * @param root    a vcs root
+   * @param files   files to delete
+   * @return a result of operation
+   * @throws VcsException in case of git problem
+   */
+  public static void deleteFilesFromCache(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
+    throws VcsException {
+    deleteFiles(project, root, files, "--cached");
+    updateUntrackedFilesHolderOnFileRemove(project, root, files);
+  }
+
+  /**
    * Add files to the Git index.
    */
-  public static void addFiles(@NotNull Project project, @NotNull VirtualFile root,
-                              @NotNull Collection<VirtualFile> files) throws VcsException {
+  public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
+    throws VcsException {
     addPaths(project, root, VcsFileUtil.chunkFiles(root, files));
     updateUntrackedFilesHolderOnFileAdd(project, root, files);
   }
 
   private static void updateUntrackedFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
                                                           @NotNull Collection<VirtualFile> addedFiles) {
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    if (manager == null) {
-      return;
-    }
-    final GitRepository repository = manager.getRepositoryForRoot(root);
+    final GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository != null) {
       repository.getUntrackedFilesHolder().remove(addedFiles);
+    }
+  }
+
+  private static void updateUntrackedFilesHolderOnFileRemove(@NotNull Project project, @NotNull VirtualFile root,
+                                                             @NotNull Collection<VirtualFile> removedFiles) {
+    final GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    if (repository != null) {
+      repository.getUntrackedFilesHolder().add(removedFiles);
     }
   }
 

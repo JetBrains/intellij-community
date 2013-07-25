@@ -333,10 +333,7 @@ public class GithubShareAction extends DumbAwareAction {
       modified.addAll(files2commit);
 
       GitFileUtils.addFiles(project, root, files2add);
-      GitFileUtils.deleteFiles(project, root, files2rm, "--cached");
-      for (VirtualFile file : files2rm) {
-        repository.getUntrackedFilesHolder().add(file);
-      }
+      GitFileUtils.deleteFilesFromCache(project, root, files2rm);
 
       // commit
       LOG.info("Performing commit");

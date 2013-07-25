@@ -136,6 +136,15 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   /**
+   * Adds several files to the list of untracked.
+   */
+  public void add(@NotNull Collection<VirtualFile> files) {
+    synchronized (myDefinitelyUntrackedFiles) {
+      myDefinitelyUntrackedFiles.addAll(files);
+    }
+  }
+
+  /**
    * Removes several files from untracked.
    */
   public void remove(@NotNull Collection<VirtualFile> files) {
