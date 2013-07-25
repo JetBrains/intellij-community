@@ -17,7 +17,6 @@ package com.intellij.tasks.vcs;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsTaskHandler;
-import com.intellij.tasks.BranchInfo;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.impl.LocalTaskImpl;
@@ -76,8 +75,11 @@ public class TaskBranchesTest extends TaskManagerTestCase {
     LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
     LocalTask localTask = myTaskManager.activateTask(foo, false);
     myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
-    List<BranchInfo> branches = localTask.getBranches();
-    assertEquals(2, branches.size());
+
+    assertEquals(4, localTask.getBranches().size());
+    assertEquals(2, localTask.getBranches(true).size());
+    assertEquals(2, localTask.getBranches(false).size());
+
     assertEquals(2, defaultTask.getBranches().size());
 
     myTaskManager.activateTask(defaultTask, false);
@@ -87,6 +89,9 @@ public class TaskBranchesTest extends TaskManagerTestCase {
     localTask = myTaskManager.activateTask(foo, false);
     myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
     assertEquals("foo", repositories.get(0).getCurrentBranch().getName());
+
+    myTaskManager.mergeBranch(localTask);
+    assertEquals("master", repositories.get(0).getCurrentBranch().getName());
   }
 
   private List<GitRepository> initRepositories(String... names) {

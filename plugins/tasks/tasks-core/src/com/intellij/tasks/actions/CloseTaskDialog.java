@@ -18,10 +18,12 @@ package com.intellij.tasks.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vcs.VcsType;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskState;
+import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.components.JBCheckBox;
 
 import javax.swing.*;
@@ -37,6 +39,7 @@ public class CloseTaskDialog extends DialogWrapper {
   private JLabel myTaskLabel;
   private JBCheckBox myMergeBranches;
   private JPanel myVcsPanel;
+  private final TaskManagerImpl myTaskManager;
 
   public CloseTaskDialog(Project project, LocalTask task) {
     super(project, false);
@@ -46,17 +49,23 @@ public class CloseTaskDialog extends DialogWrapper {
     myTaskLabel.setIcon(task.getIcon());
 
     TaskRepository repository = task.getRepository();
-    myCloseIssue.setEnabled(task.isIssue() && repository != null && repository.getRepositoryType().getPossibleTaskStates().contains(TaskState.RESOLVED));
+    boolean visible = task.isIssue() && repository != null && repository.getRepositoryType().getPossibleTaskStates().contains(TaskState.RESOLVED);
+    myCloseIssue.setVisible(visible);
 
-    TaskManager taskManager = TaskManager.getManager(project);
-    if (taskManager.isVcsEnabled()) {
-      myCommitChanges.setEnabled(taskManager.isVcsEnabled() && !task.getChangeLists().isEmpty());
-      //if (taskManager.getActiveVcs().getType() == VcsType.distributed) {
-      //
-      //}
-      //else {
+    myTaskManager = (TaskManagerImpl)TaskManager.getManager(project);
+    myCloseIssue.setSelected(visible && myTaskManager.getState().closeIssue);
+
+    if (myTaskManager.isVcsEnabled()) {
+      myCommitChanges.setEnabled(!task.getChangeLists().isEmpty());
+      myCommitChanges.setSelected(myTaskManager.getState().commitChanges);
+      if (myTaskManager.getActiveVcs().getType() == VcsType.distributed) {
+        boolean enabled = !task.getBranches(true).isEmpty() && !task.getBranches(false).isEmpty();
+        myMergeBranches.setEnabled(enabled);
+        myMergeBranches.setSelected(enabled && myTaskManager.getState().mergeBranch);
+      }
+      else {
         myMergeBranches.setVisible(false);
-      //}
+      }
     }
     else {
       myVcsPanel.setVisible(false);
@@ -76,5 +85,19 @@ public class CloseTaskDialog extends DialogWrapper {
     return myCommitChanges.isSelected();
   }
 
+  boolean isMergeBranch() {
+    return myMergeBranches.isSelected();
+  }
 
+  @Override
+  protected void doOKAction() {
+    myTaskManager.getState().closeIssue = isCloseIssue();
+    if (myCommitChanges.isEnabled()) {
+      myTaskManager.getState().commitChanges = isCommitChanges();
+    }
+    if (myMergeBranches.isEnabled()) {
+      myTaskManager.getState().mergeBranch = isMergeBranch();
+    }
+    super.doOKAction();
+  }
 }

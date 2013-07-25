@@ -37,13 +37,17 @@ public class BranchInfo {
   @Attribute("repository")
   public String repository;
 
-  public static List<BranchInfo> fromTaskInfo(VcsTaskHandler.TaskInfo taskInfo) {
+  @Attribute("original")
+  public boolean original;
+
+  public static List<BranchInfo> fromTaskInfo(VcsTaskHandler.TaskInfo taskInfo, boolean original) {
     ArrayList<BranchInfo> list = new ArrayList<BranchInfo>();
     for (Map.Entry<String, Collection<String>> entry : taskInfo.branches.entrySet()) {
       for (String repository : entry.getValue()) {
         BranchInfo branchInfo = new BranchInfo();
         branchInfo.name = entry.getKey();
         branchInfo.repository = repository;
+        branchInfo.original = original;
         list.add(branchInfo);
       }
     }
