@@ -170,7 +170,7 @@ public class PackageFileActionTest extends ArtifactCompilerTestCase {
   }
 
   private void packageFile(VirtualFile file) throws IOException {
-    PackageFileWorker.packageFile(file, myProject, ArtifactManager.getInstance(myProject).getArtifacts());
+    PackageFileWorker.packageFile(file, myProject, ArtifactManager.getInstance(myProject).getArtifacts(), true);
   }
 
 }
