@@ -19,7 +19,6 @@ package com.jetbrains.python.buildout.config;
 import com.google.common.collect.Maps;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
@@ -41,8 +40,10 @@ public class BuildoutCfgSyntaxHighlighter extends SyntaxHighlighterBase implemen
   static final String BRACKETS_ID = "BUILDOUT_BRACKETS";
 
 
-  public static final TextAttributesKey BUILDOUT_SECTION_NAME =
-    TextAttributesKey.createTextAttributesKey("BUILDOUT.SECTION_NAME", SyntaxHighlighterColors.NUMBER);
+  public static final TextAttributesKey BUILDOUT_SECTION_NAME = TextAttributesKey.createTextAttributesKey(
+    "BUILDOUT.SECTION_NAME",
+    DefaultLanguageHighlighterColors.NUMBER
+  );
 
   public static final TextAttributesKey BUILDOUT_KEY = TextAttributesKey.createTextAttributesKey(
     "BUILDOUT.KEY",
