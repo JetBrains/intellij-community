@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,7 +192,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     myPropExceptionsButton.setShortcut(CustomShortcutSet.fromString("alt X"));
 
     final JPanel panel = ToolbarDecorator.createDecorator(table).addExtraAction(myPropExceptionsButton).createPanel();
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(0));
+    panel.setBorder(IdeBorderFactory.createEmptyBorder());
 
     myExceptionsModel.addTableModelListener(mySignatureUpdater);
 

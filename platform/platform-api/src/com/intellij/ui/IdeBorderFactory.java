@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,9 @@ public class IdeBorderFactory {
     return new EmptyBorder(insets);
   }
 
+  public static Border createEmptyBorder() {
+    return createEmptyBorder(0);
+  }
   public static Border createEmptyBorder(int thickness) {
     return new EmptyBorder(thickness, thickness, thickness, thickness);
   }

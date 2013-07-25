@@ -1860,7 +1860,7 @@ public abstract class DialogWrapper {
       setLayout(new BorderLayout());
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-      pane.setBorder(IdeBorderFactory.createEmptyBorder(0));
+      pane.setBorder(IdeBorderFactory.createEmptyBorder());
       pane.setBackground(null);
       pane.getViewport().setBackground(null);
       pane.setOpaque(false);
