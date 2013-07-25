@@ -3,7 +3,6 @@ package com.jetbrains.python.fixtures;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -58,7 +57,6 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
     try {
       final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
       final PythonCommandLineState state = (PythonCommandLineState)configuration.getState(executor, new ExecutionEnvironment());
-      PyDebugRunner debugRunner = (PyDebugRunner)RunnerRegistry.getInstance().findRunnerById(PyDebugRunner.PY_DEBUG_RUNNER);
       final GeneralCommandLine generalCommandLine =
         state.generateCommandLine(PyDebugRunner.createCommandLinePatchers(configuration.getProject(), state, configuration, PORT));
       return generalCommandLine.getParametersList().getList();
