@@ -53,13 +53,6 @@ public class PyClassHasNoInitInspection extends PyInspection {
         registerProblem(node.getNameIdentifier(), PyBundle.message("INSP.class.has.no.init"),
                         new AddMethodQuickFix("__init__", new PyClassTypeImpl(node, false), false));
       }
-      for (PyClass ancestor : node.getAncestorClasses(myTypeEvalContext)) {
-        final PyFunction ancestorInit = ancestor.findInitOrNew(false);
-        if (ancestorInit == null) {
-          registerProblem(node.getNameIdentifier(), PyBundle.message("INSP.parent.$0.has.no.init", ancestor.getName()),
-                          new AddMethodQuickFix("__init__", new PyClassTypeImpl(ancestor, false), false));
-        }
-      }
     }
   }
 }
