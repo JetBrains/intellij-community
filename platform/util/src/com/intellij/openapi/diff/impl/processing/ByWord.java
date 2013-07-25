@@ -26,7 +26,7 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import java.util.ArrayList;
 
-class ByWord implements DiffPolicy{
+public class ByWord implements DiffPolicy{
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.ByWord");
   private final ComparisonPolicy myComparisonPolicy;
 
