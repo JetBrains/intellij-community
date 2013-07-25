@@ -58,6 +58,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ContainerEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -826,6 +827,11 @@ public class EditorsSplitters extends JBPanel {
 
       if (component != null) {
         newWindow = findWindowWith(component);
+      }
+      else if (cause instanceof ContainerEvent && cause.getID() == ContainerEvent.COMPONENT_REMOVED) {
+        // do not change current window in case of child removal as in JTable.removeEditor
+        // otherwise Escape in a toolwindow will not focus editor with JTable content
+        return;
       }
 
       setCurrentWindow(newWindow);
