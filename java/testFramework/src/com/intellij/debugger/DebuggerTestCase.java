@@ -128,8 +128,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     final RemoteConnection debugParameters = DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerRunnerSettings, false);
 
-    ExecutionEnvironment environment = new ExecutionEnvironment(new MockConfiguration(), new DefaultDebugExecutor(), myProject,
-                                                                debuggerRunnerSettings);
+    ExecutionEnvironment environment = new ExecutionEnvironment(new MockConfiguration(), DefaultDebugExecutor.getDebugExecutorInstance(),
+                                                                myProject, debuggerRunnerSettings);
     final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(environment){
       @Override
       protected JavaParameters createJavaParameters() {
@@ -148,7 +148,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       @Override
       public void run() {
         try {
-          myDebuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(new DefaultDebugExecutor(),
+          myDebuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(DefaultDebugExecutor.getDebugExecutorInstance(),
             runner, new MockConfiguration(), javaCommandLineState, debugParameters, false);
         }
         catch (ExecutionException e) {
@@ -185,7 +185,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     debuggerRunnerSettings.LOCAL = true;
     debuggerRunnerSettings.DEBUG_PORT = "3456";
 
-    ExecutionEnvironment environment = new ExecutionEnvironment(new MockConfiguration(), new DefaultDebugExecutor(), myProject,
+    ExecutionEnvironment environment = new ExecutionEnvironment(new MockConfiguration(), DefaultDebugExecutor.getDebugExecutorInstance(), myProject,
                                                                 debuggerRunnerSettings);
     final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(environment) {
       @Override
@@ -438,7 +438,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   protected DebuggerSession attachVirtualMachine(RunProfileState state, RemoteConnection remoteConnection, boolean pollConnection) throws ExecutionException {
-    return DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(new DefaultDebugExecutor(), new GenericDebuggerRunner(), new MockConfiguration(), state, remoteConnection, pollConnection);
+    return DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(DefaultDebugExecutor.getDebugExecutorInstance(),
+                                                                           new GenericDebuggerRunner(),
+                                                                           new MockConfiguration(), state, remoteConnection, pollConnection);
   }
 
   private static class MockConfiguration implements ModuleRunConfiguration {

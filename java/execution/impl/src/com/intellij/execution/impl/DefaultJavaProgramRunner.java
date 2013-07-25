@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.impl;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.CapturingProcessAdapter;
@@ -40,6 +37,7 @@ import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,6 +50,8 @@ import java.util.List;
  */
 public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   private final static String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
+
+  @NonNls public static final String DEFAULT_JAVA_RUNNER_ID = "Run";
 
   @Override
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
@@ -269,6 +269,10 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   @Override
   @NotNull
   public String getRunnerId() {
-    return "Run";
+    return DEFAULT_JAVA_RUNNER_ID;
+  }
+
+  public static ProgramRunner getInstance() {
+    return RunnerRegistry.getInstance().findRunnerById(DEFAULT_JAVA_RUNNER_ID);
   }
 }

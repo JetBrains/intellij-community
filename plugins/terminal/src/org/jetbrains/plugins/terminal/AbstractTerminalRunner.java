@@ -2,7 +2,6 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -95,7 +94,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   private void initConsoleUI(final T process) {
-    final Executor defaultExecutor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+    final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
 
