@@ -15,6 +15,7 @@
  */
 package git4idea.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,6 +37,7 @@ import java.util.*;
  * File utilities for the git
  */
 public class GitFileUtils {
+  private static final Logger LOG = Logger.getInstance(GitFileUtils.class.getName());
 
   /**
    * The private constructor for static utility class
@@ -125,17 +127,21 @@ public class GitFileUtils {
   private static void updateUntrackedFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
                                                           @NotNull Collection<VirtualFile> addedFiles) {
     final GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
-    if (repository != null) {
-      repository.getUntrackedFilesHolder().remove(addedFiles);
+    if (repository == null) {
+      LOG.error("Repository not found for root " + root.getPresentableUrl());
+      return;
     }
+    repository.getUntrackedFilesHolder().remove(addedFiles);
   }
 
   private static void updateUntrackedFilesHolderOnFileRemove(@NotNull Project project, @NotNull VirtualFile root,
                                                              @NotNull Collection<VirtualFile> removedFiles) {
     final GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
-    if (repository != null) {
-      repository.getUntrackedFilesHolder().add(removedFiles);
+    if (repository == null) {
+      LOG.error("Repository not found for root " + root.getPresentableUrl());
+      return;
     }
+    repository.getUntrackedFilesHolder().add(removedFiles);
   }
 
   /**

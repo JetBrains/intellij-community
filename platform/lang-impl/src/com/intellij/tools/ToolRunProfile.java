@@ -80,10 +80,6 @@ public class ToolRunProfile implements ModuleRunProfile{
   }
 
   @Override
-  public void checkConfiguration() throws RuntimeConfigurationException {
-  }
-
-  @Override
   @NotNull
   public Module[] getModules() {
     return Module.EMPTY_ARRAY;
@@ -92,7 +88,7 @@ public class ToolRunProfile implements ModuleRunProfile{
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     final Project project = env.getProject();
-    if (project == null || myCommandLine == null) {
+    if (myCommandLine == null) {
       // can return null if creation of cmd line has been cancelled
       return null;
     }

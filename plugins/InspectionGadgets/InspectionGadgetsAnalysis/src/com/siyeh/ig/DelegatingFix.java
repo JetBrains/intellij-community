@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.siyeh.ig;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class DelegatingFix extends InspectionGadgetsFix {
@@ -43,16 +41,15 @@ public class DelegatingFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor)
-    throws IncorrectOperationException {
+  protected void doFix(Project project, ProblemDescriptor descriptor) {
     delegate.applyFix(project, descriptor);
   }
 
   /**
-   * Delegating fix should check for read-only status separately
+   * Delegate fix checks for read-only status separately
    */
   @Override
-  protected boolean isQuickFixOnReadOnlyFile(PsiElement problemElement) {
+  protected boolean prepareForWriting() {
     return false;
   }
 }

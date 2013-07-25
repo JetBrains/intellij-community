@@ -27,7 +27,8 @@ import java.util.regex.Pattern;
 public class HgVersionCommand {
 
   private static final Logger LOGGER = Logger.getInstance(HgVersionCommand.class);
-  private static final Pattern HG_VERSION_PATTERN = Pattern.compile(".+\\(\\s*version\\s+([0-9]+\\.[0-9]*)\\+?([0-9]*)[0-9\\.]*\\s*\\)\\s*");
+  private static final Pattern HG_VERSION_PATTERN =
+    Pattern.compile(".+\\(\\s*version\\s+([0-9]+\\.[0-9]*)\\+?([0-9]*)[0-9\\.]*\\s*\\)\\s*");
 
   public Double getVersion(String executable, boolean isRunViaBash) {
     String hgExecutable = executable == null ? null : executable.trim();
@@ -56,6 +57,10 @@ public class HgVersionCommand {
     if (matcher.matches()) {
       return Double.valueOf(matcher.group(1).concat(matcher.group(2)));
     }
-    return null;
+    if (versionResult.getOutputLines().isEmpty()) {
+      return null;
+    }
+    LOGGER.error("Couldn't identify hg version: " + versionResult.getOutputLines());
+    return new Double(0);
   }
 }

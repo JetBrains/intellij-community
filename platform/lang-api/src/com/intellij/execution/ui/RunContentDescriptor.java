@@ -92,6 +92,11 @@ public class RunContentDescriptor implements Disposable {
     myRestarter = null;
   }
 
+  /**
+   * Returns the icon to show in the Run or Debug toolwindow tab corresponding to this content.
+   *
+   * @return the icon to show, or null if the executor icon should be used.
+   */
   @Nullable
   public Icon getIcon() {
     return myIcon;

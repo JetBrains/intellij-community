@@ -17,7 +17,6 @@ package com.intellij.execution.applet;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
@@ -70,8 +69,8 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @NonNls
   protected static final String PARAMETER_ELEMENT_NAME = "parameter";
 
-  public AppletConfiguration(final String name, final Project project, ConfigurationFactory factory) {
-    super(name, new JavaRunConfigurationModule(project, false), factory);
+  public AppletConfiguration(final Project project, ConfigurationFactory factory) {
+    super(new JavaRunConfigurationModule(project, false), factory);
   }
 
   public void setMainClass(final PsiClass psiClass) {
@@ -82,7 +81,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    final JavaCommandLineState state = new JavaCommandLineState(env) {
+    return new JavaCommandLineState(env) {
       private AppletHtmlFile myHtmlURL = null;
 
       protected JavaParameters createJavaParameters() throws ExecutionException {
@@ -117,8 +116,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         return handler;
       }
     };
-    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
-    return state;
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
@@ -205,10 +202,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         element.setAttribute(VALUE_ATTR, myAppletParameters[i].getValue());
       }
     }
-  }
-
-  protected ModuleBasedConfiguration createInstance() {
-    return new AppletConfiguration(getName(), getProject(), AppletConfigurationType.getInstance().getConfigurationFactories()[0]);
   }
 
   public String getGeneratedName() {

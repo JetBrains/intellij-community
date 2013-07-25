@@ -564,9 +564,5 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     public String getName() {
       return null;
     }
-
-    @Override
-    public void checkConfiguration() throws RuntimeConfigurationException {
-    }
   }
 }

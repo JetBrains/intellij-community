@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -459,7 +460,19 @@ public class RedundantCastUtil {
       PsiTypeElement typeElement = typeCast.getCastType();
       if (typeElement == null) return;
       final PsiType castTo = typeElement.getType();
-      final PsiType opType = typeCast.getOperand().getType();
+      final PsiExpression operand = typeCast.getOperand();
+
+      PsiType opType = operand.getType();
+      final PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(typeCast);
+      if (expectedTypeByParent != null) {
+        final PsiDeclarationStatement declarationStatement =
+          (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(operand.getProject()).createStatementFromText(
+            expectedTypeByParent.getCanonicalText() + " l = " + operand.getText() + ";", parent);
+        final PsiExpression initializer = ((PsiLocalVariable)declarationStatement.getDeclaredElements()[0]).getInitializer();
+        LOG.assertTrue(initializer != null, operand.getText());
+        opType = initializer.getType();
+      }
+
       if (opType == null) return;
       if (parent instanceof PsiReferenceExpression) {
         if (castTo instanceof PsiClassType && opType instanceof PsiPrimitiveType) return; //explicit boxing
@@ -471,7 +484,7 @@ public class RedundantCastUtil {
           PsiClass accessClass = ((PsiClassType)opType).resolve();
           if (accessClass == null) return;
           if (!JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper().isAccessible((PsiMember)element, typeCast, accessClass)) return;
-          if (!isCastRedundantInRefExpression(refExpression, typeCast.getOperand())) return;
+          if (!isCastRedundantInRefExpression(refExpression, operand)) return;
         }
       }
 

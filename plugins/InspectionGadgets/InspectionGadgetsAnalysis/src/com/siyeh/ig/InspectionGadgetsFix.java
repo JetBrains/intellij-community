@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class InspectionGadgetsFix implements LocalQuickFix {
 
   public static final InspectionGadgetsFix[] EMPTY_ARRAY = {};
-  private static final Logger LOG =
-    Logger.getInstance("#com.siyeh.ig.InspectionGadgetsFix");
+  private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.InspectionGadgetsFix");
 
   private boolean myOnTheFly = false;
 
@@ -52,13 +51,12 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
   }
 
   @Override
-  public final void applyFix(@NotNull Project project,
-                             @NotNull ProblemDescriptor descriptor) {
+  public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement problemElement = descriptor.getPsiElement();
     if (problemElement == null || !problemElement.isValid()) {
       return;
     }
-    if (isQuickFixOnReadOnlyFile(problemElement)) {
+    if (prepareForWriting() && !FileModificationService.getInstance().preparePsiElementsForWrite(problemElement)) {
       return;
     }
     try {
@@ -72,113 +70,84 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
     }
   }
 
-  protected abstract void doFix(Project project, ProblemDescriptor descriptor)
-    throws IncorrectOperationException;
+  protected boolean prepareForWriting() {
+    return true;
+  }
 
-  protected static void deleteElement(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  protected abstract void doFix(Project project, ProblemDescriptor descriptor);
+
+  protected static void deleteElement(@NotNull PsiElement element) {
     element.delete();
   }
 
-  protected static void replaceExpression(
-    @NotNull PsiExpression expression,
-    @NotNull @NonNls String newExpressionText)
-    throws IncorrectOperationException {
+  protected static void replaceExpression(@NotNull PsiExpression expression, @NotNull @NonNls String newExpressionText) {
     final Project project = expression.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
-    final PsiExpression newExpression =
-      factory.createExpressionFromText(newExpressionText, expression);
-    final PsiElement replacementExpression =
-      expression.replace(newExpression);
-    final CodeStyleManager styleManager =
-      CodeStyleManager.getInstance(project);
+    final PsiExpression newExpression = factory.createExpressionFromText(newExpressionText, expression);
+    final PsiElement replacementExpression = expression.replace(newExpression);
+    final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     styleManager.reformat(replacementExpression);
   }
 
-  protected static void replaceExpressionWithReferenceTo(
-    @NotNull PsiExpression expression,
-    @NotNull PsiMember target)
-    throws IncorrectOperationException {
+  protected static void replaceExpressionWithReferenceTo(@NotNull PsiExpression expression, @NotNull PsiMember target) {
     final Project project = expression.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
-    final PsiReferenceExpression newExpression = (PsiReferenceExpression)
-      factory.createExpressionFromText("xxx", expression);
-    final PsiReferenceExpression replacementExpression =
-      (PsiReferenceExpression)expression.replace(newExpression);
+    final PsiReferenceExpression newExpression = (PsiReferenceExpression)factory.createExpressionFromText("xxx", expression);
+    final PsiReferenceExpression replacementExpression = (PsiReferenceExpression)expression.replace(newExpression);
     final PsiElement element = replacementExpression.bindToElement(target);
-    final JavaCodeStyleManager styleManager =
-      JavaCodeStyleManager.getInstance(project);
+    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
     styleManager.shortenClassReferences(element);
   }
 
-  protected static void replaceExpressionAndShorten(
-    @NotNull PsiExpression expression,
-    @NotNull @NonNls String newExpressionText)
-    throws IncorrectOperationException {
+  protected static void replaceExpressionAndShorten(@NotNull PsiExpression expression, @NotNull @NonNls String newExpressionText) {
     final Project project = expression.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
-    final PsiExpression newExpression =
-      factory.createExpressionFromText(newExpressionText, expression);
+    final PsiExpression newExpression = factory.createExpressionFromText(newExpressionText, expression);
     final PsiElement replacementExp = expression.replace(newExpression);
-    final JavaCodeStyleManager javaCodeStyleManager =
-      JavaCodeStyleManager.getInstance(project);
+    final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
     javaCodeStyleManager.shortenClassReferences(replacementExp);
-    final CodeStyleManager styleManager =
-      CodeStyleManager.getInstance(project);
+    final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     styleManager.reformat(replacementExp);
   }
 
-  protected static void replaceStatement(
-    @NotNull PsiStatement statement,
-    @NotNull @NonNls String newStatementText)
-    throws IncorrectOperationException {
+  protected static void replaceStatement(@NotNull PsiStatement statement, @NotNull @NonNls String newStatementText) {
     final Project project = statement.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
-    final PsiStatement newStatement =
-      factory.createStatementFromText(newStatementText, statement);
+    final PsiStatement newStatement = factory.createStatementFromText(newStatementText, statement);
     final PsiElement replacementExp = statement.replace(newStatement);
-    final CodeStyleManager styleManager =
-      CodeStyleManager.getInstance(project);
+    final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     styleManager.reformat(replacementExp);
   }
 
-  protected static void replaceStatementAndShortenClassNames(
-    @NotNull PsiStatement statement,
-    @NotNull @NonNls String newStatementText)
-    throws IncorrectOperationException {
+  protected static void replaceStatementAndShortenClassNames(@NotNull PsiStatement statement, @NotNull @NonNls String newStatementText) {
     final Project project = statement.getProject();
-    final CodeStyleManager styleManager =
-      CodeStyleManager.getInstance(project);
-    final JavaCodeStyleManager javaStyleManager =
-      JavaCodeStyleManager.getInstance(project);
+    final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
+    final JavaCodeStyleManager javaStyleManager = JavaCodeStyleManager.getInstance(project);
     if (FileTypeUtils.isInJsp(statement)) {
-      final PsiDocumentManager documentManager =
-        PsiDocumentManager.getInstance(project);
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       final PsiFile jspFile = PsiUtilCore.getTemplateLanguageFile(statement);
+      if (jspFile == null) {
+        return;
+      }
       final Document document = documentManager.getDocument(jspFile);
       if (document == null) {
         return;
       }
       documentManager.doPostponedOperationsAndUnblockDocument(document);
       final TextRange textRange = statement.getTextRange();
-      document.replaceString(textRange.getStartOffset(),
-                             textRange.getEndOffset(), newStatementText);
+      document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), newStatementText);
       documentManager.commitDocument(document);
       final FileViewProvider viewProvider = jspFile.getViewProvider();
-      PsiElement elementAt =
-        viewProvider.findElementAt(textRange.getStartOffset(),
-                                   JavaLanguage.INSTANCE);
+      PsiElement elementAt = viewProvider.findElementAt(textRange.getStartOffset(), JavaLanguage.INSTANCE);
       if (elementAt == null) {
         return;
       }
-      final int endOffset = textRange.getStartOffset() +
-                            newStatementText.length();
-      while (elementAt.getTextRange().getEndOffset() < endOffset ||
-             !(elementAt instanceof PsiStatement)) {
+      final int endOffset = textRange.getStartOffset() + newStatementText.length();
+      while (elementAt.getTextRange().getEndOffset() < endOffset || !(elementAt instanceof PsiStatement)) {
         elementAt = elementAt.getParent();
         if (elementAt == null) {
           LOG.error("Cannot decode statement");
@@ -191,43 +160,27 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
       final Language baseLanguage = viewProvider.getBaseLanguage();
       final PsiFile element = viewProvider.getPsi(baseLanguage);
       if (element != null) {
-        styleManager.reformatRange(element,
-                                   newTextRange.getStartOffset(),
-                                   newTextRange.getEndOffset());
+        styleManager.reformatRange(element, newTextRange.getStartOffset(), newTextRange.getEndOffset());
       }
     }
     else {
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = facade.getElementFactory();
-      PsiStatement newStatement = factory.createStatementFromText(
-        newStatementText, statement);
+      PsiStatement newStatement = factory.createStatementFromText(newStatementText, statement);
       newStatement = (PsiStatement)statement.replace(newStatement);
       javaStyleManager.shortenClassReferences(newStatement);
       styleManager.reformat(newStatement);
     }
   }
 
-  protected boolean isQuickFixOnReadOnlyFile(PsiElement problemElement) {
-    final PsiFile containingPsiFile = problemElement.getContainingFile();
-    if (containingPsiFile == null) {
-      return false;
-    }
-    return !FileModificationService.getInstance().prepareFileForWrite(containingPsiFile);
-  }
-
-  protected static String getElementText(@NotNull PsiElement element,
-                                         @Nullable PsiElement elementToReplace,
-                                         @Nullable String replacement) {
+  protected static String getElementText(@NotNull PsiElement element, @Nullable PsiElement elementToReplace, @Nullable String replacement) {
     final StringBuilder out = new StringBuilder();
     getElementText(element, elementToReplace, replacement, out);
     return out.toString();
   }
 
-  private static void getElementText(
-    @NotNull PsiElement element,
-    @Nullable PsiElement elementToReplace,
-    @Nullable String replacement,
-    @NotNull StringBuilder out) {
+  private static void getElementText(@NotNull PsiElement element, @Nullable PsiElement elementToReplace,
+                                     @Nullable String replacement, @NotNull StringBuilder out) {
     if (element.equals(elementToReplace)) {
       out.append(replacement);
       return;

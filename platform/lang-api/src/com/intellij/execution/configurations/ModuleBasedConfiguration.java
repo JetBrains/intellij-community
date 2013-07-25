@@ -45,6 +45,11 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     myModule = configurationModule;
   }
 
+  public ModuleBasedConfiguration(final ConfigurationModule configurationModule, final ConfigurationFactory factory) {
+    super("", configurationModule.getProject(), factory);
+    myModule = configurationModule;
+  }
+
   public abstract Collection<Module> getValidModules();
 
   public ConfigurationModule getConfigurationModule() {
@@ -76,7 +81,12 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
   }
 
-  protected abstract ModuleBasedConfiguration createInstance();
+  protected ModuleBasedConfiguration createInstance() {
+    ModuleBasedConfiguration<ConfigurationModule> configuration =
+      (ModuleBasedConfiguration<ConfigurationModule>)getFactory().createTemplateConfiguration(getProject());
+    configuration.setName(getName());
+    return configuration;
+  }
 
   @Override
   public ModuleBasedConfiguration clone() {

@@ -38,21 +38,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-interface DataConstructor<T> {
-  @NotNull
-  T create() throws IllegalArgumentException, NullPointerException;
-}
-
-interface DataConstructorDetailed<T> {
-  @NotNull
-  T createDetailed() throws IllegalArgumentException, NullPointerException;
-}
-
-interface DataConstructorSimplified<T> {
-  @NotNull
-  T createSimplified() throws IllegalArgumentException, NullPointerException;
-}
-
 /**
  * @author Kirill Likhodedov
  */
@@ -63,7 +48,7 @@ public class GithubApiUtil {
   private static final int CONNECTION_TIMEOUT = 5000;
   private static final Logger LOG = GithubUtil.LOG;
 
-  @NotNull public static final Gson gson = initGson();
+  @NotNull private static final Gson gson = initGson();
 
   private static Gson initGson() {
     GsonBuilder builder = new GsonBuilder();
@@ -250,7 +235,7 @@ public class GithubApiUtil {
    * Github API
    */
 
-  public static <Raw extends DataConstructor<Result>, Result> Result createDataFromRaw(@NotNull Raw rawObject,
+  static <Raw extends DataConstructor<Result>, Result> Result createDataFromRaw(@NotNull Raw rawObject,
                                                                                        @NotNull Class<Result> result) throws JsonException {
     try {
       return rawObject.create();
@@ -260,7 +245,7 @@ public class GithubApiUtil {
     }
   }
 
-  public static <Raw extends DataConstructorDetailed<Result>, Result> Result createDataFromRaw(@NotNull Raw rawObject,
+  static <Raw extends DataConstructorDetailed<Result>, Result> Result createDataFromRaw(@NotNull Raw rawObject,
                                                                                                @NotNull Class<Result> result)
     throws JsonException {
     try {

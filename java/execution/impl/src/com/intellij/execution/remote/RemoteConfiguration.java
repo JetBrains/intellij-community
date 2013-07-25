@@ -65,8 +65,8 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   public String HOST;
   public String PORT;
 
-  public RemoteConfiguration(final String name, final Project project, ConfigurationFactory configurationFactory) {
-    super(name, new JavaRunConfigurationModule(project, true), configurationFactory);
+  public RemoteConfiguration(final Project project, ConfigurationFactory configurationFactory) {
+    super(new JavaRunConfigurationModule(project, true), configurationFactory);
   }
 
   public RemoteConnection createRemoteConnection() {
@@ -86,10 +86,6 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new RemoteConfigurable(getProject()));
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<RemoteConfiguration>());
     return group;
-  }
-
-  protected ModuleBasedConfiguration createInstance() {
-    return new RemoteConfiguration(getName(), getProject(), RemoteConfigurationType.getInstance().getConfigurationFactories()[0]);
   }
 
   public Collection<Module> getValidModules() {

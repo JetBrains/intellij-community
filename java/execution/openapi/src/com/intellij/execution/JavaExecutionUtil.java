@@ -132,9 +132,6 @@ public class JavaExecutionUtil {
     public String getName() {
       return myContentName;
     }
-
-    public void checkConfiguration() {}
-
   }
 
   @Nullable
