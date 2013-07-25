@@ -1,6 +1,10 @@
 package com.jetbrains.python.testing;
 
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.RefactoringListenerProvider;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -42,8 +46,8 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
   private String myPattern = ""; // pattern for modules in folder to match against
   private boolean usePattern = false;
 
-  protected AbstractPythonTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
-    super(name, module, configurationFactory);
+  protected AbstractPythonTestRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
+    super(project, configurationFactory);
   }
 
   @Override

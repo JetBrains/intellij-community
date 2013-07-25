@@ -24,9 +24,8 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
   protected String myTitle = "Attest";
   protected String myPluralTitle = "Attests";
   public PythonAtTestRunConfiguration(Project project,
-                                      ConfigurationFactory configurationFactory,
-                                      String name) {
-    super(new RunConfigurationModule(project), configurationFactory, name);
+                                      ConfigurationFactory configurationFactory) {
+    super(project, configurationFactory);
   }
 
   @Override

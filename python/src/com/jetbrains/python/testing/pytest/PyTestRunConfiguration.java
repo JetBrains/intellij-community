@@ -37,8 +37,8 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
   private static final String KEYWORDS_FIELD = "keywords";
   private static final String PARAMS_FIELD = "params";
 
-  public PyTestRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
-    super(new RunConfigurationModule(project), factory, name);
+  public PyTestRunConfiguration(final Project project, final ConfigurationFactory factory) {
+    super(project, factory);
   }
 
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {

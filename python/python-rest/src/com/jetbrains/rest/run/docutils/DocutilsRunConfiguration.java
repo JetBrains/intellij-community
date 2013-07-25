@@ -17,10 +17,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DocutilsRunConfiguration extends RestRunConfiguration {
 
-  public DocutilsRunConfiguration(final String name,
-                                  final Project project,
+  public DocutilsRunConfiguration(final Project project,
                                   final ConfigurationFactory factory) {
-    super(name, new RunConfigurationModule(project), factory);
+    super(project, factory);
   }
 
   @Override

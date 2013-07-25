@@ -16,10 +16,9 @@ import org.jetbrains.annotations.NotNull;
  * User : catherine
  */
 public class SphinxRunConfiguration extends RestRunConfiguration {
-  public SphinxRunConfiguration(final String name,
-                                final Project project,
+  public SphinxRunConfiguration(final Project project,
                                 final ConfigurationFactory factory) {
-    super(name, new RunConfigurationModule(project), factory);
+    super(project, factory);
   }
 
   @Override

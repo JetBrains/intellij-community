@@ -28,9 +28,8 @@ public class PythonUnitTestRunConfiguration extends
   private boolean useParam = false;
 
   public PythonUnitTestRunConfiguration(Project project,
-                                        ConfigurationFactory configurationFactory,
-                                        String name) {
-    super(new RunConfigurationModule(project), configurationFactory, name);
+                                        ConfigurationFactory configurationFactory) {
+    super(project, configurationFactory);
   }
 
   @Override
