@@ -46,7 +46,10 @@ class ChangeVariableTypeToRhsTypePredicate implements PsiElementPredicate {
       return false;
     }
     final PsiClassType initializerClassType = (PsiClassType)initializerType;
-    final PsiClass initializerClass = initializerClassType.resolve();
+    PsiClass initializerClass = initializerClassType.resolve();
+    if (initializerClass instanceof PsiAnonymousClass) {
+      initializerClass = initializerClass.getSuperClass();
+    }
     if (initializerClass == null) {
       return false;
     }
@@ -55,6 +58,12 @@ class ChangeVariableTypeToRhsTypePredicate implements PsiElementPredicate {
     if (variableClass == null) {
       return false;
     }
-    return initializerClass.isInheritor(variableClass, true);
+    if (variableClass.equals(initializerClass)) {
+      return false;
+    }
+    if (!initializerClass.isInheritor(variableClass, true)) {
+      return false;
+    }
+    return true;
   }
 }

@@ -16,8 +16,14 @@
 package hg4idea.test;
 
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.command.HgCommitCommand;
+import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
+
+import java.util.List;
 
 import static com.intellij.dvcs.test.Executor.cd;
 import static com.intellij.dvcs.test.Executor.echo;
@@ -33,5 +39,21 @@ public class HgEncodingTest extends HgPlatformTest {
     echo("file.txt", "lalala");
     HgCommitCommand commitCommand = new HgCommitCommand(myProject, myRepository, "сообщение");
     commitCommand.execute();
+  }
+
+  //test SpecialCharacters in commit message for default EncodingProject settings
+  public void testUtfMessageInHistoryWithSpecialCharacters() throws HgCommandException, VcsException {
+    cd(myRepository);
+    String fileName = "file.txt";
+    echo(fileName, "lalala");
+    String comment = "öäüß";
+    HgCommitCommand commitCommand = new HgCommitCommand(myProject, myRepository, comment);
+    commitCommand.execute();
+    HgLogCommand logCommand = new HgLogCommand(myProject);
+    VirtualFile file = myRepository.findChild(fileName);
+    assert file != null;
+    List<HgFileRevision> revisions = logCommand.execute(new HgFile(myProject, file), 1, false);
+    HgFileRevision rev = revisions.get(0);
+    assertEquals(comment, rev.getCommitMessage());
   }
 }

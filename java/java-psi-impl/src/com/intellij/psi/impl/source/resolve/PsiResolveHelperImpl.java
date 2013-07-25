@@ -522,7 +522,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   private static Pair<PsiType, ConstraintType> processArgType(PsiType arg, final ConstraintType constraintType,
                                                               final boolean captureWildcard) {
     if (arg instanceof PsiWildcardType && !captureWildcard) return FAILED_INFERENCE;
-    if (arg != PsiType.NULL) return new Pair<PsiType, ConstraintType>(arg, constraintType);
+    if (arg != PsiType.NULL) {
+      if (arg instanceof PsiWildcardType) {
+        final PsiType bound = ((PsiWildcardType)arg).getBound();
+        if (bound instanceof PsiClassType && ((PsiClassType)bound).isRaw()) return Pair.create(null, constraintType);
+      }
+      return new Pair<PsiType, ConstraintType>(arg, constraintType);
+    }
     return null;
   }
 
@@ -903,7 +909,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                   if (substituted != null) {
                     Pair<PsiType, ConstraintType> res = getSubstitutionForTypeParameterInner(
                       superSubstitutor.substitute(typeParameter), substituted, patternType, ConstraintType.EQUALS, depth + 1);
-                    if (res != null) return res;
+                    if (res != null) {
+                      if (res == FAILED_INFERENCE) continue;
+                      return res;
+                    }
                   }
                 }
               }
@@ -929,6 +938,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         return inferBySubtypingConstraint(patternType, constraintType, depth, paramClass, argClass);
       }
 
+      PsiType lowerBound = PsiType.NULL;
+      PsiType upperBound = PsiType.NULL;
       Pair<PsiType,ConstraintType> wildcardCaptured = null;
       for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(paramClass)) {
         PsiType paramType = paramResult.getSubstitutor().substitute(typeParameter);
@@ -950,12 +961,34 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         Pair<PsiType,ConstraintType> res = getSubstitutionForTypeParameterInner(paramType, argType, patternType, ConstraintType.EQUALS, depth + 1);
 
         if (res != null) {
-          PsiType type = res.getFirst();
-          if (!(type instanceof PsiWildcardType)) return res;
-          if (wildcardCaptured != null) return FAILED_INFERENCE;
-          wildcardCaptured = res;
+          final PsiType type = res.getFirst();
+          switch (res.getSecond()) {
+            case EQUALS:
+              if (!(type instanceof PsiWildcardType)) return res;
+              if (wildcardCaptured != null) return FAILED_INFERENCE;
+              wildcardCaptured = res;
+              break;
+            case SUPERTYPE:
+              wildcardCaptured = res;
+              if (PsiType.NULL.equals(lowerBound)) {
+                lowerBound = type;
+              }
+              else if (!lowerBound.equals(type)) {
+                lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, type, typeParameter.getManager());
+                if (lowerBound == null) return FAILED_INFERENCE;
+              }
+              break;
+            case SUBTYPE:
+              wildcardCaptured = res;
+              if (PsiType.NULL.equals(upperBound) || TypeConversionUtil.isAssignable(upperBound, type)) {
+                upperBound = type;
+              }
+          }
         }
       }
+
+      if (lowerBound != PsiType.NULL) return new Pair<PsiType, ConstraintType>(lowerBound, ConstraintType.SUPERTYPE);
+      if (upperBound != PsiType.NULL) return new Pair<PsiType, ConstraintType>(upperBound, ConstraintType.SUBTYPE);
 
       return wildcardCaptured;
     }

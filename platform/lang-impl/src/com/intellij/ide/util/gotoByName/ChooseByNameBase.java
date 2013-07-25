@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import com.intellij.Patches;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -32,6 +34,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -82,7 +86,10 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -144,6 +151,7 @@ public abstract class ChooseByNameBase {
   protected final int myInitialIndex;
   private String myFindUsagesTitle;
   private ShortcutSet myCheckBoxShortcut;
+  protected boolean myInitIsDone;
 
   public boolean checkDisposed() {
     if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
@@ -189,6 +197,7 @@ public abstract class ChooseByNameBase {
     myRebuildDelay = Registry.intValue("ide.goto.rebuild.delay");
 
     myTextField.setText(myInitialText);
+    myInitIsDone = true;
   }
 
   public void setShowListAfterCompletionKeyStroke(boolean showListAfterCompletionKeyStroke) {
@@ -847,7 +856,10 @@ public abstract class ChooseByNameBase {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
       @Override
       public void beforeWriteActionStart(Object action) {
-        cancelCalcElementsThread();
+        CalcElementsThread prevThread = cancelCalcElementsThread();
+        if (prevThread != null) {
+          prevThread.scheduleRestart();
+        }
       }
     }, myTextPopup);
     myTextPopup.show(layeredPane);
@@ -945,25 +957,29 @@ public abstract class ChooseByNameBase {
   }
 
   public void scheduleCalcElements(String text,
-                                    boolean checkboxState,
-                                    boolean canCancel,
-                                    ModalityState modalityState,
-                                    Consumer<Set<?>> callback) {
-    CalcElementsThread calcElementsThread = new CalcElementsThread(text, checkboxState, callback, modalityState, canCancel);
-    myCalcElementsThread = calcElementsThread;
-    ApplicationManager.getApplication().executeOnPooledThread(calcElementsThread);
+                                   boolean checkboxState,
+                                   boolean canCancel,
+                                   ModalityState modalityState,
+                                   Consumer<Set<?>> callback) {
+    scheduleCalcElements(new CalcElementsThread(text, checkboxState, callback, modalityState, canCancel, false));
+  }
+
+  private void scheduleCalcElements(final CalcElementsThread thread) {
+    myCalcElementsThread = thread;
+    ApplicationManager.getApplication().executeOnPooledThread(thread);
   }
 
   private boolean isShowListAfterCompletionKeyStroke() {
     return myShowListAfterCompletionKeyStroke;
   }
 
-  private void cancelCalcElementsThread() {
+  private CalcElementsThread cancelCalcElementsThread() {
     CalcElementsThread calcElementsThread = myCalcElementsThread;
     if (calcElementsThread != null) {
       calcElementsThread.cancel();
       myCalcElementsThread = null;
     }
+    return calcElementsThread;
   }
 
   private void setElementsToList(int pos, @NotNull Set<?> elements) {
@@ -1196,6 +1212,15 @@ public abstract class ChooseByNameBase {
       backStroke = getShortcut(IdeActions.ACTION_GOTO_BACK);
       setFocusTraversalKeysEnabled(false);
       putClientProperty("JTextField.variant", "search");
+      setDocument(new PlainDocument() {
+        @Override
+        public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
+          super.insertString(offs, str, a);
+          if (str != null && str.length() > 1) {
+            handlePaste(str);
+          }
+        }
+      });
     }
 
     @Nullable
@@ -1353,6 +1378,41 @@ public abstract class ChooseByNameBase {
     }
   }
 
+  protected void handlePaste(String str) {
+    if (!myInitIsDone) return;
+    if (myModel instanceof GotoClassModel2 && isFileName(str)) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          final GotoFileAction gotoFile = new GotoFileAction();
+          AnActionEvent event = new AnActionEvent(null,
+                                                  DataManager.getInstance().getDataContext(myTextField),
+                                                  ActionPlaces.UNKNOWN,
+                                                  gotoFile.getTemplatePresentation(),
+                                                  ActionManager.getInstance(),
+                                                  0);
+          event.setInjectedContext(gotoFile.isInInjectedContext());
+          gotoFile.actionPerformed(event);
+        }
+      });
+    }
+  }
+
+  private static boolean isFileName(String name) {
+    final int index = name.lastIndexOf('.');
+    if (index > 0) {
+      String ext = name.substring(index + 1);
+      if (ext.contains(":")) {
+        ext = ext.substring(0, ext.indexOf(':'));
+      }
+      if (FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(ext) != UnknownFileType.INSTANCE) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static final String EXTRA_ELEM = "...";
   public static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
 
@@ -1369,7 +1429,8 @@ public abstract class ChooseByNameBase {
 
   private class CalcElementsThread implements Runnable {
     private final String myPattern;
-    private boolean myCheckboxState;
+    private volatile boolean myCheckboxState;
+    private volatile boolean myScopeExpanded;
     private final Consumer<Set<?>> myCallback;
     private final ModalityState myModalityState;
 
@@ -1380,15 +1441,20 @@ public abstract class ChooseByNameBase {
                        boolean checkboxState,
                        Consumer<Set<?>> callback,
                        @NotNull ModalityState modalityState,
-                       boolean canCancel) {
+                       boolean canCancel, boolean scopeExpanded) {
       myPattern = pattern;
       myCheckboxState = checkboxState;
       myCallback = callback;
       myModalityState = modalityState;
       myCanCancel = canCancel;
+      myScopeExpanded = scopeExpanded;
     }
 
     private final Alarm myShowCardAlarm = new Alarm();
+
+    void scheduleRestart() {
+      scheduleCalcElements(new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myCanCancel, myScopeExpanded));
+    }
 
     @Override
     public void run() {
@@ -1427,13 +1493,11 @@ public abstract class ChooseByNameBase {
 
       final String cardToShow;
       if (elements.isEmpty() && !myCheckboxState) {
+        myScopeExpanded = true;
         myCheckboxState = true;
         calculation.run();
-        cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : NOT_FOUND_IN_PROJECT_CARD;
       }
-      else {
-        cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : CHECK_BOX_CARD;
-      }
+      cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
       showCard(cardToShow, 0);
 
       final Set<Object> filtered = filter(elements);
@@ -1559,7 +1623,7 @@ public abstract class ChooseByNameBase {
       fillUsages(Arrays.asList(elements[1]), usages, targets, true);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
         final String text = myTextField.getText();
-        final boolean checkboxState = myCheckBox.isSelected();
+        final boolean everywhere = myCheckBox.isSelected();
         final LinkedHashSet<Object> prefixMatchElementsArray = new LinkedHashSet<Object>();
         final LinkedHashSet<Object> nonPrefixMatchElementsArray = new LinkedHashSet<Object>();
         hideHint();
@@ -1568,14 +1632,14 @@ public abstract class ChooseByNameBase {
 
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
-            ensureNamesLoaded(checkboxState);
+            ensureNamesLoaded(everywhere);
             indicator.setIndeterminate(true);
             ApplicationManager.getApplication().runReadAction(new Runnable() {
 
               @Override
               public void run() {
                 final boolean[] overFlow = {false};
-                myCalcElementsThread = new CalcElementsThread(text, checkboxState, null, ModalityState.NON_MODAL, true) {
+                myCalcElementsThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, true, false) {
                   private final AtomicBoolean userAskedToAbort = new AtomicBoolean();
                   @Override
                   protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
@@ -1593,7 +1657,6 @@ public abstract class ChooseByNameBase {
 
                 boolean anyPlace = isSearchInAnyPlace();
                 setSearchInAnyPlace(false);
-                boolean everywhere = myCalcElementsThread.myCheckboxState;
                 myCalcElementsThread.addElementsByPattern(text, prefixMatchElementsArray, indicator, everywhere);
                 setSearchInAnyPlace(anyPlace);
 

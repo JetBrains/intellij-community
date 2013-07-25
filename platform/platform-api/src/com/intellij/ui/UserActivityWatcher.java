@@ -111,6 +111,14 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     }
   };
 
+  private final ListSelectionListener myListSelectionListener = new ListSelectionListener() {
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+      fireUIChanged();
+    }
+  };
+
   private final TreeModelListener myTreeModelListener = new TreeModelListener() {
     public void treeNodesChanged(final TreeModelEvent e) {
       fireUIChanged();
@@ -148,6 +156,7 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
     }
     else if (parentComponent instanceof JList) {
       ((JList)parentComponent).getModel().addListDataListener(myListDataListener);
+      ((JList)parentComponent).addListSelectionListener(myListSelectionListener);
     } else if (parentComponent instanceof JTree) {
       ((JTree)parentComponent).getModel().addTreeModelListener(myTreeModelListener);
     } else if (parentComponent instanceof DocumentBasedComponent) {

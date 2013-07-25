@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.components.impl;
 
+import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.components.CompositePathMacroFilter;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,6 +40,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import java.util.*;
 
 public class BasePathMacroManager extends PathMacroManager {
+  private static CompositePathMacroFilter ourFilter = new CompositePathMacroFilter(Extensions.getExtensions(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME));
   private PathMacrosImpl myPathMacros;
 
   public BasePathMacroManager(@Nullable PathMacros pathMacros) {
@@ -183,7 +187,7 @@ public class BasePathMacroManager extends PathMacroManager {
 
     @Override
     public void collapsePaths(final Element element) {
-      getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
+      getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, false, ourFilter);
     }
 
     public int hashCode() {

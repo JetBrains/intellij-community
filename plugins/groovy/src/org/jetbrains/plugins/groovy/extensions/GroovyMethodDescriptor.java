@@ -55,18 +55,26 @@ public class GroovyMethodDescriptor {
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)
   //public Arguments[] arguments;
-  public NamedArguments[] myArguments;
+  public NamedArgument[] myArguments;
 
-  @Tag("namedArguments")
-  public static class NamedArguments {
+  @Tag("namedArgument")
+  public static class NamedArgument {
     @Attribute("type")
     public String type;
 
     @Attribute("showFirst")
     public Boolean isFirst;
 
-    @Attribute("names")
-    public String names;
+    @Attribute("name")
+    public String name;
+
+    @Attribute("referenceProvider")
+    public String referenceProvider;
+
+    protected Iterable<String> getNames() {
+      assert !StringUtil.isEmptyOrSpaces(name);
+      return StringUtil.tokenize(name, ATTR_NAMES_DELIMITER);
+    }
   }
 
   @Nullable
@@ -92,6 +100,23 @@ public class GroovyMethodDescriptor {
     }
   }
 
+  public Map<String, String> getNamedArgumentsReferenceProviders() {
+    if (myArguments == null) return Collections.emptyMap();
+
+    Map<String, String> res = new HashMap<String, String>();
+
+    for (NamedArgument argument : myArguments) {
+      if (argument.referenceProvider != null) {
+        for (String name : argument.getNames()) {
+          Object oldValue = res.put(name, argument.referenceProvider);
+          assert oldValue == null;
+        }
+      }
+    }
+
+    return res;
+  }
+
   @Nullable
   public Map<String, NamedArgumentDescriptor> getArgumentsMap() {
     if (myArguments == null && namedArgs == null) {
@@ -99,22 +124,14 @@ public class GroovyMethodDescriptor {
       return null;
     }
 
-    assert namedArgsProvider == null;
-
     Map<String, NamedArgumentDescriptor> res =
       new HashMap<String, NamedArgumentDescriptor>();
 
     if (myArguments != null) {
-      for (NamedArguments arguments : myArguments) {
+      for (NamedArgument arguments : myArguments) {
         NamedArgumentDescriptor descriptor = getDescriptor(isNamedArgsShowFirst, arguments.isFirst, arguments.type);
 
-        assert !StringUtil.isEmptyOrSpaces(arguments.names);
-
-        String names = arguments.names;
-
-        for (StringTokenizer st = new StringTokenizer(names, ATTR_NAMES_DELIMITER); st.hasMoreTokens(); ) {
-          String name = st.nextToken();
-
+        for (String name : arguments.getNames()) {
           Object oldValue = res.put(name, descriptor);
           assert oldValue == null;
         }

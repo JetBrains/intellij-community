@@ -11,7 +11,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ui.FormBuilder;
-import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.*;
@@ -85,7 +84,6 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
 
   @Override
   public void apply() {
-    myRepository.clearAuthData();
     myRepository.setRepoName(myRepoName.getText().trim());
     myRepository.setRepoAuthor(myRepoAuthor.getText().trim());
     myRepository.setToken(myToken.getText().trim());
@@ -151,6 +149,9 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
       }
     });
     if (!exceptionRef.isNull()) {
+      if (exceptionRef.get() instanceof GithubAuthenticationCanceledException) {
+        return;
+      }
       GithubNotifications.showErrorDialog(myProject, "Can't get access token", exceptionRef.get().getMessage());
       return;
     }

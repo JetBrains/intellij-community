@@ -203,13 +203,14 @@ public class TestsUIUtil {
       } else{
         List allTests = Filter.LEAF.select(myRoot.getAllTests());
         final List<AbstractTestProxy> failed = Filter.DEFECTIVE_LEAF.select(allTests);
-        int failedCount = failed.size();
         final List<AbstractTestProxy> notStarted = Filter.NOT_PASSED.select(allTests);
         notStarted.removeAll(failed);
         final List ignored = Filter.IGNORED.select(allTests);
         notStarted.removeAll(ignored);
-        int notStartedCount = notStarted.size();
-        int passedCount = allTests.size() - failedCount - notStartedCount - ignored.size();
+        failed.removeAll(ignored);
+        int failedCount = failed.size();
+        int notStartedCount = notStarted.size() + ignored.size();
+        int passedCount = allTests.size() - failedCount - notStartedCount;
         if (failedCount > 0) {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
           myText = passedCount + " passed, " + failedCount + " failed" + (notStartedCount > 0 ? ", " + notStartedCount + " not started" : "");

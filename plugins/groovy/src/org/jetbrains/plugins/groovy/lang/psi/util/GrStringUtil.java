@@ -266,6 +266,7 @@ public class GrStringUtil {
     if (!forInjection) {
       unescapeCharacters(b, isSingleLine ? "'" : "'\"", true);
     }
+    if (!isSingleLine) escapeLastSymbols(b, '\"');
   }
 
   public static String escapeSymbolsForString(String s, boolean isSingleLine, boolean forInjection) {
@@ -274,7 +275,14 @@ public class GrStringUtil {
     if (!forInjection) {
       unescapeCharacters(builder, isSingleLine ? "$\"" : "$'\"", true);
     }
+    if (!isSingleLine) escapeLastSymbols(builder, '\'');
     return builder.toString();
+  }
+
+  private static void escapeLastSymbols(StringBuilder builder, char toEscape) {
+    for (int i = builder.length() - 1; i >= 0 && builder.charAt(i) == toEscape; i--) {
+      builder.insert(i, '\\');
+    }
   }
 
   @NotNull

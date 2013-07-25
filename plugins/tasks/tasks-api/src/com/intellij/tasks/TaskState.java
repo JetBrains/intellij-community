@@ -27,5 +27,4 @@ public enum TaskState {
   RESOLVED,
 
   OTHER
-
 }

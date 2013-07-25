@@ -28,10 +28,12 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.DialogManager;
@@ -53,9 +55,7 @@ import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
 
@@ -185,7 +185,7 @@ public class GithubShareAction extends DumbAwareAction {
           return;
         }
 
-        GithubNotifications.showInfoURL(project, "Successfully created project on GitHub", name, url);
+        GithubNotifications.showInfoURL(project, "Successfully shared project on GitHub", name, url);
       }
     }.queue();
   }
@@ -221,6 +221,9 @@ public class GithubShareAction extends DumbAwareAction {
       }
     });
     if (!exceptionRef.isNull()) {
+      if (exceptionRef.get() instanceof GithubAuthenticationCanceledException) {
+        return null;
+      }
       GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", exceptionRef.get().getMessage());
       return null;
     }
@@ -298,25 +301,39 @@ public class GithubShareAction extends DumbAwareAction {
       indicator.setText("Adding files to git...");
 
       // ask for files to add
-      final List<VirtualFile> untrackedFiles = new ArrayList<VirtualFile>(repository.getUntrackedFilesHolder().retrieveUntrackedFiles());
+      final List<VirtualFile> trackedFiles = ChangeListManager.getInstance(project).getAffectedFiles();
+      final Collection<VirtualFile> untrackedFiles = repository.getUntrackedFilesHolder().retrieveUntrackedFiles();
+      final List<VirtualFile> allFiles = new ArrayList<VirtualFile>();
+      allFiles.addAll(trackedFiles);
+      allFiles.addAll(untrackedFiles);
+
       final Ref<GithubUntrackedFilesDialog> dialogRef = new Ref<GithubUntrackedFilesDialog>();
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
         public void run() {
-          GithubUntrackedFilesDialog dialog = new GithubUntrackedFilesDialog(project, untrackedFiles);
+          GithubUntrackedFilesDialog dialog = new GithubUntrackedFilesDialog(project, allFiles);
+          if (!trackedFiles.isEmpty()) {
+            dialog.setSelectedFiles(trackedFiles);
+          }
           DialogManager.show(dialog);
           dialogRef.set(dialog);
         }
       }, indicator.getModalityState());
       final GithubUntrackedFilesDialog dialog = dialogRef.get();
 
-      final Collection<VirtualFile> files2add = dialog.getSelectedFiles();
-      if (!dialog.isOK() || files2add.isEmpty()) {
-        GithubNotifications
-          .showWarningURL(project, "Can't finish GitHub sharing process", "No files to commit. ", "'" + name + "'", " on GitHub", url);
+      final Collection<VirtualFile> files2commit = dialog.getSelectedFiles();
+      if (!dialog.isOK() || files2commit.isEmpty()) {
+        GithubNotifications.showInfoURL(project, "Successfully created empty repository on GitHub", name, url);
         return false;
       }
+
+      Collection<VirtualFile> files2add = ContainerUtil.intersection(untrackedFiles, files2commit);
+      Collection<VirtualFile> files2rm = ContainerUtil.subtract(trackedFiles, files2commit);
+      Collection<VirtualFile> modified = new HashSet<VirtualFile>(trackedFiles);
+      modified.addAll(files2commit);
+
       GitFileUtils.addFiles(project, root, files2add);
+      GitFileUtils.deleteFilesFromCache(project, root, files2rm);
 
       // commit
       LOG.info("Performing commit");
@@ -326,7 +343,7 @@ public class GithubShareAction extends DumbAwareAction {
       handler.endOptions();
       handler.run();
 
-      VcsFileUtil.refreshFiles(project, dialog.getSelectedFiles());
+      VcsFileUtil.refreshFiles(project, modified);
     }
     catch (VcsException e) {
       GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'" + name + "'",

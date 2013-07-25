@@ -17,6 +17,7 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.DefaultExecutionTarget;
 import com.intellij.execution.ExecutionTarget;
+import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
@@ -35,25 +36,40 @@ public final class ExecutionEnvironmentBuilder {
   @NotNull private RunProfile myRunProfile;
   @NotNull private ExecutionTarget myTarget = DefaultExecutionTarget.INSTANCE;
 
-  @Nullable private Project myProject;
+  @NotNull private final Project myProject;
 
   @Nullable private RunnerSettings myRunnerSettings;
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
   @Nullable private RunContentDescriptor myContentToReuse;
   @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
+  @Nullable private String myRunnerId;
   private boolean myAssignNewId;
+  @NotNull private final Executor myExecutor;
 
-  public ExecutionEnvironmentBuilder() {
+  public ExecutionEnvironmentBuilder(@NotNull Project project, @NotNull Executor executor) {
+    myProject = project;
+    myExecutor = executor;
+  }
+
+  /**
+   * Creates an execution environment builder initialized with a copy of the specified environment.
+   *
+   * @param copySource the environment to copy from.
+   */
+  public ExecutionEnvironmentBuilder(@NotNull ExecutionEnvironment copySource) {
+    setTarget(copySource.getExecutionTarget());
+    myProject = copySource.getProject();
+    myRunnerAndConfigurationSettings = copySource.getRunnerAndConfigurationSettings();
+    myRunProfile = copySource.getRunProfile();
+    myRunnerSettings = copySource.getRunnerSettings();
+    myConfigurationSettings = copySource.getConfigurationSettings();
+    myRunnerId = copySource.getRunnerId();
+    setContentToReuse(copySource.getContentToReuse());
+    myExecutor = copySource.getExecutor();
   }
 
   public ExecutionEnvironmentBuilder setTarget(@NotNull ExecutionTarget target) {
     myTarget = target;
-    return this;
-  }
-
-  public ExecutionEnvironmentBuilder setProject(@Nullable Project project) {
-    check(myProject, "Project");
-    myProject = project;
     return this;
   }
 
@@ -64,6 +80,7 @@ public final class ExecutionEnvironmentBuilder {
     setRunProfile(settings.getConfiguration());
     setRunnerSettings(settings.getRunnerSettings(programRunner));
     setConfigurationSettings(settings.getConfigurationSettings(programRunner));
+    setRunnerId(programRunner.getRunnerId());
     return this;
   }
 
@@ -91,6 +108,11 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  public ExecutionEnvironmentBuilder setRunnerId(String runnerId) {
+    myRunnerId = runnerId;
+    return this;
+  }
+
   public ExecutionEnvironmentBuilder assignNewId() {
     myAssignNewId = true;
     return this;
@@ -99,8 +121,8 @@ public final class ExecutionEnvironmentBuilder {
   @NotNull
   public ExecutionEnvironment build() {
     ExecutionEnvironment environment =
-      new ExecutionEnvironment(myRunProfile, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,
-                               myRunnerAndConfigurationSettings);
+      new ExecutionEnvironment(myRunProfile, myExecutor, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,
+                               myRunnerAndConfigurationSettings, myRunnerId);
     if (myAssignNewId) {
       environment.assignNewExecutionId();
     }

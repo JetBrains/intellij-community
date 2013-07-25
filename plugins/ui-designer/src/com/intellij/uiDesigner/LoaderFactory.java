@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ import java.util.*;
 public final class LoaderFactory {
   private final Project myProject;
 
-  private final WeakHashMap<Module, ClassLoader> myModule2ClassLoader;
+  private final ConcurrentWeakHashMap<Module, ClassLoader> myModule2ClassLoader;
   private ClassLoader myProjectClassLoader = null;
   private final MessageBusConnection myConnection;
 
@@ -57,7 +58,7 @@ public final class LoaderFactory {
   
   public LoaderFactory(final Project project) {
     myProject = project;
-    myModule2ClassLoader = new WeakHashMap<Module, ClassLoader>();
+    myModule2ClassLoader = new ConcurrentWeakHashMap<Module, ClassLoader>();
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       public void rootsChanged(final ModuleRootEvent event) {

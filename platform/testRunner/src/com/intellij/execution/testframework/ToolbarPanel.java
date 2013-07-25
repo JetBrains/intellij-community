@@ -21,8 +21,7 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.actions.ShowStatisticsAction;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
@@ -53,8 +52,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   private final ArrayList<ToggleModelAction> myActions = new ArrayList<ToggleModelAction>();
 
   public ToolbarPanel(final TestConsoleProperties properties,
-                      final RunnerSettings runnerSettings,
-                      final ConfigurationPerRunnerSettings configurationSettings, JComponent parent) {
+                      ExecutionEnvironment environment, JComponent parent) {
     super(new BorderLayout());
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"),
@@ -116,16 +114,15 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     myExportAction = ExportTestResultsAction.create(properties.getExecutor().getToolWindowId(), properties.getConfiguration());
     actionGroup.addAction(myExportAction);
 
-    appendAdditionalActions(actionGroup, properties, runnerSettings, configurationSettings, parent);
+    appendAdditionalActions(actionGroup, properties, environment, parent);
 
     add(ActionManager.getInstance().
       createActionToolbar(ActionPlaces.TESTTREE_VIEW_TOOLBAR, actionGroup, true).
       getComponent(), BorderLayout.CENTER);
   }
 
-  protected void appendAdditionalActions(DefaultActionGroup actionGroup, TestConsoleProperties properties, RunnerSettings runnerSettings,
-                                         ConfigurationPerRunnerSettings configurationSettings,
-                                         JComponent parent) {
+  protected void appendAdditionalActions(DefaultActionGroup actionGroup, TestConsoleProperties properties,
+                                         ExecutionEnvironment environment, JComponent parent) {
   }
 
   public void setModel(final TestFrameworkRunningModel model) {

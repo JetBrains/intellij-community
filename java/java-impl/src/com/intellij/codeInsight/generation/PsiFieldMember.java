@@ -83,17 +83,6 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
   @Nullable
   private static PsiMethod createMethodIfNotExists(PsiClass aClass, final PsiMethod template) {
     PsiMethod existing = aClass.findMethodBySignature(template, false);
-    if (existing == null) {
-      if (template != null) {
-        String modifier = aClass.isEnum() && aClass.hasModifierProperty(PsiModifier.PUBLIC) ? null : PsiUtil.getMaximumModifierForMember(aClass);
-        if (modifier != null) {
-          PsiUtil.setModifierProperty(template, modifier, true);
-        }
-      }
-      return template;
-    }
-    else {
-      return null;
-    }
+    return existing == null ? template : null;
   }
 }

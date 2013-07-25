@@ -62,9 +62,9 @@ import java.util.*;
 @State(
   name = "Encoding",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE),
-    @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/encodings.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/encodings.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
 )
 public class EncodingProjectManagerImpl extends EncodingProjectManager {
   private final Project myProject;

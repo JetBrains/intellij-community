@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
@@ -31,10 +32,10 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import org.apache.commons.httpclient.auth.AuthenticationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.*;
+import org.jetbrains.plugins.github.ui.GithubBasicLoginDialog;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import java.io.IOException;
@@ -58,25 +59,22 @@ public class GithubUtil {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
     try {
       if (auth.getAuthType() == GithubAuthData.AuthType.ANONYMOUS) {
-        throw new AuthenticationException("Bad authentication type");
+        throw new GithubAuthenticationException("Bad authentication type");
       }
       task.consume(auth);
       return auth;
     }
-    catch (AuthenticationException e) {
+    catch (GithubAuthenticationException e) {
       auth = getValidAuthData(project, indicator);
       if (auth == null) {
-        throw new AuthenticationException("Can't get valid credentials");
+        throw new GithubAuthenticationCanceledException("Can't get valid credentials");
       }
       task.consume(auth);
       return auth;
     }
     catch (IOException e) {
-      GithubSslSupport sslSupport = GithubSslSupport.getInstance();
-      if (GithubSslSupport.isCertificateException(e)) {
-        if (sslSupport.askIfShouldProceed(auth.getHost())) {
-          return runAndGetValidAuth(project, indicator, task);
-        }
+      if (checkSSLCertificate(e, auth.getHost(), indicator)) {
+        return runAndGetValidAuth(project, indicator, task);
       }
       throw e;
     }
@@ -89,23 +87,20 @@ public class GithubUtil {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
     try {
       if (auth.getAuthType() == GithubAuthData.AuthType.ANONYMOUS) {
-        throw new AuthenticationException("Bad authentication type");
+        throw new GithubAuthenticationException("Bad authentication type");
       }
       return task.convert(auth);
     }
-    catch (AuthenticationException e) {
+    catch (GithubAuthenticationException e) {
       auth = getValidAuthData(project, indicator);
       if (auth == null) {
-        throw new AuthenticationException("Can't get valid credentials");
+        throw new GithubAuthenticationCanceledException("Can't get valid credentials");
       }
       return task.convert(auth);
     }
     catch (IOException e) {
-      GithubSslSupport sslSupport = GithubSslSupport.getInstance();
-      if (GithubSslSupport.isCertificateException(e)) {
-        if (sslSupport.askIfShouldProceed(auth.getHost())) {
-          return runWithValidAuth(project, indicator, task);
-        }
+      if (checkSSLCertificate(e, auth.getHost(), indicator)) {
+        return runWithValidAuth(project, indicator, task);
       }
       throw e;
     }
@@ -118,28 +113,43 @@ public class GithubUtil {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
     try {
       if (auth.getAuthType() != GithubAuthData.AuthType.BASIC) {
-        throw new AuthenticationException("Bad authentication type");
+        throw new GithubAuthenticationException("Bad authentication type");
       }
       return task.convert(auth);
     }
-    catch (AuthenticationException e) {
+    catch (GithubAuthenticationException e) {
       auth = getValidBasicAuthData(project, indicator);
       if (auth == null) {
-        throw new AuthenticationException("Can't get valid credentials");
+        throw new GithubAuthenticationCanceledException("Can't get valid credentials");
       }
       return task.convert(auth);
     }
     catch (IOException e) {
-      GithubSslSupport sslSupport = GithubSslSupport.getInstance();
-      if (GithubSslSupport.isCertificateException(e)) {
-        if (sslSupport.askIfShouldProceed(auth.getHost())) {
-          return runWithValidAuth(project, indicator, task);
-        }
+      if (checkSSLCertificate(e, auth.getHost(), indicator)) {
+        return runWithValidBasicAuth(project, indicator, task);
       }
       throw e;
     }
   }
 
+  private static boolean checkSSLCertificate(IOException e, final String host, ProgressIndicator indicator) {
+    final GithubSslSupport sslSupport = GithubSslSupport.getInstance();
+    if (GithubSslSupport.isCertificateException(e)) {
+      final Ref<Boolean> result = new Ref<Boolean>();
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          result.set(sslSupport.askIfShouldProceed(host));
+        }
+      }, indicator.getModalityState());
+      return result.get();
+    }
+    return false;
+  }
+
+  /**
+   * @return null if user canceled login dialog. Valid GithubAuthData otherwise.
+   */
   @Nullable
   public static GithubAuthData getValidAuthData(@Nullable Project project, @NotNull ProgressIndicator indicator) {
     final GithubLoginDialog dialog = new GithubLoginDialog(project);
@@ -155,10 +165,12 @@ public class GithubUtil {
     return dialog.getAuthData();
   }
 
+  /**
+   * @return null if user canceled login dialog. Valid GithubAuthData otherwise.
+   */
   @Nullable
   public static GithubAuthData getValidBasicAuthData(@Nullable Project project, @NotNull ProgressIndicator indicator) {
-    final GithubLoginDialog dialog = new GithubLoginDialog(project);
-    dialog.setBasicOnly();
+    final GithubLoginDialog dialog = new GithubBasicLoginDialog(project);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
@@ -178,7 +190,7 @@ public class GithubUtil {
       checkAuthData(auth, GithubSettings.getInstance().getLogin());
       return auth;
     }
-    catch (AuthenticationException e) {
+    catch (GithubAuthenticationException e) {
       return getValidAuthData(project, indicator);
     }
     catch (IOException e) {
@@ -189,7 +201,7 @@ public class GithubUtil {
 
   public static void checkAuthData(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
     if (StringUtil.isEmptyOrSpaces(auth.getHost())) {
-      throw new AuthenticationException("Target host not defined");
+      throw new GithubAuthenticationException("Target host not defined");
     }
 
     switch (auth.getAuthType()) {
@@ -197,32 +209,32 @@ public class GithubUtil {
         GithubAuthData.BasicAuth basicAuth = auth.getBasicAuth();
         assert basicAuth != null;
         if (StringUtil.isEmptyOrSpaces(basicAuth.getLogin()) || StringUtil.isEmptyOrSpaces(basicAuth.getPassword())) {
-          throw new AuthenticationException("Empty login or password");
+          throw new GithubAuthenticationException("Empty login or password");
         }
         break;
       case TOKEN:
         GithubAuthData.TokenAuth tokenAuth = auth.getTokenAuth();
         assert tokenAuth != null;
         if (StringUtil.isEmptyOrSpaces(tokenAuth.getToken())) {
-          throw new AuthenticationException("Empty token");
+          throw new GithubAuthenticationException("Empty token");
         }
         break;
       case ANONYMOUS:
-        throw new AuthenticationException("Anonymous connection not allowed");
+        throw new GithubAuthenticationException("Anonymous connection not allowed");
     }
 
     try {
       testConnection(auth, login);
     }
     catch (JsonException e) {
-      throw new AuthenticationException("Can't get user info", e);
+      throw new GithubAuthenticationException("Can't get user info", e);
     }
   }
 
   private static void testConnection(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
     GithubUserDetailed user = GithubApiUtil.getCurrentUserInfo(auth);
     if (login != null && !login.equalsIgnoreCase(user.getLogin())) {
-      throw new AuthenticationException("Wrong login");
+      throw new GithubAuthenticationException("Wrong login");
     }
   }
 

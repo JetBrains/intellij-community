@@ -43,8 +43,13 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   // todo: drop unless J. will insist to keep old style look
   private static final boolean FRAMED_STYLE = SystemInfo.isMac || !SystemProperties.getBooleanProperty("idea.ui.old.mem.use", false);
 
-  @NonNls private static final String SAMPLE_STRING = "0000M of 0000M";
   private static final int MEGABYTE = 1024 * 1024;
+  @NonNls private static final String SAMPLE_STRING;
+  
+  static {
+    long maxMemory = Math.min(Runtime.getRuntime().maxMemory() / MEGABYTE, 9999);
+    SAMPLE_STRING = maxMemory + " of " + maxMemory + "M ";
+  }
   private static final int HEIGHT = 16;
   private static final Color USED_COLOR_1 = new JBColor(Gray._185, Gray._150);
   private static final Color USED_COLOR_2 = new JBColor(Gray._145, Gray._120);

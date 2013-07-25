@@ -42,7 +42,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
@@ -106,7 +105,13 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   @Nullable
   public abstract GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull Settings settings);
 
-  protected abstract InplaceVariableIntroducer<PsiElement> getIntroducer(GrVariable var, GrIntroduceContext context, List<RangeMarker> occurrences);
+  protected abstract GrInplaceIntroducer getIntroducer(@NotNull GrVariable var,
+                                                       @NotNull GrIntroduceContext context,
+                                                       @NotNull Settings settings,
+                                                       @NotNull List<RangeMarker> occurrenceMarkers,
+                                                       RangeMarker varRangeMarker,
+                                                       @Nullable RangeMarker expressionRangeMarker,
+                                                       @Nullable RangeMarker stringPartRangeMarker);
 
   protected abstract Settings getSettingsForInplace(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice);
 
@@ -314,18 +319,22 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       final boolean isInplace = isInplace(context);
       Pass<OccurrencesChooser.ReplaceChoice> callback = new Pass<OccurrencesChooser.ReplaceChoice>() {
         @Override
-        public void pass(OccurrencesChooser.ReplaceChoice choice) {
+        public void pass(final OccurrencesChooser.ReplaceChoice choice) {
 
           final Settings settings = isInplace ? getSettingsForInplace(context, choice) : showDialog(context);
           if (settings == null) return;
 
-          CommandProcessor.getInstance().executeCommand(context.getProject(), new Runnable() {
+          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
             public void run() {
               List<RangeMarker> occurrences = ContainerUtil.newArrayList();
               Document document = editor.getDocument();
               for (PsiElement element : context.getOccurrences()) {
-                occurrences.add(document.createRangeMarker(element.getTextRange()));
+                occurrences.add(createRange(document, element));
               }
+              RangeMarker expressionRangeMarker = createRange(document, context.getExpression());
+              RangeMarker stringPartRangeMarker = createRange(document, context.getStringPart());
+              RangeMarker varRangeMarker = createRange(document, context.getVar());
+
               GrVariable var = ApplicationManager.getApplication().runWriteAction(new Computable<GrVariable>() {
                 @Override
                 public GrVariable compute() {
@@ -334,14 +343,12 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
               });
 
               if (isInplace && var != null) {
-                editor.getCaretModel().moveToOffset(var.getTextOffset());
-
-                InplaceVariableIntroducer<PsiElement> introducer = getIntroducer(var, context, occurrences);
-                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(context.getEditor().getDocument());
-                introducer.performInplaceRefactoring(getDialog(context).suggestNames());
+                GrInplaceIntroducer introducer = getIntroducer(var, context, settings, occurrences, varRangeMarker, expressionRangeMarker, stringPartRangeMarker);
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+                introducer.performInplaceRefactoring(introducer.suggestNames(context));
               }
             }
-          }, getRefactoringName(), null);
+          }, getRefactoringName(), getRefactoringName());
         }
       };
 
@@ -374,12 +381,30 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
   }
 
+  private static RangeMarker createRange(Document document, StringPartInfo part) {
+    if (part == null) {
+      return null;
+    }
+    TextRange range = part.getRange().shiftRight(part.getLiteral().getTextRange().getStartOffset());
+    return document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
+
+  }
+
+  @Nullable
+  private static RangeMarker createRange(@NotNull Document document, @Nullable PsiElement expression) {
+    if (expression == null) {
+      return null;
+    }
+    TextRange range = expression.getTextRange();
+    return document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), false);
+  }
+
 
   protected boolean isInplace(GrIntroduceContext context) {
     final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(context.getPlace().getLanguage());
     return supportProvider != null &&
            context.getEditor().getSettings().isVariableInplaceRenameEnabled() &&
-           supportProvider.isInplaceIntroduceAvailable(context.getElementToIntroduce(), context.getPlace()) &&
+           supportProvider.isInplaceIntroduceAvailable(context.getPlace(), context.getPlace()) &&
            !ApplicationManager.getApplication().isUnitTestMode();
   }
 
@@ -499,7 +524,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
 
     if (candidate == null) return null;
-    
+
     if ((container instanceof GrWhileStatement) &&
         candidate.equals(((GrWhileStatement)container).getCondition())) {
       return container;

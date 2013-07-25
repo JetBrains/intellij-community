@@ -94,6 +94,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     return true;
   }
 
+  @NotNull
   @Override
   public String getInspectionForBatchShortName() {
     return UnusedDeclarationInspection.SHORT_NAME;

@@ -17,13 +17,13 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.configurations.DebuggingRunnerData;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-public class GenericDebuggerRunnerSettings implements JDOMExternalizable, DebuggingRunnerData {
+public class GenericDebuggerRunnerSettings implements RunnerSettings, DebuggingRunnerData {
   public String DEBUG_PORT = "";
   public int TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
   public boolean LOCAL = true;

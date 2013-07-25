@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ConditionCheckManager;
 import com.intellij.codeInsight.ConditionChecker;
 import com.intellij.codeInsight.ExceptionUtil;
@@ -22,11 +23,15 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.ConditionChecker.Type.*;
+import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import static com.intellij.psi.CommonClassNames.*;
 
 class ControlFlowAnalyzer extends JavaElementVisitor {
@@ -541,7 +548,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitSwitchStatement(PsiSwitchStatement switchStmt) {
     startElement(switchStmt);
-    PsiElementFactory psiFactory = JavaPsiFacade.getInstance(switchStmt.getProject()).getElementFactory();
     PsiExpression caseExpression = switchStmt.getExpression();
     Set<PsiEnumConstant> enumValues = null;
     if (caseExpression != null /*&& !(caseExpression instanceof PsiReferenceExpression)*/) {
@@ -1243,7 +1249,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     try {
       startElement(expression);
 
-      if (processSpecialMethods(expression)) {
+      List<MethodContract> contracts = getCallContract(expression);
+      if (!contracts.isEmpty()) {
+        handleContracts(expression, contracts);
         return;
       }
 
@@ -1294,124 +1302,219 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private boolean processSpecialMethods(PsiMethodCallExpression expression) {
-    PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+  private void handleContracts(PsiMethodCallExpression expression, List<MethodContract> contracts) {
+    PsiExpression[] args = expression.getArgumentList().getExpressions();
+    for (PsiExpression arg : args) {
+      arg.accept(this);
+    }
+    if (contracts.size() > 1) {
+      addInstruction(new DupInstruction(args.length, contracts.size() - 1));
+    }
+    for (MethodContract contract : contracts) {
+      if (args.length == contract.arguments.length) {
+        handleContract(expression, contract);
+      }
+    }                                        
+    pushUnknown(); // goto here if all contracts are false
+  }
+  
+  private void handleContract(PsiMethodCallExpression expression, MethodContract contract) {
+    PsiExpression[] args = expression.getArgumentList().getExpressions();
 
+    final int exitPoint = getEndOffset(expression);
+
+    List<ConditionalGotoInstruction> gotoContractFalse = new SmartList<ConditionalGotoInstruction>();
+    for (int i = args.length - 1; i >= 0; i--) {
+      ValueConstraint arg = contract.arguments[i];
+      if (arg == ValueConstraint.NULL_VALUE || arg == ValueConstraint.NOT_NULL_VALUE) {
+        addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
+        addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, expression.getProject()));
+      }
+      else if (arg != ValueConstraint.TRUE_VALUE && arg != ValueConstraint.FALSE_VALUE) {
+        addInstruction(new PopInstruction());
+        continue;
+      }
+
+      boolean expectingTrueOnStack = arg == ValueConstraint.NULL_VALUE || arg == ValueConstraint.TRUE_VALUE;
+      ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(-1, expectingTrueOnStack, null);
+      gotoContractFalse.add(condGoto);
+      addInstruction(condGoto);
+    }
+
+    // if contract is true
+    switch (contract.returnValue) {
+      case ANY_VALUE:
+        pushUnknown();
+        addInstruction(new GotoInstruction(exitPoint));
+        break;
+      case NULL_VALUE:
+        addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
+        addInstruction(new GotoInstruction(exitPoint));
+        break;
+      case NOT_NULL_VALUE:
+        PsiType type = expression.getType();
+        Nullness nullability = DfaPsiUtil.getElementNullability(type, expression.resolveMethod());
+        addInstruction(new PushInstruction(myFactory.createTypeValueWithNullability(type, nullability), null));
+        addInstruction(new GotoInstruction(exitPoint));
+        break;
+      case TRUE_VALUE:
+        addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
+        addInstruction(new GotoInstruction(exitPoint));
+        break;
+      case FALSE_VALUE:
+        addInstruction(new PushInstruction(myFactory.getConstFactory().getFalse(), null));
+        addInstruction(new GotoInstruction(exitPoint));
+        break;
+      case THROW_EXCEPTION:
+        int finallyOffset = getFinallyOffset();
+        if (finallyOffset != NOT_FOUND) {
+          addInstruction(new GosubInstruction(finallyOffset));
+        }
+        addInstruction(new ReturnInstruction());
+        break;
+      case SYSTEM_EXIT:
+        addInstruction(new ReturnInstruction());
+        break;
+    }
+
+    // if contract is false
+    for (ConditionalGotoInstruction instruction : gotoContractFalse) {
+      instruction.setOffset(myCurrentFlow.getInstructionCount());
+    }
+  }
+
+  private static List<MethodContract> getCallContract(PsiMethodCallExpression expression) {
     PsiMethod resolved = expression.resolveMethod();
     if (resolved != null) {
+      final PsiAnnotation contractAnno = AnnotationUtil.findAnnotation(resolved, "org.jetbrains.annotations.Contract");
+      if (contractAnno != null) {
+        final Project project = expression.getProject();
+        return CachedValuesManager.getManager(project).getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
+          @Nullable
+          @Override
+          public Result<List<MethodContract>> compute() {
+            PsiAnnotationMemberValue value = contractAnno.findAttributeValue(null);
+            Object text = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper().computeConstantExpression(value);
+            if (text instanceof String) {
+              try {
+                return Result.create(parseContract((String)text), contractAnno);
+              }
+              catch (Exception ignored) {
+              }
+            }
+            return Result.create(Collections.<MethodContract>emptyList(), contractAnno);
+          }
+        });
+      }
+
       @NonNls String methodName = resolved.getName();
 
       PsiExpression[] params = expression.getArgumentList().getExpressions();
       PsiClass owner = resolved.getContainingClass();
-      final int exitPoint = getEndOffset(expression) - 1;
       if (owner != null) {
         final String className = owner.getQualifiedName();
         if ("java.lang.System".equals(className)) {
           if ("exit".equals(methodName)) {
-            pushParameters(params, -1);
-            addInstruction(new ReturnInstruction());
-            return true;
+            return Arrays.asList(new MethodContract(getAnyArgConstraints(params), ValueConstraint.SYSTEM_EXIT));
           }
         }
         else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) ||
                  "junit.framework.TestCase".equals(className) || "org.testng.Assert".equals(className)) {
           boolean testng = "org.testng.Assert".equals(className);
           if ("fail".equals(methodName)) {
-            pushParameters(params, -1);
-            returnCheckingFinally();
-            return true;
+            return Arrays.asList(new MethodContract(getAnyArgConstraints(params), ValueConstraint.THROW_EXCEPTION));
           }
 
           int checkedParam = testng ? 0 : params.length - 1;
+          ValueConstraint[] constraints = getAnyArgConstraints(params);
           if ("assertTrue".equals(methodName)) {
-            pushParameters(params, checkedParam);
-            conditionalExit(exitPoint, false);
-            return true;
+            constraints[checkedParam] = ValueConstraint.FALSE_VALUE;
+            return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
           }
           if ("assertFalse".equals(methodName)) {
-            pushParameters(params, checkedParam);
-            conditionalExit(exitPoint, true);
-            return true;
+            constraints[checkedParam] = ValueConstraint.TRUE_VALUE;
+            return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
           }
           if ("assertNull".equals(methodName)) {
-            pushParameters(params, checkedParam);
-            handleAssertNullityMethod(expression, exitPoint, false);
-            return true;
+            constraints[checkedParam] = ValueConstraint.NOT_NULL_VALUE;
+            return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
           }
           if ("assertNotNull".equals(methodName)) {
-            pushParameters(params, checkedParam);
-            handleAssertNullityMethod(expression, exitPoint, true);
-            return true;
+            constraints[checkedParam] = ValueConstraint.NULL_VALUE;
+            return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
           }
-          return false;
+          return Collections.emptyList();
         }
       }
 
       ConditionChecker checker = ConditionCheckManager.findConditionChecker(resolved);
       if (checker != null) {
-        pushParameters(params, checker.getCheckedParameterIndex());
+        ValueConstraint[] constraints = getAnyArgConstraints(params);
+        int checkedParam = checker.getCheckedParameterIndex();
+        if (checkedParam >= constraints.length) {
+          return Collections.emptyList();
+        }
 
         ConditionChecker.Type type = checker.getConditionCheckType();
-        if (type == ConditionChecker.Type.ASSERT_IS_NULL_METHOD || type == ConditionChecker.Type.ASSERT_IS_NOT_NULL_METHOD) {
-          handleAssertNullityMethod(expression, exitPoint, type == ConditionChecker.Type.ASSERT_IS_NOT_NULL_METHOD);
-        } else if (type == ConditionChecker.Type.IS_NULL_METHOD || type == ConditionChecker.Type.IS_NOT_NULL_METHOD) {
-          addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
-          addInstruction(new BinopInstruction(type == ConditionChecker.Type.IS_NULL_METHOD ? JavaTokenType.EQEQ : JavaTokenType.NE, null, expression.getProject()));
-
-          ConditionalGotoInstruction ifFails = new ConditionalGotoInstruction(-1, true, null);
-          GotoInstruction gotoEnd = new GotoInstruction(exitPoint);
-
-          addInstruction(ifFails);
-          pushUnknown();
-          addInstruction(gotoEnd);
-          ifFails.setOffset(myCurrentFlow.getInstructionCount());
-          addInstruction(new PushInstruction(myFactory.getConstFactory().getFalse(), null));
-          gotoEnd.setOffset(myCurrentFlow.getInstructionCount());
-
+        if (type == ASSERT_IS_NULL_METHOD || type == ASSERT_IS_NOT_NULL_METHOD) {
+          constraints[checkedParam] = type == ASSERT_IS_NOT_NULL_METHOD ? ValueConstraint.NULL_VALUE : ValueConstraint.NOT_NULL_VALUE;
+          return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
+        } else if (type == IS_NULL_METHOD || type == IS_NOT_NULL_METHOD) {
+          constraints[checkedParam] = type == IS_NULL_METHOD ? ValueConstraint.NOT_NULL_VALUE : ValueConstraint.NULL_VALUE;
+          return Arrays.asList(new MethodContract(constraints, ValueConstraint.FALSE_VALUE));
         } else { //assertTrue or assertFalse
-          conditionalExit(exitPoint, type == ConditionChecker.Type.ASSERT_FALSE_METHOD);
-        }
-        return true;
-      }
-
-      // Idea project only.
-      if (qualifierExpression != null) {
-        if (qualifierExpression.textMatches("LOG")) {
-          final PsiType qualifierType = qualifierExpression.getType();
-          if (qualifierType != null && qualifierType.equalsToText("com.intellij.openapi.diagnostic.Logger")) {
-            if ("error".equals(methodName)) {
-              pushParameters(params, -1);
-              returnCheckingFinally();
-              return true;
-            }
-          }
+          constraints[checkedParam] = type == ASSERT_FALSE_METHOD ? ValueConstraint.TRUE_VALUE : ValueConstraint.FALSE_VALUE;
+          return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
         }
       }
     }
 
-    return false;
+    return Collections.emptyList();
   }
 
-  private void handleAssertNullityMethod(PsiMethodCallExpression expression, int exitPoint, boolean assertNotNull) {
-    addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
-    addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, expression.getProject()));
-    conditionalExit(exitPoint, assertNotNull);  // Exit if ==null for assertNull and != null for assertNotNull
-  }
-
-  private void conditionalExit(final int continuePoint, final boolean exitIfTrue) {
-    addInstruction(new ConditionalGotoInstruction(continuePoint, exitIfTrue, null));
-    addInstruction(new ReturnInstruction());
-    pushUnknown();
-  }
-
-  private void pushParameters(final PsiExpression[] params, final int leaveOnStack) {
-    for (int i = 0; i < params.length; i++) {
-      params[i].accept(this);
-      if (leaveOnStack != i) {
-        addInstruction(new PopInstruction());
+  private static List<MethodContract> parseContract(String text) throws ParseException {
+    List<MethodContract> result = ContainerUtil.newArrayList();
+    for (String clause : StringUtil.replace(text, " ", "").split(";")) {
+      String arrow = "->";
+      int arrowIndex = clause.indexOf(arrow);
+      if (arrowIndex < 0) {
+        throw new ParseException("A contract clause must be in form arg1, ..., argN -> return-value");
       }
+      
+      String[] argStrings = clause.substring(0, arrowIndex).split(",");
+      ValueConstraint[] args = new ValueConstraint[argStrings.length];
+      for (int i = 0; i < args.length; i++) {
+        args[i] = parseConstraint(argStrings[i]);
+      }
+      result.add(new MethodContract(args, parseConstraint(clause.substring(arrowIndex + arrow.length()))));
     }
+    return result;
+  }
+  
+  private static ValueConstraint parseConstraint(String name) throws ParseException {
+    if (StringUtil.isEmpty(name)) throw new ParseException("Constraint should not be empty");
+    if ("null".equals(name)) return ValueConstraint.NULL_VALUE;
+    if ("!null".equals(name)) return ValueConstraint.NOT_NULL_VALUE;
+    if ("true".equals(name)) return ValueConstraint.TRUE_VALUE;
+    if ("false".equals(name)) return ValueConstraint.FALSE_VALUE;
+    if ("exit".equals(name)) return ValueConstraint.SYSTEM_EXIT;
+    if ("fail".equals(name)) return ValueConstraint.THROW_EXCEPTION;
+    if ("any".equals(name)) return ValueConstraint.ANY_VALUE;
+    throw new ParseException("Constraint should be one of: null, !null, true, false, exit, fail, any. Found: " + name);
+  }
+  
+  private static class ParseException extends Exception {
+    private ParseException(String message) {
+      super(message);
+    }
+  }
+
+  private static ValueConstraint[] getAnyArgConstraints(PsiExpression[] params) {
+    ValueConstraint[] args = new ValueConstraint[params.length];
+    for (int i = 0; i < args.length; i++) {
+      args[i] = ValueConstraint.ANY_VALUE;
+    }
+    return args;
   }
 
   private void pushTypeOrUnknown(PsiExpression expr) {
@@ -1693,3 +1796,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
 }
+
+class MethodContract {
+  public final ValueConstraint[] arguments;
+  public final ValueConstraint returnValue;
+
+  public MethodContract(ValueConstraint[] arguments, ValueConstraint returnValue) {
+    this.arguments = arguments;
+    this.returnValue = returnValue;
+  }
+
+  public enum ValueConstraint {
+    ANY_VALUE, NULL_VALUE, NOT_NULL_VALUE, TRUE_VALUE, FALSE_VALUE, THROW_EXCEPTION, SYSTEM_EXIT
+  }
+}
+

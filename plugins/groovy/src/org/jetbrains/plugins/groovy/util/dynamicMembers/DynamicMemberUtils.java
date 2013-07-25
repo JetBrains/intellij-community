@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.StaticChecker;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -197,6 +198,14 @@ public class DynamicMemberUtils {
           originalInfo = classCommentMap.get("originalInfo");
         }
         dynamicMethod.setOriginalInfo(originalInfo);
+
+        String kind = commentMap.get("kind");
+        if (kind == null) {
+          kind = classCommentMap.get("kind");
+        }
+        if (kind != null) {
+          dynamicMethod.putUserData(GrLightMethodBuilder.KIND_KEY, kind);
+        }
 
         multiMap.putValue(null, dynamicMethod);
         multiMap.putValue(method.getName(), dynamicMethod);

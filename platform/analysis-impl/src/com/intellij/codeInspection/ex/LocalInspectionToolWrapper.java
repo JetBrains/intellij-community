@@ -98,11 +98,9 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
       final LocalInspectionTool inspectionTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
       if (inspectionTool instanceof PairedUnfairLocalInspectionTool) {
         final String oppositeShortName = ((PairedUnfairLocalInspectionTool)inspectionTool).getInspectionForBatchShortName();
-        if (oppositeShortName != null) {
-          return element == null
-                           ? inspectionProfile.getInspectionTool(oppositeShortName, project)
-                           : inspectionProfile.getInspectionTool(oppositeShortName, element);
-        }
+        return element == null
+                         ? inspectionProfile.getInspectionTool(oppositeShortName, project)
+                         : inspectionProfile.getInspectionTool(oppositeShortName, element);
       }
       return null;
     }

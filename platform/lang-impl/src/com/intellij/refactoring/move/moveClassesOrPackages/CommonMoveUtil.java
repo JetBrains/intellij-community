@@ -49,7 +49,7 @@ public class CommonMoveUtil {
         final MoveRenameUsageInfo moveRenameUsage = (MoveRenameUsageInfo)usage;
         final PsiElement oldElement = moveRenameUsage.getReferencedElement();
         final PsiElement newElement = oldToNewElementsMapping.get(oldElement);
-        LOG.assertTrue(newElement != null);
+        LOG.assertTrue(newElement != null, oldElement);
         final PsiReference reference = moveRenameUsage.getReference();
         if (reference != null) {
           try {

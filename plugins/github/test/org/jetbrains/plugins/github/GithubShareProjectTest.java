@@ -20,7 +20,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
 
     GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
 
-    checkNotification(NotificationType.INFORMATION, "Successfully created project on GitHub", null);
+    checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null);
     checkGitExists();
     checkGithubExists();
     checkRemoteConfigured();
@@ -52,7 +52,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
 
     GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
 
-    checkNotification(NotificationType.INFORMATION, "Successfully created project on GitHub", null);
+    checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null);
     checkGitExists();
     checkGithubExists();
     checkRemoteConfigured();
@@ -70,7 +70,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
 
     GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
 
-    checkNotification(NotificationType.INFORMATION, "Successfully created project on GitHub", null);
+    checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null);
     checkGitExists();
     checkGithubExists();
     checkRemoteConfigured();
@@ -83,7 +83,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
 
     GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
 
-    checkNotification(NotificationType.WARNING, "Can't finish GitHub sharing process", null);
+    checkNotification(NotificationType.INFORMATION, "Successfully created empty repository on GitHub", null);
     checkGitExists();
     checkGithubExists();
     checkRemoteConfigured();

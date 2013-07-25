@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,18 +32,18 @@ public class InheritanceUtil {
 
   private InheritanceUtil() {}
 
-  public static boolean existsMutualSubclass(PsiClass class1, final PsiClass class2) {
+  public static boolean existsMutualSubclass(PsiClass class1, final PsiClass class2, final boolean avoidExpensiveProcessing) {
     if (class1 instanceof PsiTypeParameter) {
       final PsiClass[] superClasses = class1.getSupers();
       for (PsiClass superClass : superClasses) {
-        if (!existsMutualSubclass(superClass, class2)) {
+        if (!existsMutualSubclass(superClass, class2, avoidExpensiveProcessing)) {
           return false;
         }
       }
       return true;
     }
     if (class2 instanceof PsiTypeParameter) {
-      return existsMutualSubclass(class2, class1);
+      return existsMutualSubclass(class2, class1, avoidExpensiveProcessing);
     }
 
     final String className = class1.getQualifiedName();
@@ -54,18 +54,25 @@ public class InheritanceUtil {
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(class2Name)) {
       return true;
     }
-    if (class1.isInheritor(class2, true) ||
-        class2.isInheritor(class1, true)) {
+    if (class1.isInheritor(class2, true) || class2.isInheritor(class1, true)) {
       return true;
     }
     final SearchScope scope = GlobalSearchScope.allScope(class1.getProject());
     final Query<PsiClass> search = ClassInheritorsSearch.search(class1, scope, true, true);
-    return !search.forEach(new Processor<PsiClass>() {
+    final boolean[] result = new boolean[1];
+    search.forEach(new Processor<PsiClass>() {
+      AtomicInteger count = new AtomicInteger(0);
+
       @Override
       public boolean process(PsiClass inheritor) {
-        return !inheritor.equals(class2) && !inheritor.isInheritor(class2, true);
+        if (inheritor.equals(class2) || inheritor.isInheritor(class2, true) || (avoidExpensiveProcessing && count.incrementAndGet() > 20)) {
+          result[0] = true;
+          return false;
+        }
+        return true;
       }
     });
+    return result[0];
   }
 
   public static boolean hasImplementation(PsiClass aClass) {

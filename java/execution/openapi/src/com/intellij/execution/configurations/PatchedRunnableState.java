@@ -16,5 +16,4 @@
 package com.intellij.execution.configurations;
 
 public interface PatchedRunnableState extends RunProfileState {
-  RunnerSettings getPatcher();
 }

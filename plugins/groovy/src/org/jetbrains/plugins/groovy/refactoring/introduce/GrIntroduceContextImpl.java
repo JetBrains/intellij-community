@@ -96,12 +96,4 @@ public class GrIntroduceContextImpl implements GrIntroduceContext {
   public PsiElement getPlace() {
     return myPlace;
   }
-
-  @NotNull
-  @Override
-  public PsiElement getElementToIntroduce() {
-    return myExpression != null ? myExpression :
-           myVar != null ? myVar :
-           myStringPart.getLiteral();
-  }
 }

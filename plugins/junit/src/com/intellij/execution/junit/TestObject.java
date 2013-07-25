@@ -48,8 +48,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -57,7 +55,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
@@ -87,7 +88,7 @@ public abstract class TestObject implements JavaCommandLine {
   protected JavaParameters myJavaParameters;
   private final Project myProject;
   protected final JUnitConfiguration myConfiguration;
-  private final ExecutionEnvironment myEnvironment;
+  protected final ExecutionEnvironment myEnvironment;
   protected File myTempFile = null;
   protected File myWorkingDirsFile = null;
   public File myListenersFile;
@@ -126,14 +127,8 @@ public abstract class TestObject implements JavaCommandLine {
 
   public abstract String suggestActionName();
 
-  @Override
   public RunnerSettings getRunnerSettings() {
     return myEnvironment.getRunnerSettings();
-  }
-
-  @Override
-  public ConfigurationPerRunnerSettings getConfigurationSettings() {
-    return myEnvironment.getConfigurationSettings();
   }
 
   public abstract RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration);
@@ -271,7 +266,7 @@ public abstract class TestObject implements JavaCommandLine {
     }
     final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
     final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration, executor);
-    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, runnerSettings, getConfigurationSettings(), unboundOutputRoot);
+    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, myEnvironment, unboundOutputRoot);
     consoleView.initUI();
     consoleView.attachToProcess(handler);
     unboundOutputRoot.setPrinter(consoleView.getPrinter());
@@ -380,8 +375,7 @@ public abstract class TestObject implements JavaCommandLine {
     BaseTestsOutputConsoleView smtConsoleView = SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(
       JUNIT_TEST_FRAMEWORK_NAME,
       testConsoleProperties,
-      myEnvironment.getRunnerSettings(),
-      myEnvironment.getConfigurationSettings(), null);
+      myEnvironment, null);
 
 
     Disposer.register(myProject, smtConsoleView);
@@ -438,7 +432,7 @@ public abstract class TestObject implements JavaCommandLine {
       }
     }
 
-    if (getRunnerSettings().getData() != null) {
+    if (getRunnerSettings() != null) {
       final String actionName = executor.getActionName();
       throw new CantRunException(actionName + " is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to " + actionName.toLowerCase() + ".");
     }

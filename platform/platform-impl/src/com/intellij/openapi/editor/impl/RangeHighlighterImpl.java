@@ -122,12 +122,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  public GutterMark getGutterIconRenderer() {
+  public GutterIconRenderer getGutterIconRenderer() {
     return getData().getGutterIconRenderer();
   }
 
   @Override
-  public void setGutterIconRenderer(GutterMark renderer) {
+  public void setGutterIconRenderer(GutterIconRenderer renderer) {
     getData().setGutterIconRenderer(renderer);
   }
 

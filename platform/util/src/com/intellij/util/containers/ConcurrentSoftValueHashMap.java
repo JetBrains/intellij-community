@@ -17,13 +17,15 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
+import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.Map;
 
 public final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
-  public ConcurrentSoftValueHashMap(Map<K, V> map) {
+  public ConcurrentSoftValueHashMap(@NotNull Map<K, V> map) {
     super(map);
   }
 
@@ -35,13 +37,18 @@ public final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHas
     super(initialCapacity, loadFactor, concurrencyLevel);
   }
 
-  private static class MySoftReference<K,T> extends SoftReference<T> implements ConcurrentRefValueHashMap.MyReference<K,T> {
+  public ConcurrentSoftValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+
+  private static class MySoftReference<K,T> extends SoftReference<T> implements MyValueReference<K,T> {
     private final K key;
-    private MySoftReference(K key, T referent, ReferenceQueue<T> q) {
+    private MySoftReference(@NotNull K key, @NotNull T referent, @NotNull ReferenceQueue<T> q) {
       super(referent, q);
       this.key = key;
     }
 
+    @NotNull
     @Override
     public K getKey() {
       return key;
@@ -52,7 +59,7 @@ public final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHas
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      final ConcurrentRefValueHashMap.MyReference that = (ConcurrentRefValueHashMap.MyReference)o;
+      final MyValueReference that = (MyValueReference)o;
 
       return key.equals(that.getKey()) && Comparing.equal(get(), that.get());
     }
@@ -63,7 +70,7 @@ public final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHas
   }
 
   @Override
-  protected ConcurrentRefValueHashMap.MyReference<K, V> createRef(K key, V value) {
+  protected MyValueReference<K, V> createRef(@NotNull K key, @NotNull V value) {
     return new MySoftReference<K,V>(key, value, myQueue);
   }
 }

@@ -379,7 +379,7 @@ public class MethodSignatureUtil {
     final PsiType[] superParameterTypes = superSignature.getParameterTypes();
     for (int i = 0; i < subParameterTypes.length; i++) {
       PsiType type1 = subParameterTypes[i];
-      PsiType type2 = TypeConversionUtil.erasure(superParameterTypes[i]);
+      PsiType type2 = TypeConversionUtil.erasure(superParameterTypes[i], superSignature.getSubstitutor());
       if (!Comparing.equal(type1, type2)) return false;
     }
     return true;

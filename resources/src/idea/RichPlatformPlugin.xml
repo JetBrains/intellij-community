@@ -50,6 +50,9 @@
     <extensionPoint name="compiler.makeDependencyProcessor"
                     interface="com.intellij.compiler.DependencyProcessor"/>
 
+    <extensionPoint name="compiler.optionsManager"
+                    interface="com.intellij.compiler.options.CompilerOptionsManager"/>
+
     <extensionPoint name="compiler.resourceCompilerExtension"
                     interface="com.intellij.compiler.impl.resourceCompiler.ResourceCompilerExtension"/>
 
@@ -128,8 +131,6 @@
                         serviceImplementation="com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.ide.util.projectWizard.ProjectWizardStepFactory"
                         serviceImplementation="com.intellij.ide.util.projectWizard.ProjectWizardStepFactoryImpl"/>
-
-    <applicationService serviceInterface="com.intellij.peer.PeerFactory" serviceImplementation="com.intellij.peer.impl.PeerFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.deployment.DeploymentUtil"
                         serviceImplementation="com.intellij.openapi.deployment.DeploymentUtilImpl"/>
@@ -222,6 +223,7 @@
                     serviceImplementation="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"/>
     <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.jikes.JikesConfiguration"
                     serviceImplementation="com.intellij.compiler.impl.javaCompiler.jikes.JikesConfiguration"/>
+    <pathMacroFilter implementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfigurationMacroFilter"/>
 
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.IdeaFrameTitleBuilder"/>

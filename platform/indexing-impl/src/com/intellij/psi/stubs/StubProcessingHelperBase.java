@@ -34,10 +34,11 @@ public abstract class StubProcessingHelperBase {
   public <Psi extends PsiElement> boolean processStubsInFile(final Project project, final VirtualFile file, StubIdList value, final Processor<? super Psi> processor) {
     StubTree stubTree = null;
 
-    final PsiFile _psifile = PsiManager.getInstance(project).findFile(file);
+    PsiFile _psifile = PsiManager.getInstance(project).findFile(file);
     PsiFileWithStubSupport psiFile = null;
 
     if (_psifile != null && !(_psifile instanceof PsiPlainTextFile)) {
+      _psifile = _psifile.getViewProvider().getStubBindingRoot();
       if (_psifile instanceof PsiFileWithStubSupport) {
         psiFile = (PsiFileWithStubSupport)_psifile;
         stubTree = psiFile.getStubTree();

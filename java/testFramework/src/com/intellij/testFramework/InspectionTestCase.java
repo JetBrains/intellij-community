@@ -114,20 +114,20 @@ public abstract class InspectionTestCase extends PsiTestCase {
                      boolean runDeadCodeFirst,
                      InspectionToolWrapper... additional) {
     final String testDir = getTestDataPath() + "/" + folderName;
-    runTool(testDir, jdkName, runDeadCodeFirst, toolWrapper, additional);
+    GlobalInspectionContextImpl context = runTool(testDir, jdkName, runDeadCodeFirst, toolWrapper, additional);
 
-    InspectionTestUtil.compareToolResults(toolWrapper, checkRange, testDir);
+    InspectionTestUtil.compareToolResults(context, toolWrapper, checkRange, testDir);
   }
 
   protected void runTool(@NonNls final String testDir, @NonNls final String jdkName, final InspectionToolWrapper tool) {
     runTool(testDir, jdkName, false, tool);
   }
 
-  protected void runTool(final String testDir,
-                         final String jdkName,
-                         boolean runDeadCodeFirst,
-                         @NotNull InspectionToolWrapper toolWrapper,
-                         @NotNull InspectionToolWrapper... additional) {
+  protected GlobalInspectionContextImpl runTool(final String testDir,
+                                                final String jdkName,
+                                                boolean runDeadCodeFirst,
+                                                @NotNull InspectionToolWrapper toolWrapper,
+                                                @NotNull InspectionToolWrapper... additional) {
     final VirtualFile[] sourceDir = new VirtualFile[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -149,6 +149,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
       CodeInsightTestFixtureImpl.createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrappers);
 
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext, inspectionManager);
+    return globalContext;
   }
 
   @NotNull

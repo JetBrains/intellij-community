@@ -180,7 +180,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testTypeArgumentsGivenOnRawType() { doTest7Incompatibility(false); }
   public void testSelectFromTypeParameter() { doTest5(false); }
   public void testTypeArgumentsGivenOnAnonymousClassCreation() { doTest5(false); }
-  //public void testIDEA94011() { doTest5(false); }
+  
+  public void testIDEA94011() { doTest5(false); }
   public void testDifferentTypeParamsInOverloadedMethods() { doTest5(true); }
   public void testIDEA91626() { doTest5(true); }
   public void testIDEA92022() { doTest5(false); }
@@ -291,6 +292,19 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA104160() {doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);}
   public void testSOEInLeastUpperClass() {doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);}
 
+  public void testIDEA57334() {
+    doTest5(false);
+  }
+
+  public void testIDEA57325() { doTest5(false); }
+  public void testIDEA67835() { doTest5(false); }
+  public void testIDEA67744() { doTest5(false); }
+  public void testIDEA67682() { doTest5(false); }
+  public void testIDEA57391() { doTest5(false); }
+  public void testIDEA110869() { doTest5(false); }
+  public void testIDEA110947() { doTest5(false); }
+  public void testNoInferenceFromTypeCast() { doTest5(false); }
+  
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
     assertNotNull(collectionsClass);

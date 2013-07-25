@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.task.ui;
 
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -23,7 +24,6 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecution
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -220,7 +220,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     settings.setExternalProjectPath(task.getLinkedExternalProjectPath());
     settings.setTaskNames(Collections.singletonList(task.getName()));
     settings.setExternalSystemIdString(myExternalSystemId.toString());
-    return new ExternalTaskExecutionInfo(settings, ToolWindowId.RUN);
+    return new ExternalTaskExecutionInfo(settings, DefaultRunExecutor.EXECUTOR_ID);
   }
 
   @SuppressWarnings("unchecked")

@@ -105,7 +105,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     myConsoleView.attachToProcess(myProcessHandler);
 
 // Runner creating
-    final Executor defaultExecutor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+    final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
 

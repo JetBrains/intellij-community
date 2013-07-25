@@ -27,8 +27,17 @@ import java.util.Set;
  * 
  * @author Denis Zhdanov
  * @since 4/3/13 4:13 PM
+ * @param <S>  target project setting type
  */
 public interface ExternalSystemSettingsListener<S extends ExternalProjectSettings> {
+
+  /**
+   * This method is present here only because IJ platform doesn't has corresponding messaging set up for 'project rename' event.
+   * 
+   * @param oldName  old project name
+   * @param newName  new project name
+   */
+  void onProjectRenamed(@NotNull String oldName, @NotNull String newName);
   
   void onProjectsLinked(@NotNull Collection<S> settings);
 

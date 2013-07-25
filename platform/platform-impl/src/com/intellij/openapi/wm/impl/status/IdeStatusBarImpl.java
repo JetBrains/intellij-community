@@ -160,7 +160,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     setLayout(new BorderLayout(2, 0));
     setBorder(BorderFactory.createEmptyBorder(1, 4, 0, SystemInfo.isMac ? 2 : 0));
 
-    myInfoAndProgressPanel = new InfoAndProgressPanel(master == null);
+    myInfoAndProgressPanel = new InfoAndProgressPanel();
     addWidget(myInfoAndProgressPanel, Position.CENTER);
 
     setOpaque(true);

@@ -24,6 +24,7 @@ package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.project.Project;
@@ -190,7 +191,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       if (cls != null) {
         PsiMethod[] methods = cls.findMethodsByName(methodName, true);
         for (PsiMethod method : methods) {
-          if (TestNGUtil.hasTest(method)) {
+          if (TestNGUtil.hasTest(method) || TestNGUtil.hasConfig(method)) {
             return method;
           }
         }
@@ -217,13 +218,15 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       final String className = StringUtil.getPackageName(val);
       PsiClass cls = getDependsClass(val);
       if (cls != null) {
-        PsiMethod current = PsiTreeUtil.getParentOfType(getElement(), PsiMethod.class);
-        PsiMethod[] methods = cls.getMethods();
+        final PsiMethod current = PsiTreeUtil.getParentOfType(getElement(), PsiMethod.class);
+        final String configAnnotation = TestNGUtil.getConfigAnnotation(current);
+        final PsiMethod[] methods = cls.getMethods();
         for (PsiMethod method : methods) {
-          if (current != null && method.getName().equals(current.getName())) continue;
-          if (TestNGUtil.hasTest(method) || TestNGUtil.hasConfig(method)) {
-            list.add(LookupValueFactory.createLookupValue(StringUtil.isEmpty(className) ? method.getName()
-                                                                                        :StringUtil.getQualifiedName(cls.getQualifiedName(), method.getName()), null));
+          final String methodName = method.getName();
+          if (current != null && methodName.equals(current.getName())) continue;
+          if (configAnnotation == null && TestNGUtil.hasTest(method) || configAnnotation != null && AnnotationUtil.isAnnotated(method, configAnnotation, true)) {
+            final String nameToInsert = StringUtil.isEmpty(className) ? methodName : StringUtil.getQualifiedName(cls.getQualifiedName(), methodName);
+            list.add(LookupElementBuilder.create(nameToInsert));
           }
         }
       }

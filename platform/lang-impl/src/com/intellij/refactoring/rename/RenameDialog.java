@@ -82,8 +82,7 @@ public class RenameDialog extends RefactoringDialog {
     createNewNameComponent();
     init();
 
-    myNameLabel.setText(XmlStringUtil.wrapInHtml(
-      XmlTagUtilBase.escapeString(RefactoringBundle.message("rename.0.and.its.usages.to", getFullName()), false)));
+    myNameLabel.setText(XmlStringUtil.wrapInHtml(XmlTagUtilBase.escapeString(getLabelText(), false)));
     boolean toSearchInComments = isToSearchInCommentsForRename();
     myCbSearchInComments.setSelected(toSearchInComments);
 
@@ -94,6 +93,11 @@ public class RenameDialog extends RefactoringDialog {
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) validateButtons();
     myHelpID = RenamePsiElementProcessor.forElement(psiElement).getHelpID(psiElement);
+  }
+
+  @NotNull
+  protected String getLabelText() {
+    return RefactoringBundle.message("rename.0.and.its.usages.to", getFullName());
   }
 
   public PsiElement getPsiElement() {

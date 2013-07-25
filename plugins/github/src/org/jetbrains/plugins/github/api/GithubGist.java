@@ -15,10 +15,11 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.plugins.github.api.GithubGistRaw.GistFileRaw;
@@ -26,163 +27,135 @@ import static org.jetbrains.plugins.github.api.GithubGistRaw.GistFileRaw;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
 public class GithubGist {
-  @NotNull private String id;
-  @NotNull private String description;
+  @NotNull private String myId;
+  @NotNull private String myDescription;
 
-  private boolean isPublic;
+  private boolean myIsPublic;
 
-  @NotNull private String url;
-  @NotNull private String htmlUrl;
+  @NotNull private String myHtmlUrl;
 
-  @NotNull private Map<String, GistFile> files;
+  @NotNull private List<GistFile> myFiles;
 
-  @Nullable private GithubUser user;
+  @Nullable private GithubUser myUser;
 
   public static class GistFile {
-    @NotNull private Long size;
-    @NotNull private String filename;
-    @NotNull private String content;
+    @NotNull private String myFilename;
+    @NotNull private String myContent;
 
-    @NotNull private String raw_url;
+    @NotNull private String myRawUrl;
 
-    @NotNull private String type;
-
-    @NotNull
-    public static GistFile create(@Nullable GistFileRaw raw) throws JsonException {
-      try {
-        if (raw == null) throw new JsonException("raw is null");
-        if (raw.size == null) throw new JsonException("size is null");
-        if (raw.filename == null) throw new JsonException("filename is null");
-        if (raw.content == null) throw new JsonException("content is null");
-        if (raw.raw_url == null) throw new JsonException("raw_url is null");
-        if (raw.type == null) throw new JsonException("type is null");
-
-        return new GistFile(raw.size, raw.filename, raw.content, raw.raw_url, raw.type);
-      }
-      catch (JsonException e) {
-        throw new JsonException("GistFile parse error", e);
-      }
-    }
-
-    private GistFile(@NotNull Long size, @NotNull String filename,
-                       @NotNull String content,
-                       @NotNull String raw_url,
-                       @NotNull String type) {
-      this.size = size;
-      this.filename = filename;
-      this.content = content;
-      this.raw_url = raw_url;
-      this.type = type;
-    }
-
-    @NotNull
-    public Long getSize() {
-      return size;
+    public GistFile(@NotNull String filename, @NotNull String content, @NotNull String rawUrl) {
+      myFilename = filename;
+      myContent = content;
+      myRawUrl = rawUrl;
     }
 
     @NotNull
     public String getFilename() {
-      return filename;
+      return myFilename;
     }
 
     @NotNull
     public String getContent() {
-      return content;
+      return myContent;
     }
 
     @NotNull
-    public String getRaw_url() {
-      return raw_url;
-    }
-
-    @NotNull
-    public String getType() {
-      return type;
+    public String getRawUrl() {
+      return myRawUrl;
     }
   }
 
   @NotNull
-  public Map<String, String> getContent() {
-    Map<String, String> ret = new HashMap<String, String>();
-    for (Map.Entry<String, GistFile> file : getFiles().entrySet()) {
-      ret.put(file.getKey(), file.getValue().getContent());
+  public List<FileContent> getContent() {
+    List<FileContent> ret = new ArrayList<FileContent>();
+    for (GistFile file : getFiles()) {
+      ret.add(new FileContent(file.getFilename(), file.getContent()));
     }
     return ret;
   }
 
-  @NotNull
-  public static GithubGist create(@Nullable GithubGistRaw raw) throws JsonException {
-    try {
-      if (raw == null) throw new JsonException("raw is null");
-      if (raw.id == null) throw new JsonException("id is null");
-      if (raw.description == null) throw new JsonException("description is null");
-      if (raw.isPublic == null) throw new JsonException("isPublic is null");
-      if (raw.url == null) throw new JsonException("url is null");
-      if (raw.htmlUrl == null) throw new JsonException("htmlUrl is null");
-      if (raw.files == null) throw new JsonException("files is null");
-
-      Map<String, GistFile> files = new HashMap<String, GistFile>();
-      for (Map.Entry<String, GistFileRaw> entry : raw.files.entrySet()) {
-        files.put(entry.getKey(), GistFile.create(entry.getValue()));
-      }
-      GithubUser user = raw.user == null ? null : GithubUser.create(raw.user);
-
-      return new GithubGist(raw.id, raw.description, raw.isPublic, raw.url, raw.htmlUrl, files, user);
-    }
-    catch (JsonException e) {
-      throw new JsonException("GithubGist parse error", e);
-    }
-  }
-
-
-  private GithubGist(@NotNull String id, @NotNull String description,
-                       boolean isPublic,
-                       @NotNull String url,
-                       @NotNull String htmlUrl,
-                       @NotNull Map<String, GistFile> files,
-                       @Nullable GithubUser user) {
-    this.id = id;
-    this.description = description;
-    this.isPublic = isPublic;
-    this.url = url;
-    this.htmlUrl = htmlUrl;
-    this.files = files;
-    this.user = user;
+  public GithubGist(@NotNull String id,
+                    @NotNull String description,
+                    boolean isPublic,
+                    @NotNull String htmlUrl,
+                    @NotNull List<GistFile> files,
+                    @Nullable GithubUser user) {
+    myId = id;
+    myDescription = description;
+    myIsPublic = isPublic;
+    myHtmlUrl = htmlUrl;
+    myFiles = files;
+    myUser = user;
   }
 
   @NotNull
   public String getId() {
-    return id;
+    return myId;
   }
 
   @NotNull
   public String getDescription() {
-    return description;
+    return myDescription;
   }
 
   public boolean isPublic() {
-    return isPublic;
-  }
-
-  @NotNull
-  public String getUrl() {
-    return url;
+    return myIsPublic;
   }
 
   @NotNull
   public String getHtmlUrl() {
-    return htmlUrl;
+    return myHtmlUrl;
   }
 
   @NotNull
-  public Map<String, GistFile> getFiles() {
-    return files;
+  public List<GistFile> getFiles() {
+    return myFiles;
   }
 
   @Nullable
   public GithubUser getUser() {
-    return user;
+    return myUser;
+  }
+
+  public static class FileContent {
+    @NotNull private String myFileName;
+    @NotNull private String myContent;
+
+    public FileContent(@NotNull String fileName, @NotNull String content) {
+      myFileName = fileName;
+      myContent = content;
+    }
+
+    @NotNull
+    public String getFileName() {
+      return myFileName;
+    }
+
+    @NotNull
+    public String getContent() {
+      return myContent;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      FileContent that = (FileContent)o;
+
+      if (!myContent.equals(that.myContent)) return false;
+      if (!myFileName.equals(that.myFileName)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myFileName.hashCode();
+      result = 31 * result + myContent.hashCode();
+      return result;
+    }
   }
 }

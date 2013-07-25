@@ -71,4 +71,9 @@ public final class LocalFileUrl implements Url {
   public int hashCode() {
     return path.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return toExternalForm();
+  }
 }

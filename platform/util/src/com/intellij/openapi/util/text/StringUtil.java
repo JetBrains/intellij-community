@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -735,6 +736,7 @@ public class StringUtil extends StringUtilRt {
     return toUpperCase(s.charAt(0)) + s.substring(1);
   }
 
+  @Contract("null -> false")
   public static boolean isCapitalized(@Nullable String s) {
     return s != null && !s.isEmpty() && Character.isUpperCase(s.charAt(0));
   }
@@ -885,14 +887,17 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
+  @Contract("null -> false")
   public static boolean isNotEmpty(@Nullable String s) {
     return s != null && !s.isEmpty();
   }
 
+  @Contract("null -> true")
   public static boolean isEmpty(@Nullable String s) {
     return s == null || s.isEmpty();
   }
 
+  @Contract("null -> true")
   public static boolean isEmpty(@Nullable CharSequence cs) {
     return cs == null || cs.length() == 0;
   }
@@ -927,6 +932,7 @@ public class StringUtil extends StringUtilRt {
     return s;
   }
 
+  @Contract("null -> true")
   public static boolean isEmptyOrSpaces(@Nullable final String s) {
     if(s == null || s.isEmpty()) {
       return true;

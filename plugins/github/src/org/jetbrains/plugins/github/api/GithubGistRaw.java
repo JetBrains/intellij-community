@@ -16,38 +16,64 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.annotations.SerializedName;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
-class GithubGistRaw implements Serializable {
-  public String id;
-  public String description;
+@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
+class GithubGistRaw implements DataConstructor<GithubGist> {
+  @Nullable public String id;
+  @Nullable public String description;
 
   @SerializedName("public")
-  public Boolean isPublic;
+  @Nullable public Boolean isPublic;
 
-  public String url;
-  public String htmlUrl;
-  public String gitPullUrl;
-  public String gitPushUrl;
+  @Nullable public String url;
+  @Nullable public String htmlUrl;
+  @Nullable public String gitPullUrl;
+  @Nullable public String gitPushUrl;
 
-  public Map<String, GistFileRaw> files;
+  @Nullable public Map<String, GistFileRaw> files;
 
-  public GithubUserRaw user;
+  @Nullable public GithubUserRaw user;
 
-  public static class GistFileRaw {
-    public Long size;
-    public String filename;
-    public String content;
+  @Nullable public Date createdAt;
 
-    public String raw_url;
+  public static class GistFileRaw implements DataConstructor<GithubGist.GistFile> {
+    @Nullable public Long size;
+    @Nullable public String filename;
+    @Nullable public String content;
 
-    public String type;
-    public String language;
+    @Nullable public String raw_url;
+
+    @Nullable public String type;
+    @Nullable public String language;
+
+    @NotNull
+    @Override
+    public GithubGist.GistFile create() {
+      return new GithubGist.GistFile(filename, content, raw_url);
+    }
+  }
+
+  @NotNull
+  @Override
+  public GithubGist create() {
+    GithubUser user = this.user == null ? null : this.user.create();
+
+    List<GithubGist.GistFile> files = new ArrayList<GithubGist.GistFile>();
+    for (Map.Entry<String, GistFileRaw> entry : this.files.entrySet()) {
+      files.add(entry.getValue().create());
+    }
+
+    return new GithubGist(id, description, isPublic, htmlUrl, files, user);
   }
 }

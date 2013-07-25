@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -26,10 +27,8 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -107,24 +106,10 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
     return new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId());
   }
 
-  @SuppressWarnings("deprecation")
-  @Nullable
-  @Override
-  public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
-    return null;
-  }
-
-  @SuppressWarnings("deprecation")
-  @Nullable
-  @Override
-  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner) {
-    return null;
-  }
-
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
-    return new MyRunnableState(mySettings, getProject(), ToolWindowId.DEBUG.equals(executor.getId()));
+    return new MyRunnableState(mySettings, getProject(), DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId()));
   }
 
   @Override
@@ -221,16 +206,6 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
         }
       });
       return new DefaultExecutionResult(console, processHandler);
-    }
-
-    @Override
-    public RunnerSettings getRunnerSettings() {
-      return null;
-    }
-
-    @Override
-    public ConfigurationPerRunnerSettings getConfigurationSettings() {
-      return null;
     }
   }
   

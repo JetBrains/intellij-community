@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.impl;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.CapturingProcessAdapter;
@@ -40,6 +37,7 @@ import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -53,6 +51,8 @@ import java.util.List;
 public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   private final static String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
 
+  @NonNls public static final String DEFAULT_JAVA_RUNNER_ID = "Run";
+
   @Override
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) &&
@@ -61,12 +61,14 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   }
 
   @Override
-  public void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
-    runCustomPatchers(javaParameters, settings, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultRunExecutor.class));
+  public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, final boolean beforeExecution) throws ExecutionException {
+    runCustomPatchers(javaParameters, DefaultRunExecutor.getRunExecutorInstance(), runProfile);
   }
 
   @Override
-  protected RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state, final RunContentDescriptor contentToReuse,
+  protected RunContentDescriptor doExecute(final Project project,
+                                           final RunProfileState state,
+                                           final RunContentDescriptor contentToReuse,
                                            final ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -74,9 +76,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     boolean shouldAddDefaultActions = true;
     if (state instanceof JavaCommandLine) {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
-      patch(parameters, state.getRunnerSettings(), true);
+      patch(parameters, env.getRunnerSettings(), env.getRunProfile(), true);
       final ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
-      executionResult = state.execute(executor, this);
+      executionResult = state.execute(env.getExecutor(), this);
       if (proxy != null && executionResult != null) {
         proxy.attach(executionResult.getProcessHandler());
       }
@@ -85,7 +87,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       }
     }
     else {
-      executionResult = state.execute(executor, this);
+      executionResult = state.execute(env.getExecutor(), this);
     }
 
     if (executionResult == null) {
@@ -94,7 +96,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     onProcessStarted(env.getRunnerSettings(), executionResult);
 
-    final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, executor, executionResult, env);
+    final RunContentBuilder contentBuilder = new RunContentBuilder(this, executionResult, env);
     Disposer.register(project, contentBuilder);
     if (shouldAddDefaultActions) {
       addDefaultActions(contentBuilder);
@@ -109,6 +111,10 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
 
     return runContent;
+  }
+
+  protected AnAction[] createActions(final ExecutionResult executionResult) {
+    return AnAction.EMPTY_ARRAY;
   }
 
   protected static void addDefaultActions(final RunContentBuilder contentBuilder) {
@@ -263,6 +269,10 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   @Override
   @NotNull
   public String getRunnerId() {
-    return "Run";
+    return DEFAULT_JAVA_RUNNER_ID;
+  }
+
+  public static ProgramRunner getInstance() {
+    return RunnerRegistry.getInstance().findRunnerById(DEFAULT_JAVA_RUNNER_ID);
   }
 }

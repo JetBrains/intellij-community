@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.diff.ex;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 public class DiffFragment {
   public static DiffFragment[] EMPTY_ARRAY = new DiffFragment[0];
 
@@ -26,6 +28,11 @@ public class DiffFragment {
     myText1 = text1;
     myText2 = text2;
     myIsModified = (text1 == null || text2 == null || !text1.equals(text2));
+  }
+
+  public static boolean isEmpty(DiffFragment fragment) {
+    return StringUtil.length(fragment.getText1()) == 0 &&
+           StringUtil.length(fragment.getText2()) == 0;
   }
 
   /**

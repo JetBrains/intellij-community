@@ -125,10 +125,13 @@ expected:
     return Comparing.equal(reportedFile.getName(), expectedProblem.getChildText("file"));
   }
 
-  public static void compareToolResults(@NotNull InspectionToolWrapper toolWrapper, boolean checkRange, String testDir) {
+  public static void compareToolResults(@NotNull GlobalInspectionContextImpl context,
+                                        @NotNull InspectionToolWrapper toolWrapper,
+                                        boolean checkRange,
+                                        String testDir) {
     final Element root = new Element("problems");
     final Document doc = new Document(root);
-    InspectionToolPresentation presentation = ((GlobalInspectionContextImpl)toolWrapper.getContext()).getPresentation(toolWrapper);
+    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
 
     presentation.updateContent();  //e.g. dead code need check for reachables
     presentation.exportResults(root);

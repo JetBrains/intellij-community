@@ -34,7 +34,7 @@ import java.util.Map;
  */
 public final class ConcurrentWeakHashMap<K,V> extends ConcurrentRefHashMap<K,V> {
   private static class WeakKey<K, V> extends WeakReference<K> implements Key<K, V> {
-    private final int myHash;	/* Hashcode of key, stored here since the key may be tossed by the GC */
+    private final int myHash; /* Hashcode of key, stored here since the key may be tossed by the GC */
     private final V value;
 
     private WeakKey(@NotNull K k, V v, ReferenceQueue<K> q) {
@@ -82,7 +82,7 @@ public final class ConcurrentWeakHashMap<K,V> extends ConcurrentRefHashMap<K,V> 
   public ConcurrentWeakHashMap(int initialCapacity,
                                float loadFactor,
                                int concurrencyLevel,
-                               TObjectHashingStrategy<Key<K, V>> hashingStrategy) {
+                               @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
@@ -93,5 +93,4 @@ public final class ConcurrentWeakHashMap<K,V> extends ConcurrentRefHashMap<K,V> 
   public ConcurrentWeakHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
     super(hashingStrategy);
   }
-
 }

@@ -179,7 +179,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     final ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, settings);
     if (runner == null)
       return false;
-    final ExecutionEnvironment environment = new ExecutionEnvironment(runner, settings, myProject);
+    final ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, settings, myProject);
     environment.setExecutionId(env.getExecutionId());
     if (!ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
       return false;
@@ -199,7 +199,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
           public void run() {
             targetDone.down();
             try {
-              runner.execute(executor, environment, new ProgramRunner.Callback() {
+              runner.execute(environment, new ProgramRunner.Callback() {
                 @Override
                 public void processStarted(RunContentDescriptor descriptor) {
                   ProcessHandler processHandler = descriptor != null ? descriptor.getProcessHandler() : null;

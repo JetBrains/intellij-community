@@ -31,7 +31,7 @@ public abstract class XmlSuppressionProvider {
 
   public static boolean isSuppressed(@NotNull PsiElement element, @NotNull String inspectionId) {
     for (XmlSuppressionProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (provider.isSuppressedFor(element, inspectionId)) {
+      if (provider.isProviderAvailable(element.getContainingFile()) && provider.isSuppressedFor(element, inspectionId)) {
         return true;
       }
     }

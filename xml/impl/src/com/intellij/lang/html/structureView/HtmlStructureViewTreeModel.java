@@ -15,11 +15,12 @@
  */
 package com.intellij.lang.html.structureView;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ViewStructureAction;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
-import com.intellij.ide.util.treeView.smartTree.NodeProvider;
-import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.PlaceHolder;
@@ -28,12 +29,62 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 
 class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements PlaceHolder<String> {
 
   private final Collection<NodeProvider> myNodeProviders;
-
   private String myStructureViewPlace;
+
+  private static Sorter HTML_ALPHA_SORTER = new Sorter() {
+    @Override
+    public Comparator getComparator() {
+      return new Comparator() {
+        @Override
+        public int compare(Object o1, Object o2) {
+          String s1 = SorterUtil.getStringPresentation(o1);
+          String s2 = SorterUtil.getStringPresentation(o2);
+
+          if (isTagPresenation(s1, "head") && isTagPresenation(s2, "body")) return -1;
+          if (isTagPresenation(s1, "body") && isTagPresenation(s2, "head")) return 1;
+
+          return s1.compareToIgnoreCase(s2);
+        }
+
+        private boolean isTagPresenation(final String presentation, final String tagName) {
+          // "head", "head#id", "head.cls"
+          final String lowercased = presentation.toLowerCase();
+          return lowercased.startsWith(tagName) &&
+                 (lowercased.length() == tagName.length() || !Character.isLetter(lowercased.charAt(tagName.length())));
+        }
+      };
+    }
+
+    @Override
+    public boolean isVisible() {
+      return true;
+    }
+
+    public String toString() {
+      return getName();
+    }
+
+    @Override
+    @NotNull
+    public ActionPresentation getPresentation() {
+      return new ActionPresentationData(IdeBundle.message("action.sort.alphabetically"),
+                                        IdeBundle.message("action.sort.alphabetically"),
+                                        AllIcons.ObjectBrowser.Sorted);
+    }
+
+    @Override
+    @NotNull
+    public String getName() {
+      return ALPHA_SORTER_ID;
+    }
+  };
+
+  private static final Sorter[] ourSorters = {HTML_ALPHA_SORTER};
 
   public HtmlStructureViewTreeModel(final XmlFile file, @Nullable Editor editor) {
     super(file, editor);
@@ -54,7 +105,11 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
   @Override
   @NotNull
   public Sorter[] getSorters() {
-    return Sorter.EMPTY_ARRAY;
+    if (ViewStructureAction.isInStructureViewPopup(this)) {
+      return Sorter.EMPTY_ARRAY;  // because in popup there's no option to disable sorter
+    }
+
+    return ourSorters;
   }
 
   @Override

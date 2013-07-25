@@ -85,7 +85,7 @@ public class DeployToServerRunConfiguration<C extends ServerConfiguration> exten
       throw new ExecutionException("Deployment is not selected");
     }
 
-    return new DeployToServerState(env, myDeployer, server, myDeploymentSource);
+    return new DeployToServerState(myDeployer, server, myDeploymentSource);
   }
 
   @Override

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
 * @author Dmitry Avdeev
 */
-class TestRepository extends BaseRepository {
+public class TestRepository extends BaseRepository {
   private Task[] myTasks;
 
   public TestRepository(Task... tasks) {

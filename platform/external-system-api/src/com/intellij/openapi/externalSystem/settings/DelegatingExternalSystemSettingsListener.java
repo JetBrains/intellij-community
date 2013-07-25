@@ -33,6 +33,11 @@ public class DelegatingExternalSystemSettingsListener<S extends ExternalProjectS
   }
 
   @Override
+  public void onProjectRenamed(@NotNull String oldName, @NotNull String newName) {
+    myDelegate.onProjectRenamed(oldName, newName);
+  }
+
+  @Override
   public void onProjectsLinked(@NotNull Collection<S> settings) {
     myDelegate.onProjectsLinked(settings); 
   }

@@ -18,7 +18,7 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.command.HgVersionCommand;
+import org.zmlx.hg4idea.util.HgVersionUtil;
 
 import javax.swing.*;
 
@@ -65,8 +65,7 @@ public class HgConfigurationProjectPanel {
   public void validate() throws ConfigurationException {
     String hgExecutable;
     hgExecutable = getCurrentPath();
-    HgVersionCommand command = new HgVersionCommand();
-    if (!command.isValid(hgExecutable, myRunHgAsBashCheckBox.isSelected())) {
+    if (!HgVersionUtil.isValid(hgExecutable, myRunHgAsBashCheckBox.isSelected())) {
       throw new ConfigurationException(
         HgVcsMessages.message("hg4idea.configuration.executable.error", hgExecutable)
       );

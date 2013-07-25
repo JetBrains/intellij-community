@@ -77,7 +77,10 @@ public abstract class Task {
   @Nullable
   public abstract String getIssueUrl();
 
-  // todo it should be abstract @NotNull method
+  /**
+   * @return null if no issue is associated
+   * @see #isIssue()
+   */
   @Nullable
   public TaskRepository getRepository() {
     return null;

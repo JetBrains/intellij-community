@@ -31,6 +31,11 @@ import java.io.IOException;
  * @author peter
  */
 public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.addClass("package org.jetbrains.annotations; public @interface Contract { String value(); }");
+  }
 
   @Override
   protected String getTestDataPath() {
@@ -266,4 +271,6 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
+
+  public void testContractAnnotation() { doTest(); }
 }

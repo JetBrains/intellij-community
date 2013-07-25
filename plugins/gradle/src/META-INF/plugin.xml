@@ -61,6 +61,12 @@
     <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
     <defaultImportContributor implementation="org.jetbrains.plugins.gradle.config.GradleDefaultImportContributor"/>
     <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.gradle.config.GradleGroovyConfigNotification"/>
+    
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptContributor"/>
+    <methodDescriptor class="org.gradle.api.Project"
+                      name="apply"
+                      namedArgsProvider="org.jetbrains.plugins.gradle.service.resolve.GradleProjectApplyArgsProvider"/>
+    
   </extensions>
 
   <actions>

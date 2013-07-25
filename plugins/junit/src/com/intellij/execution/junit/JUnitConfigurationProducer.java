@@ -21,6 +21,8 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
@@ -46,10 +48,7 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
     if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
       return null;
     }
-    final Module predefinedModule =
-      ((JUnitConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
-        .getConfigurationTemplate(getConfigurationFactory())
-        .getConfiguration()).getConfigurationModule().getModule();
+    final RuntimeConfiguration predefinedConfiguration = context.getOriginalConfiguration(JUnitConfigurationType.getInstance());
     location = JavaExecutionUtil.stepIntoSingleClass(location);
     final PsiElement element = location.getPsiElement();
     final PsiClass testClass = JUnitUtil.getTestClass(element);
@@ -62,8 +61,14 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
     } else {
       testPackage = null;
     }
+    final Module predefinedModule =
+          ((JUnitConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
+            .getConfigurationTemplate(getConfigurationFactory())
+            .getConfiguration()).getConfigurationModule().getModule();
+    final String vmParameters = predefinedConfiguration instanceof JUnitConfiguration ? ((JUnitConfiguration)predefinedConfiguration).getVMParameters() : null;
     for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final JUnitConfiguration unitConfiguration = (JUnitConfiguration)existingConfiguration.getConfiguration();
+      if (vmParameters != null && !Comparing.strEqual(vmParameters, unitConfiguration.getVMParameters())) continue;
       final TestObject testobject = unitConfiguration.getTestObject();
       if (testobject != null) {
         if (testobject.isConfiguredByElement(unitConfiguration, testClass, testMethod, testPackage)) {

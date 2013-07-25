@@ -23,64 +23,22 @@ import java.util.List;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
 public class GithubAuthorization {
-  private long id;
-  @NotNull private String token;
+  @NotNull private String myToken;
+  @NotNull private List<String> myScopes;
 
-  @Nullable private String note;
-  @Nullable private String noteUrl;
-
-  @NotNull private List<String> scopes;
-
-  @NotNull
-  public static GithubAuthorization create(GithubAuthorizationRaw raw) throws JsonException {
-    try {
-      if (raw == null) throw new JsonException("raw is null");
-      if (raw.id == null) throw new JsonException("id is null");
-      if (raw.token == null) throw new JsonException("token is null");
-      if (raw.scopes == null) throw new JsonException("scopes is null");
-
-      return new GithubAuthorization(raw.id, raw.token, raw.note, raw.noteUrl, raw.scopes);
-    }
-    catch (JsonException e) {
-      throw new JsonException("GithubAuthorization parse error", e);
-    }
-  }
-
-  private GithubAuthorization(long id,
-                              @NotNull String token,
-                              @Nullable String note,
-                              @Nullable String noteUrl,
-                              @NotNull List<String> scopes) {
-    this.id = id;
-    this.token = token;
-    this.note = note;
-    this.noteUrl = noteUrl;
-    this.scopes = scopes;
-  }
-
-  public long getId() {
-    return id;
+  public GithubAuthorization(@NotNull String token, @NotNull List<String> scopes) {
+    myToken = token;
+    myScopes = scopes;
   }
 
   @NotNull
   public String getToken() {
-    return token;
-  }
-
-  @Nullable
-  public String getNote() {
-    return note;
-  }
-
-  @Nullable
-  public String getNoteUrl() {
-    return noteUrl;
+    return myToken;
   }
 
   @NotNull
   public List<String> getScopes() {
-    return scopes;
+    return myScopes;
   }
 }

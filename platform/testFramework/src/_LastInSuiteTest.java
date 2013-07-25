@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LeakHunter;
@@ -36,8 +34,6 @@ public class _LastInSuiteTest extends TestCase {
       }
     }.execute().throwException();
 
-    final Application application = ApplicationManager.getApplication();
-
     // disposes default project too
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -46,7 +42,7 @@ public class _LastInSuiteTest extends TestCase {
       }
     });
 
-    LeakHunter.checkProjectLeak(application);
+    LeakHunter.checkProjectLeak();
     Disposer.assertIsEmpty(true);
   }
 }

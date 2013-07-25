@@ -390,6 +390,10 @@ public class RedundantCastUtil {
               return;
             }
             if (!checkResolveAfterRemoveCast(parent)) return;
+            final PsiExpression thenExpression = ((PsiConditionalExpression)parent).getThenExpression();
+            final PsiExpression elseExpression = ((PsiConditionalExpression)parent).getElseExpression();
+            final PsiExpression opposite = thenExpression == typeCast ? elseExpression : thenExpression;
+            if (opposite == null || !Comparing.equal(conditionalType, opposite.getType())) return;
           }
         } else if (parent instanceof PsiSynchronizedStatement && (expr instanceof PsiExpression && ((PsiExpression)expr).getType() instanceof PsiPrimitiveType)) {
           return;

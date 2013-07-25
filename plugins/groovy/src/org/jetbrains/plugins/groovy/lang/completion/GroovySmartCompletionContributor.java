@@ -160,7 +160,9 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         for (TypeConstraint typeConstraint : typeConstraints) {
           final PsiType type = typeConstraint.getType();
           final LookupItem item = PsiTypeLookupItem.createLookupItem(type, position, PsiTypeLookupItem.isDiamond(type), ChooseTypeExpression.IMPORT_FIXER);
-          JavaCompletionUtil.setShowFQN(item);
+          if (item.getObject() instanceof PsiClass) {
+            JavaCompletionUtil.setShowFQN(item);
+          }
           item.setInsertHandler(new InsertHandler<LookupElement>() {
             @Override
             public void handleInsert(InsertionContext context, LookupElement item) {

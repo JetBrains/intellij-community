@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Processor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -40,12 +41,15 @@ import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
 
 import java.io.File;
+import java.util.Set;
 
 public class MavenRootModelAdapter {
 
   private final MavenProject myMavenProject;
   private final ModifiableModuleModel myModuleModel;
   private final ModifiableRootModel myRootModel;
+
+  private final Set<String> myOrderEntriesBeforeJdk = new THashSet<String>();
 
   public MavenRootModelAdapter(@NotNull MavenProject p, @NotNull Module module, final MavenModifiableModelsProvider rootModelsProvider) {
     myMavenProject = p;
@@ -82,8 +86,14 @@ public class MavenRootModelAdapter {
   }
 
   private void initOrderEntries() {
+    boolean jdkProcessed = false;
+
     for (OrderEntry e : myRootModel.getOrderEntries()) {
-      if (e instanceof ModuleSourceOrderEntry || e instanceof JdkOrderEntry) continue;
+      if (e instanceof ModuleSourceOrderEntry || e instanceof JdkOrderEntry) {
+        jdkProcessed = true;
+        continue;
+      }
+
       if (e instanceof LibraryOrderEntry) {
         if (!isMavenLibrary(((LibraryOrderEntry)e).getLibrary())) continue;
       }
@@ -91,6 +101,16 @@ public class MavenRootModelAdapter {
         Module m = ((ModuleOrderEntry)e).getModule();
         if (m != null && !MavenProjectsManager.getInstance(myRootModel.getProject()).isMavenizedModule(m)) continue;
       }
+
+      if (!jdkProcessed) {
+        if (e instanceof ModuleOrderEntry) {
+          myOrderEntriesBeforeJdk.add(((ModuleOrderEntry)e).getModuleName());
+        }
+        else if (e instanceof LibraryOrderEntry) {
+          myOrderEntriesBeforeJdk.add(((LibraryOrderEntry)e).getLibraryName());
+        }
+      }
+
       myRootModel.removeOrderEntry(e);
     }
   }
@@ -278,6 +298,10 @@ public class MavenRootModelAdapter {
     if (testJar) {
       ((ModuleOrderEntryImpl)e).setProductionOnTestDependency(true);
     }
+
+    if (myOrderEntriesBeforeJdk.contains(moduleName)) {
+      moveLastOrderEntryBeforeJdk();
+    }
   }
 
   @Nullable
@@ -324,6 +348,26 @@ public class MavenRootModelAdapter {
 
     LibraryOrderEntry e = myRootModel.addLibraryEntry(library);
     e.setScope(scope);
+
+    if (myOrderEntriesBeforeJdk.contains(e.getLibraryName())) {
+      moveLastOrderEntryBeforeJdk();
+    }
+  }
+
+  private void moveLastOrderEntryBeforeJdk() {
+    OrderEntry[] entries = myRootModel.getOrderEntries().clone();
+
+    int i = entries.length - 1;
+    while (i > 0 && (entries[i - 1] instanceof ModuleSourceOrderEntry || entries[i - 1] instanceof JdkOrderEntry)) {
+      OrderEntry e = entries[i - 1];
+      entries[i - 1] = entries[i];
+      entries[i] = e;
+      i--;
+    }
+
+    if (i < entries.length) {
+      myRootModel.rearrangeOrderEntries(entries);
+    }
   }
 
   private static void updateUrl(Library.ModifiableModel library,

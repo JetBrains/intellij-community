@@ -31,7 +31,9 @@ class AccessorBindingWrapper implements Binding {
 
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     Object value = myAccessor.read(o);
-    assert value != null : "Property " + myAccessor + " of object " + o + " must not be null";
+    if (value == null) {
+      throw new XmlSerializationException("Property " + myAccessor + " of object " + o + " (" + o.getClass() + ") must not be null");
+    }
     return myBinding.serialize(value, context, filter);
   }
 

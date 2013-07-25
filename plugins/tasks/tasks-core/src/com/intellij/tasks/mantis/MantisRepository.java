@@ -153,7 +153,9 @@ public class MantisRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public Comment[] getComments() {
-        final List<Comment> comments = ContainerUtil.map(data.getNotes(), new Function<IssueNoteData, Comment>() {
+        IssueNoteData[] notes = data.getNotes();
+        if (notes == null) return Comment.EMPTY_ARRAY;
+        final List<Comment> comments = ContainerUtil.map(notes, new Function<IssueNoteData, Comment>() {
           @Override
           public Comment fun(final IssueNoteData data) {
             return new Comment() {

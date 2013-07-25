@@ -105,17 +105,22 @@ public class JDOMUtil {
 
   private static int addToHash(int i, @NotNull final Element element) {
     i = addToHash(i, element.getName());
-    i = addToHash(i, element.getText());
 
-    final List list = element.getAttributes();
-    for (Object aList : list) {
-      Attribute attribute = (Attribute)aList;
-      i = addToHash(i, attribute);
+    final List<Attribute> list = element.getAttributes();
+    //noinspection ForLoopReplaceableByForEach
+    for (int j = 0; j < list.size(); j++) {
+      i = addToHash(i, list.get(j));
     }
 
-    final List<Element> children = getChildren(element);
-    for (Element child : children) { //iterator is used here which is more efficient than get(index)
-      i = addToHash(i, child);
+    List<Content> content = element.getContent();
+    //noinspection ForLoopReplaceableByForEach
+    for (int j = 0; j < content.size(); j++) {
+      Content child = content.get(j);
+      if (child instanceof Element) {
+        i = addToHash(i, (Element)child);
+      } else if (child instanceof Text) {
+        i = addToHash(i, ((Text)child).getText());
+      }
     }
 
     return i;

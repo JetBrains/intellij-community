@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -9,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,18 +25,19 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 import javax.swing.event.HyperlinkEvent;
+import java.io.IOException;
 
 /**
  * @author Sergey Evdokimov
  */
 public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
-  //private static final Logger LOG = Logger.getInstance(MavenShowEffectivePom.class);
+  private static final Logger LOG = Logger.getInstance(MavenShowEffectivePom.class);
 
-  private static void showUnsupportedNotification(@NotNull final Project project) {
+  private static void showUnsupportedNotification(@NotNull final Project project, @NotNull final VirtualFile file) {
     new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
                      "Unsupported action",
-                     "<html>You have to <a href='#'>enable</a> <b>Settings -> Maven -> Importing -> \"Use Maven3 to import project\"</b> option to use Show Effective POM action</html>",
+                     "<html>You have to <a href='#'>enable</a> <b>" + CommonBundle.settingsActionPath() + " | Maven | Importing | \"Use Maven3 to import project\"</b> option to use Show Effective POM action</html>",
                      NotificationType.ERROR,
                      new NotificationListener.Adapter() {
                        @Override
@@ -44,24 +47,14 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
                          new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "Option enabled", "Option \"Use Maven3 to import project\" has been enabled", NotificationType.INFORMATION)
                            .notify(project);
+
+                         actionPerformed(project, file);
                        }
                      }).notify(project);
   }
 
-  @Override
-  public void actionPerformed(AnActionEvent event) {
-    final Project project = MavenActionUtil.getProject(event.getDataContext());
-
-    if (MavenServerManager.getInstance().isUseMaven2()) {
-      showUnsupportedNotification(project);
-      return;
-    }
-
-
+  public static void actionPerformed(@NotNull final Project project, @NotNull VirtualFile file) {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(event.getDataContext());
-    assert file != null;
 
     final MavenProject mavenProject = manager.findProject(file);
     assert mavenProject != null;
@@ -72,13 +65,37 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            String fileName = mavenProject.getMavenId().getArtifactId() + "-pom.xml";
+            if (project.isDisposed()) return;
+
+            String fileName = mavenProject.getMavenId().getArtifactId() + "-effective-pom.xml";
             PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, XMLLanguage.INSTANCE, s);
+            try {
+              //noinspection ConstantConditions
+              file.getVirtualFile().setWritable(false);
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+
             file.navigate(true);
           }
         });
       }
     });
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent event) {
+    final Project project = MavenActionUtil.getProject(event.getDataContext());
+    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(event.getDataContext());
+    assert file != null;
+
+    if (MavenServerManager.getInstance().isUseMaven2()) {
+      showUnsupportedNotification(project, file);
+    }
+    else {
+      actionPerformed(project, file);
+    }
   }
 
   @Override

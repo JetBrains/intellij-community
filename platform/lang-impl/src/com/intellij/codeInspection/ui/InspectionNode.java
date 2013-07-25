@@ -34,7 +34,6 @@ public class InspectionNode extends InspectionTreeNode {
 
   public InspectionNode(@NotNull InspectionToolWrapper toolWrapper) {
     super(toolWrapper);
-    assert toolWrapper.getContext() != null;
   }
 
   public String toString() {

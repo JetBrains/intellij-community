@@ -15,8 +15,6 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.Printable;
@@ -44,9 +42,8 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   private class MyConsoleView extends SMTRunnerConsoleView {
     private final TestsOutputConsolePrinter myTestsOutputConsolePrinter;
 
-    private MyConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
-                          final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
-      super(consoleProperties, runnerSettings, configurationPerRunnerSettings);
+    private MyConsoleView(final TestConsoleProperties consoleProperties, final ExecutionEnvironment environment) {
+      super(consoleProperties, environment);
 
       myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(MyConsoleView.this, consoleProperties, null) {
         @Override
@@ -70,7 +67,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     final ExecutionEnvironment environment = new ExecutionEnvironment();
 
     myMockResettablePrinter = new MockPrinter(true);
-    myConsole = new MyConsoleView(consoleProperties, environment.getRunnerSettings(), environment.getConfigurationSettings());
+    myConsole = new MyConsoleView(consoleProperties, environment);
     myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
     myRootSuite = myResultsViewer.getTestsRootNode();

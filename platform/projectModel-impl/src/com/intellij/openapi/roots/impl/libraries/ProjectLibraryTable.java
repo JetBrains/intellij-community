@@ -37,9 +37,9 @@ import java.util.List;
 @State(
   name = "libraryTable",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/libraries/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectLibraryTable.LibraryStateSplitter.class)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/libraries/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectLibraryTable.LibraryStateSplitter.class)
+  }
 )
 public class ProjectLibraryTable extends LibraryTableBase {
   private static final LibraryTablePresentation PROJECT_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {

@@ -7,7 +7,7 @@ public enum TestEnum {
         this._i = _i;
     }
 
-    private int get_i() {
+    public int get_i() {
         return _i;
     }
 }

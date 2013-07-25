@@ -51,6 +51,9 @@ public abstract class TaskRepositoryType<T extends TaskRepository> {
 
   public abstract Class<T> getRepositoryClass();
 
+  /**
+   * @return states that can be set by {@link TaskRepository#setTaskState(Task, TaskState)}
+   */
   public EnumSet<TaskState> getPossibleTaskStates() {
     return EnumSet.noneOf(TaskState.class);
   }

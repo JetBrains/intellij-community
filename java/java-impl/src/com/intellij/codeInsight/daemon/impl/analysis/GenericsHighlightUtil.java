@@ -68,7 +68,7 @@ public class GenericsHighlightUtil {
       for (PsiClassType type : extendsTypes) {
         PsiType extendsType = substitutor.substitute(type);
         if (substituted instanceof PsiWildcardType) {
-          if (!((PsiWildcardType)substituted).isExtends()) {
+          if (((PsiWildcardType)substituted).isSuper()) {
             continue;
           }
           final PsiType extendsBound = ((PsiWildcardType)substituted).getExtendsBound();

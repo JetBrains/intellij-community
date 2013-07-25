@@ -21,12 +21,12 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,13 +46,12 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
 
   @Override
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
-    return profile instanceof ExternalSystemRunConfiguration && ToolWindowId.DEBUG.equals(executorId);
+    return profile instanceof ExternalSystemRunConfiguration && DefaultDebugExecutor.EXECUTOR_ID.equals(executorId);
   }
 
   @Nullable
   @Override
   protected RunContentDescriptor createContentDescriptor(Project project,
-                                                         Executor executor,
                                                          RunProfileState state,
                                                          RunContentDescriptor contentToReuse,
                                                          ExecutionEnvironment env) throws ExecutionException
@@ -61,7 +60,7 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
       int port = ((ExternalSystemRunConfiguration.MyRunnableState)state).getDebugPort();
       if (port > 0) {
         RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(port), false);
-        return attachVirtualMachine(project, executor, state, contentToReuse, env, connection, true);
+        return attachVirtualMachine(project, state, contentToReuse, env, connection, true);
       }
       else {
         LOG.warn("Can't attach debugger to external system task execution. Reason: target debug port is unknown");

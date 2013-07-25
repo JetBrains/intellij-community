@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.OptionalConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -27,7 +28,7 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class RemoteServerListConfigurable extends MasterDetailsComponent implements OptionalConfigurable {
+public class RemoteServerListConfigurable extends MasterDetailsComponent implements OptionalConfigurable, SearchableConfigurable {
   private final RemoteServersManager myServersManager;
 
   public RemoteServerListConfigurable(RemoteServersManager manager) {
@@ -54,6 +55,18 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     MyNode node = new MyNode(new RemoteServerConfigurable(server, TREE_UPDATER, isNew));
     addNode(node, myRoot);
     return node;
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return "RemoteServers";
+  }
+
+  @Nullable
+  @Override
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   @Override

@@ -51,16 +51,12 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -80,7 +76,6 @@ import org.testng.RemoteTestNGStarter;
 import org.testng.annotations.AfterClass;
 import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
-import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.SerializedMessageSender;
 
 import javax.swing.*;
@@ -93,7 +88,6 @@ import java.net.UnknownHostException;
 public class TestNGRunnableState extends JavaCommandLineState {
   private static final Logger LOG = Logger.getInstance("TestNG Runner");
   private static final String TESTNG_TEST_FRAMEWORK_NAME = "TestNG";
-  private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
   private final TestNGConfiguration config;
   private final RunnerSettings runnerSettings;
   protected final IDEARemoteTestRunnerClient client;
@@ -106,14 +100,13 @@ public class TestNGRunnableState extends JavaCommandLineState {
   public TestNGRunnableState(ExecutionEnvironment environment, TestNGConfiguration config) {
     super(environment);
     this.runnerSettings = environment.getRunnerSettings();
-    myConfigurationPerRunnerSettings = environment.getConfigurationSettings();
     this.config = config;
     //TODO need to narrow this down a bit
     //setModulesToCompile(ModuleManager.getInstance(config.getProject()).getModules());
     client = new IDEARemoteTestRunnerClient();
     // Want debugging?
-    if (runnerSettings.getData() instanceof DebuggingRunnerData) {
-      DebuggingRunnerData debuggingRunnerData = ((DebuggingRunnerData)runnerSettings.getData());
+    if (runnerSettings instanceof DebuggingRunnerData) {
+      DebuggingRunnerData debuggingRunnerData = ((DebuggingRunnerData)runnerSettings);
       debugPort = debuggingRunnerData.getDebugPort();
       if (debugPort.length() == 0) {
         try {
@@ -136,8 +129,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     }
     OSProcessHandler processHandler = startProcess();
     final TreeRootNode unboundOutputRoot = new TreeRootNode();
-    final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings, unboundOutputRoot,
-                                                            executor);
+    final TestNGConsoleView console = new TestNGConsoleView(config, getEnvironment(), unboundOutputRoot, executor);
     console.initUI();
     unboundOutputRoot.setPrinter(console.getPrinter());
     Disposer.register(console, unboundOutputRoot);
@@ -240,8 +232,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     final BaseTestsOutputConsoleView smtConsoleView = SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(
       TESTNG_TEST_FRAMEWORK_NAME,
       testConsoleProperties,
-      getEnvironment().getRunnerSettings(),
-      getEnvironment().getConfigurationSettings(), null);
+      getEnvironment(), null);
 
 
     Disposer.register(getEnvironment().getProject(), smtConsoleView);
@@ -400,7 +391,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       LOG.error(e);
     }
     // Configure for debugging
-    if (runnerSettings.getData() instanceof DebuggingRunnerData) {
+    if (runnerSettings instanceof DebuggingRunnerData) {
       ParametersList params = javaParameters.getVMParametersList();
 
       String hostname = "localhost";

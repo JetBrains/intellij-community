@@ -131,7 +131,7 @@ public class GrIntroduceFieldProcessor {
   }
 
   @NotNull
-  private static GrVariableDeclaration insertField(@NotNull PsiClass targetClass, @NotNull GrVariableDeclaration declaration) {
+  protected GrVariableDeclaration insertField(@NotNull PsiClass targetClass, @NotNull GrVariableDeclaration declaration) {
     if (targetClass instanceof GrEnumTypeDefinition) {
       final GrEnumConstantList enumConstants = ((GrEnumTypeDefinition)targetClass).getEnumConstantList();
       return (GrVariableDeclaration)targetClass.addAfter(declaration, enumConstants);
@@ -165,7 +165,7 @@ public class GrIntroduceFieldProcessor {
     return anchor;
   }
 
-  private void initializeInSetup(GrVariable field) {
+  void initializeInSetup(GrVariable field) {
     final PsiMethod setUpMethod = TestFrameworks.getInstance().findOrCreateSetUpMethod(((PsiClass)context.getScope()));
     assert setUpMethod instanceof GrMethod;
 
@@ -174,22 +174,13 @@ public class GrIntroduceFieldProcessor {
     generateAssignment(field, (GrStatement)anchor, body);
   }
 
-  private void initializeInMethod(GrVariable field) {
+  void initializeInMethod(GrVariable field) {
     final PsiElement _scope = context.getScope();
     final PsiElement scope = _scope instanceof GroovyScriptClass ? ((GroovyScriptClass)_scope).getContainingFile() : _scope;
 
-    final GrExpression expression;
-    if (context.getExpression() != null) {
-      expression = context.getExpression();
-    }
-    else if (context.getStringPart() != null) {
-      expression = context.getStringPart().getLiteral();
-    }
-    else {
-      return;
-    }
+    final PsiElement place = context.getPlace();
 
-    final GrMember member = GrIntroduceFieldHandler.getContainer(expression, scope);
+    final GrMember member = GrIntroduceFieldHandler.getContainer(place, scope);
     LOG.assertTrue(member != null);
     GrOpenBlock container = member instanceof GrMethod? ((GrMethod)member).getBlock():
                             member instanceof GrClassInitializer ? ((GrClassInitializer)member).getBlock():
@@ -208,7 +199,7 @@ public class GrIntroduceFieldProcessor {
     generateAssignment(field, anchor, container);
   }
 
-  private void initializeInConstructor(GrVariable field) {
+  void initializeInConstructor(GrVariable field) {
     final PsiClass scope = (PsiClass)context.getScope();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
 
@@ -346,7 +337,7 @@ public class GrIntroduceFieldProcessor {
   }
 
   @NotNull
-  private GrExpression getInitializer() {
+  protected GrExpression getInitializer() {
     if (settings.removeLocalVar()) {
       return extractVarInitializer();
     }

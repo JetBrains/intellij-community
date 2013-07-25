@@ -125,23 +125,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   public Element getState(final boolean shared) {
     Element element = new Element("state");
-    //if (!shared) {
-    //  element.setAttribute("enabled", Boolean.toString(myEnabled));
-    //  element.setAttribute("enabledForTabs", Boolean.toString(myEnabledForTabs));
-    //}
-
     myModel.save(element, shared);
-    //if (!shared) {
-    //  final boolean exists = findConfigurationByName(NonProjectFilesScope.NAME, myModel.getLocalConfigurations()) != null;
-    //  if (myEnabledForNonProject && !exists) {
-    //    myEnabledForNonProject = false;
-    //  } else if (!myEnabledForNonProject && exists) {
-    //    myEnabledForNonProject = true;
-    //  }
-    //
-    //  element.setAttribute("showNonProject", Boolean.toString(myEnabledForNonProject));
-    //}
-
     return element;
   }
 
@@ -161,22 +145,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   @SuppressWarnings({"AutoUnboxing"})
   void loadState(Element state, final boolean shared) {
-    if (!shared) {
-      //final String enabled = state.getAttributeValue("enabled");
-      //myEnabled = enabled == null ? true : Boolean.valueOf(enabled);
-      //
-      //final String enabledForTabs = state.getAttributeValue("enabledForTabs");
-      //myEnabledForTabs = enabledForTabs == null ? true : Boolean.valueOf(enabledForTabs);
-
-      //final String showNonProject = state.getAttributeValue("showNonProject");
-      //myEnabledForNonProject = showNonProject == null ? true : Boolean.valueOf(showNonProject);
-    }
-
     myModel.load(state, shared);
-    //final List<FileColorConfiguration> local = myModel.getLocalConfigurations();
-    //if (!shared && myEnabledForNonProject && findConfigurationByName(NonProjectFilesScope.NAME, local) == null) {
-    //  local.add(new FileColorConfiguration(NonProjectFilesScope.NAME, NonProjectFilesScope.DEFAULT_COLOR));
-    //}
   }
 
   @Override
@@ -236,13 +205,9 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   @Nullable
   public Color getFileColor(@NotNull final VirtualFile file) {
     initSharedConfigurations();
-    final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
-    if (psiFile != null) {
-      return getFileColor(psiFile);
-    } else {
-      final String colorName = myModel.getColor(file, getProject());
-      return colorName == null ? null : getColor(colorName);
-    }
+
+    final String colorName = myModel.getColor(file, getProject());
+    return colorName == null ? null : getColor(colorName);
   }
 
   @Override
@@ -252,10 +217,6 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   FileColorsModel getModel() {
     return myModel;
-  }
-
-  boolean isShared(FileColorConfiguration configuration) {
-    return myModel.isShared(configuration);
   }
 
   @Override
@@ -276,16 +237,6 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     for (String name : ourDefaultColors.keySet()) {
       if (color.equals(ourDefaultColors.get(name))) {
         return name;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static FileColorConfiguration findConfigurationByName(String name, List<FileColorConfiguration> configurations) {
-    for (FileColorConfiguration configuration : configurations) {
-      if (name.equals(configuration.getScopeName())) {
-        return configuration;
       }
     }
     return null;

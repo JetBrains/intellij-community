@@ -80,4 +80,12 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
     if (sub != 0) return -sub;
     return 0;
   }
+
+  @Override
+  public String toString() {
+    return (myFirstMethodStatic ? "1" : "0") + 
+           (myHasCallingVariableInContext ? "1" : "0") + "_" + 
+           myLastMethodOccurrences + "_" + 
+           myUnreachableParametersCount;
+  }
 }

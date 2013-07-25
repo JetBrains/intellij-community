@@ -18,7 +18,6 @@ package org.intellij.lang.xpath.xslt.run;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.CommandLineState;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
@@ -69,8 +68,7 @@ public class XsltCommandLineState extends CommandLineState {
     public XsltCommandLineState(XsltRunConfiguration xsltRunConfiguration, ExecutionEnvironment env) {
         super(env);
         myXsltRunConfiguration = xsltRunConfiguration;
-        final ConfigurationPerRunnerSettings settings = env.getConfigurationSettings();
-        myIsDebugger = settings != null && "Debug".equals(settings.getRunnerId());
+        myIsDebugger = "Debug".equals(env.getRunnerId());
     }
 
     @NotNull

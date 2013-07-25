@@ -23,180 +23,75 @@ import java.io.Serializable;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
 public class GithubUserDetailed extends GithubUser {
-  @Nullable private String name;
-  @Nullable private String email;
-  @Nullable private String company;
-  @Nullable private String location;
+  @Nullable private String myName;
+  @Nullable private String myEmail;
 
-  @NotNull private Integer publicRepos;
-  @NotNull private Integer publicGists;
-  @NotNull private Integer totalPrivateRepos;
-  @NotNull private Integer ownedPrivateRepos;
-  @NotNull private Integer privateGists;
-  private long diskUsage;
+  private int myOwnedPrivateRepos;
 
-  @NotNull private String type;
-  @NotNull private GithubUserPlan plan;
+  @NotNull private String myType;
+  @NotNull private UserPlan myPlan;
 
-  public static class GithubUserPlan implements Serializable {
-    @NotNull private String name;
-    private long space;
-    private long collaborators;
-    private long privateRepos;
+  public static class UserPlan implements Serializable {
+    @NotNull private String myName;
+    private long myPrivateRepos;
 
-    @NotNull
-    public static GithubUserPlan create(@Nullable GithubUserRaw.GithubUserPlanRaw raw) throws JsonException {
-      try {
-        if (raw == null) throw new JsonException("raw is null");
-        if (raw.name == null) throw new JsonException("name is null");
-        if (raw.space == null) throw new JsonException("space is null");
-        if (raw.collaborators == null) throw new JsonException("collaborators is null");
-        if (raw.privateRepos == null) throw new JsonException("privateRepos is null");
-
-        return new GithubUserPlan(raw.name, raw.space, raw.collaborators, raw.privateRepos);
-      }
-      catch (JsonException e) {
-        throw new JsonException("GithubUserPlan parse error", e);
-      }
-    }
-
-    private GithubUserPlan(@NotNull String name, long space, long collaborators, long privateRepos) {
-      this.name = name;
-      this.space = space;
-      this.collaborators = collaborators;
-      this.privateRepos = privateRepos;
+    public UserPlan(@NotNull String name, long privateRepos) {
+      myName = name;
+      myPrivateRepos = privateRepos;
     }
 
     @NotNull
     public String getName() {
-      return name;
-    }
-
-    public long getSpace() {
-      return space;
-    }
-
-    public long getCollaborators() {
-      return collaborators;
+      return myName;
     }
 
     public long getPrivateRepos() {
-      return privateRepos;
+      return myPrivateRepos;
     }
   }
 
-  public Boolean canCreatePrivateRepo() {
+  public boolean canCreatePrivateRepo() {
     return getPlan().getPrivateRepos() > getOwnedPrivateRepos();
   }
 
-  @NotNull
-  public static GithubUserDetailed createDetailed(@Nullable GithubUserRaw raw) throws JsonException {
-    try {
-      if (raw == null) throw new JsonException("raw is null");
-      if (raw.type == null) throw new JsonException("type is null");
-      if (raw.publicRepos == null) throw new JsonException("publicRepos is null");
-      if (raw.publicGists == null) throw new JsonException("publicGists is null");
-      if (raw.totalPrivateRepos == null) throw new JsonException("totalPrivateRepos is null");
-      if (raw.ownedPrivateRepos == null) throw new JsonException("ownedPrivateRepos is null");
-      if (raw.privateGists == null) throw new JsonException("privateGists is null");
-      if (raw.diskUsage == null) throw new JsonException("diskUsage is null");
-
-      GithubUser user = GithubUser.create(raw);
-      GithubUserPlan plan = GithubUserPlan.create(raw.plan);
-
-      return new GithubUserDetailed(user, raw.name, raw.email, raw.company, raw.location, raw.type, raw.publicRepos, raw.publicGists,
-                                    raw.totalPrivateRepos, raw.ownedPrivateRepos, raw.privateGists, raw.diskUsage, plan);
-    }
-    catch (JsonException e) {
-      throw new JsonException("GithubUserDetailed parse error", e);
-    }
-  }
-
-  private GithubUserDetailed(@NotNull GithubUser user, @Nullable String name,
-                               @Nullable String email,
-                               @Nullable String company,
-                               @Nullable String location,
-                               @NotNull String type,
-                               @NotNull Integer publicRepos,
-                               @NotNull Integer publicGists,
-                               @NotNull Integer totalPrivateRepos,
-                               @NotNull Integer ownedPrivateRepos,
-                               @NotNull Integer privateGists,
-                               long diskUsage,
-                               @NotNull GithubUserPlan plan) {
-    super(user);
-    this.name = name;
-    this.email = email;
-    this.company = company;
-    this.location = location;
-    this.type = type;
-    this.publicRepos = publicRepos;
-    this.publicGists = publicGists;
-    this.totalPrivateRepos = totalPrivateRepos;
-    this.ownedPrivateRepos = ownedPrivateRepos;
-    this.privateGists = privateGists;
-    this.diskUsage = diskUsage;
-    this.plan = plan;
+  public GithubUserDetailed(@NotNull String login,
+                            @NotNull String htmlUrl,
+                            @Nullable String gravatarId,
+                            @Nullable String name,
+                            @Nullable String email,
+                            int ownedPrivateRepos,
+                            @NotNull String type,
+                            @NotNull UserPlan plan) {
+    super(login, htmlUrl, gravatarId);
+    myName = name;
+    myEmail = email;
+    myOwnedPrivateRepos = ownedPrivateRepos;
+    myType = type;
+    myPlan = plan;
   }
 
   @Nullable
   public String getName() {
-    return name;
+    return myName;
   }
 
   @Nullable
   public String getEmail() {
-    return email;
-  }
-
-  @Nullable
-  public String getCompany() {
-    return company;
-  }
-
-  @Nullable
-  public String getLocation() {
-    return location;
+    return myEmail;
   }
 
   @NotNull
   public String getType() {
-    return type;
+    return myType;
+  }
+
+  public int getOwnedPrivateRepos() {
+    return myOwnedPrivateRepos;
   }
 
   @NotNull
-  public Integer getPublicRepos() {
-    return publicRepos;
-  }
-
-  @NotNull
-  public Integer getPublicGists() {
-    return publicGists;
-  }
-
-  @NotNull
-  public Integer getTotalPrivateRepos() {
-    return totalPrivateRepos;
-  }
-
-  @NotNull
-  public Integer getOwnedPrivateRepos() {
-    return ownedPrivateRepos;
-  }
-
-  @NotNull
-  public Integer getPrivateGists() {
-    return privateGists;
-  }
-
-  public long getDiskUsage() {
-    return diskUsage;
-  }
-
-  @NotNull
-  public GithubUserPlan getPlan() {
-    return plan;
+  public UserPlan getPlan() {
+    return myPlan;
   }
 }

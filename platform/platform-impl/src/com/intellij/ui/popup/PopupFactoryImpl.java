@@ -621,7 +621,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     public boolean isEnabled() { return myIsEnabled; }
   }
 
-  private static class ActionPopupStep implements ListPopupStep<ActionItem>, MnemonicNavigationFilter<ActionItem>, SpeedSearchFilter<ActionItem> {
+  private static class ActionPopupStep implements ListPopupStepEx<ActionItem>, MnemonicNavigationFilter<ActionItem>, SpeedSearchFilter<ActionItem> {
     private final List<ActionItem> myItems;
     private final String myTitle;
     private final Component myContext;
@@ -711,6 +711,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     @Override
     public PopupStep onChosen(final ActionItem actionChoice, final boolean finalChoice) {
+      return onChosen(actionChoice, finalChoice, 0);
+    }
+
+    @Override
+    public PopupStep onChosen(ActionItem actionChoice, boolean finalChoice, final int eventModifiers) {
       if (!actionChoice.isEnabled()) return FINAL_CHOICE;
       final AnAction action = actionChoice.getAction();
       DataManager mgr = DataManager.getInstance();
@@ -725,9 +730,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         myFinalRunnable = new Runnable() {
           @Override
           public void run() {
-            action.actionPerformed(
-              new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
-                                ActionManager.getInstance(), 0));
+            action.actionPerformed(new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(), ActionManager.getInstance(), eventModifiers));
           }
         };
         return FINAL_CHOICE;

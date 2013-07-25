@@ -16,12 +16,14 @@
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,7 +122,12 @@ public class RepositoryUtil {
   }
 
   public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<T> repositories) {
-    List<T> repos = new ArrayList<T>(repositories);
+    List<T> repos = ContainerUtil.filter(repositories, new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        return t.getRoot().isValid();
+      }
+    });
     Collections.sort(repos, new Comparator<Repository>() {
       @Override
       public int compare(Repository o1, Repository o2) {

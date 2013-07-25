@@ -72,6 +72,9 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       if (containingClass == null) return null;
       String classFqn = containingClass.getQualifiedName();
       if (classFqn == null) return member.getName();  // refer to member of anonymous class by simple name
+      if (member instanceof PsiMethod && containingClass.findMethodsByName(member.getName(), false).length > 1) {
+        return classFqn + "#" + member.getName() + getParameterString((PsiMethod)member);
+      }
       return classFqn + "#" + member.getName();
     }
     return null;
@@ -89,17 +92,18 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     final int endIndex = fqn.indexOf('#');
     if (endIndex != -1) {
       String className = fqn.substring(0, endIndex);
-      if (className != null) {
-        aClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
-        if (aClass != null) {
-          String memberName = fqn.substring(endIndex + 1);
-          PsiField field = aClass.findFieldByName(memberName, false);
-          if (field != null) {
-            return field;
-          }
-          PsiMethod[] methods = aClass.findMethodsByName(memberName, false);
-          if (methods.length != 0) {
-            return methods[0];
+      int paramIndex = fqn.indexOf('(', endIndex);
+      aClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+      if (aClass != null) {
+        String memberName = fqn.substring(endIndex + 1, paramIndex < 0 ? fqn.length() : paramIndex);
+        PsiField field = aClass.findFieldByName(memberName, false);
+        if (field != null) {
+          return field;
+        }
+        String paramString = paramIndex < 0 ? "" : fqn.substring(paramIndex);
+        for (PsiMethod overload : aClass.findMethodsByName(memberName, false)) {
+          if (StringUtil.isEmpty(paramString) || paramString.equals(getParameterString(overload))) {
+            return overload;
           }
         }
       }
@@ -161,14 +165,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       if (toInsert.length() != 0) toInsert += "#";
       toInsert += member.getName();
       if (member instanceof PsiMethod) {
-        toInsert += "(";
-        PsiParameter[] parameters = ((PsiMethod)member).getParameterList().getParameters();
-        for (int i = 0; i < parameters.length; i++) {
-          PsiParameter parameter = parameters[i];
-          if (i != 0) toInsert += ", ";
-          toInsert += parameter.getType().getCanonicalText();
-        }
-        toInsert += ")";
+        toInsert += getParameterString((PsiMethod)member);
       }
     }
     else if (elementAtCaret == null ||
@@ -254,6 +251,18 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       caretOffset --;
     }
     editor.getCaretModel().moveToOffset(caretOffset);
+  }
+
+  private static String getParameterString(PsiMethod method) {
+    String toInsert = "(";
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      if (i != 0) toInsert += ", ";
+      toInsert += parameter.getType().getCanonicalText();
+    }
+    toInsert += ")";
+    return toInsert;
   }
 
   private static boolean isReferencedTo(PsiReferenceExpression referenceExpression, PsiMember targetElement) {

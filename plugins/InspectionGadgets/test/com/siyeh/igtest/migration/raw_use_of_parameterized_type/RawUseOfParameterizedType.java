@@ -28,3 +28,13 @@ class RawUseOfParameterizedType {
     Map.Entry<String, String> entry;
   }
 }
+interface X {
+  List foo(Map map);
+}
+class Y implements X {
+
+  @Override
+  public List foo(Map map) {
+    return null;
+  }
+}

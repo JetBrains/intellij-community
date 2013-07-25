@@ -597,7 +597,7 @@ public final class UpdateChecker {
           URL requestUrl = new URL(url);
           if (!StandardFileSystems.FILE_PROTOCOL.equals(requestUrl.getProtocol())) {
             HttpConfigurable.getInstance().prepareURL(url);
-            requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString());
+            requestUrl = new URL(url + (url.contains("?") ? "&" : "?") + "build=" + ApplicationInfo.getInstance().getBuild().asString());
           }
           inputStreams[0] = requestUrl.openStream();
         }

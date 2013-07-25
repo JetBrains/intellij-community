@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,11 @@ import org.jetbrains.plugins.github.api.GithubGist;
 import org.jetbrains.plugins.github.test.GithubTest;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+
+import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
 
 /**
  * @author Aleksey Pivovarov
@@ -60,12 +65,12 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
   }
 
   @NotNull
-  protected static Map<String, String> createContent() {
-    Map<String, String> content = new HashMap<String, String>();
+  protected static List<FileContent> createContent() {
+    List<FileContent> content = new ArrayList<FileContent>();
 
-    content.put("file1", "file1 content");
-    content.put("file2", "file2 content");
-    content.put("dir_file3", "file3 content");
+    content.add(new FileContent("file1", "file1 content"));
+    content.add(new FileContent("file2", "file2 content"));
+    content.add(new FileContent("dir_file3", "file3 content"));
 
     return content;
   }
@@ -76,7 +81,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
     if (GIST == null) {
       try {
-        GIST = GithubGist.create(GithubApiUtil.getGist(myGitHubSettings.getAuthData(), GIST_ID));
+        GIST = GithubApiUtil.getGist(myGitHubSettings.getAuthData(), GIST_ID);
       }
       catch (IOException e) {
         System.err.println(e.getMessage());
@@ -121,16 +126,15 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
     assertEquals("Gist content differs from sample", expected, result.getDescription());
   }
 
-  protected void checkGistContent(@NotNull Map<String, String> expected) {
+  protected void checkGistContent(@NotNull List<FileContent> expected) {
     GithubGist result = getGist();
 
-    Map<String, String> files = result.getContent();
+    List<FileContent> files = result.getContent();
 
-
-    assertEquals("Gist content differs from sample", expected, files);
+    assertTrue("Gist content differs from sample", Comparing.haveEqualElements(files, expected));
   }
 
-  protected void checkEquals(@NotNull Map<String, String> expected, @NotNull Map<String, String> actual) {
-    assertEquals("Gist content differs from sample", expected, actual);
+  protected void checkEquals(@NotNull List<FileContent> expected, @NotNull List<FileContent> actual) {
+    assertTrue("Gist content differs from sample", Comparing.haveEqualElements(expected, actual));
   }
 }

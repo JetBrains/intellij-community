@@ -101,7 +101,7 @@ public class RunContentExecutor {
     if (myHelpId != null) {
       view.setHelpId(myHelpId);
     }
-    Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+    Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     DefaultActionGroup actions = new DefaultActionGroup();
 
     final JComponent consolePanel = createConsolePanel(view, actions);

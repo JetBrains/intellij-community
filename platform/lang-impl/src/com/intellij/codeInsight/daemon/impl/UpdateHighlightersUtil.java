@@ -436,7 +436,7 @@ public class UpdateHighlightersUtil {
           finalHighlighter.setErrorStripeTooltip(info);
         }
         GutterMark renderer = info.getGutterIconRenderer();
-        finalHighlighter.setGutterIconRenderer(renderer);
+        finalHighlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
 
         ranges2markersCache.put(finalInfoRange, info.highlighter);
         if (info.quickFixActionRanges != null) {

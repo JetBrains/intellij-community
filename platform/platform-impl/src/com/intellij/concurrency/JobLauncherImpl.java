@@ -70,7 +70,7 @@ public class JobLauncherImpl extends JobLauncher {
     }
     catch (Throwable throwable) {
       job.cancel();
-      LOG.error(throwable);
+      throw new ProcessCanceledException(throwable);
     }
     return !job.isCanceled();
   }

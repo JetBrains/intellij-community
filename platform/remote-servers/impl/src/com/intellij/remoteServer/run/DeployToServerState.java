@@ -18,10 +18,7 @@ package com.intellij.remoteServer.run;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
@@ -34,16 +31,13 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class DeployToServerState<C extends ServerConfiguration> implements RunProfileState {
-  private final ExecutionEnvironment myExecutionEnvironment;
   @NotNull private final Deployer<C> myDeployer;
   @NotNull private final RemoteServer<C> myServer;
   @NotNull private final DeploymentSource mySource;
 
-  public DeployToServerState(@NotNull ExecutionEnvironment executionEnvironment,
-                             @NotNull Deployer<C> deployer,
+  public DeployToServerState(@NotNull Deployer<C> deployer,
                              @NotNull RemoteServer<C> server,
                              @NotNull DeploymentSource deploymentSource) {
-    myExecutionEnvironment = executionEnvironment;
     myDeployer = deployer;
     myServer = server;
     mySource = deploymentSource;
@@ -54,15 +48,5 @@ public class DeployToServerState<C extends ServerConfiguration> implements RunPr
   public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
     myDeployer.startDeployment(myServer, mySource);
     return null;
-  }
-
-  @Override
-  public RunnerSettings getRunnerSettings() {
-    return myExecutionEnvironment.getRunnerSettings();
-  }
-
-  @Override
-  public ConfigurationPerRunnerSettings getConfigurationSettings() {
-    return myExecutionEnvironment.getConfigurationSettings();
   }
 }

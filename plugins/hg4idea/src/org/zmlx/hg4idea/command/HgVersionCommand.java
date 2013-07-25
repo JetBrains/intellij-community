@@ -12,27 +12,50 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommand;
 import org.zmlx.hg4idea.execution.ShellCommandException;
 
 import java.nio.charset.Charset;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class HgVersionCommand {
 
-  public boolean isValid(String executable, boolean isRunViaBash) {
+  private static final Logger LOGGER = Logger.getInstance(HgVersionCommand.class);
+  private static final Pattern HG_VERSION_PATTERN = Pattern.compile(".+\\(\\s*version\\s+([0-9]+\\.[0-9]*)\\+?([0-9]*)[0-9\\.]*\\s*\\)\\s*");
+
+  public Double getVersion(String executable, boolean isRunViaBash) {
     String hgExecutable = executable == null ? null : executable.trim();
     ShellCommand shellCommand = new ShellCommand(isRunViaBash);
+    List<String> cmdArgs = new ArrayList<String>();
+    cmdArgs.add(hgExecutable);
+    cmdArgs.add("version");
+    cmdArgs.add("-q");
     try {
-      return !shellCommand
-        .execute(Arrays.asList(hgExecutable, "version"), null, Charset.defaultCharset())
-        .getOutputLines()
-        .isEmpty();
-    } catch (ShellCommandException e) {
-      return false;
-    } catch (Exception e) {
-      return false;
+      HgCommandResult versionResult = shellCommand
+        .execute(cmdArgs, null, Charset.defaultCharset());
+      return parseVersion(versionResult);
     }
+    catch (InterruptedException e) {
+      LOGGER.error(e);
+    }
+    catch (ShellCommandException e) {
+      LOGGER.error(e);
+    }
+    return null;
   }
 
+  @Nullable
+  private static Double parseVersion(HgCommandResult versionResult) {
+    Matcher matcher = HG_VERSION_PATTERN.matcher(versionResult.getRawOutput());
+    if (matcher.matches()) {
+      return Double.valueOf(matcher.group(1).concat(matcher.group(2)));
+    }
+    return null;
+  }
 }

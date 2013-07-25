@@ -83,7 +83,7 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
           doEnable();
         }
       }
-    }, ApplicationManager.getApplication());
+    }, myProject);
 
     myEnabled = new AtomicBoolean(Registry.is(REGISTRY_KEY) || ApplicationManager.getApplication().isUnitTestMode());
     if (myEnabled.get()) {
@@ -118,21 +118,22 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
             myLock.lock();
             try {
               context.getProgressIndicator().setText("Compiler output indexing in progress");
-              for (final Module module : context.getCompileScope().getAffectedModules()) {
-                CompilerOutputFilesUtil.iterateModuleClassFiles(module, new Consumer<File>() {
-                  @Override
-                  public void consume(final File file) {
-                    try {
-                      doIndexing(file, context.getProgressIndicator());
-                    }
-                    catch (ProcessCanceledException e0) {
-                      throw e0;
-                    }
-                    catch (RuntimeException e) {
-                      LOG.error(e);
-                    }
+              final Consumer<File> fileConsumer = new Consumer<File>() {
+                @Override
+                public void consume(final File file) {
+                  try {
+                    doIndexing(file, context.getProgressIndicator());
                   }
-                });
+                  catch (ProcessCanceledException e0) {
+                    throw e0;
+                  }
+                  catch (RuntimeException e) {
+                    LOG.error(e);
+                  }
+                }
+              };
+              for (final Module module : context.getCompileScope().getAffectedModules()) {
+                CompilerOutputFilesUtil.iterateModuleClassFiles(module, fileConsumer);
               }
             }
             finally {
@@ -241,7 +242,6 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
       LOG.error(e);
       return;
     }
-    indicator.setText2(filePath);
     final Long timestamp = getTimestamp(filePath);
     ProgressManager.checkCanceled();
     final long currentTimeStamp = file.lastModified();
@@ -267,6 +267,7 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
         }
       }
       try {
+        indicator.setText2(filePath);
         final int id = myFileEnumerator.enumerate(filePath);
         for (final CompilerOutputBaseIndex index : myIndexes) {
           index.update(id, reader);

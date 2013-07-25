@@ -380,7 +380,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           else {
             newArg = factory.createExpressionFromText(info.getName(), list);
           }
-          JavaCodeStyleManager.getInstance(list.getProject()).shortenClassReferences(list.add(newArg));
+          if (newArg != null) JavaCodeStyleManager.getInstance(list.getProject()).shortenClassReferences(list.add(newArg));
         }
       }
       else {

@@ -35,7 +35,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -181,7 +184,9 @@ public class ExternalSystemApiUtil {
    */
   @NotNull
   public static String toCanonicalPath(@NotNull String path) {
-    return PathUtil.getCanonicalPath(normalizePath(new File(path).getAbsolutePath()));
+    String p = normalizePath(new File(path).getAbsolutePath());
+    assert p != null;
+    return PathUtil.getCanonicalPath(p);
   }
 
   @NotNull

@@ -24,8 +24,7 @@ package com.theoryinpractice.testng.ui;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
@@ -91,10 +90,9 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   public TestNGResults(final JComponent component,
                        final TestNGConfiguration configuration,
                        final TestNGConsoleView console,
-                       final RunnerSettings runnerSettings,
-                       final ConfigurationPerRunnerSettings configurationSettings) {
+                       final ExecutionEnvironment environment) {
     super(component, console.getConsole().createConsoleActions(), console.getProperties(),
-          runnerSettings, configurationSettings, TESTNG_SPLITTER_PROPERTY, 0.5f);
+          environment, TESTNG_SPLITTER_PROPERTY, 0.5f);
     this.project = configuration.getProject();
 
     model = new TestNGResultsTableModel(project);
@@ -151,14 +149,12 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   @Override
   protected ToolbarPanel createToolbarPanel() {
-    final ToolbarPanel panel = new ToolbarPanel(getProperties(), myRunnerSettings, myConfigurationSettings, this){
+    final ToolbarPanel panel = new ToolbarPanel(getProperties(), myEnvironment, this){
       @Override
       protected void appendAdditionalActions(DefaultActionGroup actionGroup,
                                              TestConsoleProperties properties,
-                                             RunnerSettings runnerSettings,
-                                             ConfigurationPerRunnerSettings configurationSettings,
-                                             JComponent parent) {
-        super.appendAdditionalActions(actionGroup, properties, runnerSettings, configurationSettings, parent);
+                                             ExecutionEnvironment environment, JComponent parent) {
+        super.appendAdditionalActions(actionGroup, properties, environment, parent);
         actionGroup.addAction(new ToggleBooleanProperty(
           ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name"),
                                                     null,

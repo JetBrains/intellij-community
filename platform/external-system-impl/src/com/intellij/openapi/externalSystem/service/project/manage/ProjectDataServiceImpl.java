@@ -18,9 +18,12 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -34,6 +37,12 @@ import java.util.Collection;
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, Project> {
+  
+  @NotNull private final ExternalSystemSettingsManager mySettingsManager;
+
+  public ProjectDataServiceImpl(@NotNull ExternalSystemSettingsManager settingsManager) {
+    mySettingsManager = settingsManager;
+  }
 
   @NotNull
   @Override
@@ -43,15 +52,18 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, P
 
   @Override
   public void importData(@NotNull Collection<DataNode<ProjectData>> toImport, @NotNull Project project, boolean synchronous) {
-    if (!ExternalSystemApiUtil.isNewProjectConstruction()) {
-      return;
-    }
     if (toImport.size() != 1) {
       throw new IllegalArgumentException(String.format("Expected to get a single project but got %d: %s", toImport.size(), toImport));
     }
-    ProjectData projectData = toImport.iterator().next().getData();
+    DataNode<ProjectData> node = toImport.iterator().next();
+    ProjectData projectData = node.getData();
+    
+    if (!ExternalSystemApiUtil.isNewProjectConstruction() && !ExternalSystemUtil.isOneToOneMapping(project, node)) {
+      return;
+    }
+    
     if (!project.getName().equals(projectData.getName())) {
-      renameProject(projectData.getName(), project, synchronous);
+      renameProject(projectData.getName(), projectData.getOwner(), project, synchronous);
     }
   }
 
@@ -60,14 +72,20 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, P
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public void renameProject(@NotNull final String newName, @NotNull final Project project, boolean synchronous) {
+  public void renameProject(@NotNull final String newName,
+                            @NotNull final ProjectSystemId externalSystemId,
+                            @NotNull final Project project,
+                            boolean synchronous)
+  {
     if (!(project instanceof ProjectEx) || newName.equals(project.getName())) {
       return;
     }
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
+        String oldName = project.getName();
         ((ProjectEx)project).setProjectName(newName);
+        mySettingsManager.getSettings(project, externalSystemId).getPublisher().onProjectRenamed(oldName, newName);
       }
     });
   }

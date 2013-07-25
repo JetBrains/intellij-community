@@ -21,8 +21,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
 
 /**
  * @author Aleksey Pivovarov
@@ -35,58 +37,58 @@ public class GithubCreateGistContentTest extends GithubCreateGistTestBase {
   }
 
   public void testCreateFromFile() throws Throwable {
-    Map<String, String> expected = new HashMap<String, String>();
-    expected.put("file.txt", "file.txt content");
+    List<FileContent> expected = new ArrayList<FileContent>();
+    expected.add(new FileContent("file.txt", "file.txt content"));
 
     VirtualFile file = myProjectRoot.findFileByRelativePath("file.txt");
     assertNotNull(file);
 
-    Map<String, String> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
+    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
 
     checkEquals(expected, actual);
   }
 
   public void testCreateFromDirectory() throws Throwable {
-    Map<String, String> expected = new HashMap<String, String>();
-    expected.put("folder_file1", "file1 content");
-    expected.put("folder_file2", "file2 content");
-    expected.put("folder_dir_file3", "file3 content");
+    List<FileContent> expected = new ArrayList<FileContent>();
+    expected.add(new FileContent("folder_file1", "file1 content"));
+    expected.add(new FileContent("folder_file2", "file2 content"));
+    expected.add(new FileContent("folder_dir_file3", "file3 content"));
 
     VirtualFile file = myProjectRoot.findFileByRelativePath("folder");
     assertNotNull(file);
 
-    Map<String, String> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
+    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
 
     checkEquals(expected, actual);
   }
 
   public void testCreateFromEmptyDirectory() throws Throwable {
-    Map<String, String> expected = new HashMap<String, String>();
+    List<FileContent> expected = new ArrayList<FileContent>();
 
     VirtualFile file = myProjectRoot.findFileByRelativePath("folder/empty_folder");
     assertNotNull(file);
 
-    Map<String, String> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
+    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
 
     checkEquals(expected, actual);
   }
 
   public void testCreateFromEmptyFile() throws Throwable {
-    Map<String, String> expected = new HashMap<String, String>();
+    List<FileContent> expected = new ArrayList<FileContent>();
 
     VirtualFile file = myProjectRoot.findFileByRelativePath("folder/empty_file");
     assertNotNull(file);
 
-    Map<String, String> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
+    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
 
     checkEquals(expected, actual);
   }
 
   public void testCreateFromFiles() throws Throwable {
-    Map<String, String> expected = new HashMap<String, String>();
-    expected.put("file.txt", "file.txt content");
-    expected.put("file2", "file2 content");
-    expected.put("file3", "file3 content");
+    List<FileContent> expected = new ArrayList<FileContent>();
+    expected.add(new FileContent("file.txt", "file.txt content"));
+    expected.add(new FileContent("file2", "file2 content"));
+    expected.add(new FileContent("file3", "file3 content"));
 
     VirtualFile[] files = new VirtualFile[3];
     files[0] = myProjectRoot.findFileByRelativePath("file.txt");
@@ -96,17 +98,17 @@ public class GithubCreateGistContentTest extends GithubCreateGistTestBase {
     assertNotNull(files[1]);
     assertNotNull(files[2]);
 
-    Map<String, String> actual = GithubCreateGistAction.collectContents(myProject, null, null, files);
+    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, null, files);
 
     checkEquals(expected, actual);
   }
 
   public void testCreateFromEmptyFiles() throws Throwable {
-    Map<String, String> expected = new HashMap<String, String>();
+    List<FileContent> expected = new ArrayList<FileContent>();
 
     VirtualFile[] files = new VirtualFile[0];
 
-    Map<String, String> actual = GithubCreateGistAction.collectContents(myProject, null, null, files);
+    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, null, files);
 
     checkEquals(expected, actual);
   }
@@ -118,10 +120,10 @@ public class GithubCreateGistContentTest extends GithubCreateGistTestBase {
     assertNotNull(editor);
     ((EditorImpl)editor).setCaretActive();
 
-    Map<String, String> expected = new HashMap<String, String>();
-    expected.put("file.txt", "file.txt content");
+    List<FileContent> expected = new ArrayList<FileContent>();
+    expected.add(new FileContent("file.txt", "file.txt content"));
 
-    Map<String, String> actual = GithubCreateGistAction.collectContents(myProject, editor, file, null);
+    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, editor, file, null);
 
     checkEquals(expected, actual);
   }
@@ -133,10 +135,10 @@ public class GithubCreateGistContentTest extends GithubCreateGistTestBase {
     assertNotNull(editor);
     ((EditorImpl)editor).setCaretActive();
 
-    Map<String, String> expected = new HashMap<String, String>();
-    expected.put("", "file.txt content");
+    List<FileContent> expected = new ArrayList<FileContent>();
+    expected.add(new FileContent("", "file.txt content"));
 
-    Map<String, String> actual = GithubCreateGistAction.collectContents(myProject, editor, null, null);
+    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, editor, null, null);
 
     checkEquals(expected, actual);
   }

@@ -16,10 +16,7 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.RunnerRegistry;
+import com.intellij.execution.*;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -175,8 +172,9 @@ public class CreateSnapShotAction extends AnAction {
       try {
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, appConfig);
         LOG.assertTrue(runner != null, "Runner MUST not be null!");
-        runner.execute(DefaultRunExecutor.getRunExecutorInstance(),
-                       new ExecutionEnvironment(runner, snapshotConfiguration, project));
+        Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+        runner.execute(
+          new ExecutionEnvironment(executor, runner, snapshotConfiguration, project));
       }
       catch (ExecutionException ex) {
         Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.run.error", ex.getMessage()),

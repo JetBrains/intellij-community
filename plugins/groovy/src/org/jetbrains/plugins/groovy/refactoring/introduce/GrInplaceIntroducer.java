@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -51,4 +52,6 @@ public abstract class GrInplaceIntroducer extends InplaceVariableIntroducer<PsiE
   protected GrVariable getVariable() {
     return (GrVariable)super.getVariable();
   }
+
+  public abstract LinkedHashSet<String> suggestNames(GrIntroduceContext context);
 }

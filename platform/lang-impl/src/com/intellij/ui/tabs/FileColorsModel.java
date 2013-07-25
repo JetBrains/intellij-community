@@ -121,7 +121,7 @@ public class FileColorsModel implements Cloneable {
 
     configurations.clear();
 
-    final List<Element> list = (List<Element>)e.getChildren(FILE_COLOR);
+    final List<Element> list = e.getChildren(FILE_COLOR);
     final Map<String, String> global = new HashMap<String, String>(globalScopes);
     for (Element child : list) {
       final FileColorConfiguration configuration = FileColorConfiguration.load(child);
@@ -198,12 +198,8 @@ public class FileColorsModel implements Cloneable {
     if (!psiFile.isValid()) {
       return null;
     }
-
-    final FileColorConfiguration configuration = findConfiguration(psiFile);
-    if (configuration != null && configuration.isValid(psiFile.getProject())) {
-      return configuration.getColorName();
-    }
-    return null;
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    return virtualFile == null? null : getColor(virtualFile, psiFile.getProject());
   }
 
   @Nullable
@@ -216,31 +212,6 @@ public class FileColorsModel implements Cloneable {
     if (configuration != null && configuration.isValid(project)) {
       return configuration.getColorName();
     }
-    return null;
-  }
-
-  @Nullable
-  private FileColorConfiguration findConfiguration(@NotNull final PsiFile colored) {
-    for (final FileColorConfiguration configuration : myConfigurations) {
-      final NamedScope scope = NamedScopeManager.getScope(myProject, configuration.getScopeName());
-      if (scope != null) {
-        final NamedScopesHolder namedScopesHolder = NamedScopeManager.getHolder(myProject, configuration.getScopeName(), null);
-        if (scope.getValue() != null && namedScopesHolder != null && scope.getValue().contains(colored, namedScopesHolder)) {
-          return configuration;
-        }
-      }
-    }
-
-    for (FileColorConfiguration configuration : mySharedConfigurations) {
-      final NamedScope scope = NamedScopeManager.getScope(myProject, configuration.getScopeName());
-      if (scope != null) {
-        final NamedScopesHolder namedScopesHolder = NamedScopeManager.getHolder(myProject, configuration.getScopeName(), null);
-        if (scope.getValue() != null && namedScopesHolder != null && scope.getValue().contains(colored, namedScopesHolder)) {
-          return configuration;
-        }
-      }
-    }
-
     return null;
   }
 

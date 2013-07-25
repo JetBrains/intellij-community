@@ -204,8 +204,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
         else {
           if (!fromFile.exists()) {
-            fail("Cannot find source file: '" + sourceFilePath + "'. getTestDataPath()='" + testDataPath + "'. " +
-                 "getHomePath()='" + getHomePath() + "'.");
+            Assert.fail("Cannot find source file: '" + sourceFilePath + "'. getTestDataPath()='" + testDataPath + "'. ");
           }
           try {
             FileUtil.copy(fromFile, targetFile);
@@ -369,9 +368,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         @Override
         public Trinity<PsiFile, Editor, ExpectedHighlightingData> fun(final VirtualFile file) {
           final PsiFile psiFile = myPsiManager.findFile(file);
-          assertNotNull(psiFile);
+          Assert.assertNotNull(psiFile);
           final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
-          assertNotNull(document);
+          Assert.assertNotNull(document);
           ExpectedHighlightingData data = new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, psiFile);
           data.init();
           return Trinity.create(psiFile, createEditor(file), data);
@@ -451,7 +450,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     GlobalInspectionContextImpl globalContext = createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrapper);
 
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext, inspectionManager);
-    InspectionTestUtil.compareToolResults(toolWrapper, false, new File(getTestDataPath(), testDir).getPath());
+    InspectionTestUtil.compareToolResults(globalContext, toolWrapper, false, new File(getTestDataPath(), testDir).getPath());
   }
 
   @NotNull
@@ -1081,7 +1080,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void setUp() throws Exception {
     super.setUp();
 
-    edt(new Runnable() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         try {
@@ -1106,7 +1105,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void tearDown() throws Exception {
-    edt(new Runnable() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
@@ -1700,7 +1699,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       final int actualLine = myEditor.getCaretModel().getLogicalPosition().line;
       final int actualCol = myEditor.getCaretModel().getLogicalPosition().column;
       boolean caretPositionEquals = caretLine == actualLine && caretCol == actualCol;
-      assertTrue("Caret position in " + expectedFile + " differs. Expected " + genCaretPositionPresentation(caretLine, caretCol) +
+      Assert.assertTrue("Caret position in " + expectedFile + " differs. Expected " + genCaretPositionPresentation(caretLine, caretCol) +
         ". Actual " + genCaretPositionPresentation(actualLine, actualCol), caretPositionEquals);
     }
 
@@ -1850,7 +1849,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final String cleanContent = expectedContent.replaceAll(START_FOLD, "").replaceAll(END_FOLD, "");
     final String actual = getFoldingDescription(cleanContent, verificationFileName, doCheckCollapseStatus);
 
-    assertEquals(expectedContent, actual);
+    Assert.assertEquals(expectedContent, actual);
   }
 
   @Override
@@ -1866,16 +1865,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void assertPreferredCompletionItems(final int selected, @NonNls final String... expected) {
     final LookupImpl lookup = getLookup();
-    assertNotNull(lookup);
+    Assert.assertNotNull(lookup);
 
     final JList list = lookup.getList();
     List<String> strings = getLookupElementStrings();
     assert strings != null;
     final List<String> actual = strings.subList(0, Math.min(expected.length, strings.size()));
     if (!actual.equals(Arrays.asList(expected))) {
-      assertOrderedEquals(DumpLookupElementWeights.getLookupElementWeights(lookup), expected);
+      UsefulTestCase.assertOrderedEquals(DumpLookupElementWeights.getLookupElementWeights(lookup), expected);
     }
-    assertEquals(selected, list.getSelectedIndex());
+    Assert.assertEquals(selected, list.getSelectedIndex());
   }
 
   @Override

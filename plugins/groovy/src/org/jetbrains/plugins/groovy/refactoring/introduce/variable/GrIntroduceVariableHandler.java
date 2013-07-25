@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,8 +131,14 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   }
 
   @Override
-  protected InplaceVariableIntroducer<PsiElement> getIntroducer(GrVariable var, GrIntroduceContext context, List<RangeMarker> occurrences) {
-    return new GrInplaceVariableIntroducer(var, context.getEditor(), context.getProject(), REFACTORING_NAME, occurrences, var);
+  protected GrInplaceVariableIntroducer getIntroducer(@NotNull GrVariable var,
+                                                      @NotNull GrIntroduceContext context,
+                                                      @NotNull GroovyIntroduceVariableSettings settings,
+                                                      @NotNull List<RangeMarker> occurrenceMarkers,
+                                                      RangeMarker varRangeMarker, RangeMarker expressionRangeMarker,
+                                                      RangeMarker stringPartRangeMarker) {
+    context.getEditor().getCaretModel().moveToOffset(var.getTextOffset());
+    return new GrInplaceVariableIntroducer(var, context.getEditor(), context.getProject(), REFACTORING_NAME, occurrenceMarkers, var);
   }
 
   @Override
@@ -147,7 +152,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
       @Nullable
       @Override
       public String getName() {
-        return getDialog(context).suggestNames().iterator().next();
+        return new GrVariableNameSuggester(context, new GroovyVariableValidator(context)).suggestNames().iterator().next();
       }
 
       @Override

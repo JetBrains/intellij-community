@@ -24,7 +24,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -93,12 +92,12 @@ public class UnknownRunConfiguration implements RunConfiguration {
   }
 
   @Override
-  public JDOMExternalizable createRunnerSettings(final ConfigurationInfoProvider provider) {
+  public ConfigurationPerRunnerSettings createRunnerSettings(final ConfigurationInfoProvider provider) {
     return null;
   }
 
   @Override
-  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(final ProgramRunner runner) {
+  public SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(final ProgramRunner runner) {
     return null;
   }
 

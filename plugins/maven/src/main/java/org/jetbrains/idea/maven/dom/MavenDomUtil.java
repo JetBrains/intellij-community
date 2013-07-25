@@ -398,7 +398,14 @@ public class MavenDomUtil {
   public static MavenDomDependency createDomDependency(MavenDomProjectModel model,
                                                        @Nullable Editor editor,
                                                        @NotNull final MavenId id) {
-    MavenDomDependency dep = createDomDependency(model, editor);
+    return createDomDependency(model.getDependencies(), editor, id);
+  }
+
+  @NotNull
+  public static MavenDomDependency createDomDependency(MavenDomDependencies dependencies,
+                                                       @Nullable Editor editor,
+                                                       @NotNull final MavenId id) {
+    MavenDomDependency dep = createDomDependency(dependencies, editor);
 
     dep.getGroupId().setStringValue(id.getGroupId());
     dep.getArtifactId().setStringValue(id.getArtifactId());
@@ -409,8 +416,11 @@ public class MavenDomUtil {
 
   @NotNull
   public static MavenDomDependency createDomDependency(@NotNull MavenDomProjectModel model, @Nullable Editor editor) {
-    MavenDomDependencies dependencies = model.getDependencies();
+    return createDomDependency(model.getDependencies(), editor);
+  }
 
+  @NotNull
+  public static MavenDomDependency createDomDependency(@NotNull MavenDomDependencies dependencies, @Nullable Editor editor) {
     int index = getCollectionIndex(dependencies, editor);
     if (index >= 0) {
       DomCollectionChildDescription childDescription = dependencies.getGenericInfo().getCollectionChildDescription("dependency");

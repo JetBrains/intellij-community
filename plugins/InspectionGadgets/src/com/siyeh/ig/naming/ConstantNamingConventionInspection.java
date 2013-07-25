@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,7 @@ import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-import java.util.Arrays;
-import java.util.Collection;
+import javax.swing.*;
 
 public class ConstantNamingConventionInspection extends ConventionInspection {
 
@@ -70,9 +68,10 @@ public class ConstantNamingConventionInspection extends ConventionInspection {
   }
 
   @Override
-  public Collection<? extends JComponent> createExtraOptions() {
-    return Arrays.asList(
-      new CheckBox(InspectionGadgetsBundle.message("constant.naming.convention.immutables.option"), this, "onlyCheckImmutables"));
+  public JComponent[] createExtraOptions() {
+    return new JComponent[] {
+      new CheckBox(InspectionGadgetsBundle.message("constant.naming.convention.immutables.option"), this, "onlyCheckImmutables")
+    };
   }
 
   @Override

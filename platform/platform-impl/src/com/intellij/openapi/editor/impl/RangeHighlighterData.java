@@ -38,7 +38,7 @@ abstract class RangeHighlighterData {
   private Color myErrorStripeColor;
   private Color myLineSeparatorColor;
   private SeparatorPlacement mySeparatorPlacement;
-  private GutterMark myGutterIconRenderer;
+  private GutterIconRenderer myGutterIconRenderer;
   private Object myErrorStripeTooltip;
   private MarkupEditorFilter myFilter = MarkupEditorFilter.EMPTY;
   private CustomHighlighterRenderer myCustomRenderer;
@@ -115,11 +115,11 @@ abstract class RangeHighlighterData {
     myCustomRenderer = renderer;
   }
 
-  public GutterMark getGutterIconRenderer() {
+  public GutterIconRenderer getGutterIconRenderer() {
     return myGutterIconRenderer;
   }
 
-  public void setGutterIconRenderer(GutterMark renderer) {
+  public void setGutterIconRenderer(GutterIconRenderer renderer) {
     GutterMark old = myGutterIconRenderer;
     myGutterIconRenderer = renderer;
     if (!Comparing.equal(old, renderer)) {

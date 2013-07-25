@@ -23,6 +23,8 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
@@ -1424,5 +1426,38 @@ class Foo {
     joinCompletion()
     assert lookup
   }
+
+  public void "test typing during restart commit document"() {
+    def longText = "\nfoo(); bar();" * 100
+    myFixture.configureByText "a.java", "class Foo { void foo(int ab, int abde) { <caret>; $longText }}"
+    myFixture.type('a')
+    joinAutopopup()
+    myFixture.type('b')
+    myTester.joinCommit()
+    myFixture.type('c')
+    joinCompletion()
+    assert !lookup
+  }
+
+  public void "test no name autopopup in live template"() {
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    myFixture.configureByText 'a.java', '''class F {
+  String nameContainingIdentifier;
+<caret>
+}'''
+
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("m", "user", 'void foo(String $V1$) {}');
+    template.addVariable("V1", "", '"s"', true);
+
+    edt {
+      CommandProcessor.instance.executeCommand project, {manager.startTemplate(myFixture.editor, template)}, null, null
+    }
+
+    type('name')
+    assert !myFixture.lookupElementStrings
+    assert !lookup
+  }
+
 
 }

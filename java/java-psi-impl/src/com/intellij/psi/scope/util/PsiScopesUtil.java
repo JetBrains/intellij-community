@@ -27,13 +27,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.PsiFieldStub;
+import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.MethodsProcessor;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -313,7 +315,7 @@ public class PsiScopesUtil {
           PsiType type = ((PsiExpression)qualifier).getType();
           if (type != null && qualifier instanceof PsiReferenceExpression) {
             final PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
-            if (resolve instanceof PsiVariable && ((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL)) {
+            if (resolve instanceof PsiVariable && ((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL) && ((PsiVariable)resolve).hasInitializer()) {
               final PsiExpression initializer = ((PsiVariable)resolve).getInitializer();
               if (initializer instanceof PsiNewExpression) {
                 final PsiAnonymousClass anonymousClass = ((PsiNewExpression)initializer).getAnonymousClass();

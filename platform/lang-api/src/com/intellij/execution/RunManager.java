@@ -23,8 +23,11 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * User: anna
@@ -67,4 +70,17 @@ public abstract class RunManager {
   public abstract Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type);
 
   public abstract void refreshUsagesList(RunProfile profile);
+
+  public static String suggestUniqueName(String str, ArrayList<String> currentNames) {
+    if (!currentNames.contains(str)) return str;
+
+    final Matcher matcher = Pattern.compile("(.*?)\\s*\\(\\d+\\)").matcher(str);
+    final String originalName = (matcher.matches()) ? matcher.group(1) : str;
+    int i = 1;
+    while (true) {
+      final String newName = String.format("%s (%d)", originalName, i);
+      if (!currentNames.contains(newName)) return newName;
+      i++;
+    }
+  }
 }

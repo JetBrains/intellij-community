@@ -22,7 +22,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
@@ -287,13 +286,12 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @SuppressWarnings("deprecation")
   @Override
-  public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
+  public ConfigurationPerRunnerSettings createRunnerSettings(ConfigurationInfoProvider provider) {
     return null;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
-  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner) {
+  public SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(ProgramRunner runner) {
     return null;
   }
 }

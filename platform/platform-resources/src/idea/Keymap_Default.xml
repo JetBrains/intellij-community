@@ -3,6 +3,9 @@
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>
+  <action id="SearchEverywhere">
+    <keyboard-shortcut first-keystroke="shift SPACE"/>
+  </action>
   <action id="FileChooser.TogglePathShowing">
     <keyboard-shortcut first-keystroke="control P"/>
   </action>
@@ -920,6 +923,8 @@
   <action id="VcsHistory.ShowAllAffected">
     <keyboard-shortcut first-keystroke="alt shift A" />
   </action>
+
+  <action id="DatabaseView.PropertiesAction"><keyboard-shortcut first-keystroke="F4"/><keyboard-shortcut first-keystroke="ENTER"/></action>
 
   <action id="Jdbc.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
   <action id="Jpa.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>

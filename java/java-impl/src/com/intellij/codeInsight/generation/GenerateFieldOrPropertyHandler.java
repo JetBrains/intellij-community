@@ -21,8 +21,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyMemberType;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,36 +57,70 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
   @Override
   @NotNull
   public List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
-    final PsiElementFactory psiElementFactory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+    PsiElementFactory psiElementFactory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
     try {
-      final String name = myMemberType == PropertyMemberType.FIELD? myAttributeName : JavaCodeStyleManager.getInstance(aClass.getProject()).propertyNameToVariableName(myAttributeName, VariableKind.FIELD);
-      final PsiField psiField = psiElementFactory.createField(name, myType);
-      final GenerationInfo[] objects = new GenerateGetterAndSetterHandler().generateMemberPrototypes(aClass, new PsiFieldMember(psiField));
-      final GenerationInfo getter = objects[0];
-      final GenerationInfo setter = objects[1];
+      String fieldName = getFieldName(aClass);
+      PsiField psiField = psiElementFactory.createField(fieldName, myType);
+      GenerationInfo[] infos = new GenerateGetterAndSetterHandler().generateMemberPrototypes(aClass, new PsiFieldMember(psiField));
       if (myAnnotations.length > 0) {
-        final PsiMember targetMember;
-        switch (myMemberType) {
-          case FIELD: targetMember = psiField;
-            break;
-          case GETTER: targetMember = getter.getPsiMember();
-            break;
-          case SETTER: targetMember = setter.getPsiMember();
-            break;
-          default: targetMember = null;
-            break;
+        PsiMember targetMember = null;
+        if (myMemberType == PropertyMemberType.FIELD) {
+          targetMember = psiField;
         }
-        assert targetMember != null;
-        for (PsiAnnotation annotation : myAnnotations) {
-          targetMember.getModifierList().addAfter(annotation, null);
+        else {
+          for (GenerationInfo info : infos) {
+            PsiMember member = info.getPsiMember();
+            if (!(member instanceof PsiMethod)) continue;
+            if (myMemberType == PropertyMemberType.GETTER && PropertyUtil.isSimplePropertyGetter((PsiMethod)member) ||
+                myMemberType == PropertyMemberType.SETTER && PropertyUtil.isSimplePropertySetter((PsiMethod)member)) {
+              targetMember = member;
+              break;
+            }
+          }
+          if (targetMember == null) targetMember = findExistingMember(aClass, myMemberType);
+        }
+        PsiModifierList modifierList = targetMember != null? targetMember.getModifierList() : null;
+        if (modifierList != null) {
+          for (PsiAnnotation annotation : myAnnotations) {
+            PsiAnnotation existing = modifierList.findAnnotation(annotation.getQualifiedName());
+            if (existing != null) existing.replace(annotation);
+            else modifierList.addAfter(annotation, null);
+          }
         }
       }
-      return Arrays.asList(new PsiGenerationInfo<PsiField>(psiField), getter, setter);
+      return ContainerUtil.concat(Collections.singletonList(new PsiGenerationInfo<PsiField>(psiField)), Arrays.asList(infos));
     }
     catch (IncorrectOperationException e) {
       assert false : e;
       return Collections.emptyList();
     }
+  }
+
+  @Nullable
+  public PsiMember findExistingMember(@NotNull PsiClass aClass, @NotNull PropertyMemberType memberType) {
+    if (memberType == PropertyMemberType.FIELD) {
+      return aClass.findFieldByName(getFieldName(aClass), false);
+    }
+    else if (memberType == PropertyMemberType.GETTER) {
+      try {
+        PsiElementFactory psiElementFactory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+        PsiField field = psiElementFactory.createField(myAttributeName, myType);
+        PsiMethod[] templates = GetterSetterPrototypeProvider.generateGetterSetters(field, myMemberType == PropertyMemberType.GETTER);
+        for (PsiMethod template : templates) {
+          PsiMethod existingMethod = aClass.findMethodBySignature(template, true);
+          if (existingMethod != null) return existingMethod;
+        }
+      }
+      catch (IncorrectOperationException e) {
+        assert false : e;
+      }
+    }
+    return null;
+  }
+
+  private String getFieldName(PsiClass aClass) {
+    return myMemberType == PropertyMemberType.FIELD? myAttributeName : JavaCodeStyleManager
+      .getInstance(aClass.getProject()).propertyNameToVariableName(myAttributeName, VariableKind.FIELD);
   }
 
   @Override

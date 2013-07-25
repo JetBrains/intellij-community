@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool;
+import com.siyeh.ig.imports.UnusedImportInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,8 +56,9 @@ public class UnusedImportLocalInspection extends BaseJavaLocalInspectionTool imp
     return true;
   }
 
+  @NotNull
   @Override
   public String getInspectionForBatchShortName() {
-    return "UnusedImport";
+    return new UnusedImportInspection().getShortName();
   }
 }

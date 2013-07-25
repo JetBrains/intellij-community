@@ -19,11 +19,9 @@ package com.intellij.execution.runners;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author spleaner
  */
-public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> implements ProgramRunner<Settings> {
+public abstract class GenericProgramRunner<Settings extends RunnerSettings> implements ProgramRunner<Settings> {
 
   @Deprecated
   public static final DataKey<RunContentDescriptor> CONTENT_TO_REUSE_DATA_KEY = DataKey.create("contentToReuse");
@@ -53,39 +51,28 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> 
   }
 
   @Override
-  public AnAction[] createActions(final ExecutionResult executionResult) {
-    return AnAction.EMPTY_ARRAY;
-  }
-
-  @Override
   @Nullable
   public SettingsEditor<Settings> getSettingsEditor(final Executor executor, final RunConfiguration configuration) {
     return null;
   }
 
   @Override
-  public void execute(@NotNull final Executor executor, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
-    execute(executor, environment, null);
+  public void execute(@NotNull final ExecutionEnvironment environment) throws ExecutionException {
+    execute(environment, null);
   }
 
   @Override
-  public void execute(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env, @Nullable final Callback callback)
+  public void execute(@NotNull final ExecutionEnvironment env, @Nullable final Callback callback)
       throws ExecutionException {
 
     final Project project = env.getProject();
-    if (project == null) {
-      return;
-    }
 
-    final RunProfileState state = env.getState(executor);
+    final RunProfileState state = env.getState();
     if (state == null) {
       return;
     }
 
-    RunnerSettings runnerSettings = env.getRunnerSettings();
-    if (runnerSettings != null) {
-      RunManager.getInstance(project).refreshUsagesList(runnerSettings.getRunProfile());
-    }
+    RunManager.getInstance(project).refreshUsagesList(env.getRunProfile());
 
     ExecutionManager.getInstance(project).startRunProfile(new RunProfileStarter() {
       @Override
@@ -94,19 +81,19 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> 
                                           @NotNull RunProfileState state,
                                           @Nullable RunContentDescriptor contentToReuse,
                                           @NotNull ExecutionEnvironment env) throws ExecutionException {
-        final RunContentDescriptor descriptor = doExecute(project, executor, state, contentToReuse, env);
+        final RunContentDescriptor descriptor = doExecute(project, state, contentToReuse, env);
         if (descriptor != null) {
           descriptor.setExecutionId(env.getExecutionId());
         }
         if (callback != null) callback.processStarted(descriptor);
         return descriptor;
       }
-    }, state, project, executor, env);
+    }, state, env);
   }
 
   @Nullable
-  protected abstract RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state,
-                                        final RunContentDescriptor contentToReuse,
-                                        final ExecutionEnvironment env) throws ExecutionException;
+  protected abstract RunContentDescriptor doExecute(final Project project, final RunProfileState state,
+                                                    final RunContentDescriptor contentToReuse,
+                                                    final ExecutionEnvironment env) throws ExecutionException;
 
 }

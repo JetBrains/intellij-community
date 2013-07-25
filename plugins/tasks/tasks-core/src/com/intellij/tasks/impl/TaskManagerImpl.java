@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.VcsType;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.tasks.*;
@@ -44,6 +45,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -356,7 +358,12 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     final LocalTask task = doActivate(origin, true);
 
+    return restoreVcsContext(task);
+  }
+
+  private LocalTask restoreVcsContext(LocalTask task) {
     if (!isVcsEnabled()) return task;
+
     List<ChangeListInfo> changeLists = task.getChangeLists();
     if (!changeLists.isEmpty()) {
       ChangeListInfo info = changeLists.get(0);
@@ -367,15 +374,33 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
       myChangeListManager.setDefaultChangeList(changeList);
     }
+
+    List<BranchInfo> branches = task.getBranches();
+    MultiMap<String, String> map = new MultiMap<String, String>();
+    for (BranchInfo branch : branches) {
+      map.putValue(branch.name, branch.repository);
+    }
+    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+    for (VcsTaskHandler handler : handlers) {
+      handler.switchToTask(new VcsTaskHandler.TaskInfo(map));
+    }
     return task;
   }
 
-  @Override
-  public void performVcsOperation(LocalTask task, VcsOperation operation) {
-    if (operation == VcsOperation.CREATE_CHANGELIST) {
-      String name = getChangelistName(task);
-      String comment = TaskUtil.getChangeListComment(task);
-      createChangeList(task, name, comment);
+  public void createBranch(LocalTask task, LocalTask previousActive, String name) {
+    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+    for (VcsTaskHandler handler : handlers) {
+      if (previousActive != null) {
+        addBranches(previousActive, handler.getActiveTask());
+      }
+      addBranches(task, handler.startNewTask(name));
+    }
+  }
+
+  private static void addBranches(LocalTask task, VcsTaskHandler.TaskInfo info) {
+    List<BranchInfo> branchInfos = BranchInfo.fromTaskInfo(info);
+    for (BranchInfo branchInfo : branchInfos) {
+      task.addBranch(branchInfo);
     }
   }
 
@@ -867,6 +892,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return task.getSummary();
   }
 
+  public String suggestBranchName(Task task) {
+    if (task.isIssue() && StringUtil.isNotEmpty(task.getNumber())) {
+      return task.getId().replace(' ', '-');
+    }
+    else {
+      String summary = task.getSummary();
+      List<String> words = StringUtil.getWordsIn(summary);
+      String[] strings = ArrayUtil.toStringArray(words);
+      return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
+    }
+  }
+
+
   @TestOnly
   public ChangeListAdapter getChangeListListener() {
     return myChangeListListener;
@@ -888,8 +926,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     public boolean clearContext = true;
 
-    public int vcsOperation = 0;
     public boolean createChangelist = true;
+    public boolean createBranch = true;
 
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = false;

@@ -15,17 +15,18 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
+import java.util.Date;
 
 /**
  * Information about a user on GitHub.
  *
  * @author Kirill Likhodedov
  */
-@SuppressWarnings("UnusedDeclaration")
-class GithubUserRaw implements Serializable {
+@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
+class GithubUserRaw implements DataConstructor<GithubUser>, DataConstructorDetailed<GithubUserDetailed> {
 
   @Nullable public String login;
   @Nullable public Long id;
@@ -53,12 +54,32 @@ class GithubUserRaw implements Serializable {
   @Nullable public Integer collaborators;
   @Nullable public String blog;
 
-  @Nullable public GithubUserPlanRaw plan;
+  @Nullable public UserPlanRaw plan;
 
-  public static class GithubUserPlanRaw implements Serializable {
+  @Nullable public Date createdAt;
+
+  public static class UserPlanRaw implements DataConstructor<GithubUserDetailed.UserPlan> {
     @Nullable public String name;
     @Nullable public Long space;
     @Nullable public Long collaborators;
     @Nullable public Long privateRepos;
+
+    @NotNull
+    @Override
+    public GithubUserDetailed.UserPlan create() {
+      return new GithubUserDetailed.UserPlan(name, privateRepos);
+    }
+  }
+
+  @NotNull
+  @Override
+  public GithubUser create() {
+    return new GithubUser(login, htmlUrl, gravatarId);
+  }
+
+  @NotNull
+  @Override
+  public GithubUserDetailed createDetailed() {
+    return new GithubUserDetailed(login, htmlUrl, gravatarId, name, email, ownedPrivateRepos, type, plan.create());
   }
 }

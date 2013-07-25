@@ -1441,7 +1441,7 @@
     <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.callingLocation.MethodCallingLocationIndex"/>
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
                             implementationClass="com.intellij.codeInsight.completion.methodChains.completion.MethodsChainsCompletionContributor"/>
-    <weigher order="first" key="completion" id="methodsChainsCompletionContributor"
+    <weigher order="first" key="completion" id="methodsChains"
              implementationClass="com.intellij.codeInsight.completion.methodChains.completion.MethodsChainsWeigher"/>
 
     <applicationService serviceInterface="org.jetbrains.generate.tostring.template.TemplatesManager"

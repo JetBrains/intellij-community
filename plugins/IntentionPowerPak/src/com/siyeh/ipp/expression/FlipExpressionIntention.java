@@ -26,7 +26,7 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class FlipExpressionIntention extends MutablyNamedIntention {

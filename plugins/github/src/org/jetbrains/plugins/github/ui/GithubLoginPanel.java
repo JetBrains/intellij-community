@@ -16,12 +16,10 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubUtil;
@@ -31,6 +29,10 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author oleg
@@ -44,6 +46,7 @@ public class GithubLoginPanel {
   private JTextPane mySignupTextField;
   private JCheckBox mySavePasswordCheckBox;
   private JComboBox myAuthTypeComboBox;
+  private JLabel myPasswordLabel;
 
   private final static String AUTH_PASSWORD = "Password";
   private final static String AUTH_TOKEN = "Token";
@@ -71,11 +74,25 @@ public class GithubLoginPanel {
     myAuthTypeComboBox.addItem(AUTH_PASSWORD);
     myAuthTypeComboBox.addItem(AUTH_TOKEN);
 
-    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-    if (passwordSafe.getSettings().getProviderType() != PasswordSafeSettings.ProviderType.MASTER_PASSWORD) {
-      mySavePasswordCheckBox.setVisible(false);
-      mySavePasswordCheckBox.setSelected(true);
-    }
+    myAuthTypeComboBox.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          String item = e.getItem().toString();
+          myPasswordLabel.setText(item + ":");
+          mySavePasswordCheckBox.setText("Save " + item.toLowerCase());
+        }
+      }
+    });
+
+    List<Component> order = new ArrayList<Component>();
+    order.add(myHostTextField);
+    order.add(myLoginTextField);
+    order.add(myAuthTypeComboBox);
+    order.add(myPasswordField);
+    order.add(mySavePasswordCheckBox);
+    myPane.setFocusTraversalPolicyProvider(true);
+    myPane.setFocusTraversalPolicy(new MyFocusTraversalPolicy(order));
   }
 
   public JComponent getPanel() {
@@ -108,6 +125,15 @@ public class GithubLoginPanel {
     myAuthTypeComboBox.setEnabled(false);
   }
 
+  public void setSavePasswordSelected(boolean savePassword) {
+    mySavePasswordCheckBox.setSelected(savePassword);
+  }
+
+  public void setSavePasswordVisibleEnabled(boolean visible) {
+    mySavePasswordCheckBox.setVisible(visible);
+    mySavePasswordCheckBox.setEnabled(visible);
+  }
+
   @NotNull
   public String getHost() {
     return myHostTextField.getText().trim();
@@ -123,7 +149,7 @@ public class GithubLoginPanel {
     return String.valueOf(myPasswordField.getPassword());
   }
 
-  public boolean shouldSavePassword() {
+  public boolean isSavePasswordSelected() {
     return mySavePasswordCheckBox.isSelected();
   }
 
@@ -138,6 +164,20 @@ public class GithubLoginPanel {
     if (AUTH_TOKEN.equals(selected)) return GithubAuthData.createTokenAuth(getHost(), getPassword());
     GithubUtil.LOG.error("GithubLoginPanel illegal selection: anonymous AuthData created", selected.toString());
     return GithubAuthData.createAnonymous(getHost());
+  }
+
+  private static class MyFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy {
+    @NotNull private List<Component> myOrder;
+
+    private MyFocusTraversalPolicy(@NotNull List<Component> order) {
+      myOrder = order;
+    }
+
+    @NotNull
+    @Override
+    protected List<Component> getOrderedComponents() {
+      return myOrder;
+    }
   }
 }
 

@@ -28,8 +28,8 @@ import org.jetbrains.annotations.NotNull;
 @State(
   name="SharedFileColors",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE),
-    @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/fileColors.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/fileColors.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
 public class FileColorSharedConfigurationManager implements PersistentStateComponent<Element> {

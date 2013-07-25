@@ -96,14 +96,14 @@ public abstract class GroovyNamedArgumentProvider {
           mapExpected = true;
 
           for (GroovyMethodInfo methodInfo : GroovyMethodInfo.getInfos(method)) {
-            if (methodInfo.getNamedArguments() != null) {
+            if (methodInfo.getNamedArguments() != null || methodInfo.isNamedArgumentProviderDefined()) {
               if (methodInfo.isApplicable(method)) {
-                namedArguments.putAll(methodInfo.getNamedArguments());
-              }
-            }
-            else if (methodInfo.isNamedArgumentProviderDefined()) {
-              if (methodInfo.isApplicable(method)) {
-                methodInfo.getNamedArgProvider().getNamedArguments(call, element, result, argumentName, forCompletion, namedArguments);
+                if (methodInfo.isNamedArgumentProviderDefined()) {
+                  methodInfo.getNamedArgProvider().getNamedArguments(call, element, result, argumentName, forCompletion, namedArguments);
+                }
+                if (methodInfo.getNamedArguments() != null) {
+                  namedArguments.putAll(methodInfo.getNamedArguments());
+                }
               }
             }
           }

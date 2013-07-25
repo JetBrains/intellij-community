@@ -46,7 +46,7 @@ public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepositor
 
   @Override
   public EnumSet<TaskState> getPossibleTaskStates() {
-    return EnumSet.of(TaskState.SUBMITTED, TaskState.OPEN, TaskState.IN_PROGRESS, TaskState.REOPENED, TaskState.RESOLVED);
+    return EnumSet.of(TaskState.IN_PROGRESS, TaskState.RESOLVED);
   }
 
   @NotNull

@@ -17,8 +17,8 @@
 package org.jetbrains.plugins.groovy.mvc.projectView;
 
 import com.intellij.ide.SelectInContext;
-import com.intellij.ide.SelectInTarget;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.ide.SelectInTargetBase;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,12 +28,12 @@ import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 /**
  * @author Dmitry Krasilschikov
  */
-public class MvcProjectViewSelectInTarget implements SelectInTarget, DumbAware {
-
+public class MvcProjectViewSelectInTarget extends SelectInTargetBase implements DumbAware {
+  @Override
   public boolean canSelect(SelectInContext context) {
     final Project project = context.getProject();
     final VirtualFile file = context.getVirtualFile();
-    final MvcFramework framework = MvcFramework.getInstance(ModuleUtil.findModuleForFile(file, project));
+    final MvcFramework framework = MvcFramework.getInstance(ModuleUtilCore.findModuleForFile(file, project));
     if (framework == null) {
       return false;
     }
@@ -41,16 +41,18 @@ public class MvcProjectViewSelectInTarget implements SelectInTarget, DumbAware {
     return MvcProjectViewPane.canSelectFile(project, framework, file);
   }
 
+  @Override
   public void selectIn(SelectInContext context, final boolean requestFocus) {
     final Project project = context.getProject();
     final VirtualFile file = context.getVirtualFile();
 
-    final MvcFramework framework = MvcFramework.getInstance(ModuleUtil.findModuleForFile(file, project));
+    final MvcFramework framework = MvcFramework.getInstance(ModuleUtilCore.findModuleForFile(file, project));
     if (framework == null) {
       return;
     }
 
     final Runnable select = new Runnable() {
+      @Override
       public void run() {
         final MvcProjectViewPane view = MvcProjectViewPane.getView(project, framework);
         if (view != null) {
@@ -66,20 +68,12 @@ public class MvcProjectViewSelectInTarget implements SelectInTarget, DumbAware {
     }
   }
 
-  public String getToolWindowId() {
-    throw new UnsupportedOperationException();
-  }
-
   public String toString() {
     return "Grails/Griffon View";
   }
 
-  public String getMinorViewId() {
-    throw new UnsupportedOperationException();
-  }
-
+  @Override
   public float getWeight() {
     return (float)5.239;
   }
-
 }

@@ -105,8 +105,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myComponent.setLayout(new BorderLayout());
       myProcessName.setText(processInfo.getTitle());
       myComponent.add(myProcessName, BorderLayout.NORTH);
-      final Font font = myProcessName.getFont();
-
       myProcessName.setForeground(UIUtil.getPanelBackground().brighter().brighter());
       myProcessName.setBorder(new EmptyBorder(2, 2, 2, 2));
       myProcessName.setDecorate(false);
@@ -280,7 +278,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   private static class MyProgressBar extends JProgressBar {
-
     private boolean myActive = true;
     private final boolean myCompact;
 
@@ -296,6 +293,13 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       super.paint(g);
     }
 
+    @Override
+    public void setIndeterminate(boolean newValue) {
+      super.setIndeterminate(newValue);
+      if (myCompact) {
+        setVisible(!newValue);
+      }
+    }
 
     public boolean isActive() {
       return myActive;

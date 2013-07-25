@@ -14,6 +14,7 @@ package org.zmlx.hg4idea;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -56,6 +57,7 @@ import org.zmlx.hg4idea.status.ui.HgHideableWidget;
 import org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget;
 import org.zmlx.hg4idea.status.ui.HgStatusWidget;
 import org.zmlx.hg4idea.util.HgUtil;
+import org.zmlx.hg4idea.util.HgVersionUtil;
 
 import java.io.File;
 import java.util.Collections;
@@ -273,19 +275,14 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
     myIncomingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, true);
     myOutgoingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, false);
-    try {
-      GuiUtils.runOrInvokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          myIncomingWidget.activate();
-          myOutgoingWidget.activate();
-        }
-      });
-    }
-    catch (Exception ex) {
-      throw new RuntimeException("Unable to activate incoming/outgoing widgets on AWT thread", ex);
-    }
 
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        myIncomingWidget.activate();
+        myOutgoingWidget.activate();
+      }
+    }, ModalityState.NON_MODAL);
 
     // updaters and listeners
     myHgRemoteStatusUpdater =

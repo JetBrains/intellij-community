@@ -16,19 +16,26 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author cdr
  */
-public class InsertOverwritePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation {
+public class InsertOverwritePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget, PropertyChangeListener {
+  private final TextPanel myTextPanel = new TextPanel();
+  private EditorEx myOldEditor;
 
   public InsertOverwritePanel(Project project) {
     super(project);
@@ -40,7 +47,7 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
   }
 
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {
-    return this;
+    return null;
   }
 
   @Override
@@ -48,38 +55,57 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
     return new InsertOverwritePanel(getProject());
   }
 
-
-  @NotNull
-  public String getText() {
-    final Editor editor = getEditor();
-    if (editor != null) {
-      return editor.isColumnMode()
-             ? UIBundle.message("status.bar.column.status.text")
-             : editor.isInsertMode()
-               ? UIBundle.message("status.bar.insert.status.text")
-               : UIBundle.message("status.bar.overwrite.status.text");
-
-    }
-
-    return "";
+  @Override
+  public JComponent getComponent() {
+    return myTextPanel;
   }
 
-  @NotNull
-  public String getMaxPossibleText() {
-    return UIBundle.message("status.bar.overwrite.status.text");
+  private void updateStatus() {
+    final Editor editor = getEditor();
+    if (editor == null || !editor.isColumnMode()) {
+      myTextPanel.setBorder(null);
+      myTextPanel.setVisible(false);
+    } else {
+      myTextPanel.setBorder(WidgetBorder.INSTANCE);
+      myTextPanel.setVisible(true);
+      myTextPanel.setText(UIBundle.message("status.bar.column.status.text"));
+      myTextPanel.setToolTipText("Column selection mode");
+    }
   }
 
   @Override
-  public float getAlignment() {
-    return JComponent.LEFT_ALIGNMENT;
+  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+    updateStatus();
+    switchEditor();
   }
 
-  public String getTooltipText() {
-    return null;
+  @Override
+  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+    updateStatus();
+    switchEditor();
   }
 
-  public Consumer<MouseEvent> getClickConsumer() {
-    return null;
+  @Override
+  public void propertyChange(PropertyChangeEvent evt) {
+    if (EditorEx.PROP_INSERT_MODE.equals(evt.getPropertyName()) || EditorEx.PROP_COLUMN_MODE.equals(evt.getPropertyName())) {
+      updateStatus();
+    }
   }
 
+  @Override
+  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+    updateStatus();
+    switchEditor();
+  }
+
+  private void switchEditor() {
+    if (myOldEditor != null) {
+      myOldEditor.removePropertyChangeListener(this);
+    }
+    EditorEx editor = (EditorEx)getEditor();
+    if (editor != null) {
+      editor.addPropertyChangeListener(this);
+      myOldEditor = editor;
+    }
+  }
 }

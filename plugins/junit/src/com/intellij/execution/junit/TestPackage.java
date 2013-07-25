@@ -26,6 +26,7 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -37,7 +38,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -446,8 +446,7 @@ public class TestPackage extends TestObject {
                                     : DefaultRunExecutor.getRunExecutorInstance();
           final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), myConfiguration);
           assert runner != null;
-          runner.execute(executor,
-                         new ExecutionEnvironment(myConfiguration, myProject, getRunnerSettings(), getConfigurationSettings(), null));
+          runner.execute(new ExecutionEnvironmentBuilder(myEnvironment).setContentToReuse(null).build());
           final Balloon balloon = myToolWindowManager.getToolWindowBalloon(myTestRunDebugId);
           if (balloon != null) {
             balloon.hide();
