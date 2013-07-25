@@ -45,6 +45,11 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     myModule = configurationModule;
   }
 
+  public ModuleBasedConfiguration(final ConfigurationModule configurationModule, final ConfigurationFactory factory) {
+    super("", configurationModule.getProject(), factory);
+    myModule = configurationModule;
+  }
+
   public abstract Collection<Module> getValidModules();
 
   public ConfigurationModule getConfigurationModule() {

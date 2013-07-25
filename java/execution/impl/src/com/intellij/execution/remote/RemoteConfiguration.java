@@ -65,8 +65,8 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   public String HOST;
   public String PORT;
 
-  public RemoteConfiguration(final String name, final Project project, ConfigurationFactory configurationFactory) {
-    super(name, new JavaRunConfigurationModule(project, true), configurationFactory);
+  public RemoteConfiguration(final Project project, ConfigurationFactory configurationFactory) {
+    super(new JavaRunConfigurationModule(project, true), configurationFactory);
   }
 
   public RemoteConnection createRemoteConnection() {

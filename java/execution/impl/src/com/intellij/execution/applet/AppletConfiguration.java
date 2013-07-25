@@ -69,8 +69,8 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @NonNls
   protected static final String PARAMETER_ELEMENT_NAME = "parameter";
 
-  public AppletConfiguration(final String name, final Project project, ConfigurationFactory factory) {
-    super(name, new JavaRunConfigurationModule(project, false), factory);
+  public AppletConfiguration(final Project project, ConfigurationFactory factory) {
+    super(new JavaRunConfigurationModule(project, false), factory);
   }
 
   public void setMainClass(final PsiClass psiClass) {
