@@ -365,7 +365,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           });
         }
         catch (ProcessCanceledException e) {
-          throw e;
+          final Throwable cause = e.getCause();
+          if (cause != null) {
+            LOG.error("In file: " + file, cause);
+          } else {
+            throw e;
+          }
         }
         catch (IndexNotReadyException e) {
           throw e;
