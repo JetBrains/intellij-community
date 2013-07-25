@@ -21,8 +21,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.RegexpFilter;
-import com.intellij.execution.filters.TextConsoleBuilder;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -138,10 +136,8 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       super(null);
       myGenerationOptions = generationOptions;
       myProject = project;
-      TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-      builder.addFilter(new RegexpFilter(project, "$FILE_PATH$:$LINE$:[^\\^]+\\^"));
-      builder.addFilter(new RegexpFilter(project, "$FILE_PATH$:$LINE$: warning - .+$"));
-      setConsoleBuilder(builder);
+      addConsoleFilters(new RegexpFilter(project, "$FILE_PATH$:$LINE$:[^\\^]+\\^"),
+                        new RegexpFilter(project, "$FILE_PATH$:$LINE$: warning - .+$"));
     }
 
     protected GeneralCommandLine createCommandLine() throws ExecutionException {

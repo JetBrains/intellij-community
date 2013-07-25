@@ -22,7 +22,6 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -55,7 +54,6 @@ import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.*;
-import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 import com.intellij.uiDesigner.make.Form2ByteCodeCompiler;
 import com.intellij.uiDesigner.make.PreviewNestedFormLoader;
 import com.intellij.util.PathsList;
@@ -63,6 +61,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 
 import javax.swing.*;
 import java.io.File;
@@ -330,7 +329,7 @@ public final class PreviewFormAction extends AnAction{
     }
 
     public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-      final JavaCommandLineState state = new JavaCommandLineState(env) {
+      return new JavaCommandLineState(env) {
         protected JavaParameters createJavaParameters() {
           return myParams;
         }
@@ -356,8 +355,6 @@ public final class PreviewFormAction extends AnAction{
           }
         }
       };
-      state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(myModule.getProject()));
-      return state;
     }
 
     public String getName() {

@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -184,7 +183,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
     final boolean tests = ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(script);
 
-    final JavaCommandLineState state = new JavaCommandLineState(environment) {
+    return new JavaCommandLineState(environment) {
       @NotNull
       @Override
       protected OSProcessHandler startProcess() throws ExecutionException {
@@ -212,9 +211,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
         return params;
       }
     };
-
-    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
-    return state;
   }
 
   public void setScriptParameters(String scriptParameters) {
