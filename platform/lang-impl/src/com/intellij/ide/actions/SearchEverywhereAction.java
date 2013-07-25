@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
@@ -24,6 +25,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -128,10 +130,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }, 300);
       }
     });
+    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor));
     editor.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor));
         field.setText("");
         field.getTextEditor().setForeground(UIUtil.getLabelForeground());
 
@@ -162,7 +164,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(editor);
           focusManager.requestDefaultFocus(true);
         } else if (keyCode == KeyEvent.VK_ENTER) {
-          doNavigate();
+          doNavigate(project);
         }
       }
     });
@@ -187,8 +189,28 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     });
   }
 
-  private void doNavigate() {
-
+  private void doNavigate(Project project) {
+    Object value = myList.getSelectedValue();
+    IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(field.getTextEditor());
+    if (myPopup != null && myPopup.isVisible()) {
+      myPopup.cancel();
+    }
+    AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+    if (value instanceof PsiElement) {
+      NavigationUtil.activateFileWithPsiElement((PsiElement)value, true);
+      return;
+    } else if (value instanceof VirtualFile) {
+      OpenFileDescriptor navigatable = new OpenFileDescriptor(project, (VirtualFile)value);
+      if (navigatable.canNavigate()) {
+        navigatable.navigate(true);
+        return;
+      }
+    }
+    } finally {
+      token.finish();
+    }
+    focusManager.requestDefaultFocus(true);
   }
 
   private void rebuildList(String pattern) {

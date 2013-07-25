@@ -99,6 +99,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     new THashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
   private final List<ID<?, ?>> myIndicesWithoutFileTypeInfo = new ArrayList<ID<?, ?>>();
   private final Map<FileType, List<ID<?, ?>>> myFileType2IndicesWithFileTypeInfoMap = new THashMap<FileType, List<ID<?, ?>>>();
+  private final List<ID<?, ?>> myIndicesForDirectories = new SmartList<ID<?, ?>>();
 
   private final Map<ID<?, ?>, Semaphore> myUnsavedDataIndexingSemaphores = new THashMap<ID<?, ?>, Semaphore>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
@@ -251,9 +252,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   public static boolean isProjectOrWorkspaceFile(final VirtualFile file,
-                                                 final FileType fileType) {
+                                                 final @Nullable FileType fileType) {
     if (fileType instanceof InternalFileType) return true;
-    VirtualFile parent = file.getParent();
+    VirtualFile parent = file.isDirectory() ? file: file.getParent();
     while(parent instanceof VirtualFileSystemEntry) {
       if (((VirtualFileSystemEntry)parent).compareNameTo(ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR, !SystemInfoRt.isFileSystemCaseSensitive) == 0) return true;
       parent = parent.getParent();
@@ -448,6 +449,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         myUnsavedDataIndexingSemaphores.put(name, new Semaphore());
         myIndexIdToVersionMap.put(name, version);
         if (!extension.dependsOnFileContent()) {
+          if (extension.indexDirectories()) myIndicesForDirectories.add(name);
           myNotRequiringContentIndices.add(name);
         }
         else {
@@ -1777,6 +1779,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private List<ID<?, ?>> getAffectedIndexCandidates(VirtualFile file) {
+    if (file.isDirectory()) {
+      return isProjectOrWorkspaceFile(file, null) ?  Collections.<ID<?,?>>emptyList() : myIndicesForDirectories;
+    }
     FileType fileType = file.getFileType();
     if(isProjectOrWorkspaceFile(file, fileType)) return Collections.emptyList();
 
@@ -1949,11 +1954,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
         // indexes may depend on file name
         final VirtualFile file = event.getFile();
-        if (!file.isDirectory()) {
-          // name change may lead to filetype change so the file might become not indexable
-          // in general case have to 'unindex' the file and index it again if needed after the name has been changed
-          invalidateIndices(file, false);
-        }
+
+        // name change may lead to filetype change so the file might become not indexable
+        // in general case have to 'unindex' the file and index it again if needed after the name has been changed
+        invalidateIndices(file, false);
       }
     }
 
@@ -1961,9 +1965,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
       if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
         // indexes may depend on file name
-        if (!event.getFile().isDirectory()) {
-          markDirty(event, false);
-        }
+        markDirty(event, false);
       }
     }
 
@@ -1978,8 +1980,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         @Override
         public boolean process(@NotNull final VirtualFile file) {
           FileContent fileContent = null;
+
           // handle 'content-less' indices separately
-          for (ID<?, ?> indexId : myNotRequiringContentIndices) {
+          boolean fileIsDirectory = file.isDirectory();
+          for (ID<?, ?> indexId : fileIsDirectory ? myIndicesForDirectories : myNotRequiringContentIndices) {
             if (getInputFilter(indexId).acceptInput(file)) {
               try {
                 if (fileContent == null) {
@@ -1994,7 +1998,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             }
           }
           // For 'normal indices' schedule the file for update and stop iteration if at least one index accepts it
-          if (!isTooLarge(file)) {
+          if (!fileIsDirectory && !isTooLarge(file)) {
             final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
             //noinspection ForLoopReplaceableByForEach
             for (int i = 0, size = candidates.size(); i < size; ++i) {
@@ -2029,6 +2033,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             return false;
           }
           if (file.isDirectory()) {
+            invalidateIndicesForFile(file, markForReindex);
             if (!isMock(file) && !myManagingFS.wereChildrenAccessed(file)) {
               return false;
             }
@@ -2174,9 +2179,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         final ContentIterator iterator = new ContentIterator() {
           @Override
           public boolean processFile(@NotNull final VirtualFile fileOrDir) {
-            if (!fileOrDir.isDirectory()) {
-              processor.process(fileOrDir);
-            }
+            processor.process(fileOrDir);
             return true;
           }
         };
@@ -2352,72 +2355,63 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       if (!file.isValid()) {
         return true;
       }
-      if (!file.isDirectory()) {
-        if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
-          return true;
-        }
+      if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
+        return true;
+      }
 
-        if (file instanceof VirtualFileWithId) {
-          try {
-            FileTypeManagerImpl.cacheFileType(file, file.getFileType());
+      if (file instanceof VirtualFileWithId) {
+        try {
+          FileTypeManagerImpl.cacheFileType(file, file.getFileType());
 
-            boolean oldStuff = true;
-            if (!isTooLarge(file)) {
-              final List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(file);
-              //noinspection ForLoopReplaceableByForEach
-              for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
-                final ID<?, ?> indexId = affectedIndexCandidates.get(i);
-                try {
-                  if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
-                    myFiles.add(file);
-                    oldStuff = false;
-                    break;
-                  }
-                }
-                catch (RuntimeException e) {
-                  final Throwable cause = e.getCause();
-                  if (cause instanceof IOException || cause instanceof StorageException) {
-                    LOG.info(e);
-                    requestRebuild(indexId);
-                  }
-                  else {
-                    throw e;
-                  }
+          boolean oldStuff = true;
+          if (file.isDirectory() || !isTooLarge(file)) {
+            final List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(file);
+            //noinspection ForLoopReplaceableByForEach
+            for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
+              final ID<?, ?> indexId = affectedIndexCandidates.get(i);
+              try {
+                if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
+                  myFiles.add(file);
+                  oldStuff = false;
+                  break;
                 }
               }
-            }
-            FileContent fileContent = null;
-            for (ID<?, ?> indexId : myNotRequiringContentIndices) {
-              if (shouldIndexFile(file, indexId)) {
-                oldStuff = false;
-                try {
-                  if (fileContent == null) {
-                    fileContent = new FileContentImpl(file);
-                  }
-                  updateSingleIndex(indexId, file, fileContent);
-                }
-                catch (StorageException e) {
+              catch (RuntimeException e) {
+                final Throwable cause = e.getCause();
+                if (cause instanceof IOException || cause instanceof StorageException) {
                   LOG.info(e);
                   requestRebuild(indexId);
                 }
+                else {
+                  throw e;
+                }
               }
             }
-            IndexingStamp.flushCache(file);
-
-            if (oldStuff && file instanceof VirtualFileSystemEntry) {
-              ((VirtualFileSystemEntry)file).setFileIndexed(true);
+          }
+          FileContent fileContent = null;
+          for (ID<?, ?> indexId : myNotRequiringContentIndices) {
+            if (shouldIndexFile(file, indexId)) {
+              oldStuff = false;
+              try {
+                if (fileContent == null) {
+                  fileContent = new FileContentImpl(file);
+                }
+                updateSingleIndex(indexId, file, fileContent);
+              }
+              catch (StorageException e) {
+                LOG.info(e);
+                requestRebuild(indexId);
+              }
             }
           }
-          finally {
-            FileTypeManagerImpl.cacheFileType(file, null);
+          IndexingStamp.flushCache(file);
+
+          if (oldStuff && file instanceof VirtualFileSystemEntry) {
+            ((VirtualFileSystemEntry)file).setFileIndexed(true);
           }
         }
-      }
-      else {
-        if (myProgressIndicator != null) { // once for dir is cheap enough
-          myProgressIndicator.checkCanceled();
-          myProgressIndicator.setText("Scanning files to index");
-          myProgressIndicator.setText2(file.getPresentableUrl());
+        finally {
+          FileTypeManagerImpl.cacheFileType(file, null);
         }
       }
       return true;
@@ -2523,6 +2517,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     final VirtualFileSystemEntry nvf = (VirtualFileSystemEntry)file;
     if (file.isDirectory()) {
+      nvf.setFileIndexed(false);
       for (VirtualFile child : nvf.getCachedChildren()) {
         cleanProcessedFlag(child);
       }
@@ -2604,10 +2599,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       public boolean visitFile(@NotNull VirtualFile file) {
         if (indicator != null) indicator.checkCanceled();
 
-        if (!file.isDirectory()) {
-          processor.processFile(file);
-        }
-        else if (indicator != null) {
+        processor.processFile(file);
+        if (indicator != null && file.isDirectory()) {
           // once for directory should be cheap enough
           indicator.setText2(file.getPresentableUrl());
         }

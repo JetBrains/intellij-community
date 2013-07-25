@@ -100,9 +100,8 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
       public boolean visitFile(@NotNull VirtualFile file) {
 
         if (!isInSet(file)) return false;
-        if (!file.isDirectory()) {
-          iterator.processFile(file);
-        }
+        iterator.processFile(file);
+
         return true;
       }
     });

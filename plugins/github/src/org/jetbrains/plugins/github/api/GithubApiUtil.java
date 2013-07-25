@@ -310,7 +310,8 @@ public class GithubApiUtil {
 
   @NotNull
   private static <T> T fromJson(@Nullable JsonElement json, @NotNull Class<T> classT) throws IOException {
-    return fromJson(json, (Type)classT);
+    //cast as workaround for early java 1.6 bug
+    return (T)fromJson(json, (Type)classT);
   }
 
   @NotNull
@@ -321,7 +322,8 @@ public class GithubApiUtil {
 
     T res;
     try {
-      res = gson.fromJson(json, type);
+      //cast as workaround for early java 1.6 bug 
+      res = (T) gson.fromJson(json, type);
     }
     catch (JsonParseException jpe) {
       throw new JsonException("Parse exception converting JSON to object " + type.toString(), jpe);

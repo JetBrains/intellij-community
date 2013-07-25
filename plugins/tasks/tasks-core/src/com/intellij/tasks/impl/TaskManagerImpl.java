@@ -375,30 +375,49 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       myChangeListManager.setDefaultChangeList(changeList);
     }
 
-    List<BranchInfo> branches = task.getBranches();
+    List<BranchInfo> branches = task.getBranches(false);
+    VcsTaskHandler.TaskInfo info = fromBranches(branches);
+
+    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+    for (VcsTaskHandler handler : handlers) {
+      handler.switchToTask(info);
+    }
+    return task;
+  }
+
+  private static VcsTaskHandler.TaskInfo fromBranches(List<BranchInfo> branches) {
     MultiMap<String, String> map = new MultiMap<String, String>();
     for (BranchInfo branch : branches) {
       map.putValue(branch.name, branch.repository);
     }
-    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
-    for (VcsTaskHandler handler : handlers) {
-      handler.switchToTask(new VcsTaskHandler.TaskInfo(map));
-    }
-    return task;
+    return new VcsTaskHandler.TaskInfo(map);
   }
 
   public void createBranch(LocalTask task, LocalTask previousActive, String name) {
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
     for (VcsTaskHandler handler : handlers) {
+      VcsTaskHandler.TaskInfo info = handler.getActiveTask();
       if (previousActive != null) {
-        addBranches(previousActive, handler.getActiveTask());
+        addBranches(previousActive, info, false);
       }
-      addBranches(task, handler.startNewTask(name));
+      addBranches(task, info, true);
+      addBranches(task, handler.startNewTask(name), false);
     }
   }
 
-  private static void addBranches(LocalTask task, VcsTaskHandler.TaskInfo info) {
-    List<BranchInfo> branchInfos = BranchInfo.fromTaskInfo(info);
+  public void mergeBranch(LocalTask task) {
+    VcsTaskHandler.TaskInfo original = fromBranches(task.getBranches(true));
+    VcsTaskHandler.TaskInfo feature = fromBranches(task.getBranches(false));
+
+    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+    for (VcsTaskHandler handler : handlers) {
+      handler.switchToTask(original);
+      handler.closeTask(feature);
+    }
+  }
+
+  private static void addBranches(LocalTask task, VcsTaskHandler.TaskInfo info, boolean original) {
+    List<BranchInfo> branchInfos = BranchInfo.fromTaskInfo(info, original);
     for (BranchInfo branchInfo : branchInfos) {
       task.addBranch(branchInfo);
     }
@@ -924,18 +943,23 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public int updateInterval = 20;
     public int updateIssuesCount = 100;
 
+    // create task options
     public boolean clearContext = true;
-
     public boolean createChangelist = true;
     public boolean createBranch = true;
+
+    // close task options
+    public boolean closeIssue = true;
+    public boolean commitChanges = true;
+    public boolean mergeBranch = true;
 
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = false;
     public boolean markAsInProgress = false;
+
     public String changelistNameFormat = "{id} {summary}";
 
     public boolean searchClosedTasks = false;
-
     @Tag("servers")
     public Element servers = new Element("servers");
   }

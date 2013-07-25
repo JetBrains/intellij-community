@@ -58,6 +58,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.Arrays;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -137,49 +139,73 @@ public class IdeaApplication {
     new JFrame().pack(); // this peer will prevent shutting down our application
 
     final File file = new File(PathManager.getSystemPath());
+    if (!file.canWrite()) {
+      String fullProductName = ApplicationNamesInfo.getInstance().getFullProductName();
+      String message = "System directory of " + fullProductName + " is read only";
+      LOG.info(message);
+      Messages.showErrorDialog(message, "Fatal Configuration Problem");
+    }
     final AtomicBoolean reported = new AtomicBoolean();
     final long lowDiskSpaceThreshold = 50 * 1024 * 1024;
+    final ThreadLocal<Future<Long>> ourFreeSpaceCalculation = new ThreadLocal<Future<Long>>();
 
     JobScheduler.getScheduler().schedule(new Runnable() {
-      public static final long MAX_WRITE_SPEED_IN_BYTES_PER_SECOND = 1024 * 1024 * 500; // 500Mb/sec
+      public static final long MAX_WRITE_SPEED_IN_BYTES_PER_SECOND = 1024 * 1024 * 500; // 500Mb/sec is near max SSD sequential write speed
 
       @Override
       public void run() {
         if (!reported.get()) {
-          final long fileUsableSpace = file.getUsableSpace();
-          final long timeout = Math.max(5, (fileUsableSpace - lowDiskSpaceThreshold) / MAX_WRITE_SPEED_IN_BYTES_PER_SECOND);
-
-          if (fileUsableSpace < lowDiskSpaceThreshold) {
-            reported.compareAndSet(false, true);
-
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(new Runnable() {
+          Future<Long> future = ourFreeSpaceCalculation.get();
+          if (future == null) {
+            ourFreeSpaceCalculation.set(future = ApplicationManager.getApplication().executeOnPooledThread(new Callable<Long>() {
               @Override
-              public void run() {
-                boolean writable = file.canWrite();
-                String fullProductName = ApplicationNamesInfo.getInstance().getFullProductName();
-                String message = writable
-                               ? "Low disk space on disk where system directory of " + fullProductName + " is located"
-                               : "System directory of " + fullProductName + " is read only";
-                if (!writable || fileUsableSpace < 100 * 1024) {
-                  Messages.showErrorDialog(message, "Fatal Configuration Problem");
-                  reported.compareAndSet(true, false);
-                  restart(timeout);
-                }
-                else {
-                  new NotificationGroup("System", NotificationDisplayType.STICKY_BALLOON, false)
-                    .createNotification(message, file.getPath(), NotificationType.ERROR, null).whenExpired(new Runnable() {
-                    @Override
-                    public void run() {
-                      reported.compareAndSet(true, false);
-                      restart(timeout);
-                    }
-                  }).notify(null);
-                }
+              public Long call() throws Exception {
+                return file.getUsableSpace();
               }
-            });
-          } else {
-            restart(timeout);
+            }));
+          }
+          if (!future.isDone()) {
+            JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
+            return;
+          }
+
+          try {
+            final long fileUsableSpace = future.isCancelled() ? 0 : future.get();
+            final long timeout = Math.max(5, (fileUsableSpace - lowDiskSpaceThreshold) / MAX_WRITE_SPEED_IN_BYTES_PER_SECOND);
+            ourFreeSpaceCalculation.set(null);
+
+            if (fileUsableSpace < lowDiskSpaceThreshold) {
+              reported.compareAndSet(false, true);
+
+              //noinspection SSBasedInspection
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  String fullProductName = ApplicationNamesInfo.getInstance().getFullProductName();
+                  String message = "Low disk space on disk where system directory of " + fullProductName + " is located";
+                  if (fileUsableSpace < 100 * 1024) {
+                    LOG.info(message);
+                    Messages.showErrorDialog(message, "Fatal Configuration Problem");
+                    reported.compareAndSet(true, false);
+                    restart(timeout);
+                  }
+                  else {
+                    new NotificationGroup("System", NotificationDisplayType.STICKY_BALLOON, false)
+                      .createNotification(message, file.getPath(), NotificationType.ERROR, null).whenExpired(new Runnable() {
+                      @Override
+                      public void run() {
+                        reported.compareAndSet(true, false);
+                        restart(timeout);
+                      }
+                    }).notify(null);
+                  }
+                }
+              });
+            } else {
+              restart(timeout);
+            }
+          } catch (Exception ex) {
+            LOG.error(ex);
           }
         }
       }
