@@ -19,6 +19,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubUtil;
@@ -165,52 +166,17 @@ public class GithubLoginPanel {
     return GithubAuthData.createAnonymous(getHost());
   }
 
-  private static class MyFocusTraversalPolicy extends FocusTraversalPolicy {
-    private List<Component> myOrder;
+  private static class MyFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy {
+    @NotNull private List<Component> myOrder;
 
-    private MyFocusTraversalPolicy(List<Component> order) {
+    private MyFocusTraversalPolicy(@NotNull List<Component> order) {
       myOrder = order;
     }
 
+    @NotNull
     @Override
-    public Component getComponentAfter(Container aContainer, Component aComponent) {
-      int index = myOrder.indexOf(aComponent);
-      if (index == -1) {
-        return null;
-      }
-      index++;
-      if (index >= myOrder.size()) {
-        index -= myOrder.size();
-      }
-      return myOrder.get(index);
-    }
-
-    @Override
-    public Component getComponentBefore(Container aContainer, Component aComponent) {
-      int index = myOrder.indexOf(aComponent);
-      if (index == -1) {
-        return null;
-      }
-      index--;
-      if (index < 0) {
-        index += myOrder.size();
-      }
-      return myOrder.get(index);
-    }
-
-    @Override
-    public Component getFirstComponent(Container aContainer) {
-      return myOrder.get(0);
-    }
-
-    @Override
-    public Component getLastComponent(Container aContainer) {
-      return myOrder.get(myOrder.size() - 1);
-    }
-
-    @Override
-    public Component getDefaultComponent(Container aContainer) {
-      return myOrder.get(0);
+    protected List<Component> getOrderedComponents() {
+      return myOrder;
     }
   }
 }
