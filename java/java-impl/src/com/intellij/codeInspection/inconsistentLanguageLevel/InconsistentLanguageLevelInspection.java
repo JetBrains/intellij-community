@@ -44,6 +44,11 @@ import java.util.Set;
 
 public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
   @Override
+  public boolean isGraphNeeded() {
+    return false;
+  }
+
+  @Override
   public void runInspection(@NotNull AnalysisScope scope,
                             @NotNull InspectionManager manager,
                             @NotNull GlobalInspectionContext globalContext,
