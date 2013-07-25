@@ -60,14 +60,16 @@ public class PackageFileWorker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.ui.actions.PackageFileWorker");
   private final File myFile;
   private final String myRelativeOutputPath;
+  private final boolean myPackIntoArchives;
 
-  private PackageFileWorker(File file, String relativeOutputPath) {
+  private PackageFileWorker(File file, String relativeOutputPath, boolean packIntoArchives) {
     myFile = file;
     myRelativeOutputPath = relativeOutputPath;
+    myPackIntoArchives = packIntoArchives;
   }
 
   public static void startPackagingFiles(Project project, List<VirtualFile> files, Artifact[] artifacts, final @NotNull Runnable onFinishedInAwt) {
-    startPackagingFiles(project, files, artifacts).doWhenProcessed(new Runnable() {
+    startPackagingFiles(project, files, artifacts, true).doWhenProcessed(new Runnable() {
       @Override
       public void run() {
         ApplicationManager.getApplication().invokeLater(onFinishedInAwt);
@@ -75,7 +77,8 @@ public class PackageFileWorker {
     });
   }
 
-  public static ActionCallback startPackagingFiles(final Project project, final List<VirtualFile> files, final Artifact[] artifacts) {
+  public static ActionCallback startPackagingFiles(final Project project, final List<VirtualFile> files,
+                                                   final Artifact[] artifacts, final boolean packIntoArchives) {
     final ActionCallback callback = new ActionCallback();
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Packaging Files") {
       @Override
@@ -86,7 +89,7 @@ public class PackageFileWorker {
             new ReadAction() {
               protected void run(final Result result) {
                 try {
-                  packageFile(file, project, artifacts);
+                  packageFile(file, project, artifacts, packIntoArchives);
                 }
                 catch (IOException e) {
                   String message = CompilerBundle.message("message.tect.package.file.io.error", e.toString());
@@ -107,7 +110,8 @@ public class PackageFileWorker {
     return callback;
   }
 
-  public static void packageFile(@NotNull VirtualFile file, @NotNull Project project, final Artifact[] artifacts) throws IOException {
+  public static void packageFile(@NotNull VirtualFile file, @NotNull Project project, final Artifact[] artifacts,
+                                 final boolean packIntoArchives) throws IOException {
     LOG.debug("Start packaging file: " + file.getPath());
     final Collection<Trinity<Artifact, PackagingElementPath, String>> items = ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project, artifacts);
     File ioFile = VfsUtilCore.virtualToIoFile(file);
@@ -115,7 +119,7 @@ public class PackageFileWorker {
       final Artifact artifact = item.getFirst();
       final String outputPath = artifact.getOutputPath();
       if (!StringUtil.isEmpty(outputPath)) {
-        PackageFileWorker worker = new PackageFileWorker(ioFile, item.getThird());
+        PackageFileWorker worker = new PackageFileWorker(ioFile, item.getThird(), packIntoArchives);
         LOG.debug(" package to " + outputPath);
         worker.packageFile(outputPath, item.getSecond().getParents());
       }
@@ -149,7 +153,9 @@ public class PackageFileWorker {
     final String nextOutputPath = outputPath + "/" + element.getName();
     final List<CompositePackagingElement<?>> parentsTrail = parents.subList(1, parents.size());
     if (element instanceof ArchivePackagingElement) {
-      packFile(nextOutputPath, "", parentsTrail);
+      if (myPackIntoArchives) {
+        packFile(nextOutputPath, "", parentsTrail);
+      }
     }
     else {
       copyFile(nextOutputPath, parentsTrail);
