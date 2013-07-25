@@ -36,7 +36,7 @@ public final class ExecutionEnvironmentBuilder {
   @NotNull private RunProfile myRunProfile;
   @NotNull private ExecutionTarget myTarget = DefaultExecutionTarget.INSTANCE;
 
-  @Nullable private Project myProject;
+  @NotNull private final Project myProject;
 
   @Nullable private RunnerSettings myRunnerSettings;
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
@@ -44,9 +44,11 @@ public final class ExecutionEnvironmentBuilder {
   @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
   @Nullable private String myRunnerId;
   private boolean myAssignNewId;
-  @NotNull private Executor myExecutor;
+  @NotNull private final Executor myExecutor;
 
-  public ExecutionEnvironmentBuilder() {
+  public ExecutionEnvironmentBuilder(@NotNull Project project, @NotNull Executor executor) {
+    myProject = project;
+    myExecutor = executor;
   }
 
   /**
@@ -56,29 +58,18 @@ public final class ExecutionEnvironmentBuilder {
    */
   public ExecutionEnvironmentBuilder(@NotNull ExecutionEnvironment copySource) {
     setTarget(copySource.getExecutionTarget());
-    setProject(copySource.getProject());
+    myProject = copySource.getProject();
     myRunnerAndConfigurationSettings = copySource.getRunnerAndConfigurationSettings();
     myRunProfile = copySource.getRunProfile();
     myRunnerSettings = copySource.getRunnerSettings();
     myConfigurationSettings = copySource.getConfigurationSettings();
     myRunnerId = copySource.getRunnerId();
     setContentToReuse(copySource.getContentToReuse());
-    setExecutor(copySource.getExecutor());
-  }
-
-  public ExecutionEnvironmentBuilder setExecutor(@NotNull Executor executor) {
-    myExecutor = executor;
-    return this;
+    myExecutor = copySource.getExecutor();
   }
 
   public ExecutionEnvironmentBuilder setTarget(@NotNull ExecutionTarget target) {
     myTarget = target;
-    return this;
-  }
-
-  public ExecutionEnvironmentBuilder setProject(@NotNull Project project) {
-    check(myProject, "Project");
-    myProject = project;
     return this;
   }
 

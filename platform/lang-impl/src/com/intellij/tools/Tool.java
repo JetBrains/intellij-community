@@ -279,10 +279,8 @@ public class Tool implements SchemeElement {
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
         assert runner != null;
 
-        ExecutionEnvironment executionEnvironment = new ExecutionEnvironmentBuilder()
+        ExecutionEnvironment executionEnvironment = new ExecutionEnvironmentBuilder(project, DefaultRunExecutor.getRunExecutorInstance())
           .setRunProfile(profile)
-          .setProject(project)
-          .setExecutor(new DefaultRunExecutor())
           .build();
         executionEnvironment.setExecutionId(executionId);
         runner.execute(executionEnvironment, new ProgramRunner.Callback() {

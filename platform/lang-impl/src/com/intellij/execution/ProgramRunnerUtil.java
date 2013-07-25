@@ -98,8 +98,8 @@ public class ProgramRunnerUtil {
     }
 
     try {
-      runner.execute(new ExecutionEnvironmentBuilder().setRunnerAndSettings(runner, configuration).setTarget(target)
-        .setContentToReuse(contentToReuse).setProject(project).setExecutor(executor).assignNewId().build());
+      runner.execute(new ExecutionEnvironmentBuilder(project, executor).setRunnerAndSettings(runner, configuration).setTarget(target)
+        .setContentToReuse(contentToReuse).assignNewId().build());
     }
     catch (ExecutionException e) {
       ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), configuration.getConfiguration(), e);
