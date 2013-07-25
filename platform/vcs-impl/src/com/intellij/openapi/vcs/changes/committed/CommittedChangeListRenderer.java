@@ -37,7 +37,6 @@ import java.util.Date;
 import java.util.List;
 
 public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
-  private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
   private final IssueLinkRenderer myRenderer;
   private final List<CommittedChangeListDecorator> myDecorators;
   private final Project myProject;
@@ -153,9 +152,9 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       myRenderer.appendTextWithLinks(description);
       if (!StringUtil.isEmpty(description)) {
         append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        append(moreMarker, LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
+        append(moreMarker, SimpleTextAttributes.LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
       } else if (remainingWidth > 0) {
-        append(moreMarker, LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
+        append(moreMarker, SimpleTextAttributes.LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
       }
       // align value is for the latest added piece
       appendFixedTextFragmentWidth(descMaxWidth);

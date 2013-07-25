@@ -142,6 +142,15 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     super.setOpaque(isOpaque);
   }
 
+  @Override
+  public Font getFont() {
+    Font font = super.getFont();
+
+    // Cell renderers could have no parent and no explicit set font.
+    // Take tree font in this case.
+    return font != null ? font : getTree().getFont();
+  }
+
   /**
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.
