@@ -141,11 +141,11 @@ public class TestNGUtil
         if (AnnotationUtil.isAnnotated(method, fqn, false)) return true;
       }
 
-      for (PsiElement child : method.getChildren()) {
-        if (child instanceof PsiDocComment) {
-          PsiDocComment doc = (PsiDocComment) child;
+      if (hasDocTagsSupport) {
+        final PsiDocComment comment = method.getDocComment();
+        if (comment != null) {
           for (String javadocTag : CONFIG_JAVADOC_TAGS) {
-            if (doc.findTagByName(javadocTag) != null) return true;
+            if (comment.findTagByName(javadocTag) != null) return true;
           }
         }
       }
