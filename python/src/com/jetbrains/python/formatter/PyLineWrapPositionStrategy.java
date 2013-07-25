@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyLineWrapPositionStrategy extends GenericLineWrapPositionStrategy {
   public PyLineWrapPositionStrategy() {
     // Commas.
-    addRule(new Rule(',', WrapCondition.AFTER, Rule.DEFAULT_WEIGHT * 1.2));
+    addRule(new Rule(',', WrapCondition.AFTER, Rule.DEFAULT_WEIGHT * 1.1));
 
     // Symbols to wrap either before or after.
     addRule(new Rule(' '));
