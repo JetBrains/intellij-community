@@ -23,12 +23,9 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -107,7 +104,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
                               @NotNull Executor executor,
                               @NotNull ExecutionTarget target,
-                              @Nullable Project project,
+                              @NotNull Project project,
                               @Nullable RunnerSettings runnerSettings,
                               @Nullable ConfigurationPerRunnerSettings configurationSettings,
                               @Nullable RunContentDescriptor contentToReuse,
@@ -150,19 +147,6 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   @Nullable
   public RunnerAndConfigurationSettings getRunnerAndConfigurationSettings() {
     return myRunnerAndConfigurationSettings;
-  }
-
-  /**
-   * @deprecated use {@link #getProject()} and {@link #getContentToReuse()}
-   */
-  @Deprecated
-  public DataContext getDataContext() {
-    return new DataContext() {
-      @Override
-      public Object getData(@NonNls String dataId) {
-        return PlatformDataKeys.PROJECT.is(dataId) ? myProject : null;
-      }
-    };
   }
 
   @Nullable
