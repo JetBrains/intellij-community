@@ -578,4 +578,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       return myModificationStamp;
     }
   }
+
+  @NotNull
+  @Override
+  public PsiFile getStubBindingRoot() {
+    final PsiFile psi = getPsi(getBaseLanguage());
+    assert psi != null;
+    return psi;
+  }
 }

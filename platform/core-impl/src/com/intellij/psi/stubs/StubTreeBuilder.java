@@ -56,6 +56,7 @@ public class StubTreeBuilder {
         final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
         PsiFile psi = inputData.getPsiFile();
+        psi = psi.getViewProvider().getStubBindingRoot();
         CharSequence contentAsText = inputData.getContentAsText();
         psi.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, contentAsText);
 
