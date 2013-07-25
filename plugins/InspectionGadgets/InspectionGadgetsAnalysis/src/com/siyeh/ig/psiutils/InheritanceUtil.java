@@ -61,12 +61,11 @@ public class InheritanceUtil {
     final Query<PsiClass> search = ClassInheritorsSearch.search(class1, scope, true, true);
     final boolean[] result = new boolean[1];
     search.forEach(new Processor<PsiClass>() {
-      int count = 0;
+      AtomicInteger count = new AtomicInteger(0);
 
       @Override
       public boolean process(PsiClass inheritor) {
-        count++;
-        if (inheritor.equals(class2) || inheritor.isInheritor(class2, true) || (avoidExpensiveProcessing && count > 20)) {
+        if (inheritor.equals(class2) || inheritor.isInheritor(class2, true) || (avoidExpensiveProcessing && count.incrementAndGet() > 20)) {
           result[0] = true;
           return false;
         }

@@ -17,8 +17,6 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -35,6 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MethodMayBeStaticInspection extends BaseInspection {
 
@@ -133,11 +132,11 @@ public class MethodMayBeStaticInspection extends BaseInspection {
       final Query<PsiClass> search = ClassInheritorsSearch.search(containingClass, method.getUseScope(), true, true, false);
       final boolean[] result = new boolean[1];
       search.forEach(new Processor<PsiClass>() {
-        int count = 0;
+        AtomicInteger count = new AtomicInteger(0);
 
         @Override
         public boolean process(PsiClass subClass) {
-          if (++count > 5) {
+          if (count.incrementAndGet() > 5) {
             result[0] = true;
             return false;
           }
