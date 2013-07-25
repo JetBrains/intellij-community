@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -106,7 +107,7 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
             final Runnable runnable = new Runnable() {
               @Override
               public void run() {
-                if (isQuickFixOnReadOnlyFile(referenceExpression)) {
+                if (!FileModificationService.getInstance().preparePsiElementsForWrite(referenceExpression)) {
                   return;
                 }
                 final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
