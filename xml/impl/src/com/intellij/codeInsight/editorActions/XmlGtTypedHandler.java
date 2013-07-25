@@ -174,7 +174,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
         name = name.substring(0, offset - elementAtCaret.getTextOffset());
       }
       if (tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(name)) return Result.CONTINUE;
-      if ("".equals(name)) return Result.CONTINUE;
+      if (name.isEmpty()) return Result.CONTINUE;
 
       int tagOffset = tag.getTextRange().getStartOffset();
 
