@@ -48,7 +48,11 @@ public abstract class FileBasedIndexExtension<K, V> {
   public abstract FileBasedIndex.InputFilter getInputFilter();
   
   public abstract boolean dependsOnFileContent();
-  
+
+  public boolean indexDirectories() {
+    return false;
+  }
+
   public abstract int getVersion();
 
   /**

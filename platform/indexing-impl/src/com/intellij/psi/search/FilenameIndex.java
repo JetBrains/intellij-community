@@ -18,8 +18,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.*;
@@ -67,8 +66,13 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   }
 
   @Override
+  public boolean indexDirectories() {
+    return true;
+  }
+
+  @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
   public static String[] getAllFilenames(Project project) {
@@ -81,17 +85,33 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   }
 
   public static PsiFile[] getFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
+    return (PsiFile[])getFilesByName(project, name, scope, false);
+  }
+
+  public static PsiFileSystemItem[] getFilesByName(final Project project,
+                                         final String name,
+                                         final GlobalSearchScope scope,
+                                         boolean includeDirs) {
     final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope);
     if (files.isEmpty()) return PsiFile.EMPTY_ARRAY;
-    List<PsiFile> result = new ArrayList<PsiFile>();
+    List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
     for(VirtualFile file: files) {
       if (!file.isValid()) continue;
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      PsiManager psiManager = PsiManager.getInstance(project);
+      PsiFile psiFile = psiManager.findFile(file);
       if (psiFile != null) {
         result.add(psiFile);
+      } else if (includeDirs) {
+        PsiDirectory dir = psiManager.findDirectory(file);
+        if (dir != null) result.add(dir);
       }
     }
-    return PsiUtilCore.toPsiFileArray(result);
+
+    if (includeDirs) {
+      return ArrayUtil.toObjectArray(result, PsiFileSystemItem.class);
+    }
+    //noinspection SuspiciousToArrayCall
+    return result.toArray(new PsiFile[result.size()]);
   }
 
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {

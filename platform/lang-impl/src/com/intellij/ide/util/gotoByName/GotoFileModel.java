@@ -29,6 +29,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,8 +117,8 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
   @Override
   @Nullable
   public String getFullName(final Object element) {
-    if (element instanceof PsiFile) {
-      final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
+    if (element instanceof PsiFileSystemItem) {
+      final VirtualFile virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
       return virtualFile != null ? virtualFile.getPath() : null;
     }
 
