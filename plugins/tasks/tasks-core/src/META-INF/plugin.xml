@@ -25,6 +25,9 @@
       <action id="tasks.goto" class="com.intellij.tasks.actions.GotoTaskAction">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift N"/>
       </action>
+      <action id="tasks.close" class="com.intellij.tasks.actions.CloseTaskAction" text="_Close Active Task...">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift W"/>
+      </action>
       <separator/>
       <action id="tasks.create.changelist" class="com.intellij.tasks.actions.CreateChangelistAction" text="Create Change_list..."/>
       <action id="tasks.show.task.description" class="com.intellij.tasks.actions.ShowTaskDescription" text="Show Description"/>

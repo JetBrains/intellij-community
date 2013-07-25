@@ -64,6 +64,7 @@ public class OpenTaskDialog extends DialogWrapper {
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
     setTitle("Open Task");
     myTaskNameLabel.setText(TaskUtil.getTrimmedSummary(task));
+    myTaskNameLabel.setIcon(task.getIcon());
 
     TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
     ControlBinder binder = new ControlBinder(manager.getState());

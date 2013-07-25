@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,10 +38,12 @@ import java.util.concurrent.Callable;
  */
 @Tag("server")
 public abstract class TaskRepository  {
+
   protected static final int NO_FEATURES = 0;
   public static final int BASIC_HTTP_AUTHORIZATION = 0x0001;
   public static final int LOGIN_ANONYMOUSLY = 0x0002;
   public static final int TIME_MANAGEMENT = 0x0004;
+  public static final int STATE_UPDATING = 0x0008;
 
   @Attribute("url")
   public String getUrl() {
@@ -111,6 +114,9 @@ public abstract class TaskRepository  {
   @Nullable
   public abstract String extractId(String taskName);
 
+  /**
+   * @see com.intellij.tasks.TaskRepositoryType#getPossibleTaskStates()
+   */
   public void setTaskState(Task task, TaskState state) throws Exception {
     throw new UnsupportedOperationException();
   }
@@ -222,10 +228,12 @@ public abstract class TaskRepository  {
     public abstract void cancel();
   }
 
-  public boolean isSupported(int feature) {
+  public boolean isSupported(@MagicConstant(
+    flags = {NO_FEATURES, BASIC_HTTP_AUTHORIZATION, LOGIN_ANONYMOUSLY, STATE_UPDATING, TIME_MANAGEMENT}) int feature) {
     return (getFeatures() & feature) != 0;
   }
 
+  @MagicConstant(flags = { NO_FEATURES, BASIC_HTTP_AUTHORIZATION, LOGIN_ANONYMOUSLY, STATE_UPDATING, TIME_MANAGEMENT})
   protected int getFeatures() {
     return NO_FEATURES;
   }
