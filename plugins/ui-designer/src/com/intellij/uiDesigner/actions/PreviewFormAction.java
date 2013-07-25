@@ -364,9 +364,6 @@ public final class PreviewFormAction extends AnAction{
       return UIDesignerBundle.message("title.form.preview");
     }
 
-    public void checkConfiguration() throws RuntimeConfigurationException {
-    }
-
     @NotNull
     public Module[] getModules() {
       return new Module[] {myModule};
