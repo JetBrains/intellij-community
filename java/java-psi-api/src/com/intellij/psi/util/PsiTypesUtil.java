@@ -218,9 +218,6 @@ public class PsiTypesUtil {
         return PsiType.BOOLEAN.getBoxedType(parent);
       }
     }
-    else if (parent instanceof PsiTypeCastExpression) {
-      return ((PsiTypeCastExpression)parent).getType();
-    }
     else if (parent instanceof PsiReturnStatement) {
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
       if (lambdaExpression != null) {
