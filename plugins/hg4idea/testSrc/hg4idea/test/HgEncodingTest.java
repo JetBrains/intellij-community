@@ -16,13 +16,12 @@
 package hg4idea.test;
 
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import org.zmlx.hg4idea.HgVcs;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.command.HgCommitCommand;
+import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
-import org.zmlx.hg4idea.provider.HgCachingCommitedChangesProvider;
-import org.zmlx.hg4idea.provider.HgRepositoryLocation;
 
 import java.util.List;
 
@@ -45,14 +44,16 @@ public class HgEncodingTest extends HgPlatformTest {
   //test SpecialCharacters in commit message for default EncodingProject settings
   public void testUtfMessageInHistoryWithSpecialCharacters() throws HgCommandException, VcsException {
     cd(myRepository);
-    echo("file.txt", "lalala");
+    String fileName = "file.txt";
+    echo(fileName, "lalala");
     String comment = "öäüß";
     HgCommitCommand commitCommand = new HgCommitCommand(myProject, myRepository, comment);
     commitCommand.execute();
-    HgCachingCommitedChangesProvider cachingProvider = new HgCachingCommitedChangesProvider(myProject, HgVcs.getInstance(myProject));
-    List<CommittedChangeList> committedChangeList =
-      cachingProvider.getCommittedChanges(new ChangeBrowserSettings(), new HgRepositoryLocation(myRepository.getUrl(), myRepository), 1);
-    CommittedChangeList change = committedChangeList.get(0);
-    assertEquals(comment, change.getComment());
+    HgLogCommand logCommand = new HgLogCommand(myProject);
+    VirtualFile file = myRepository.findChild(fileName);
+    assert file != null;
+    List<HgFileRevision> revisions = logCommand.execute(new HgFile(myProject, file), 1, false);
+    HgFileRevision rev = revisions.get(0);
+    assertEquals(comment, rev.getCommitMessage());
   }
 }
