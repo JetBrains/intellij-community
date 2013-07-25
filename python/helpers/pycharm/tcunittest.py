@@ -148,8 +148,12 @@ class TeamcityTestResult(TestResult):
       import inspect
 
       try:
-        source_dir_splitted = inspect.getsourcefile(test.__class__).split("/")[:-1]
-        source_dir = "/".join(source_dir_splitted) + "/"
+        source_file = inspect.getsourcefile(test.__class__)
+        if source_file:
+            source_dir_splitted = source_file.split("/")[:-1]
+            source_dir = "/".join(source_dir_splitted) + "/"
+        else:
+            source_dir = ""
       except TypeError:
         source_dir = ""
 
