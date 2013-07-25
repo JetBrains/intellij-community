@@ -61,6 +61,10 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
     } else {
       testPackage = null;
     }
+    final Module predefinedModule =
+          ((JUnitConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
+            .getConfigurationTemplate(getConfigurationFactory())
+            .getConfiguration()).getConfigurationModule().getModule();
     final String vmParameters = predefinedConfiguration instanceof JUnitConfiguration ? ((JUnitConfiguration)predefinedConfiguration).getVMParameters() : null;
     for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final JUnitConfiguration unitConfiguration = (JUnitConfiguration)existingConfiguration.getConfiguration();
@@ -70,6 +74,9 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
         if (testobject.isConfiguredByElement(unitConfiguration, testClass, testMethod, testPackage)) {
           final Module configurationModule = unitConfiguration.getConfigurationModule().getModule();
           if (Comparing.equal(location.getModule(), configurationModule)) return existingConfiguration;
+          if (Comparing.equal(predefinedModule, configurationModule)) {
+            return existingConfiguration;
+          }
         }
       }
     }

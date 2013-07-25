@@ -45,6 +45,10 @@ public abstract class TestNGConfigurationProducer extends JavaRuntimeConfigurati
     final TestNGConfiguration testNGConfiguration =
       (TestNGConfiguration)context.getOriginalConfiguration(TestNGConfigurationType.getInstance());
     final String vmParameters = testNGConfiguration != null ? testNGConfiguration.getVMParameters() : null;
+    final Module predefinedModule =
+              ((TestNGConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
+                .getConfigurationTemplate(getConfigurationFactory())
+                .getConfiguration()).getConfigurationModule().getModule();
     for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       TestNGConfiguration config = (TestNGConfiguration)existingConfiguration.getConfiguration();
       if (vmParameters != null && !Comparing.strEqual(config.getVMParameters(), vmParameters)) continue;
@@ -54,6 +58,7 @@ public abstract class TestNGConfigurationProducer extends JavaRuntimeConfigurati
         if (testobject.isConfiguredByElement(element)) {
           final Module configurationModule = config.getConfigurationModule().getModule();
           if (Comparing.equal(location.getModule(), configurationModule)) return existingConfiguration;
+          if (Comparing.equal(predefinedModule, configurationModule)) return existingConfiguration;
         }
       }
     }
