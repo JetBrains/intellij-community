@@ -55,25 +55,25 @@ public class GroovyMethodDescriptor {
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)
   //public Arguments[] arguments;
-  public NamedArguments[] myArguments;
+  public NamedArgument[] myArguments;
 
-  @Tag("namedArguments")
-  public static class NamedArguments {
+  @Tag("namedArgument")
+  public static class NamedArgument {
     @Attribute("type")
     public String type;
 
     @Attribute("showFirst")
     public Boolean isFirst;
 
-    @Attribute("names")
-    public String names;
+    @Attribute("name")
+    public String name;
 
     @Attribute("referenceProvider")
     public String referenceProvider;
 
     protected Iterable<String> getNames() {
-      assert !StringUtil.isEmptyOrSpaces(names);
-      return StringUtil.tokenize(names, ATTR_NAMES_DELIMITER);
+      assert !StringUtil.isEmptyOrSpaces(name);
+      return StringUtil.tokenize(name, ATTR_NAMES_DELIMITER);
     }
   }
 
@@ -105,7 +105,7 @@ public class GroovyMethodDescriptor {
 
     Map<String, String> res = new HashMap<String, String>();
 
-    for (NamedArguments argument : myArguments) {
+    for (NamedArgument argument : myArguments) {
       if (argument.referenceProvider != null) {
         for (String name : argument.getNames()) {
           Object oldValue = res.put(name, argument.referenceProvider);
@@ -128,7 +128,7 @@ public class GroovyMethodDescriptor {
       new HashMap<String, NamedArgumentDescriptor>();
 
     if (myArguments != null) {
-      for (NamedArguments arguments : myArguments) {
+      for (NamedArgument arguments : myArguments) {
         NamedArgumentDescriptor descriptor = getDescriptor(isNamedArgsShowFirst, arguments.isFirst, arguments.type);
 
         for (String name : arguments.getNames()) {
