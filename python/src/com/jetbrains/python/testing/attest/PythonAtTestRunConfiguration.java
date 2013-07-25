@@ -30,11 +30,6 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
   }
 
   @Override
-  protected ModuleBasedConfiguration createInstance() {
-    return new PythonAtTestRunConfiguration(getProject(), getFactory(), getName());
-  }
-
-  @Override
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     return new PythonAtTestRunConfigurationEditor(getProject(), this);
   }

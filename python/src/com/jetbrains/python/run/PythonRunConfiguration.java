@@ -43,10 +43,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     setUnbufferedEnv();
   }
 
-  protected ModuleBasedConfiguration createInstance() {
-    return new PythonRunConfiguration(getProject(), getFactory(), getName());
-  }
-
   @Override
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     return new PythonRunConfigurationEditor(this);

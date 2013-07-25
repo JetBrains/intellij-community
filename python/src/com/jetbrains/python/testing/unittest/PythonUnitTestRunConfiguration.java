@@ -34,11 +34,6 @@ public class PythonUnitTestRunConfiguration extends
   }
 
   @Override
-  protected ModuleBasedConfiguration createInstance() {
-    return new PythonUnitTestRunConfiguration(getProject(), getFactory(), getName());
-  }
-
-  @Override
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     return new PythonUnitTestRunConfigurationEditor(getProject(), this);
   }

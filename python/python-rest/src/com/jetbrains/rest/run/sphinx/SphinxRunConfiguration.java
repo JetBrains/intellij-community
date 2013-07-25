@@ -23,11 +23,6 @@ public class SphinxRunConfiguration extends RestRunConfiguration {
   }
 
   @Override
-  protected ModuleBasedConfiguration createInstance() {
-    return new SphinxRunConfiguration(getName(), getProject(), getFactory());
-  }
-
-  @Override
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     RestConfigurationEditor editor = new RestConfigurationEditor(getProject(), this, new SphinxTasksModel());
     editor.setConfigurationName("Sphinx task");

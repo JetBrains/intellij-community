@@ -35,11 +35,6 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
   }
 
   @Override
-  protected ModuleBasedConfiguration createInstance() {
-    return new PythonNoseTestRunConfiguration(getProject(), getFactory(), getName());
-  }
-
-  @Override
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     return new PythonNoseTestRunConfigurationEditor(getProject(), this);
   }

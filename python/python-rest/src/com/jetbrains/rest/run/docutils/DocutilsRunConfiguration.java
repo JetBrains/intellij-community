@@ -24,11 +24,6 @@ public class DocutilsRunConfiguration extends RestRunConfiguration {
   }
 
   @Override
-  protected ModuleBasedConfiguration createInstance() {
-    return new DocutilsRunConfiguration(getName(), getProject(), getFactory());
-  }
-
-  @Override
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     RestConfigurationEditor editor = new RestConfigurationEditor(getProject(), this, new DocutilsTasksModel());
     editor.setConfigurationName("Docutils task");
