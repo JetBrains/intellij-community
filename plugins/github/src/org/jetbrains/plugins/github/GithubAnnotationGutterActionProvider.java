@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github.ui;
+package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
