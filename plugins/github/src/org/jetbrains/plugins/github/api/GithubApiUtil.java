@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThrowableConvertor;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.*;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -297,25 +295,21 @@ public class GithubApiUtil {
 
   @NotNull
   private static <T> T fromJson(@Nullable JsonElement json, @NotNull Class<T> classT) throws IOException {
-    //cast as workaround for early java 1.6 bug
-    //noinspection RedundantCast
-    return (T)fromJson(json, (Type)classT);
-  }
-
-  @NotNull
-  private static <T> T fromJson(@Nullable JsonElement json, @NotNull Type type) throws IOException {
     if (json == null) {
       throw new JsonException("Unexpected empty response");
     }
 
     T res;
     try {
-      //cast as workaround for early java 1.6 bug 
+      //cast as workaround for early java 1.6 bug
       //noinspection RedundantCast
-      res = (T) gson.fromJson(json, type);
+      res = (T)gson.fromJson(json, classT);
     }
-    catch (JsonParseException jpe) {
-      throw new JsonException("Parse exception converting JSON to object " + type.toString(), jpe);
+    catch (ClassCastException e) {
+      throw new JsonException("Parse exception while converting JSON to object " + classT.toString(), e);
+    }
+    catch (JsonParseException e) {
+      throw new JsonException("Parse exception while converting JSON to object " + classT.toString(), e);
     }
     if (res == null) {
       throw new JsonException("Empty Json response");
@@ -356,8 +350,7 @@ public class GithubApiUtil {
     String request = user == null ? "/user/repos" : "/users/" + user + "/repos";
     JsonElement result = getRequest(auth, request);
 
-    List<GithubRepoRaw> rawRepos = fromJson(result, new TypeToken<List<GithubRepoRaw>>() {
-    }.getType());
+    GithubRepoRaw[] rawRepos = fromJson(result, GithubRepoRaw[].class);
 
     List<GithubRepo> repos = new ArrayList<GithubRepo>();
     for (GithubRepoRaw raw : rawRepos) {
@@ -431,8 +424,7 @@ public class GithubApiUtil {
 
     JsonElement result = getRequest(auth, path);
 
-    List<GithubIssueRaw> rawIssues = fromJson(result, new TypeToken<List<GithubIssueRaw>>() {
-    }.getType());
+    GithubIssueRaw[] rawIssues = fromJson(result, GithubIssueRaw[].class);
 
     List<GithubIssue> issues = new ArrayList<GithubIssue>();
     for (GithubIssueRaw raw : rawIssues) {
@@ -458,8 +450,7 @@ public class GithubApiUtil {
 
     JsonElement result = getRequest(auth, path);
 
-    List<GithubIssueCommentRaw> rawComments = fromJson(result, new TypeToken<List<GithubIssueCommentRaw>>() {
-    }.getType());
+    GithubIssueCommentRaw[] rawComments = fromJson(result, GithubIssueCommentRaw[].class);
 
     List<GithubIssueComment> comments = new ArrayList<GithubIssueComment>();
     for (GithubIssueCommentRaw raw : rawComments) {
@@ -493,8 +484,7 @@ public class GithubApiUtil {
 
     JsonElement result = getRequest(auth, path);
 
-    List<GithubPullRequestRaw> rawRequests = fromJson(result, new TypeToken<List<GithubPullRequestRaw>>() {
-    }.getType());
+    GithubPullRequestRaw[] rawRequests = fromJson(result, GithubPullRequestRaw[].class);
 
     List<GithubPullRequest> requests = new ArrayList<GithubPullRequest>();
     for (GithubPullRequestRaw raw : rawRequests) {
@@ -510,8 +500,7 @@ public class GithubApiUtil {
 
     JsonElement result = getRequest(auth, path);
 
-    List<GithubCommitRaw> rawCommits = fromJson(result, new TypeToken<List<GithubCommitRaw>>() {
-    }.getType());
+    GithubCommitRaw[] rawCommits = fromJson(result, GithubCommitRaw[].class);
 
     List<GithubCommit> commits = new ArrayList<GithubCommit>();
     for (GithubCommitRaw raw : rawCommits) {
@@ -527,8 +516,7 @@ public class GithubApiUtil {
 
     JsonElement result = getRequest(auth, path);
 
-    List<GithubFileRaw> rawFiles = fromJson(result, new TypeToken<List<GithubFileRaw>>() {
-    }.getType());
+    GithubFileRaw[] rawFiles = fromJson(result, GithubFileRaw[].class);
 
     List<GithubFile> files = new ArrayList<GithubFile>();
     for (GithubFileRaw raw : rawFiles) {
