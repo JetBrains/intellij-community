@@ -312,7 +312,7 @@ public class GithubApiUtil {
     }
   }
 
-  public static <Raw extends DataConstructorSimplified<Result>, Result> Result createDataFromRaw(@NotNull Raw rawObject,
+  static <Raw extends DataConstructorSimplified<Result>, Result> Result createDataFromRaw(@NotNull Raw rawObject,
                                                                                                  @NotNull Class<Result> result)
     throws JsonException {
     try {
