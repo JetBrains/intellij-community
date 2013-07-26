@@ -10,7 +10,7 @@ import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -98,11 +98,11 @@ public class TrackCoverageAction extends ToggleModelAction {
       return null;
     }
 
-    final RunConfigurationBase runConf = myModel.getProperties().getConfiguration();
+    final ModuleRunConfiguration runConf = myModel.getProperties().getConfiguration();
     if (runConf instanceof ModuleBasedConfiguration) {
 
       // if coverage supported for run configuration
-      if (CoverageEnabledConfiguration.isApplicableTo(runConf)) {
+      if (CoverageEnabledConfiguration.isApplicableTo((ModuleBasedConfiguration) runConf)) {
 
         // Get coverage settings
         Executor executor = myProperties.getExecutor();
