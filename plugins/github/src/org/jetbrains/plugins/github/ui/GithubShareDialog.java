@@ -24,7 +24,7 @@ public class GithubShareDialog extends DialogWrapper {
     myAvailableNames = availableNames;
     myGithubSharePanel = new GithubSharePanel(this);
     init();
-    setTitle("Share project on GitHub");
+    setTitle("Share Project On GitHub");
     setOKButtonText("Share");
     myGithubSharePanel.setRepositoryName(project.getName());
     myGithubSharePanel.setPrivateRepoAvailable(privateRepoAllowed);
