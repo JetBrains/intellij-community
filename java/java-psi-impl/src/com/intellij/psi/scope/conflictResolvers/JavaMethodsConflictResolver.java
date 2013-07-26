@@ -626,6 +626,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   private static Specifics chooseHigherDimension(PsiType type1, PsiType type2) {
+    if (type1 != null && type1.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return null;
+    if (type2 != null && type2.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return null;
     int d1 = type1 != null ? type1.getArrayDimensions() : 0;
     int d2 = type2 != null ? type2.getArrayDimensions() : 0;
     if (d1 > d2) {
