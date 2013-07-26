@@ -227,11 +227,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
           if (newElement instanceof GroovyFile) {
             GroovyFile file = (GroovyFile)newElement;
             setScriptPath(file.getVirtualFile().getPath());
-
-            final PsiClass newClassToRun = GroovyRunnerUtil.getRunningClass(newElement);
-            if (newClassToRun instanceof GroovyScriptClass) {
-              setName(GroovyRunnerUtil.getConfigurationName(file.getScriptClass(), getConfigurationModule()));
-            }
           }
         }
 

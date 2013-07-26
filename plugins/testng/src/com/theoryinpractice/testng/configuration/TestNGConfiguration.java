@@ -449,18 +449,14 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       if (!method.getContainingClass().equals(myClass.getPsiElement())) return null;
       class Listener extends RefactoringElementAdapter implements UndoRefactoringElementListener {
         public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
-          final boolean generatedName = isGeneratedName();
           data.setTestMethod(PsiLocation.fromPsiElement((PsiMethod)newElement));
-          if (generatedName) setGeneratedName();
         }
 
         @Override
         public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
           final int methodIdx = oldQualifiedName.indexOf("#") + 1;
           if (methodIdx <= 0 || methodIdx >= oldQualifiedName.length()) return;
-          final boolean generatedName = isGeneratedName();
           data.METHOD_NAME = oldQualifiedName.substring(methodIdx);
-          if (generatedName) setGeneratedName();
         }
       }
       return RunConfigurationExtension.wrapRefactoringElementListener(element, this, new Listener());

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author anna
  * @see LocatableConfigurationBase
  */
-public interface LocatableConfiguration extends RunProfile {
+public interface LocatableConfiguration extends RunConfiguration {
   /**
    * Checks if the current name for the run configuration was automatically generated.
    *

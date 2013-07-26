@@ -220,9 +220,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   public void setMainClassName(final String qualifiedName) {
-    final boolean generatedName = isGeneratedName();
     MAIN_CLASS_NAME = qualifiedName;
-    if (generatedName) setGeneratedName();
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {

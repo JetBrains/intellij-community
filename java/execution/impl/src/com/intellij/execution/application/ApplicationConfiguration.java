@@ -113,9 +113,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   public void setMainClassName(final String qualifiedName) {
-    final boolean generatedName = isGeneratedName();
     MAIN_CLASS_NAME = qualifiedName;
-    if (generatedName) setGeneratedName();
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {

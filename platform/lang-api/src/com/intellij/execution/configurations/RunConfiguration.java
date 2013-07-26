@@ -31,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
  * If debugger is provided by plugin, RunConfiguration should also implement RunConfigurationWithSuppressedDefaultDebugAction
  * Otherwise (in case of disabled plugin) debug action may be enabled in UI but with no reaction
  * @see RunConfigurationWithSuppressedDefaultDebugAction
+ *
+ * @see RefactoringListenerProvider
  */
 public interface RunConfiguration extends RunProfile, JDOMExternalizable, Cloneable {
   /**
