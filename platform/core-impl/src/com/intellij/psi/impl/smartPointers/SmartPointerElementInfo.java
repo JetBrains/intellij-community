@@ -44,4 +44,6 @@ interface SmartPointerElementInfo {
   @Nullable
   Segment getRange();
   @NotNull Project getProject();
+
+  void cleanup();
 }

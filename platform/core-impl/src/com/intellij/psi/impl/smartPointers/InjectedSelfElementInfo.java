@@ -116,4 +116,10 @@ class InjectedSelfElementInfo extends SelfElementInfo {
     SmartPointerElementInfo oElementInfo = ((SmartPsiElementPointerImpl)((InjectedSelfElementInfo)other).myInjectedFileRangeInHostFile).getElementInfo();
     return myElementInfo.pointsToTheSameElementAs(oElementInfo);
   }
+
+  @Override
+  public void cleanup() {
+    super.cleanup();
+    SmartPointerManager.getInstance(getProject()).removePointer(myInjectedFileRangeInHostFile);
+  }
 }

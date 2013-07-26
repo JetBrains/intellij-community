@@ -84,4 +84,9 @@ public class ClsElementInfo implements SmartPointerElementInfo {
   public Project getProject() {
     return myStubIndexReference.getProject();
   }
+
+  @Override
+  public void cleanup() {
+
+  }
 }

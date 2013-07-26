@@ -106,7 +106,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
   }
 
-  private static final Key<Reference<SmartPsiElementPointer>> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
+  private static final Key<Reference<SmartPointerEx>> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
   @Override
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element) {
@@ -120,22 +120,26 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     if (containingFile != null && !containingFile.isValid() || containingFile == null && !element.isValid()) {
       LOG.error("Invalid element:" + element);
     }
-    SmartPsiElementPointer<E> cachedPointer = getCachedPointer(element);
+    SmartPointerEx<E> cachedPointer = getCachedPointer(element);
     if (cachedPointer != null) {
+      containingFile = containingFile == null ? element.getContainingFile() : containingFile;
+      if (containingFile != null && areBeltsFastened(containingFile)) {
+        cachedPointer.fastenBelt(0, null);
+      }
       return cachedPointer;
     }
 
     SmartPointerEx<E> pointer = new SmartPsiElementPointerImpl<E>(myProject, element, containingFile);
     initPointer(pointer, containingFile);
-    element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<SmartPsiElementPointer>(pointer));
+    element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<SmartPointerEx>(pointer));
     return pointer;
   }
 
-  private static <E extends PsiElement> SmartPsiElementPointer<E> getCachedPointer(@NotNull E element) {
-    Reference<SmartPsiElementPointer> data = element.getUserData(CACHED_SMART_POINTER_KEY);
-    SmartPsiElementPointer cachedPointer = data == null ? null : data.get();
-    if (cachedPointer instanceof SmartPointerEx) {
-      PsiElement cachedElement = ((SmartPointerEx)cachedPointer).getCachedElement();
+  private static <E extends PsiElement> SmartPointerEx<E> getCachedPointer(@NotNull E element) {
+    Reference<SmartPointerEx> data = element.getUserData(CACHED_SMART_POINTER_KEY);
+    SmartPointerEx cachedPointer = data == null ? null : data.get();
+    if (cachedPointer != null) {
+      PsiElement cachedElement = cachedPointer.getCachedElement();
       if (cachedElement != null && cachedElement != element) {
         return null;
       }
@@ -160,7 +164,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     synchronized (lock) {
       List<SmartPointerEx> pointers = getPointers(containingFile);
       if (pointers == null) {
-        pointers = new UnsafeWeakList<SmartPointerEx>(); // we synchronise access anyway by containingFile
+        pointers = new UnsafeWeakList<SmartPointerEx>(); // we synchronise access anyway
         containingFile.putUserData(SMART_POINTERS_IN_PSI_FILE_KEY, pointers);
       }
       pointers.add(pointer);
@@ -171,14 +175,29 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
   }
 
+  @Override
+  public boolean removePointer(@NotNull SmartPsiElementPointer pointer) {
+    synchronized (lock) {
+      PsiFile containingFile = pointer.getContainingFile();
+      if (containingFile == null) return false;
+      List<SmartPointerEx> pointers = getPointers(containingFile);
+      if (pointers == null) return false;
+      SmartPointerElementInfo info = ((SmartPsiElementPointerImpl)pointer).getElementInfo();
+      info.cleanup();
+      return pointers.remove(pointer);
+    }
+  }
+
   private static List<SmartPointerEx> getPointers(@NotNull PsiFile containingFile) {
     return containingFile.getUserData(SMART_POINTERS_IN_PSI_FILE_KEY);
   }
 
   @TestOnly
   public int getPointersNumber(@NotNull PsiFile containingFile) {
-    List<SmartPointerEx> pointers = getPointers(containingFile);
-    return pointers == null ? 0 : pointers.size();
+    synchronized (lock) {
+      List<SmartPointerEx> pointers = getPointers(containingFile);
+      return pointers == null ? 0 : pointers.size();
+    }
   }
 
   private static boolean areBeltsFastened(@NotNull PsiFile file) {

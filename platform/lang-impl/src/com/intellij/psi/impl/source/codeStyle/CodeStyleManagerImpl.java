@@ -98,9 +98,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(new CodeFormatterFacade(getSettings()).processElement(treeElement));
     if (!canChangeWhiteSpacesOnly) {
       return postProcessElement(formatted);
-    } else {
-      return formatted;
     }
+    return formatted;
   }
 
   private PsiElement postProcessElement(@NotNull final PsiElement formatted) {
@@ -234,6 +233,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
         postProcessText(file, new TextRange(info.fromStart ? 0 : startElement.getTextRange().getStartOffset(),
                                             info.toEnd ? file.getTextLength() : endElement.getTextRange().getEndOffset()));
       }
+      if (info.startPointer != null) smartPointerManager.removePointer(info.startPointer);
+      if (info.endPointer != null) smartPointerManager.removePointer(info.endPointer);
     }
 
     if (editor == null) {
@@ -794,11 +795,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   private static class RangeFormatInfo{
-
-    public final SmartPsiElementPointer startPointer;
-    public final SmartPsiElementPointer endPointer;
-    public final boolean                fromStart;
-    public final boolean                toEnd;
+    private final SmartPsiElementPointer startPointer;
+    private final SmartPsiElementPointer endPointer;
+    private final boolean                fromStart;
+    private final boolean                toEnd;
 
     RangeFormatInfo(@Nullable SmartPsiElementPointer startPointer,
                     @Nullable SmartPsiElementPointer endPointer,

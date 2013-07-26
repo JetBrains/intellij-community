@@ -94,4 +94,9 @@ class FileElementInfo implements SmartPointerElementInfo {
   public Project getProject() {
     return myProject;
   }
+
+  @Override
+  public void cleanup() {
+
+  }
 }

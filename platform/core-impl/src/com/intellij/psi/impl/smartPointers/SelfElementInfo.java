@@ -205,6 +205,15 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     return ref == null ? null : ref.get();
   }
 
+  @Override
+  public void cleanup() {
+    RangeMarker marker = getMarker();
+    if (marker != null) marker.dispose();
+    unfastenBelt(0);
+    setMarker(null);
+    mySyncMarkerIsValid = false;
+  }
+
   private void setMarker(RangeMarker marker) {
     myMarkerRef = marker == null ? null : new SoftReference<RangeMarker>(marker);
   }
