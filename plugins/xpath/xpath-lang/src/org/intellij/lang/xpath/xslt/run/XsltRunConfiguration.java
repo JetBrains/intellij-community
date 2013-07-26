@@ -61,7 +61,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class XsltRunConfiguration extends RunConfigurationBase implements LocatableConfiguration, ModuleRunConfiguration, RunConfigurationWithSuppressedDefaultDebugAction {
+public final class XsltRunConfiguration extends LocatableConfigurationBase implements ModuleRunConfiguration, RunConfigurationWithSuppressedDefaultDebugAction {
     private static final String NAME = "XSLT Configuration";
 
     private static final String STRICT_FILE_PATH_EXPR = "(file\\://?(?:/?\\p{Alpha}\\:)?(?:/\\p{Alpha}\\:)?[^:]+)";
@@ -494,11 +494,6 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
             }
         }
         return module;
-    }
-
-    @Override
-    public boolean isGeneratedName() {
-        return mySuggestedName != null;
     }
 
     @Override

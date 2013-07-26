@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.configurations;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Base class for configurations that can be created from context (a location in a file) by implementations of
  * {@link com.intellij.execution.junit.RuntimeConfigurationProducer}.
@@ -34,7 +36,9 @@ public interface LocatableConfiguration extends RunProfile {
    * Returns the default name for the run configuration based on its settings (such as the name of class or file to run).
    *
    * @return the suggested name for the configuration, or null if no name could be suggested based on the current settings (for example,
-   * the name of the file to run isn't yet specified).
+   * the name of the file to run isn't yet specified). NOTE: Please don't return hard-coded strings which are not based on the current
+   * run configuration settings (such as "Unnamed").
    */
+  @Nullable
   String suggestedName();
 }

@@ -27,7 +27,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -37,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.*;
 
-public class MavenRunConfiguration extends RunConfigurationBase implements LocatableConfiguration, ModuleRunProfile {
+public class MavenRunConfiguration extends LocatableConfigurationBase implements ModuleRunProfile {
   private MavenSettings mySettings;
 
   protected MavenRunConfiguration(Project project, ConfigurationFactory factory, String name) {
@@ -108,11 +107,6 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     return state;
   }
 
-  @Override
-  public void checkConfiguration() throws RuntimeConfigurationException {
-
-  }
-
   private void updateProjectsFolders() {
     MavenProjectsManager.getInstance(getProject()).updateProjectTargetFolders();
   }
@@ -172,16 +166,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   }
 
   @Override
-  public boolean isGeneratedName() {
-    return Comparing.equal(getName(), getGeneratedName());
-  }
-
-  @Override
   public String suggestedName() {
-    return getGeneratedName();
-  }
-
-  private String getGeneratedName() {
     return MavenRunConfigurationType.generateName(getProject(), mySettings.myRunnerParameters);
   }
 

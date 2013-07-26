@@ -25,7 +25,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,7 +43,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 23.05.13 18:30
  */
-public class ExternalSystemRunConfiguration extends RunConfigurationBase implements LocatableConfiguration {
+public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
 
   private static final Logger LOG = Logger.getInstance("#" + ExternalSystemRunConfiguration.class.getName());
 
@@ -60,18 +59,8 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
   }
 
   @Override
-  public boolean isGeneratedName() {
-    return Comparing.equal(getName(), getGeneratedName());
-  }
-
-  @NotNull
-  private String getGeneratedName() {
-    return AbstractExternalSystemTaskConfigurationType.generateName(getProject(), mySettings);
-  }
-
-  @Override
   public String suggestedName() {
-    return getGeneratedName();
+    return AbstractExternalSystemTaskConfigurationType.generateName(getProject(), mySettings);
   }
 
   @Override
@@ -113,10 +102,6 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
     return new MyRunnableState(mySettings, getProject(), DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId()));
   }
 
-  @Override
-  public void checkConfiguration() throws RuntimeConfigurationException {
-  }
-  
   public static class MyRunnableState implements RunProfileState {
     
     @NotNull private final ExternalSystemTaskExecutionSettings mySettings;
