@@ -122,21 +122,17 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
           public void elementRenamedOrMoved(@NotNull PsiElement newElement) {
             VirtualFile virtualFile = ((PsiFile)newElement).getVirtualFile();
             if (virtualFile != null) {
-              updateScriptAndName(virtualFile.getPath());
+              updateScriptName(virtualFile.getPath());
             }
           }
 
           @Override
           public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
-            updateScriptAndName(oldQualifiedName);
+            updateScriptName(oldQualifiedName);
           }
 
-          private void updateScriptAndName(String path) {
-            boolean rename = getName().equals(suggestedName());
+          private void updateScriptName(String path) {
             myScriptName = FileUtil.toSystemDependentName(path);
-            if (rename) {
-              setGeneratedName();
-            }
           }
         };
       }

@@ -251,7 +251,6 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
             setWorkingDirectory(newPath);
             if (myTestType == TestType.TEST_FOLDER) {
               myFolderName = newPath;
-              setGeneratedName();
             }
           }
 
@@ -261,7 +260,6 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
             setWorkingDirectory(systemDependant);
             if (myTestType == TestType.TEST_FOLDER) {
               myFolderName = systemDependant;
-              setGeneratedName();
             }
           }
         };
@@ -285,14 +283,12 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
             VirtualFile virtualFile = ((PsiFile)newElement).getVirtualFile();
             if (virtualFile != null) {
               myScriptName = FileUtil.toSystemDependentName(virtualFile.getPath());
-              setGeneratedName();
             }
           }
 
           @Override
           public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
             myScriptName = FileUtil.toSystemDependentName(oldQualifiedName);
-            setGeneratedName();
           }
         };
       }
@@ -302,13 +298,11 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
           @Override
           protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
             myClassName = ((PyClass) newElement).getName();
-            setGeneratedName();
           }
 
           @Override
           public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
             myClassName = oldQualifiedName;
-            setGeneratedName();
           }
         };
       }
@@ -321,7 +315,6 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
             @Override
             protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
               myMethodName = ((PyFunction) newElement).getName();
-              setGeneratedName();
             }
 
             @Override
@@ -329,7 +322,6 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
               final int methodIdx = oldQualifiedName.indexOf("#") + 1;
               if (methodIdx > 0 && methodIdx < oldQualifiedName.length()) {
                 myMethodName = oldQualifiedName.substring(methodIdx);
-                setGeneratedName();
               }
             }
           };
