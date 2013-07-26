@@ -81,6 +81,10 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest("AddSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.add.parameter.self", "self"), true, true);
   }
 
+  public void testReplacePrint() {
+    doInspectionTest("ReplacePrint.py", PyCompatibilityInspection.class, PyBundle.message("QFIX.statement.effect"), true, true);
+  }
+
   public void testAddSelfFunction() { //PY-4556
     doInspectionTest("AddSelfFunction.py",
                      PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.unresolved.reference", "get_a", "self"), true, true);

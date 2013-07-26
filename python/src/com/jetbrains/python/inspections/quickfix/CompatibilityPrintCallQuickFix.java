@@ -36,7 +36,7 @@ public class CompatibilityPrintCallQuickFix implements LocalQuickFix {
   }
 
   private static void replacePrint(PsiElement expression, PyElementGenerator elementGenerator) {
-    StringBuilder stringBuilder = new StringBuilder("print (");
+    StringBuilder stringBuilder = new StringBuilder("print(");
 
     PyExpression[] target = PsiTreeUtil.getChildrenOfType(expression, PyExpression.class);
     if (target != null) {
