@@ -21,6 +21,7 @@ import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.LocatableConfiguration;
+import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.actionSystem.*;
@@ -216,9 +217,10 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   public static String suggestRunActionName(final LocatableConfiguration configuration) {
-    if (!configuration.isGeneratedName()) {
-      return ProgramRunnerUtil.shortenName(configuration.getName(), 0);
-    } else return configuration.suggestedName();
+    if (configuration instanceof LocatableConfigurationBase && configuration.isGeneratedName()) {
+      return ((LocatableConfigurationBase) configuration).getActionName();
+    }
+    return ProgramRunnerUtil.shortenName(configuration.getName(), 0);
   }
 
   protected abstract void updatePresentation(Presentation presentation, String actionText, ConfigurationContext context);

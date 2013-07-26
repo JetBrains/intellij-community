@@ -73,4 +73,16 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
   public void checkConfiguration() throws RuntimeConfigurationException {
 
   }
+
+  /**
+   * Returns the text of the context menu action to start this run configuration. This can be different from the run configuration name
+   * (for example, for a Java unit test method, the context menu shows just the name of the method, whereas the name of the run
+   * configuration includes the class name).
+   *
+   * @return the name of the action.
+   */
+  public String getActionName() {
+    String name = getName();
+    return name.length() < 20 ? name : name.substring(0, 20) + "...";
+  }
 }

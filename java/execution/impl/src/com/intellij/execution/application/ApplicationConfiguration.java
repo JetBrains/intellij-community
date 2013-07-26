@@ -105,7 +105,17 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return getConfigurationModule().findClass(MAIN_CLASS_NAME);
   }
 
+  @Override
+  @Nullable
   public String suggestedName() {
+    if (MAIN_CLASS_NAME == null) {
+      return null;
+    }
+    return JavaExecutionUtil.getPresentableClassName(MAIN_CLASS_NAME, getConfigurationModule());
+  }
+
+  @Override
+  public String getActionName() {
     if (MAIN_CLASS_NAME == null || MAIN_CLASS_NAME.length() == 0) {
       return null;
     }

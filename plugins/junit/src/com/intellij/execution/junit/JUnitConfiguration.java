@@ -124,6 +124,11 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   }
 
   public String suggestedName() {
+    return myData.getGeneratedName(getConfigurationModule());
+  }
+
+  @Override
+  public String getActionName() {
     return getTestObject().suggestActionName();
   }
 
