@@ -26,11 +26,14 @@ public class CommentLanguageInjector implements MultiHostInjector {
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement context) {
     PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
     if (!host.isValidHost()) return;
+    if (context.getClass().getSimpleName().startsWith("XmlAttribute")) return; // no injection in XML attributes, they cannot be commented
     ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
     if (manipulator == null) return;
     TextRange rangeInElement = manipulator.getRangeInElement(host);
     if (rangeInElement.isEmpty()) return;
-    BaseInjection injection = InjectorUtils.findCommentInjection(context, "comment", Ref.<PsiComment>create());
+    PsiElement anchor = rangeInElement.getStartOffset() == 0 ? context.getParent() : context; // handle XmlText
+    BaseInjection injection = InjectorUtils.findCommentInjection(anchor, "comment", Ref.<PsiComment>create());
+    //BaseInjection injection = InjectorUtils.findCommentInjection(context, "comment", Ref.<PsiComment>create());
     if (injection == null) return;
     InjectedLanguage injectedLanguage = InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
     Language language = injectedLanguage != null ? injectedLanguage.getLanguage() : null;

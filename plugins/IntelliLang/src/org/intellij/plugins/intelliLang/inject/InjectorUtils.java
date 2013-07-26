@@ -16,8 +16,10 @@
 
 package org.intellij.plugins.intelliLang.inject;
 
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -25,9 +27,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.psi.impl.source.tree.injected.Place;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
@@ -233,26 +238,62 @@ public class InjectorUtils {
   @Nullable
   public static <T> T findNearestComment(PsiElement element, NullableFunction<PsiComment, T> processor) {
     if (element instanceof PsiComment) return null;
-    PsiComment comment;
-    PsiElement start = element;
-    for (int i = 0; i < 3 && start != null; i++) {
-      if (start instanceof PsiFile) return null;
-      for (PsiElement e = start.getPrevSibling(); e != null; e = e.getPrevSibling()) {
+
+    PsiFile containingFile = element.getContainingFile();
+    Document document = PsiDocumentManager.getInstance(containingFile.getProject()).getDocument(containingFile);
+    if (document == null) return null;
+    TextRange elementRange = element.getTextRange();
+    int lineNumber = document.getLineNumber(elementRange.getStartOffset());
+
+    int minLineOffset = document.getLineStartOffset(Math.max(0, lineNumber - 3)); // allow 3 lines span
+    TextRange r = TextRange.create(minLineOffset, elementRange.getStartOffset());
+    List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(containingFile, r.getStartOffset(), r.getEndOffset());
+    List<PsiLanguageInjectionHost> otherHosts = new SmartList<PsiLanguageInjectionHost>();
+
+    boolean commentOrSpaces = false;
+    for (PsiElement e : ContainerUtil.reverse(elements)) {
+      if (e.getTextLength() > r.getLength()) continue; // skip 'parents' from #getElementsInRange
+      if (e instanceof PsiComment) {
+        commentOrSpaces = true;
+        PsiComment comment = (PsiComment)e;
+        if (!checkDepth(otherHosts, element, comment)) continue;
+        T value = processor.fun(comment);
+        if (value != null) return value;
+      }
+      else if (StringUtil.isEmptyOrSpaces(e.getText())) {
+        commentOrSpaces = true;
+      }
+      else {
+        commentOrSpaces = false;
+        if (e instanceof PsiLanguageInjectionHost) {
+          otherHosts.add((PsiLanguageInjectionHost)e);
+        }
+      }
+    }
+    if (commentOrSpaces) { // allow several comments
+      for (PsiElement e = elements.get(0).getPrevSibling(); e != null; e = e.getPrevSibling()) {
         if (e instanceof PsiComment) {
-          comment = (PsiComment)e;
+          PsiComment comment = (PsiComment)e;
+          if (!checkDepth(otherHosts, element, comment)) continue;
           T value = processor.fun(comment);
           if (value != null) return value;
-          else continue;
         }
-        else if (e instanceof PsiWhiteSpace || e.getText().trim().isEmpty()) continue;
-        else if (e instanceof PsiLanguageInjectionHost) {
-          if (StringUtil.isEmptyOrSpaces(e.getText())) continue;
-          else return null;
+        else if (!StringUtil.isEmptyOrSpaces(e.getText())) {
+          break;
         }
-        break;
       }
-      start = start.getParent();
     }
     return null;
+  }
+
+  // allow java-like multi variable commenting: String s = "s", t = "t"
+  // a comment should cover all hosts in a subtree
+  private static boolean checkDepth(List<PsiLanguageInjectionHost> hosts, PsiElement element, PsiComment comment) {
+    if (hosts.isEmpty()) return true;
+    PsiElement parent = PsiTreeUtil.findCommonParent(comment, element);
+    for (PsiLanguageInjectionHost host : hosts) {
+      if (!PsiTreeUtil.isAncestor(parent, PsiTreeUtil.findCommonParent(host, element), true)) return false;
+    }
+    return true;
   }
 }
