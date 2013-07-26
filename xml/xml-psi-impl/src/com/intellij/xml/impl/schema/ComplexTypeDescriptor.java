@@ -382,7 +382,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
   
   enum CanContainAttributeType {
-    CanContainButSkip, CanContainButDoNotSkip, CanNotContain
+    CanContainButSkip, CanContainButDoNotSkip, CanContainAny, CanNotContain
   }
 
   private CanContainAttributeType _canContainAttribute(String namespace,
@@ -400,6 +400,9 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       
       if (OTHER_NAMESPACE_ATTR_VALUE.equals(ns)) {
         return !namespace.equals(myDocumentDescriptor.getDefaultNamespace()) ? canContainAttributeType : CanContainAttributeType.CanNotContain;
+      }
+      else if ("##any".equals(ns)) {
+        return CanContainAttributeType.CanContainAny;
       }
       return canContainAttributeType;
     }

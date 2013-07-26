@@ -306,19 +306,21 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
     XmlAttributeDescriptor attribute = getAttribute(localName, namespace, context, attributeName);
     
-    if (attribute instanceof AnyXmlAttributeDescriptor && namespace.length() > 0) {
-      final XmlNSDescriptor candidateNSDescriptor = context.getNSDescriptor(namespace, true);
+    if (attribute instanceof AnyXmlAttributeDescriptor) {
+      final ComplexTypeDescriptor.CanContainAttributeType containAttributeType =
+        ((AnyXmlAttributeDescriptor)attribute).getCanContainAttributeType();
+      if (containAttributeType != ComplexTypeDescriptor.CanContainAttributeType.CanContainAny && !namespace.isEmpty()) {
+        final XmlNSDescriptor candidateNSDescriptor = context.getNSDescriptor(namespace, true);
 
-      if (candidateNSDescriptor instanceof XmlNSDescriptorImpl) {
-        final XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)candidateNSDescriptor;
+        if (candidateNSDescriptor instanceof XmlNSDescriptorImpl) {
+          final XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)candidateNSDescriptor;
 
-        final XmlAttributeDescriptor xmlAttributeDescriptor = nsDescriptor.getAttribute(localName, namespace, context);
-        if (xmlAttributeDescriptor != null) return xmlAttributeDescriptor;
-        else {
-          final ComplexTypeDescriptor.CanContainAttributeType containAttributeType =
-            ((AnyXmlAttributeDescriptor)attribute).getCanContainAttributeType();
-          if (containAttributeType == ComplexTypeDescriptor.CanContainAttributeType.CanContainButDoNotSkip) {
-            attribute = null;
+          final XmlAttributeDescriptor xmlAttributeDescriptor = nsDescriptor.getAttribute(localName, namespace, context);
+          if (xmlAttributeDescriptor != null) return xmlAttributeDescriptor;
+          else {
+            if (containAttributeType == ComplexTypeDescriptor.CanContainAttributeType.CanContainButDoNotSkip) {
+              attribute = null;
+            }
           }
         }
       }
