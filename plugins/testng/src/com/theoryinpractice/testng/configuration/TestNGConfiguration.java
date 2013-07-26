@@ -293,6 +293,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return data.getGeneratedName(getConfigurationModule());
   }
 
+  @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<TestNGConfiguration> group = new SettingsEditorGroup<TestNGConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new TestNGConfigurationEditor(getProject()));

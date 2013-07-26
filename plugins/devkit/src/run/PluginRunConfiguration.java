@@ -61,6 +61,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     super(project, factory, name);
   }
 
+  @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new PluginRunConfigurationEditor(this);

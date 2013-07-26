@@ -164,6 +164,7 @@ public class ModuleRunConfigurationManagerTest extends LightPlatformTestCase {
       return null;
     }
 
+    @NotNull
     @Override
     public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       return null;

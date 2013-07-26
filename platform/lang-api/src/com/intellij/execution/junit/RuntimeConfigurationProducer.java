@@ -180,6 +180,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
       myConfig = config;
     }
 
+    @NotNull
     @Override
     public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       return myConfig.getConfigurationEditor();

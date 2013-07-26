@@ -104,6 +104,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         mySuggestedName = null;
     }
 
+    @NotNull
     @Override
     public SettingsEditor<XsltRunConfiguration> getConfigurationEditor() {
         return new XsltRunSettingsEditor(getProject());

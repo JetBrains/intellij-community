@@ -296,6 +296,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     return GroovyRunnerUtil.getRunningClass(file);
   }
 
+  @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new GroovyRunConfigurationEditor();
   }

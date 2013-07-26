@@ -52,6 +52,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     return clone;
   }
 
+  @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<MavenRunConfiguration> group = new SettingsEditorGroup<MavenRunConfiguration>();

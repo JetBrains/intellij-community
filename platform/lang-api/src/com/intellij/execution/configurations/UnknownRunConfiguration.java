@@ -75,6 +75,7 @@ public class UnknownRunConfiguration implements RunConfiguration {
     myName = name;
   }
 
+  @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new UnknownSettingsEditor();

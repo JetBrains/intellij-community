@@ -225,6 +225,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     return new MvcCommandLineState(environment, cmdLine, module, false);
   }
 
+  @NotNull
   public SettingsEditor<? extends MvcRunConfiguration> getConfigurationEditor() {
     return new MvcRunConfigurationEditor<MvcRunConfiguration>();
   }

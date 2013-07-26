@@ -56,10 +56,14 @@ public interface RunConfiguration extends RunProfile, JDOMExternalizable, Clonea
   void setName(String name);
 
   /**
-   * Returns the UI control for editing the run configuration settings.
+   * Returns the UI control for editing the run configuration settings. If additional control over validation is required, the object
+   * returned from this method may also implement {@link com.intellij.execution.impl.CheckableRunConfigurationEditor}. The returned object
+   * can also implement {@link com.intellij.openapi.options.SettingsEditorGroup} if the settings it provides need to be displayed in
+   * multiple tabs.
    *
    * @return the settings editor component.
    */
+  @NotNull
   SettingsEditor<? extends RunConfiguration> getConfigurationEditor();
 
   /**

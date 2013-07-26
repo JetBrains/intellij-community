@@ -118,6 +118,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     };
   }
 
+  @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new AppletConfigurable(getProject());
   }

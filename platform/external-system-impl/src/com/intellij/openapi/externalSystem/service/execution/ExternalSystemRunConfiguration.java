@@ -101,6 +101,7 @@ public class ExternalSystemRunConfiguration extends RunConfigurationBase impleme
     return mySettings;
   }
 
+  @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId());
