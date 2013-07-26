@@ -90,6 +90,30 @@ public class PyDuplocatorTest extends PyTestCase {
     }
   }
 
+  public void testStringMethodCall() throws Exception {
+    myDuplocatorSettings.DISTINGUISH_METHODS = false;
+    myDuplocatorSettings.DISTINGUISH_LITERALS = false;
+    try {
+      doTest(1);
+    }
+    finally {
+      myDuplocatorSettings.DISTINGUISH_METHODS = true;
+      myDuplocatorSettings.DISTINGUISH_LITERALS = true;
+    }
+  }
+
+  public void testStringMethodCallNegative() throws Exception {
+    myDuplocatorSettings.DISTINGUISH_METHODS = false;
+    myDuplocatorSettings.LOWER_BOUND = 5;
+    try {
+      doTest(1);
+    }
+    finally {
+      myDuplocatorSettings.LOWER_BOUND = 3;
+      myDuplocatorSettings.DISTINGUISH_METHODS = true;
+    }
+  }
+
   public void testFunctionCallNegative() throws Exception {
     doTest(1);
   }
