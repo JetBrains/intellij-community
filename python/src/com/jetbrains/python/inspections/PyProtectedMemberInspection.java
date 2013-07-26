@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -46,7 +47,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     @Override
     public void visitPyReferenceExpression(PyReferenceExpression node) {
       final PyExpression qualifier = node.getQualifier();
-      if (qualifier == null) return;
+      if (qualifier == null || PyNames.CANONICAL_SELF.equals(qualifier.getText())) return;
       final String name = node.getName();
       if (name != null && name.startsWith("_") && !name.startsWith("__") && !name.endsWith("__")) {
         final PyClass parentClass = PsiTreeUtil.getParentOfType(node, PyClass.class);

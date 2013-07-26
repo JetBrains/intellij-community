@@ -27,6 +27,10 @@ public class PyProtectedMemberInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testSelfField() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("inspections/PyProtectedMemberInspection/" + getTestName(true) + ".py");
     myFixture.enableInspections(PyProtectedMemberInspection.class);
