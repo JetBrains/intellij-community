@@ -216,4 +216,40 @@ class MavenDuplicatedInspectionTest extends MavenDomTestCase {
     checkHighlighting(myProjectPom, true, false, true)
   }
 
+  public void testDuplicatedInManagedDependencies() {
+    myFixture.enableInspections(MavenDuplicateDependenciesInspection)
+
+    createProjectPom("""
+  <groupId>mavenParent</groupId>
+  <artifactId>childA</artifactId>
+  <version>1.0</version>
+
+  <dependencyManagement>
+    <dependencies>
+      <<warning>dependency</warning>>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>3.8.2</version>
+        <type>jar</type>
+      </dependency>
+
+      <<warning>dependency</warning>>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.0</version>
+        <classifier>sources</classifier>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+""")
+
+    checkHighlighting()
+  }
+
 }

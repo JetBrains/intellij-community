@@ -26,11 +26,14 @@ import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -47,11 +50,12 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
                                DomElementAnnotationHolder holder) {
     MavenDomProjectModel projectModel = domFileElement.getRootElement();
 
-    checkMavenProjectModel(projectModel, holder);
+    checkManagedDependencies(projectModel, holder);
+    checkDependencies(projectModel, holder);
   }
 
-  private static void checkMavenProjectModel(@NotNull MavenDomProjectModel projectModel,
-                                             @NotNull DomElementAnnotationHolder holder) {
+  private static void checkDependencies(@NotNull MavenDomProjectModel projectModel,
+                                        @NotNull DomElementAnnotationHolder holder) {
     final Map<DependencyConflictId, Set<MavenDomDependency>> allDuplicates = getDuplicateDependenciesMap(projectModel);
 
     for (MavenDomDependency dependency : projectModel.getDependencies().getDependencies()) {
@@ -152,19 +156,7 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
 
     Processor<MavenDomProjectModel> collectProcessor = new Processor<MavenDomProjectModel>() {
       public boolean process(MavenDomProjectModel model) {
-        for (MavenDomDependency dependency : model.getDependencies().getDependencies()) {
-          DependencyConflictId mavenId = DependencyConflictId.create(dependency);
-          if (mavenId != null) {
-            if (allDependencies.containsKey(mavenId)) {
-              allDependencies.get(mavenId).add(dependency);
-            }
-            else {
-              Set<MavenDomDependency> dependencies = new HashSet<MavenDomDependency>();
-              dependencies.add(dependency);
-              allDependencies.put(mavenId, dependencies);
-            }
-          }
-        }
+        collect(allDependencies, model.getDependencies());
         return false;
       }
     };
@@ -173,6 +165,36 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
     MavenDomProjectProcessorUtils.processParentProjects(projectModel, collectProcessor);
 
     return allDependencies;
+  }
+
+  private static void collect(Map<DependencyConflictId, Set<MavenDomDependency>> duplicates, @NotNull MavenDomDependencies dependencies) {
+    for (MavenDomDependency dependency : dependencies.getDependencies()) {
+      DependencyConflictId mavenId = DependencyConflictId.create(dependency);
+      if (mavenId == null) continue;
+
+      Set<MavenDomDependency> set = duplicates.get(mavenId);
+      if (set == null) {
+        set = new THashSet<MavenDomDependency>();
+        duplicates.put(mavenId, set);
+      }
+
+      set.add(dependency);
+    }
+  }
+
+  private static void checkManagedDependencies(@NotNull MavenDomProjectModel projectModel,
+                                               @NotNull DomElementAnnotationHolder holder) {
+    final Map<DependencyConflictId, Set<MavenDomDependency>> duplicates = new THashMap<DependencyConflictId, Set<MavenDomDependency>>();
+    collect(duplicates, projectModel.getDependencyManagement().getDependencies());
+
+    for (Map.Entry<DependencyConflictId, Set<MavenDomDependency>> entry : duplicates.entrySet()) {
+      Set<MavenDomDependency> set = entry.getValue();
+      if (set.size() <= 1) continue;
+
+      for (MavenDomDependency dependency : set) {
+        holder.createProblem(dependency, HighlightSeverity.WARNING, "Duplicated dependency");
+      }
+    }
   }
 
   @NotNull
