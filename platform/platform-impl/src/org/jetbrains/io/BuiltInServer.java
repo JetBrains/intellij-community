@@ -15,6 +15,7 @@
  */
 package org.jetbrains.io;
 
+import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -23,16 +24,18 @@ import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.handler.codec.http.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.CustomPortServerManager;
 import org.jetbrains.ide.PooledThreadExecutor;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.Map;
 import java.util.concurrent.Executor;
-
-import static org.jboss.netty.channel.Channels.pipeline;
 
 public class BuiltInServer implements Disposable {
   private final ChannelGroup openChannels = new DefaultChannelGroup();
@@ -63,17 +66,34 @@ public class BuiltInServer implements Disposable {
       throw new IllegalStateException("server already started");
     }
 
-    ServerBootstrap bootstrap = createServerBootstrap(channelFactory, openChannels);
+    ServerBootstrap bootstrap = createServerBootstrap(channelFactory, openChannels, null);
     int port = bind(firstPort, portsCount, tryAnyPort, bootstrap);
     bindCustomPorts(firstPort, port);
     return port;
   }
 
-  static ServerBootstrap createServerBootstrap(NioServerSocketChannelFactory channelFactory, ChannelGroup openChannels) {
+  static ServerBootstrap createServerBootstrap(NioServerSocketChannelFactory channelFactory, ChannelGroup openChannels, @Nullable Map<String, Object> xmlRpcHandlers) {
     ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
     bootstrap.setOption("child.tcpNoDelay", true);
     bootstrap.setOption("child.keepAlive", true);
-    bootstrap.setPipelineFactory(new ChannelPipelineFactoryImpl(new PortUnificationServerHandler(openChannels)));
+    if (xmlRpcHandlers == null) {
+      final ChannelHandler handler = new PortUnificationServerHandler(openChannels);
+      bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+        @Override
+        public ChannelPipeline getPipeline() throws Exception {
+          return Channels.pipeline(handler);
+        }
+      });
+    }
+    else {
+      final XmlRpcDelegatingHttpRequestHandler handler = new XmlRpcDelegatingHttpRequestHandler(xmlRpcHandlers);
+      bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+        @Override
+        public ChannelPipeline getPipeline() throws Exception {
+          return Channels.pipeline(new HttpRequestDecoder(), new HttpChunkAggregator(1048576), new HttpResponseEncoder(), handler);
+        }
+      });
+    }
     return bootstrap;
   }
 
@@ -157,16 +177,17 @@ public class BuiltInServer implements Disposable {
     context.getPipeline().replace(DelegatingHttpRequestHandler.class, "replacedDefaultHandler", messageChannelHandler);
   }
 
-  private static class ChannelPipelineFactoryImpl implements ChannelPipelineFactory {
-    private final ChannelHandler defaultHandler;
+  private static final class XmlRpcDelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBase {
+    private final Map<String, Object> handlers;
 
-    public ChannelPipelineFactoryImpl(ChannelHandler defaultHandler) {
-      this.defaultHandler = defaultHandler;
+    public XmlRpcDelegatingHttpRequestHandler(Map<String, Object> handlers) {
+      this.handlers = handlers;
     }
 
     @Override
-    public ChannelPipeline getPipeline() throws Exception {
-      return pipeline(defaultHandler);
+    protected boolean process(ChannelHandlerContext context, HttpRequest request, QueryStringDecoder urlDecoder) throws IOException {
+      return (request.getMethod() == HttpMethod.POST || request.getMethod() == HttpMethod.OPTIONS) &&
+             XmlRpcServer.SERVICE.getInstance().process(urlDecoder.getPath(), request, context, handlers);
     }
   }
 }

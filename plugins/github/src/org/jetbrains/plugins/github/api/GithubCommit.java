@@ -18,13 +18,8 @@ package org.jetbrains.plugins.github.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import static org.jetbrains.plugins.github.api.GithubCommitRaw.GitCommitRaw;
-import static org.jetbrains.plugins.github.api.GithubCommitRaw.GitUserRaw;
 
 /**
  * @author Aleksey Pivovarov
@@ -38,7 +33,7 @@ public class GithubCommit extends GithubCommitSha {
 
   @NotNull private GitCommit myCommit;
 
-  public static class GitCommit implements Serializable {
+  public static class GitCommit {
     @NotNull private String myMessage;
 
     @NotNull private GitUser myAuthor;
@@ -66,7 +61,7 @@ public class GithubCommit extends GithubCommitSha {
     }
   }
 
-  public static class GitUser implements Serializable {
+  public static class GitUser {
     @NotNull private String myName;
     @NotNull private String myEmail;
     @NotNull private Date myDate;

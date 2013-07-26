@@ -63,6 +63,7 @@ public class DeployToServerRunConfiguration<C extends ServerConfiguration> exten
     return myDeployer;
   }
 
+  @NotNull
   @Override
   public SettingsEditor<DeployToServerRunConfiguration> getConfigurationEditor() {
     return new DeployToServerSettingsEditor(myServerType, myDeployer, getProject());

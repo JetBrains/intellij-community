@@ -2677,4 +2677,12 @@ public class UIUtil {
     return null;
   }
 
+  @NotNull
+  public static Window getActiveWindow() {
+    Window[] windows = Window.getWindows();
+    for (Window each : windows) {
+      if (each.isVisible() && each.isActive()) return each;
+    }
+    return JOptionPane.getRootFrame();
+  }
 }

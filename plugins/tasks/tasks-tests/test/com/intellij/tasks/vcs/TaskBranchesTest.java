@@ -88,6 +88,7 @@ public class TaskBranchesTest extends TaskManagerTestCase {
     foo = myTaskManager.createLocalTask("foo");
     localTask = myTaskManager.activateTask(foo, false);
     myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
+    Thread.sleep(300);
     assertEquals("foo", repositories.get(0).getCurrentBranch().getName());
 
     myTaskManager.mergeBranch(localTask);

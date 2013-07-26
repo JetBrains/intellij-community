@@ -445,7 +445,7 @@ class RunConfigurable extends BaseConfigurable {
           if (runtimeConfiguration.isGeneratedName() && !changed[0]) {
             try {
               final LocatableConfiguration snapshot = (LocatableConfiguration)editor.getSnapshot().getConfiguration();
-              final String generatedName = snapshot instanceof RuntimeConfiguration? ((RuntimeConfiguration)snapshot).getGeneratedName() : snapshot.suggestedName();
+              final String generatedName = snapshot.suggestedName();
               if (generatedName != null && generatedName.length() > 0) {
                 info.setNameText(generatedName);
                 changed[0] = false;

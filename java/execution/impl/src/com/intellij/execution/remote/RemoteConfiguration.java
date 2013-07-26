@@ -81,6 +81,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return new RemoteStateState(getProject(), createRemoteConnection());
   }
 
+  @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<RemoteConfiguration> group = new SettingsEditorGroup<RemoteConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new RemoteConfigurable(getProject()));

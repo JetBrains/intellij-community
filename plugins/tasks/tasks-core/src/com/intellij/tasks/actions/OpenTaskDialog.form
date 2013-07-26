@@ -104,7 +104,7 @@
               <enabled value="false"/>
             </properties>
           </component>
-          <component id="ff04b" class="com.intellij.ui.components.JBCheckBox" binding="myCreateBranchJBCheckBox" default-binding="true">
+          <component id="ff04b" class="com.intellij.ui.components.JBCheckBox" binding="myCreateBranch" default-binding="true">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -112,7 +112,7 @@
               <text value="Create &amp;branch"/>
             </properties>
           </component>
-          <component id="807e3" class="com.intellij.ui.components.JBCheckBox" binding="myCreateChangelistJBCheckBox" default-binding="true">
+          <component id="807e3" class="com.intellij.ui.components.JBCheckBox" binding="myCreateChangelist" default-binding="true">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>

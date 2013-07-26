@@ -34,7 +34,7 @@ final class SubServer implements CustomPortServerManager.CustomPortService, Disp
   public SubServer(CustomPortServerManager user, NioServerSocketChannelFactory channelFactory) {
     this.user = user;
     user.setManager(this);
-    bootstrap = BuiltInServer.createServerBootstrap(channelFactory, openChannels);
+    bootstrap = BuiltInServer.createServerBootstrap(channelFactory, openChannels, user.createXmlRpcHandlers());
   }
 
   public boolean bind(int port) {
@@ -59,7 +59,6 @@ final class SubServer implements CustomPortServerManager.CustomPortService, Disp
   }
 
   private void stop() {
-    // todo should we call releaseExternalResources? We use only 1 boss&worker thread
     openChannels.close().awaitUninterruptibly();
     openChannels.clear();
   }

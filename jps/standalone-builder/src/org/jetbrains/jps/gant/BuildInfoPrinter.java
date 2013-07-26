@@ -20,11 +20,17 @@ package org.jetbrains.jps.gant;
  */
 public interface BuildInfoPrinter {
 
-  void printProgressMessage(JpsGantProjectBuilder project, String message);
+  void printProgressMessage(JpsGantProjectBuilder builder, String message);
 
-  void printCompilationErrors(JpsGantProjectBuilder project, String compilerName, String messages);
+  void printBlockOpenedMessage(JpsGantProjectBuilder builder, String blockId);
 
-  void printCompilationFinish(JpsGantProjectBuilder project, String compilerName);
+  void printBlockClosedMessage(JpsGantProjectBuilder builder, String blockId);
 
-  void printCompilationStart(JpsGantProjectBuilder project, String compilerName);
+  void printStatisticsMessage(JpsGantProjectBuilder builder, String key, String value);
+
+  void printCompilationErrors(JpsGantProjectBuilder builder, String compilerName, String messages);
+
+  void printCompilationFinish(JpsGantProjectBuilder builder, String compilerName);
+
+  void printCompilationStart(JpsGantProjectBuilder builder, String compilerName);
 }

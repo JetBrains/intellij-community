@@ -16,6 +16,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.RunManager;
+import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +38,7 @@ public class RunConfigurationRefactoringElementListenerProvider implements Refac
 
     for (RunConfiguration configuration : configurations) {
       if (configuration instanceof RefactoringListenerProvider) { // todo: perhaps better way to handle listeners?
-        final RefactoringElementListener listener;
+        RefactoringElementListener listener;
         try {
           listener = ((RefactoringListenerProvider)configuration).getRefactoringElementListener(element);
         }
@@ -46,6 +47,9 @@ public class RunConfigurationRefactoringElementListenerProvider implements Refac
           continue;
         }
         if (listener != null) {
+          if (configuration instanceof LocatableConfiguration) {
+            listener = new NameGeneratingListenerDecorator((LocatableConfiguration)configuration, listener);
+          }
           if (composite == null) {
             composite = new RefactoringElementListenerComposite();
           }

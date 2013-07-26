@@ -1992,6 +1992,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(getFullRelativeTestName(".html"), true, true);
   }
 
+  public void testAnyAttribute() throws Exception {
+    configureByFiles(null, BASE_PATH + "anyAttribute.xml", BASE_PATH + "services-1.0.xsd");
+    doDoTest(true, false);
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

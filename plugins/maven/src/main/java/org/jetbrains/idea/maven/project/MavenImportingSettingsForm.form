@@ -154,7 +154,7 @@
           </hspacer>
         </children>
       </grid>
-      <grid id="7fb78" binding="mySeparateModulesDirPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="7fb78" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="10" right="0"/>
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -168,6 +168,7 @@
             </constraints>
             <properties>
               <text value="&amp;Keep project files in:"/>
+              <toolTipText value="Keep IDEA specified files like *.iml / .idea in selected directory. By default *.iml files are stored beside the pom.xml "/>
             </properties>
           </component>
           <component id="dd23c" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="mySeparateModulesDirChooser">

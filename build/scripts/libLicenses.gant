@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import org.jetbrains.jps.ClasspathKind
-import org.jetbrains.jps.Library
-import org.jetbrains.jps.Module
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.module.JpsModule
 
 class LibraryLicense {
   String name, url, version
@@ -44,27 +46,25 @@ binding.setVariable("jetbrainsLibrary", {String name ->
   jetbrainsLibraries << name
 })
 
-def String getLibraryName(Library lib) {
+def String getLibraryName(JpsLibrary lib) {
   def name = lib.name
-  if (name.startsWith("moduleLibrary#")) {
-    if (lib.classpath.size() != 1) {
+  if (name.startsWith("#")) {
+    if (lib.getRoots(JpsOrderRootType.COMPILED).size() != 1) {
       projectBuilder.warning("Non-single entry module library $name: $lib.classpath");
     }
-    String filePath = lib.classpath[0]
-    return filePath.substring(filePath.lastIndexOf('/')+1)
+    File file = lib.getFiles(JpsOrderRootType.COMPILED)[0]
+    return file.name
   }
   return name
 }
 
 binding.setVariable("checkLibLicenses", {
-  def libraries = new HashSet<Library>()
-  def lib2Module = new HashMap<Library, Module>();
-  allModules().each {Module module ->
-    module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {
-      if (it instanceof Library) {
-        lib2Module[it] = module
-        libraries << it
-      }
+  def libraries = new HashSet<JpsLibrary>()
+  def lib2Module = new HashMap<JpsLibrary, JpsModule>();
+  allModules().each {JpsModule module ->
+    JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).getLibraries().each {
+      lib2Module[it] = module
+      libraries << it
     }
   }
 
@@ -72,7 +72,7 @@ binding.setVariable("checkLibLicenses", {
   libWithLicenses.addAll(jetbrainsLibraries)
 
   List<String> withoutLicenses = []
-  libraries.each {Library lib ->
+  libraries.each {JpsLibrary lib ->
     def name = getLibraryName(lib)
     if (!libWithLicenses.contains(name)) {
       withoutLicenses << "$name (used in module ${lib2Module[lib].name})".toString()
@@ -94,13 +94,11 @@ binding.setVariable("checkLibLicenses", {
 binding.setVariable("generateLicensesTable", {String filePath, Set<String> usedModulesNames ->
   projectBuilder.info("Generating licenses table")
   projectBuilder.info("Used modules: $usedModulesNames")
-  Set<Module> usedModules = allModules().findAll {usedModulesNames.contains(it.name)}
+  Set<JpsModule> usedModules = allModules().findAll {usedModulesNames.contains(it.name)}
   Map<String, String> usedLibraries = [:]
-  usedModules.each {Module module ->
-    module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {item ->
-      if (item instanceof Library) {
-        usedLibraries[getLibraryName(item)] = module.name
-      }
+  usedModules.each {JpsModule module ->
+    JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).getLibraries().each {item ->
+      usedLibraries[getLibraryName(item)] = module.name
     }
   }
 

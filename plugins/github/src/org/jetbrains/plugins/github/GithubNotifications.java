@@ -25,8 +25,6 @@ import git4idea.Notificator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URL;
-
 /**
  * @author Aleksey Pivovarov
  */
@@ -36,41 +34,41 @@ public class GithubNotifications {
   private static final String GITHUB_NOTIFICATION_GROUP = "github";
 
   public static void showInfo(@NotNull Project project, @NotNull String title, @NotNull String message) {
+    LOG.info(title + "; " + message);
     Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.INFORMATION);
     Notificator.getInstance(project).notify(notification);
-    LOG.info(title + "; " + message);
   }
 
   public static void showWarning(@NotNull Project project, @NotNull String title, @NotNull String message) {
+    LOG.info(title + "; " + message);
     Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.WARNING);
     Notificator.getInstance(project).notify(notification);
-    LOG.warn(title + "; " + message);
   }
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull String message) {
+    LOG.info(title + "; " + message);
     Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.ERROR);
     Notificator.getInstance(project).notify(notification);
-    LOG.warn(title + "; " + message);
   }
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull String message, @NotNull String logDetails) {
+    LOG.warn(title + "; " + message + "; " + logDetails);
     Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.ERROR);
     Notificator.getInstance(project).notify(notification);
-    LOG.warn(title + "; " + message + "; " + logDetails);
   }
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull Exception e) {
+    LOG.warn(title + "; ", e);
     Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, e.getMessage(), NotificationType.ERROR);
     Notificator.getInstance(project).notify(notification);
-    LOG.warn(title + "; ", e);
   }
 
   public static void showInfoURL(@NotNull Project project, @NotNull String title, @NotNull String message, @NotNull String url) {
+    LOG.info(title + "; " + message + "; " + url);
     Notification notification =
       new Notification(GITHUB_NOTIFICATION_GROUP, title, "<a href='" + url + "'>" + message + "</a>", NotificationType.INFORMATION,
                        NotificationListener.URL_OPENING_LISTENER);
     Notificator.getInstance(project).notify(notification);
-    LOG.info(title + "; " + message + "; " + url);
   }
 
   public static void showWarningURL(@NotNull Project project,
@@ -79,11 +77,11 @@ public class GithubNotifications {
                                     @NotNull String highlight,
                                     @NotNull String postfix,
                                     @NotNull String url) {
+    LOG.info(title + "; " + prefix + highlight + postfix + "; " + url);
     Notification notification =
       new Notification(GITHUB_NOTIFICATION_GROUP, title, prefix + "<a href='" + url + "'>" + highlight + "</a>" + postfix,
                        NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER);
     Notificator.getInstance(project).notify(notification);
-    LOG.warn(title + "; " + prefix + highlight + postfix + "; " + url);
   }
 
   public static void showErrorURL(@NotNull Project project,
@@ -92,26 +90,31 @@ public class GithubNotifications {
                                   @NotNull String highlight,
                                   @NotNull String postfix,
                                   @NotNull String url) {
+    LOG.info(title + "; " + prefix + highlight + postfix + "; " + url);
     Notification notification =
       new Notification(GITHUB_NOTIFICATION_GROUP, title, prefix + "<a href='" + url + "'>" + highlight + "</a>" + postfix,
                        NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER);
     Notificator.getInstance(project).notify(notification);
-    LOG.warn(title + "; " + prefix + highlight + postfix + "; " + url);
   }
 
   public static void showInfoDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
-    Messages.showInfoMessage(project, message, title);
     LOG.info(title + "; " + message);
+    Messages.showInfoMessage(project, message, title);
   }
 
   public static void showWarningDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
+    LOG.info(title + "; " + message);
     Messages.showWarningDialog(project, message, title);
-    LOG.warn(title + "; " + message);
   }
 
   public static void showErrorDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
+    LOG.info(title + "; " + message);
     Messages.showErrorDialog(project, message, title);
-    LOG.warn(title + "; " + message);
+  }
+
+  public static void showErrorDialog(final @Nullable Project project, final @NotNull String title, final @NotNull Exception e) {
+    LOG.warn(title, e);
+    Messages.showErrorDialog(project, e.getMessage(), title);
   }
 
   public static int showYesNoDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {

@@ -17,6 +17,7 @@ package com.intellij.util.net;
 
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -38,7 +39,7 @@ public class IOExceptionDialog extends JDialog {
   private boolean cancelPressed = false;
 
   public IOExceptionDialog(String title, String errorText)  {
-    super (JOptionPane.getRootFrame(), title, true);
+    super(UIUtil.getActiveWindow(), title, DEFAULT_MODALITY_TYPE);
 
     new MnemonicHelper().register(getContentPane());
     
@@ -62,6 +63,9 @@ public class IOExceptionDialog extends JDialog {
     );
 
     errorLabel.setText(errorText);
+    errorLabel.setFont(UIManager.getFont("Label.font"));
+    errorLabel.setBackground(UIManager.getColor("Label.background"));
+    errorLabel.setForeground(UIManager.getColor("Label.foreground"));
 
     setupButton.addActionListener(new ActionListener () {
       public void actionPerformed(ActionEvent e) {
@@ -83,7 +87,7 @@ public class IOExceptionDialog extends JDialog {
     });
 
     pack();
-    setLocationRelativeTo(null);
+    setLocationRelativeTo(getOwner());
     setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
     addWindowListener(new WindowAdapter() {
       @Override

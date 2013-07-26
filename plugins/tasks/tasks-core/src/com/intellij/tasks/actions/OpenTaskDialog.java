@@ -51,8 +51,8 @@ public class OpenTaskDialog extends DialogWrapper {
   private JPanel myVcsPanel;
   private JTextField myBranchName;
   private JTextField myChangelistName;
-  private JBCheckBox myCreateBranchJBCheckBox;
-  private JBCheckBox myCreateChangelistJBCheckBox;
+  private JBCheckBox myCreateBranch;
+  private JBCheckBox myCreateChangelist;
 
   private final Project myProject;
   private final Task myTask;
@@ -91,14 +91,14 @@ public class OpenTaskDialog extends DialogWrapper {
           updateFields();
         }
       };
-      myCreateChangelistJBCheckBox.addActionListener(listener);
-      myCreateBranchJBCheckBox.addActionListener(listener);
-      myCreateChangelistJBCheckBox.setSelected(manager.getState().createChangelist);
-      myCreateBranchJBCheckBox.setSelected(manager.getState().createBranch);
+      myCreateChangelist.addActionListener(listener);
+      myCreateBranch.addActionListener(listener);
+      myCreateChangelist.setSelected(manager.getState().createChangelist);
+      myCreateBranch.setSelected(manager.getState().createBranch);
 
       if (vcs.getType() != VcsType.distributed) {
-        myCreateBranchJBCheckBox.setSelected(false);
-        myCreateBranchJBCheckBox.setVisible(false);
+        myCreateBranch.setSelected(false);
+        myCreateBranch.setVisible(false);
         myBranchName.setVisible(false);
       }
 
@@ -110,8 +110,8 @@ public class OpenTaskDialog extends DialogWrapper {
   }
 
   private void updateFields() {
-    myBranchName.setEnabled(myCreateBranchJBCheckBox.isSelected());
-    myChangelistName.setEnabled(myCreateChangelistJBCheckBox.isSelected());
+    myBranchName.setEnabled(myCreateBranch.isSelected());
+    myChangelistName.setEnabled(myCreateChangelist.isSelected());
   }
 
 
@@ -120,8 +120,8 @@ public class OpenTaskDialog extends DialogWrapper {
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
 
     taskManager.getState().markAsInProgress = isMarkAsInProgress();
-    taskManager.getState().createChangelist = myCreateChangelistJBCheckBox.isSelected();
-    taskManager.getState().createBranch = myCreateBranchJBCheckBox.isSelected();
+    taskManager.getState().createChangelist = myCreateChangelist.isSelected();
+    taskManager.getState().createBranch = myCreateBranch.isSelected();
 
     TaskRepository repository = myTask.getRepository();
     if (isMarkAsInProgress() && repository != null) {
@@ -134,8 +134,13 @@ public class OpenTaskDialog extends DialogWrapper {
       }
     }
     LocalTask localTask = taskManager.activateTask(myTask, isClearContext());
-    LocalTask activeTask = taskManager.getActiveTask();
-    taskManager.createBranch(localTask, activeTask, myBranchName.getText());
+    if (myCreateChangelist.isSelected()) {
+      taskManager.createChangeList(localTask, myChangelistName.getText());
+    }
+    if (myCreateBranch.isSelected()) {
+      LocalTask activeTask = taskManager.getActiveTask();
+      taskManager.createBranch(localTask, activeTask, myBranchName.getText());
+    }
     if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
       AnalyzeTaskStacktraceAction.analyzeStacktrace(myTask, myProject);
     }
@@ -145,7 +150,7 @@ public class OpenTaskDialog extends DialogWrapper {
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
-    if (myCreateBranchJBCheckBox.isSelected()) {
+    if (myCreateBranch.isSelected()) {
       String branchName = myBranchName.getText().trim();
       if (branchName.isEmpty()) {
         return new ValidationInfo("Branch name should not be empty", myBranchName);
@@ -157,7 +162,7 @@ public class OpenTaskDialog extends DialogWrapper {
         return null;
       }
     }
-    if (myCreateChangelistJBCheckBox.isSelected()) {
+    if (myCreateChangelist.isSelected()) {
       if (myChangelistName.getText().trim().isEmpty()) {
         return new ValidationInfo("Changelist name should not be empty");
       }
@@ -180,10 +185,10 @@ public class OpenTaskDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    if (myCreateBranchJBCheckBox.isSelected()) {
+    if (myCreateBranch.isSelected()) {
       return myBranchName;
     }
-    else if (myCreateChangelistJBCheckBox.isSelected()) {
+    else if (myCreateChangelist.isSelected()) {
       return myChangelistName;
     }
     else return null;

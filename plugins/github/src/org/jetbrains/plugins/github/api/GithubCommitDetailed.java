@@ -18,11 +18,7 @@ package org.jetbrains.plugins.github.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
-
-import static org.jetbrains.plugins.github.api.GithubCommitRaw.CommitStatsRaw;
 
 /**
  * @author Aleksey Pivovarov
@@ -32,7 +28,7 @@ public class GithubCommitDetailed extends GithubCommit {
   @NotNull private CommitStats myStats;
   @NotNull private List<GithubFile> myFiles;
 
-  public static class CommitStats implements Serializable {
+  public static class CommitStats {
     private int myAdditions;
     private int myDeletions;
     private int myTotal;

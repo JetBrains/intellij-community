@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -559,12 +560,16 @@ public class MavenProjectImporter {
 
     boolean removed = false;
     for (Library each : unusedLibraries) {
-      if (MavenRootModelAdapter.isMavenLibrary(each) && !MavenRootModelAdapter.isChangedByUser(each)) {
+      if (!isDisposed(each) && MavenRootModelAdapter.isMavenLibrary(each) && !MavenRootModelAdapter.isChangedByUser(each)) {
         myModelsProvider.removeLibrary(each);
         removed = true;
       }
     }
     return removed;
+  }
+
+  private static boolean isDisposed(Library library) {
+    return library instanceof LibraryImpl && ((LibraryImpl)library).isDisposed();
   }
 
   private Collection<ModuleRootModel> collectModuleModels() {

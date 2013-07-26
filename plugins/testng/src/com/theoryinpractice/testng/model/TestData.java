@@ -18,14 +18,12 @@ package com.theoryinpractice.testng.model;
 import com.intellij.execution.ExternalizablePath;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 
@@ -172,35 +170,6 @@ public class TestData implements Cloneable
     data.myPatterns.addAll(myPatterns);
     data.setScope(getScope());
     return data;
-  }
-
-  public boolean isGeneratedName(String s, JavaRunConfigurationModule config) {
-    if (TEST_OBJECT == null) return true;
-    if ((TestType.CLASS.getType().equals(TEST_OBJECT) || TestType.METHOD.getType().equals(TEST_OBJECT)) && getMainClassName().length() == 0)
-      return JavaExecutionUtil.isNewName(s);
-    if (TestType.METHOD.getType().equals(TEST_OBJECT) && getMethodName().length() == 0)
-      return JavaExecutionUtil.isNewName(s);
-    else return Comparing.equal(s, getGeneratedName(config));
-  }
-
-  public String getGeneratedName(JavaRunConfigurationModule runconfigurationmodule) {
-    if (TestType.PACKAGE.getType().equals(TEST_OBJECT)) if (getPackageName().length() == 0) return "<default>";
-    else return getPackageName();
-    String name = JavaExecutionUtil.getPresentableClassName(getMainClassName(), runconfigurationmodule);
-    if (TestType.METHOD.getType().equals(TEST_OBJECT)) {
-      return name + '.' + getMethodName();
-    }
-    else if (TestType.SUITE.getType().equals(TEST_OBJECT)) {
-      return getSuiteName();
-    }
-    else {
-      if (TestType.PATTERN.getType().equals(TEST_OBJECT)) {
-        final int size = myPatterns.size();
-        if (size == 0) return "Temp suite";
-        return StringUtil.getShortName(myPatterns.iterator().next()) + (size > 1 ? " and " + (size - 1) + " more" : "");
-      }
-      return name;
-    }
   }
 
   public String getMainClassName() {

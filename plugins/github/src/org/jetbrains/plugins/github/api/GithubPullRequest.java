@@ -20,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-import static org.jetbrains.plugins.github.api.GithubPullRequestRaw.LinkRaw;
-
 /**
  * @author Aleksey Pivovarov
  */

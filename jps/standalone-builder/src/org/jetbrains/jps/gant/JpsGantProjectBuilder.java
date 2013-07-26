@@ -18,15 +18,20 @@ package org.jetbrains.jps.gant;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.NotNullFunction;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.build.Standalone;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.JpsModelLoader;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.BuildingTargetProgressMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
@@ -36,6 +41,8 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.util.*;
+
+import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
  * @author nik
@@ -48,6 +55,9 @@ public class JpsGantProjectBuilder {
   private JpsModelLoader myModelLoader;
   private boolean myDryRun;
   private BuildInfoPrinter myBuildInfoPrinter = new DefaultBuildInfoPrinter();
+  private Set<String> myCompiledModules = new HashSet<String>();
+  private Set<String> myCompiledModuleTests = new HashSet<String>();
+  private boolean myStatisticsReported;
 
   public JpsGantProjectBuilder(Project project, JpsModel model) {
     myProject = project;
@@ -67,6 +77,7 @@ public class JpsGantProjectBuilder {
   public void setTargetFolder(String targetFolder) {
     String url = "file://" + FileUtil.toSystemIndependentName(targetFolder);
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myModel.getProject()).setOutputUrl(url);
+    exportModuleOutputProperties();
   }
 
   public boolean isCompressJars() {
@@ -131,10 +142,26 @@ public class JpsGantProjectBuilder {
         }
       }
     }
+    myCompiledModules.clear();
+    myCompiledModuleTests.clear();
   }
 
   public void makeModule(JpsModule module) {
     runBuild(getModuleDependencies(module, false), false, false);
+  }
+
+  public void buildModules(List<JpsModule> modules) {
+    Set<String> names = new LinkedHashSet<String>();
+    info("Collecting dependencies for " + modules.size() + " modules");
+    for (JpsModule module : modules) {
+      Set<String> dependencies = getModuleDependencies(module, false);
+      for (String dependency : dependencies) {
+        if (names.add(dependency)) {
+          info(" adding " + dependency + " required for " + module.getName());
+        }
+      }
+    }
+    runBuild(names, false, false);
   }
 
   public void makeModuleTests(JpsModule module) {
@@ -152,16 +179,21 @@ public class JpsGantProjectBuilder {
   public void exportModuleOutputProperties() {
     for (JpsModule module : myModel.getProject().getModules()) {
       for (boolean test : new boolean[]{true, false}) {
-        myProject.setProperty("module." + module.getName() + ".output." + (test ? "test" : "main"), getModuleOutput(module, test));
+        String propertyName = "module." + module.getName() + ".output." + (test ? "test" : "main");
+        String outputPath = getModuleOutput(module, test);
+        myProject.setProperty(propertyName, outputPath);
       }
     }
 
   }
 
   private static Set<String> getModuleDependencies(JpsModule module, boolean includeTests) {
-    Set<JpsModule> modules = JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.compile(includeTests)).getModules();
+    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).recursively();
+    if (!includeTests) {
+      enumerator = enumerator.productionOnly();
+    }
     Set<String> names = new HashSet<String>();
-    for (JpsModule depModule : modules) {
+    for (JpsModule depModule : enumerator.getModules()) {
       names.add(depModule.getName());
     }
     return names;
@@ -171,10 +203,40 @@ public class JpsGantProjectBuilder {
     if (!myDryRun) {
       final AntMessageHandler messageHandler = new AntMessageHandler();
       Logger.setFactory(new AntLoggerFactory(messageHandler));
-      info("Starting build: modules = " + modulesSet + ", caches are saved to " + myDataStorageRoot.getAbsolutePath());
+      boolean forceBuild = true;
+
+      List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
+      for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+        if (includeTests || !type.isTests()) {
+          List<String> namesToCompile = new ArrayList<String>(allModules ? getAllModules() : modulesSet);
+          if (type.isTests()) {
+            namesToCompile.removeAll(myCompiledModuleTests);
+            myCompiledModuleTests.addAll(namesToCompile);
+          }
+          else {
+            namesToCompile.removeAll(myCompiledModules);
+            myCompiledModules.addAll(namesToCompile);
+          }
+          if (namesToCompile.isEmpty()) continue;
+
+          TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId()).setForceBuild(forceBuild);
+          if (allModules) {
+            scopes.add(builder.setAllTargets(true).build());
+          }
+          else if (!modulesSet.isEmpty()) {
+            scopes.add(builder.addAllTargetId(modulesSet).build());
+          }
+        }
+      }
+
+      info("Starting build; cache directory: " + myDataStorageRoot.getAbsolutePath());
       try {
-        Standalone.runBuild(myModelLoader, myDataStorageRoot, true, modulesSet, allModules, Collections.<String>emptyList(), includeTests,
-                            messageHandler);
+        long compilationStart = System.currentTimeMillis();
+        Standalone.runBuild(myModelLoader, myDataStorageRoot, messageHandler, scopes, false);
+        if (!myStatisticsReported) {
+          myBuildInfoPrinter.printStatisticsMessage(this, "Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart));
+          myStatisticsReported = true;
+        }
       }
       catch (Throwable e) {
         error(e);
@@ -183,6 +245,14 @@ public class JpsGantProjectBuilder {
     else {
       info("Building skipped as we're running dry");
     }
+  }
+
+  private Set<String> getAllModules() {
+    HashSet<String> modules = new HashSet<String>();
+    for (JpsModule module : myModel.getProject().getModules()) {
+      modules.add(module.getName());
+    }
+    return modules;
   }
 
   public String moduleOutput(JpsModule module) {
@@ -217,6 +287,7 @@ public class JpsGantProjectBuilder {
         case ERROR:
           String compilerName = msg instanceof CompilerMessage ? ((CompilerMessage)msg).getCompilerName() : "";
           myBuildInfoPrinter.printCompilationErrors(JpsGantProjectBuilder.this, compilerName, text);
+          error("Compilation failed");
           break;
         case WARNING:
           warning(text);
@@ -227,7 +298,24 @@ public class JpsGantProjectBuilder {
           }
           break;
         case PROGRESS:
-          myBuildInfoPrinter.printProgressMessage(JpsGantProjectBuilder.this, text);
+          if (msg instanceof BuildingTargetProgressMessage) {
+            String targetsString = StringUtil.join(((BuildingTargetProgressMessage)msg).getTargets(),
+                                                   new NotNullFunction<BuildTarget<?>, String>() {
+                                                     @NotNull
+                                                     @Override
+                                                     public String fun(BuildTarget<?> dom) {
+                                                       return dom.getPresentableName();
+                                                     }
+                                                   }, ",");
+            switch (((BuildingTargetProgressMessage)msg).getEventType()) {
+              case STARTED:
+                myBuildInfoPrinter.printBlockOpenedMessage(JpsGantProjectBuilder.this, targetsString);
+                break;
+              case FINISHED:
+                myBuildInfoPrinter.printBlockClosedMessage(JpsGantProjectBuilder.this, targetsString);
+                break;
+            }
+          }
           break;
       }
     }

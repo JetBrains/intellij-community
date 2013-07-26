@@ -34,6 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Standard base class for run configuration implementations.
+ *
  * @author dyoma
  */
 public abstract class RunConfigurationBase extends UserDataHolderBase implements RunConfiguration, TargetAwareRunProfile {

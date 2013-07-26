@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -191,6 +195,9 @@ public class SpringLoadedPositionManager implements PositionManager {
       if (effectiveRef.locationsOfLine(lineNumber).size() > 0) {
         res.add(effectiveRef);
       }
+    }
+    catch (ObjectCollectedException ignored) {
+
     }
     catch (AbsentInformationException ignored) {
     }

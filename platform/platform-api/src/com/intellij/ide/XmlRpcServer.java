@@ -16,6 +16,13 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.util.Map;
 
 public interface XmlRpcServer {
   void addHandler(String name, Object handler);
@@ -23,6 +30,8 @@ public interface XmlRpcServer {
   boolean hasHandler(String name);
 
   void removeHandler(String name);
+
+  boolean process(@NotNull String path, @NotNull HttpRequest request, @NotNull ChannelHandlerContext context, @Nullable Map<String, Object> handlers) throws IOException;
 
   final class SERVICE {
     private SERVICE() {

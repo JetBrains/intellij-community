@@ -443,7 +443,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public boolean isMavenizedModule(final Module m) {
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      return "true".equals(m.getOptionValue(getMavenizedModuleOptionName()));
+      return !m.isDisposed() && "true".equals(m.getOptionValue(getMavenizedModuleOptionName()));
     }
     finally {
       accessToken.finish();

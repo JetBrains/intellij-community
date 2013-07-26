@@ -147,11 +147,6 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   @Override
-  public boolean isGeneratedName() {
-    return data.isGeneratedName(getName(), getConfigurationModule());
-  }
-
-  @Override
   public String suggestedName() {
     if (TestType.CLASS.getType().equals(data.TEST_OBJECT)) {
       String shortName = JavaExecutionUtil.getShortClassName(data.MAIN_CLASS_NAME);
@@ -285,14 +280,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     setGeneratedName();
   }
 
-  public void setGeneratedName() {
-    setName(getGeneratedName());
-  }
-
-  public String getGeneratedName() {
-    return data.getGeneratedName(getConfigurationModule());
-  }
-
+  @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<TestNGConfiguration> group = new SettingsEditorGroup<TestNGConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new TestNGConfigurationEditor(getProject()));
@@ -461,18 +449,14 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       if (!method.getContainingClass().equals(myClass.getPsiElement())) return null;
       class Listener extends RefactoringElementAdapter implements UndoRefactoringElementListener {
         public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
-          final boolean generatedName = isGeneratedName();
           data.setTestMethod(PsiLocation.fromPsiElement((PsiMethod)newElement));
-          if (generatedName) setGeneratedName();
         }
 
         @Override
         public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
           final int methodIdx = oldQualifiedName.indexOf("#") + 1;
           if (methodIdx <= 0 || methodIdx >= oldQualifiedName.length()) return;
-          final boolean generatedName = isGeneratedName();
           data.METHOD_NAME = oldQualifiedName.substring(methodIdx);
-          if (generatedName) setGeneratedName();
         }
       }
       return RunConfigurationExtension.wrapRefactoringElementListener(element, this, new Listener());

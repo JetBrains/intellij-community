@@ -20,10 +20,21 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * This interface can be implemented by run configurations that need to update their settings when the target element is renamed or
+ * moved (for example, a Java run configuration needs to update the class name stored in its settings when the class is renamed).
+ * Note that if you provide a listener, and the run configuration has a generated name, the name will be automatically updated after
+ * the refactoring.
+ *
  * @author spleaner
  */
 public interface RefactoringListenerProvider {
 
+  /**
+   * Returns a listener to handle a rename or move refactoring of the specified PSI element.
+   *
+   * @param element the element on which a refactoring was invoked.
+   * @return the listener to handle the refactoring, or null if the run configuration doesn't care about refactoring of this element.
+   */
   @Nullable
   RefactoringElementListener getRefactoringElementListener(final PsiElement element);
 

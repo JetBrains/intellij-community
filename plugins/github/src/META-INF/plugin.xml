@@ -13,9 +13,9 @@
     <checkoutProvider implementation="org.jetbrains.plugins.github.GithubCheckoutProvider"/>
     <applicationService serviceInterface="org.jetbrains.plugins.github.GithubSettings"
                         serviceImplementation="org.jetbrains.plugins.github.GithubSettings"/>
-    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.ui.GithubAnnotationGutterActionProvider" />
+    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.GithubAnnotationGutterActionProvider" />
     <checkoutCompletedListener implementation="org.jetbrains.plugins.github.GithubCheckoutListener" order="after PlatformProjectCheckoutListener"/>
-    <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GitHubSettingsConfigurable"/>
+    <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
 
     <applicationService serviceInterface="org.jetbrains.plugins.github.GithubSslSupport"
                         serviceImplementation="org.jetbrains.plugins.github.GithubSslSupport"/>
@@ -46,6 +46,5 @@
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="ConsoleEditorPopupMenu"/>
     </action>
-    <action id="Github.Rebase.Internal" class="org.jetbrains.plugins.github.GithubRebase"/>
   </actions>
 </idea-plugin>

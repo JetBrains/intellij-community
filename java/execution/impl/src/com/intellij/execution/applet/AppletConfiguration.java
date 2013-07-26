@@ -118,6 +118,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     };
   }
 
+  @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new AppletConfigurable(getProject());
   }
@@ -204,11 +205,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     }
   }
 
-  public String getGeneratedName() {
-    if (MAIN_CLASS_NAME == null) return null;
-    return JavaExecutionUtil.getPresentableClassName(MAIN_CLASS_NAME, getConfigurationModule());
-  }
-
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
     if (HTML_USED) return null;
     return RefactoringListeners.getClassOrPackageListener(element, new RefactoringListeners.SingleClassConfigurationAccessor(this));
@@ -218,22 +214,13 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return getConfigurationModule().findClass(MAIN_CLASS_NAME);
   }
 
-  public void setGeneratedName() {
-    setName(getGeneratedName());
-  }
-
-  public boolean isGeneratedName() {
-    return Comparing.equal(getName(), getGeneratedName());
-  }
-
   public String suggestedName() {
+    if (MAIN_CLASS_NAME == null) return null;
     return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 0);
   }
 
   public void setMainClassName(final String qualifiedName) {
-    final boolean generatedName = isGeneratedName();
     MAIN_CLASS_NAME = qualifiedName;
-    if (generatedName) setGeneratedName();
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {

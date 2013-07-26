@@ -75,7 +75,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     if (UIUtil.isUnderDarcula()) {
       css += "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>";
     }
-    updateLinkPane.setBorder(IdeBorderFactory.createEmptyBorder(0));
+    updateLinkPane.setBorder(IdeBorderFactory.createEmptyBorder());
     updateLinkPane.setText(IdeBundle.message("updates.configure.label", css));
     updateLinkPane.setEditable(false);
     LabelTextReplacingUtil.replaceText(panel);

@@ -286,7 +286,7 @@ public class GithubUtil {
       version = GitVersion.identifyVersion(executable);
     }
     catch (Exception e) {
-      GithubNotifications.showErrorDialog(project, GitBundle.getString("find.git.error.title"), e.getMessage());
+      GithubNotifications.showErrorDialog(project, GitBundle.getString("find.git.error.title"), e);
       return false;
     }
 

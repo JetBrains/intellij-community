@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubGist;
-import org.jetbrains.plugins.github.ui.GitHubCreateGistDialog;
+import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
 
 import java.io.IOException;
 import java.util.*;
@@ -100,7 +100,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                @Nullable final VirtualFile[] files) {
 
     // Ask for description and other params
-    final GitHubCreateGistDialog dialog = new GitHubCreateGistDialog(project, editor, file);
+    final GithubCreateGistDialog dialog = new GithubCreateGistDialog(project, editor, file);
     dialog.show();
     if (!dialog.isOK()) {
       return;

@@ -56,6 +56,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private boolean myStoreProjectConfiguration;
   private boolean mySingleton;
   private String myFolderName;
+  private boolean myChangingNameFromCode;
 
 
   private SingleConfigurationConfigurable(RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
@@ -74,6 +75,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       @Override
       public void textChanged(DocumentEvent event) {
         setModified(true);
+        if (!myChangingNameFromCode) {
+          RunConfiguration runConfiguration = getSettings().getConfiguration();
+          if (runConfiguration instanceof LocatableConfigurationBase) {
+            ((LocatableConfigurationBase) runConfiguration).setNameChangedByUser(true);
+          }
+        }
       }
     });
 
@@ -199,13 +206,19 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   public final void setNameText(final String name) {
+    myChangingNameFromCode = true;
     try {
-      if (!myNameDocument.getText(0, myNameDocument.getLength()).equals(name)) {
-        myNameDocument.replace(0, myNameDocument.getLength(), name, null);
+      try {
+        if (!myNameDocument.getText(0, myNameDocument.getLength()).equals(name)) {
+          myNameDocument.replace(0, myNameDocument.getLength(), name, null);
+        }
+      }
+      catch (BadLocationException e) {
+        LOG.error(e);
       }
     }
-    catch (BadLocationException e) {
-      LOG.error(e);
+    finally {
+      myChangingNameFromCode = false;
     }
   }
 

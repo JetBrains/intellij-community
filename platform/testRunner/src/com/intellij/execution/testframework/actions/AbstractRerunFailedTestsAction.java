@@ -234,6 +234,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       myConfiguration.writeExternal(element);
     }
 
+    @NotNull
     public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       return myConfiguration.getConfigurationEditor();
     }

@@ -43,7 +43,7 @@ public abstract class CommandLineState implements RunProfileState {
 
   protected CommandLineState(ExecutionEnvironment environment) {
     myEnvironment = environment;
-    myConsoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(myEnvironment.getProject());
+    myConsoleBuilder = myEnvironment != null ? TextConsoleBuilderFactory.getInstance().createBuilder(myEnvironment.getProject()) : null;
   }
 
   public ExecutionEnvironment getEnvironment() {

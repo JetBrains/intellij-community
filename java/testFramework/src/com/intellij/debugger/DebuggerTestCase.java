@@ -465,6 +465,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    @NotNull
     @Override
     public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       return null;  //To change body of implemented methods use File | Settings | File Templates.

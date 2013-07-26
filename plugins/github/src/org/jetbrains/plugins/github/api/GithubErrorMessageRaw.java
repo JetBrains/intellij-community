@@ -17,14 +17,12 @@ package org.jetbrains.plugins.github.api;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
-
 /**
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-class GithubErrorMessageRaw implements Serializable {
-  private String message;
+class GithubErrorMessageRaw {
+  @Nullable private String message;
 
   @Nullable
   public String getMessage() {

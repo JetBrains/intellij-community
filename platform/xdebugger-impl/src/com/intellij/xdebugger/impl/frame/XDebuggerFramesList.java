@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.TextTransferrable;
@@ -47,13 +48,16 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     doInit();
   }
 
+  @Override
   protected ListCellRenderer createListRenderer() {
     return new XDebuggerFrameListRenderer(myProject);
   }
 
+  @Override
   protected void onFrameChanged(final Object selectedValue) {
     if (mySelectedFrame != selectedValue) {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           repaint();
         }
@@ -76,6 +80,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
       myColorsManager = FileColorManager.getInstance(project);
     }
 
+    @Override
     protected void customizeCellRenderer(final JList list,
                                          final Object value,
                                          final int index,
@@ -118,7 +123,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     return defaultTransferHandler;
   }
 
-  private static class MyColoredTextContainer implements XStackFrame.ColoredTextContainer {
+  private static class MyColoredTextContainer implements ColoredTextContainer {
     private final StringBuilder builder = new StringBuilder();
     @Override
     public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
@@ -128,9 +133,14 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     @Override
     public void setIcon(@Nullable Icon icon) {
     }
+
+    @Override
+    public void setToolTipText(String text) {
+    }
   }
 
   private static class MyListTransferHandler extends TransferHandler {
+    @Override
     protected Transferable createTransferable(JComponent c) {
       if (!(c instanceof XDebuggerFramesList)) {
         return null;
@@ -171,6 +181,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
       return new TextTransferrable(htmlBuf.toString(), plainBuf.toString());
     }
 
+    @Override
     public int getSourceActions(JComponent c) {
       return COPY;
     }

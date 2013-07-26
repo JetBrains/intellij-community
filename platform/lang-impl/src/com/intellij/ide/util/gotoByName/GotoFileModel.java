@@ -100,13 +100,13 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
   @Override
   public boolean loadInitialCheckBoxState() {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    return propertiesComponent.isTrueValue("GoToClass.includeJavaFiles");
+    return propertiesComponent.isTrueValue("GoToFile.includeJavaFiles");
   }
 
   @Override
   public void saveInitialCheckBoxState(boolean state) {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    propertiesComponent.setValue("GoToClass.includeJavaFiles", Boolean.toString(state));
+    propertiesComponent.setValue("GoToFile.includeJavaFiles", Boolean.toString(state));
   }
 
   @Override

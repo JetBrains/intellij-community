@@ -16,12 +16,9 @@
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
@@ -32,7 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.*;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -62,59 +61,84 @@ public class GithubApiUtil {
   }
 
   @Nullable
-  private static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
-    return request(auth, path, null, HttpVerb.GET);
-  }
-
-  @Nullable
   private static JsonElement postRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable String requestBody)
     throws IOException {
-    return request(auth, path, requestBody, HttpVerb.POST);
+    return request(auth, path, requestBody, HttpVerb.POST).getJsonElement();
   }
 
   @Nullable
   private static JsonElement deleteRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
-    return request(auth, path, null, HttpVerb.DELETE);
+    return request(auth, path, null, HttpVerb.DELETE).getJsonElement();
   }
 
   @Nullable
-  private static JsonElement request(@NotNull GithubAuthData auth,
-                                     @NotNull String path,
-                                     @Nullable String requestBody,
-                                     @NotNull HttpVerb verb) throws IOException {
+  private static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
+    return request(auth, path, null, HttpVerb.GET).getJsonElement();
+  }
+
+  @Nullable
+  private static ResponsePage getPagedRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
+    return request(auth, path, null, HttpVerb.GET);
+  }
+
+  @Nullable
+  private static JsonArray getAllRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
+    JsonArray ret = new JsonArray();
+    String next = path;
+
+    while (next != null) {
+      ResponsePage response = request(auth, next, null, HttpVerb.GET);
+
+      if (response.getJsonElement() == null) {
+        return null;
+      }
+
+      if (!response.getJsonElement().isJsonArray()) {
+        throw new JsonException("Wrong json type: expected JsonArray");
+      }
+
+      next = response.getNextPage();
+      ret.addAll(response.getJsonElement().getAsJsonArray());
+    }
+
+    return ret;
+  }
+
+  @NotNull
+  private static ResponsePage request(@NotNull GithubAuthData auth,
+                                      @NotNull String path,
+                                      @Nullable String requestBody,
+                                      @NotNull HttpVerb verb) throws IOException {
     HttpMethod method = null;
     try {
       method = doREST(auth, path, requestBody, verb);
 
       checkStatusCode(method);
 
-      String resp = method.getResponseBodyAsString();
+      InputStream resp = method.getResponseBodyAsStream();
       if (resp == null) {
-        return null;
+        return new ResponsePage();
       }
 
       JsonElement ret = parseResponse(resp);
+      if (ret.isJsonNull()) {
+        return new ResponsePage();
+      }
 
       Header header = method.getResponseHeader("Link");
       if (header != null) {
         String value = header.getValue();
-        int end = value.indexOf(">; rel=\"next\"");
+        int end = value.indexOf(">; rel=\"nextPage\"");
         int begin = value.lastIndexOf('<', end);
         if (begin >= 0 && end >= 0) {
           String newPath = GithubUrlUtil.removeProtocolPrefix(value.substring(begin + 1, end));
           int index = newPath.indexOf('/');
 
-          JsonElement next = request(auth, newPath.substring(index), requestBody, verb);
-          if (next == null) {
-            throw new NoHttpResponseException("Unexpected empty response");
-          }
-          JsonArray merged = ret.getAsJsonArray();
-          merged.addAll(next.getAsJsonArray());
-          return merged;
+          return new ResponsePage(ret, newPath.substring(index));
         }
       }
 
-      return ret;
+      return new ResponsePage(ret);
     }
     finally {
       if (method != null) {
@@ -200,20 +224,10 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  private static JsonElement parseResponse(@NotNull String githubResponse) throws JsonException {
-    try {
-      return new JsonParser().parse(githubResponse);
-    }
-    catch (JsonSyntaxException jse) {
-      throw new JsonException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
-    }
-  }
-
-  @NotNull
   private static String getErrorMessage(@NotNull HttpMethod method) {
     String message = null;
     try {
-      String resp = method.getResponseBodyAsString();
+      InputStream resp = method.getResponseBodyAsStream();
       if (resp != null) {
         GithubErrorMessageRaw error = fromJson(parseResponse(resp), GithubErrorMessageRaw.class);
         message = error.getMessage();
@@ -228,6 +242,48 @@ public class GithubApiUtil {
     }
     else {
       return method.getStatusText();
+    }
+  }
+
+  @NotNull
+  private static JsonElement parseResponse(@NotNull InputStream githubResponse) throws IOException {
+    Reader reader = new InputStreamReader(githubResponse);
+    try {
+      return new JsonParser().parse(reader);
+    }
+    catch (JsonSyntaxException jse) {
+      throw new JsonException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
+    }
+    finally {
+      reader.close();
+    }
+  }
+
+  private static class ResponsePage {
+    @Nullable private JsonElement response;
+    @Nullable private String nextPage;
+
+    public ResponsePage() {
+      this(null, null);
+    }
+
+    public ResponsePage(@Nullable JsonElement response) {
+      this(response, null);
+    }
+
+    public ResponsePage(@Nullable JsonElement response, @Nullable String next) {
+      this.response = response;
+      this.nextPage = next;
+    }
+
+    @Nullable
+    public JsonElement getJsonElement() {
+      return response;
+    }
+
+    @Nullable
+    public String getNextPage() {
+      return nextPage;
     }
   }
 
@@ -256,7 +312,7 @@ public class GithubApiUtil {
     }
   }
 
-  public static <Raw extends DataConstructorSimplified<Result>, Result> Result createDataFromRaw(@NotNull Raw rawObject,
+  static <Raw extends DataConstructorSimplified<Result>, Result> Result createDataFromRaw(@NotNull Raw rawObject,
                                                                                                  @NotNull Class<Result> result)
     throws JsonException {
     try {
@@ -295,23 +351,21 @@ public class GithubApiUtil {
 
   @NotNull
   private static <T> T fromJson(@Nullable JsonElement json, @NotNull Class<T> classT) throws IOException {
-    //cast as workaround for early java 1.6 bug
-    return (T)fromJson(json, (Type)classT);
-  }
-
-  @NotNull
-  private static <T> T fromJson(@Nullable JsonElement json, @NotNull Type type) throws IOException {
     if (json == null) {
       throw new JsonException("Unexpected empty response");
     }
 
     T res;
     try {
-      //cast as workaround for early java 1.6 bug 
-      res = (T) gson.fromJson(json, type);
+      //cast as workaround for early java 1.6 bug
+      //noinspection RedundantCast
+      res = (T)gson.fromJson(json, classT);
     }
-    catch (JsonParseException jpe) {
-      throw new JsonException("Parse exception converting JSON to object " + type.toString(), jpe);
+    catch (ClassCastException e) {
+      throw new JsonException("Parse exception while converting JSON to object " + classT.toString(), e);
+    }
+    catch (JsonParseException e) {
+      throw new JsonException("Parse exception while converting JSON to object " + classT.toString(), e);
     }
     if (res == null) {
       throw new JsonException("Empty Json response");
@@ -350,10 +404,9 @@ public class GithubApiUtil {
   @NotNull
   private static List<GithubRepo> doGetAvailableRepos(@NotNull GithubAuthData auth, @Nullable String user) throws IOException {
     String request = user == null ? "/user/repos" : "/users/" + user + "/repos";
-    JsonElement result = getRequest(auth, request);
+    JsonElement result = getAllRequest(auth, request);
 
-    List<GithubRepoRaw> rawRepos = fromJson(result, new TypeToken<List<GithubRepoRaw>>() {
-    }.getType());
+    GithubRepoRaw[] rawRepos = fromJson(result, GithubRepoRaw[].class);
 
     List<GithubRepo> repos = new ArrayList<GithubRepo>();
     for (GithubRepoRaw raw : rawRepos) {
@@ -425,10 +478,9 @@ public class GithubApiUtil {
       path = "/repos/" + user + "/" + repo + "/issues";
     }
 
-    JsonElement result = getRequest(auth, path);
+    JsonElement result = getAllRequest(auth, path);
 
-    List<GithubIssueRaw> rawIssues = fromJson(result, new TypeToken<List<GithubIssueRaw>>() {
-    }.getType());
+    GithubIssueRaw[] rawIssues = fromJson(result, GithubIssueRaw[].class);
 
     List<GithubIssue> issues = new ArrayList<GithubIssue>();
     for (GithubIssueRaw raw : rawIssues) {
@@ -452,10 +504,9 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments";
 
-    JsonElement result = getRequest(auth, path);
+    JsonElement result = getAllRequest(auth, path);
 
-    List<GithubIssueCommentRaw> rawComments = fromJson(result, new TypeToken<List<GithubIssueCommentRaw>>() {
-    }.getType());
+    GithubIssueCommentRaw[] rawComments = fromJson(result, GithubIssueCommentRaw[].class);
 
     List<GithubIssueComment> comments = new ArrayList<GithubIssueComment>();
     for (GithubIssueCommentRaw raw : rawComments) {
@@ -487,10 +538,9 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/pulls";
 
-    JsonElement result = getRequest(auth, path);
+    JsonElement result = getAllRequest(auth, path);
 
-    List<GithubPullRequestRaw> rawRequests = fromJson(result, new TypeToken<List<GithubPullRequestRaw>>() {
-    }.getType());
+    GithubPullRequestRaw[] rawRequests = fromJson(result, GithubPullRequestRaw[].class);
 
     List<GithubPullRequest> requests = new ArrayList<GithubPullRequest>();
     for (GithubPullRequestRaw raw : rawRequests) {
@@ -504,10 +554,9 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/commits";
 
-    JsonElement result = getRequest(auth, path);
+    JsonElement result = getAllRequest(auth, path);
 
-    List<GithubCommitRaw> rawCommits = fromJson(result, new TypeToken<List<GithubCommitRaw>>() {
-    }.getType());
+    GithubCommitRaw[] rawCommits = fromJson(result, GithubCommitRaw[].class);
 
     List<GithubCommit> commits = new ArrayList<GithubCommit>();
     for (GithubCommitRaw raw : rawCommits) {
@@ -521,10 +570,9 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/files";
 
-    JsonElement result = getRequest(auth, path);
+    JsonElement result = getAllRequest(auth, path);
 
-    List<GithubFileRaw> rawFiles = fromJson(result, new TypeToken<List<GithubFileRaw>>() {
-    }.getType());
+    GithubFileRaw[] rawFiles = fromJson(result, GithubFileRaw[].class);
 
     List<GithubFile> files = new ArrayList<GithubFile>();
     for (GithubFileRaw raw : rawFiles) {
