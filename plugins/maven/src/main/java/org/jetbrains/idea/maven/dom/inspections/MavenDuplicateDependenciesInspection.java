@@ -27,7 +27,7 @@ import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
@@ -52,10 +52,10 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
 
   private static void checkMavenProjectModel(@NotNull MavenDomProjectModel projectModel,
                                              @NotNull DomElementAnnotationHolder holder) {
-    final Map<String, Set<MavenDomDependency>> allDuplicates = getDuplicateDependenciesMap(projectModel);
+    final Map<DependencyConflictId, Set<MavenDomDependency>> allDuplicates = getDuplicateDependenciesMap(projectModel);
 
     for (MavenDomDependency dependency : projectModel.getDependencies().getDependencies()) {
-      String id = createId(dependency);
+      DependencyConflictId id = DependencyConflictId.create(dependency);
       if (id != null) {
         Set<MavenDomDependency> dependencies = allDuplicates.get(id);
         if (dependencies != null && dependencies.size() > 1) {
@@ -66,12 +66,12 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
             if (d == dependency) continue;
 
             if (d.getParent() == dependency.getParent()) {
-              duplicatedDependencies.add(d); // Dependencies in same file must be unique by groupId:artifactId:type:classifier
+              duplicatedDependencies.add(d); // Dependencies in the same file must be unique by groupId:artifactId:type:classifier
             }
             else {
               if (scope(d).equals(scope(dependency))
                   && Comparing.equal(d.getVersion().getStringValue(), dependency.getVersion().getStringValue())) {
-                duplicatedDependencies.add(d); // Dependencies in same file must be unique by groupId:artifactId:VERSION:type:classifier:SCOPE
+                duplicatedDependencies.add(d); // Dependencies in different files must not have same groupId:artifactId:VERSION:type:classifier:SCOPE
               }
             }
           }
@@ -147,13 +147,13 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
   }
 
   @NotNull
-  private static Map<String, Set<MavenDomDependency>> getDuplicateDependenciesMap(MavenDomProjectModel projectModel) {
-    final Map<String, Set<MavenDomDependency>> allDependencies = new HashMap<String, Set<MavenDomDependency>>();
+  private static Map<DependencyConflictId, Set<MavenDomDependency>> getDuplicateDependenciesMap(MavenDomProjectModel projectModel) {
+    final Map<DependencyConflictId, Set<MavenDomDependency>> allDependencies = new HashMap<DependencyConflictId, Set<MavenDomDependency>>();
 
     Processor<MavenDomProjectModel> collectProcessor = new Processor<MavenDomProjectModel>() {
       public boolean process(MavenDomProjectModel model) {
         for (MavenDomDependency dependency : model.getDependencies().getDependencies()) {
-          String mavenId = createId(dependency);
+          DependencyConflictId mavenId = DependencyConflictId.create(dependency);
           if (mavenId != null) {
             if (allDependencies.containsKey(mavenId)) {
               allDependencies.get(mavenId).add(dependency);
@@ -173,19 +173,6 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
     MavenDomProjectProcessorUtils.processParentProjects(projectModel, collectProcessor);
 
     return allDependencies;
-  }
-
-  @Nullable
-  private static String createId(MavenDomDependency coordinates) {
-    String groupId = coordinates.getGroupId().getStringValue();
-    String artifactId = coordinates.getArtifactId().getStringValue();
-
-    if (StringUtil.isEmptyOrSpaces(groupId) || StringUtil.isEmptyOrSpaces(artifactId)) return null;
-
-    String type = coordinates.getType().getStringValue();
-    String classifier = coordinates.getClassifier().getStringValue();
-
-    return groupId + ":" + artifactId + ":" + type + ":" + classifier;
   }
 
   @NotNull
