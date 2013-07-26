@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class XValueChildrenList {
+public class XValueChildrenList extends XValueChildrenProvider {
   public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.<String>emptyList(), Collections.<XValue>emptyList());
 
   private final List<String> myNames;
@@ -56,14 +56,17 @@ public class XValueChildrenList {
     myValues.add(value);
   }
 
+  @Override
   public int size() {
     return myNames.size();
   }
 
+  @Override
   public String getName(int i) {
     return myNames.get(i);
   }
 
+  @Override
   public XValue getValue(int i) {
     return myValues.get(i);
   }
