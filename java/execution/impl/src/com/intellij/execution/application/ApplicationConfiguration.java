@@ -119,7 +119,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     if (MAIN_CLASS_NAME == null || MAIN_CLASS_NAME.length() == 0) {
       return null;
     }
-    return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 6);
+    return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 6) + ".main()";
   }
 
   public void setMainClassName(final String qualifiedName) {

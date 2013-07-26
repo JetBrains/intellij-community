@@ -40,7 +40,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     checkClassName(CLASS_NAME, configuration);
     checkMethodName(METHOD_NAME, configuration);
     checkPackage(PACKAGE_NAME, configuration);
-    checkGeneratedName(configuration, METHOD_NAME + "()");
+    checkGeneretedName(configuration, SHORT_CLASS_NAME + "." + METHOD_NAME);
   }
 
   public void testJUnitClassTest() {
@@ -50,7 +50,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     checkTestObject(JUnitConfiguration.TEST_CLASS, configuration);
     checkClassName(CLASS_NAME, configuration);
     checkPackage(PACKAGE_NAME, configuration);
-    checkGeneratedName(configuration, SHORT_CLASS_NAME);
+    checkGeneretedName(configuration, SHORT_CLASS_NAME);
   }
 
 
@@ -78,7 +78,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     JUnitConfiguration configuration = createJUnitConfiguration(psiPackage, AllInPackageConfigurationProducer.class, dataContext);
     checkTestObject(JUnitConfiguration.TEST_PACKAGE, configuration);
     checkPackage(PACKAGE_NAME, configuration);
-    checkGeneratedName(configuration, "Tests in '" + PACKAGE_NAME + "'");
+    checkGeneretedName(configuration, PACKAGE_NAME + " in " + module.getName());
   }
 
   public void testJUnitDefaultPackage() {
@@ -91,7 +91,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     JUnitConfiguration configuration = createJUnitConfiguration(defaultPackage, AllInPackageConfigurationProducer.class, dataContext);
     checkTestObject(JUnitConfiguration.TEST_PACKAGE, configuration);
     checkPackage("", configuration);
-    checkGeneratedName(configuration, "All Tests");
+    checkGeneretedName(configuration, "All in " + module.getName());
   }
 
   public void testApplication() {
@@ -134,9 +134,9 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     JUnitConfiguration.Data data = configuration.getPersistentData();
     data.PACKAGE_NAME = psiPackage.getQualifiedName();
     data.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
-    assertEquals("Tests in '" + PACKAGE_NAME + "'", configuration.suggestedName());
+    assertEquals(PACKAGE_NAME, configuration.suggestedName());
     data.PACKAGE_NAME = "not.existing.pkg";
-    assertEquals("Tests in 'not.existing.pkg'", configuration.suggestedName());
+    assertEquals("not.existing.pkg", configuration.suggestedName());
 
     data.TEST_OBJECT = JUnitConfiguration.TEST_CLASS;
     data.MAIN_CLASS_NAME = psiClass.getQualifiedName();
@@ -151,12 +151,12 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     data.TEST_OBJECT = JUnitConfiguration.TEST_METHOD;
     data.MAIN_CLASS_NAME = psiClass.getQualifiedName();
     data.METHOD_NAME = METHOD_NAME;
-    assertEquals(METHOD_NAME + "()", configuration.suggestedName());
+    assertEquals(SHORT_CLASS_NAME + "." + METHOD_NAME, configuration.suggestedName());
     data.MAIN_CLASS_NAME = "not.existing.TestClass";
-    assertEquals(METHOD_NAME + "()", configuration.suggestedName());
+    assertEquals("TestClass." + METHOD_NAME, configuration.suggestedName());
   }
 
-  private static void checkGeneratedName(JUnitConfiguration configuration, String name) {
+  private static void checkGeneretedName(JUnitConfiguration configuration, String name) {
     assertEquals(configuration.suggestedName(), configuration.getName());
     assertEquals(name, configuration.getName());
   }

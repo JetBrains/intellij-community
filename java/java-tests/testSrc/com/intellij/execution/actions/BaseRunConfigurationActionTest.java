@@ -16,6 +16,7 @@ public class BaseRunConfigurationActionTest extends LightIdeaTestCase {
     checkSuggestedName("AClass.main()", configuration);
 
     configuration.setName("Other name");
+    configuration.setNameChangedByUser(true);
     checkSuggestedName("Other name", configuration);
 
     configuration.setName("1234567890123456789012345 other long name");
@@ -35,6 +36,7 @@ public class BaseRunConfigurationActionTest extends LightIdeaTestCase {
     checkSuggestedName("ATestClass", configuration);
 
     configuration.setName("Other name");
+    configuration.setNameChangedByUser(true);
     checkSuggestedName("Other name", configuration);
 
     data.METHOD_NAME = "testSmth";
