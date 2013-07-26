@@ -65,17 +65,4 @@ public class XValueChildrenList {
   public XValue getValue(int i) {
     return myValues.get(i);
   }
-
-  /**
-   * @deprecated use {@link XCompositeNode#isAlreadySorted} (to remove in IDEA 13)
-   */
-  public boolean isAlreadySorted() {
-    return false;
-  }
-
-  /**
-   * @deprecated use {@link XCompositeNode#setAlreadySorted} instead (to remove in IDEA 13)
-   */
-  public void setAlreadySorted(boolean alreadySorted) {
-  }
 }
