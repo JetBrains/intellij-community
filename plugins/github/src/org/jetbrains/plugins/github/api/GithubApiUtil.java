@@ -87,7 +87,7 @@ public class GithubApiUtil {
       checkStatusCode(method);
 
       String resp = method.getResponseBodyAsString();
-      if (resp == null) {
+      if (resp == null || StringUtil.isEmptyOrSpaces(resp)) {
         return null;
       }
 
@@ -104,7 +104,11 @@ public class GithubApiUtil {
 
           JsonElement next = request(auth, newPath.substring(index), requestBody, verb);
           if (next == null) {
-            throw new NoHttpResponseException("Unexpected empty response");
+            LOG.info("Bad response page: " + index);
+            return null;
+          }
+          if (!next.isJsonArray() || !ret.isJsonArray()) {
+            throw new JsonException("Wrong json type: expected JsonArray");
           }
           JsonArray merged = ret.getAsJsonArray();
           merged.addAll(next.getAsJsonArray());
