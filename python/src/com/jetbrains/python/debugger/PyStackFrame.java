@@ -8,7 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -26,7 +26,7 @@ public class PyStackFrame extends XStackFrame {
 
   private final PyDebugProcess myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
-  private XSourcePosition myPosition;
+  private final XSourcePosition myPosition;
 
   public PyStackFrame(@NotNull final PyDebugProcess debugProcess, @NotNull final PyStackFrameInfo frameInfo) {
     myDebugProcess = debugProcess;
@@ -50,7 +50,7 @@ public class PyStackFrame extends XStackFrame {
   }
 
   @Override
-  public void customizePresentation(SimpleColoredComponent component) {
+  public void customizePresentation(ColoredTextContainer component) {
     component.setIcon(AllIcons.Debugger.StackFrame);
 
     if (myPosition == null) {
@@ -87,6 +87,7 @@ public class PyStackFrame extends XStackFrame {
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
       public void run() {
         try {
           final XValueChildrenList values = myDebugProcess.loadFrame();
