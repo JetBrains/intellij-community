@@ -1,9 +1,6 @@
 package com.jetbrains.python.testing;
 
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RefactoringListenerProvider;
-import com.intellij.execution.configurations.RuntimeConfigurationError;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -254,7 +251,6 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
             setWorkingDirectory(newPath);
             if (myTestType == TestType.TEST_FOLDER) {
               myFolderName = newPath;
-              setName(suggestedName());
             }
           }
 
@@ -264,7 +260,6 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
             setWorkingDirectory(systemDependant);
             if (myTestType == TestType.TEST_FOLDER) {
               myFolderName = systemDependant;
-              setName(suggestedName());
             }
           }
         };
@@ -288,14 +283,12 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
             VirtualFile virtualFile = ((PsiFile)newElement).getVirtualFile();
             if (virtualFile != null) {
               myScriptName = FileUtil.toSystemDependentName(virtualFile.getPath());
-              setName(suggestedName());
             }
           }
 
           @Override
           public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
             myScriptName = FileUtil.toSystemDependentName(oldQualifiedName);
-            setName(suggestedName());
           }
         };
       }
@@ -305,13 +298,11 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
           @Override
           protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
             myClassName = ((PyClass) newElement).getName();
-            setName(suggestedName());
           }
 
           @Override
           public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
             myClassName = oldQualifiedName;
-            setName(suggestedName());
           }
         };
       }
@@ -324,7 +315,6 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
             @Override
             protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
               myMethodName = ((PyFunction) newElement).getName();
-              setName(suggestedName());
             }
 
             @Override
@@ -332,7 +322,6 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
               final int methodIdx = oldQualifiedName.indexOf("#") + 1;
               if (methodIdx > 0 && methodIdx < oldQualifiedName.length()) {
                 myMethodName = oldQualifiedName.substring(methodIdx);
-                setName(suggestedName());
               }
             }
           };

@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.debugger.PyDebugRunner;
@@ -41,10 +42,11 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
     return cls.cast(factory.createTemplateConfiguration(project));
   }
 
-  protected static List<String> buildRunCommandLine(AbstractPythonRunConfiguration configuration) {
+  protected List<String> buildRunCommandLine(AbstractPythonRunConfiguration configuration) {
     try {
       final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      final PythonCommandLineState state = (PythonCommandLineState)configuration.getState(executor, new ExecutionEnvironment());
+      ExecutionEnvironment env = new ExecutionEnvironmentBuilder(myFixture.getProject(), executor).setRunProfile(configuration).build();
+      final PythonCommandLineState state = (PythonCommandLineState)configuration.getState(executor, env);
       final GeneralCommandLine generalCommandLine = state.generateCommandLine();
       return generalCommandLine.getParametersList().getList();
     }
@@ -53,10 +55,11 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
     }
   }
 
-  protected static List<String> buildDebugCommandLine(AbstractPythonRunConfiguration configuration) {
+  protected List<String> buildDebugCommandLine(AbstractPythonRunConfiguration configuration) {
     try {
       final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
-      final PythonCommandLineState state = (PythonCommandLineState)configuration.getState(executor, new ExecutionEnvironment());
+      ExecutionEnvironment env = new ExecutionEnvironmentBuilder(myFixture.getProject(), executor).setRunProfile(configuration).build();
+      final PythonCommandLineState state = (PythonCommandLineState)configuration.getState(executor, env);
       final GeneralCommandLine generalCommandLine =
         state.generateCommandLine(PyDebugRunner.createCommandLinePatchers(configuration.getProject(), state, configuration, PORT));
       return generalCommandLine.getParametersList().getList();

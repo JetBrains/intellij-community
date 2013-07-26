@@ -104,7 +104,7 @@ target('default': "Build artifacts") {
 
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", ["$home/build/idea.license", "$home/build/pycharm.license"], {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm"), false).each {
-      pathelement(location: it)
+      ant.pathelement(location: it)
     }
   }, "-Didea.platform.prefix=Python -Didea.no.jre.check=true")
 

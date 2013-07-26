@@ -24,6 +24,7 @@ import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -90,6 +91,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     };
   }
 
+  @NotNull
   @Override
   public final SettingsEditor<T> getConfigurationEditor() {
     final SettingsEditor<T> runConfigurationEditor = createConfigurationEditor();
