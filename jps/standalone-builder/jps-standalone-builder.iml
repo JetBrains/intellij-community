@@ -10,18 +10,18 @@
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="jps-builders" />
     <orderEntry type="module" module-name="jps-model-api" />
+    <orderEntry type="library" name="cli-parser" level="project" />
+    <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="module" module-name="jps-model-serialization" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/gant-1.9.5_groovy-1.7.10.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../build/lib/gant/lib/gant_groovy2.0-1.9.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="cli-parser" level="project" />
-    <orderEntry type="library" name="Ant" level="project" />
-    <orderEntry type="module" module-name="jps-model-serialization" />
   </component>
 </module>
 

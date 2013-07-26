@@ -36,9 +36,6 @@
           <fileset dir="${project.home}/lib/ant/lib">
             <include name="*.jar"/>
           </fileset>
-          <fileset dir="${gant.home}/lib">
-            <include name="*.jar"/>
-          </fileset>
         </classpath>
 
         <arg value="-f"/>

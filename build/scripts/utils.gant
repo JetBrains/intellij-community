@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import org.jetbrains.jps.Jps
-import org.jetbrains.jps.Module
-import org.jetbrains.jps.idea.IdeaProjectLoader
+import org.jetbrains.jps.gant.JpsGantTool
+import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.module.JpsModule
 
-includeTool << Jps
+includeTool << JpsGantTool
 
 binding.setVariable("p", {String key ->
   return getProperty(key) as String
@@ -122,23 +123,24 @@ binding.setVariable("loadProject", {
       classpath "$jdkHome/lib/tools.jar"
     }
   }
-  IdeaProjectLoader.loadFromPath(project, "${home}")
+  projectBuilder.dataStorageRoot = new File("$home/.jps-build-data")
+  loadProjectFromPath(home)
 })
 
-boolean hasSourceRoots(Module module) {
-  return !module.sourceRoots.isEmpty()
+boolean hasSourceRoots(JpsModule module) {
+  return module.getSourceRoots(JavaSourceRootType.SOURCE).iterator().hasNext()
 }
 
 binding.setVariable("findModule", {String name ->
-  project.modules[name]
+  project.modules.find { it.name == name }
 })
 
 binding.setVariable("allModules", {
-  return project.modules.values()
+  return project.modules
 })
 
 binding.setVariable("printUnusedModules", {Set<String> usedModules ->
-  allModules().each {Module m ->
+  allModules().each {JpsModule m ->
     if (!usedModules.contains(m.name) && hasSourceRoots(m)) {
       projectBuilder.warning("Module $m.name is not used in project layout")
     }
@@ -158,7 +160,7 @@ String readSnapshotBuild() {
 
 binding.setVariable("snapshot", readSnapshotBuild())
 
-projectBuilder.buildInfoPrinter = new org.jetbrains.jps.teamcity.TeamcityBuildInfoPrinter()
+projectBuilder.buildInfoPrinter = new TeamCityBuildInfoPrinter()
 projectBuilder.compressJars = false
 
 binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
