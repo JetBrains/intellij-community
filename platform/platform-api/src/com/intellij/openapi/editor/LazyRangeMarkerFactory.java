@@ -38,8 +38,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 public class LazyRangeMarkerFactory extends AbstractProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.LazyRangeMarkerFactory");
-
   private final ConcurrentMap<VirtualFile,WeakList<LazyMarker>> myMarkers = new ConcurrentWeakHashMap<VirtualFile, WeakList<LazyMarker>>();
 
   public LazyRangeMarkerFactory(@NotNull Project project, @NotNull final FileDocumentManager fileDocumentManager) {
@@ -82,13 +80,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     return ApplicationManager.getApplication().runReadAction(new Computable<RangeMarker>() {
       @Override
       public RangeMarker compute() {
-        FileDocumentManager fdm = FileDocumentManager.getInstance();
-        final Document document = fdm.getCachedDocument(file);
-        if (document != null) {
-          int _offset = Math.min(offset, document.getTextLength());
-          return document.createRangeMarker(_offset, _offset);
-        }
-
+        // even for already loaded document do not create range marker yet - wait until it really needed when e.g. user clicked to jump to OpenFileDescriptor
         final LazyMarker marker = new OffsetLazyMarker(file, offset);
         addToLazyMarkersList(marker, file);
         return marker;
