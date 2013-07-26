@@ -15,6 +15,7 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -248,6 +249,7 @@ public class ResolveImportUtil {
     PsiDirectory dir = null;
     PsiElement ret = null;
     PsiElement possible_ret = null;
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext();
     if (parent instanceof PyFileImpl) {
       if (PyNames.INIT_DOT_PY.equals(((PyFile)parent).getName())) {
         // gobject does weird things like '_gobject = sys.modules['gobject._gobject'], so it's preferable to look at
@@ -258,9 +260,12 @@ public class ResolveImportUtil {
 
       // OTOH, quite often a module named foo exports a class or function named foo, which is used as a fallback
       // by a module one level higher (e.g. curses.set_key). Prefer it to submodule if possible.
-      PsiElement elementNamed = ((PyFile)parent).getElementNamed(referencedName);
-      if (!fileOnly || PyUtil.instanceOf(elementNamed, PsiFile.class, PsiDirectory.class)) {
-        ret = elementNamed;
+      final PyModuleType moduleType = new PyModuleType((PyFile)parent);
+      final List<? extends RatedResolveResult> results = moduleType.resolveMember(referencedName, null, AccessDirection.READ,
+                                                                                  resolveContext);
+      final PsiElement moduleMember = results != null && !results.isEmpty() ? results.get(0).getElement() : null;
+      if (!fileOnly || PyUtil.instanceOf(moduleMember, PsiFile.class, PsiDirectory.class)) {
+        ret = moduleMember;
       }
       if (ret != null && !PyUtil.instanceOf(ret, PsiFile.class, PsiDirectory.class) &&
           PsiTreeUtil.getStubOrPsiParentOfType(ret, PyExceptPart.class) == null) {
@@ -273,7 +278,6 @@ public class ResolveImportUtil {
       dir = (PsiDirectory)parent;
     }
     else if (parent != null) {
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext();
       PyType refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, resolveContext.getTypeEvalContext(), null);
       if (refType != null) {
         final List<? extends RatedResolveResult> result = refType.resolveMember(referencedName, null, AccessDirection.READ, resolveContext);

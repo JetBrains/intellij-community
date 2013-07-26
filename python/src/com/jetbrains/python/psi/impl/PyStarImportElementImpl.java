@@ -6,7 +6,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,13 +56,16 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
         if (source instanceof PyFile) {
           PyFile sourceFile = (PyFile)source;
-          final PsiElement exportedName = sourceFile.getElementNamed(name);
-          if (exportedName != null) {
+          final PyModuleType moduleType = new PyModuleType(sourceFile);
+          final List<? extends RatedResolveResult> results = moduleType.resolveMember(name, null, AccessDirection.READ,
+                                                                                      PyResolveContext.defaultContext());
+          final PsiElement result = results != null && !results.isEmpty() ? results.get(0).getElement() : null;
+          if (result != null) {
             final List<String> all = sourceFile.getDunderAll();
             if (all != null && !all.contains(name)) {
               continue;
             }
-            return exportedName;
+            return result;
           }
         }
       }
@@ -91,9 +97,7 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
       }
 
       public String getLocationString() {
-        StringBuilder buf = new StringBuilder("| ");
-        buf.append("from ").append(getName()).append(" import *");
-        return buf.toString();
+        return "| " + "from " + getName() + " import *";
       }
 
       public Icon getIcon(final boolean open) {
