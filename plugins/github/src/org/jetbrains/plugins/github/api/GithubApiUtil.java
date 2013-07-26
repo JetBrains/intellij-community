@@ -29,6 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.*;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -84,12 +87,15 @@ public class GithubApiUtil {
 
       checkStatusCode(method);
 
-      String resp = method.getResponseBodyAsString();
-      if (resp == null || StringUtil.isEmptyOrSpaces(resp)) {
+      InputStream resp = method.getResponseBodyAsStream();
+      if (resp == null) {
         return null;
       }
 
       JsonElement ret = parseResponse(resp);
+      if (ret.isJsonNull()) {
+        return null;
+      }
 
       Header header = method.getResponseHeader("Link");
       if (header != null) {
@@ -200,20 +206,10 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  private static JsonElement parseResponse(@NotNull String githubResponse) throws JsonException {
-    try {
-      return new JsonParser().parse(githubResponse);
-    }
-    catch (JsonSyntaxException jse) {
-      throw new JsonException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
-    }
-  }
-
-  @NotNull
   private static String getErrorMessage(@NotNull HttpMethod method) {
     String message = null;
     try {
-      String resp = method.getResponseBodyAsString();
+      InputStream resp = method.getResponseBodyAsStream();
       if (resp != null) {
         GithubErrorMessageRaw error = fromJson(parseResponse(resp), GithubErrorMessageRaw.class);
         message = error.getMessage();
@@ -228,6 +224,20 @@ public class GithubApiUtil {
     }
     else {
       return method.getStatusText();
+    }
+  }
+
+  @NotNull
+  private static JsonElement parseResponse(@NotNull InputStream githubResponse) throws IOException {
+    Reader reader = new InputStreamReader(githubResponse);
+    try {
+      return new JsonParser().parse(reader);
+    }
+    catch (JsonSyntaxException jse) {
+      throw new JsonException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
+    }
+    finally {
+      reader.close();
     }
   }
 
