@@ -37,23 +37,26 @@ class ExecutionCallback {
     myCountToExecution = executedCount;
   }
 
-  void setExecuted() {
+  boolean setExecuted() {
     signalExecution();
-    if (isExecuted()) {
-      Runnable[] all;
-      synchronized (this) {
-        if (myRunnables == null) {
-          all = ArrayUtil.EMPTY_RUNNABLE_ARRAY;
-        }
-        else {
-          all = myRunnables.toArray(new Runnable[myRunnables.size()]);
-          myRunnables.clear();
-        }
+    if (!isExecuted()) {
+      return false;
+    }
+
+    Runnable[] all;
+    synchronized (this) {
+      if (myRunnables == null) {
+        all = ArrayUtil.EMPTY_RUNNABLE_ARRAY;
       }
-      for (Runnable each : all) {
-        each.run();
+      else {
+        all = myRunnables.toArray(new Runnable[myRunnables.size()]);
+        myRunnables.clear();
       }
     }
+    for (Runnable each : all) {
+      each.run();
+    }
+    return true;
   }
 
   private static class CompositeRunnable extends ArrayList<Runnable> implements Runnable {

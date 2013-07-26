@@ -63,8 +63,9 @@ public class ActionCallback implements Disposable {
   }
 
   public void setDone() {
-    myDone.setExecuted();
-    Disposer.dispose(this);
+    if (myDone.setExecuted()) {
+      Disposer.dispose(this);
+    }
   }
 
   public boolean isDone() {
@@ -80,8 +81,9 @@ public class ActionCallback implements Disposable {
   }
 
   public void setRejected() {
-    myRejected.setExecuted();
-    Disposer.dispose(this);
+    if (myRejected.setExecuted()) {
+      Disposer.dispose(this);
+    }
   }
 
   @NotNull
