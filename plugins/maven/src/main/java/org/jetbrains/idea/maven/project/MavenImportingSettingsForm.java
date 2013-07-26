@@ -50,7 +50,6 @@ public class MavenImportingSettingsForm {
   private JCheckBox myDownloadDocsCheckBox;
 
   private JPanel myAdditionalSettingsPanel;
-  private JPanel mySeparateModulesDirPanel;
   private JComboBox myGeneratedSourcesComboBox;
   private JCheckBox myExcludeTargetFolderCheckBox;
   private JTextField myDependencyTypes;
@@ -59,7 +58,6 @@ public class MavenImportingSettingsForm {
     mySearchRecursivelyCheckBox.setVisible(isImportStep);
     myProjectFormatLabel.setVisible(isImportStep && isCreatingNewProject);
     myProjectFormatComboBox.setVisible(isImportStep && isCreatingNewProject);
-    mySeparateModulesDirPanel.setVisible(isImportStep);
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
