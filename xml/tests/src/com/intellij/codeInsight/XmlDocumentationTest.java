@@ -54,10 +54,6 @@ public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
     doQuickDocGenerationTestWithCheckExpectedResult(testName + ".xml", testName + ".xsd");
   }
 
-  public void testXmlDoc5() throws Exception {
-    doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml", "maven-4.0.0.xsd");
-  }
-
   public void testSchemaPrefix() throws Exception {
     DocumentationTestContext context = new DocumentationTestContext("SchemaPrefix.xml");
     assertEquals("XML Namespace Prefix \"xs\" (http://www.w3.org/2001/XMLSchema)", context.getQuickNavigateInfo());
