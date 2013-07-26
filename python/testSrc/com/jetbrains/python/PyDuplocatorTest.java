@@ -80,6 +80,16 @@ public class PyDuplocatorTest extends PyTestCase {
     }
   }
 
+  public void testClassName() throws Exception {
+    myDuplocatorSettings.DISTINGUISH_FIELDS = false;
+    try {
+      doTest(1);
+    }
+    finally {
+      myDuplocatorSettings.DISTINGUISH_FUNCTIONS = true;
+    }
+  }
+
   public void testFunctionCallNegative() throws Exception {
     doTest(1);
   }
