@@ -74,7 +74,8 @@ public class UsageInfo {
   }
 
   public UsageInfo(@NotNull SmartPsiElementPointer<?> smartPointer,
-                   SmartPsiFileRange psiFileRange, boolean dynamicUsage,
+                   SmartPsiFileRange psiFileRange,
+                   boolean dynamicUsage,
                    boolean nonCodeUsage) {
     myDynamicUsage = dynamicUsage;
     isNonCodeUsage = nonCodeUsage;

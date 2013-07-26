@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class DefaultIconDeferrer extends IconDeferrer {
+  @Override
   public <T> Icon defer(final Icon base, final T param, @NotNull final Function<T, Icon> f) {
     return f.fun(param);
   }
