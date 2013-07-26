@@ -321,13 +321,22 @@ public class MacMessagesImpl extends MacMessages {
 
   private static Window findDocumentRoot (final Component c) {
     if (c == null) return null;
-    Window w = (c instanceof Window) ? (Window)c : SunToolkit.getContainingWindow(c);
+    Window w = (c instanceof Window) ? (Window)c : getContainingWindow(c);
     synchronized (c.getTreeLock()) {
       while (w.getOwner() != null) {
         w = w.getOwner();
       }
     }
     return w;
+  }
+
+  // This method is not available in jdk 1.6.0_6. Should be changed to the JDK implementation
+  // as soon as we will have switched on JDK 7.
+  private static Window getContainingWindow(Component comp) {
+    while (comp != null && !(comp instanceof Window)) {
+      comp = comp.getParent();
+    }
+    return (Window)comp;
   }
 
   private static void startModal(final Window w, ID windowId) {
