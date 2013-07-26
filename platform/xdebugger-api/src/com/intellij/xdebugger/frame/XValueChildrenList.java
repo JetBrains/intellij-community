@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +28,7 @@ import java.util.List;
  */
 public class XValueChildrenList {
   public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.<String>emptyList(), Collections.<XValue>emptyList());
+
   private final List<String> myNames;
   private final List<XValue> myValues;
 
@@ -36,8 +38,8 @@ public class XValueChildrenList {
   }
 
   public XValueChildrenList() {
-    myNames = new ArrayList<String>();
-    myValues = new ArrayList<XValue>();
+    myNames = new SmartList<String>();
+    myValues = new SmartList<XValue>();
   }
 
   public static XValueChildrenList singleton(String name, @NotNull XValue value) {
