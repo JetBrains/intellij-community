@@ -23,7 +23,7 @@ import javax.swing.*;
  * @author oleg
  * @date 9/27/11
  */
-public class GitHubCreateGistPanel {
+public class GithubCreateGistPanel {
   private JTextArea myDescriptionTextArea;
   private JCheckBox myPrivateCheckBox;
   private JPanel myPanel;
@@ -32,7 +32,7 @@ public class GitHubCreateGistPanel {
   private JTextField myFileNameField;
   private JLabel myFileNameLabel;
 
-  public GitHubCreateGistPanel() {
+  public GithubCreateGistPanel() {
     myDescriptionTextArea.setBorder(BorderFactory.createEtchedBorder());
     myFileNameLabel.setVisible(false);
     myFileNameField.setVisible(false);

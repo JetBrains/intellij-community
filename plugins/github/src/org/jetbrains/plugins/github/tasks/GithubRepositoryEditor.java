@@ -27,7 +27,7 @@ import java.util.Collections;
 /**
  * @author Dennis.Ushakov
  */
-public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepository> {
+public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepository> {
   private JTextField myToken;
   private JTextField myRepoName;
   private JTextField myRepoAuthor;
@@ -36,7 +36,7 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
   private JBLabel myRepoLabel;
   private JCheckBox myPrivateRepo;
 
-  public GitHubRepositoryEditor(final Project project, final GitHubRepository repository, Consumer<GitHubRepository> changeListener) {
+  public GithubRepositoryEditor(final Project project, final GithubRepository repository, Consumer<GithubRepository> changeListener) {
     super(project, repository, changeListener);
     myUserNameText.setVisible(false);
     myUsernameLabel.setVisible(false);

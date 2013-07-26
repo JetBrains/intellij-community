@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  * @author Dennis.Ushakov
  */
 @Tag("GitHub")
-public class GitHubRepository extends BaseRepositoryImpl {
+public class GithubRepository extends BaseRepositoryImpl {
   private static final Logger LOG = GithubUtil.LOG;
 
   private Pattern myPattern = Pattern.compile("($^)");
@@ -46,16 +46,16 @@ public class GitHubRepository extends BaseRepositoryImpl {
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public GitHubRepository() {}
+  public GithubRepository() {}
 
-  public GitHubRepository(GitHubRepository other) {
+  public GithubRepository(GithubRepository other) {
     super(other);
     setRepoName(other.myRepoName);
     setRepoAuthor(other.myRepoAuthor);
     setToken(other.myToken);
   }
 
-  public GitHubRepository(GitHubRepositoryType type) {
+  public GithubRepository(GithubRepositoryType type) {
     super(type);
   }
 
@@ -167,7 +167,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
 
       @Override
       public TaskRepository getRepository() {
-        return GitHubRepository.this;
+        return GithubRepository.this;
       }
 
       @Override
@@ -183,7 +183,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
     return ContainerUtil.map2Array(result, Comment.class, new Function<GithubIssueComment, Comment>() {
       @Override
       public Comment fun(GithubIssueComment comment) {
-        return new GitHubComment(comment.getCreatedAt(), comment.getUser().getLogin(), comment.getBody(), comment.getUser().getGravatarId(),
+        return new GithubComment(comment.getCreatedAt(), comment.getUser().getLogin(), comment.getBody(), comment.getUser().getGravatarId(),
                                  comment.getUser().getHtmlUrl());
       }
     });
@@ -203,7 +203,7 @@ public class GitHubRepository extends BaseRepositoryImpl {
 
   @Override
   public BaseRepository clone() {
-    return new GitHubRepository(this);
+    return new GithubRepository(this);
   }
 
   public String getRepoName() {
@@ -253,9 +253,9 @@ public class GitHubRepository extends BaseRepositoryImpl {
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
-    if (!(o instanceof GitHubRepository)) return false;
+    if (!(o instanceof GithubRepository)) return false;
 
-    GitHubRepository that = (GitHubRepository)o;
+    GithubRepository that = (GithubRepository)o;
     if (!Comparing.equal(getRepoAuthor(), that.getRepoAuthor())) return false;
     if (!Comparing.equal(getRepoName(), that.getRepoName())) return false;
     if (!Comparing.equal(getToken(), that.getToken())) return false;

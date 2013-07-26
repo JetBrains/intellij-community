@@ -9,8 +9,8 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubFullPath;
-import org.jetbrains.plugins.github.tasks.GitHubRepository;
-import org.jetbrains.plugins.github.tasks.GitHubRepositoryType;
+import org.jetbrains.plugins.github.tasks.GithubRepository;
+import org.jetbrains.plugins.github.tasks.GithubRepositoryType;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -76,12 +76,12 @@ public class GithubCheckoutListener implements CheckoutListener {
     final TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
     final TaskRepository[] allRepositories = manager.getAllRepositories();
     for (TaskRepository repository : allRepositories) {
-      if (repository instanceof GitHubRepository) {
+      if (repository instanceof GithubRepository) {
         return;
       }
     }
     // Create new one if not found exists
-    final GitHubRepository repository = new GitHubRepository(new GitHubRepositoryType());
+    final GithubRepository repository = new GithubRepository(new GithubRepositoryType());
     repository.setToken("");
     repository.setRepoAuthor(author);
     repository.setRepoName(name);

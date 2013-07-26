@@ -29,12 +29,12 @@ import javax.swing.*;
  * @author oleg
  * @date 9/27/11
  */
-public class GitHubCreateGistDialog extends DialogWrapper {
-  private final GitHubCreateGistPanel myGithubCreateGistPanel;
+public class GithubCreateGistDialog extends DialogWrapper {
+  private final GithubCreateGistPanel myGithubCreateGistPanel;
 
-  public GitHubCreateGistDialog(@NotNull final Project project, @Nullable Editor editor, @Nullable VirtualFile file) {
+  public GithubCreateGistDialog(@NotNull final Project project, @Nullable Editor editor, @Nullable VirtualFile file) {
     super(project, true);
-    myGithubCreateGistPanel = new GitHubCreateGistPanel();
+    myGithubCreateGistPanel = new GithubCreateGistPanel();
     // Use saved settings for controls
     final GithubSettings settings = GithubSettings.getInstance();
     myGithubCreateGistPanel.setAnonymous(settings.isAnonymousGist());

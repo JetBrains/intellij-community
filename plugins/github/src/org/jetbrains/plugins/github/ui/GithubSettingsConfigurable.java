@@ -14,11 +14,11 @@ import javax.swing.*;
 /**
  * @author oleg
  */
-public class GitHubSettingsConfigurable implements SearchableConfigurable, VcsConfigurableProvider {
+public class GithubSettingsConfigurable implements SearchableConfigurable, VcsConfigurableProvider {
   private GithubSettingsPanel mySettingsPane;
   private final GithubSettings mySettings;
 
-  public GitHubSettingsConfigurable() {
+  public GithubSettingsConfigurable() {
     mySettings = GithubSettings.getInstance();
   }
 

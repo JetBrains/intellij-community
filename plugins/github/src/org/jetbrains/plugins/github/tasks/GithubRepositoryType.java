@@ -13,7 +13,7 @@ import javax.swing.*;
 /**
  * @author Dennis.Ushakov
  */
-public class GitHubRepositoryType extends BaseRepositoryType<GitHubRepository> {
+public class GithubRepositoryType extends BaseRepositoryType<GithubRepository> {
 
   @NotNull
   @Override
@@ -30,19 +30,19 @@ public class GitHubRepositoryType extends BaseRepositoryType<GitHubRepository> {
   @NotNull
   @Override
   public TaskRepository createRepository() {
-    return new GitHubRepository(this);
+    return new GithubRepository(this);
   }
 
   @Override
-  public Class<GitHubRepository> getRepositoryClass() {
-    return GitHubRepository.class;
+  public Class<GithubRepository> getRepositoryClass() {
+    return GithubRepository.class;
   }
 
   @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(GitHubRepository repository,
+  public TaskRepositoryEditor createEditor(GithubRepository repository,
                                            Project project,
-                                           Consumer<GitHubRepository> changeListener) {
-    return new GitHubRepositoryEditor(project, repository, changeListener);
+                                           Consumer<GithubRepository> changeListener) {
+    return new GithubRepositoryEditor(project, repository, changeListener);
   }
 }

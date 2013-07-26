@@ -26,11 +26,11 @@ import java.util.Date;
 /**
  * @author Dennis.Ushakov
  */
-public class GitHubComment extends SimpleComment {
+public class GithubComment extends SimpleComment {
   @Nullable private final String myGravatarId;
   @NotNull private final String myUserHtmlUrl;
 
-  public GitHubComment(@Nullable Date date,
+  public GithubComment(@Nullable Date date,
                        @Nullable String author,
                        @NotNull String text,
                        @Nullable String gravatarId,
