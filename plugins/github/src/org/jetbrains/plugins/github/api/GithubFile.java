@@ -16,15 +16,12 @@
 package org.jetbrains.plugins.github.api;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.Serializable;
 
 /**
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-public class GithubFile implements Serializable {
+public class GithubFile {
   @NotNull private String myFilename;
 
   private int myAdditions;

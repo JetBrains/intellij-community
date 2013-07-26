@@ -18,7 +18,6 @@ package org.jetbrains.plugins.github.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
 import java.util.List;
 
 /**

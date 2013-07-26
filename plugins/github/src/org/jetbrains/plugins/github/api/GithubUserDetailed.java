@@ -18,8 +18,6 @@ package org.jetbrains.plugins.github.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
-
 /**
  * @author Aleksey Pivovarov
  */
@@ -32,7 +30,7 @@ public class GithubUserDetailed extends GithubUser {
   @NotNull private String myType;
   @NotNull private UserPlan myPlan;
 
-  public static class UserPlan implements Serializable {
+  public static class UserPlan {
     @NotNull private String myName;
     private long myPrivateRepos;
 

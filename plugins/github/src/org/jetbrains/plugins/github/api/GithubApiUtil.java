@@ -19,9 +19,7 @@ import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
@@ -296,6 +294,7 @@ public class GithubApiUtil {
   @NotNull
   private static <T> T fromJson(@Nullable JsonElement json, @NotNull Class<T> classT) throws IOException {
     //cast as workaround for early java 1.6 bug
+    //noinspection RedundantCast
     return (T)fromJson(json, (Type)classT);
   }
 
@@ -308,6 +307,7 @@ public class GithubApiUtil {
     T res;
     try {
       //cast as workaround for early java 1.6 bug 
+      //noinspection RedundantCast
       res = (T) gson.fromJson(json, type);
     }
     catch (JsonParseException jpe) {
