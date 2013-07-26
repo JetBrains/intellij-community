@@ -63,10 +63,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     }
   }
 
-  public boolean isGeneratedName() {
-    return Comparing.equal(getName(), suggestedName());
-  }
-
   public String suggestedName() {
     String name = new File(getScriptName()).getName();
     if (name.endsWith(".py")) {
@@ -139,7 +135,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
             boolean rename = getName().equals(suggestedName());
             myScriptName = FileUtil.toSystemDependentName(path);
             if (rename) {
-              setName(suggestedName());
+              setGeneratedName();
             }
           }
         };
