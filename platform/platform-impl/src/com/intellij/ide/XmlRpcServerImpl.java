@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import gnu.trove.THashMap;
 import org.apache.xmlrpc.*;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -33,47 +34,23 @@ import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.io.Responses;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.Map;
 
 public class XmlRpcServerImpl implements XmlRpcServer {
   private static final Logger LOG = Logger.getInstance(XmlRpcServerImpl.class);
 
-  private final XmlRpcHandlerMappingImpl handlerMapping;
-  // idea doesn't use authentication
-  private final XmlRpcContext xmlRpcContext = new XmlRpcContext() {
-    @Nullable
-    @Override
-    public String getUserName() {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public String getPassword() {
-      return null;
-    }
-
-    @Override
-    public XmlRpcHandlerMapping getHandlerMapping() {
-      return handlerMapping;
-    }
-  };
+  private final Map<String, Object> handlerMapping;
 
   public XmlRpcServerImpl() {
-    handlerMapping = LOG.isDebugEnabled() ? new LoggingDefaultHandlerMapping() : new XmlRpcHandlerMappingImpl();
-
+    handlerMapping = new THashMap<String, Object>();
     for (XmlRpcHandlerBean handlerBean : Extensions.getExtensions(XmlRpcHandlerBean.EP_NAME)) {
-      final Object handler;
       try {
-        handler = handlerBean.instantiate();
+        handlerMapping.put(handlerBean.name, handlerBean.instantiate());
       }
       catch (ClassNotFoundException e) {
         LOG.error(e);
-        continue;
       }
-      handlerMapping.addHandler(handlerBean.name, handler);
     }
-
     LOG.debug("XmlRpcServerImpl instantiated, handlers " + handlerMapping);
   }
 
@@ -85,27 +62,28 @@ public class XmlRpcServerImpl implements XmlRpcServer {
 
     @Override
     public boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context) throws IOException {
-      return ((XmlRpcServerImpl)SERVICE.getInstance()).process(urlDecoder, request, context);
+      return SERVICE.getInstance().process(urlDecoder.getPath(), request, context, null);
     }
   }
 
   @Override
   public boolean hasHandler(String name) {
-    return handlerMapping.handlers.containsKey(name);
+    return handlerMapping.containsKey(name);
   }
 
   @Override
   public void addHandler(String name, Object handler) {
-    handlerMapping.addHandler(name, handler);
+    handlerMapping.put(name, handler);
   }
 
   @Override
   public void removeHandler(String name) {
-    handlerMapping.removeHandler(name);
+    handlerMapping.remove(name);
   }
 
-  private boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context) throws IOException {
-    if (!isXmlRpcRequest(urlDecoder.getPath())) {
+  @Override
+  public boolean process(@NotNull String path, @NotNull HttpRequest request, @NotNull ChannelHandlerContext context, @Nullable Map<String, Object> handlers) throws IOException {
+    if (!(path.isEmpty() || (path.length() == 1 && path.charAt(0) == '/') || path.equalsIgnoreCase("/RPC2"))) {
       return false;
     }
 
@@ -113,11 +91,13 @@ public class XmlRpcServerImpl implements XmlRpcServer {
       ChannelBuffer result;
       ChannelBufferInputStream in = new ChannelBufferInputStream(request.getContent());
       try {
-        result = ChannelBuffers.copiedBuffer(new XmlRpcWorker(handlerMapping).execute(in, xmlRpcContext));
+        XmlRpcServerRequest xmlRpcServerRequest = new XmlRpcRequestProcessor().decodeRequest(in);
+        Object response = invokeHandler(getHandler(xmlRpcServerRequest.getMethodName(), handlers == null ? handlerMapping : handlers), xmlRpcServerRequest);
+        result = ChannelBuffers.copiedBuffer(new XmlRpcResponseProcessor().encodeResponse(response, CharsetToolkit.UTF8));
       }
-      catch (Throwable ex) {
+      catch (Throwable e) {
         context.getChannel().close();
-        LOG.error(ex);
+        LOG.error(e);
         return true;
       }
       finally {
@@ -137,80 +117,32 @@ public class XmlRpcServerImpl implements XmlRpcServer {
     return false;
   }
 
-  private static boolean isXmlRpcRequest(String path) {
-    return path.isEmpty() || (path.length() == 1 && path.charAt(0) == '/') || path.equalsIgnoreCase("/RPC2");
+  private static Object getHandler(String methodName, Map<String, Object> handlers) {
+    Object handler = null;
+    String handlerName = null;
+    int dot = methodName.lastIndexOf('.');
+    if (dot > -1) {
+      handlerName = methodName.substring(0, dot);
+      handler = handlers.get(handlerName);
+    }
+
+    if (handler != null) {
+      return handler;
+    }
+
+    IllegalStateException exception;
+    if (dot > -1) {
+      exception = new IllegalStateException("RPC handler object \"" + handlerName + "\" not found");
+    }
+    else {
+      exception = new IllegalStateException("RPC handler object not found for \"" + methodName);
+    }
+
+    LOG.error(exception);
+    throw exception;
   }
 
-  private static class XmlRpcHandlerMappingImpl implements XmlRpcHandlerMapping {
-    protected final THashMap<String, Object> handlers = new THashMap<String, Object>();
-
-    public void addHandler(@NotNull String handlerName, @NotNull Object handler) {
-      if (handler instanceof XmlRpcHandler) {
-        handlers.put(handlerName, handler);
-      }
-      else {
-        handlers.put(handlerName, new Invoker(handler));
-      }
-    }
-
-    public void removeHandler(String handlerName) {
-      handlers.remove(handlerName);
-    }
-
-    @Override
-    public Object getHandler(String methodName) {
-      Object handler = null;
-      String handlerName = null;
-      int dot = methodName.lastIndexOf('.');
-      if (dot > -1) {
-        handlerName = methodName.substring(0, dot);
-        handler = handlers.get(handlerName);
-      }
-
-      if (handler != null) {
-        return handler;
-      }
-
-      IllegalStateException exception;
-      if (dot > -1) {
-        exception = new IllegalStateException("RPC handler object \"" + handlerName + "\" not found");
-      }
-      else {
-        exception = new IllegalStateException("RPC handler object not found for \"" + methodName);
-      }
-
-      LOG.error(exception);
-      throw exception;
-    }
-  }
-
-  private static class LoggingDefaultHandlerMapping extends XmlRpcHandlerMappingImpl {
-    @Override
-    public void addHandler(@NotNull String handlerName, @NotNull Object handler) {
-      LOG.debug(String.format("addHandler: handlerName: %s, handler: %s%s", handlerName, handler, getHandlers()));
-      super.addHandler(handlerName, handler);
-    }
-
-    @Override
-    public void removeHandler(String handlerName) {
-      LOG.debug(String.format("removeHandler: handlerName: %s%s", handlerName, getHandlers()));
-      super.removeHandler(handlerName);
-    }
-
-    @Override
-    public Object getHandler(String methodName) {
-      LOG.debug(String.format("getHandler: methodName: %s%s", methodName, getHandlers()));
-      return super.getHandler(methodName);
-    }
-
-    private String getHandlers() {
-      //noinspection SpellCheckingInspection
-      return String.format("%nhandlers: %s %s", Arrays.toString(handlers.keySet().toArray()), Arrays.toString(handlers.values().toArray()));
-    }
-
-    @Override
-    public String toString() {
-      return getHandlers();
-    }
+  private static Object invokeHandler(@NotNull Object handler, XmlRpcServerRequest request) throws Exception {
+    return (handler instanceof XmlRpcHandler ? (XmlRpcHandler)handler : new Invoker(handler)).execute(request.getMethodName(), request.getParameters());
   }
 }

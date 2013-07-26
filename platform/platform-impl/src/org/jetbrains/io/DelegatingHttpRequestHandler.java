@@ -19,8 +19,10 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
 import org.apache.sanselan.ImageFormat;
+import org.apache.sanselan.ImageWriteException;
 import org.apache.sanselan.Sanselan;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.ChannelHandler;
+import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.ide.BuiltInServerManager;
@@ -28,29 +30,16 @@ import org.jetbrains.ide.HttpRequestHandler;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
-
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import java.io.IOException;
 
 @ChannelHandler.Sharable
-final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
+final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBase {
   @Override
-  public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
-    if (!(event.getMessage() instanceof HttpRequest)) {
-      context.sendUpstream(event);
-      return;
-    }
-
-    HttpRequest request = (HttpRequest)event.getMessage();
-    //if (BuiltInServer.LOG.isDebugEnabled()) {
-      //BuiltInServer.LOG.debug(request.toString());
-    //}
-
-    QueryStringDecoder urlDecoder = new QueryStringDecoder(request.getUri());
-
+  protected boolean process(ChannelHandlerContext context, HttpRequest request, QueryStringDecoder urlDecoder) throws IOException, ImageWriteException {
     HttpRequestHandler connectedHandler = (HttpRequestHandler)context.getAttachment();
     if (connectedHandler != null) {
       if (connectedHandler.isSupported(request) && connectedHandler.process(urlDecoder, request, context)) {
-        return;
+        return true;
       }
       // prev cached connectedHandler is not suitable for this request, so, let's find it again
       context.setAttachment(null);
@@ -63,7 +52,7 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
         icon.paintIcon(null, image.getGraphics(), 0, 0);
         byte[] icoBytes = Sanselan.writeImageToBytes(image, ImageFormat.IMAGE_FORMAT_ICO, null);
         Responses.send(icoBytes, FileResponses.createResponse(urlDecoder.getPath()), request, context);
-        return;
+        return true;
       }
     }
 
@@ -73,24 +62,13 @@ final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
           if (context.getAttachment() == null) {
             context.setAttachment(handler);
           }
-          return;
+          return true;
         }
       }
       catch (Throwable e) {
         BuiltInServer.LOG.error(e);
       }
     }
-    Responses.sendStatus(request, context, NOT_FOUND);
-  }
-
-  @Override
-  public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
-    try {
-      BuiltInServer.LOG.error(event.getCause());
-    }
-    finally {
-      context.setAttachment(null);
-      event.getChannel().close();
-    }
+    return false;
   }
 }

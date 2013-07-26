@@ -37,7 +37,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
 
   @Nullable
   private BuiltInServer server;
-  private boolean myEnabledInUnitTestMode = true;
+  private boolean enabledInUnitTestMode = true;
 
   @Override
   public int getPort() {
@@ -83,7 +83,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
 
   private Future<?> startServerInPooledThread() {
     Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() && !myEnabledInUnitTestMode) {
+    if (application.isUnitTestMode() && !enabledInUnitTestMode) {
       return null;
     }
 
@@ -153,7 +153,6 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
    */
   @TestOnly
   public void setEnabledInUnitTestMode(boolean enabled) {
-    myEnabledInUnitTestMode = enabled;
+    enabledInUnitTestMode = enabled;
   }
-
 }
