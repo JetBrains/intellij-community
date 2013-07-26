@@ -97,9 +97,7 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
       }
 
       public String getLocationString() {
-        StringBuilder buf = new StringBuilder("| ");
-        buf.append("from ").append(getName()).append(" import *");
-        return buf.toString();
+        return "| " + "from " + getName() + " import *";
       }
 
       public Icon getIcon(final boolean open) {
