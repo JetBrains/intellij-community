@@ -1,13 +1,16 @@
 package com.intellij.execution;
 
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -147,11 +150,11 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
     return (JUnitConfiguration)settings.getConfiguration();
   }
 
-  protected final <T extends RuntimeConfiguration> T createConfiguration(PsiElement psiElement) {
+  protected final <T extends RunConfiguration> T createConfiguration(PsiElement psiElement) {
     return (T)createConfiguration(psiElement, new MapDataContext());
   }
 
-  protected <T extends RuntimeConfiguration> T createConfiguration(PsiElement psiElement, MapDataContext dataContext) {
+  protected <T extends RunConfiguration> T createConfiguration(PsiElement psiElement, MapDataContext dataContext) {
     ConfigurationContext context = createContext(psiElement, dataContext);
     RunnerAndConfigurationSettings settings = context.getConfiguration();
     return settings == null ? null : (T)settings.getConfiguration();

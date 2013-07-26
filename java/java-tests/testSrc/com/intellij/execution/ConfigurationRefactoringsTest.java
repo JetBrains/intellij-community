@@ -1,7 +1,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.AllInPackageConfigurationProducer;
@@ -222,7 +222,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
   }
 
   @Override
-  protected <T extends RuntimeConfiguration> T createConfiguration(PsiElement psiClass, MapDataContext dataContext) {
+  protected <T extends RunConfiguration> T createConfiguration(PsiElement psiClass, MapDataContext dataContext) {
     T configuration = (T)super.createConfiguration(psiClass, dataContext);
     RunManagerEx.getInstanceEx(myProject).setTemporaryConfiguration(new RunnerAndConfigurationSettingsImpl(null, configuration, false));
     return configuration;

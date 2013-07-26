@@ -287,7 +287,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     String output = setCompilerOutput(module, "classes", false);
     assertEquals(output, setCompilerOutput(module, "classes", true));
 
-    RuntimeConfiguration configuration = createConfiguration(findClass(module, "Application"));
+    RunConfiguration configuration = createConfiguration(findClass(module, "Application"));
     JavaParameters javaParameters = checkCanRun(configuration);
     checkContains(javaParameters.getClassPath().getPathsString(), output);
 
@@ -418,7 +418,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     return outputs;
   }
 
-  private JavaParameters checkCanRun(RuntimeConfiguration configuration) throws ExecutionException {
+  private JavaParameters checkCanRun(RunConfiguration configuration) throws ExecutionException {
     final RunProfileState state;
     state = configuration.getState(MOCK_EXECUTOR, new ExecutionEnvironment(new MockProfile(), MOCK_EXECUTOR, myProject, null));
     assertNotNull(state);
@@ -439,7 +439,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     return ((JavaCommandLine)state).getJavaParameters();
   }
 
-  private void checkCantRun(RuntimeConfiguration configuration, String reasonBegining) throws ExecutionException {
+  private void checkCantRun(RunConfiguration configuration, String reasonBegining) throws ExecutionException {
     //MockRunRequest request = new MockRunRequest(myProject);
     //CantRunException rejectReason;
     //try {

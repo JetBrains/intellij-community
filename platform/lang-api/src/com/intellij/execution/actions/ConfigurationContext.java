@@ -22,7 +22,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -51,7 +51,7 @@ public class ConfigurationContext {
   private RunnerAndConfigurationSettings myConfiguration;
   private Ref<RunnerAndConfigurationSettings> myExistingConfiguration;
   private final Module myModule;
-  private final RuntimeConfiguration myRuntimeConfiguration;
+  private final RunConfiguration myRuntimeConfiguration;
   private final Component myContextComponent;
 
   public static Key<ConfigurationContext> SHARED_CONTEXT = Key.create("SHARED_CONTEXT");
@@ -72,7 +72,7 @@ public class ConfigurationContext {
   }
 
   private ConfigurationContext(final DataContext dataContext) {
-    myRuntimeConfiguration = RuntimeConfiguration.DATA_KEY.getData(dataContext);
+    myRuntimeConfiguration = RunConfiguration.DATA_KEY.getData(dataContext);
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     myModule = LangDataKeys.MODULE.getData(dataContext);
     @SuppressWarnings({"unchecked"})
@@ -190,15 +190,15 @@ public class ConfigurationContext {
   }
 
   /**
-   * Returns original {@link RuntimeConfiguration} from this context.
+   * Returns original {@link RunConfiguration} from this context.
    * For example, it could be some test framework runtime configuration that had been launched
    * and that had brought a result test tree on which a right-click action was performed.
    *
    * @param type {@link ConfigurationType} instance to filter original runtime configuration by its type
-   * @return {@link RuntimeConfiguration} instance, it could be null
+   * @return {@link RunConfiguration} instance, it could be null
    */
   @Nullable
-  public RuntimeConfiguration getOriginalConfiguration(@Nullable ConfigurationType type) {
+  public RunConfiguration getOriginalConfiguration(@Nullable ConfigurationType type) {
     if (type == null) {
       return myRuntimeConfiguration;
     }

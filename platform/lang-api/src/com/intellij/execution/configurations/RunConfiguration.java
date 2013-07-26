@@ -16,6 +16,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -35,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
  * @see RefactoringListenerProvider
  */
 public interface RunConfiguration extends RunProfile, JDOMExternalizable, Cloneable {
+  DataKey<RunConfiguration> DATA_KEY = DataKey.create("runtimeConfiguration");
+
   /**
    * Returns the type of the run configuration.
    *

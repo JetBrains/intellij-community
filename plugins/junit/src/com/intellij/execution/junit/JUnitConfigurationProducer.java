@@ -22,7 +22,6 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
@@ -48,7 +47,7 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
     if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
       return null;
     }
-    final RuntimeConfiguration predefinedConfiguration = context.getOriginalConfiguration(JUnitConfigurationType.getInstance());
+    final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(JUnitConfigurationType.getInstance());
     location = JavaExecutionUtil.stepIntoSingleClass(location);
     final PsiElement element = location.getPsiElement();
     final PsiClass testClass = JUnitUtil.getTestClass(element);

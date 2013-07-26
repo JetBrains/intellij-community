@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
@@ -89,14 +89,14 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private String myCurrentCustomProgressCategory;
   private final Set<String> myMentionedCategories = new LinkedHashSet<String>();
 
-  public SMTestRunnerResultsForm(final RunConfigurationBase runConfiguration,
+  public SMTestRunnerResultsForm(final RunConfiguration runConfiguration,
                                  @NotNull final JComponent console,
                                  final TestConsoleProperties consoleProperties,
                                  final ExecutionEnvironment environment) {
     this(runConfiguration, console, AnAction.EMPTY_ARRAY, consoleProperties, environment, null);
   }
 
-  public SMTestRunnerResultsForm(final RunConfigurationBase runConfiguration,
+  public SMTestRunnerResultsForm(final RunConfiguration runConfiguration,
                                  @NotNull final JComponent console,
                                  AnAction[] consoleActions,
                                  final TestConsoleProperties consoleProperties,

@@ -18,7 +18,7 @@ package com.intellij.execution.testframework.sm;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.CommandLineState;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -188,7 +188,7 @@ public class SMTestRunnerConnectionUtil {
    */
   public static ConsoleView createAndAttachConsole(@NotNull final String testFrameworkName, @NotNull final ProcessHandler processHandler,
                                                    @NotNull final CommandLineState commandLineState,
-                                                   @NotNull final RuntimeConfiguration config,
+                                                   @NotNull final ModuleRunConfiguration config,
                                                    @NotNull final Executor executor
   ) throws ExecutionException {
     // final String testFrameworkName
@@ -200,7 +200,7 @@ public class SMTestRunnerConnectionUtil {
 
   public static ConsoleView createConsole(@NotNull final String testFrameworkName,
                                           @NotNull final CommandLineState commandLineState,
-                                          @NotNull final RuntimeConfiguration config,
+                                          @NotNull final ModuleRunConfiguration config,
                                           @NotNull final Executor executor
   ) throws ExecutionException {
     // final String testFrameworkName

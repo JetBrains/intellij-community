@@ -16,15 +16,15 @@
 
 package com.intellij.execution.configurations;
 
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated
+ */
 public abstract class RuntimeConfiguration extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
-  public static final DataKey<RuntimeConfiguration> DATA_KEY = DataKey.create("runtimeConfiguration");
-
   protected RuntimeConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(project, factory, name);
   }
