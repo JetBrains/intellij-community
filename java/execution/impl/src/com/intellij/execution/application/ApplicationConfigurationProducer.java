@@ -69,7 +69,7 @@ public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationPr
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final ApplicationConfiguration configuration = (ApplicationConfiguration)settings.getConfiguration();
     configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(aClass);
-    configuration.setName(configuration.getGeneratedName());
+    configuration.setGeneratedName();
     setupConfigurationModule(context, configuration);
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
     return settings;

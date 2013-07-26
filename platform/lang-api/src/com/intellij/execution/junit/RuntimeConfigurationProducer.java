@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 
 public abstract class RuntimeConfigurationProducer implements Comparable, Cloneable {
   public static final ExtensionPointName<RuntimeConfigurationProducer> RUNTIME_CONFIGURATION_PRODUCER = ExtensionPointName.create("com.intellij.configurationProducer");
@@ -200,11 +199,6 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     @Override
     public void checkConfiguration() throws RuntimeConfigurationException {
       myConfig.checkConfiguration();
-    }
-
-    @Override
-    public boolean isGeneratedName() {
-      return myConfig.isGeneratedName();
     }
 
     @Override

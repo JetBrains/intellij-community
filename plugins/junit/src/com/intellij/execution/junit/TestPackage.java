@@ -223,10 +223,6 @@ public class TestPackage extends TestObject {
   }
 
   public String suggestActionName() {
-    final String configurationName = myConfiguration.getName();
-    if (!myConfiguration.isGeneratedName()) {
-      return "'" + configurationName + "'";
-    }
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     if (data.getPackageName().trim().length() > 0) {
       return ExecutionBundle.message("test.in.scope.presentable.text", data.getPackageName());

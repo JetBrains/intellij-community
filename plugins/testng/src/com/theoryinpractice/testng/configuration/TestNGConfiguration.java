@@ -147,11 +147,6 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   @Override
-  public boolean isGeneratedName() {
-    return data.isGeneratedName(getName(), getConfigurationModule());
-  }
-
-  @Override
   public String suggestedName() {
     if (TestType.CLASS.getType().equals(data.TEST_OBJECT)) {
       String shortName = JavaExecutionUtil.getShortClassName(data.MAIN_CLASS_NAME);
@@ -283,14 +278,6 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       setModule(module);
     }
     setGeneratedName();
-  }
-
-  public void setGeneratedName() {
-    setName(getGeneratedName());
-  }
-
-  public String getGeneratedName() {
-    return data.getGeneratedName(getConfigurationModule());
   }
 
   @NotNull

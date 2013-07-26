@@ -49,7 +49,11 @@ class TestClass extends TestObject {
   }
 
   public String suggestActionName() {
-    return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(myConfiguration.getPersistentData().MAIN_CLASS_NAME), 0);
+    String name = myConfiguration.getPersistentData().MAIN_CLASS_NAME;
+    if (name != null && name.endsWith(".")) {
+      return ProgramRunnerUtil.shortenName(name, 0);
+    }
+    return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(name), 0);
   }
 
   public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
