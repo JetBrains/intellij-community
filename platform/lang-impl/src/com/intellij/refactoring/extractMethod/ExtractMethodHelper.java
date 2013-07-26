@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,7 +41,10 @@ import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dennis.Ushakov
@@ -93,19 +97,26 @@ public class ExtractMethodHelper {
                            DialogWrapper.OK_EXIT_CODE;
       if (exitCode == DialogWrapper.OK_EXIT_CODE) {
         boolean replaceAll = false;
+        final Map<SimpleMatch, RangeHighlighter> highlighterMap = new HashMap<SimpleMatch, RangeHighlighter>();
         for (SimpleMatch match : duplicates) {
           final Pair<SimpleMatch, PsiElement> replacement = Pair.create(match, callElement);
           if (!replaceAll) {
-            highlightInEditor(project, match, editor);
+            highlightInEditor(project, match, editor, highlighterMap);
 
             int promptResult = FindManager.PromptResult.ALL;
+            //noinspection ConstantConditions
             if (!isUnittest) {
               ReplacePromptDialog promptDialog =
                 new ReplacePromptDialog(false, RefactoringBundle.message("replace.fragment"), project);
               promptDialog.show();
               promptResult = promptDialog.getExitCode();
             }
-            if (promptResult == FindManager.PromptResult.SKIP) continue;
+            if (promptResult == FindManager.PromptResult.SKIP) {
+              final HighlightManager highlightManager = HighlightManager.getInstance(project);
+              final RangeHighlighter highlighter = highlighterMap.get(match);
+              if (highlighter != null) highlightManager.removeSegmentHighlighter(editor, highlighter);
+              continue;
+            }
             if (promptResult == FindManager.PromptResult.CANCEL) break;
 
             if (promptResult == FindManager.PromptResult.OK) {
@@ -139,14 +150,17 @@ public class ExtractMethodHelper {
     }, "Replace duplicate", null);
   }
 
+
   private static void highlightInEditor(@NotNull final Project project, @NotNull final SimpleMatch match,
-                                        @NotNull final Editor editor) {
+                                 @NotNull final Editor editor, Map<SimpleMatch, RangeHighlighter> highlighterMap) {
+    final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
     final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     final int startOffset = match.getStartElement().getTextRange().getStartOffset();
     final int endOffset = match.getEndElement().getTextRange().getEndOffset();
-    highlightManager.addRangeHighlight(editor, startOffset, endOffset, attributes, true, null);
+    highlightManager.addRangeHighlight(editor, startOffset, endOffset, attributes, true, highlighters);
+    highlighterMap.put(match, highlighters.get(0));
     final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(startOffset);
     editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
   }
