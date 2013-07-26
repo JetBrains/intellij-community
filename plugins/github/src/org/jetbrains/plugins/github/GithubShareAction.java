@@ -224,7 +224,7 @@ public class GithubShareAction extends DumbAwareAction {
       if (exceptionRef.get() instanceof GithubAuthenticationCanceledException) {
         return null;
       }
-      GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", exceptionRef.get().getMessage());
+      GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", exceptionRef.get());
       return null;
     }
     return githubInfoRef.get();
@@ -278,7 +278,7 @@ public class GithubShareAction extends DumbAwareAction {
       }
     }
     catch (VcsException e) {
-      GithubNotifications.showError(project, "Failed to add GitHub repository as remote", e.getMessage());
+      GithubNotifications.showError(project, "Failed to add GitHub repository as remote", e);
       return false;
     }
     return true;
@@ -346,6 +346,7 @@ public class GithubShareAction extends DumbAwareAction {
       VcsFileUtil.refreshFiles(project, modified);
     }
     catch (VcsException e) {
+      LOG.warn(e);
       GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'" + name + "'",
                                        " on GitHub, but initial commit failed:<br/>" + e.getMessage(), url);
       return false;

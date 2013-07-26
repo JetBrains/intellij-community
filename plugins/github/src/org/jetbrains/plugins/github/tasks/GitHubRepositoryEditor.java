@@ -108,14 +108,10 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
         }
       });
       if (!exceptionRef.isNull()) {
-        GithubNotifications.showErrorDialog(myProject, "Error", "Can't check token scopes");
+        GithubNotifications.showErrorDialog(myProject, "Can't check token scopes", exceptionRef.get());
         return;
       }
       Collection<String> scopes = scopesRef.get();
-      if (scopes == null) {
-        GithubNotifications.showErrorDialog(myProject, "Error", "Can't check token scopes");
-        return;
-      }
       if (myPrivateRepo.isSelected()) {
         scopes.remove("repo");
       }
@@ -152,7 +148,7 @@ public class GitHubRepositoryEditor extends BaseRepositoryEditor<GitHubRepositor
       if (exceptionRef.get() instanceof GithubAuthenticationCanceledException) {
         return;
       }
-      GithubNotifications.showErrorDialog(myProject, "Can't get access token", exceptionRef.get().getMessage());
+      GithubNotifications.showErrorDialog(myProject, "Can't get access token", exceptionRef.get());
       return;
     }
     myToken.setText(tokenRef.get());

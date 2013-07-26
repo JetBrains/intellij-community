@@ -114,6 +114,11 @@ public class GithubNotifications {
     LOG.warn(title + "; " + message);
   }
 
+  public static void showErrorDialog(final @Nullable Project project, final @NotNull String title, final @NotNull Exception e) {
+    Messages.showErrorDialog(project, e.getMessage(), title);
+    LOG.warn(title, e);
+  }
+
   public static int showYesNoDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
     return Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon());
   }
