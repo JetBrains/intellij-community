@@ -216,6 +216,7 @@ public class GenericsUtil {
   }
 
   public static boolean isTypeArgumentsApplicable(PsiTypeParameter[] typeParams, PsiSubstitutor substitutor, final PsiElement context) {
+    nextTypeParam:
     for (PsiTypeParameter typeParameter : typeParams) {
       PsiType substituted = substitutor.substitute(typeParameter);
       if (substituted == null) return true;
@@ -225,7 +226,7 @@ public class GenericsUtil {
       for (PsiClassType type : extendsTypes) {
         PsiType extendsType = substitutor.substitute(type);
         if (extendsType.isAssignableFrom(substituted)) {
-          return true;
+          continue nextTypeParam;
         }
       }
       if (extendsTypes.length > 0) return false;
