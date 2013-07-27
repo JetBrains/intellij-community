@@ -160,7 +160,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       public void keyPressed(KeyEvent e) {
         int keyCode = e.getKeyCode();
-        if (keyCode == KeyEvent.VK_ESCAPE && StringUtil.isEmpty(editor.getText())) {
+        if (keyCode == KeyEvent.VK_ESCAPE && (myPopup == null || !myPopup.isVisible())) {
           IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(editor);
           focusManager.requestDefaultFocus(true);
         } else if (keyCode == KeyEvent.VK_ENTER) {
