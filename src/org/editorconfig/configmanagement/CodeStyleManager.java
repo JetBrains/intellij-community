@@ -13,11 +13,17 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.utils.ConfigConverter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 
 public class CodeStyleManager implements FileEditorManagerListener {
+    // Handles the following EditorConfig settings:
+    private static final String indentSizeKey = "indent_size";
+    private static final String tabWidthKey = "tab_width";
+    private static final String indentStyleKey = "indent_style";
+
     private static final Logger LOG = 
             Logger.getInstance("#org.editorconfig.configmanagement.CodeStyleManager");
     private final CodeStyleSettingsManager codeStyleSettingsManager;
@@ -27,17 +33,17 @@ public class CodeStyleManager implements FileEditorManagerListener {
     }
 
     @Override
-    public void fileOpened(FileEditorManager source, VirtualFile file) {
+    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         applySettings(file);
     }
 
     @Override
-    public void fileClosed(FileEditorManager source, VirtualFile file) {
+    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         // Not used
     }
 
     @Override
-    public void selectionChanged(FileEditorManagerEvent event) {
+    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         VirtualFile file = event.getNewFile();
         applySettings(file);
     }
@@ -56,47 +62,81 @@ public class CodeStyleManager implements FileEditorManagerListener {
         SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
         List<OutPair> outPairs = settingsProvider.getOutPairs(filePath);
         // Apply editorconfig settings for the current editor
-        applyCodeStyleSettings(outPairs, newSettings);
+        applyCodeStyleSettings(outPairs, newSettings, filePath);
         codeStyleSettingsManager.setTemporarySettings(newSettings);
         LOG.debug("Applied code style settings for: " + filePath);
     }
 
     private void applyCodeStyleSettings(List<OutPair> outPairs,
-                                              CodeStyleSettings codeStyleSettings) {
+                                              CodeStyleSettings codeStyleSettings, String filePath) {
         // Apply indent options
         // TODO: Find a good way to reliably get the language of the current editor
         Collection<Language> registeredLanguages = Language.getRegisteredLanguages();
         for (Language language: registeredLanguages) {
             CommonCodeStyleSettings commonSettings = codeStyleSettings.getCommonSettings(language);
             CommonCodeStyleSettings.IndentOptions indentOptions = commonSettings.getIndentOptions();
-            applyIndentOptions(outPairs, indentOptions);
+            applyIndentOptions(outPairs, indentOptions, filePath);
         }
     }
 
-    private void applyIndentOptions (List<OutPair> outPairs, CommonCodeStyleSettings.IndentOptions indentOptions) {
-        String indentSize = ConfigConverter.valueForKey(outPairs, "indent_size");
-        String tabWidth = ConfigConverter.valueForKey(outPairs, "tab_width");
-        String indentStyle = ConfigConverter.valueForKey(outPairs, "indent_style");
+    private void applyIndentOptions (List<OutPair> outPairs, CommonCodeStyleSettings.IndentOptions indentOptions,
+                                     String filePath) {
+        String indentSize = ConfigConverter.valueForKey(outPairs, indentSizeKey);
+        String tabWidth = ConfigConverter.valueForKey(outPairs, tabWidthKey);
+        String indentStyle = ConfigConverter.valueForKey(outPairs, indentStyleKey);
+        try {
+            applyIndentSize(indentOptions, indentSize, filePath);
+        }
+        catch(InvalidConfigException e) {
+            LOG.warn(e.getMessage());
+        }
+        // Apply tab_width if set, or fall back to indent_size
+        if (tabWidth.isEmpty()) {
+            tabWidth = indentSize;
+        }
+        try {
+            applyTabWidth(indentOptions, tabWidth, filePath);
+        }
+        catch(InvalidConfigException e) {
+            LOG.warn(e.getMessage());
+        }
+        try {
+            applyIndentStyle(indentOptions, indentStyle, filePath);
+        }
+        catch(InvalidConfigException e) {
+            LOG.warn(e.getMessage());
+        }
+    }
 
+    private void applyIndentSize(CommonCodeStyleSettings.IndentOptions indentOptions, String indentSize,
+                                 String filePath) throws InvalidConfigException {
         if (!indentSize.isEmpty()) {
             try {
                 indentOptions.INDENT_SIZE = Integer.parseInt(indentSize);
-            } catch (Exception error){
-                LOG.error("Unable to parse indent_size");
+            } catch (NumberFormatException e){
+                throw new InvalidConfigException(indentSizeKey, indentSize, filePath);
             }
         }
+    }
+
+    private void applyTabWidth(CommonCodeStyleSettings.IndentOptions indentOptions, String tabWidth,
+                               String filePath) throws InvalidConfigException {
         if (!tabWidth.isEmpty()) {
             try {
                 indentOptions.TAB_SIZE = Integer.parseInt(tabWidth);
             } catch (Exception error) {
-                LOG.error("Unable to parse tab_size");
+                throw new InvalidConfigException(tabWidthKey, tabWidth, filePath);
             }
         }
+    }
+
+    private void applyIndentStyle(CommonCodeStyleSettings.IndentOptions indentOptions, String indentStyle,
+                                  String filePath) throws InvalidConfigException {
         if (!indentStyle.isEmpty()) {
             if (indentStyle.equals("tab") || indentStyle.equals("space")) {
                 indentOptions.USE_TAB_CHARACTER = indentStyle.equals("tab");
             } else {
-                LOG.error("Value of use_tab_character is invalid");
+                throw new InvalidConfigException(indentStyleKey, indentStyle, filePath);
             }
         }
     }

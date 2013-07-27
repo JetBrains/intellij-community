@@ -20,6 +20,9 @@ import java.io.IOException;
 import java.util.*;
 
 public class EndOfLineManager implements FileDocumentManagerListener, DoneSavingListener {
+    // Handles the following EditorConfig settings:
+    private static final String endOfLineKey = "end_of_line";
+
     private final Logger LOG = Logger.getInstance("#org.editorconfig.codestylesettings.EndOfLineManager");
     private final Project project;
     private final List<Document> documentsToChange = new ArrayList<Document>();
@@ -117,13 +120,13 @@ public class EndOfLineManager implements FileDocumentManagerListener, DoneSaving
             }
             String filePath = file.getCanonicalPath();
             final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
-            String endOfLine = ConfigConverter.valueForKey(outPairs, "end_of_line");
+            String endOfLine = ConfigConverter.valueForKey(outPairs, endOfLineKey);
             if (!endOfLine.isEmpty()) {
                 if (endOfLineMap.containsKey(endOfLine)) {
                     String lineSeparator = endOfLineMap.get(endOfLine);
                     changeSeparators(file, document, lineSeparator);
                 } else {
-                    LOG.error("Value of charset is invalid");
+                    LOG.warn(new InvalidConfigException(endOfLineKey, endOfLine, filePath));
                 }
             }
             LOG.debug("Applied end of line settings for: " + filePath);

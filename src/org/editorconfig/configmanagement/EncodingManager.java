@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.Map;
 
 public class EncodingManager implements FileDocumentManagerListener {
+    // Handles the following EditorConfig settings:
+    private static final String charsetKey = "charset";
+
     private final Logger LOG = Logger.getInstance("#org.editorconfig.codestylesettings.EncodingManager");
     private final Project project;
 
@@ -104,12 +107,12 @@ public class EncodingManager implements FileDocumentManagerListener {
         String filePath = file.getCanonicalPath();
         List<OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
         EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(project);
-        String charset = ConfigConverter.valueForKey(outPairs, "charset");
+        String charset = ConfigConverter.valueForKey(outPairs, charsetKey);
         if (!charset.isEmpty()) {
             if (encodingMap.containsKey(charset)) {
                 encodingProjectManager.setEncoding(file, encodingMap.get(charset));
             } else {
-                LOG.error("Value of end_of_line is invalid");
+                LOG.warn(new InvalidConfigException(charsetKey, charset, filePath));
             }
         }
         isApplyingSettings = false;

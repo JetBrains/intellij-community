@@ -15,6 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class EditorSettingsManager implements DoneSavingListener, FileDocumentManagerListener {
+    // Handles the following EditorConfig settings:
+    private static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
+    private static final String insertFinalNewlineKey = "insert_final_newline";
+
     private static final Logger LOG = Logger.getInstance("#org.editorconfig.configmanagement.EditorSettingsManager");
 
     private String originalStripTrailingSpaces;
@@ -53,7 +57,7 @@ public class EditorSettingsManager implements DoneSavingListener, FileDocumentMa
     public void beforeDocumentSaving(@NotNull Document document) {
         // This is fired when any document is saved, regardless of whether it is part of a save-all or
         // a save-one operation
-        LOG.debug("Saving one documents");
+        LOG.debug("Saving one document");
         if (originalSettingsSaved) {
             revertToOriginalEditorSettings();
         }
@@ -92,7 +96,7 @@ public class EditorSettingsManager implements DoneSavingListener, FileDocumentMa
         String filePath = file.getCanonicalPath();
         SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
         List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(filePath);
-        applyEditorSettings(outPairs);
+        applyEditorSettings(outPairs, filePath);
         LOG.debug("Applied editor settings for: " + filePath);
         
     }
@@ -114,25 +118,47 @@ public class EditorSettingsManager implements DoneSavingListener, FileDocumentMa
         LOG.debug("Reverted to original editor settings");
     }
 
-    private void applyEditorSettings(List<EditorConfig.OutPair> outPairs) {
+    private void applyEditorSettings(List<EditorConfig.OutPair> outPairs, String filePath) {
         EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-        String trimTrailingWhitespace = ConfigConverter.valueForKey(outPairs, "trim_trailing_whitespace");
-        String insertFinalNewline = ConfigConverter.valueForKey(outPairs, "insert_final_newline");
+        String trimTrailingWhitespace = ConfigConverter.valueForKey(outPairs, trimTrailingWhitespaceKey);
+        String insertFinalNewline = ConfigConverter.valueForKey(outPairs, insertFinalNewlineKey);
+        try {
+            applyTrimTrailingWhitespace(editorSettings, trimTrailingWhitespace, filePath);
+        }
+        catch(InvalidConfigException e) {
+            LOG.warn(e.getMessage());
+        }
+        try {
+            applyInsertFinalNewline(editorSettings, insertFinalNewline, filePath);
+        }
+        catch(InvalidConfigException e) {
+            LOG.warn(e.getMessage());
+        }
+    }
+
+    private void applyTrimTrailingWhitespace(EditorSettingsExternalizable editorSettings,
+                                             String trimTrailingWhitespace, String filePath)
+                                                throws InvalidConfigException {
         if (!trimTrailingWhitespace.isEmpty()) {
             if (trimTrailingWhitespace.equals("true")) {
                 editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
             } else if (trimTrailingWhitespace.equals("false")) {
                 editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
             } else {
-                LOG.error("Value of trim_trailing_whitespace is invalid");
+                throw new InvalidConfigException(trimTrailingWhitespaceKey, trimTrailingWhitespace, filePath);
             }
         }
+    }
+
+    private void applyInsertFinalNewline(EditorSettingsExternalizable editorSettings, String insertFinalNewline,
+                                         String filePath) throws InvalidConfigException {
         if (!insertFinalNewline.isEmpty()) {
             if (insertFinalNewline.equals("true") || insertFinalNewline.equals("false")) {
                 editorSettings.setEnsureNewLineAtEOF(insertFinalNewline.equals("true"));
             }
-        } else {
-            LOG.error("Value of trim_trailing_whitespace is invalid");
+            else {
+                throw new InvalidConfigException(insertFinalNewlineKey, insertFinalNewline, filePath);
+            }
         }
     }
 }
