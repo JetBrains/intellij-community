@@ -1,15 +1,17 @@
 package org.editorconfig.configmanagement;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.core.EditorConfig;
-import org.editorconfig.plugincomponents.ReplacementFileDocumentManager;
 import org.editorconfig.utils.ConfigConverter;
 import org.editorconfig.plugincomponents.DoneSavingListener;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +23,7 @@ public class EndOfLineManager implements FileDocumentManagerListener, DoneSaving
     private final Logger LOG = Logger.getInstance("#org.editorconfig.codestylesettings.EndOfLineManager");
     private final Project project;
     private final List<Document> documentsToChange = new ArrayList<Document>();
+
 
     private static final String CR = Character.toString((char) 13);
     private static final String LF = Character.toString((char) 10);
@@ -99,45 +102,48 @@ public class EndOfLineManager implements FileDocumentManagerListener, DoneSaving
 
     @Override
     public void doneSavingAllDocuments() {
-        applyChanges();
+        applySettings();
     }
 
     @Override
     public void doneSavingDocument(@NotNull Document document) {
-        applyChanges();
+        applySettings();
     }
-
-    private void applyChanges () {
-        ReplacementFileDocumentManager fileDocumentManager =
-                (ReplacementFileDocumentManager) FileDocumentManager.getInstance();
-        for (Document document: documentsToChange) {
-            fileDocumentManager.setAlwaysReload(true);
-            applySettings(document);
-            fileDocumentManager.setAlwaysReload(false);
-            documentsToChange.remove(document);
-        }
-    }
-
-    private void applySettings(Document document) {
-        final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-        if (file == null) {
-            return;
-        }
-        String filePath = file.getCanonicalPath();
-        final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
-        String endOfLine = ConfigConverter.valueForKey(outPairs, "end_of_line");
-        if (!endOfLine.isEmpty()) {
-            if (endOfLineMap.containsKey(endOfLine)) {
-                String lineSeparator = endOfLineMap.get(endOfLine);
-                try {
-                    LoadTextUtil.changeLineSeparators(project, file, lineSeparator, this);
-                } catch (IOException error) {
-                    LOG.error("IOException while changing line separator");
-                }
-            } else {
-                LOG.error("Value of charset is invalid");
+    private void applySettings() {
+        for (Document document:documentsToChange){
+            final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+            if (file == null) {
+                return;
             }
+            String filePath = file.getCanonicalPath();
+            final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
+            String endOfLine = ConfigConverter.valueForKey(outPairs, "end_of_line");
+            if (!endOfLine.isEmpty()) {
+                if (endOfLineMap.containsKey(endOfLine)) {
+                    String lineSeparator = endOfLineMap.get(endOfLine);
+                    changeSeparators(file, document, lineSeparator);
+                } else {
+                    LOG.error("Value of charset is invalid");
+                }
+            }
+            LOG.debug("Applied end of line settings for: " + filePath);
         }
-        LOG.debug("Applied end of line settings for: " + filePath);
+        documentsToChange.clear();
+    }
+
+    private void changeSeparators(VirtualFile file, Document document, String lineSeparator) {
+        String text = document.getText();
+        if (!lineSeparator.equals("\n")) {
+            text = StringUtil.convertLineSeparators(text, lineSeparator);
+        }
+        final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+        try {
+            LoadTextUtil.write(project, file, this, text, document.getModificationStamp());
+        } catch (IOException error) {
+            LOG.error("IOException while changing line separator");
+        }
+        finally {
+            token.finish();
+        }
     }
 }

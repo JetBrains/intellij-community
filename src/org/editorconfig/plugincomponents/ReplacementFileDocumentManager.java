@@ -5,13 +5,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
@@ -20,16 +20,6 @@ public class ReplacementFileDocumentManager extends FileDocumentManagerImpl {
     private static final Logger LOG = Logger.getInstance("#org.editorconfig.plugincomponents.ReplacementFileDocumentManager");
 
     private final MessageBus bus;
-
-    public boolean isAlwaysReload() {
-        return alwaysReload;
-    }
-
-    public void setAlwaysReload(boolean alwaysReload) {
-        this.alwaysReload = alwaysReload;
-    }
-
-    private boolean alwaysReload;
 
     // This is basically copied from FileDocumentManagerImpl
     private final DoneSavingListener multiCaster;
@@ -55,6 +45,9 @@ public class ReplacementFileDocumentManager extends FileDocumentManagerImpl {
         try {
             method.invoke(bus.syncPublisher(DoneSavingTopic.DONE_SAVING), args);
         }
+        catch (InvocationTargetException e) {
+            LOG.error(e.getTargetException());
+        }
         catch (ClassCastException e) {
             LOG.error("Arguments: "+ Arrays.toString(args), e);
         }
@@ -74,15 +67,4 @@ public class ReplacementFileDocumentManager extends FileDocumentManagerImpl {
         super.saveDocument(document);    //To change body of overridden methods use File | Settings | File Templates.
         multiCaster.doneSavingDocument(document);
     }
-
-    @Override
-    public void contentsChanged(VirtualFileEvent event) {
-        Document document = getCachedDocument(event.getFile());
-        if (alwaysReload && document != null) {
-            reloadFromDisk(document);
-        } else {
-            super.contentsChanged(event);
-        }
-    }
-
 }

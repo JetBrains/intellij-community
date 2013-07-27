@@ -32,8 +32,11 @@ public class EncodingManager implements FileDocumentManagerListener {
         encodingMap = Collections.unmodifiableMap(map);
     }
 
+    private boolean isApplyingSettings;
+
     public EncodingManager(Project project) {
         this.project = project;
+        isApplyingSettings = false;
     }
 
     public void initComponent() {
@@ -65,7 +68,9 @@ public class EncodingManager implements FileDocumentManagerListener {
     @Override
     public void beforeDocumentSaving(@NotNull Document document) {
         VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-        applySettings(file);
+        if(!isApplyingSettings) {
+            applySettings(file);
+        }
     }
 
     @Override
@@ -94,6 +99,8 @@ public class EncodingManager implements FileDocumentManagerListener {
     }
 
     private void applySettings(VirtualFile file) {
+        // Prevent "setEncoding" calling "saveAll" from causing an endless loop
+        isApplyingSettings = true;
         String filePath = file.getCanonicalPath();
         List<OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(filePath);
         EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(project);
@@ -105,6 +112,7 @@ public class EncodingManager implements FileDocumentManagerListener {
                 LOG.error("Value of end_of_line is invalid");
             }
         }
+        isApplyingSettings = false;
         LOG.debug("Applied encoding settings for: " + filePath);
     }
 }
