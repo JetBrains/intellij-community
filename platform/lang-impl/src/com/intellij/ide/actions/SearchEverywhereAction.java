@@ -171,7 +171,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private void onFocusLost(final JTextField editor) {
-    editor.setColumns(SystemInfo.isMac ? 5 : 7);
+    editor.setColumns(SystemInfo.isMac ? 5 : 8);
     field.getTextEditor().setForeground(UIUtil.getLabelDisabledForeground());
     field.setText(" " + KeymapUtil.getFirstKeyboardShortcutText(this));
 
