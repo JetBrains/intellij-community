@@ -32,7 +32,7 @@ public class DarculaTextBorder implements Border, UIResource {
   @Override
   public Insets getBorderInsets(Component c) {
     if (DarculaTextFieldUI.isSearchField(c)) {
-      return new InsetsUIResource(5, 7 + 16 + 3, 5, 7 + 16);
+      return new InsetsUIResource(5, 4 + 16 + 3, 5, 7 + 16);
     } else {
       return new InsetsUIResource(5, 7, 5, 7);
     }
