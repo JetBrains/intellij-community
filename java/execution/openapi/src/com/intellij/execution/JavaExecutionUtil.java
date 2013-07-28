@@ -141,6 +141,7 @@ public class JavaExecutionUtil {
 
   @Nullable
   public static String getPresentableClassName(final String rtClassName, final JavaRunConfigurationModule configurationModule) {
+    if (StringUtil.isEmpty(rtClassName)) return null;
     final PsiClass psiClass = configurationModule.findClass(rtClassName);
     if (psiClass != null) {
       return psiClass.getName();
