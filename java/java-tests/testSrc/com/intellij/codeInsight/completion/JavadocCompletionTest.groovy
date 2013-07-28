@@ -220,7 +220,7 @@ class Foo {
     myFixture.configureByText "a.java", '''
 class Foo {
   /**
-  * @param intParam so<caret>
+  * @param intParam so<caret> xxx
   */
   void foo2(int intParam, Object param2) { }
 
@@ -232,6 +232,9 @@ class Foo {
 '''
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, 'some', 'some integer param'
+    myFixture.lookup.currentItem = myFixture.lookupElements[1]
+    myFixture.type('\t')
+    assert !myFixture.editor.document.text.contains('xxx')
   }
 
   public void "test see super class"() {

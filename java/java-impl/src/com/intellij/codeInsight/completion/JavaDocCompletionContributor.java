@@ -168,7 +168,20 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       }
     });
     for (String description : descriptions) {
-      result.addElement(LookupElementBuilder.create(description));
+      result.addElement(LookupElementBuilder.create(description).withInsertHandler(new InsertHandler<LookupElement>() {
+        @Override
+        public void handleInsert(InsertionContext context, LookupElement item) {
+          context.commitDocument();
+          PsiDocTag docTag = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiDocTag.class, false);
+          if (docTag != null) {
+            int tagEnd = docTag.getTextRange().getEndOffset();
+            int tail = context.getTailOffset();
+            if (tail < tagEnd) {
+              context.getDocument().deleteString(tail, tagEnd);
+            }
+          }
+        }
+      }));
     }
   }
 
