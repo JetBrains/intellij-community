@@ -2,7 +2,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 // "Convert to atomic" "true"
 class Test {
-  AtomicInteger o = new AtomicInteger();
+  final AtomicInteger o = new AtomicInteger();
   int j = o.get();
 
   void foo() {

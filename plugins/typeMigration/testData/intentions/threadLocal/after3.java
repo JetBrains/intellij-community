@@ -1,6 +1,6 @@
 // "Convert to ThreadLocal" "true"
 class Test {
-    ThreadLocal<Integer> field = new ThreadLocal<Integer>() {
+    final ThreadLocal<Integer> field = new ThreadLocal<Integer>() {
         @Override
         protected Integer initialValue() {
             return new Integer(0);

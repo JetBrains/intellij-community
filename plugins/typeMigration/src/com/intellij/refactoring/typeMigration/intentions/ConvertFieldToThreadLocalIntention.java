@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -120,6 +121,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
       }
 
       psiField.getTypeElement().replace(elementFactory.createTypeElement(toType));
+      psiField.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
