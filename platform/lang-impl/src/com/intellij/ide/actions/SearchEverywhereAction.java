@@ -76,6 +76,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private JList myList = new JList(); //don't use JBList here!!! todo[kb]
+  private AnActionEvent myActionEvent;
+  private Component myContextComponent;
 
   public SearchEverywhereAction() {
     createSearchField();
@@ -130,7 +132,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }, 300);
       }
     });
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor));
     editor.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
@@ -164,7 +165,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(editor);
           focusManager.requestDefaultFocus(true);
         } else if (keyCode == KeyEvent.VK_ENTER) {
-          doNavigate(project);
+          doNavigate();
         }
       }
     });
@@ -189,8 +190,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     });
   }
 
-  private void doNavigate(Project project) {
-    Object value = myList.getSelectedValue();
+  private void doNavigate() {
+    final Object value = myList.getSelectedValue();
+    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(field.getTextEditor()));
     IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(field.getTextEditor());
     if (myPopup != null && myPopup.isVisible()) {
       myPopup.cancel();
@@ -206,6 +208,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         navigatable.navigate(true);
         return;
       }
+    } else {
+      focusManager.requestDefaultFocus(true);
+      IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
+        @Override
+        public void run() {
+          GotoActionAction.openOptionOrPerformAction(value, field.getText(), project, myContextComponent ,myActionEvent);
+        }
+      });
+      return;
     }
     } finally {
       token.finish();
@@ -339,6 +350,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public void actionPerformed(AnActionEvent e) {
     IdeFocusManager focusManager = IdeFocusManager.getInstance(e.getProject());
     focusManager.requestFocus(field.getTextEditor(), true);
+    myActionEvent = e;
+    myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
   }
 
   @Override
