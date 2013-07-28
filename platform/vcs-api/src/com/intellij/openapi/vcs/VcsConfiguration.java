@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.IgnoreSpaceEnum;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -57,8 +56,6 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
 
   @NonNls public static final String PATCH = "patch";
   @NonNls public static final String DIFF = "diff";
-
-  private Project myProject;
 
   public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = true;
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = !PlatformUtils.isPyCharm() && !PlatformUtils.isRubyMine();
@@ -145,7 +142,6 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public float FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION = 0.8f;
   public float FILE_HISTORY_DIALOG_SPLITTER_PROPORTION = 0.5f;
 
-  public String ACTIVE_VCS_NAME = null;
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
   public boolean UPDATE_FILTER_BY_SCOPE = false;
@@ -160,8 +156,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   private final PerformInBackgroundOption myCheckoutOption = new CheckoutInBackgroundOption();
   private final PerformInBackgroundOption myAddRemoveOption = new AddRemoveInBackgroundOption();
 
-  public VcsConfiguration(final Project project) {
-    myProject = project;
+  public VcsConfiguration() {
   }
 
   public Element getState() {
@@ -198,13 +193,6 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
     final List messages = element.getChildren(MESSAGE_ELEMENT_NAME);
     for (final Object message : messages) {
       saveCommitMessage(((Element)message).getAttributeValue(VALUE_ATTR));
-    }
-    if (ACTIVE_VCS_NAME != null && ACTIVE_VCS_NAME.length() > 0) {
-      StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
-        public void run() {
-          ProjectLevelVcsManager.getInstance(myProject).setDirectoryMapping("", ACTIVE_VCS_NAME);
-        }
-      });
     }
   }
 
