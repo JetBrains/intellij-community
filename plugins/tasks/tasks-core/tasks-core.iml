@@ -29,9 +29,19 @@
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/commons-discovery-0.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="library" exported="" name="markdownj" level="project" />
+    <orderEntry type="module" module-name="core-api" />
   </component>
 </module>
 

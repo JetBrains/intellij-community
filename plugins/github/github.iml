@@ -20,7 +20,6 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="dvcs" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="jira-connector" scope="TEST" />
   </component>
 </module>
 
