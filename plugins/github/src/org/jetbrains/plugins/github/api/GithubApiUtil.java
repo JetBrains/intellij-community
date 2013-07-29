@@ -403,7 +403,7 @@ public class GithubApiUtil {
 
   @NotNull
   private static List<GithubRepo> doGetAvailableRepos(@NotNull GithubAuthData auth, @Nullable String user) throws IOException {
-    String request = user == null ? "/user/repos" : "/users/" + user + "/repos";
+    String request = user == null ? "/user/repos" : "/users/" + user + "/repos?per_page=100";
     JsonElement result = getAllRequest(auth, request);
 
     GithubRepoRaw[] rawRepos = fromJson(result, GithubRepoRaw[].class);
@@ -472,10 +472,10 @@ public class GithubApiUtil {
     boolean noQuery = StringUtil.isEmpty(query);
     if (!noQuery) {
       query = URLEncoder.encode(query, "UTF-8");
-      path = "/legacy/issues/search/" + user + "/" + repo + "/open/" + query;
+      path = "/legacy/issues/search/" + user + "/" + repo + "/open/" + query + "?per_page=100";
     }
     else {
-      path = "/repos/" + user + "/" + repo + "/issues";
+      path = "/repos/" + user + "/" + repo + "/issues?per_page=100";
     }
 
     JsonElement result = getAllRequest(auth, path);
@@ -502,7 +502,7 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubIssueComment> getIssueComments(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments";
+    String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments?per_page=100";
 
     JsonElement result = getAllRequest(auth, path);
 
@@ -536,7 +536,7 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubPullRequest> getPullRequests(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/pulls";
+    String path = "/repos/" + user + "/" + repo + "/pulls?per_page=100";
 
     JsonElement result = getAllRequest(auth, path);
 
@@ -552,7 +552,7 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubCommit> getPullRequestCommits(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/commits";
+    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/commits?per_page=100";
 
     JsonElement result = getAllRequest(auth, path);
 
@@ -568,7 +568,7 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubFile> getPullRequestFiles(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/files";
+    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/files?per_page=100";
 
     JsonElement result = getAllRequest(auth, path);
 
