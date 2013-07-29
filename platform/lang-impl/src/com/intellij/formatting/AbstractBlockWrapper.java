@@ -505,7 +505,7 @@ public abstract class AbstractBlockWrapper {
     return myParent.findFirstIndentedParent();
   }
 
-  public void setIndent(final IndentImpl indent) {
+  public void setIndent(@Nullable final IndentImpl indent) {
     myIndent = indent;
   }
 

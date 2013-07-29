@@ -16,6 +16,8 @@
 
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.*;
 
 class WrapImpl extends Wrap {
@@ -38,7 +40,7 @@ class WrapImpl extends Wrap {
   private static final Type[] myTypes = Type.values();
 
 
-  public boolean isChildOf(final WrapImpl wrap, LeafBlockWrapper leaf) {
+  public boolean isChildOf(@Nullable final WrapImpl wrap, LeafBlockWrapper leaf) {
     if (getIgnoreParentWraps()) return false;
     if (leaf != null && myIgnoredWraps != null) {
       Collection<LeafBlockWrapper> leaves = myIgnoredWraps.get(wrap);
@@ -61,7 +63,7 @@ class WrapImpl extends Wrap {
    *
    * @param parent    parent wrap to register for the current wrap
    */
-  void registerParent(WrapImpl parent) {
+  void registerParent(@Nullable WrapImpl parent) {
     if (parent == this) return;
     if (parent == null) return;
     if (parent.isChildOf(this, null)) return;
@@ -109,7 +111,7 @@ class WrapImpl extends Wrap {
    * @param wrap          target wrap
    * @param currentBlock  target block for which given wrap should be ignored
    */
-  public void ignoreParentWrap(final WrapImpl wrap, final LeafBlockWrapper currentBlock) {
+  public void ignoreParentWrap(@Nullable final WrapImpl wrap, final LeafBlockWrapper currentBlock) {
     if (myIgnoredWraps == null) {
       myIgnoredWraps = new HashMap<WrapImpl, Collection<LeafBlockWrapper>>(5);
     }
@@ -133,7 +135,7 @@ class WrapImpl extends Wrap {
     return myFirstEntry != null && myFirstEntry == currentBlock;
   }
 
-  static enum Type{
+  enum Type{
     DO_NOT_WRAP, WRAP_AS_NEEDED, CHOP_IF_NEEDED, WRAP_ALWAYS
   }
 

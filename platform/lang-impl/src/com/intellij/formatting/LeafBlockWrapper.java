@@ -44,7 +44,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
    * @param isReadOnly          flag that indicates if target block is read-only
    */
   public LeafBlockWrapper(final Block block,
-                          CompositeBlockWrapper parent,
+                          @Nullable CompositeBlockWrapper parent,
                           WhiteSpace whiteSpaceBefore,
                           FormattingDocumentModel model,
                           CommonCodeStyleSettings.IndentOptions options,
@@ -188,7 +188,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return myParent.getChildOffset(this, options, this.getStartOffset());
   }
 
-  public void setSpaceProperty(final SpacingImpl currentSpaceProperty) {
+  public void setSpaceProperty(@Nullable final SpacingImpl currentSpaceProperty) {
     mySpaceProperty = currentSpaceProperty;
   }
 

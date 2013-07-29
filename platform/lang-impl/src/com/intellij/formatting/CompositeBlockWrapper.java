@@ -33,7 +33,7 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
    * @param whiteSpace    white space before the block
    * @param parent        wrapped block parent
    */
-  public CompositeBlockWrapper(final Block block, final WhiteSpace whiteSpace, final CompositeBlockWrapper parent) {
+  public CompositeBlockWrapper(final Block block, final WhiteSpace whiteSpace, @Nullable final CompositeBlockWrapper parent) {
     super(block, whiteSpace, parent, block.getTextRange());
   }
 
