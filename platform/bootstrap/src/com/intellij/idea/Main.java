@@ -163,7 +163,7 @@ public class Main {
   }
 
   public static void showMessage(String title, Throwable t) {
-    String message = "Internal exception, please report to http://youtrack.jetbrains.com\n\n" + ExceptionUtil.getThrowableText(t);
+    String message = "Internal error. Please report to http://youtrack.jetbrains.com\n\n" + ExceptionUtil.getThrowableText(t);
     showMessage(title, message, true);
   }
 
