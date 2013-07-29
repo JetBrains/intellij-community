@@ -194,4 +194,8 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
   public static boolean isSearchField(Component c) {
     return c instanceof JTextField && "search".equals(((JTextField)c).getClientProperty("JTextField.variant"));
   }
+
+  public static boolean isSearchFieldWithHistoryPopup(Component c) {
+    return isSearchField(c) && ((JTextField)c).getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu;
+  }
 }
