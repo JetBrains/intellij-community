@@ -68,6 +68,12 @@ public class MockRunManager extends RunManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
+  @Override
+  public RunnerAndConfigurationSettings getConfigurationTemplate(ConfigurationFactory factory) {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   @NotNull
   public RunnerAndConfigurationSettings[] getConfigurationSettings(@NotNull ConfigurationType type) {

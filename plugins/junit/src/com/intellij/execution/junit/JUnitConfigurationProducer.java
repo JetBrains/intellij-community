@@ -18,11 +18,10 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -60,9 +59,10 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
     } else {
       testPackage = null;
     }
+    RunnerAndConfigurationSettings template = RunManager.getInstance(location.getProject())
+      .getConfigurationTemplate(getConfigurationFactory());
     final Module predefinedModule =
-          ((JUnitConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
-            .getConfigurationTemplate(getConfigurationFactory())
+          ((JUnitConfiguration)template
             .getConfiguration()).getConfigurationModule().getModule();
     final String vmParameters = predefinedConfiguration instanceof JUnitConfiguration ? ((JUnitConfiguration)predefinedConfiguration).getVMParameters() : null;
     for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {

@@ -28,12 +28,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Manages {@link RunConfiguration}s.
- *
- * @see RunnerRegistry
- * @see ExecutionManager
- */
 public abstract class RunManagerEx extends RunManager {
   public static RunManagerEx getInstanceEx(final Project project) {
     return (RunManagerEx)project.getComponent(RunManager.class);
@@ -46,12 +40,16 @@ public abstract class RunManagerEx extends RunManager {
     setSelectedConfiguration(configuration);
   }
 
-  public abstract void setSelectedConfiguration(@Nullable RunnerAndConfigurationSettings configuration);
-
   public abstract void setTemporaryConfiguration(@Nullable RunnerAndConfigurationSettings tempConfiguration);
 
   public abstract RunManagerConfig getConfig();
 
+  /**
+   * @deprecated use {@link RunManager#createRunConfiguration(String, com.intellij.execution.configurations.ConfigurationFactory)} instead
+   * @param name
+   * @param type
+   * @return
+   */
   @NotNull
   public abstract RunnerAndConfigurationSettings createConfiguration(String name, ConfigurationFactory type);
 
@@ -59,8 +57,6 @@ public abstract class RunManagerEx extends RunManager {
                                         boolean isShared,
                                         List<BeforeRunTask> tasks,
                                         boolean addTemplateTasksIfAbsent);
-
-  public abstract void addConfiguration(final RunnerAndConfigurationSettings settings, final boolean isShared);
 
   public abstract boolean isConfigurationShared(RunnerAndConfigurationSettings settings);
 

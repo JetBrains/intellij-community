@@ -268,6 +268,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return Collections.unmodifiableMap(result);
   }
 
+  @Override
+  @NotNull
   public RunnerAndConfigurationSettings getConfigurationTemplate(final ConfigurationFactory factory) {
     RunnerAndConfigurationSettings template = myTemplateConfigurationsMap.get(factory.getType().getId() + "." + factory.getName());
     if (template == null) {

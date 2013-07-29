@@ -31,6 +31,8 @@ import java.util.regex.Pattern;
  * Manages the list of run/debug configurations in a project.
  *
  * @author anna
+ * @see RunnerRegistry
+ * @see ExecutionManager
  */
 public abstract class RunManager {
   public static RunManager getInstance(final Project project) {
@@ -104,7 +106,15 @@ public abstract class RunManager {
   public abstract RunnerAndConfigurationSettings getSelectedConfiguration();
 
   /**
-   * Creates a configuration of the specified type with the specified name.
+   * Selects a configuration in the run/debug configurations combobox.
+   *
+   * @param configuration the configuration to select, or null if nothing should be selected.
+   */
+  public abstract void setSelectedConfiguration(@Nullable RunnerAndConfigurationSettings configuration);
+
+  /**
+   * Creates a configuration of the specified type with the specified name. Note that you need to call
+   * {@link #addConfiguration(RunnerAndConfigurationSettings, boolean)} if you want the configuration to be persisted in the project.
    *
    * @param name the name of the configuration to create (should be unique and not equal to any other existing configuration)
    * @param type the type of the configuration to create.
@@ -115,7 +125,8 @@ public abstract class RunManager {
   public abstract RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory type);
 
   /**
-   * Creates a configuration settings object based on a specified {@link RunConfiguration}.
+   * Creates a configuration settings object based on a specified {@link RunConfiguration}. Note that you need to call
+   * {@link #addConfiguration(RunnerAndConfigurationSettings, boolean)} if you want the configuration to be persisted in the project.
    *
    * @param runConfiguration the run configuration
    * @param factory the factory instance.
@@ -123,6 +134,24 @@ public abstract class RunManager {
    */
   @NotNull
   public abstract RunnerAndConfigurationSettings createConfiguration(@NotNull RunConfiguration runConfiguration, @NotNull ConfigurationFactory factory);
+
+  /**
+   * Returns the template settings for the specified configuration type.
+   *
+   * @param factory the configuration factory.
+   * @return the template settings.
+   */
+  @NotNull
+  public abstract RunnerAndConfigurationSettings getConfigurationTemplate(ConfigurationFactory factory);
+
+  /**
+   * Adds the specified run configuration to the list of run configurations stored in the project.
+   *
+   * @param settings the run configuration settings.
+   * @param isShared true if the configuration is marked as shared (stored in the versioned part of the project files), false if it's local
+   *                 (stored in the workspace file).
+   */
+  public abstract void addConfiguration(final RunnerAndConfigurationSettings settings, final boolean isShared);
 
   /**
    * Marks the specified run configuration as recently used (the temporary run configurations are deleted in LRU order).
