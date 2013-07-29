@@ -24,7 +24,9 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.Stack;
@@ -347,9 +349,18 @@ public class XmlEmmetParser extends EmmetParser {
       return null;
     }
 
-    final String name = ((IdentifierToken)token).getText();
+    String name = ((IdentifierToken)token).getText();
 
     if (name.isEmpty()) {
+      return null;
+    }
+
+    final XmlTag tag = XmlElementFactory.getInstance(myCallback.getProject()).createTagFromText("<tag " + name + "=''/>");
+    XmlAttribute[] attributes = tag.getAttributes();
+    if (attributes.length == 1) {
+      name = attributes[0].getName();
+    }
+    else {
       return null;
     }
 
