@@ -839,7 +839,9 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.web2py.completion.Web2PyBuiltinCompletionContributor"/>
 
-    <!-- Chameleon -->
+    <!-- Pyramid && Chameleon -->
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.pyramid.annotator.PyramidViewLineMarkerProvider"/>
+
     <fileTypeFactory implementation="com.jetbrains.pyramid.templates.file.ChameleonFileTypeFactory"/>
     <lang.fileViewProviderFactory language="Chameleon"
                                   implementationClass="com.jetbrains.pyramid.templates.file.ChameleonFileProviderFactory"/>
