@@ -49,7 +49,7 @@ public class SvnInfoHandler extends DefaultHandler {
   public SvnInfoHandler(File base, final Consumer<SVNInfo> infoConsumer) {
     myBase = base;
     myInfoConsumer = infoConsumer;
-    myPending = new SvnInfoStructure();
+    myPending = createPending();
     myElementsMap = new HashMap<String, Getter<ElementHandlerBase>>();
     fillElements();
     myParseStack = new ArrayList<ElementHandlerBase>();
@@ -70,7 +70,14 @@ public class SvnInfoHandler extends DefaultHandler {
       myInfoConsumer.consume(info);
     }
     myResultsMap.put(info.getFile(), info);
-    myPending = new SvnInfoStructure();
+    myPending = createPending();
+  }
+
+  private SvnInfoStructure createPending() {
+    SvnInfoStructure pending = new SvnInfoStructure();
+    pending.myDepth = SVNDepth.INFINITY;
+
+    return pending;
   }
 
   @Override
@@ -250,6 +257,24 @@ public class SvnInfoHandler extends DefaultHandler {
       @Override
       public ElementHandlerBase get() {
         return new Url();
+      }
+    });
+    myElementsMap.put("relative-url", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new RelativeUrl();
+      }
+    });
+    myElementsMap.put("lock", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new Lock();
+      }
+    });
+    myElementsMap.put("created", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new Date();
       }
     });
     myElementsMap.put("uuid", new Getter<ElementHandlerBase>() {
@@ -698,11 +723,34 @@ public class SvnInfoHandler extends DefaultHandler {
     }
   }
 
+  private static class RelativeUrl extends Url{
+    @Override
+    public void characters(String s, SvnInfoStructure structure) throws SAXException {
+      structure.relativeUrl = s;
+    }
+  }
+
+  private static class Lock extends ElementHandlerBase {
+    private Lock() {
+      super(new String[]{"created"}, new String[]{});
+    }
+
+    @Override
+    protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
+      // TODO:
+    }
+
+    @Override
+    public void characters(String s, SvnInfoStructure structure) throws SAXException {
+      // TODO:
+    }
+  }
+
   private static class Entry extends ElementHandlerBase {
     private final File myBase;
 
     private Entry(final File base) {
-      super(new String[]{"url","repository","wc-info","commit","conflict","tree-conflict"}, new String[]{});
+      super(new String[]{"url", "relative-url", "lock", "repository","wc-info","commit","conflict","tree-conflict"}, new String[]{});
       myBase = base;
     }
 

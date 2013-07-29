@@ -259,23 +259,15 @@ class SvnChangeProviderContext implements StatusReceiver {
   
   public void addModifiedNotSavedChange(final VirtualFile file) throws SVNException {
     final FilePath filePath = new FilePathImpl(file);
-    final SVNInfo svnInfo;
-    try {
-      svnInfo = myVcs.createWCClient().doInfo(new File(file.getPath()), SVNRevision.UNDEFINED);
+    final SVNInfo svnInfo = myVcs.getInfo(file);
+
+    if (svnInfo != null) {
+      final SVNStatus svnStatus = new SVNStatus();
+      svnStatus.setRevision(svnInfo.getRevision());
+      myChangelistBuilder.processChangeInList(
+        createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, svnInfo.getRevision()), CurrentContentRevision.create(filePath),
+                     FileStatus.MODIFIED, svnStatus), (String)null, SvnVcs.getKey());
     }
-    catch (SVNException e) {
-      final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
-      if (SVNErrorCode.WC_PATH_NOT_FOUND.equals(errorCode) ||
-          SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode) || SVNErrorCode.WC_NOT_WORKING_COPY.equals(errorCode)) {
-        return;
-      }
-      throw e;
-    }
-    final SVNStatus svnStatus = new SVNStatus();
-    svnStatus.setRevision(svnInfo.getRevision());
-    myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, svnInfo.getRevision()),
-                                             CurrentContentRevision.create(filePath), FileStatus.MODIFIED, svnStatus), (String) null,
-                                            SvnVcs.getKey());
   }
 
   private void checkSwitched(final FilePath filePath, final ChangelistBuilder builder, final SVNStatus status,

@@ -177,7 +177,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     if (committables.isEmpty()) {
       return;
     }
-    if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(format) &&
+    if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) || WorkingCopyFormat.ONE_DOT_SEVEN.equals(format) &&
         SvnConfiguration.UseAcceleration.commandLine.equals(SvnConfiguration.getInstance(mySvnVcs.getProject()).myUseAcceleration) &&
         (SvnAuthenticationManager.HTTP.equals(url.getProtocol()) || SvnAuthenticationManager.HTTPS.equals(url.getProtocol()))) {
       doWithCommandLine(committables, comment, exception, feedback);
@@ -348,25 +348,19 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   private List<File> getCommitables(List<File> paths) {
     final Adder adder = new Adder();
 
-    SVNStatusClient statusClient = mySvnVcs.createStatusClient();
     for (File path : paths) {
       File file = path.getAbsoluteFile();
       adder.add(file);
       if (file.getParentFile() != null) {
-        addParents(statusClient, file.getParentFile(), adder);
+        addParents(file.getParentFile(), adder);
       }
     }
     return adder.getResult();
   }
 
-  private static void addParents(SVNStatusClient statusClient, File file, final Adder adder) {
-    SVNStatus status;
-    try {
-      status = statusClient.doStatus(file, false);
-    }
-    catch (SVNException e) {
-      return;
-    }
+  private void addParents(File file, final Adder adder) {
+    SVNStatus status = getStatus(file);
+
     if (status != null &&
         (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_ADDED) ||
          SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_REPLACED))) {
@@ -374,9 +368,31 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       adder.add(file);
       file = file.getParentFile();
       if (file != null) {
-        addParents(statusClient, file, adder);
+        addParents(file, adder);
       }
     }
+  }
+
+  private SVNStatus getStatus(File file) {
+    SVNStatus result = null;
+    WorkingCopyFormat format = mySvnVcs.getWorkingCopyFormat(file);
+
+    try {
+      result = WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ? getStatusCommandLine(file) : getStatusSvnKit(file);
+    }
+    catch (SVNException e) {
+      // do nothing
+    }
+
+    return result;
+  }
+
+  private SVNStatus getStatusSvnKit(File file) throws SVNException {
+    return mySvnVcs.createStatusClient().doStatus(file, false);
+  }
+
+  private SVNStatus getStatusCommandLine(File file) throws SVNException {
+    return new SvnCommandLineStatusClient(mySvnVcs.getProject()).doStatus(file, false);
   }
 
   private static List<File> collectPaths(final List<Change> changes) {

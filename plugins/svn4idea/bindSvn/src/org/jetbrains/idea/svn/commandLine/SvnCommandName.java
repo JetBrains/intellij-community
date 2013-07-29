@@ -27,7 +27,9 @@ public enum SvnCommandName {
   st("st", false),
   up("up", true),
   ci("commit", true),
-  cleanup("cleanup", true);
+  cleanup("cleanup", true),
+  cat("cat", false),
+  add("add", true);
   
   private final String myName;
   private final boolean myWriteable;

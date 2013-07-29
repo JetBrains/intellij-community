@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vcs.LineProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,13 +31,22 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.AuthenticationCallback;
 import org.jetbrains.idea.svn.SvnBindUtil;
 import org.jetbrains.idea.svn.config.SvnBindException;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created with IntelliJ IDEA.
@@ -52,6 +62,7 @@ public class SvnLineCommand extends SvnCommand {
   public static final String PASSPHRASE_FOR = "Passphrase for";
   public static final String UNABLE_TO_CONNECT = "svn: E170001:";
   public static final String CANNOT_AUTHENTICATE_TO_PROXY = "Could not authenticate to proxy server";
+  public static final String AUTHENTICATION_FAILED_MESSAGE = "Authentication failed";
 
   // kept for exact text
   //public static final String CLIENT_CERTIFICATE_FILENAME = "Client certificate filename:";
@@ -66,6 +77,7 @@ public class SvnLineCommand extends SvnCommand {
   private final EventDispatcher<LineProcessEventListener> myLineListeners;
   private final AtomicReference<Integer> myExitCode;
   private final StringBuffer myErr;
+  private final StringBuffer myOut;
 
   public SvnLineCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath) {
     this(workingDirectory, commandName, exePath, null);
@@ -76,6 +88,7 @@ public class SvnLineCommand extends SvnCommand {
     myLineListeners = EventDispatcher.create(LineProcessEventListener.class);
     myExitCode = new AtomicReference<Integer>();
     myErr = new StringBuffer();
+    myOut = new StringBuffer();
   }
 
   @Override
@@ -94,8 +107,20 @@ public class SvnLineCommand extends SvnCommand {
                                                   SvnCommandName commandName,
                                                   final LineCommandListener listener,
                                                   @Nullable AuthenticationCallback authenticationCallback,
-                                                  final String... parameters) throws SvnBindException {
-    File base = firstFile.isDirectory() ? firstFile : firstFile.getParentFile();
+                                                  String... parameters) throws SvnBindException {
+    runWithAuthenticationAttempt(exePath, firstFile, null, commandName, listener, authenticationCallback, false, parameters);
+  }
+
+
+  public static void runWithAuthenticationAttempt(final String exePath,
+                                                  final File firstFile,
+                                                  final SVNURL url,
+                                                  SvnCommandName commandName,
+                                                  final LineCommandListener listener,
+                                                  @Nullable AuthenticationCallback authenticationCallback,
+                                                  boolean needCleanup,
+                                                  String... parameters) throws SvnBindException {
+    File base = firstFile != null ? (firstFile.isDirectory() ? firstFile : firstFile.getParentFile()) : null;
     base = SvnBindUtil.correctUpToExistingParent(base);
 
     listener.baseDirectory(base);
@@ -114,13 +139,16 @@ public class SvnLineCommand extends SvnCommand {
         if (command.myErr.length() > 0) {
           final String errText = command.myErr.toString().trim();
           if (authenticationCallback != null) {
-            final AuthCallbackCase callback = createCallback(errText, authenticationCallback, base);
+            final AuthCallbackCase callback = createCallback(errText, authenticationCallback, base, url);
             if (callback != null) {
-              cleanup(exePath, commandName, base);
+              if (needCleanup) {
+                cleanup(exePath, commandName, base);
+              }
               if (callback.getCredentials(errText)) {
                 if (authenticationCallback.getSpecialConfigDir() != null) {
                   configDir = authenticationCallback.getSpecialConfigDir();
                 }
+                parameters = updateParameters(callback, parameters);
                 continue;
               }
             }
@@ -138,6 +166,27 @@ public class SvnLineCommand extends SvnCommand {
         authenticationCallback.reset();
       }
     }
+  }
+
+  private static String[] updateParameters(AuthCallbackCase callback, String[] parameters) {
+    String[] result = parameters;
+
+    if (callback instanceof UsernamePasswordCallback &&
+        ((UsernamePasswordCallback)callback).getAuthentication() instanceof SVNPasswordAuthentication) {
+      SVNPasswordAuthentication auth = (SVNPasswordAuthentication)((UsernamePasswordCallback)callback).getAuthentication();
+      List<String> p = new ArrayList<String>(Arrays.asList(parameters));
+
+      p.add("--username");
+      p.add(auth.getUserName());
+      p.add("--password");
+      p.add(auth.getPassword());
+      if (!auth.isStorageAllowed()) {
+        p.add("--no-auth-cache");
+      }
+      result = ArrayUtil.toStringArray(p);
+    }
+
+    return result;
   }
 
   private static void writeIdeaConfig2SubversionConfig(@NotNull AuthenticationCallback authenticationCallback, @NotNull File base) throws SvnBindException {
@@ -158,7 +207,7 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  private static AuthCallbackCase createCallback(final String errText, final AuthenticationCallback callback, final File base) {
+  private static AuthCallbackCase createCallback(final String errText, final AuthenticationCallback callback, final File base, final SVNURL url) {
     if (errText.startsWith(CERTIFICATE_ERROR)) {
       return new CertificateCallbackCase(callback, base);
     }
@@ -171,7 +220,52 @@ public class SvnLineCommand extends SvnCommand {
     if (errText.startsWith(UNABLE_TO_CONNECT) && errText.contains(CANNOT_AUTHENTICATE_TO_PROXY)) {
       return new ProxyCallback(callback, base);
     }
+    if (errText.contains(AUTHENTICATION_FAILED_MESSAGE)) {
+      return new UsernamePasswordCallback(callback, base, url);
+    }
     return null;
+  }
+
+  private static class UsernamePasswordCallback extends AuthCallbackCase {
+    private SVNAuthentication myAuthentication;
+    private SVNURL myUrl;
+
+    protected UsernamePasswordCallback(AuthenticationCallback callback, File base, SVNURL url) {
+      super(callback, base);
+      myUrl = url;
+    }
+
+    @Override
+    boolean getCredentials(String errText) throws SvnBindException {
+      myAuthentication = myAuthenticationCallback.requestCredentials(myUrl != null ? myUrl : parseUrlFromError(errText));
+
+      return true;
+    }
+
+    private SVNURL parseUrlFromError(String errorText) {
+      Pattern pattern = Pattern.compile("Unable to connect to a repository at URL '(.*)'");
+      Matcher matcher = pattern.matcher(errorText);
+      String urlValue = null;
+
+      if (matcher.find()) {
+        urlValue = matcher.group(1);
+      }
+
+      return urlValue != null ? parseUrl(urlValue) : null;
+    }
+
+    private SVNURL parseUrl(String urlValue) {
+      try {
+        return SVNURL.parseURIDecoded(urlValue);
+      }
+      catch (SVNException e) {
+        return null;
+      }
+    }
+
+    public SVNAuthentication getAuthentication() {
+      return myAuthentication;
+    }
   }
 
   private static class ProxyCallback extends AuthCallbackCase {
@@ -192,7 +286,7 @@ public class SvnLineCommand extends SvnCommand {
 
     @Override
     boolean getCredentials(String errText) throws SvnBindException {
-      final String realm = cutFirstLine(errText).substring(AUTHENTICATION_REALM.length()).trim();
+      final String realm = errText.startsWith(AUTHENTICATION_REALM) ? cutFirstLine(errText).substring(AUTHENTICATION_REALM.length()).trim() : null;
       final boolean isPassword = StringUtil.containsIgnoreCase(errText, "password");
       if (myTried) {
         myAuthenticationCallback.clearPassiveCredentials(realm, myBase, isPassword);
@@ -320,6 +414,8 @@ public class SvnLineCommand extends SvnCommand {
     command.addLineListener(new LineProcessEventListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
+        command.myOut.append(line);
+
         if (SvnCommand.LOG.isDebugEnabled()) {
           SvnCommand.LOG.debug("==> " + line);
         }

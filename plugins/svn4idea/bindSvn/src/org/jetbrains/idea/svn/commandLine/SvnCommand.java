@@ -186,6 +186,10 @@ public abstract class SvnCommand {
     }
   }
 
+  public String getCommandText() {
+    return myCommandLine.getCommandLineString();
+  }
+
   /**
    * check that process is not started yet
    *

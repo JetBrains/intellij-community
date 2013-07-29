@@ -78,6 +78,12 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   }
 
   @Override
+  public SVNAuthentication requestCredentials(@Nullable SVNURL url) {
+    return url != null ? myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getProvider().requestClientAuthentication(
+      ISVNAuthenticationManager.PASSWORD, url, url.toDecodedString(), null, null, true) : null;
+  }
+
+  @Override
   public boolean acceptSSLServerCertificate(final File file, final String realm) {
     final File base = getExistingParent(file);
     if (base == null) return false;

@@ -15,13 +15,19 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnBindUtil;
+import org.jetbrains.idea.svn.SvnCommitRunner;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
+import org.jetbrains.idea.svn.config.SvnBindException;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.portable.SvnkitSvnWcClient;
 import org.tmatesoft.svn.core.*;
@@ -36,7 +42,9 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -45,9 +53,12 @@ import java.util.Collection;
  * Time: 12:59 PM
  */
 public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
+
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient");
   private final Project myProject;
 
   public SvnCommandLineInfoClient(final Project project) {
+    // TODO: Remove svn kit client instantiation
     super(SvnVcs.getInstance(project).createWCClient());
     myProject = project;
   }
@@ -76,21 +87,20 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       // very unrealistic
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), new RuntimeException("Can not find existing parent file"));
     }
-    final SvnSimpleCommand command = SvnCommandFactory.createSimpleCommand(myProject, base, SvnCommandName.info);
+    issueCommand(path.getPath(), pegRevision, revision, depth, changeLists, handler, base);
+  }
 
-    if (depth != null) {
-      command.addParameters("--depth", depth.getName());
-    }
-    if (revision != null && ! SVNRevision.UNDEFINED.equals(revision) && ! SVNRevision.WORKING.equals(revision)) {
-      command.addParameters("-r", revision.toString());
-    }
-    command.addParameters("--xml");
+  private void issueCommand(String path, SVNRevision pegRevision,
+                            SVNRevision revision,
+                            SVNDepth depth,
+                            Collection changeLists,
+                            final ISVNInfoHandler handler, File base) throws SVNException {
+    final SvnSimpleCommand command = SvnCommandFactory.createSimpleCommand(myProject, base, SvnCommandName.info);
+    List<String> parameters = new ArrayList<String>();
+
+    fillParameters(path, pegRevision, revision, depth, parameters);
+    command.addParameters(parameters);
     SvnCommandLineStatusClient.changelistsToCommand(changeLists, command);
-    if (pegRevision != null && ! SVNRevision.UNDEFINED.equals(pegRevision) && ! SVNRevision.WORKING.equals(pegRevision)) {
-      command.addParameters(path.getPath() + "@" + pegRevision.toString());
-    } else {
-      command.addParameters(path.getPath());
-    }
 
     final SvnInfoHandler[] infoHandler = new SvnInfoHandler[1];
     infoHandler[0] = new SvnInfoHandler(base, new Consumer<SVNInfo>() {
@@ -138,6 +148,23 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     }
   }
 
+  private void fillParameters(String path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, Collection<String> parameters) {
+    if (depth != null) {
+      parameters.add("--depth");
+      parameters.add(depth.getName());
+    }
+    if (revision != null && ! SVNRevision.UNDEFINED.equals(revision) && ! SVNRevision.WORKING.equals(revision)) {
+      parameters.add("-r");
+      parameters.add(revision.toString());
+    }
+    parameters.add("--xml");
+    if (pegRevision != null && ! SVNRevision.UNDEFINED.equals(pegRevision) && ! SVNRevision.WORKING.equals(pegRevision)) {
+      parameters.add(path + "@" + pegRevision.toString());
+    } else {
+      parameters.add(path);
+    }
+  }
+
   @Override
   public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
     throws SVNException {
@@ -147,7 +174,20 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
   @Override
   public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNInfoHandler handler)
     throws SVNException {
-    throw new UnsupportedOperationException();
+    String path = url.toDecodedString();
+    List<String> parameters = new ArrayList<String>();
+
+    fillParameters(path, pegRevision, revision, depth, parameters);
+    try {
+      String exe = SvnApplicationSettings.getInstance().getCommandLinePath();
+      SvnLineCommand.runWithAuthenticationAttempt(exe,
+                                                  new File(exe), url, SvnCommandName.info, new SvnCommitRunner.CommandListener(null),
+                                                  new IdeaSvnkitBasedAuthenticationCallback(SvnVcs.getInstance(myProject)), false,
+                                                  ArrayUtil.toStringArray(parameters));
+    }
+    catch (SvnBindException e) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);
+    }
   }
 
   @Override

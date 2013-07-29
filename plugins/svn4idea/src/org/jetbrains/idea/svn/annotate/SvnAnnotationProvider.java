@@ -99,8 +99,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
           final SvnFileAnnotation result = new SvnFileAnnotation(myVcs, file, contents, lastChangedRevision);
 
-          SVNWCClient wcClient = myVcs.createWCClient();
-          info = wcClient.doInfo(ioFile, SVNRevision.UNDEFINED);
+          info = myVcs.getInfo(ioFile);
           if (info == null) {
               exception[0] = new VcsException(new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "File ''{0}'' is not under version control", ioFile)));
               return;
@@ -214,8 +213,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     final String relativePath = FileUtil.getRelativePath(root.getPath(), wasFile.getPath(), File.separatorChar);
     if (relativePath == null) throw new VcsException("Can not find relative path for " + wasFile.getPath() + "@" + revision.getRevisionNumber().asString());
 
-    SVNWCClient wcClient = myVcs.createWCClient();
-    SVNInfo wcRootInfo = wcClient.doInfo(root, SVNRevision.UNDEFINED);
+    SVNInfo wcRootInfo = myVcs.getInfo(root);
     if (wcRootInfo == null || wcRootInfo.getURL() == null) {
         throw new VcsException("Can not find relative path for " + wasFile.getPath() + "@" + revision.getRevisionNumber().asString());
     }

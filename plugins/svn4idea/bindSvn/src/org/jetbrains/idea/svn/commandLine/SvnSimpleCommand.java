@@ -94,7 +94,11 @@ public class SvnSimpleCommand extends SvnCommand {
       if (myException != null) throw myException;
       final int code = getExitCode();
       if (code == 0) {
-        return myStdout.toString();
+        String result = myStdout.toString();
+
+        LOG.debug(result);
+
+        return result;
       } else {
         final String msg = new StringBuilder("Svn process exited with error code: ").append(code).append("\n")
           .append("stderr: ").append(myStderr.toString()).append("\nstdout: ").append(getStdout().toString())

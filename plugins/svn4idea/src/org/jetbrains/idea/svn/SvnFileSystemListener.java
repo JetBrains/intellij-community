@@ -44,10 +44,8 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.ActionWithTempFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
+import org.jetbrains.idea.svn.commandLine.SvnAddClient;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -160,10 +158,10 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   private class UUIDHelper {
-    private final SVNWCClient myWcClient;
+    private final SvnVcs myVcs;
 
     private UUIDHelper(final SvnVcs vcs) {
-      myWcClient = vcs.createWCClient();
+      myVcs = vcs;
     }
 
     /**
@@ -175,7 +173,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         final SVNInfo info1 = new RepeatSvnActionThroughBusy() {
           @Override
           protected void executeImpl() throws SVNException {
-            myT = myWcClient.doInfo(new File(dir.getPath()), SVNRevision.UNDEFINED);
+            myT = myVcs.getInfo(new File(dir.getPath()));
           }
         }.compute();
         if (info1 == null || info1.getRepositoryUUID() == null) {
@@ -793,7 +791,18 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
               new RepeatSvnActionThroughBusy() {
                 @Override
                 protected void executeImpl() throws SVNException {
-                  wcClient.doAdd(ioFile, true, false, false, true);
+                  WorkingCopyFormat format = vcs.getWorkingCopyFormat(ioFile);
+
+                  if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)) {
+                    SvnAddClient client = new SvnAddClient(project);
+                    try {
+                      client.add(ioFile, null, false, false, true);
+                    } catch(VcsException e) {
+                      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);
+                    }
+                  } else {
+                    wcClient.doAdd(ioFile, true, false, false, true);
+                  }
                 }
               }.execute();
             }

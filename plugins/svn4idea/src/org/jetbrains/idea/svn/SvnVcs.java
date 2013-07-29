@@ -70,6 +70,7 @@ import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
+import org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient;
 import org.jetbrains.idea.svn.commandLine.SvnExecutableChecker;
 import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
@@ -79,6 +80,7 @@ import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.lowLevel.PrimitivePool;
 import org.jetbrains.idea.svn.networking.SSLProtocolExceptionParser;
+import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
@@ -911,24 +913,96 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return new File(file, pathToDirProps);
   }
 
+  public SVNInfo runInfoCommand(final File file) {
+    SVNInfo result = null;
+
+    try {
+      result = SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration.myUseAcceleration)
+               ? getInfoCommandLine(file)
+               : getInfoSvnKit(file);
+    }
+    catch (SVNException e) {
+      handleInfoException(e);
+    }
+
+    return result;
+  }
+
+  public SVNInfo runInfoCommand(final VirtualFile file) {
+    return runInfoCommand(new File(file.getPath()));
+  }
+
+  public SVNInfo getInfo(@NotNull SVNURL url, SVNRevision revision, ISVNAuthenticationManager manager) throws SVNException {
+    if (SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration.myUseAcceleration)) {
+      return createInfoClient().doInfo(url, SVNRevision.UNDEFINED, revision);
+    } else {
+      return (manager != null ? createWCClient(manager) : createWCClient()).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+    }
+  }
+
+  public SVNInfo getInfo(@NotNull SVNURL url, SVNRevision revision) throws SVNException {
+    return getInfo(url, revision, null);
+  }
+
   @Nullable
-  public SVNInfo getInfo(final VirtualFile file) {
+  public SVNInfo getInfo(@NotNull final VirtualFile file) {
     final File ioFile = new File(file.getPath());
     return getInfo(ioFile);
   }
 
-  public SVNInfo getInfo(File ioFile) {
+  @Nullable
+  public SVNInfo getInfo(@NotNull String path) {
+    return getInfo(new File(path));
+  }
+
+  @Nullable
+  public SVNInfo getInfo(@NotNull File ioFile) {
+    WorkingCopyFormat format = getWorkingCopyFormat(ioFile);
+    SVNInfo result = null;
+
     try {
-      SVNWCClient wcClient = createWCClient();
-      SVNInfo info = wcClient.doInfo(ioFile, SVNRevision.UNDEFINED);
-      if (info == null || info.getRepositoryRootURL() == null) {
-        info = wcClient.doInfo(ioFile, SVNRevision.HEAD);
-      }
-      return info;
+      result = format == WorkingCopyFormat.ONE_DOT_EIGHT ? getInfoCommandLine(ioFile) : runInfoCommand(ioFile);
     }
     catch (SVNException e) {
-      return null;
+      handleInfoException(e);
     }
+
+    return result;
+  }
+
+  private void handleInfoException(SVNException e) {
+    final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
+
+    if (SVNErrorCode.WC_PATH_NOT_FOUND.equals(errorCode) ||
+        SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode) || SVNErrorCode.WC_NOT_WORKING_COPY.equals(errorCode)) {
+      LOG.debug(e);
+    } else {
+      LOG.error(e);
+    }
+  }
+
+  private SVNInfo getInfoSvnKit(@NotNull File ioFile) throws SVNException {
+    SVNWCClient wcClient = createWCClient();
+    SVNInfo info = wcClient.doInfo(ioFile, SVNRevision.UNDEFINED);
+    if (info == null || info.getRepositoryRootURL() == null) {
+      info = wcClient.doInfo(ioFile, SVNRevision.HEAD);
+    }
+    return info;
+  }
+
+  private SVNInfo getInfoCommandLine(@NotNull File ioFile) throws SVNException {
+    SvnCommandLineInfoClient client = new SvnCommandLineInfoClient(myProject);
+    return client.doInfo(ioFile, SVNRevision.UNDEFINED);
+  }
+
+  private SvnWcClientI createInfoClient() {
+    return new SvnCommandLineInfoClient(myProject);
+  }
+
+  public WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile) {
+    RootUrlInfo rootInfo = getSvnFileUrlMapping().getWcRootForFilePath(ioFile);
+
+    return rootInfo != null ? rootInfo.getFormat() : WorkingCopyFormat.UNKNOWN;
   }
 
   public void refreshSSLProperty() {

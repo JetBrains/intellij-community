@@ -16,6 +16,8 @@
 package org.jetbrains.idea.svn;
 
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +51,8 @@ public interface AuthenticationCallback {
    * @return false if authentication canceled or was unsuccessful
    */
   boolean authenticateFor(@Nullable String realm, File base, boolean previousFailed, boolean passwordRequest);
+
+  SVNAuthentication requestCredentials(@Nullable SVNURL url);
 
   /**
    * @return config directory if TMP was created

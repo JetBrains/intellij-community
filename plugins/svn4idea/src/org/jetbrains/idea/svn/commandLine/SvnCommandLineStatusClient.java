@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,6 +49,8 @@ import java.util.Map;
  * Time: 5:21 PM
  */
 public class SvnCommandLineStatusClient implements SvnStatusClientI {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient");
+
   private final Project myProject;
   private final SvnCommandLineInfoClient myInfoClient;
 
@@ -116,7 +119,8 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
       parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), svnHandl[0]);
       if (! svnHandl[0].isAnythingReported()) {
         if (! SvnUtil.isSvnVersioned(myProject, path)) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY));
+          throw new SVNException(
+            SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Command - " + command.getCommandText() + ". Result - " + result));
         }
       }
     }

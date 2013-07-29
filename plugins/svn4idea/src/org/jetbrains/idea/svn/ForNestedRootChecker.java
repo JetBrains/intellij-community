@@ -49,16 +49,14 @@ public class ForNestedRootChecker {
 
   private static class UrlConstructor {
     final SvnVcs myVcs;
-    final SVNWCClient myClient;
 
     private UrlConstructor(final SvnVcs vcs) {
       myVcs = vcs;
-      myClient = myVcs.createWCClient();
     }
 
     @Nullable
     public Real createReal(final VirtualFile file, final VirtualFile vcsRoot) {
-      final SVNInfo info = myVcs.getInfo(file);
+      final SVNInfo info = myVcs.runInfoCommand(file);
       if (info == null || info.getRepositoryRootURL() == null || info.getURL() == null) {
         return null;
       }

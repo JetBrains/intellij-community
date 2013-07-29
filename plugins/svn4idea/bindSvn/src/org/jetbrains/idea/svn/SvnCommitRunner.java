@@ -96,7 +96,7 @@ public class SvnCommitRunner {
     return myCommandListener.getCommittedRevision();
   }
 
-  private static class CommandListener extends LineCommandListener {
+  public static class CommandListener extends LineCommandListener {
     @Nullable private final CommitEventHandler myHandler;
     private SvnBindException myException;
     private long myCommittedRevision = Revision.SVN_INVALID_REVNUM;

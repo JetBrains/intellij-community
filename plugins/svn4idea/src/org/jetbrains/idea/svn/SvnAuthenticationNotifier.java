@@ -350,7 +350,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     }
     SvnInteractiveAuthenticationProvider.clearCallState();
     try {
-      SvnVcs.getInstance(project).createWCClient(manager).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+      SvnVcs.getInstance(project).getInfo(url, SVNRevision.HEAD, manager);
     } catch (SVNAuthenticationException e) {
       log(e);
       return false;
