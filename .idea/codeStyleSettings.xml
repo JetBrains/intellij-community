@@ -90,9 +90,6 @@
         <XML>
           <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
         </XML>
-        <ADDITIONAL_INDENT_OPTIONS fileType="rb">
-          <option name="INDENT_SIZE" value="2" />
-        </ADDITIONAL_INDENT_OPTIONS>
         <codeStyleSettings language="CFML">
           <option name="KEEP_LINE_BREAKS" value="false" />
           <option name="ELSE_ON_NEW_LINE" value="true" />
@@ -108,6 +105,12 @@
           <option name="TERNARY_OPERATION_SIGNS_ON_NEXT_LINE" value="true" />
           <option name="FOR_STATEMENT_WRAP" value="5" />
           <option name="ASSIGNMENT_WRAP" value="1" />
+          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+        </codeStyleSettings>
+        <codeStyleSettings language="CoffeeScript">
+          <option name="KEEP_LINE_BREAKS" value="false" />
+          <option name="ALIGN_MULTILINE_PARAMETERS_IN_CALLS" value="true" />
+          <option name="METHOD_PARAMETERS_WRAP" value="5" />
           <option name="PARENT_SETTINGS_INSTALLED" value="true" />
         </codeStyleSettings>
         <codeStyleSettings language="ECMA Script Level 4">
@@ -263,6 +266,15 @@
             <option name="INDENT_SIZE" value="2" />
             <option name="CONTINUATION_INDENT_SIZE" value="4" />
             <option name="TAB_SIZE" value="8" />
+          </indentOptions>
+        </codeStyleSettings>
+        <codeStyleSettings language="ruby">
+          <option name="KEEP_LINE_BREAKS" value="false" />
+          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+          <indentOptions>
+            <option name="CONTINUATION_INDENT_SIZE" value="8" />
+            <option name="TAB_SIZE" value="4" />
+            <option name="USE_RELATIVE_INDENTS" value="false" />
           </indentOptions>
         </codeStyleSettings>
       </value>
