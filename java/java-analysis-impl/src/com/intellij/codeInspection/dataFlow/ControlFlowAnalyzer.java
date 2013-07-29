@@ -1512,8 +1512,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if ("false".equals(name)) return ValueConstraint.FALSE_VALUE;
     if ("exit".equals(name)) return ValueConstraint.SYSTEM_EXIT;
     if ("fail".equals(name)) return ValueConstraint.THROW_EXCEPTION;
-    if ("any".equals(name)) return ValueConstraint.ANY_VALUE;
-    throw new ParseException("Constraint should be one of: null, !null, true, false, exit, fail, any. Found: " + name);
+    if ("_".equals(name)) return ValueConstraint.ANY_VALUE;
+    throw new ParseException("Constraint should be one of: null, !null, true, false, exit, fail, _. Found: " + name);
   }
   
   private static class ParseException extends Exception {

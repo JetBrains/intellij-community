@@ -30,7 +30,7 @@ import java.lang.annotation.*;
  *  
  * The constraints denote the following:<br/>
  * <ul>
- * <li> any - any value
+ * <li> _ - any value
  * <li> null - null value
  * <li> !null - a value statically proved to be not-null
  * <li> true - true boolean value
@@ -39,8 +39,8 @@ import java.lang.annotation.*;
  * <li> exit - the method terminates the current process, if the arguments satisfy argument constraints
  * </ul>
  * Examples:<p/>
- * <code>@Contract("any, null -> null")</code> - method returns null if its second argument is null<br/>
- * <code>@Contract("any, null -> null; any, !null -> !null")</code> - method returns null if its second argument is null and not-null otherwise<br/>
+ * <code>@Contract("_, null -> null")</code> - method returns null if its second argument is null<br/>
+ * <code>@Contract("_, null -> null; _, !null -> !null")</code> - method returns null if its second argument is null and not-null otherwise<br/>
  * <code>@Contract("true -> fail")</code> - a typical assertFalse method which throws an exception if <code>true</code> is passed to it<br/> 
  * 
  * @author peter
