@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,6 +37,7 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
+import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.ar;
 
@@ -129,7 +131,6 @@ public class GantRunner extends GroovyScriptRunner {
     final File[] groovyJars = GroovyConfigUtils.getGroovyAllJars(gantHome + "/lib/");
     if (groovyJars.length > 0) {
       params.getClassPath().add(groovyJars[0].getAbsolutePath());
-      return;
     }
 
     if (module == null) {
@@ -141,17 +142,20 @@ public class GantRunner extends GroovyScriptRunner {
       File[] libJars = GroovyUtils.getFilesInDirectoryByPattern(groovyHome + "/lib/", ".*\\.jar");
       if (libJars.length > 0) {
         params.getClassPath().addAllFiles(libJars);
-        return;
       }
     }
 
+    List<VirtualFile> classpath = params.getClassPath().getRootDirs();
+
     String[] characteristicClasses = ar(
-      LibrariesUtil.SOME_GROOVY_CLASS, "org.apache.tools.ant.BuildException",
-      "org.apache.tools.ant.launch.AntMain", "org.apache.commons.cli.ParseException");
+      LibrariesUtil.SOME_GROOVY_CLASS, "org.apache.tools.ant.BuildException", "org.apache.tools.ant.launch.AntMain",
+      "org.apache.commons.cli.ParseException");
     for (String someClass : characteristicClasses) {
-      VirtualFile jar = LibrariesUtil.findJarWithClass(module, someClass);
-      if (jar != null) {
-        params.getClassPath().add(jar);
+      if (!LibraryUtil.isClassAvailableInLibrary(classpath, someClass)) {
+        VirtualFile jar = LibrariesUtil.findJarWithClass(module, someClass);
+        if (jar != null) {
+          params.getClassPath().add(jar);
+        }
       }
     }
   }
