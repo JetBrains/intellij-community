@@ -64,7 +64,9 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   }
 
   public String suggestedName() {
-    String name = new File(getScriptName()).getName();
+    final String scriptName = getScriptName();
+    if (scriptName == null) return null;
+    String name = new File(scriptName).getName();
     if (name.endsWith(".py")) {
       return name.substring(0, name.length() - 3);
     }
