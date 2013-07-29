@@ -20,6 +20,7 @@ import com.intellij.tasks.*;
 import com.intellij.tasks.jira.model.JiraComment;
 import com.intellij.tasks.jira.model.JiraIssue;
 import com.intellij.tasks.jira.model.JiraIssueType;
+import com.intellij.tasks.jira.model.JiraStatus;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import icons.TasksIcons;
@@ -100,7 +101,8 @@ class JiraTask extends Task {
 
   @Override
   public TaskState getState() {
-    switch (Integer.parseInt(myJiraIssue.getId())) {
+    JiraStatus status = myJiraIssue.getStatus();
+    switch (Integer.parseInt(status.getId())) {
       case 1:
         return TaskState.OPEN;
       case 3:

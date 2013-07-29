@@ -32,7 +32,7 @@ public class JiraIssue {
    */
   public static final String REQUIRED_RESPONSE_FIELDS = "id,key,summary,description," +
                                                          "created,updated,duedate,resolutiondate" +
-                                                         "assignee,reporter,issuetype,comment";
+                                                         "assignee,reporter,issuetype,comment,status";
 
   private String id;
   private String key;
@@ -109,6 +109,10 @@ public class JiraIssue {
     return fields.comment == null ? ContainerUtil.<JiraComment>emptyList() : fields.comment.getComments();
   }
 
+  public JiraStatus getStatus() {
+    return fields.status;
+  }
+
   public static class Fields {
     private String summary;
     private String description;
@@ -122,5 +126,6 @@ public class JiraIssue {
     private JiraUser reporter;
 
     private JiraIssueType issuetype;
+    private JiraStatus status;
   }
 }
