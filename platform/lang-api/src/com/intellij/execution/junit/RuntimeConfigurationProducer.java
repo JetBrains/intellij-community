@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -170,12 +171,12 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     }
   }
 
-  public static class DelegatingRuntimeConfiguration<T extends RunConfigurationBase & LocatableConfiguration>
-    extends RuntimeConfiguration {
+  public static class DelegatingRuntimeConfiguration<T extends LocatableConfiguration>
+    extends LocatableConfigurationBase implements ModuleRunConfiguration {
     private final T myConfig;
 
     public DelegatingRuntimeConfiguration(T config) {
-      super(config.getName(), config.getProject(), config.getFactory());
+      super(config.getProject(), config.getFactory(), config.getName());
       myConfig = config;
     }
 
@@ -218,6 +219,12 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
 
     public T getPeer() {
       return myConfig;
+    }
+
+    @Override
+    @NotNull
+    public Module[] getModules() {
+      return Module.EMPTY_ARRAY;
     }
   }
 }
