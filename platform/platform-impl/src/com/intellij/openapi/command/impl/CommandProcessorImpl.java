@@ -196,12 +196,14 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   }
 
   private void fireCommandFinished() {
-    CommandEvent event = new CommandEvent(this, myCurrentCommand.myCommand,
-                                          myCurrentCommand.myName,
-                                          myCurrentCommand.myGroupId,
-                                          myCurrentCommand.myProject,
-                                          myCurrentCommand.myUndoConfirmationPolicy,
-                                          myCurrentCommand.myDocument);
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    CommandDescriptor currentCommand = myCurrentCommand;
+    CommandEvent event = new CommandEvent(this, currentCommand.myCommand,
+                                          currentCommand.myName,
+                                          currentCommand.myGroupId,
+                                          currentCommand.myProject,
+                                          currentCommand.myUndoConfirmationPolicy,
+                                          currentCommand.myDocument);
     try {
       for (CommandListener listener : myListeners) {
         try {
@@ -227,14 +229,17 @@ public class CommandProcessorImpl extends CommandProcessorEx {
 
   @Override
   public void enterModal() {
-    myInterruptedCommands.push(myCurrentCommand);
-    if (myCurrentCommand != null) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    CommandDescriptor currentCommand = myCurrentCommand;
+    myInterruptedCommands.push(currentCommand);
+    if (currentCommand != null) {
       fireCommandFinished();
     }
   }
 
   @Override
   public void leaveModal() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     CommandLog.LOG.assertTrue(myCurrentCommand == null, "Command must not run: " + String.valueOf(myCurrentCommand));
 
     myCurrentCommand = myInterruptedCommands.pop();
@@ -245,26 +250,32 @@ public class CommandProcessorImpl extends CommandProcessorEx {
 
   @Override
   public void setCurrentCommandName(String name) {
-    CommandLog.LOG.assertTrue(myCurrentCommand != null);
-    myCurrentCommand.myName = name;
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    CommandDescriptor currentCommand = myCurrentCommand;
+    CommandLog.LOG.assertTrue(currentCommand != null);
+    currentCommand.myName = name;
   }
 
   @Override
   public void setCurrentCommandGroupId(Object groupId) {
-    CommandLog.LOG.assertTrue(myCurrentCommand != null);
-    myCurrentCommand.myGroupId = groupId;
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    CommandDescriptor currentCommand = myCurrentCommand;
+    CommandLog.LOG.assertTrue(currentCommand != null);
+    currentCommand.myGroupId = groupId;
   }
 
   @Override
   @Nullable
   public Runnable getCurrentCommand() {
-    return myCurrentCommand != null ? myCurrentCommand.myCommand : null;
+    CommandDescriptor currentCommand = myCurrentCommand;
+    return currentCommand != null ? currentCommand.myCommand : null;
   }
 
   @Override
   @Nullable
   public String getCurrentCommandName() {
-    if (myCurrentCommand != null) return myCurrentCommand.myName;
+    CommandDescriptor currentCommand = myCurrentCommand;
+    if (currentCommand != null) return currentCommand.myName;
     if (!myInterruptedCommands.isEmpty()) {
       final CommandDescriptor command = myInterruptedCommands.peek();
       return command != null ? command.myName : null;
@@ -275,7 +286,8 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   @Override
   @Nullable
   public Object getCurrentCommandGroupId() {
-    if (myCurrentCommand != null) return myCurrentCommand.myGroupId;
+    CommandDescriptor currentCommand = myCurrentCommand;
+    if (currentCommand != null) return currentCommand.myGroupId;
     if (!myInterruptedCommands.isEmpty()) {
       final CommandDescriptor command = myInterruptedCommands.peek();
       return command != null ? command.myGroupId : null;
@@ -286,7 +298,8 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   @Override
   @Nullable
   public Project getCurrentCommandProject() {
-    return myCurrentCommand != null ? myCurrentCommand.myProject : null;
+    CommandDescriptor currentCommand = myCurrentCommand;
+    return currentCommand != null ? currentCommand.myProject : null;
   }
 
   @Override
@@ -331,7 +344,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     getUndoManager(project).markCurrentCommandAsGlobal();
   }
 
-  private UndoManagerImpl getUndoManager(Project project) {
+  private static UndoManagerImpl getUndoManager(Project project) {
     return (UndoManagerImpl)(project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance());
   }
 
@@ -346,13 +359,15 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   }
 
   private void fireCommandStarted() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    CommandDescriptor currentCommand = myCurrentCommand;
     CommandEvent event = new CommandEvent(this,
-                                          myCurrentCommand.myCommand,
-                                          myCurrentCommand.myName,
-                                          myCurrentCommand.myGroupId,
-                                          myCurrentCommand.myProject,
-                                          myCurrentCommand.myUndoConfirmationPolicy,
-                                          myCurrentCommand.myDocument);
+                                          currentCommand.myCommand,
+                                          currentCommand.myName,
+                                          currentCommand.myGroupId,
+                                          currentCommand.myProject,
+                                          currentCommand.myUndoConfirmationPolicy,
+                                          currentCommand.myDocument);
     for (CommandListener listener : myListeners) {
       try {
         listener.commandStarted(event);

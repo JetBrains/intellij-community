@@ -415,6 +415,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
   @Override
   public ActionCallback show() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myTypeAheadCallback != null) {
       IdeFocusManager.getInstance(myProject).typeAheadUntil(myTypeAheadCallback);
     }
