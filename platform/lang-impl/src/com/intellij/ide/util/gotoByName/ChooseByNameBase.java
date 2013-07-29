@@ -104,6 +104,7 @@ public abstract class ChooseByNameBase {
   private boolean mySearchInAnyPlace = false;
 
   protected Component myPreviouslyFocusedComponent;
+  private boolean myInitialized;
 
   protected final JPanelProvider myTextFieldPanel = new JPanelProvider();// Located in the layered pane
   protected final MyTextField myTextField = new MyTextField();
@@ -666,6 +667,8 @@ public abstract class ChooseByNameBase {
 
     showTextFieldPanel();
 
+    myInitialized = true;
+
     if (modalityState != null) {
       rebuildList(myInitialIndex, 0, modalityState, null);
     }
@@ -892,6 +895,10 @@ public abstract class ChooseByNameBase {
                              @NotNull final ModalityState modalityState,
                              @Nullable final Runnable postRunnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!myInitialized) {
+      return;
+    }
+
     myListIsUpToDate = false;
     myAlarm.cancelAllRequests();
     myListUpdater.cancelAll();
