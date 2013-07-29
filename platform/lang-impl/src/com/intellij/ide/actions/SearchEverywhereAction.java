@@ -167,7 +167,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (keyCode == KeyEvent.VK_ESCAPE && (myPopup == null || !myPopup.isVisible())) {
           IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(editor);
           focusManager.requestDefaultFocus(true);
-        } else if (keyCode == KeyEvent.VK_ENTER) {
+        }
+        else if (keyCode == KeyEvent.VK_ENTER) {
           doNavigate();
         }
       }
@@ -294,7 +295,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       gotoAction = StringUtil.isEmpty(gotoAction) ? "Actions" : "Actions (" + gotoAction + ")";
       if (prevValue == null) { // firstElement
         if (value instanceof PsiElement)return gotoClass;
-        if (value instanceof VirtualFile)return gotoClass;
+        if (value instanceof VirtualFile)return gotoFile;
         return gotoAction;
       } else {
         if (!(prevValue instanceof VirtualFile) && value instanceof VirtualFile) return gotoFile;
