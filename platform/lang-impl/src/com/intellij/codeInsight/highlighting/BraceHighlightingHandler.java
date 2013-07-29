@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,10 +55,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -413,7 +415,11 @@ public class BraceHighlightingHandler {
             if (myProject.isDisposed() || myEditor.isDisposed()) return;
             Color color = attributes.getBackgroundColor();
             if (color == null) return;
-            color = color.darker();
+            if (UIUtil.isUnderDarcula()) {
+              color = ColorUtil.shift(color, 1.1d);
+            } else {
+              color = color.darker();
+            }
             lineMarkFragment(startLine, endLine, color);
           }
         };

@@ -75,13 +75,13 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
           inputStream.skip(skippedContents);
         }
       }
-      catch (FileNotFoundException e) {
+      catch (FileNotFoundException ignored) {
         if (FileUtil.createIfDoesntExist(file)) {
           reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
         }
       }
     }
-    catch (Throwable e) {
+    catch (Throwable ignored) {
       reader = null;
     }
     return reader;

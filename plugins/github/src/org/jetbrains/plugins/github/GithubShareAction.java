@@ -212,7 +212,7 @@ public class GithubShareAction extends DumbAwareAction {
           }
 
           // check access to private repos (network)
-          final GithubUserDetailed userInfo = GithubApiUtil.getCurrentUserInfo(auth);
+          final GithubUserDetailed userInfo = GithubApiUtil.getCurrentUserDetailed(auth);
           githubInfoRef.set(new GithubInfo(auth, userInfo, names));
         }
         catch (IOException e) {
