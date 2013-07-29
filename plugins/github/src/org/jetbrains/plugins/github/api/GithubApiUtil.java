@@ -36,6 +36,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * @author Kirill Likhodedov
@@ -74,34 +75,6 @@ public class GithubApiUtil {
   @Nullable
   private static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
     return request(auth, path, null, HttpVerb.GET).getJsonElement();
-  }
-
-  @Nullable
-  private static ResponsePage getPagedRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
-    return request(auth, path, null, HttpVerb.GET);
-  }
-
-  @Nullable
-  private static JsonArray getAllRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
-    JsonArray ret = new JsonArray();
-    String next = path;
-
-    while (next != null) {
-      ResponsePage response = request(auth, next, null, HttpVerb.GET);
-
-      if (response.getJsonElement() == null) {
-        return null;
-      }
-
-      if (!response.getJsonElement().isJsonArray()) {
-        throw new JsonException("Wrong json type: expected JsonArray");
-      }
-
-      next = response.getNextPage();
-      ret.addAll(response.getJsonElement().getAsJsonArray());
-    }
-
-    return ret;
   }
 
   @NotNull
@@ -295,8 +268,8 @@ public class GithubApiUtil {
     }
   }
 
-  /*
-   * Github API
+   /*
+   * Json API
    */
 
   static <Raw extends DataConstructor, Result> Result createDataFromRaw(@NotNull Raw rawObject, @NotNull Class<Result> resultClass)
@@ -309,29 +282,58 @@ public class GithubApiUtil {
     }
   }
 
-  @NotNull
-  public static Collection<String> getTokenScopes(@NotNull GithubAuthData auth) throws IOException {
-    HttpMethod method = null;
-    try {
-      method = doREST(auth, "", null, HttpVerb.HEAD);
+  static class PagedRequest<T, R extends DataConstructor> {
+    @NotNull private GithubAuthData myAuth;
+    @Nullable private String myNextPage;
+    @NotNull private Class<T> myResult;
+    @NotNull private Class<R[]> myRawArray;
 
-      checkStatusCode(method);
-
-      Header header = method.getResponseHeader("X-OAuth-Scopes");
-      if (header == null) {
-        throw new HttpException("No scopes header");
-      }
-
-      Collection<String> scopes = new ArrayList<String>();
-      for (HeaderElement elem : header.getElements()) {
-        scopes.add(elem.getName());
-      }
-      return scopes;
+    public PagedRequest(@NotNull GithubAuthData auth, @NotNull String path, @NotNull Class<T> result, @NotNull Class<R[]> rawArray) {
+      myAuth = auth;
+      myNextPage = path;
+      myResult = result;
+      myRawArray = rawArray;
     }
-    finally {
-      if (method != null) {
-        method.releaseConnection();
+
+    @NotNull
+    public List<T> next() throws IOException {
+      if (myNextPage == null) {
+        throw new NoSuchElementException();
       }
+
+      String page = myNextPage;
+      myNextPage = null;
+
+      ResponsePage response = request(myAuth, page, null, HttpVerb.GET);
+
+      if (response.getJsonElement() == null) {
+        throw new HttpException("Empty response");
+      }
+
+      if (!response.getJsonElement().isJsonArray()) {
+        throw new JsonException("Wrong json type: expected JsonArray");
+      }
+
+      myNextPage = response.getNextPage();
+
+      List<T> result = new ArrayList<T>();
+      for (R raw : fromJson(response.getJsonElement().getAsJsonArray(), myRawArray)) {
+        result.add(createDataFromRaw(raw, myResult));
+      }
+      return result;
+    }
+
+    public boolean hasNext() {
+      return myNextPage != null;
+    }
+
+    @NotNull
+    public List<T> getAll() throws IOException {
+      List<T> result = new ArrayList<T>();
+      while (hasNext()) {
+        result.addAll(next());
+      }
+      return result;
     }
   }
 
@@ -357,6 +359,36 @@ public class GithubApiUtil {
       throw new JsonException("Empty Json response");
     }
     return res;
+  }
+
+   /*
+   * Github API
+   */
+
+  @NotNull
+  public static Collection<String> getTokenScopes(@NotNull GithubAuthData auth) throws IOException {
+    HttpMethod method = null;
+    try {
+      method = doREST(auth, "", null, HttpVerb.HEAD);
+
+      checkStatusCode(method);
+
+      Header header = method.getResponseHeader("X-OAuth-Scopes");
+      if (header == null) {
+        throw new HttpException("No scopes header");
+      }
+
+      Collection<String> scopes = new ArrayList<String>();
+      for (HeaderElement elem : header.getElements()) {
+        scopes.add(elem.getName());
+      }
+      return scopes;
+    }
+    finally {
+      if (method != null) {
+        method.releaseConnection();
+      }
+    }
   }
 
   @NotNull
@@ -389,16 +421,13 @@ public class GithubApiUtil {
 
   @NotNull
   private static List<GithubRepo> doGetAvailableRepos(@NotNull GithubAuthData auth, @Nullable String user) throws IOException {
-    String request = user == null ? "/user/repos" : "/users/" + user + "/repos?per_page=100";
-    JsonElement result = getAllRequest(auth, request);
+    String path = user == null ? "/user/repos" : "/users/" + user + "/repos?per_page=100";
 
-    GithubRepoRaw[] rawRepos = fromJson(result, GithubRepoRaw[].class);
 
-    List<GithubRepo> repos = new ArrayList<GithubRepo>();
-    for (GithubRepoRaw raw : rawRepos) {
-      repos.add(createDataFromRaw(raw, GithubRepo.class));
-    }
-    return repos;
+    PagedRequest<GithubRepo, GithubRepoRaw> request =
+      new PagedRequest<GithubRepo, GithubRepoRaw>(auth, path, GithubRepo.class, GithubRepoRaw[].class);
+
+    return request.getAll();
   }
 
   @NotNull
@@ -464,15 +493,10 @@ public class GithubApiUtil {
       path = "/repos/" + user + "/" + repo + "/issues?per_page=100";
     }
 
-    JsonElement result = getAllRequest(auth, path);
+    PagedRequest<GithubIssue, GithubIssueRaw> request =
+      new PagedRequest<GithubIssue, GithubIssueRaw>(auth, path, GithubIssue.class, GithubIssueRaw[].class);
 
-    GithubIssueRaw[] rawIssues = fromJson(result, GithubIssueRaw[].class);
-
-    List<GithubIssue> issues = new ArrayList<GithubIssue>();
-    for (GithubIssueRaw raw : rawIssues) {
-      issues.add(createDataFromRaw(raw, GithubIssue.class));
-    }
-    return issues;
+    return request.getAll();
   }
 
   @NotNull
@@ -490,15 +514,10 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments?per_page=100";
 
-    JsonElement result = getAllRequest(auth, path);
+    PagedRequest<GithubIssueComment, GithubIssueCommentRaw> request =
+      new PagedRequest<GithubIssueComment, GithubIssueCommentRaw>(auth, path, GithubIssueComment.class, GithubIssueCommentRaw[].class);
 
-    GithubIssueCommentRaw[] rawComments = fromJson(result, GithubIssueCommentRaw[].class);
-
-    List<GithubIssueComment> comments = new ArrayList<GithubIssueComment>();
-    for (GithubIssueCommentRaw raw : rawComments) {
-      comments.add(createDataFromRaw(raw, GithubIssueComment.class));
-    }
-    return comments;
+    return request.getAll();
   }
 
   @NotNull
@@ -524,15 +543,10 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/pulls?per_page=100";
 
-    JsonElement result = getAllRequest(auth, path);
+    PagedRequest<GithubPullRequest, GithubPullRequestRaw> request =
+      new PagedRequest<GithubPullRequest, GithubPullRequestRaw>(auth, path, GithubPullRequest.class, GithubPullRequestRaw[].class);
 
-    GithubPullRequestRaw[] rawRequests = fromJson(result, GithubPullRequestRaw[].class);
-
-    List<GithubPullRequest> requests = new ArrayList<GithubPullRequest>();
-    for (GithubPullRequestRaw raw : rawRequests) {
-      requests.add(createDataFromRaw(raw, GithubPullRequest.class));
-    }
-    return requests;
+    return request.getAll();
   }
 
   @NotNull
@@ -540,15 +554,10 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/commits?per_page=100";
 
-    JsonElement result = getAllRequest(auth, path);
+    PagedRequest<GithubCommit, GithubCommitRaw> request =
+      new PagedRequest<GithubCommit, GithubCommitRaw>(auth, path, GithubCommit.class, GithubCommitRaw[].class);
 
-    GithubCommitRaw[] rawCommits = fromJson(result, GithubCommitRaw[].class);
-
-    List<GithubCommit> commits = new ArrayList<GithubCommit>();
-    for (GithubCommitRaw raw : rawCommits) {
-      commits.add(createDataFromRaw(raw, GithubCommit.class));
-    }
-    return commits;
+    return request.getAll();
   }
 
   @NotNull
@@ -556,14 +565,9 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/files?per_page=100";
 
-    JsonElement result = getAllRequest(auth, path);
+    PagedRequest<GithubFile, GithubFileRaw> request =
+      new PagedRequest<GithubFile, GithubFileRaw>(auth, path, GithubFile.class, GithubFileRaw[].class);
 
-    GithubFileRaw[] rawFiles = fromJson(result, GithubFileRaw[].class);
-
-    List<GithubFile> files = new ArrayList<GithubFile>();
-    for (GithubFileRaw raw : rawFiles) {
-      files.add(createDataFromRaw(raw, GithubFile.class));
-    }
-    return files;
+    return request.getAll();
   }
 }
