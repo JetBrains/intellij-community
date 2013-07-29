@@ -27,6 +27,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -39,10 +40,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.SystemDock;
@@ -175,6 +173,11 @@ public class IdeaApplication {
             ourFreeSpaceCalculation.set(null);
 
             if (fileUsableSpace < lowDiskSpaceThreshold) {
+              if(!notificationsComponentIsLoaded()) {
+                ourFreeSpaceCalculation.set(future);
+                JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
+                return;
+              }
               reported.compareAndSet(false, true);
 
               //noinspection SSBasedInspection
@@ -208,6 +211,15 @@ public class IdeaApplication {
             LOG.error(ex);
           }
         }
+      }
+
+      private boolean notificationsComponentIsLoaded() {
+        return ApplicationManager.getApplication().runReadAction(new Computable<NotificationsConfiguration>() {
+          @Override
+          public NotificationsConfiguration compute() {
+            return NotificationsConfiguration.getNotificationsConfiguration();
+          }
+        }) != null;
       }
 
       private void restart(long timeout) {
