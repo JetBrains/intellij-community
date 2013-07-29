@@ -114,17 +114,21 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         Map<String/* library name */, LibraryDependencyData> projectLibrariesToImport = ContainerUtilRt.newHashMap();
         Set<LibraryDependencyData> toImport = ContainerUtilRt.newLinkedHashSet();
         
+        boolean hasUnresolved = false;
         for (DataNode<LibraryDependencyData> dependencyNode : nodesToImport) {
           LibraryDependencyData dependencyData = dependencyNode.getData();
           LibraryData libraryData = dependencyData.getTarget();
+          hasUnresolved |= libraryData.isUnresolved();
           switch (dependencyData.getLevel()) {
             case MODULE:
-              Set<String> paths = ContainerUtilRt.newHashSet();
-              for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
-                paths.add(ExternalSystemApiUtil.toCanonicalPath(path));
+              if (!libraryData.isUnresolved()) {
+                Set<String> paths = ContainerUtilRt.newHashSet();
+                for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
+                  paths.add(ExternalSystemApiUtil.toCanonicalPath(path));
+                }
+                moduleLibrariesToImport.put(paths, dependencyData);
+                toImport.add(dependencyData);
               }
-              moduleLibrariesToImport.put(paths, dependencyData);
-              toImport.add(dependencyData);
               break;
             case PROJECT:
               projectLibrariesToImport.put(libraryData.getName(), dependencyData);
@@ -135,11 +139,12 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
         LibraryTable moduleLibraryTable = moduleRootModel.getModuleLibraryTable();
-        Set<String> moduleLibraryKey = ContainerUtilRt.newHashSet();
         LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
         try {
-          // Remove obsolete library dependencies.
-          removeObsolete(moduleLibrariesToImport, projectLibrariesToImport, toImport, moduleRootModel, moduleLibraryKey);
+          if (!hasUnresolved) { // There is a possible case that a project has been successfully imported from external model and after
+                                // that network/repo goes down. We don't want to drop existing binary mappings then.
+            removeObsolete(moduleLibrariesToImport, projectLibrariesToImport, toImport, moduleRootModel);
+          }
 
           // Import missing library dependencies.
           if (!toImport.isEmpty()) {
@@ -160,12 +165,16 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
                              @NotNull Module module)
   {
     for (LibraryDependencyData dependencyData : toImport) {
+      LibraryData libraryData = dependencyData.getTarget();
+      if (libraryData.isUnresolved()) {
+        continue;
+      }
       switch (dependencyData.getLevel()) {
         case MODULE:
           @SuppressWarnings("ConstantConditions") Library moduleLib = moduleLibraryTable.createLibrary(dependencyData.getName());
           Library.ModifiableModel libModel = moduleLib.getModifiableModel();
           try {
-            Map<OrderRootType, Collection<File>> files = myLibraryManager.prepareLibraryFiles(dependencyData.getTarget());
+            Map<OrderRootType, Collection<File>> files = myLibraryManager.prepareLibraryFiles(libraryData);
             myLibraryManager.registerPaths(files, libModel, dependencyData.getName());
           }
           finally {
@@ -193,9 +202,9 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
   private static void removeObsolete(@NotNull Map<Set<String>, LibraryDependencyData> moduleLibrariesToImport,
                                      @NotNull Map<String, LibraryDependencyData> projectLibrariesToImport,
                                      @NotNull Set<LibraryDependencyData> toImport,
-                                     @NotNull ModifiableRootModel moduleRootModel,
-                                     @NotNull Set<String> moduleLibraryKey)
+                                     @NotNull ModifiableRootModel moduleRootModel)
   {
+    Set<String> moduleLibraryKey = ContainerUtilRt.newHashSet();
     for (OrderEntry entry : moduleRootModel.getOrderEntries()) {
       if (entry instanceof ModuleLibraryOrderEntryImpl) {
         Library library = ((ModuleLibraryOrderEntryImpl)entry).getLibrary();

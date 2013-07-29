@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.gradle.tooling.ModelBuilder;
@@ -24,6 +25,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.idea.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
@@ -42,6 +44,8 @@ import java.util.Set;
  * @since 8/8/11 11:09 AM
  */
 public class GradleProjectResolver implements ExternalSystemProjectResolver<GradleExecutionSettings> {
+
+  @NotNull @NonNls private static final String UNRESOLVED_DEPENDENCY_PREFIX = "unresolved dependency - ";
 
   @NotNull private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
 
@@ -80,7 +84,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
       }
     }
-    
+
     return myHelper.execute(projectPath, settings, new Function<ProjectConnection, DataNode<ProjectData>>() {
       @Override
       public DataNode<ProjectData> fun(ProjectConnection connection) {
@@ -350,16 +354,40 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     // Gradle API doesn't provide library name at the moment.
-    final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, FileUtil.getNameWithoutExtension(binaryPath));
-    library.addPath(LibraryPathType.BINARY, binaryPath.getAbsolutePath());
+    String libraryName = FileUtil.getNameWithoutExtension(binaryPath);
+    
+    // Gradle API doesn't explicitly provide information about unresolved libraries (http://issues.gradle.org/browse/GRADLE-1995).
+    // That's why we use this dirty hack here.
+    boolean unresolved = libraryName.startsWith(UNRESOLVED_DEPENDENCY_PREFIX);
+    if (unresolved) {
+      // Gradle uses names like 'unresolved dependency - commons-collections commons-collections 3.2' for unresolved dependencies.
+      libraryName = binaryPath.getName().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
+      int i = libraryName.indexOf(' ');
+      if (i >= 0) {
+        i = CharArrayUtil.shiftForward(libraryName, i + 1, " ");
+      }
+      
+      if (i >= 0 && i < libraryName.length()) {
+        int dependencyNameIndex = i;
+        i = libraryName.indexOf(' ', dependencyNameIndex);
+        if (i > 0) {
+          libraryName = String.format("%s-%s", libraryName.substring(dependencyNameIndex, i), libraryName.substring(i + 1));
+        }
+      }
+    }
+    
+    final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, unresolved);
+    if (!unresolved) {
+      library.addPath(LibraryPathType.BINARY, binaryPath.getAbsolutePath());
+    }
 
     File sourcePath = dependency.getSource();
-    if (sourcePath != null) {
+    if (!unresolved && sourcePath != null) {
       library.addPath(LibraryPathType.SOURCE, sourcePath.getAbsolutePath());
     }
 
     File javadocPath = dependency.getJavadoc();
-    if (javadocPath != null) {
+    if (!unresolved && javadocPath != null) {
       library.addPath(LibraryPathType.DOC, javadocPath.getAbsolutePath());
     }
 

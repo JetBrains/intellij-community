@@ -189,6 +189,9 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
   }
 
   public void syncPaths(@NotNull final LibraryData externalLibrary, @NotNull final Library ideLibrary, boolean synchronous) {
+    if (externalLibrary.isUnresolved()) {
+      return;
+    }
     final Map<OrderRootType, Set<String>> toRemove = ContainerUtilRt.newHashMap();
     final Map<OrderRootType, Set<String>> toAdd = ContainerUtilRt.newHashMap();
     for (LibraryPathType pathType : LibraryPathType.values()) {

@@ -21,9 +21,20 @@ public class LibraryData extends AbstractNamedData implements Named {
   private static final long serialVersionUID = 1L;
 
   private final Map<LibraryPathType, Set<String>> myPaths = new HashMap<LibraryPathType, Set<String>>();
+  
+  private final boolean myUnresolved;
 
   public LibraryData(@NotNull ProjectSystemId owner, @NotNull String name) {
+    this(owner, name, false);
+  }
+
+  public LibraryData(@NotNull ProjectSystemId owner, @NotNull String name, boolean unresolved) {
     super(owner, name);
+    myUnresolved = unresolved;
+  }
+
+  public boolean isUnresolved() {
+    return myUnresolved;
   }
 
   @NotNull
@@ -48,6 +59,7 @@ public class LibraryData extends AbstractNamedData implements Named {
   public int hashCode() {
     int result = myPaths.hashCode();
     result = 31 * result + super.hashCode();
+    result = 31 * result + (myUnresolved ? 0 : 1);
     return result;
   }
 
@@ -56,11 +68,11 @@ public class LibraryData extends AbstractNamedData implements Named {
     if (!super.equals(o)) return false;
 
     LibraryData that = (LibraryData)o;
-    return super.equals(that) && myPaths.equals(that.myPaths);
+    return super.equals(that) && myUnresolved == that.myUnresolved && myPaths.equals(that.myPaths);
   }
 
   @Override
   public String toString() {
-    return "library " + getName();
+    return String.format("library %s%s", getName(), myUnresolved ? "(unresolved)" : "");
   }
 }
