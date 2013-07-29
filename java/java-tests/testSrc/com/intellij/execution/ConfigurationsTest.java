@@ -346,6 +346,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       assertEquals(otherTest.getName(), configuration.getName());
       String specialName = "My name";
       configuration.setName(specialName);
+      configuration.setNameChangedByUser(true);
       configurable.reset();
       component.setText(testA.getQualifiedName());
       configurable.apply();
