@@ -86,7 +86,10 @@ public class PyUserSkeletonsUtil {
       final VirtualFile directory = getUserSkeletonsDirectory();
       if (directory != null) {
         final PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(directory);
-        final PsiElement fileSkeleton = new QualifiedNameResolverImpl(qName).resolveModuleAt(psiDirectory);
+        PsiElement fileSkeleton = new QualifiedNameResolverImpl(qName).resolveModuleAt(psiDirectory);
+        if (fileSkeleton instanceof PsiDirectory) {
+          fileSkeleton = PyUtil.getPackageElement((PsiDirectory)fileSkeleton);
+        }
         if (fileSkeleton instanceof PyFile) {
           cache.put(cacheQName, Collections.singletonList(fileSkeleton));
           return (PyFile)fileSkeleton;

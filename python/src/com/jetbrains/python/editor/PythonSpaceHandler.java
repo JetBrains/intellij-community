@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PythonSpaceHandler extends TypedHandlerDelegate {
   @Override
-  public Result charTyped(char c, Project project, Editor editor, @NotNull PsiFile file) {
+  public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     if (c == ' ' && codeInsightSettings.JAVADOC_STUB_ON_ENTER) {
       int offset = editor.getCaretModel().getOffset();
