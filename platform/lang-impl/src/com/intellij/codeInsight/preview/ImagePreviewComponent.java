@@ -137,12 +137,15 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
     return false;
   }
 
-  public static JComponent getPreviewComponent(final PsiElement parent) {
+  public static JComponent getPreviewComponent(@Nullable final PsiElement parent) {
+    if (parent == null) {
+      return null;
+    }
     final PsiReference[] references = parent.getReferences();
     for (final PsiReference reference : references) {
       final PsiElement fileItem = reference.resolve();
       if (fileItem instanceof PsiFileSystemItem) {
-        final PsiFileSystemItem item = (PsiFileSystemItem) fileItem;
+        final PsiFileSystemItem item = (PsiFileSystemItem)fileItem;
         if (!item.isDirectory()) {
           final VirtualFile file = item.getVirtualFile();
           if (file != null && supportedExtensions.contains(file.getExtension())) {
