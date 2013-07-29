@@ -216,4 +216,8 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   public void testHoverOverParameter() {
     checkHover();
   }
+
+  public void testHoverOverControlFlowUnion() {
+    checkHover();
+  }
 }
