@@ -298,8 +298,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       //if (!(element instanceof PsiDocCommentOwner)) return null;
     }
 
-    storeOriginalElement(project, originalElement, element);
-
     final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
       @Override
       public void updatePopup(Object lookupIteObject) {
@@ -360,6 +358,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                                  @Nullable final Runnable closeCallback)
   {
     Project project = getProject(element);
+    storeOriginalElement(project, originalElement, element);
 
     if (myToolWindow == null && PropertiesComponent.getInstance().isTrueValue(SHOW_DOCUMENTATION_IN_TOOL_WINDOW)) {
       createToolWindow(element, originalElement);
