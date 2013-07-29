@@ -1460,7 +1460,7 @@ public class StringUtil extends StringUtilRt {
    * @param filter search filter
    * @return position of the first character accepted or -1 if not found
    */
-  public static int findFirst(@NotNull final String s, @NotNull CharFilter filter) {
+  public static int findFirst(@NotNull final CharSequence s, @NotNull CharFilter filter) {
     for (int i = 0; i < s.length(); i++) {
       char ch = s.charAt(i);
       if (filter.accept(ch)) {

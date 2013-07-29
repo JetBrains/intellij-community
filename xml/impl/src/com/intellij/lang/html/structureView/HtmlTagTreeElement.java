@@ -85,7 +85,6 @@ class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationP
       return null;
     }
     else {
-      assert src != null;
       return StringUtil.shortenPathWithEllipsis(src, MAX_TEXT_LENGTH, true);
     }
   }
