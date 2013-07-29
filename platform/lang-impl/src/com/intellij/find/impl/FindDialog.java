@@ -619,6 +619,18 @@ public class FindDialog extends DialogWrapper {
 
     myCbInCommentsOnly = createCheckbox(FindBundle.message("find.options.comments.only"));
     myCbInStringLiteralsOnly = createCheckbox(FindBundle.message("find.options.string.literals.only"));
+    ItemListener itemListener = new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (e.getSource() == myCbInCommentsOnly) {
+          if (myCbInCommentsOnly.isSelected()) myCbInStringLiteralsOnly.setSelected(false);
+        } else if (e.getSource() == myCbInStringLiteralsOnly) {
+          if (myCbInStringLiteralsOnly.isSelected()) myCbInCommentsOnly.setSelected(false);
+        }
+      }
+    };
+    myCbInCommentsOnly.addItemListener(itemListener);
+    myCbInStringLiteralsOnly.addItemListener(itemListener);
 
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
       findOptionsPanel.add(myCbInCommentsOnly);
