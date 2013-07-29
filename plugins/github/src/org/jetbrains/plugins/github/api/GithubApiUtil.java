@@ -212,14 +212,22 @@ public class GithubApiUtil {
     return client;
   }
 
-  private static void checkStatusCode(@NotNull HttpMethod method) throws GithubAuthenticationException {
-    switch (method.getStatusCode()) {
-      case 400: // HTTP_BAD_REQUEST
-      case 401: // HTTP_UNAUTHORIZED
-      case 402: // HTTP_PAYMENT_REQUIRED
-      case 403: // HTTP_FORBIDDEN
-      case 404: // HTTP_NOT_FOUND
+  private static void checkStatusCode(@NotNull HttpMethod method) throws IOException {
+    int code = method.getStatusCode();
+    switch (code) {
+      case HttpStatus.SC_OK:
+      case HttpStatus.SC_CREATED:
+      case HttpStatus.SC_ACCEPTED:
+      case HttpStatus.SC_NO_CONTENT:
+        return;
+      case HttpStatus.SC_BAD_REQUEST:
+      case HttpStatus.SC_UNAUTHORIZED:
+      case HttpStatus.SC_PAYMENT_REQUIRED:
+      case HttpStatus.SC_FORBIDDEN:
+      case HttpStatus.SC_NOT_FOUND:
         throw new GithubAuthenticationException("Request response: " + getErrorMessage(method));
+      default:
+        throw new HttpException(code + ": " + method.getStatusText());
     }
   }
 
