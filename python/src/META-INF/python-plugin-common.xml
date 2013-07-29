@@ -841,6 +841,9 @@
 
     <!-- Pyramid && Chameleon -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.pyramid.annotator.PyramidViewLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.pyramid.annotator.PyramidTemplateLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.pyramid.annotator.PyramidTemplateLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Chameleon" implementationClass="com.jetbrains.pyramid.annotator.PyramidTemplateLineMarkerProvider"/>
 
     <fileTypeFactory implementation="com.jetbrains.pyramid.templates.file.ChameleonFileTypeFactory"/>
     <lang.fileViewProviderFactory language="Chameleon"
