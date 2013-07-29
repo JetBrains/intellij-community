@@ -39,6 +39,7 @@ public class GithubRepository extends BaseRepositoryImpl {
   private Pattern myPattern = Pattern.compile("($^)");
   private String myRepoAuthor = "";
   private String myRepoName = "";
+  private String myUser = "";
   private String myToken = "";
 
   {
@@ -85,7 +86,16 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   @NotNull
   private Task[] getIssues(@Nullable String query) throws Exception {
-    List<GithubIssue> issues = GithubApiUtil.getIssues(getAuthData(), getRepoAuthor(), getRepoName(), query);
+    List<GithubIssue> issues;
+    if (StringUtil.isEmptyOrSpaces(query)) {
+      if (StringUtil.isEmptyOrSpaces(myUser)) {
+        myUser = GithubApiUtil.getCurrentUser(getAuthData()).getLogin();
+      }
+      issues = GithubApiUtil.getIssuesAssigned(getAuthData(), getRepoAuthor(), getRepoName(), myUser);
+    }
+    else {
+      issues = GithubApiUtil.getIssuesQueried(getAuthData(), getRepoAuthor(), getRepoName(), query);
+    }
 
     return ContainerUtil.map2Array(issues, Task.class, new Function<GithubIssue, Task>() {
       @Override
@@ -221,6 +231,14 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   public void setRepoAuthor(String repoAuthor) {
     myRepoAuthor = repoAuthor;
+  }
+
+  public String getUser() {
+    return myUser;
+  }
+
+  public void setUser(String user) {
+    myUser = user;
   }
 
   @Transient

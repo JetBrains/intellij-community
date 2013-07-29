@@ -33,10 +33,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * @author Kirill Likhodedov
@@ -485,24 +482,36 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static List<GithubIssue> getIssues(@NotNull GithubAuthData auth,
-                                            @NotNull String user,
-                                            @NotNull String repo,
-                                            @Nullable String query) throws IOException {
+  public static List<GithubIssue> getIssuesAssigned(@NotNull GithubAuthData auth,
+                                                    @NotNull String user,
+                                                    @NotNull String repo,
+                                                    @Nullable String assigned) throws IOException {
     String path;
-    boolean noQuery = StringUtil.isEmpty(query);
-    if (!noQuery) {
-      query = URLEncoder.encode(query, "UTF-8");
-      path = "/legacy/issues/search/" + user + "/" + repo + "/open/" + query + "?per_page=100";
+    if (StringUtil.isEmptyOrSpaces(assigned)) {
+      path = "/repos/" + user + "/" + repo + "/issues?per_page=100";
     }
     else {
-      path = "/repos/" + user + "/" + repo + "/issues?per_page=100";
+      path = "/repos/" + user + "/" + repo + "/issues?assignee=" + assigned + "&per_page=100";
     }
 
     PagedRequest<GithubIssue, GithubIssueRaw> request =
       new PagedRequest<GithubIssue, GithubIssueRaw>(auth, path, GithubIssue.class, GithubIssueRaw[].class);
 
     return request.getAll();
+  }
+
+  @NotNull
+
+  public static List<GithubIssue> getIssuesQueried(@NotNull GithubAuthData auth,
+                                                   @NotNull String user,
+                                                   @NotNull String repo,
+                                                   @Nullable String query) throws IOException {
+    query = URLEncoder.encode("@" + user + "/" + repo + " " + query, "UTF-8");
+    String path = "/search/issues/?q=" + query;
+
+    JsonElement result = getRequest(auth, path);
+
+    return createDataFromRaw(fromJson(result, GithubIssuesSearchResultRaw.class), GithubIssuesSearchResult.class).getIssues();
   }
 
   @NotNull
