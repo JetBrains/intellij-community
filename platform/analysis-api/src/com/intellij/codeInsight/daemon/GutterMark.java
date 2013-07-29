@@ -45,28 +45,4 @@ public interface GutterMark {
    */
   @Nullable
   String getTooltipText();
-
-  /**
-   * Returns the priority of the icon relative to other icons. Multiple icons in the same line
-   * are drawn in increasing priority order.
-   *
-   * @return the priority value.
-   */
-  Alignment getAlignment();
-
-  enum Alignment {
-    LEFT(1),
-    RIGHT(3),
-    CENTER(2);
-
-    private final int myWeight;
-
-    Alignment(int weight) {
-      myWeight = weight;
-    }
-
-    public int getWeight() {
-      return myWeight;
-    }
-  }
 }

@@ -34,6 +34,8 @@ import javax.swing.*;
  * @see RangeHighlighter#setGutterIconRenderer(GutterIconRenderer)
  */
 public abstract class GutterIconRenderer implements GutterMark {
+
+
   /**
    * Returns the icon drawn in the gutter.
    *
@@ -116,6 +118,22 @@ public abstract class GutterIconRenderer implements GutterMark {
   @Nullable
   public GutterDraggableObject getDraggableObject() {
     return null;
+  }
+
+  public enum Alignment {
+    LEFT(1),
+    RIGHT(3),
+    CENTER(2);
+
+    private final int myWeight;
+
+    Alignment(int weight) {
+      myWeight = weight;
+    }
+
+    public int getWeight() {
+      return myWeight;
+    }
   }
 
   @Override

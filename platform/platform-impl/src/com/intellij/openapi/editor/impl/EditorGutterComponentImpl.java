@@ -747,7 +747,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     final int y = myEditor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
 
     for (GutterMark r : row) {
-      final GutterIconRenderer.Alignment alignment = r.getAlignment();
+      final GutterIconRenderer.Alignment alignment = ((GutterIconRenderer)r).getAlignment();
       final Icon icon = r.getIcon();
       if (alignment == GutterIconRenderer.Alignment.LEFT) {
         processor.process(x, y + getTextAlignmentShift(icon), r);
@@ -765,7 +765,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     x = getLineMarkerAreaOffset() + myIconsAreaWidth;
     for (GutterMark r : row) {
-      if (r.getAlignment() == GutterIconRenderer.Alignment.RIGHT) {
+      if (((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.RIGHT) {
         Icon icon = r.getIcon();
         x -= icon.getIconWidth();
         processor.process(x, y + getTextAlignmentShift(icon), r);
@@ -779,7 +779,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       middleSize -= GAP_BETWEEN_ICONS;
       x = getLineMarkerAreaOffset() + leftSize + (myIconsAreaWidth - leftSize - rightSize - middleSize) / 2;
       for (GutterMark r : row) {
-        if (r.getAlignment() == GutterIconRenderer.Alignment.CENTER) {
+        if (((GutterIconRenderer)r).getAlignment() == GutterIconRenderer.Alignment.CENTER) {
           Icon icon = r.getIcon();
           processor.process(x, y + getTextAlignmentShift(icon), r);
           x += icon.getIconWidth() + GAP_BETWEEN_ICONS;
