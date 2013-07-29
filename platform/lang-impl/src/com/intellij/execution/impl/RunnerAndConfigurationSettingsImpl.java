@@ -84,7 +84,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     myManager = manager;
   }
 
-  public RunnerAndConfigurationSettingsImpl(RunManagerImpl manager, RunConfiguration configuration, boolean isTemplate) {
+  public RunnerAndConfigurationSettingsImpl(RunManagerImpl manager, @NotNull RunConfiguration configuration, boolean isTemplate) {
     myManager = manager;
     myConfiguration = configuration;
     myIsTemplate = isTemplate;

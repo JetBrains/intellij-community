@@ -22,10 +22,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * User: anna
- * Date: Jan 25, 2005
+ * Describes a complete persisted run configuration (as displayed in the Run/Debug Configurations dialog), together with runner-specific
+ * settings.
+ *
+ * @author anna
  */
 public interface RunnerAndConfigurationSettings {
+  /**
+   * Returns the type of the run configuration.
+   *
+   * @return the type of the run configuration, or null if the settings object was loaded from disk and no plugin corresponding to the
+   * stored type of the run configuration is loaded.
+   */
+  @Nullable
+  ConfigurationType getType();
+
   @Nullable
   ConfigurationFactory getFactory();
 
@@ -44,9 +55,6 @@ public interface RunnerAndConfigurationSettings {
 
   @Nullable
   ConfigurationPerRunnerSettings getConfigurationSettings(@NotNull ProgramRunner runner);
-
-  @Nullable
-  ConfigurationType getType();
 
   void checkSettings() throws RuntimeConfigurationException;
 
