@@ -18,8 +18,10 @@ package com.intellij.tasks.vcs;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.TaskManagerTestCase;
+import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.impl.LocalTaskImpl;
+import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.branch.GitBranchesCollection;
@@ -34,10 +36,11 @@ import java.util.List;
  *         Date: 18.07.13
  */
 @SuppressWarnings("ConstantConditions")
-public class TaskBranchesTest extends TaskManagerTestCase {
+public class TaskBranchesTest extends PlatformTestCase {
 
-  // todo re-enable
-  public void _testGitTaskHandler() throws Exception {
+  private TaskManagerImpl myTaskManager;
+
+  public void testGitTaskHandler() throws Exception {
 
     List<GitRepository> repositories = initRepositories("community", "idea");
     GitRepository repository = repositories.get(0);
@@ -61,10 +64,8 @@ public class TaskBranchesTest extends TaskManagerTestCase {
     assertEquals(3, repository.getBranches().getLocalBranches().size());
     assertEquals(second, repository.getCurrentBranch().getName());
 
-    handler.switchToTask(firstInfo);
-    assertEquals(first, repository.getCurrentBranch().getName());
-
-    handler.closeTask(secondInfo);
+    handler.closeTask(secondInfo, firstInfo);
+    repository.update();
     assertEquals(2, repository.getBranches().getLocalBranches().size());
   }
 
@@ -112,5 +113,11 @@ public class TaskBranchesTest extends TaskManagerTestCase {
     GitBranchesCollection branches = repository.getBranches();
     assertEquals(1, branches.getLocalBranches().size());
     return repository;
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
   }
 }

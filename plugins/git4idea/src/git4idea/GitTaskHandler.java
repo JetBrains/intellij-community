@@ -32,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Dmitry Avdeev
@@ -98,10 +100,25 @@ public class GitTaskHandler extends VcsTaskHandler {
   }
 
   @Override
-  public void closeTask(TaskInfo taskInfo) {
+  public void closeTask(final TaskInfo taskInfo, TaskInfo original) {
 
-    for (String branchName : taskInfo.branches.keySet()) {
-      myBrancher.merge(branchName, GitBrancher.DeleteOnMergeOption.DELETE, getRepositories(taskInfo.branches.get(branchName)));
+    Set<String> branches = original.branches.keySet();
+    final AtomicInteger counter = new AtomicInteger(branches.size());
+    for (final String originalBranch : branches) {
+      myBrancher.checkout(originalBranch, getRepositories(original.branches.get(originalBranch)), new Runnable() {
+        @Override
+        public void run() {
+          if (counter.decrementAndGet() == 0) {
+            merge(taskInfo);
+          }
+        }
+      });
+    }
+  }
+
+  private void merge(TaskInfo taskInfo) {
+    for (String featureBranch : taskInfo.branches.keySet()) {
+      myBrancher.merge(featureBranch, GitBrancher.DeleteOnMergeOption.DELETE, getRepositories(taskInfo.branches.get(featureBranch)));
     }
   }
 

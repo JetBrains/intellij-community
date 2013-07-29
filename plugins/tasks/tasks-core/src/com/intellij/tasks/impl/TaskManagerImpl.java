@@ -411,8 +411,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
     for (VcsTaskHandler handler : handlers) {
-      handler.switchToTask(original);
-      handler.closeTask(feature);
+      handler.closeTask(feature, original);
     }
   }
 

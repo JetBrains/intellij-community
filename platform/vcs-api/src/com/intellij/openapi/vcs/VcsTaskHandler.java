@@ -44,7 +44,7 @@ public abstract class VcsTaskHandler {
 
   public abstract void switchToTask(TaskInfo taskInfo);
 
-  public abstract void closeTask(TaskInfo taskInfo);
+  public abstract void closeTask(TaskInfo taskInfo, TaskInfo original);
 
   public abstract TaskInfo getActiveTask();
 }
