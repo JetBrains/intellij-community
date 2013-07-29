@@ -211,17 +211,17 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     AnActionButton deleteActionButton = new DeleteFromFavoritesAction();
     deleteActionButton.setShortcut(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE));
 
-    final AnAction exportToTextFileAction = CommonActionsManager.getInstance().createExportToTextFileAction(createTextExporter());
-    AnActionButton exportActionButton = AnActionButton.fromAction(exportToTextFileAction);
-    exportActionButton.setShortcut(exportToTextFileAction.getShortcutSet());
+    //final AnAction exportToTextFileAction = CommonActionsManager.getInstance().createExportToTextFileAction(createTextExporter());
+    //AnActionButton exportActionButton = AnActionButton.fromAction(exportToTextFileAction);
+    //exportActionButton.setShortcut(exportToTextFileAction.getShortcutSet());
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree)
       .initPosition()
       .disableAddAction().disableRemoveAction().disableDownAction().disableUpAction()
       .addExtraAction(addActionButton)
       .addExtraAction(editActionButton)
-      .addExtraAction(deleteActionButton)
-      .addExtraAction(exportActionButton);
+      .addExtraAction(deleteActionButton);
+      //.addExtraAction(exportActionButton);
 
     final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEW_ELEMENT);
     action.registerCustomShortcutSet(action.getShortcutSet(), myTree);
