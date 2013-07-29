@@ -299,32 +299,10 @@ public class GithubApiUtil {
    * Github API
    */
 
-  static <Raw extends DataConstructor<Result>, Result> Result createDataFromRaw(@NotNull Raw rawObject,
-                                                                                       @NotNull Class<Result> result) throws JsonException {
-    try {
-      return rawObject.create();
-    }
-    catch (Exception e) {
-      throw new JsonException("Json parse error", e);
-    }
-  }
-
-  static <Raw extends DataConstructorDetailed<Result>, Result> Result createDataFromRaw(@NotNull Raw rawObject,
-                                                                                               @NotNull Class<Result> result)
+  static <Raw extends DataConstructor, Result> Result createDataFromRaw(@NotNull Raw rawObject, @NotNull Class<Result> resultClass)
     throws JsonException {
     try {
-      return rawObject.createDetailed();
-    }
-    catch (Exception e) {
-      throw new JsonException("Json parse error", e);
-    }
-  }
-
-  static <Raw extends DataConstructorSimplified<Result>, Result> Result createDataFromRaw(@NotNull Raw rawObject,
-                                                                                                 @NotNull Class<Result> result)
-    throws JsonException {
-    try {
-      return rawObject.createSimplified();
+      return rawObject.create(resultClass);
     }
     catch (Exception e) {
       throw new JsonException("Json parse error", e);

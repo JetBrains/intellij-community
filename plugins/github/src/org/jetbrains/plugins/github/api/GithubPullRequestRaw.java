@@ -24,7 +24,7 @@ import java.util.Date;
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
-class GithubPullRequestRaw implements DataConstructor<GithubPullRequest> {
+class GithubPullRequestRaw implements DataConstructor {
   @Nullable public Long number;
   @Nullable public String state;
   @Nullable public String title;
@@ -55,7 +55,7 @@ class GithubPullRequestRaw implements DataConstructor<GithubPullRequest> {
   @Nullable public LinkRaw head;
   @Nullable public LinkRaw base;
 
-  public static class LinkRaw implements DataConstructor<GithubPullRequest.Link> {
+  public static class LinkRaw {
     @Nullable public String label;
     @Nullable public String ref;
     @Nullable public String sha;
@@ -64,16 +64,25 @@ class GithubPullRequestRaw implements DataConstructor<GithubPullRequest> {
     @Nullable public GithubUserRaw user;
 
     @NotNull
-    @Override
     public GithubPullRequest.Link create() {
-      return new GithubPullRequest.Link(label, ref, sha, repo.create(), user.create());
+      return new GithubPullRequest.Link(label, ref, sha, repo.createRepo(), user.createUser());
     }
   }
 
   @NotNull
-  @Override
-  public GithubPullRequest create() {
+  public GithubPullRequest createPullRequest() {
     return new GithubPullRequest(number, state, title, body, htmlUrl, diffUrl, patchUrl, issueUrl, createdAt, updatedAt, closedAt, mergedAt,
-                                 user.create(), head.create(), base.create());
+                                 user.createUser(), head.create(), base.create());
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  @Override
+  public <T> T create(@NotNull Class<T> resultClass) {
+    if (resultClass.isAssignableFrom(GithubPullRequest.class)) {
+      return (T)createPullRequest();
+    }
+
+    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
   }
 }

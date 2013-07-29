@@ -23,8 +23,8 @@ import java.util.Date;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
-class GithubIssueRaw implements DataConstructor<GithubIssue> {
+@SuppressWarnings("UnusedDeclaration")
+class GithubIssueRaw implements DataConstructor {
   @Nullable public String url;
   @Nullable public String htmlUrl;
   @Nullable public Long number;
@@ -39,10 +39,21 @@ class GithubIssueRaw implements DataConstructor<GithubIssue> {
   @Nullable public Date createdAt;
   @Nullable public Date updatedAt;
 
+  @SuppressWarnings("ConstantConditions")
+  @NotNull
+  public GithubIssue createIssue() {
+    GithubUser assignee = this.assignee == null ? null : this.assignee.createUser();
+    return new GithubIssue(htmlUrl, number, state, title, body, user.createUser(), assignee, closedAt, createdAt, updatedAt);
+  }
+
+  @SuppressWarnings("unchecked")
   @NotNull
   @Override
-  public GithubIssue create() {
-    GithubUser assignee = this.assignee == null ? null : this.assignee.create();
-    return new GithubIssue(htmlUrl, number, state, title, body, user.create(), assignee, closedAt, createdAt, updatedAt);
+  public <T> T create(@NotNull Class<T> resultClass) {
+    if (resultClass.isAssignableFrom(GithubIssue.class)) {
+      return (T)createIssue();
+    }
+
+    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
   }
 }

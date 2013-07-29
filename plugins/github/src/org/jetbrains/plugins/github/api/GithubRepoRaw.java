@@ -24,8 +24,8 @@ import java.util.Date;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
-class GithubRepoRaw implements DataConstructor<GithubRepo>, DataConstructorDetailed<GithubRepoDetailed> {
+@SuppressWarnings("UnusedDeclaration")
+class GithubRepoRaw implements DataConstructor {
   @Nullable public Long id;
   @Nullable public String name;
   @Nullable public String fullName;
@@ -72,16 +72,31 @@ class GithubRepoRaw implements DataConstructor<GithubRepo>, DataConstructorDetai
   @Nullable public Date createdAt;
   @Nullable public Date updatedAt;
 
+  @SuppressWarnings("ConstantConditions")
   @NotNull
-  @Override
-  public GithubRepo create() {
-    return new GithubRepo(name, fullName, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.create());
+  public GithubRepo createRepo() {
+    return new GithubRepo(name, fullName, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.createUser());
   }
 
+  @SuppressWarnings("ConstantConditions")
+  @NotNull
+  public GithubRepoDetailed createRepoDetailed() {
+    GithubRepo parent = this.parent == null ? null : this.parent.createRepo();
+    return new GithubRepoDetailed(name, fullName, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.createUser(),
+                                  parent);
+  }
+
+  @SuppressWarnings("unchecked")
   @NotNull
   @Override
-  public GithubRepoDetailed createDetailed() {
-    GithubRepo parent = this.parent == null ? null : this.parent.create();
-    return new GithubRepoDetailed(name, fullName, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.create(), parent);
+  public <T> T create(@NotNull Class<T> resultClass) {
+    if (resultClass.isAssignableFrom(GithubRepo.class)) {
+      return (T)createRepo();
+    }
+    if (resultClass.isAssignableFrom(GithubRepoDetailed.class)) {
+      return (T)createRepoDetailed();
+    }
+
+    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
   }
 }

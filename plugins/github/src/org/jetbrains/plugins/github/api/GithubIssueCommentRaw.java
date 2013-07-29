@@ -23,8 +23,8 @@ import java.util.Date;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
-class GithubIssueCommentRaw implements DataConstructor<GithubIssueComment> {
+@SuppressWarnings("UnusedDeclaration")
+class GithubIssueCommentRaw implements DataConstructor {
   @Nullable public Long id;
 
   @Nullable public String url;
@@ -36,9 +36,20 @@ class GithubIssueCommentRaw implements DataConstructor<GithubIssueComment> {
 
   @Nullable public GithubUserRaw user;
 
+  @SuppressWarnings("ConstantConditions")
+  @NotNull
+  public GithubIssueComment createIssueComment() {
+    return new GithubIssueComment(id, htmlUrl, body, createdAt, updatedAt, user.createUser());
+  }
+
+  @SuppressWarnings("unchecked")
   @NotNull
   @Override
-  public GithubIssueComment create() {
-    return new GithubIssueComment(id, htmlUrl, body, createdAt, updatedAt, user.create());
+  public <T> T create(@NotNull Class<T> resultClass) {
+    if (resultClass.isAssignableFrom(GithubIssueComment.class)) {
+      return (T)createIssueComment();
+    }
+
+    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
   }
 }

@@ -25,8 +25,8 @@ import java.util.Date;
  *
  * @author Kirill Likhodedov
  */
-@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
-class GithubUserRaw implements DataConstructor<GithubUser>, DataConstructorDetailed<GithubUserDetailed> {
+@SuppressWarnings("UnusedDeclaration")
+class GithubUserRaw implements DataConstructor {
 
   @Nullable public String login;
   @Nullable public Long id;
@@ -58,28 +58,42 @@ class GithubUserRaw implements DataConstructor<GithubUser>, DataConstructorDetai
 
   @Nullable public Date createdAt;
 
-  public static class UserPlanRaw implements DataConstructor<GithubUserDetailed.UserPlan> {
+  public static class UserPlanRaw {
     @Nullable public String name;
     @Nullable public Long space;
     @Nullable public Long collaborators;
     @Nullable public Long privateRepos;
 
+    @SuppressWarnings("ConstantConditions")
     @NotNull
-    @Override
     public GithubUserDetailed.UserPlan create() {
       return new GithubUserDetailed.UserPlan(name, privateRepos);
     }
   }
 
+  @SuppressWarnings("ConstantConditions")
   @NotNull
-  @Override
-  public GithubUser create() {
+  public GithubUser createUser() {
     return new GithubUser(login, htmlUrl, gravatarId);
   }
 
+  @SuppressWarnings("ConstantConditions")
+  @NotNull
+  public GithubUserDetailed createUserDetailed() {
+    return new GithubUserDetailed(login, htmlUrl, gravatarId, name, email, ownedPrivateRepos, type, plan.create());
+  }
+
+  @SuppressWarnings("unchecked")
   @NotNull
   @Override
-  public GithubUserDetailed createDetailed() {
-    return new GithubUserDetailed(login, htmlUrl, gravatarId, name, email, ownedPrivateRepos, type, plan.create());
+  public <T> T create(@NotNull Class<T> resultClass) {
+    if (resultClass.isAssignableFrom(GithubUser.class)) {
+      return (T)createUser();
+    }
+    if (resultClass.isAssignableFrom(GithubUserDetailed.class)) {
+      return (T)createUserDetailed();
+    }
+
+    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
   }
 }

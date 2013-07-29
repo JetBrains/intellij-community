@@ -25,27 +25,13 @@ import org.jetbrains.annotations.NotNull;
  * All fields of the raw type are nullable by the nature of GSon parser;
  * but some of them are required, so we want them to be @NotNull in the actual data class,
  * otherwise there is an error in JSon data received from the server
- * <p/>
+ *
  * So we create Data class assuming that all required fields actually notnull and
  * catch exception if they are not.
- * <p/>
- * There are few similar interfaces because same entity can be provided with
- * different levels of detailing. And we don't want to duplicate Raw classes to
- * support such cases.
  *
  * Probably, these interfaces shouldn't be used outside of GithubApiUtil.createDataFromRaw()
  */
-interface DataConstructor<T> {
+interface DataConstructor {
   @NotNull
-  T create() throws IllegalArgumentException, NullPointerException;
-}
-
-interface DataConstructorDetailed<T> {
-  @NotNull
-  T createDetailed() throws IllegalArgumentException, NullPointerException;
-}
-
-interface DataConstructorSimplified<T> {
-  @NotNull
-  T createSimplified() throws IllegalArgumentException, NullPointerException;
+  <T> T create(@NotNull Class<T> resultClass) throws IllegalArgumentException, NullPointerException, ClassCastException;
 }

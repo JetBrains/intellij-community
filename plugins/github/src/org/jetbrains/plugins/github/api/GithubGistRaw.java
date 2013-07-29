@@ -27,8 +27,8 @@ import java.util.Map;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
-class GithubGistRaw implements DataConstructor<GithubGist> {
+@SuppressWarnings("UnusedDeclaration")
+class GithubGistRaw implements DataConstructor {
   @Nullable public String id;
   @Nullable public String description;
 
@@ -46,7 +46,7 @@ class GithubGistRaw implements DataConstructor<GithubGist> {
 
   @Nullable public Date createdAt;
 
-  public static class GistFileRaw implements DataConstructor<GithubGist.GistFile> {
+  public static class GistFileRaw {
     @Nullable public Long size;
     @Nullable public String filename;
     @Nullable public String content;
@@ -56,17 +56,17 @@ class GithubGistRaw implements DataConstructor<GithubGist> {
     @Nullable public String type;
     @Nullable public String language;
 
+    @SuppressWarnings("ConstantConditions")
     @NotNull
-    @Override
     public GithubGist.GistFile create() {
       return new GithubGist.GistFile(filename, content, raw_url);
     }
   }
 
+  @SuppressWarnings("ConstantConditions")
   @NotNull
-  @Override
-  public GithubGist create() {
-    GithubUser user = this.user == null ? null : this.user.create();
+  public GithubGist createGist() {
+    GithubUser user = this.user == null ? null : this.user.createUser();
 
     List<GithubGist.GistFile> files = new ArrayList<GithubGist.GistFile>();
     for (Map.Entry<String, GistFileRaw> entry : this.files.entrySet()) {
@@ -74,5 +74,16 @@ class GithubGistRaw implements DataConstructor<GithubGist> {
     }
 
     return new GithubGist(id, description, isPublic, htmlUrl, files, user);
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  @Override
+  public <T> T create(@NotNull Class<T> resultClass) {
+    if (resultClass.isAssignableFrom(GithubGist.class)) {
+      return (T)createGist();
+    }
+
+    throw new ClassCastException(this.getClass().getName() + ": bad class type: " + resultClass.getName());
   }
 }
