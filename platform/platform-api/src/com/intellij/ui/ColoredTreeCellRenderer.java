@@ -148,7 +148,9 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
 
     // Cell renderers could have no parent and no explicit set font.
     // Take tree font in this case.
-    return font != null ? font : getTree().getFont();
+    if (font != null) return font;
+    JTree tree = getTree();
+    return tree != null ? tree.getFont() : null;
   }
 
   /**
