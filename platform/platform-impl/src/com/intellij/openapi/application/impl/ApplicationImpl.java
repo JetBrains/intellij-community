@@ -253,7 +253,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
             @Override
             public void run() {
               String currentDirectory = args.isEmpty() ? null : args.get(0);
-              List<String> realArgs = args.size() <= 1 ? args : args.subList(1, args.size());
+              List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
               final Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
               final JFrame frame;
               if (project != null) {
