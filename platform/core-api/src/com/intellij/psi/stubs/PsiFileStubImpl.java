@@ -25,7 +25,7 @@ import com.intellij.psi.tree.IStubFileElementType;
 
 public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements PsiFileStub<T> {
   public static final IStubFileElementType TYPE = new IStubFileElementType(Language.ANY);
-  private T myFile;
+  private volatile T myFile;
 
   public PsiFileStubImpl(final T file) {
     super(null, null);

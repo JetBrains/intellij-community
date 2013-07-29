@@ -712,9 +712,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final StubTree derefdOnLock = derefStub();
       if (derefdOnLock != null) return derefdOnLock;
 
+      //noinspection unchecked
+      ((StubBase)stubHolder.getRoot()).setPsi(this);
       myStub = new SoftReference<StubTree>(stubHolder);
-      StubBase<PsiFile> base = (StubBase)stubHolder.getRoot();
-      base.setPsi(this);
       return stubHolder;
     }
   }
