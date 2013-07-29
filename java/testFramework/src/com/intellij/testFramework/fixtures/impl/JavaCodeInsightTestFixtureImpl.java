@@ -27,6 +27,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.ui.UIUtil;
+import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,7 +76,7 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
   @NotNull
   public PsiClass findClass(@NotNull @NonNls final String name) {
     final PsiClass aClass = getJavaFacade().findClass(name, ProjectScope.getProjectScope(getProject()));
-    assertNotNull("Class " + name + " not found", aClass);
+    Assert.assertNotNull("Class " + name + " not found", aClass);
     return aClass;
   }
 
@@ -83,7 +84,7 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
   @NotNull
   public PsiPackage findPackage(@NotNull @NonNls final String name) {
     final PsiPackage aPackage = getJavaFacade().findPackage(name);
-    assertNotNull("Package " + name + " not found", aPackage);
+    Assert.assertNotNull("Package " + name + " not found", aPackage);
     return aPackage;
   }
 

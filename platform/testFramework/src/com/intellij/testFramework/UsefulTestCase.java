@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.StartMarkAction;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -117,9 +118,11 @@ public abstract class UsefulTestCase extends TestCase {
     if (shouldContainTempFiles()) {
       String testName = getTestName(true);
       if (StringUtil.isEmptyOrSpaces(testName)) testName = "";
+      testName = new File(testName).getName(); // in case the test name contains file separators
       myTempDir = ORIGINAL_TEMP_DIR + "/unitTest_" + testName + "_"+ PRNG.nextInt(1000);
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
+    DocumentImpl.CHECK_DOCUMENT_CONSISTENCY = !isPerformanceTest();
   }
 
   @Override
@@ -170,6 +173,14 @@ public abstract class UsefulTestCase extends TestCase {
     if (isPerformanceTest() || ApplicationManager.getApplication() == null || ApplicationManager.getApplication() instanceof MockApplication) {
       return;
     }
+    CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
+    myOldCodeStyleSettings = null;
+
+    doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
+  }
+
+  public static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
+                                              @NotNull CodeStyleSettings currentCodeStyleSettings) throws Exception {
     CompositeException result = new CompositeException();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     try {
@@ -185,18 +196,16 @@ public abstract class UsefulTestCase extends TestCase {
       result.add(error);
     }
 
-    CodeStyleSettings codeStyleSettings = getCurrentCodeStyleSettings();
-    codeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
+    currentCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
     try {
-      checkSettingsEqual(myOldCodeStyleSettings, codeStyleSettings, "Code style settings damaged");
+      checkSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings, "Code style settings damaged");
     }
     catch (AssertionError e) {
       result.add(e);
     }
     finally {
-      codeStyleSettings.clearCodeStyleSettings();
+      currentCodeStyleSettings.clearCodeStyleSettings();
     }
-    myOldCodeStyleSettings = null;
 
     try {
       InplaceRefactoring.checkCleared();
@@ -382,7 +391,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static <T> void assertSameElements(Collection<? extends T> collection, Collection<T> expected) {
     assertSameElements(null, collection, expected);
   }
-  
+
   public static <T> void assertSameElements(String message, Collection<? extends T> collection, Collection<T> expected) {
     assertNotNull(collection);
     assertNotNull(expected);
@@ -391,11 +400,11 @@ public abstract class UsefulTestCase extends TestCase {
       Assert.assertEquals(message, new HashSet<T>(expected), new HashSet<T>(collection));
     }
   }
-  
+
   public <T> void assertContainsOrdered(Collection<? extends T> collection, T... expected) {
     assertContainsOrdered(collection, Arrays.asList(expected));
   }
-    
+
   public <T> void assertContainsOrdered(Collection<? extends T> collection, Collection<T> expected) {
     ArrayList<T> copy = new ArrayList<T>(collection);
     copy.retainAll(expected);
@@ -405,7 +414,7 @@ public abstract class UsefulTestCase extends TestCase {
   public <T> void assertContainsElements(Collection<? extends T> collection, T... expected) {
     assertContainsElements(collection, Arrays.asList(expected));
   }
-    
+
   public <T> void assertContainsElements(Collection<? extends T> collection, Collection<T> expected) {
     ArrayList<T> copy = new ArrayList<T>(collection);
     copy.retainAll(expected);
@@ -829,7 +838,7 @@ public abstract class UsefulTestCase extends TestCase {
     return GraphicsEnvironment.isHeadless();
   }
 
-  protected static void refreshRecursively(@NotNull VirtualFile file) {
+  public static void refreshRecursively(@NotNull VirtualFile file) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
