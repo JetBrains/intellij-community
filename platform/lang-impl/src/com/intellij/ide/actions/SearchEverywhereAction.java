@@ -27,7 +27,9 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -78,6 +80,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private JList myList = new JList(); //don't use JBList here!!! todo[kb]
   private AnActionEvent myActionEvent;
   private Component myContextComponent;
+  private CalcThread myCalcThread;
 
   public SearchEverywhereAction() {
     createSearchField();
@@ -224,127 +227,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     focusManager.requestDefaultFocus(true);
   }
 
-  private void rebuildList(String pattern) {
-    if (myClassModel == null) {
-      final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(field.getTextEditor()));
-
-      assert project != null;
-
-      myClassModel = new GotoClassModel2(project);
-      myFileModel = new GotoFileModel(project);
-      myActionModel = new GotoActionModel(project, myFocusComponent);
-      myClasses = myClassModel.getNames(false);
-      myFiles = myFileModel.getNames(false);
-      myActions = myActionModel.getNames(true);
+  private void rebuildList(final String pattern) {
+    if (myCalcThread != null) {
+      myCalcThread.cancel();
     }
-    final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      List<MatchResult> classes = collectResults(pattern, myClasses, myClassModel);
-      List<MatchResult> files = collectResults(pattern, myFiles, myFileModel);
-      List<MatchResult> actions = collectResults(pattern, myActions, myActionModel);
-      final DefaultListModel listModel = new DefaultListModel();
-      Set<VirtualFile> alreadyAddedFiles = new HashSet<VirtualFile>();
+    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(field.getTextEditor()));
 
-      for (MatchResult o : classes) {
-        Object[] objects = myClassModel.getElementsByName(o.elementName, false, pattern);
-        for (Object object : objects) {
-          if (!listModel.contains(object)) {
-            listModel.addElement(object);
-            if (object instanceof PsiElement) {
-              VirtualFile file = PsiUtilCore.getVirtualFile((PsiElement)object);
-              if (file != null) {
-                alreadyAddedFiles.add(file);
-              }
-            }
-          }
-        }
-      }
-      for (MatchResult o : files) {
-        Object[] objects = myFileModel.getElementsByName(o.elementName, false, pattern);
-        for (Object object : objects) {
-          if (!listModel.contains(object)) {
-            if (object instanceof PsiFile) {
-              object = ((PsiFile)object).getVirtualFile();
-            }
-            if (!alreadyAddedFiles.contains(object)) {
-              listModel.addElement(object);
-            }
-          }
-        }
-      }
-      for (MatchResult o : actions) {
-        Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
-        for (Object object : objects) {
-          listModel.addElement(object);
-        }
-      }
-
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myList.setModel(listModel);
-          if (myPopup == null || !myPopup.isVisible()) {
-            final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(field.getTextEditor(), myList);
-            myPopup = JBPopupFactory.getInstance()
-              .createListPopupBuilder(myList)
-              .setRequestFocus(false)
-              .createPopup();
-            Disposer.register(myPopup, new Disposable() {
-              @Override
-              public void dispose() {
-                callback.setDone();
-              }
-            });
-            myPopup.showUnderneathOf(field);
-          } else {
-            myList.revalidate();
-            myList.repaint();
-          }
-          ListScrollingUtil.ensureSelectionExists(myList);
-          if (myList.getModel().getSize() == 0) {
-            myPopup.cancel();
-          } else {
-            final Dimension size = myList.getPreferredSize();
-            myPopup.setSize(new Dimension(Math.min(600, Math.max(field.getWidth(), size.width + 2)), Math.min(600, size.height + 2)));
-            final Point screen = field.getLocationOnScreen();
-            final int x = screen.x + field.getWidth() - myPopup.getSize().width;
-
-            myPopup.setLocation(new Point(x, myPopup.getLocationOnScreen().y));
-          }
-        }
-      });
-    }
-    finally {
-      token.finish();
-    }
+    assert project != null;
+    myCalcThread = new CalcThread(project, pattern);
+    myCalcThread.start();
   }
 
-  private static List<MatchResult> collectResults(String pattern, String[] names, ChooseByNameModel model) {
-    final ArrayList<MatchResult> results = new ArrayList<MatchResult>();
-    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
-    MatchResult result;
-
-    for (String name : names) {
-      ProgressManager.checkCanceled();
-      result = null;
-      if (model instanceof CustomMatcherModel) {
-        try {
-          result = ((CustomMatcherModel)model).matches(name, pattern) ? new MatchResult(name, 0, true) : null;
-        }
-        catch (Exception ignore) {
-        }
-      }
-      else {
-        result = matcher.matches(name) ? new MatchResult(name, matcher.matchingDegree(name), matcher.isStartMatch(name)) : null;
-      }
-
-      if (result != null) {
-        results.add(result);
-      }
-    }
-    return results;
-  }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -359,7 +252,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return field;
   }
 
-  private class MySearchTextField extends SearchTextField {
+  private static class MySearchTextField extends SearchTextField {
     public MySearchTextField() {
       super(false);
       setOpaque(false);
@@ -428,6 +321,154 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
       finally {
         token.finish();
+      }
+    }
+  }
+
+  private class CalcThread implements Runnable {
+    private final Project project;
+    private final String pattern;
+    private ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
+
+    public CalcThread(Project project, String pattern) {
+      this.project = project;
+      this.pattern = pattern;
+    }
+
+    @Override
+    public void run() {
+      if (myClassModel == null) {
+        myClassModel = new GotoClassModel2(project);
+        myFileModel = new GotoFileModel(project);
+        myActionModel = new GotoActionModel(project, myFocusComponent);
+        myClasses = myClassModel.getNames(false);
+        myFiles = myFileModel.getNames(false);
+        myActions = myActionModel.getNames(true);
+      }
+      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+      try {
+        List<MatchResult> classes = collectResults(pattern, myClasses, myClassModel);
+        List<MatchResult> files = collectResults(pattern, myFiles, myFileModel);
+        List<MatchResult> actions = collectResults(pattern, myActions, myActionModel);
+        final DefaultListModel listModel = new DefaultListModel();
+        Set<VirtualFile> alreadyAddedFiles = new HashSet<VirtualFile>();
+
+        for (MatchResult o : classes) {
+          myProgressIndicator.checkCanceled();
+          Object[] objects = myClassModel.getElementsByName(o.elementName, false, pattern);
+          for (Object object : objects) {
+            myProgressIndicator.checkCanceled();
+            if (!listModel.contains(object)) {
+              listModel.addElement(object);
+              if (object instanceof PsiElement) {
+                VirtualFile file = PsiUtilCore.getVirtualFile((PsiElement)object);
+                if (file != null) {
+                  alreadyAddedFiles.add(file);
+                }
+              }
+            }
+          }
+        }
+        for (MatchResult o : files) {
+          myProgressIndicator.checkCanceled();
+          Object[] objects = myFileModel.getElementsByName(o.elementName, false, pattern);
+          for (Object object : objects) {
+            myProgressIndicator.checkCanceled();
+            if (!listModel.contains(object)) {
+              if (object instanceof PsiFile) {
+                object = ((PsiFile)object).getVirtualFile();
+              }
+              if (!alreadyAddedFiles.contains(object)) {
+                myProgressIndicator.checkCanceled();
+                listModel.addElement(object);
+              }
+            }
+          }
+        }
+        for (MatchResult o : actions) {
+          myProgressIndicator.checkCanceled();
+          Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
+          for (Object object : objects) {
+            myProgressIndicator.checkCanceled();
+            listModel.addElement(object);
+          }
+        }
+
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            myProgressIndicator.checkCanceled();
+            myList.setModel(listModel);
+            if (myPopup == null || !myPopup.isVisible()) {
+              final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(field.getTextEditor(), myList);
+              myPopup = JBPopupFactory.getInstance()
+                .createListPopupBuilder(myList)
+                .setRequestFocus(false)
+                .createPopup();
+              Disposer.register(myPopup, new Disposable() {
+                @Override
+                public void dispose() {
+                  callback.setDone();
+                }
+              });
+              myPopup.showUnderneathOf(field);
+            } else {
+              myList.revalidate();
+              myList.repaint();
+            }
+            ListScrollingUtil.ensureSelectionExists(myList);
+            if (myList.getModel().getSize() == 0) {
+              myPopup.cancel();
+            } else {
+              final Dimension size = myList.getPreferredSize();
+              myPopup.setSize(new Dimension(Math.min(600, Math.max(field.getWidth(), size.width + 2)), Math.min(600, size.height + 2)));
+              final Point screen = field.getLocationOnScreen();
+              final int x = screen.x + field.getWidth() - myPopup.getSize().width;
+
+              myPopup.setLocation(new Point(x, myPopup.getLocationOnScreen().y));
+            }
+          }
+        });
+      }
+      finally {
+        token.finish();
+      }
+    }
+
+    private List<MatchResult> collectResults(String pattern, String[] names, ChooseByNameModel model) {
+      final ArrayList<MatchResult> results = new ArrayList<MatchResult>();
+      MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      MatchResult result;
+
+      for (String name : names) {
+        myProgressIndicator.checkCanceled();
+        result = null;
+        if (model instanceof CustomMatcherModel) {
+          try {
+            result = ((CustomMatcherModel)model).matches(name, pattern) ? new MatchResult(name, 0, true) : null;
+          }
+          catch (Exception ignore) {
+          }
+        }
+        else {
+          result = matcher.matches(name) ? new MatchResult(name, matcher.matchingDegree(name), matcher.isStartMatch(name)) : null;
+        }
+
+        if (result != null) {
+          results.add(result);
+        }
+      }
+      return results;
+    }
+
+    public void cancel() {
+      myProgressIndicator.cancel();
+    }
+
+    public void start() {
+      if (!myProgressIndicator.isCanceled()) {
+        ProgressManager.getInstance().runProcess(this, myProgressIndicator);
       }
     }
   }
