@@ -21,6 +21,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -38,7 +39,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -79,9 +82,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     long start = System.currentTimeMillis();
     List<ChooseByNameContributor> liveContribs = filterDumb(myContributors);
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    Processor<ChooseByNameContributor> processor = new Processor<ChooseByNameContributor>() {
+    Processor<ChooseByNameContributor> processor = new ReadActionProcessor<ChooseByNameContributor>() {
       @Override
-      public boolean process(ChooseByNameContributor contributor) {
+      public boolean processInReadAction(ChooseByNameContributor contributor) {
         try {
           if (!myProject.isDisposed()) {
             String[] names = contributor.getNames(myProject, checkBoxState);
