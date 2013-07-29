@@ -16,6 +16,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Manages {@link RunConfiguration}s.
@@ -85,6 +87,9 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract void addRunManagerListener(RunManagerListener listener);
   public abstract void removeRunManagerListener(RunManagerListener listener);
+
+  @NotNull
+  public abstract Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type);
 
   public static void disableTasks(Project project, RunConfiguration settings, Key<? extends BeforeRunTask>... keys) {
     for (Key<? extends BeforeRunTask> key : keys) {

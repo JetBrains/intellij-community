@@ -64,7 +64,7 @@ public class MockRunManager extends RunManagerEx {
 
   @NotNull
   @Override
-  public RunnerAndConfigurationSettings createConfiguration(RunConfiguration runConfiguration, ConfigurationFactory factory) {
+  public RunnerAndConfigurationSettings createConfiguration(@NotNull RunConfiguration runConfiguration, @NotNull ConfigurationFactory factory) {
     throw new UnsupportedOperationException();
   }
 

@@ -66,6 +66,7 @@ public interface RunnerAndConfigurationSettings {
    * Marks the configuration as temporary or permanent.
    *
    * @param temporary true if the configuration is temporary, false if it's permanent.
+   * @see RunManager#makeStable(com.intellij.execution.configurations.RunConfiguration)
    */
   void setTemporary(boolean temporary);
 

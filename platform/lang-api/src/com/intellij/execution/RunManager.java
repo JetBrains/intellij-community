@@ -24,51 +24,111 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * User: anna
- * Date: Jan 25, 2005
+ * Manages the list of run/debug configurations in a project.
+ *
+ * @author anna
  */
 public abstract class RunManager {
   public static RunManager getInstance(final Project project) {
     return project.getComponent(RunManager.class);
   }
 
+  /**
+   * Returns the list of all registered configuration types.
+   *
+   * @return all registered configuration types.
+   */
   @NotNull
   public abstract ConfigurationType[] getConfigurationFactories();
 
+  /**
+   * Returns the list of all configurations of a specified type.
+   *
+   * @param type a run configuration type.
+   * @return all configurations of the type, or an empty array if no configurations of the type are defined.
+   */
   @NotNull
   public abstract RunConfiguration[] getConfigurations(@NotNull ConfigurationType type);
 
-  @NotNull
-  public abstract RunConfiguration[] getAllConfigurations();
-
-  @NotNull
-  public abstract RunConfiguration[] getTempConfigurations();
-
-  public abstract boolean isTemporary(@NotNull RunConfiguration configuration);
-
-  public abstract void makeStable(@NotNull RunConfiguration configuration);
-
-  @Nullable
-  public abstract RunnerAndConfigurationSettings getSelectedConfiguration();
-
-  @NotNull
-  public abstract RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory type);
-
-  @NotNull
-  public abstract RunnerAndConfigurationSettings createConfiguration(RunConfiguration runConfiguration, ConfigurationFactory factory);
-
+  /**
+   * Returns the list of {@link RunnerAndConfigurationSettings} for all configurations of a specified type.
+   *
+   * @param type a run configuration type.
+   * @return settings for all configurations of the type, or an empty array if no configurations of the type are defined.
+   */
   @NotNull
   public abstract RunnerAndConfigurationSettings[] getConfigurationSettings(@NotNull ConfigurationType type);
 
+  /**
+   * Returns the list of all run configurations.
+   *
+   * @return the list of all run configurations.
+   */
   @NotNull
-  public abstract Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type);
+  public abstract RunConfiguration[] getAllConfigurations();
 
+  /**
+   * Returns the list of all temporary run configurations.
+   *
+   * @return the list of all temporary run configurations.
+   * @see com.intellij.execution.RunnerAndConfigurationSettings#isTemporary()
+   */
+  @NotNull
+  public abstract RunConfiguration[] getTempConfigurations();
+
+  /**
+   * Checks if the specified run configuration is temporary and will be deleted when the temporary configurations limit is exceeded.
+   *
+   * @return true if the configuration is temporary, false otherwise.
+   * @see com.intellij.execution.RunnerAndConfigurationSettings#isTemporary()
+   */
+  public abstract boolean isTemporary(@NotNull RunConfiguration configuration);
+
+  /**
+   * Saves the specified temporary run configuration and makes it a permanent one.
+   *
+   * @param configuration the temporary run configuration to save.
+   */
+  public abstract void makeStable(@NotNull RunConfiguration configuration);
+
+  /**
+   * Returns the selected item in the run/debug configurations combobox.
+   *
+   * @return the selected configuration, or null if no configuration is defined or selected.
+   */
+  @Nullable
+  public abstract RunnerAndConfigurationSettings getSelectedConfiguration();
+
+  /**
+   * Creates a configuration of the specified type with the specified name.
+   *
+   * @param name the name of the configuration to create (should be unique and not equal to any other existing configuration)
+   * @param type the type of the configuration to create.
+   * @return the configuration settings object.
+   * @see RunManager#suggestUniqueName(String, java.util.ArrayList)
+   */
+  @NotNull
+  public abstract RunnerAndConfigurationSettings createRunConfiguration(@NotNull String name, @NotNull ConfigurationFactory type);
+
+  /**
+   * Creates a configuration settings object based on a specified {@link RunConfiguration}.
+   *
+   * @param runConfiguration the run configuration
+   * @param factory the factory instance.
+   * @return the configuration settings object.
+   */
+  @NotNull
+  public abstract RunnerAndConfigurationSettings createConfiguration(@NotNull RunConfiguration runConfiguration, @NotNull ConfigurationFactory factory);
+
+  /**
+   * Marks the specified run configuration as recently used (the temporary run configurations are deleted in LRU order).
+   *
+   * @param profile the run configuration to mark as recently used.
+   */
   public abstract void refreshUsagesList(RunProfile profile);
 
   public static String suggestUniqueName(String str, ArrayList<String> currentNames) {
