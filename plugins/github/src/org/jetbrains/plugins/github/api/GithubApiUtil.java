@@ -404,7 +404,13 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static GithubUserDetailed getCurrentUserInfo(@NotNull GithubAuthData auth) throws IOException {
+  public static GithubUser getCurrentUser(@NotNull GithubAuthData auth) throws IOException {
+    JsonElement result = getRequest(auth, "/user");
+    return createDataFromRaw(fromJson(result, GithubUserRaw.class), GithubUser.class);
+  }
+
+  @NotNull
+  public static GithubUserDetailed getCurrentUserDetailed(@NotNull GithubAuthData auth) throws IOException {
     JsonElement result = getRequest(auth, "/user");
     return createDataFromRaw(fromJson(result, GithubUserRaw.class), GithubUserDetailed.class);
   }

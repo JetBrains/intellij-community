@@ -232,7 +232,7 @@ public class GithubUtil {
   }
 
   private static void testConnection(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
-    GithubUserDetailed user = GithubApiUtil.getCurrentUserInfo(auth);
+    GithubUserDetailed user = GithubApiUtil.getCurrentUserDetailed(auth);
     if (login != null && !login.equalsIgnoreCase(user.getLogin())) {
       throw new GithubAuthenticationException("Wrong login");
     }
