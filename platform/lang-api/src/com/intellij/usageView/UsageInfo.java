@@ -192,6 +192,10 @@ public class UsageInfo {
     return range.getStartOffset() + rangeInElement.getStartOffset();
   }
 
+  public boolean isValid() {
+    return getSegment() != null;
+  }
+
   @Nullable
   public Segment getSegment() {
     PsiElement element = getElement();

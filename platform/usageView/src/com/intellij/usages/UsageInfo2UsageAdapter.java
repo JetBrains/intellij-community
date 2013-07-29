@@ -161,7 +161,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
       return false;
     }
     for (UsageInfo usageInfo : getMergedInfos()) {
-      if (usageInfo.getSegment() == null) return false;
+      if (!usageInfo.isValid()) return false;
     }
     return true;
   }

@@ -23,8 +23,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: cdr
  */
-public class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<PsiFile> implements SmartPsiFileRange {
-  public SmartPsiFileRangePointerImpl(@NotNull PsiFile containingFile, @NotNull ProperTextRange range) {
+class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<PsiFile> implements SmartPsiFileRange {
+  SmartPsiFileRangePointerImpl(@NotNull PsiFile containingFile, @NotNull ProperTextRange range) {
     super(containingFile, createElementInfo(containingFile, range), PsiFile.class);
   }
 
