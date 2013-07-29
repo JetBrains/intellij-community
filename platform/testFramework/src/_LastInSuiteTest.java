@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
+
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * This must be the last test.
@@ -42,7 +46,21 @@ public class _LastInSuiteTest extends TestCase {
       }
     });
 
-    LeakHunter.checkProjectLeak();
-    Disposer.assertIsEmpty(true);
+    try {
+      LeakHunter.checkProjectLeak();
+      Disposer.assertIsEmpty(true);
+    }
+    catch (Exception e) {
+      captureMemorySnapshot();
+      throw e;
+    }
+  }
+
+  private static void captureMemorySnapshot() {
+    try {
+      ReflectionUtil.getMethod(Class.forName("com.intellij.util.ProfilingUtil"), "forceCaptureMemorySnapshot").invoke(null);
+    }
+    catch (Exception ignored) {
+    }
   }
 }
