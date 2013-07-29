@@ -371,7 +371,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         for (MatchResult o : files) {
           myProgressIndicator.checkCanceled();
-          Object[] objects = myFileModel.getElementsByName(o.elementName, false, pattern);
+          Object[] objects = myFileModel.getElementsByName(o.elementName, false, pattern, myProgressIndicator);
           for (Object object : objects) {
             myProgressIndicator.checkCanceled();
             if (!listModel.contains(object)) {
@@ -437,6 +437,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private List<MatchResult> collectResults(String pattern, String[] names, ChooseByNameModel model) {
+      if (!pattern.startsWith("*")) {
+        pattern = "*" + pattern;
+      }
       final ArrayList<MatchResult> results = new ArrayList<MatchResult>();
       MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
       MatchResult result;
