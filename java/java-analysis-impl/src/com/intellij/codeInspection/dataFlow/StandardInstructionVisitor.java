@@ -271,7 +271,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (methodType == MethodCallInstruction.MethodType.CAST) {
       if (qualifierValue instanceof DfaConstValue) {
-        return factory.getConstFactory().createFromValue(castConstValue((DfaConstValue)qualifierValue), type, null);
+        return factory.getConstFactory().createFromValue(castConstValue((DfaConstValue)qualifierValue), type, ((DfaConstValue)qualifierValue).getConstant());
       }
       return qualifierValue;
     }

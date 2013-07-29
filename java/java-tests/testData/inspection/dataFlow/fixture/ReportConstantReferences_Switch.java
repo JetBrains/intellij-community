@@ -6,4 +6,17 @@ class Test {
     }
   }
 
+  private void test2(int state) {
+    switch (state) {
+      case ONE:
+      case TWO:
+        if (state == TWO) {
+          System.out.println("hello");
+        }
+    }
+  }
+
+  public static final int ONE = 1;
+  public static final int TWO = 2;
+
 }
