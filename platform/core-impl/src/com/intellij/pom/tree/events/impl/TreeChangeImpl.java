@@ -508,7 +508,8 @@ public class TreeChangeImpl implements TreeChange {
       buffer.append("(");
       buffer.append(node.getElementType().toString());
       buffer.append(" at ").append(pair.getSecond()).append(", ");
-      buffer.append(getChangeByChild(node).toString());
+      ChangeInfo child = getChangeByChild(node);
+      buffer.append(child != null ? child.toString():"null");
       buffer.append(")");
       if(iterator.hasNext()) buffer.append(", ");
     }
