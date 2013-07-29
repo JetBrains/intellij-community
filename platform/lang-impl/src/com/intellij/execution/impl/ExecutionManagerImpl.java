@@ -93,6 +93,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     myRunningConfigurations.clear();
   }
 
+  @NotNull
   @Override
   public RunContentManager getContentManager() {
     if (myContentManager == null) {
