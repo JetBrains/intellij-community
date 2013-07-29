@@ -187,7 +187,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
 
     @SuppressWarnings({"CloneDoesntCallSuperClone"})
     @Override
-    public RuntimeConfiguration clone() {
+    public DelegatingRuntimeConfiguration<T> clone() {
       return new DelegatingRuntimeConfiguration<T>((T)myConfig.clone());
     }
 
