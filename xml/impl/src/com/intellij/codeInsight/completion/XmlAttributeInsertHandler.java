@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.text.CharArrayUtil;
@@ -67,5 +67,6 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
     editor.getCaretModel().moveToOffset(caretOffset + 2);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
+    AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor);
   }
 }

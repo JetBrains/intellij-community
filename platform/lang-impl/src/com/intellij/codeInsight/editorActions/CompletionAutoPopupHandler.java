@@ -69,7 +69,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
     if (Character.isLetter(charTyped) || charTyped == '_') {
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor, null);
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       return Result.STOP;
     }
 

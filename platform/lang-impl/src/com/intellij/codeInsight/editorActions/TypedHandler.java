@@ -278,6 +278,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     return false;
   }
 
+  @NotNull
   static Editor injectedEditorIfCharTypedIsSignificant(final char charTyped, Editor editor, PsiFile oldFile) {
     int offset = editor.getCaretModel().getOffset();
     // even for uncommitted document try to retrieve injected fragment that has been there recently

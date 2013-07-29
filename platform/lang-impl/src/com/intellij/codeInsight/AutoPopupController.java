@@ -128,6 +128,10 @@ public class AutoPopupController implements Disposable {
     });
   }
 
+  public void scheduleAutoPopup(final Editor editor) {
+    scheduleAutoPopup(editor, null);
+  }
+
   private void addRequest(final Runnable request, final int delay) {
     Runnable runnable = new Runnable() {
       @Override

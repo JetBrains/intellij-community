@@ -34,7 +34,7 @@ class PackageLookupItem extends LookupItem<PsiPackage> {
   public void handleInsert(InsertionContext context) {
     super.handleInsert(context);
     if (getTailType() == TailType.DOT || context.getCompletionChar() == '.') {
-      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor(), null);
+      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
     }
   }
 }

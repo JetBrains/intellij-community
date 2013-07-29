@@ -65,7 +65,7 @@ public abstract class TypedHandlerDelegate {
    * @param editor
    * @param file
    */
-  public Result charTyped(char c, final Project project, final Editor editor, @NotNull final PsiFile file) {
+  public Result charTyped(char c, final Project project, final @NotNull Editor editor, @NotNull final PsiFile file) {
     return Result.CONTINUE;
   }
 

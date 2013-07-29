@@ -41,7 +41,7 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
   private static final char SLASH = '/';
   
   @Override
-  public Result charTyped(char c, Project project, Editor editor, PsiFile file) {
+  public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (project == null || editor == null || file == null) {
       return Result.CONTINUE;
     }

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -45,11 +46,12 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
   }
 
   @Override
-  public Result charTyped(char c, Project project, Editor editor, @NotNull PsiFile file) {
+  public Result charTyped(char c, Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (needToInsertQuotes) {
       int offset = editor.getCaretModel().getOffset();
       editor.getDocument().insertString(offset, "\"\"");
       editor.getCaretModel().moveToOffset(offset + 1);
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
     }
     needToInsertQuotes = false;
     return super.charTyped(c, project, editor, file);

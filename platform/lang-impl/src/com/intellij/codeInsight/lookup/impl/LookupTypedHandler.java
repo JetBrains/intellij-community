@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,7 +91,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
         if (completion != null) {
           completion.scheduleRestart();
         } else {
-          AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor, null);
+          AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor);
         }
       }
 
