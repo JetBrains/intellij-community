@@ -24,6 +24,7 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -1249,9 +1250,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     try {
       startElement(expression);
 
-      List<MethodContract> contracts = getCallContract(expression);
-      if (!contracts.isEmpty()) {
-        handleContracts(expression, contracts);
+      if (handleContracts(expression, getCallContracts(expression))) {
         return;
       }
 
@@ -1302,20 +1301,34 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private void handleContracts(PsiMethodCallExpression expression, List<MethodContract> contracts) {
-    PsiExpression[] args = expression.getArgumentList().getExpressions();
+  private boolean handleContracts(PsiMethodCallExpression expression, List<MethodContract> _contracts) {
+    if (_contracts.isEmpty()) {
+      return false;
+    }
+
+    final PsiExpression[] args = expression.getArgumentList().getExpressions();
+    List<MethodContract> contracts = ContainerUtil.findAll(_contracts, new Condition<MethodContract>() {
+      @Override
+      public boolean value(MethodContract contract) {
+        return args.length == contract.arguments.length;
+      }
+    });
+    if (contracts.isEmpty()) {
+      return false;
+    }
+
     for (PsiExpression arg : args) {
       arg.accept(this);
     }
+
     if (contracts.size() > 1) {
       addInstruction(new DupInstruction(args.length, contracts.size() - 1));
     }
     for (MethodContract contract : contracts) {
-      if (args.length == contract.arguments.length) {
-        handleContract(expression, contract);
-      }
-    }                                        
+      handleContract(expression, contract);
+    }
     pushUnknown(); // goto here if all contracts are false
+    return true;
   }
   
   private void handleContract(PsiMethodCallExpression expression, MethodContract contract) {
@@ -1383,7 +1396,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private static List<MethodContract> getCallContract(PsiMethodCallExpression expression) {
+  private static List<MethodContract> getCallContracts(PsiMethodCallExpression expression) {
     PsiMethod resolved = expression.resolveMethod();
     if (resolved != null) {
       final PsiAnnotation contractAnno = AnnotationUtil.findAnnotation(resolved, "org.jetbrains.annotations.Contract");
@@ -1415,33 +1428,33 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         final String className = owner.getQualifiedName();
         if ("java.lang.System".equals(className)) {
           if ("exit".equals(methodName)) {
-            return Arrays.asList(new MethodContract(getAnyArgConstraints(params), ValueConstraint.SYSTEM_EXIT));
+            return Collections.singletonList(new MethodContract(getAnyArgConstraints(params), ValueConstraint.SYSTEM_EXIT));
           }
         }
         else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) ||
                  "junit.framework.TestCase".equals(className) || "org.testng.Assert".equals(className)) {
           boolean testng = "org.testng.Assert".equals(className);
           if ("fail".equals(methodName)) {
-            return Arrays.asList(new MethodContract(getAnyArgConstraints(params), ValueConstraint.THROW_EXCEPTION));
+            return Collections.singletonList(new MethodContract(getAnyArgConstraints(params), ValueConstraint.THROW_EXCEPTION));
           }
 
           int checkedParam = testng ? 0 : params.length - 1;
           ValueConstraint[] constraints = getAnyArgConstraints(params);
           if ("assertTrue".equals(methodName)) {
             constraints[checkedParam] = ValueConstraint.FALSE_VALUE;
-            return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
+            return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
           }
           if ("assertFalse".equals(methodName)) {
             constraints[checkedParam] = ValueConstraint.TRUE_VALUE;
-            return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
+            return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
           }
           if ("assertNull".equals(methodName)) {
             constraints[checkedParam] = ValueConstraint.NOT_NULL_VALUE;
-            return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
+            return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
           }
           if ("assertNotNull".equals(methodName)) {
             constraints[checkedParam] = ValueConstraint.NULL_VALUE;
-            return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
+            return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
           }
           return Collections.emptyList();
         }
@@ -1458,13 +1471,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         ConditionChecker.Type type = checker.getConditionCheckType();
         if (type == ASSERT_IS_NULL_METHOD || type == ASSERT_IS_NOT_NULL_METHOD) {
           constraints[checkedParam] = type == ASSERT_IS_NOT_NULL_METHOD ? ValueConstraint.NULL_VALUE : ValueConstraint.NOT_NULL_VALUE;
-          return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
+          return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
         } else if (type == IS_NULL_METHOD || type == IS_NOT_NULL_METHOD) {
           constraints[checkedParam] = type == IS_NULL_METHOD ? ValueConstraint.NOT_NULL_VALUE : ValueConstraint.NULL_VALUE;
-          return Arrays.asList(new MethodContract(constraints, ValueConstraint.FALSE_VALUE));
+          return Collections.singletonList(new MethodContract(constraints, ValueConstraint.FALSE_VALUE));
         } else { //assertTrue or assertFalse
           constraints[checkedParam] = type == ASSERT_FALSE_METHOD ? ValueConstraint.TRUE_VALUE : ValueConstraint.FALSE_VALUE;
-          return Arrays.asList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
+          return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
         }
       }
     }
