@@ -171,6 +171,9 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     }
   }
 
+  /**
+   * @deprecated feel free to pass your configuration to SMTRunnerConsoleProperties directly instead of wrapping in DelegatingRuntimeConfiguration
+   */
   public static class DelegatingRuntimeConfiguration<T extends LocatableConfiguration>
     extends LocatableConfigurationBase implements ModuleRunConfiguration {
     private final T myConfig;
