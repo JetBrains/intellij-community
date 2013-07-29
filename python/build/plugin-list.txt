@@ -26,7 +26,6 @@ hg4idea
 tasks
 tasks-core
 tasks-api
-jira-connector
 github
 webDeployment
 jdbc-console
