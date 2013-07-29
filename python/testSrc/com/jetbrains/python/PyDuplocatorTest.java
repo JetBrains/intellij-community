@@ -118,6 +118,16 @@ public class PyDuplocatorTest extends PyTestCase {
     doTest(1);
   }
 
+  public void testFunctionParametersNegative() throws Exception {
+    myDuplocatorSettings.DISTINGUISH_VARIABLES = false;
+    try {
+      doTest(0);
+    }
+    finally {
+      myDuplocatorSettings.DISTINGUISH_VARIABLES = true;
+    }
+  }
+
   protected void setUp() throws Exception {
     super.setUp();
     myDuplocatorSettings = PyDuplocatorSettings.getInstance();
