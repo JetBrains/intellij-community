@@ -128,7 +128,7 @@ public class GithubApiUtil {
       Header header = method.getResponseHeader("Link");
       if (header != null) {
         String value = header.getValue();
-        int end = value.indexOf(">; rel=\"nextPage\"");
+        int end = value.indexOf(">; rel=\"next\"");
         int begin = value.lastIndexOf('<', end);
         if (begin >= 0 && end >= 0) {
           String newPath = GithubUrlUtil.removeProtocolPrefix(value.substring(begin + 1, end));
