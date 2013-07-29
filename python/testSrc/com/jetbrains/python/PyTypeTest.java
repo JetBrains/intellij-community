@@ -629,6 +629,17 @@ public class PyTypeTest extends PyTestCase {
     assertTrue(PyTypeChecker.isUnknown(type));
   }
 
+  public void testParameterOfFunctionTypeAndReturnValue() {
+    doTest("int",
+           "def func(f):\n" +
+           "    '''\n" +
+           "    :type f: (unknown) -> str\n" +
+           "    '''\n" +
+           "    return 1\n" +
+           "\n" +
+           "expr = func(foo)\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }

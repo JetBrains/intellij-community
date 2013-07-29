@@ -400,23 +400,26 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Nullable
   private String extractReturnType() {
+    final String ARROW = "->";
+    final StructuredDocString structuredDocString = getStructuredDocString();
+    if (structuredDocString != null) {
+      return structuredDocString.getReturnType();
+    }
     final String docString = getDocStringValue();
-    if (docString == null) {
-      return null;
-    }
-    final List<String> lines = StringUtil.split(docString, "\n");
-    while (lines.size() > 0 && lines.get(0).trim().length() == 0) {
-      lines.remove(0);
-    }
-    if (lines.size() > 1 && lines.get(1).trim().length() == 0) {
-      String firstLine = lines.get(0);
-      int pos = firstLine.lastIndexOf("->");
-      if (pos >= 0) {
-        return firstLine.substring(pos + 2).trim();
+    if (docString != null && docString.contains(ARROW)) {
+      final List<String> lines = StringUtil.split(docString, "\n");
+      while (lines.size() > 0 && lines.get(0).trim().length() == 0) {
+        lines.remove(0);
+      }
+      if (lines.size() > 1 && lines.get(1).trim().length() == 0) {
+        String firstLine = lines.get(0);
+        int pos = firstLine.lastIndexOf(ARROW);
+        if (pos >= 0) {
+          return firstLine.substring(pos + 2).trim();
+        }
       }
     }
-    final StructuredDocString structuredDocString = getStructuredDocString();
-    return structuredDocString != null ? structuredDocString.getReturnType() : null;
+    return null;
   }
 
   private static class ReturnVisitor extends PyRecursiveElementVisitor {
