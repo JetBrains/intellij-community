@@ -965,7 +965,8 @@
     <visitorFilter language="Python" implementationClass="com.jetbrains.web2py.annotator.Web2PyVisitorFilter"/>
     <importResolver implementation="com.jetbrains.web2py.psi.Web2PyImportResolver"/>
 
-    <!-- Chameleon -->
+    <!-- Pyramid && Chameleon -->
+    <typeProvider implementation="com.jetbrains.pyramid.codeInsight.PyramidTypeProvider"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.pyramid.templates.ref.ChameleonTokenSetContributor"/>
     <visitorFilter language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonTemplateVisitorFilter"/>
   </extensions>
