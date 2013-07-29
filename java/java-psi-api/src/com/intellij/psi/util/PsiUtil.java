@@ -1015,6 +1015,11 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static void ensureValidType(@NotNull PsiType type) {
     if (!type.isValid()) {
+      Thread.yield();
+      if (type.isValid()) {
+        LOG.error("PsiType resurrected: " + type + " of " + type.getClass());
+        return;
+      }
       if (type instanceof PsiClassType) {
         ((PsiClassType)type).resolve(); // should throw exception
       }

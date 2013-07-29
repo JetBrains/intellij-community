@@ -17,6 +17,7 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -38,6 +39,7 @@ import java.util.Collection;
  * @author yole
  */
 public class PsiUtilCore {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilCore");
   public static final PsiElement NULL_PSI_ELEMENT = new PsiElement() {
     @Override
     @NotNull
@@ -452,6 +454,11 @@ public class PsiUtilCore {
 
   public static void ensureValid(@NotNull PsiElement element) {
     if (!element.isValid()) {
+      Thread.yield();
+      if (element.isValid()) {
+        LOG.error("PSI resurrected: " + element + " of " + element.getClass());
+        return;
+      }
       throw new PsiInvalidElementAccessException(element);
     }
   }
