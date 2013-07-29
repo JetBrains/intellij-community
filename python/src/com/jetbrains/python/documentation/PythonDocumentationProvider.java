@@ -100,8 +100,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
       return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString() + "\n" + summary;
     }
-    else if (element instanceof PyTargetExpression || element instanceof PyNamedParameter) {
-      return describeExpression((PyExpression)element);
+    else if (element instanceof PyExpression) {
+      return describeExpression((PyExpression)element, originalElement);
     }
     return null;
   }
@@ -131,7 +131,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   @Nullable
-  private static String describeExpression(PyExpression expr) {
+  private static String describeExpression(@NotNull PyExpression expr, @NotNull PsiElement originalElement) {
     final String name = expr.getName();
     if (name != null) {
       StringBuilder result = new StringBuilder((expr instanceof PyNamedParameter) ? "parameter" : "variable");
@@ -143,15 +143,17 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           result.append(String.format(" \"%s\"", function.getName()));
         }
       }
-      result.append("\n").append(describeExpressionType(expr));
+      if (originalElement instanceof PyTypedElement) {
+        result.append("\n").append(describeType((PyTypedElement)originalElement));
+      }
       return result.toString();
     }
     return null;
   }
 
-  static String describeExpressionType(PyExpression expr) {
-    final TypeEvalContext context = TypeEvalContext.userInitiated(expr.getContainingFile());
-    return String.format("Inferred type: %s", getTypeName(context.getType(expr), context));
+  static String describeType(@NotNull PyTypedElement element) {
+    final TypeEvalContext context = TypeEvalContext.userInitiated(element.getContainingFile());
+    return String.format("Inferred type: %s", getTypeName(context.getType(element), context));
   }
 
   public static String getTypeDescription(@NotNull PyFunction fun) {
