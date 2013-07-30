@@ -98,5 +98,15 @@ public class GithubRepo {
   public GithubUser getOwner() {
     return myOwner;
   }
+
+  @NotNull
+  public String getUserName() {
+    return getOwner().getLogin();
+  }
+
+  @NotNull
+  public GithubFullPath getFullPath() {
+    return new GithubFullPath(getUserName(), getName());
+  }
 }
 

@@ -78,7 +78,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     Collections.sort(availableRepos, new Comparator<GithubRepo>() {
       @Override
       public int compare(final GithubRepo r1, final GithubRepo r2) {
-        final int comparedOwners = r1.getOwner().getLogin().compareTo(r2.getOwner().getLogin());
+        final int comparedOwners = r1.getUserName().compareTo(r2.getUserName());
         return comparedOwners != 0 ? comparedOwners : r1.getName().compareTo(r2.getName());
       }
     });
