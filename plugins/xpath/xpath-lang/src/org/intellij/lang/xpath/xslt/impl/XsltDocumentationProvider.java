@@ -156,7 +156,13 @@ public class XsltDocumentationProvider implements DocumentationProvider {
           return xmlTag.getLocalName();
         }
         else if (XmlUtil.ourSchemaUrisList.contains(xmlTag.getNamespace())) {
-          return xmlTag.getAttributeValue("name");
+          PsiFile file = xmlTag.getContainingFile();
+          if (file instanceof XmlFile) {
+            XmlTag tag = ((XmlFile)file).getRootTag();
+            if (tag != null && XsltSupport.XSLT_NS.equals(tag.getAttributeValue("targetNamespace"))) {
+              return xmlTag.getAttributeValue("name");
+            }
+          }
         }
       }
       return null;
