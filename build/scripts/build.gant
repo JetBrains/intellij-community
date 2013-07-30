@@ -1,0 +1,82 @@
+import org.jetbrains.jps.LayoutInfo
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+import org.jetbrains.jps.Build
+import org.jetbrains.jps.Paths
+
+includeTargets << new File("${guessHome(this)}/community/build/scripts/utils.gant")
+includeTargets << new File("${guessHome(this)}/build/scripts/ultimate_utils.gant")
+includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
+
+//requireProperty("buildNumber", requireProperty("build.number", snapshot))
+
+def Build build
+
+init = { product_build -> 
+  projectBuilder.stage("Cleaning, creating folders, initializing timestamps")
+  build = product_build 
+  requireProperty("buildNumber", requireProperty("build.number", snapshot))			
+  loadProject()
+  projectBuilder.arrangeModuleCyclesOutputs = true
+
+  projectBuilder.stage("Cleaning up sandbox folder")
+  forceDelete(build.paths.sandbox)
+
+  projectBuilder.stage("Creating folders")
+  [build.paths.sandbox, build.paths.classesTarget, build.paths.distWin, build.paths.distWinZip, build.paths.distAll,
+   build.paths.distJars, build.paths.distUnix, build.paths.distMac, build.paths.distDev, build.paths.artifacts].each {
+    ant.mkdir(dir: it)
+  }
+  projectBuilder.stage("initializing timestamps")
+  ant.tstamp() {
+	format(property: "today.year", pattern: "yyyy")
+  }
+  build.setModules(project.modules.values())  
+  projectBuilder.stage("Init done")
+}
+
+compile = { 
+  projectBuilder.stage("Target compilation.")
+  println project
+  if (build.steps.zipSources) {
+    projectBuilder.stage("zip: $build.home $build.paths.artifacts")
+    zipSources(build.home, build.paths.artifacts)
+  }
+  build.compile()
+  projectBuilder.stage("Target compilation finished .")
+}
+
+scramble = { Map args -> {
+  if (isUnderTeamCity()) {
+    projectBuilder.stage("Scrambling")
+    
+    getPreviousLogs()
+
+    def prevBuildLog = "${paths.sandbox}/prevBuild/logs/ChangeLog.txt"
+    if (!new File(prevBuildLog).exists()) prevBuildLog = null
+
+    def inc = prevBuildLog != null ? "looseChangeLogFileIn=\"${prevBuildLog}\"" : ""
+    copyAndPatchFile("$home/build/conf/script.zkm.stub", "${paths.sandbox}/script.zkm",
+                     ["CLASSES": "\"${args.jarPath}/${args.jarName}\"", "SCRAMBLED_CLASSES": args.jarPath, "INCREMENTAL": inc])
+
+    ant.mkdir(dir: "$paths.artifacts/${args.jarName}.unscrambled")
+    def unscrambledPath = "$paths.artifacts/${args.jarName}.unscramble"
+    ant.copy(file: "$args.jarPath/${args.jarName}", todir: unscrambledPath)
+    notifyArtifactBuilt("$unscrambledPath/${args.jar}")
+
+    zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName)
+
+    ant.zip(destfile: "$paths.artifacts/logs.zip") {
+      fileset(file: "ChangeLog.txt")
+      fileset(file: "ZKM_log.txt")
+      fileset(file: "$paths.sandbox/script.zkm")
+    }
+
+    ant.delete(file: "ChangeLog.txt")
+    ant.delete(file: "ZKM_log.txt")
+  }
+  else {
+    projectBuilder.info("teamcity.buildType.id is not defined. Incremental scrambling is disabled")
+  }
+}
+
+}
