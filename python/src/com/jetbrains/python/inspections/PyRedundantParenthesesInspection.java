@@ -57,7 +57,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
       PyExpression expression = node.getContainedExpression();
       if (node.getText().contains("\n")) return;
       PyYieldExpression yieldExpression = PsiTreeUtil.getParentOfType(expression, PyYieldExpression.class, false);
-      if (yieldExpression != null && yieldExpression.isDelegating()) return;
+      if (yieldExpression != null) return;
       if (expression instanceof PyReferenceExpression || expression instanceof PyLiteralExpression) {
         if (myIgnorePercOperator) {
           PsiElement parent = node.getParent();

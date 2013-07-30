@@ -60,4 +60,8 @@ public class PyRedundantParenthesesInspectionTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON33);
   }
 
+  public void testYield() {       //PY-10420
+    doTest(LanguageLevel.PYTHON27);
+  }
+
 }
