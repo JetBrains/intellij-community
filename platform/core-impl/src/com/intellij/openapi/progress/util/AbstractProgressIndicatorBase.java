@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
@@ -36,6 +37,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   private volatile boolean myCanceled;
   private volatile boolean myRunning;
+  private volatile boolean myFinished;
 
   private volatile boolean myIndeterminate;
 
@@ -50,17 +52,33 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public synchronized void start() {
     LOG.assertTrue(!isRunning(), "Attempt to start ProgressIndicator which is already running");
+    if (myFinished) {
+      if (!isReuseable()) {
+        if (ourReportedReuseExceptions.add(getClass())) {
+          LOG.error("Attempt to start ProgressIndicator which is already stopped:" + this + "," + getClass());
+        }
+      }
+      myCanceled = false;
+      myFinished = false;
+    }
+
     myText = "";
     myFraction = 0;
     myText2 = "";
-    myCanceled = false;
     myRunning = true;
   }
 
+  private static final ConcurrentHashSet<Class> ourReportedReuseExceptions = new ConcurrentHashSet<Class>(2);
+
+  protected boolean isReuseable() {
+    return false;
+  }
+
   @Override
-  public void stop() {
+  public synchronized void stop() {
     LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
     myRunning = false;
+    myFinished = true;
   }
 
   @Override

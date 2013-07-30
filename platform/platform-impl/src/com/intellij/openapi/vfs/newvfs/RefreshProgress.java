@@ -77,6 +77,11 @@ public class RefreshProgress extends ProgressIndicatorBase {
   }
 
   @Override
+  protected boolean isReuseable() {
+    return true;
+  }
+
+  @Override
   public void stop() {
     super.stop();
 
