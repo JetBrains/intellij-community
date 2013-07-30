@@ -38,7 +38,7 @@ def test():
 
     result = f1([1, 2, 3])
     print(result)
-    print(result + <warning descr="Expected type 'one of (int, long, float, complex)', got 'str' instead">'foo'</warning>)
+    print(result + <warning descr="Expected type 'int | long | float | complex', got 'str' instead">'foo'</warning>)
 
     f2(1, <weak_warning descr="Expected type 'list of int' (matched generic type 'list of T'), got 'list of str' instead">['foo']</weak_warning>, 'bar')
 

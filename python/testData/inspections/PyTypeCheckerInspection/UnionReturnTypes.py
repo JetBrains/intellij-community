@@ -17,7 +17,7 @@ def test():
         """
     x1 = f1(42)
     f2(x1)  # Weaker union types
-    f3(<warning descr="Expected type 'int', got 'one of (list, str, None)' instead">x1</warning>)
+    f3(<warning descr="Expected type 'int', got 'list | str | None' instead">x1</warning>)
 
     f2(<warning descr="Expected type 'str', got 'int' instead">x1.count('')</warning>)
     f3(x1.count(''))
