@@ -120,6 +120,7 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
     myState.myRememberedUserNames.put(stringUrl, username);
   }
 
+  @NotNull
   public String getHgExecutable() {
     return myState.myHgExecutable == null ? defaultHgExecutable() : myState.myHgExecutable;
   }

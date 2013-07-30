@@ -29,7 +29,6 @@ import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
-import org.zmlx.hg4idea.util.HgVersionUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,7 +81,8 @@ public class HgCommitCommand {
       List<List<String>> chunkedCommits = VcsFileUtil.chunkRelativePaths(relativePaths);
       int size = chunkedCommits.size();
       commitChunkFiles(chunkedCommits.get(0), false);
-      boolean amendCommit = HgVersionUtil.isAmendSupported();
+      HgVcs vcs = HgVcs.getInstance(myProject);
+      boolean amendCommit = vcs != null && vcs.getVersion().isAmendSupported();
       for (int i = 1; i < size; i++) {
         List<String> chunk = chunkedCommits.get(i);
         commitChunkFiles(chunk, amendCommit);

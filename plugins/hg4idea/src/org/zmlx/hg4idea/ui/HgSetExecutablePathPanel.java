@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.util.HgVersionUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.awt.event.ActionListener;
 import java.util.HashSet;
@@ -24,7 +24,7 @@ class HgSetExecutablePathPanel extends TextFieldWithBrowseButton {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
         String path = files[0].getPath();
-        if (!HgVersionUtil.isValid(path, projectSettings.isRunViaBash())) {
+        if (!HgUtil.isValid(path)) {
           throw new ConfigurationException(HgVcsMessages.message("hg4idea.configuration.executable.error", path));
         }
         for (ActionListener okListener : myOkListeners) {

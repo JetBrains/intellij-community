@@ -12,6 +12,9 @@
 // limitations under the License.
 package org.zmlx.hg4idea.util;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,11 +28,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.FileHistoryPanelImpl;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -586,5 +591,24 @@ public abstract class HgUtil {
     HgRepository hgRepository = getRepositoryManager(project).getRepositoryForRoot(root);
     assert hgRepository != null : "Repository can't be null for root " + root.getName();
     return hgRepository.getRepositoryConfig().getPaths();
+  }
+
+  public static boolean isValid(@Nullable String executable) {
+    try {
+      if (StringUtil.isEmptyOrSpaces(executable)) {
+        return false;
+      }
+      GeneralCommandLine commandLine = new GeneralCommandLine();
+      //noinspection ConstantConditions
+      commandLine.setExePath(executable);
+      commandLine.addParameter("--version");
+      commandLine.addParameter("-q");
+      CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
+      ProcessOutput result = handler.runProcess(30 * 1000);
+      return !result.isTimeout() && result.getStderr().isEmpty();
+    }
+    catch (Throwable e) {
+      return false;
+    }
   }
 }

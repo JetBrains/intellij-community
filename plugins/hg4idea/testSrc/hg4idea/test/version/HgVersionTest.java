@@ -16,29 +16,66 @@
 package hg4idea.test.version;
 
 import hg4idea.test.HgPlatformTest;
-import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.command.HgVersionCommand;
+import org.zmlx.hg4idea.util.HgVersion;
+
+import java.lang.reflect.Field;
 
 /**
  * @author Nadya Zabrodina
  */
 public class HgVersionTest extends HgPlatformTest {
 
-  @NotNull private HgVcs myVcs;
+  private static final TestHgVersion[] commonTests = {
+    new TestHgVersion("Mercurial Distributed SCM (version 2.6.2)", 2, 6, 2),
+    new TestHgVersion("Mercurial Distributed SCM (version 2.6+20130507)", 2, 6, 20130507),
+    new TestHgVersion("Mercurial Distributed SCM (version 1.9.5)", 1, 9, 5),
+    new TestHgVersion("Mercurial Distributed SCM (version 2.6)", 2, 6, 0)
+  };
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    HgVcs vcs = HgVcs.getInstance(myProject);
-    assertNotNull(vcs);
-    myVcs = vcs;
+  public void testParseSupported() throws Exception {
+    for (TestHgVersion test : commonTests) {
+      HgVersion version = HgVersion.parseVersion(test.output);
+      assertEqualVersions(version, test);
+      assertTrue(version.isSupported());
+    }
   }
 
-  public void testVersionCommandForCurrentHgVersion() {
-    Double version =
-      new HgVersionCommand().getVersion(myVcs.getGlobalSettings().getHgExecutable(), myVcs.getGlobalSettings().isRunViaBash());
-    assertNotNull(version);
-    assertTrue(version > 0);
+  public void testParseUnsupported() throws Exception {
+    TestHgVersion unsupportedVersion = new TestHgVersion("Mercurial Distributed SCM (version 1.5.1)", 1, 5, 1);
+    HgVersion parsedVersion = HgVersion.parseVersion(unsupportedVersion.output);
+    assertEqualVersions(parsedVersion, unsupportedVersion);
+    assertFalse(parsedVersion.isSupported());
+  }
+
+  private static void assertEqualVersions(HgVersion actual, TestHgVersion expected) throws Exception {
+    Field field = HgVersion.class.getDeclaredField("myMajor");
+    field.setAccessible(true);
+    final int major = field.getInt(actual);
+    field = HgVersion.class.getDeclaredField("myMiddle");
+    field.setAccessible(true);
+    final int middle = field.getInt(actual);
+    field = HgVersion.class.getDeclaredField("myMinor");
+    field.setAccessible(true);
+    final int minor = field.getInt(actual);
+
+    assertEquals(major, expected.major);
+    assertEquals(middle, expected.middle);
+    assertEquals(minor, expected.minor);
+    HgVersion versionFromTest = new HgVersion(expected.major, expected.middle, expected.minor);
+    assertEquals(versionFromTest, actual); //test equals meth
+  }
+
+  private static class TestHgVersion {
+    private final String output;
+    private final int major;
+    private final int middle;
+    private final int minor;
+
+    public TestHgVersion(String output, int major, int middle, int minor) {
+      this.output = output;
+      this.major = major;
+      this.middle = middle;
+      this.minor = minor;
+    }
   }
 }

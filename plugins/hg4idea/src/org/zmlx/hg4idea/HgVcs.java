@@ -12,6 +12,9 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.intellij.ide.BrowserUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -23,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -39,13 +43,13 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
@@ -57,8 +61,9 @@ import org.zmlx.hg4idea.status.ui.HgHideableWidget;
 import org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget;
 import org.zmlx.hg4idea.status.ui.HgStatusWidget;
 import org.zmlx.hg4idea.util.HgUtil;
-import org.zmlx.hg4idea.util.HgVersionUtil;
+import org.zmlx.hg4idea.util.HgVersion;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -105,6 +110,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private HgStatusWidget myStatusWidget;
   private HgIncomingOutgoingWidget myIncomingWidget;
   private HgIncomingOutgoingWidget myOutgoingWidget;
+  @NotNull private HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
 
   public HgVcs(Project project,
                @NotNull HgGlobalSettings globalSettings,
@@ -262,12 +268,8 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void activate() {
-    super.activate();
-
-    // validate hg executable on start
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      getExecutableValidator().checkExecutableAndNotifyIfNeeded();
-    }
+    // validate hg executable on start and update hg version
+    checkExecutableAndVersion();
 
     // status bar
     myStatusWidget = new HgStatusWidget(this, getProject(), projectSettings);
@@ -317,6 +319,12 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
     // Force a branch topic update
     myProject.getMessageBus().syncPublisher(BRANCH_TOPIC).update(myProject, null);
+  }
+
+  private void checkExecutableAndVersion() {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
+      checkVersion();
+    }
   }
 
   @Override
@@ -412,5 +420,62 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public CheckoutProvider getCheckoutProvider() {
     return new HgCheckoutProvider();
+  }
+
+  /**
+   * Checks Hg version and updates the myVersion variable.
+   * In the case of nullable or unsupported version reports the problem.
+   */
+  public void checkVersion() {
+    final String executable = getGlobalSettings().getHgExecutable();
+    HgCommandResultNotifier errorNotification = new HgCommandResultNotifier(myProject);
+    String message;
+    final String SETTINGS_LINK = "settings";
+    final String UPDATE_LINK = "update";
+    NotificationListener linkAdapter = new NotificationListener.Adapter() {
+      @Override
+      protected void hyperlinkActivated(@NotNull Notification notification,
+                                        @NotNull HyperlinkEvent e) {
+        if (SETTINGS_LINK.equals(e.getDescription())) {
+          ShowSettingsUtil.getInstance()
+            .showSettingsDialog(myProject, getConfigurable().getDisplayName());
+        }
+        else if (UPDATE_LINK.equals(e.getDescription())) {
+          BrowserUtil.browse("http://mercurial.selenic.com");
+        }
+      }
+    };
+    try {
+      myVersion = HgVersion.identifyVersion(executable);
+      //if version is not supported, but have valid hg executable
+      if (!myVersion.isSupported()) {
+        LOG.info("Unsupported Hg version: " + myVersion);
+        message = String.format("The <a href='" + SETTINGS_LINK + "'>configured</a> version of Hg is not supported: %s.<br/> " +
+                                "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
+                                myVersion, HgVersion.MIN);
+        errorNotification.notifyError(null, "Unsupported Hg version", message, linkAdapter);
+
+      }
+    }
+    catch (Exception e) {
+      if (getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
+        //sometimes not hg application has version command, but we couldn't parse an answer as valid hg,
+        // so parse(output) throw ParseException, but hg and git executable seems to be valid in this case
+        final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
+        message = HgVcsMessages.message("hg4idea.unable.to.run.hg", executable);
+        errorNotification.notifyError(null, message,
+                                      String.format(
+                                        reason + "<br/> Please check your hg executable path in <a href='" + SETTINGS_LINK + "'> settings </a>"),
+                                      linkAdapter);
+      }
+    }
+  }
+
+  /**
+   * @return the version number of Hg, which is used by IDEA. Or {@link HgVersion#NULL} if version info is unavailable.
+   */
+  @NotNull
+  public HgVersion getVersion() {
+    return myVersion;
   }
 }
