@@ -473,6 +473,19 @@ public class GithubApiUtil {
   }
 
   @NotNull
+  public static GithubPullRequest createPullRequest(@NotNull GithubAuthData auth,
+                                                    @NotNull String user,
+                                                    @NotNull String repo,
+                                                    @NotNull String title,
+                                                    @NotNull String description,
+                                                    @NotNull String from,
+                                                    @NotNull String onto) throws IOException {
+    String request = gson.toJson(new GithubPullRequestRequest(title, description, from, onto));
+    return createDataFromRaw(fromJson(postRequest(auth, "/repos/" + user + "/" + repo + "/pulls", request), GithubPullRequestRaw.class),
+                             GithubPullRequest.class);
+  }
+
+  @NotNull
   public static GithubRepo createRepo(@NotNull GithubAuthData auth, @NotNull String name, @NotNull String description, boolean isPublic)
     throws IOException {
     String path = "/user/repos";
