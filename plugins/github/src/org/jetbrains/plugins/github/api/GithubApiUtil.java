@@ -610,4 +610,25 @@ public class GithubApiUtil {
 
     return request.getAll();
   }
+
+  @Nullable
+  public static GithubRepo findForkByUser(@NotNull GithubAuthData auth,
+                                          @NotNull String user,
+                                          @NotNull String repo,
+                                          @NotNull String forkUser) throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/forks";
+
+    PagedRequest<GithubRepo, GithubRepoRaw> request =
+      new PagedRequest<GithubRepo, GithubRepoRaw>(auth, path, GithubRepo.class, GithubRepoRaw[].class);
+
+    while (request.hasNext()) {
+      for (GithubRepo fork : request.next()) {
+        if (StringUtil.equalsIgnoreCase(fork.getUserName(), forkUser)) {
+          return fork;
+        }
+      }
+    }
+
+    return null;
+  }
 }
