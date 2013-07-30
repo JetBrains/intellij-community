@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.ProcessAdapter;
@@ -63,7 +62,6 @@ public class MavenResumeAction extends AnAction {
   public static final int STATE_WTF = -1;
 
   private final ProgramRunner myRunner;
-  private final Executor myExecutor;
   private final ExecutionEnvironment myEnvironment;
 
   private int myState = STATE_INITIAL;
@@ -78,11 +76,9 @@ public class MavenResumeAction extends AnAction {
 
   public MavenResumeAction(ProcessHandler processHandler,
                            ProgramRunner runner,
-                           Executor executor,
                            ExecutionEnvironment environment) {
     super("Resume build from specified module", null, AllIcons.RunConfigurations.RerunFailedTests);
     myRunner = runner;
-    myExecutor = executor;
     myEnvironment = environment;
 
     final MavenRunConfiguration runConfiguration = (MavenRunConfiguration)environment.getRunProfile();

@@ -83,7 +83,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         DefaultExecutionResult res = (DefaultExecutionResult)super.execute(executor, runner);
         if (executor.getId().equals(ToolWindowId.RUN)
             && MavenResumeAction.isApplicable(env.getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
-          MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, executor, env);
+          MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, env);
           res.setRestartActions(resumeAction);
         }
         return res;
