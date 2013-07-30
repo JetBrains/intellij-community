@@ -216,7 +216,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       }
       return createVariable(variableName, expression, context);
     }
-    return null;
+    return expression.getText();
   }
 
   private static String createVariable(String variableNameRoot,
