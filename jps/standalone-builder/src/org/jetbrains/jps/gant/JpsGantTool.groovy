@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package org.jetbrains.jps.gant
+
+import org.apache.tools.ant.AntClassLoader
 import org.codehaus.gant.GantBinding
 import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.model.JpsElementFactory
@@ -94,7 +96,11 @@ final class JpsGantTool {
     })
 
     def contextLoaderRef = "GANT_CONTEXT_CLASS_LOADER";
-    binding.ant.project.addReference(contextLoaderRef, Thread.currentThread().contextClassLoader)
+    ClassLoader contextLoader = Thread.currentThread().contextClassLoader
+    if (!(contextLoader instanceof AntClassLoader)) {
+      contextLoader = new AntClassLoader(contextLoader, binding.ant.project, null)
+    }
+    binding.ant.project.addReference(contextLoaderRef, contextLoader)
     binding.ant.taskdef(name: "layout", loaderRef: contextLoaderRef, classname: "jetbrains.antlayout.tasks.LayoutTask")
   }
 
