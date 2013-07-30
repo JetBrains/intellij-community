@@ -16,10 +16,9 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.ide.KillRingTransferable;
 
 /**
@@ -38,7 +37,7 @@ public class KillRingSaveAction extends TextComponentEditorAction {
     super(new Handler(false));
   }
 
-  static class Handler extends EditorWriteActionHandler {
+  static class Handler extends EditorActionHandler {
     
     private final boolean myRemove;
 
@@ -47,7 +46,7 @@ public class KillRingSaveAction extends TextComponentEditorAction {
     }
 
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void execute(Editor editor, DataContext dataContext) {
       SelectionModel selectionModel = editor.getSelectionModel();
       if (!selectionModel.hasSelection()) {
         return;
@@ -61,7 +60,7 @@ public class KillRingSaveAction extends TextComponentEditorAction {
       KillRingUtil.copyToKillRing(editor, start, end, false);
       if (myRemove) {
         editor.getDocument().deleteString(start, end);
-      }
+      } 
     }
   }
 }
