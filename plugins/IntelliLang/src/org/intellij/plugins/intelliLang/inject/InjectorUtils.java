@@ -253,14 +253,15 @@ public class InjectorUtils {
         T value = processor.fun(comment);
         if (value != null) return value;
       }
-      else if (StringUtil.isEmptyOrSpaces(e.getText())) {
+      else if (e instanceof PsiWhiteSpace) {
         commentOrSpaces = true;
+      }
+      else if (e instanceof PsiLanguageInjectionHost) {
+        commentOrSpaces = StringUtil.isEmptyOrSpaces(e.getText()); // check getText only for hosts (XmlText)
+        if (!commentOrSpaces) otherHosts.add((PsiLanguageInjectionHost)e);
       }
       else {
         commentOrSpaces = false;
-        if (e instanceof PsiLanguageInjectionHost) {
-          otherHosts.add((PsiLanguageInjectionHost)e);
-        }
       }
     }
     if (commentOrSpaces) { // allow several comments
@@ -271,7 +272,7 @@ public class InjectorUtils {
           T value = processor.fun(comment);
           if (value != null) return value;
         }
-        else if (!StringUtil.isEmptyOrSpaces(e.getText())) {
+        else if (!(e instanceof PsiWhiteSpace)) {
           break;
         }
       }
