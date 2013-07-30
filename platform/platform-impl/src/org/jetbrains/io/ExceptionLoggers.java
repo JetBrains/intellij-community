@@ -16,16 +16,27 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jboss.netty.channel.ChannelException;
 
 import java.io.IOException;
 
 public final class ExceptionLoggers {
   public static void log(Throwable throwable, Logger log) {
-    if (throwable instanceof IOException && "An existing connection was forcibly closed by the remote host".equals(throwable.getMessage())) {
+    if (isAsWarning(throwable)) {
       log.warn(throwable);
     }
     else {
       log.error(throwable);
     }
+  }
+
+  private static boolean isAsWarning(Throwable throwable) {
+    String message = throwable.getMessage();
+    if (message == null) {
+      return false;
+    }
+
+    return (throwable instanceof IOException && message.equals("An existing connection was forcibly closed by the remote host")) ||
+           (throwable instanceof ChannelException && message.startsWith("Failed to bind to: "));
   }
 }
