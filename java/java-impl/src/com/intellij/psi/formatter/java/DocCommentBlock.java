@@ -18,9 +18,9 @@ package com.intellij.psi.formatter.java;
 import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public class DocCommentBlock extends AbstractJavaBlock{
 
     ASTNode child = myNode.getFirstChildNode();
     while (child != null) {
-      if (child.getElementType() == ElementType.DOC_COMMENT_START) {
+      if (child.getElementType() == JavaDocTokenType.DOC_COMMENT_START) {
         result.add(createJavaBlock(child, mySettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()));
       } else if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getText().trim().length() > 0){
         result.add(createJavaBlock(child, mySettings, Indent.getSpaceIndent(1), null, AlignmentStrategy.getNullStrategy()));
