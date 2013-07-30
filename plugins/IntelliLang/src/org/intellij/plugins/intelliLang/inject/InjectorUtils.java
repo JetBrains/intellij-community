@@ -238,21 +238,14 @@ public class InjectorUtils {
   @Nullable
   public static <T> T findNearestComment(PsiElement element, NullableFunction<PsiComment, T> processor) {
     if (element instanceof PsiComment) return null;
-
     PsiFile containingFile = element.getContainingFile();
-    Document document = PsiDocumentManager.getInstance(containingFile.getProject()).getDocument(containingFile);
-    if (document == null) return null;
-    TextRange elementRange = element.getTextRange();
-    int lineNumber = document.getLineNumber(elementRange.getStartOffset());
 
-    int minLineOffset = document.getLineStartOffset(Math.max(0, lineNumber - 3)); // allow 3 lines span
-    TextRange r = TextRange.create(minLineOffset, elementRange.getStartOffset());
-    List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(containingFile, r.getStartOffset(), r.getEndOffset());
     List<PsiLanguageInjectionHost> otherHosts = new SmartList<PsiLanguageInjectionHost>();
 
     boolean commentOrSpaces = false;
-    for (PsiElement e : ContainerUtil.reverse(elements)) {
-      if (e.getTextLength() > r.getLength()) continue; // skip 'parents' from #getElementsInRange
+
+    PsiElement prev = element, e = prevOrParent(element, containingFile);
+    for (int counter = 0; e != null && counter < 100; prev = e, e = prevOrParent(e, containingFile), counter ++) {
       if (e instanceof PsiComment) {
         commentOrSpaces = true;
         PsiComment comment = (PsiComment)e;
@@ -271,7 +264,7 @@ public class InjectorUtils {
       }
     }
     if (commentOrSpaces) { // allow several comments
-      for (PsiElement e = elements.get(0).getPrevSibling(); e != null; e = e.getPrevSibling()) {
+      for (e = prevOrParent(prev, containingFile); e != null; e = e.getPrevSibling()) {
         if (e instanceof PsiComment) {
           PsiComment comment = (PsiComment)e;
           if (!checkDepth(otherHosts, element, comment)) continue;
@@ -295,5 +288,14 @@ public class InjectorUtils {
       if (!PsiTreeUtil.isAncestor(parent, PsiTreeUtil.findCommonParent(host, element), true)) return false;
     }
     return true;
+  }
+
+  @Nullable
+  public static PsiElement prevOrParent(PsiElement e, PsiElement scope) {
+    if (e == null || e == scope) return null;
+    PsiElement prev = e.getPrevSibling();
+    if (prev != null) return PsiTreeUtil.getDeepestLast(prev);
+    PsiElement parent = e.getParent();
+    return parent == scope || parent instanceof PsiFile ? null : parent;
   }
 }
