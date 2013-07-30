@@ -239,8 +239,9 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public boolean hasInitializer() {
-    if (getStub() != null) {
-      return getInitializerText() != null;
+    PsiFieldStub stub = getStub();
+    if (stub != null) {
+      return stub.getInitializerText() != null;
     }
 
     return getInitializer() != null;
@@ -325,16 +326,6 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
 
     return JavaResolveCache.getInstance(getProject()).computeConstantValueWithCaching(this, OurConstValueComputer.INSTANCE, visitedVars);
-  }
-
-  @Nullable
-  private String getInitializerText() {
-    final PsiFieldStub stub = getStub();
-    if (stub != null) {
-      return stub.getInitializerText();
-    }
-
-    throw new RuntimeException("Shall not be called when in stubless mode");
   }
 
   @Override
