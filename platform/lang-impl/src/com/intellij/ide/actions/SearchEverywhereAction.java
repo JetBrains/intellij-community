@@ -307,6 +307,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       Component cmp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (myLocationString != null) {
         final JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(UIUtil.getListBackground());
         panel.add(cmp, BorderLayout.CENTER);
         panel.add(myLocation.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus), BorderLayout.EAST);
         cmp = panel;
