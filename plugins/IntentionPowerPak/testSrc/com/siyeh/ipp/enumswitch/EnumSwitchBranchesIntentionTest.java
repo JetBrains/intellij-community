@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,10 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
 public class EnumSwitchBranchesIntentionTest extends IPPTestCase {
-  public void testWithoutBraces() throws Exception {
-    doTest();
-  }
 
-  public void testNoActionAfterBraces() throws Exception {
-    assertIntentionNotAvailable();
-  }
+  public void testWithoutBraces() { doTest(); }
+  public void testBeforeDefault() { doTest(); }
+  public void testNoActionAfterBraces() { assertIntentionNotAvailable(); }
 
   @Override
   protected String getIntentionName() {
