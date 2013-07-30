@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,7 +233,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return StringUtil.compare(getFullName(o1), getFullName(o2), true);
   }
 
-  protected static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
+  public static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
     final AnActionEvent event = new AnActionEvent(null, dataContext,
                                                   ActionPlaces.UNKNOWN, new Presentation(), ActionManager.getInstance(),
                                                   0);
