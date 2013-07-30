@@ -7,12 +7,8 @@ import pycharm_commands  # we need pycharm_commands module to be loaded
 
 if __name__ == "__main__":
     test_suite = sys.argv.pop(-1)
-
+    sys.argv = [test_suite, "--command-packages", "pycharm_commands", "pycharm_test"]
     __file__ = test_suite
-    sys.argv.append("--command-packages")
-    sys.argv.append("pycharm_commands")
-    sys.argv.append("pycharm_test")
-
 
     if PYTHON_VERSION_MINOR == 2 and PYTHON_VERSION_MAJOR == 4:
         #noinspection PyCompatibility
