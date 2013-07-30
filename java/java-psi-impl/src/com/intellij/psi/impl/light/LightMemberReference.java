@@ -61,7 +61,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   @Override
-  public void processVariants(PsiScopeProcessor processor){
+  public void processVariants(@NotNull PsiScopeProcessor processor){
     throw new RuntimeException("Variants are not available for light references");
   }
 

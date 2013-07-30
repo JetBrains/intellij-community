@@ -91,7 +91,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
             return super.advancedResolve(incompleteCode);
           }
 
-          public void processVariants(final PsiScopeProcessor processor) {
+          public void processVariants(@NotNull final PsiScopeProcessor processor) {
             if (processor instanceof JavaCompletionProcessor) {
               ((JavaCompletionProcessor)processor).setCompletionElements(getVariants());
             } else {

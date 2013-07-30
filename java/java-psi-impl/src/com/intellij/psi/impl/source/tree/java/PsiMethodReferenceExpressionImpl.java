@@ -93,7 +93,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   }
 
   @Override
-  public void processVariants(final PsiScopeProcessor processor) {
+  public void processVariants(@NotNull final PsiScopeProcessor processor) {
     final FilterScopeProcessor proc = new FilterScopeProcessor(ElementClassFilter.METHOD, processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
   }
@@ -288,7 +288,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           if (isConstructor && interfaceMethod != null) {
             final PsiTypeParameter[] typeParameters = containingClass.getTypeParameters();
             final boolean isRawSubst = PsiUtil.isRawSubstitutor(containingClass, substitutor);
-            final PsiClassType returnType = JavaPsiFacade.getElementFactory(getProject()).createType(containingClass, 
+            final PsiClassType returnType = JavaPsiFacade.getElementFactory(getProject()).createType(containingClass,
                                                                                                      isRawSubst ? PsiSubstitutor.EMPTY : substitutor);
 
             substitutor = LambdaUtil.inferFromReturnType(typeParameters, returnType, interfaceMethodReturnType, substitutor, languageLevel,
@@ -446,7 +446,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final boolean validConstructorRef = psiMethod.isConstructor() && (myContainingClass.getContainingClass() == null || myContainingClass.hasModifierProperty(PsiModifier.STATIC));
           final boolean staticOrValidConstructorRef = psiMethod.hasModifierProperty(PsiModifier.STATIC) || validConstructorRef;
 
-          if ((parameterTypes.length == signatureParameterTypes2.length || varArgs) && 
+          if ((parameterTypes.length == signatureParameterTypes2.length || varArgs) &&
               (!(myBeginsWithReferenceType ^ staticOrValidConstructorRef) || (psiMethod.isConstructor() && conflict.isStaticsScopeCorrect()))) {
             boolean correct = true;
             for (int i = 0; i < parameterTypes.length; i++) {

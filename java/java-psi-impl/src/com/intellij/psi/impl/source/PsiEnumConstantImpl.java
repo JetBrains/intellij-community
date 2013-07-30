@@ -260,7 +260,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     }
 
     @Override
-    public void processVariants(PsiScopeProcessor processor) {
+    public void processVariants(@NotNull PsiScopeProcessor processor) {
     }
 
     @Override
