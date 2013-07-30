@@ -94,7 +94,7 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
         parseGenericXml();
         break;
       case ELEMENT_CONTENT_SPEC:
-        parseElementContentSpec();
+        doParseContentSpec(true);
         break;
       case ATTLIST_SPEC:
         parseAttlistContent();
@@ -492,22 +492,28 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
   }
 
   private boolean parseName() {
-    if (myBuilder.getTokenType() == XML_NAME) {
+    IElementType type = myBuilder.getTokenType();
+    if (type == XML_NAME) {
       addToken();
 
       return true;
     }
 
-    if (myBuilder.getTokenType() == XML_ENTITY_REF_TOKEN) {
+    if (type == XML_ENTITY_REF_TOKEN) {
       parseEntityRef();
       return true;
     }
 
-    return false;
+    return consumeKeywordAsName(type);
   }
 
-  private void parseElementContentSpec() {
-    doParseContentSpec(true);
+  private boolean consumeKeywordAsName(IElementType type) {
+    if (type == XML_DOCTYPE_PUBLIC || type == XML_DOCTYPE_SYSTEM || type == XML_CONTENT_EMPTY || type == XML_CONTENT_ANY) {
+      myBuilder.remapCurrentToken(XML_NAME);
+      addToken();
+      return true;
+    }
+    return false;
   }
 
   private void doParseContentSpec(boolean topLevel) {
@@ -567,6 +573,9 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
                  tokenType == XML_PCDATA
                  ) {
         addToken();
+        endedWithDelimiter = false;
+      }
+      else if (consumeKeywordAsName(tokenType)) {
         endedWithDelimiter = false;
       }
       else {

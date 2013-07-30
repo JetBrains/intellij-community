@@ -670,6 +670,15 @@ public class XmlParsingTest extends ParsingTestCase {
     doTest("<script type=\"application/custom\">Custom Script</script>", "test.html");
   }
 
+  public void testKeywordsAsName() throws Exception {
+    doTestDtd("<!ELEMENT FIELD ANY>\n" +
+              "<!ELEMENT PUBLIC ANY>\n" +
+              "<!ELEMENT EMPTY ANY>\n" +
+              "<!ELEMENT ANY ANY>\n" +
+              "<!ELEMENT AND (FIELD|PUBLIC|EMPTY|ANY)*>");
+
+  }
+
   static class MyLanguage extends Language implements InjectableLanguage {
     protected MyLanguage() {
       super("MyLanguage", "application/custom");
