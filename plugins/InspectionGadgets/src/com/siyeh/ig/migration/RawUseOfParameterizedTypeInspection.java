@@ -42,16 +42,6 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean ignoreParametersOfOverridingMethods = false;
 
   @Override
-  public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    node.addContent(new Element("option").setAttribute("name", "ignoreObjectConstruction").setAttribute("value", String.valueOf(ignoreObjectConstruction)));
-    node.addContent(new Element("option").setAttribute("name", "ignoreTypeCasts").setAttribute("value", String.valueOf(ignoreTypeCasts)));
-    node.addContent(new Element("option").setAttribute("name", "ignoreUncompilable").setAttribute("value", String.valueOf(ignoreUncompilable)));
-    if (ignoreParametersOfOverridingMethods) {
-      node.addContent(new Element("option").setAttribute("name", "ignoreParametersOfOverridingMethods").setAttribute("value", "true"));
-    }
-  }
-
-  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("raw.use.of.parameterized.type.display.name");
