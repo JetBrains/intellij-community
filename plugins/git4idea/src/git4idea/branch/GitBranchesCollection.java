@@ -15,6 +15,8 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import org.jetbrains.annotations.NotNull;
@@ -70,4 +72,12 @@ public final class GitBranchesCollection {
     return new HashSet<GitRemoteBranch>(myRemoteBranches);
   }
 
+  public GitLocalBranch findLocalBranch(@NotNull final String name) {
+    return ContainerUtil.find(myLocalBranches, new Condition<GitLocalBranch>() {
+      @Override
+      public boolean value(GitLocalBranch branch) {
+        return name.equals(branch.getName());
+      }
+    });
+  }
 }

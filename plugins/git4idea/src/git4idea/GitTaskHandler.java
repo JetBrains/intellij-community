@@ -57,12 +57,7 @@ public class GitTaskHandler extends VcsTaskHandler {
     List<GitRepository> problems = ContainerUtil.filter(repositories, new Condition<GitRepository>() {
       @Override
       public boolean value(GitRepository repository) {
-        return (ContainerUtil.find(repository.getBranches().getLocalBranches(), new Condition<GitLocalBranch>() {
-          @Override
-          public boolean value(GitLocalBranch branch) {
-            return branch.getName().equals(taskName);
-          }
-        }) != null);
+        return repository.getBranches().findLocalBranch(taskName) != null;
       }
     });
     MultiMap<String, String> map = new MultiMap<String, String>();
@@ -94,8 +89,21 @@ public class GitTaskHandler extends VcsTaskHandler {
 
   @Override
   public void switchToTask(TaskInfo taskInfo) {
-    for (String branchName : taskInfo.branches.keySet()) {
-      myBrancher.checkout(branchName, getRepositories(taskInfo.branches.get(branchName)), null);
+    for (final String branchName : taskInfo.branches.keySet()) {
+      List<GitRepository> repositories = getRepositories(taskInfo.branches.get(branchName));
+      List<GitRepository> notFound = ContainerUtil.filter(repositories, new Condition<GitRepository>() {
+        @Override
+        public boolean value(GitRepository repository) {
+          return repository.getBranches().findLocalBranch(branchName) == null;
+        }
+      });
+      if (!notFound.isEmpty()) {
+        myBrancher.checkoutNewBranch(branchName, notFound);
+      }
+      repositories.removeAll(notFound);
+      if (!repositories.isEmpty()) {
+        myBrancher.checkout(branchName, repositories, null);
+      }
     }
   }
 

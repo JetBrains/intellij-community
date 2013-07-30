@@ -84,16 +84,22 @@ public class TaskBranchesTest extends PlatformTestCase {
     assertEquals(2, defaultTask.getBranches().size());
 
     myTaskManager.activateTask(defaultTask, false);
-    assertEquals("master", repositories.get(0).getCurrentBranch().getName());
+
+    GitRepository repository = repositories.get(0);
+    assertEquals("master", repository.getCurrentBranch().getName());
 
     foo = myTaskManager.createLocalTask("foo");
     localTask = myTaskManager.activateTask(foo, false);
     myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
-    Thread.sleep(300);
-    assertEquals("foo", repositories.get(0).getCurrentBranch().getName());
+    assertEquals("foo", repository.getCurrentBranch().getName());
 
     myTaskManager.mergeBranch(localTask);
-    assertEquals("master", repositories.get(0).getCurrentBranch().getName());
+    repository.update();
+    assertEquals("master", repository.getCurrentBranch().getName());
+    assertEquals(1, repository.getBranches().getLocalBranches().size());
+
+    myTaskManager.activateTask(defaultTask, false);
+    myTaskManager.activateTask(foo, false);
   }
 
   private List<GitRepository> initRepositories(String... names) {
