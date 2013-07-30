@@ -79,7 +79,7 @@ public class PathManager {
     }
     try {
       if (!SystemInfo.isFileSystemCaseSensitive) {
-        ourHomePath = ourHomePath == null ? null : new File(ourHomePath).getCanonicalPath();
+        ourHomePath = new File(ourHomePath).getCanonicalPath();
       }
     }
     catch (IOException e) {
@@ -100,9 +100,9 @@ public class PathManager {
         if (parent == null) return null;
         root = new File(parent).getAbsoluteFile(); // one step back to get folder
       }
-      while (root != null && !isIdeaHome(root));
+      while (!isIdeaHome(root));
 
-      return root != null ? root.getAbsolutePath() : null;
+      return root.getAbsolutePath();
     }
     return null;
   }

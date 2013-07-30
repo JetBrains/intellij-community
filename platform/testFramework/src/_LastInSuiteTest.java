@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LeakHunter;
@@ -22,8 +21,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
-
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * This must be the last test.

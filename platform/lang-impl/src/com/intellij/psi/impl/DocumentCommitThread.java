@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -290,7 +289,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       else {
         final CommitTask commitTask = task;
         final Runnable[] result = new Runnable[1];
-        ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
+        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
           @Override
           public void run() {
             result[0] = commitUnderProgress(commitTask, false);
