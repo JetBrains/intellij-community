@@ -599,4 +599,15 @@ public class GithubApiUtil {
 
     return request.getAll();
   }
+
+  @NotNull
+  public static List<GithubBranch> getRepoBranches(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo)
+    throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/branches";
+
+    PagedRequest<GithubBranch, GithubBranchRaw> request =
+      new PagedRequest<GithubBranch, GithubBranchRaw>(auth, path, GithubBranch.class, GithubBranchRaw[].class);
+
+    return request.getAll();
+  }
 }
