@@ -75,15 +75,16 @@ public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
 
   private void doQuickDocGenerationTestWithCheckExpectedResult(Object completionVariant, final String... baseFileNames) throws Exception {
     final DocumentationTestContext context = new DocumentationTestContext(baseFileNames);
-    VirtualFile vfile =
-      LocalFileSystem.getInstance().findFileByIoFile(new File(getTestDataPath() +baseFileNames[0] + ".expected.html"));
+    String pathname = getTestDataPath() + baseFileNames[0] + ".expected.html";
+    VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(pathname));
+    assertNotNull(pathname + " not found", vfile);
     String expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile));
-    assertEquals(expectedText, context.generateDoc());
+    assertEquals(expectedText, StringUtil.convertLineSeparators(context.generateDoc()));
 
     if (completionVariant != null) {
       vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(getTestDataPath() +baseFileNames[0] + ".expected.completion.html"));
-      expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile));
-      assertEquals(expectedText, context.generateDocForCompletion(completionVariant));
+      expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile), "\n");
+      assertEquals(expectedText, StringUtil.convertLineSeparators(context.generateDocForCompletion(completionVariant), "\n"));
     }
   }
 
@@ -160,6 +161,10 @@ public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
 
   public void testScopeAttribute() throws Exception {
     doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml","spring-beans.xsd");
+  }
+
+  public void testXslCompletion() throws Exception {
+    doQuickDocGenerationTestWithCheckExpectedResult((Object)"apply-imports", "xslCompletion.xsl");
   }
 
   @Override

@@ -19,7 +19,9 @@ import com.intellij.codeInsight.completion.XmlTagInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Function;
 import com.intellij.xml.*;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,13 +41,17 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     }
     XmlExtension xmlExtension = XmlExtension.getExtension(tag.getContainingFile());
     List<String> nsInfo = new ArrayList<String>();
-    final String[] variants = TagNameVariantCollector.getTagNameVariants(tag, namespaces, nsInfo);
-    for (int i = 0, variantsLength = variants.length; i < variantsLength; i++) {
-      String qname = variants[i];
+    @SuppressWarnings("unchecked") List<XmlElementDescriptor> variants = TagNameVariantCollector
+      .getTagNameVariants(tag, namespaces, nsInfo, (Function<XmlElementDescriptor, XmlElementDescriptor>)Function.ID);
+
+    for (int i = 0; i < variants.size(); i++) {
+      XmlElementDescriptor descriptor = variants.get(i);
+      String qname = descriptor.getName(tag);
       if (!prefix.isEmpty() && qname.startsWith(prefix + ":")) {
         qname = qname.substring(prefix.length() + 1);
       }
-      LookupElementBuilder lookupElement = LookupElementBuilder.create(qname);
+      PsiElement declaration = descriptor.getDeclaration();
+      LookupElementBuilder lookupElement = declaration == null ? LookupElementBuilder.create(qname) : LookupElementBuilder.create(declaration, qname);
       final int separator = qname.indexOf(':');
       if (separator > 0) {
         lookupElement = lookupElement.withLookupString(qname.substring(separator + 1));
