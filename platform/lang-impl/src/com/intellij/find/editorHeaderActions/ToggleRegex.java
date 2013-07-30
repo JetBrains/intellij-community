@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 
 public class ToggleRegex extends EditorHeaderToggleAction {
 
-  private static final String REGEX = "&Regex";
+  private static final String REGEX = "Re&gex";
 
   @Override
   public boolean isSelected(AnActionEvent e) {
