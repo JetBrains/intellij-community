@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameIdea");
@@ -56,7 +59,10 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     final ChooseByNameModel model = base.getModel();
     String matchingPattern = convertToMatchingPattern(base, namePattern);
     List<MatchResult> namesList = new ArrayList<MatchResult>();
-    processNamesByPattern(base, base.getNames(everywhere), matchingPattern, new CollectConsumer<MatchResult>(namesList));
+    String[] names = base.getNames(everywhere);
+    processNamesByPattern(base, names, matchingPattern, new CollectConsumer<MatchResult>(namesList));
+
+    indicator.checkCanceled();
     sortNamesList(matchingPattern, namesList);
 
     indicator.checkCanceled();
@@ -222,10 +228,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       @Override
       public Pair<String, MinusculeMatcher> fun(String s) {
         String namePattern = getNamePattern(base, s);
-        if (base.isSearchInAnyPlace() && !namePattern.trim().isEmpty()) {
-          namePattern = "*" + namePattern;
-        }
-        return Pair.create(namePattern, buildPatternMatcher(namePattern, NameUtil.MatchingCaseSensitivity.NONE));
+        return Pair.create(addSearchAnywherePatternDecorationIfNeeded(base, namePattern), buildPatternMatcher(namePattern, NameUtil.MatchingCaseSensitivity.NONE));
       }
     });
   }
@@ -244,17 +247,59 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   private static void processNamesByPattern(@NotNull final ChooseByNameBase base,
-                                            @NotNull String[] names,
-                                            final String pattern, Consumer<MatchResult> consumer) {
+                                            @NotNull final String[] names,
+                                            final String pattern,
+                                            final Consumer<MatchResult> consumer
+                                            ) {
     final MinusculeMatcher matcher = buildPatternMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    int chunks = Math.min(Runtime.getRuntime().availableProcessors(), 4);
+    final AtomicReferenceArray<ArrayList<MatchResult>> arr = new AtomicReferenceArray<ArrayList<MatchResult>>(chunks);
+    Future<?>[] futures = new Future[arr.length() - 1];
+    for(int i = 0; i < futures.length; ++i) {
+      final int finalI = i;
+      futures[i] = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          arr.set(finalI, matchNamesByPatternInChunk(base, finalI, arr.length(), names, pattern, matcher));
+        }
+      });
+    }
+    arr.set(futures.length, matchNamesByPatternInChunk(base, futures.length, arr.length(), names, pattern, matcher));
 
-    for (String name : names) {
+    for(int i = arr.length() - 1; i >= 0; --i) {
+      if (i < futures.length) {
+        try {
+          futures[i].get();
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+      for (MatchResult result: arr.get(i)) consumer.consume(result);
+    }
+  }
+
+  private static ArrayList<MatchResult> matchNamesByPatternInChunk(@NotNull final ChooseByNameBase base,
+                                                             int index,
+                                                             int totalWorkers,
+                                                             @NotNull String[] names,
+                                                             String pattern,
+                                                             MinusculeMatcher matcher
+
+  ) {
+    ArrayList<MatchResult> namesList = new ArrayList<MatchResult>();
+
+    int perThreadWork = (names.length / totalWorkers + 1);
+    int max = Math.min(perThreadWork * (index + 1), names.length);
+
+    for (int i = perThreadWork * index; i < max; ++i) {
       ProgressManager.checkCanceled();
-      MatchResult result = matches(base, pattern, matcher, name);
+      MatchResult result = matches(base, pattern, matcher, names[i]);
       if (result != null) {
-        consumer.consume(result);
+        namesList.add(result);
       }
     }
+
+    return namesList;
   }
 
   private static String convertToMatchingPattern(ChooseByNameBase base, String pattern) {
@@ -264,7 +309,12 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       LOG.assertTrue(!pattern.isEmpty(), base);
     }
 
-    if (base.isSearchInAnyPlace() && !pattern.trim().isEmpty()) {
+    return addSearchAnywherePatternDecorationIfNeeded(base, pattern);
+  }
+
+  private static String addSearchAnywherePatternDecorationIfNeeded(ChooseByNameBase base, String pattern) {
+    String trimmedPattern;
+    if (base.isSearchInAnyPlace() && !(trimmedPattern = pattern.trim()).isEmpty() && trimmedPattern.length() > 1) {
       pattern = "*" + pattern;
     }
     return pattern;
