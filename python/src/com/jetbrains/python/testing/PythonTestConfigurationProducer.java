@@ -140,6 +140,8 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
 
   protected boolean isTestFile(PsiElement file) {
     if (file == null || !(file instanceof PyFile)) return false;
+    final List<PyStatement> testCases = getTestCaseClassesFromFile((PyFile)file);
+    if (testCases.isEmpty()) return false;
     return true;
   }
 
@@ -192,8 +194,6 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
     if (!isTestFile(file)) return null;
 
     final PyFile pyFile = (PyFile)file;
-    final List<PyStatement> testCases = getTestCaseClassesFromFile(pyFile);
-    if (testCases.isEmpty()) return null;
 
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from file");
     final AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)settings.getConfiguration();

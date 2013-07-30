@@ -10,11 +10,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.testing.*;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class PythonUnitTestConfigurationProducer extends PythonTestConfigurationProducer {
   public PythonUnitTestConfigurationProducer() {
@@ -61,6 +62,15 @@ public class PythonUnitTestConfigurationProducer extends PythonTestConfiguration
 
   private static boolean isUnitTestCaseClass(PyClass pyClass) {
     if (pyClass == null || !PythonUnitTestUtil.isUnitTestCaseClass(pyClass)) return false;
+    return true;
+  }
+
+  @Override
+  protected boolean isTestFile(PsiElement file) {
+    if (file == null || !(file instanceof PyFile)) return false;
+    if (PyNames.SETUP_DOT_PY.equals(((PyFile)file).getName())) return true;
+    final List<PyStatement> testCases = getTestCaseClassesFromFile((PyFile)file);
+    if (testCases.isEmpty()) return false;
     return true;
   }
 }

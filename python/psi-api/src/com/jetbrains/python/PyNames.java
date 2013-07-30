@@ -25,6 +25,8 @@ public class PyNames {
   public static final String DOT_PY = ".py";
   public static final String INIT_DOT_PY = INIT + DOT_PY;
 
+  public static final String SETUP_DOT_PY = "setup" + DOT_PY;
+
   public static final String NEW = "__new__";
   public static final String GETATTR = "__getattr__";
   public static final String GETATTRIBUTE = "__getattribute__";
