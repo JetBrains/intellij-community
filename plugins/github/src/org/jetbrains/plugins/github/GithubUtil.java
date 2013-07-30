@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -244,22 +245,31 @@ public class GithubUtil {
 
   @Nullable
   public static String findGithubRemoteUrl(@NotNull GitRepository repository) {
-    String githubUrl = null;
+    Pair<GitRemote, String> remote = findGithubRemote(repository);
+    if (remote == null) {
+      return null;
+    }
+    return remote.getSecond();
+  }
+
+  @Nullable
+  public static Pair<GitRemote, String> findGithubRemote(@NotNull GitRepository repository) {
+    Pair<GitRemote, String> githubRemote = null;
     for (GitRemote gitRemote : repository.getRemotes()) {
       for (String remoteUrl : gitRemote.getUrls()) {
         if (GithubUrlUtil.isGithubUrl(remoteUrl)) {
           final String remoteName = gitRemote.getName();
           if ("github".equals(remoteName) || "origin".equals(remoteName)) {
-            return remoteUrl;
+            return new Pair<GitRemote, String>(gitRemote, remoteUrl);
           }
-          if (githubUrl == null) {
-            githubUrl = remoteUrl;
+          if (githubRemote == null) {
+            githubRemote = new Pair<GitRemote, String>(gitRemote, remoteUrl);
           }
           break;
         }
       }
     }
-    return githubUrl;
+    return githubRemote;
   }
 
   @Nullable
