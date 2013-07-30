@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -57,6 +58,16 @@ public class DefaultActionGroup extends ActionGroup {
    * @since 9.0
    */
   public DefaultActionGroup(@NotNull AnAction... actions) {
+    this(Arrays.asList(actions));
+  }
+
+  /**
+   * Creates an action group containing the specified actions.
+   *
+   * @param actions the actions to add to the group
+   * @since 13.0
+   */
+  public DefaultActionGroup(@NotNull List<? extends AnAction> actions) {
     this(null, false);
     for (AnAction action : actions) {
       add(action);
@@ -245,7 +256,7 @@ public class DefaultActionGroup extends ActionGroup {
         LOG.error("Empty sorted child: " + this + ", " + getClass() + "; index=" + i);
       }
       if (action instanceof ActionStub) {
-        action = unstub(e, (ActionStub)action);
+        action = unStub(e, (ActionStub)action);
         mySortedChildren.set(i, action);
       }
 
@@ -259,7 +270,7 @@ public class DefaultActionGroup extends ActionGroup {
         LOG.error("Empty pair child: " + this + ", " + getClass() + "; index=" + i);
       }
       if (action instanceof ActionStub) {
-        action = unstub(e, (ActionStub)action);
+        action = unStub(e, (ActionStub)action);
         myPairs.set(i, Pair.create(action, pair.second));
       }
 
@@ -274,7 +285,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   @Nullable
-  private AnAction unstub(@Nullable AnActionEvent e, final ActionStub stub) {
+  private AnAction unStub(@Nullable AnActionEvent e, final ActionStub stub) {
     ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
     try {
       AnAction action = actionManager.getAction(stub.getId());
