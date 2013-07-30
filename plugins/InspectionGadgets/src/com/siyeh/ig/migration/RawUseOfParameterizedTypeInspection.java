@@ -17,6 +17,7 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -24,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +38,18 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean ignoreTypeCasts = false;
 
   @SuppressWarnings("PublicField") public boolean ignoreUncompilable = false;
+
+  @SuppressWarnings("PublicField") public boolean ignoreParametersOfOverridingMethods = false;
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    node.addContent(new Element("option").setAttribute("name", "ignoreObjectConstruction").setAttribute("value", String.valueOf(ignoreObjectConstruction)));
+    node.addContent(new Element("option").setAttribute("name", "ignoreTypeCasts").setAttribute("value", String.valueOf(ignoreTypeCasts)));
+    node.addContent(new Element("option").setAttribute("name", "ignoreUncompilable").setAttribute("value", String.valueOf(ignoreUncompilable)));
+    if (ignoreParametersOfOverridingMethods) {
+      node.addContent(new Element("option").setAttribute("name", "ignoreParametersOfOverridingMethods").setAttribute("value", "true"));
+    }
+  }
 
   @Override
   @NotNull
@@ -59,6 +73,8 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
                              "ignoreTypeCasts");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("raw.use.of.parameterized.type.ignore.uncompilable.option"),
                              "ignoreUncompilable");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("raw.use.of.parameterized.type.ignore.overridden.parameter.option"),
+                             "ignoreParametersOfOverridingMethods");
     return optionsPanel;
   }
 
@@ -116,7 +132,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
           return;
         }
       }
-      if (parent instanceof PsiParameter) {
+      if (parent instanceof PsiParameter && ignoreParametersOfOverridingMethods) {
         final PsiParameter parameter = (PsiParameter)parent;
         final PsiElement declarationScope = parameter.getDeclarationScope();
         if (declarationScope instanceof PsiMethod) {
@@ -124,11 +140,6 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
           if (MethodUtils.hasSuper(method)) {
             return;
           }
-        }
-      } else if (parent instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)parent;
-        if (MethodUtils.hasSuper(method)) {
-          return;
         }
       }
       final PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
@@ -180,7 +191,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     private boolean hasNeededLanguageLevel(PsiElement element) {
-      return element.getLanguage() == JavaLanguage.INSTANCE && PsiUtil.isLanguageLevel5OrHigher(element);
+      return element.getLanguage().isKindOf(JavaLanguage.INSTANCE) && PsiUtil.isLanguageLevel5OrHigher(element);
     }
   }
 }

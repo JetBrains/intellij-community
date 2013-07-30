@@ -28,4 +28,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Raw use of parameterized class</problem_class>
     <description>Raw use of parameterized class &lt;code&gt;Map&lt;/code&gt; #loc</description>
   </problem>
+
+  <problem>
+    <file>RawUseOfParameterizedType.java</file>
+    <line>37</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Raw use of parameterized class</problem_class>
+    <description>Raw use of parameterized class &lt;code&gt;List&lt;/code&gt; #loc</description>
+  </problem>
 </problems>
