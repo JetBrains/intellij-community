@@ -66,10 +66,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
 
   @Override
   public String inferBinaryName(Location location, JavaFileObject file) {
-    return super.inferBinaryName(
-      location,
-      file instanceof TransformableJavaFileObject? ((TransformableJavaFileObject)file).getOriginal() : file
-    );
+    return super.inferBinaryName(location, unwrapFileObject(file));
   }
 
   public void setLocation(Location location, Iterable<? extends File> path) throws IOException{
@@ -104,6 +101,10 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   }
 
   private static FileObject unwrapFileObject(FileObject a) {
+    return a instanceof TransformableJavaFileObject ? ((TransformableJavaFileObject)a).getOriginal() : a;
+  }
+
+  private static JavaFileObject unwrapFileObject(JavaFileObject a) {
     return a instanceof TransformableJavaFileObject ? ((TransformableJavaFileObject)a).getOriginal() : a;
   }
 
