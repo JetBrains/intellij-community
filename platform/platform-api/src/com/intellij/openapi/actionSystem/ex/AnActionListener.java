@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 
 /**
  * @author Kirill Kalishev
@@ -39,7 +39,7 @@ public interface AnActionListener {
 
   void beforeEditorTyping(char c, DataContext dataContext);
 
-  class Adapter implements AnActionListener {
+  abstract class Adapter implements AnActionListener {
     @Override
     public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {}
 
