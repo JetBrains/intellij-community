@@ -219,7 +219,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   }
 
   private class InputFileObject extends BaseFileObject {
-    private String name;
+    private final String name;
     private final File file;
     private Reference<File> absFileRef;
 
@@ -256,7 +256,12 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
 
     @Override
     public JavaFileObject.Kind getKind() {
-      return getKind(name);
+      for (Kind kind : Kind.values()) {
+        if (kind != Kind.OTHER && name.endsWith(kind.extension)) {
+          return kind;
+        }
+      }
+      return Kind.OTHER;
     }
 
     @Override
