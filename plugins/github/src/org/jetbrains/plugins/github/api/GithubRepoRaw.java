@@ -82,8 +82,9 @@ class GithubRepoRaw implements DataConstructor {
   @NotNull
   public GithubRepoDetailed createRepoDetailed() {
     GithubRepo parent = this.parent == null ? null : this.parent.createRepo();
+    GithubRepo source = this.source == null ? null : this.source.createRepo();
     return new GithubRepoDetailed(name, fullName, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.createUser(),
-                                  parent);
+                                  parent, source);
   }
 
   @SuppressWarnings("unchecked")

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GithubRepoDetailed extends GithubRepo {
   @Nullable private GithubRepo myParent;
+  @Nullable private GithubRepo mySource;
 
   public GithubRepoDetailed(@NotNull String name,
                             @NotNull String fullName,
@@ -33,9 +34,11 @@ public class GithubRepoDetailed extends GithubRepo {
                             @NotNull String cloneUrl,
                             @Nullable String defaultBranch,
                             @NotNull GithubUser owner,
-                            @Nullable GithubRepo parent) {
+                            @Nullable GithubRepo parent,
+                            @Nullable GithubRepo source) {
     super(name, fullName, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner);
     myParent = parent;
+    mySource = source;
   }
 
   @Nullable
@@ -43,4 +46,8 @@ public class GithubRepoDetailed extends GithubRepo {
     return myParent;
   }
 
+  @Nullable
+  public GithubRepo getSource() {
+    return mySource;
+  }
 }
