@@ -18,15 +18,16 @@ init = { product_build ->
   loadProject()
   projectBuilder.arrangeModuleCyclesOutputs = true
 
-  projectBuilder.stage("Cleaning up sandbox folder")
-  forceDelete(build.paths.sandbox)
+  if (build.steps.clear) {
+	projectBuilder.stage("Cleaning up sandbox folder")
+	forceDelete(build.paths.sandbox)
 
-  projectBuilder.stage("Creating folders")
-  [build.paths.sandbox, build.paths.classesTarget, build.paths.distWin, build.paths.distWinZip, build.paths.distAll,
-   build.paths.distJars, build.paths.distUnix, build.paths.distMac, build.paths.distDev, build.paths.artifacts].each {
-    ant.mkdir(dir: it)
-  }
-  projectBuilder.stage("initializing timestamps")
+	projectBuilder.stage("Creating folders")
+	[build.paths.sandbox, build.paths.classesTarget, build.paths.distWin, build.paths.distWinZip, build.paths.distAll,
+		build.paths.distJars, build.paths.distUnix, build.paths.distMac, build.paths.distDev, build.paths.artifacts].each {
+		ant.mkdir(dir: it)
+	}
+  }	
   ant.tstamp() {
 	format(property: "today.year", pattern: "yyyy")
   }
@@ -41,34 +42,36 @@ compile = {
     projectBuilder.stage("zip: $build.home $build.paths.artifacts")
     zipSources(build.home, build.paths.artifacts)
   }
-  build.compile()
+  if (build.steps.compile) {
+	build.compile()
+  }	
   projectBuilder.stage("Target compilation finished .")
 }
 
-scramble = { Map args -> {
+scramble = { args ->
   if (isUnderTeamCity()) {
     projectBuilder.stage("Scrambling")
     
     getPreviousLogs()
 
-    def prevBuildLog = "${paths.sandbox}/prevBuild/logs/ChangeLog.txt"
+    def prevBuildLog = "${build.paths.sandbox}/prevBuild/logs/ChangeLog.txt"
     if (!new File(prevBuildLog).exists()) prevBuildLog = null
 
     def inc = prevBuildLog != null ? "looseChangeLogFileIn=\"${prevBuildLog}\"" : ""
-    copyAndPatchFile("$home/build/conf/script.zkm.stub", "${paths.sandbox}/script.zkm",
-                     ["CLASSES": "\"${args.jarPath}/${args.jarName}\"", "SCRAMBLED_CLASSES": args.jarPath, "INCREMENTAL": inc])
+    copyAndPatchFile("$build.home/build/conf/script.zkm.stub", "${build.paths.sandbox}/script.zkm",
+                     ["CLASSES": "\"$build.paths.distJars/lib/${args.jarName}\"", "SCRAMBLED_CLASSES": build.paths.distJars/lib, "INCREMENTAL": inc])
 
-    ant.mkdir(dir: "$paths.artifacts/${args.jarName}.unscrambled")
-    def unscrambledPath = "$paths.artifacts/${args.jarName}.unscramble"
-    ant.copy(file: "$args.jarPath/${args.jarName}", todir: unscrambledPath)
+    ant.mkdir(dir: "$build.paths.artifacts/${args.jarName}.unscrambled")
+    def unscrambledPath = "$build.paths.artifacts/${args.jarName}.unscramble"
+    ant.copy(file: "$build.paths.distJars/lib/${args.jarName}", todir: unscrambledPath)
     notifyArtifactBuilt("$unscrambledPath/${args.jar}")
 
-    zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName)
+    zkmScramble("$build.paths.sandbox/script.zkm", build.paths.distJars/lib, args.jarName)
 
-    ant.zip(destfile: "$paths.artifacts/logs.zip") {
+    ant.zip(destfile: "$build.paths.artifacts/logs.zip") {
       fileset(file: "ChangeLog.txt")
       fileset(file: "ZKM_log.txt")
-      fileset(file: "$paths.sandbox/script.zkm")
+      fileset(file: "$build.paths.sandbox/script.zkm")
     }
 
     ant.delete(file: "ChangeLog.txt")
@@ -79,4 +82,30 @@ scramble = { Map args -> {
   }
 }
 
+private boolean isUnderTeamCity() {
+  return isDefined("teamcity.buildType.id")
+}
+
+private lastPinnedBuild() {
+  "http://buildserver/httpAuth/repository/download/${this."teamcity.buildType.id"}/.lastPinned"
+}
+
+private getPreviousLogs() {
+  def removeZip = "${lastPinnedBuild()}/logs.zip"
+  def localZip = "${build.paths.sandbox}/prevBuild/logs.zip"
+  ant.mkdir(dir: "${build.paths.sandbox}/prevBuild")
+  ant.get(src: removeZip,
+          dest: localZip,
+          username: "builduser",
+          password: "qpcv4623nmdu",
+          ignoreerrors: "true"
+  )
+
+  if (new File(localZip).exists()) {
+    ant.unzip(src: localZip, dest: "${build.paths.sandbox}.prevBuild/logs") {
+      patternset {
+        include(name: "ChangeLog.txt")
+      }
+    }
+  }
 }

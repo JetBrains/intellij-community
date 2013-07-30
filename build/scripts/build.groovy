@@ -56,25 +56,57 @@ class Paths {
 }
 
 class Steps {
+  def clear = true
   def zipSources = true
   def compile = true
+  def scramble = true
   def layout = true
   def build_searchable_options = true
   def zipwin = true
   def targz = true
   def dmg = true
   def sit = true
+  Steps(Map params){
+    clear = params.clear
+    zipSources = params.zipSources
+    compile = params.compile
+    scramble = params.scramble
+    layout = params.layout
+    build_searchable_options = params.build_searchable_options
+    zipwin = params.zipwin
+    targz = params.targz
+    dmg = params.dmg
+    sit = params.sit
+  }
 }
 
 class Build {
   def product
   def productCode  
   def modules
-  Steps steps
+  Map steps_value = [
+	clear: false,
+	zipSources: false,
+	compile: false,
+	scramble: false,
+	layout: false,
+	build_searchable_options: false,
+	zipwin: false,
+	targz: false,
+	dmg: false,
+	sit: false
+  ]
+  def steps
   Paths paths
   def home
   ProjectBuilder projectBuilder
   def buildNumber
+
+  Build(String arg_home, ProjectBuilder prjBuilder){
+    home = arg_home
+	projectBuilder = prjBuilder
+    paths = new Paths(home)
+  }
 
   def compile() {
     projectBuilder.stage("Compilation")
@@ -89,14 +121,7 @@ class Build {
   
   def scramble() {}
   def install() {}
-
-  Build(String arg_home, ProjectBuilder prjBuilder){
-    home = arg_home
-	projectBuilder = prjBuilder
-    steps = new Steps()
-    paths = new Paths(home)
-  }
-  
+ 
   def includeFile(String filename) {
 	Script s = groovyShell.parse(new File("this.home/build/scripts/$filename"))
 	s.setBinding(binding)
