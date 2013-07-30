@@ -2,7 +2,6 @@
   <property name="project.home" value="${basedir}"/>
   <property name="out.dir" value="${project.home}/out"/>
   <property name="tmp.dir" value="${project.home}/out/tmp"/>
-  <property name="gant.home" value="${project.home}/build/lib/gant"/>
 
   <target name="cleanup">
     <delete dir="${out.dir}" failonerror="false"/>
