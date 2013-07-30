@@ -152,6 +152,7 @@ public class GithubApiUtil {
           if (tokenAuth != null) {
             method.addRequestHeader("Authorization", "token " + tokenAuth.getToken());
           }
+          method.addRequestHeader("Accept", "application/vnd.github.preview"); //TODO: remove after end of preview period. ~ october 2013
           return method;
         }
       });
@@ -507,7 +508,7 @@ public class GithubApiUtil {
                                                    @NotNull String repo,
                                                    @Nullable String query) throws IOException {
     query = URLEncoder.encode("@" + user + "/" + repo + " " + query, "UTF-8");
-    String path = "/search/issues/?q=" + query;
+    String path = "/search/issues?q=" + query;
 
     JsonElement result = getRequest(auth, path);
 
