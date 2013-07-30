@@ -15,32 +15,30 @@
  */
 package com.intellij.psi.impl.source.resolve.reference;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.PsiReferenceService;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.FactoryMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Dmitry Avdeev
  */
 public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
-  private final ConcurrentMap<Class, SimpleProviderBinding<PsiReferenceProvider>> myBindingsMap = new ConcurrentHashMap<Class, SimpleProviderBinding<PsiReferenceProvider>>();
-  private final ConcurrentMap<Class, NamedObjectProviderBinding<PsiReferenceProvider>> myNamedBindingsMap = new ConcurrentHashMap<Class, NamedObjectProviderBinding<PsiReferenceProvider>>();
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl");
+  private final Map<Class, SimpleProviderBinding<PsiReferenceProvider>> myBindingsMap = new THashMap<Class, SimpleProviderBinding<PsiReferenceProvider>>();
+  private final Map<Class, NamedObjectProviderBinding<PsiReferenceProvider>> myNamedBindingsMap = new THashMap<Class, NamedObjectProviderBinding<PsiReferenceProvider>>();
   private final FactoryMap<Class, Class[]> myKnownSupers = new ConcurrentFactoryMap<Class, Class[]>() {
     @Override
     protected Class[] create(Class key) {
@@ -61,22 +59,20 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       return result.toArray(new Class[result.size()]);
     }
   };
+  private boolean myInitialized;
 
-  /**
-   * @deprecated {@see com.intellij.psi.PsiReferenceContributor
-   */
-  public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
-                                        @NotNull Class scope,
-                                        @NotNull PsiReferenceProvider provider,
-                                        double priority) {
-    PsiElementPattern.Capture<PsiElement> capture = PlatformPatterns.psiElement(scope);
-    registerReferenceProvider(capture.and(new FilterPattern(elementFilter)), provider, priority);
+  public void markInitialized() {
+    myInitialized = true;
   }
 
   @Override
   public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
                                                                @NotNull PsiReferenceProvider provider,
                                                                double priority) {
+    if (myInitialized && !ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.error("Reference provider registration is only allowed from PsiReferenceContributor");
+    }
+
     myKnownSupers.clear(); // we should clear the cache
     final Class scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
     final List<PatternCondition<? super T>> conditions = pattern.getCondition().getConditions();
@@ -101,26 +97,11 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       break;
     }
 
-    while (true) {
-      SimpleProviderBinding<PsiReferenceProvider> providerBinding = myBindingsMap.get(scope);
-      if (providerBinding != null) {
-        providerBinding.registerProvider(provider, pattern, priority);
-        return;
-      }
-
-      SimpleProviderBinding<PsiReferenceProvider> binding = new SimpleProviderBinding<PsiReferenceProvider>();
-      binding.registerProvider(provider, pattern, priority);
-      if (myBindingsMap.putIfAbsent(scope, binding) == null) break;
+    SimpleProviderBinding<PsiReferenceProvider> providerBinding = myBindingsMap.get(scope);
+    if (providerBinding == null) {
+      myBindingsMap.put(scope, providerBinding = new SimpleProviderBinding<PsiReferenceProvider>());
     }
-  }
-
-  /**
-   * @deprecated {@link com.intellij.psi.PsiReferenceContributor}
-   */
-  public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
-                                        @NotNull Class scope,
-                                        @NotNull PsiReferenceProvider provider) {
-    registerReferenceProvider(elementFilter, scope, provider, DEFAULT_PRIORITY);
+    providerBinding.registerProvider(provider, pattern, priority);
   }
 
   public void unregisterReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
@@ -139,14 +120,13 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     NamedObjectProviderBinding<PsiReferenceProvider> providerBinding = myNamedBindingsMap.get(scopeClass);
 
     if (providerBinding == null) {
-      providerBinding = ConcurrencyUtil.cacheOrGet(myNamedBindingsMap, scopeClass, new NamedObjectProviderBinding<PsiReferenceProvider>() {
+      myNamedBindingsMap.put(scopeClass, providerBinding = new NamedObjectProviderBinding<PsiReferenceProvider>() {
         @Override
         protected String getName(final PsiElement position) {
           return nameCondition.getPropertyValue(position);
         }
       });
     }
-
     providerBinding.registerProvider(names, pattern, caseSensitive, provider, priority);
   }
 
@@ -155,7 +135,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
    * @deprecated
    */
   public void registerReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
-    registerReferenceProvider(null, scope, provider);
+    registerReferenceProvider(PlatformPatterns.psiElement(scope), provider, DEFAULT_PRIORITY);
   }
 
   @NotNull

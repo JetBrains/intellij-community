@@ -73,6 +73,9 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
           });
         }
       }
+
+      registrar.markInitialized();
+
       return registrar;
     }
   };
