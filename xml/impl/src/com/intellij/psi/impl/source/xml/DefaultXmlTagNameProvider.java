@@ -21,12 +21,16 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
-import com.intellij.xml.*;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlTagNameProvider;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
   @Override
@@ -42,7 +46,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     XmlExtension xmlExtension = XmlExtension.getExtension(tag.getContainingFile());
     List<String> nsInfo = new ArrayList<String>();
     @SuppressWarnings("unchecked") List<XmlElementDescriptor> variants = TagNameVariantCollector
-      .getTagNameVariants(tag, namespaces, nsInfo, (Function<XmlElementDescriptor, XmlElementDescriptor>)Function.ID);
+      .getTagDescriptors(tag, namespaces, nsInfo);
 
     for (int i = 0; i < variants.size(); i++) {
       XmlElementDescriptor descriptor = variants.get(i);
