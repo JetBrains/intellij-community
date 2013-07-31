@@ -53,9 +53,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public synchronized void start() {
     LOG.assertTrue(!isRunning(), "Attempt to start ProgressIndicator which is already running");
     if (myFinished) {
-      if (!isReuseable()) {
+      if (myCanceled && !isReuseable()) {
         if (ourReportedReuseExceptions.add(getClass())) {
-          LOG.error("Attempt to start ProgressIndicator which is already stopped:" + this + "," + getClass());
+          LOG.error("Attempt to start ProgressIndicator which is cancelled and already stopped:" + this + "," + getClass());
         }
       }
       myCanceled = false;
