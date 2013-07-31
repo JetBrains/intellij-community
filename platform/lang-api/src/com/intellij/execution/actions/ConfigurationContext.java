@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -56,6 +57,7 @@ public class ConfigurationContext {
 
   public static Key<ConfigurationContext> SHARED_CONTEXT = Key.create("SHARED_CONTEXT");
   private List<RuntimeConfigurationProducer> myPreferredProducers;
+  private List<ConfigurationFromContext> myConfigurationsFromContext;
 
   public static ConfigurationContext getFromContext(DataContext dataContext) {
     final ConfigurationContext context = new ConfigurationContext(dataContext);
@@ -107,6 +109,11 @@ public class ConfigurationContext {
         null;
   }
 
+  public void setConfiguration(RunnerAndConfigurationSettings configuration) {
+    myConfiguration = configuration;
+  }
+
+  @Deprecated
   @Nullable
   public RunnerAndConfigurationSettings updateConfiguration(final RuntimeConfigurationProducer producer) {
     myConfiguration = producer.getConfiguration();
@@ -139,9 +146,21 @@ public class ConfigurationContext {
           myExistingConfiguration.set(configuration);
         }
       }
+      for (RunConfigurationProducer producer : Extensions.getExtensions(RunConfigurationProducer.EP_NAME)) {
+        RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(this);
+        if (configuration != null && configuration.getConfiguration() == myRuntimeConfiguration) {
+          myExistingConfiguration.set(configuration);
+        }
+      }
     }
     for (RuntimeConfigurationProducer producer : producers) {
       final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
+      if (configuration != null) {
+        myExistingConfiguration.set(configuration);
+      }
+    }
+    for (RunConfigurationProducer producer : Extensions.getExtensions(RunConfigurationProducer.EP_NAME)) {
+      RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(this);
       if (configuration != null) {
         myExistingConfiguration.set(configuration);
       }
@@ -209,11 +228,19 @@ public class ConfigurationContext {
     return null;
   }
 
+  @Deprecated
   @Nullable
   public List<RuntimeConfigurationProducer> findPreferredProducers() {
     if (myPreferredProducers == null) {
       myPreferredProducers = PreferredProducerFind.findPreferredProducers(myLocation, this, true);
     }
     return myPreferredProducers;
+  }
+
+  public List<ConfigurationFromContext> getConfigurationsFromContext() {
+    if (myConfigurationsFromContext == null) {
+      myConfigurationsFromContext = PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true);
+    }
+    return myConfigurationsFromContext;
   }
 }

@@ -23,7 +23,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.actionSystem.Presentation;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,8 +72,8 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
 
     protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
-      final List<RuntimeConfigurationProducer> producers = context.findPreferredProducers();
-      if (producers != null && producers.size() == 1) { //hide fuzzy icon when multiple run configurations are possible
+      final List<ConfigurationFromContext> fromContext = context.getConfigurationsFromContext();
+      if (fromContext != null && fromContext.size() == 1) { //hide fuzzy icon when multiple run configurations are possible
         presentation.setIcon(context.getConfiguration().getFactory().getIcon());
       }
     }

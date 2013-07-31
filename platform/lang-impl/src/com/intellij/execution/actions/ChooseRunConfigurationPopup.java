@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
@@ -588,78 +587,71 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
       final DataContext dataContext = DataManager.getInstance().getDataContext();
       final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
 
-      final List<RuntimeConfigurationProducer> producers = PreferredProducerFind
-        .findPreferredProducers(context.getLocation(), context, false);
+      final List<ConfigurationFromContext> producers = PreferredProducerFind.getConfigurationsFromContext(context.getLocation(),
+                                                                                                           context, false);
       if (producers == null) return Collections.emptyList();
 
-      Collections.sort(producers, new Comparator<RuntimeConfigurationProducer>() {
-        @Override
-        public int compare(final RuntimeConfigurationProducer p1, final RuntimeConfigurationProducer p2) {
-          return p1.getConfigurationType().getDisplayName().compareTo(p2.getConfigurationType().getDisplayName());
-        }
-      });
+      Collections.sort(producers, ConfigurationFromContext.NAME_COMPARATOR);
 
       final RunnerAndConfigurationSettings[] preferred = {null};
 
       int i = 2; // selectedConfiguration == null ? 1 : 2;
-      for (final RuntimeConfigurationProducer producer : producers) {
-        final RunnerAndConfigurationSettings configuration = producer.getConfiguration();
-        if (configuration != null) {
-          if (existing.keySet().contains(configuration)) {
-            final ItemWrapper wrapper = existing.get(configuration);
-            if (wrapper.getMnemonic() != 1) {
-              wrapper.setMnemonic(i);
-              i++;
-            }
-          }
-          else {
-            if (selectedConfiguration != null && configuration.equals(selectedConfiguration)) continue;
-            contextConfigurations.add(configuration);
-
-            if (preferred[0] == null) {
-              preferred[0] = configuration;
-            }
-
-            //noinspection unchecked
-            final ItemWrapper wrapper = new ItemWrapper(configuration) {
-              @Override
-              public Icon getIcon() {
-                return RunManagerEx.getInstanceEx(project).getConfigurationIcon(configuration);
-              }
-
-              @Override
-              public String getText() {
-                return configuration.getName();
-              }
-
-              @Override
-              public boolean available(Executor executor) {
-                return canRun(executor, configuration);
-              }
-
-              @Override
-              public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
-                manager.setTemporaryConfiguration(configuration);
-                RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
-                doRunConfiguration(configuration, executor, project);
-              }
-
-              @Override
-              public PopupStep getNextStep(@NotNull final Project project, @NotNull final ChooseRunConfigurationPopup action) {
-                return new ConfigurationActionsStep(project, action, configuration, isDynamic());
-              }
-
-              @Override
-              public boolean hasActions() {
-                return true;
-              }
-            };
-
-            wrapper.setDynamic(true);
+      for (final ConfigurationFromContext fromContext : producers) {
+        final RunnerAndConfigurationSettings configuration = fromContext.getConfigurationSettings();
+        if (existing.keySet().contains(configuration)) {
+          final ItemWrapper wrapper = existing.get(configuration);
+          if (wrapper.getMnemonic() != 1) {
             wrapper.setMnemonic(i);
-            result.add(wrapper);
             i++;
           }
+        }
+        else {
+          if (selectedConfiguration != null && configuration.equals(selectedConfiguration)) continue;
+          contextConfigurations.add(configuration);
+
+          if (preferred[0] == null) {
+            preferred[0] = configuration;
+          }
+
+          //noinspection unchecked
+          final ItemWrapper wrapper = new ItemWrapper(configuration) {
+            @Override
+            public Icon getIcon() {
+              return RunManagerEx.getInstanceEx(project).getConfigurationIcon(configuration);
+            }
+
+            @Override
+            public String getText() {
+              return configuration.getName();
+            }
+
+            @Override
+            public boolean available(Executor executor) {
+              return canRun(executor, configuration);
+            }
+
+            @Override
+            public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
+              manager.setTemporaryConfiguration(configuration);
+              RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
+              doRunConfiguration(configuration, executor, project);
+            }
+
+            @Override
+            public PopupStep getNextStep(@NotNull final Project project, @NotNull final ChooseRunConfigurationPopup action) {
+              return new ConfigurationActionsStep(project, action, configuration, isDynamic());
+            }
+
+            @Override
+            public boolean hasActions() {
+              return true;
+            }
+          };
+
+          wrapper.setDynamic(true);
+          wrapper.setMnemonic(i);
+          result.add(wrapper);
+          i++;
         }
       }
 

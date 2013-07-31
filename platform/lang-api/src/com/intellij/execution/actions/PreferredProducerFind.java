@@ -19,6 +19,7 @@ package com.intellij.execution.actions;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.impl.ConfigurationFromContextWrapper;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,11 +39,12 @@ class PreferredProducerFind {
 
   @Nullable
   public static RunnerAndConfigurationSettings createConfiguration(@NotNull Location location, final ConfigurationContext context) {
-    final RuntimeConfigurationProducer preferredProducer = findPreferredProducer(location, context);
-    return preferredProducer != null ? preferredProducer.getConfiguration() : null;
+    final ConfigurationFromContext fromContext = findConfigurationFromContext(location, context);
+    return fromContext != null ? fromContext.getConfigurationSettings() : null;
   }
 
   @Nullable
+  @Deprecated
   public static List<RuntimeConfigurationProducer> findPreferredProducers(final Location location, final ConfigurationContext context, final boolean strict) {
     if (location == null) {
       return null;
@@ -83,9 +85,60 @@ class PreferredProducerFind {
     return producers;
   }
 
+  public static List<ConfigurationFromContext> getConfigurationsFromContext(final Location location,
+                                                                            final ConfigurationContext context,
+                                                                            final boolean strict) {
+    if (location == null) {
+      return null;
+    }
+
+    //todo load configuration types if not already loaded
+    Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
+    final RuntimeConfigurationProducer[] configurationProducers =
+      ApplicationManager.getApplication().getExtensions(RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER);
+    final ArrayList<ConfigurationFromContext> configurationsFromContext = new ArrayList<ConfigurationFromContext>();
+    for (final RuntimeConfigurationProducer prototype : configurationProducers) {
+      final RuntimeConfigurationProducer producer;
+      try {
+        producer = prototype.createProducer(location, context);
+      }
+      catch (AbstractMethodError e) {
+        LOG.error(prototype.toString(), e);
+        continue;
+      }
+      if (producer.getConfiguration() != null) {
+        LOG.assertTrue(producer.getSourceElement() != null, producer);
+        configurationsFromContext.add(new ConfigurationFromContextWrapper(producer));
+      }
+    }
+
+    for (RunConfigurationProducer producer : Extensions.getExtensions(RunConfigurationProducer.EP_NAME)) {
+      ConfigurationFromContext fromContext = producer.createConfigurationFromContext(context);
+      if (fromContext != null) {
+        configurationsFromContext.add(fromContext);
+      }
+    }
+
+    if (configurationsFromContext.isEmpty()) return null;
+    Collections.sort(configurationsFromContext, ConfigurationFromContext.COMPARATOR);
+
+    if(strict) {
+      final ConfigurationFromContext first = configurationsFromContext.get(0);
+      for (Iterator<ConfigurationFromContext> it = configurationsFromContext.iterator(); it.hasNext();) {
+        ConfigurationFromContext producer = it.next();
+        if (producer != first && ConfigurationFromContext.COMPARATOR.compare(producer, first) >= 0) {
+          it.remove();
+        }
+      }
+    }
+
+    return configurationsFromContext;
+  }
+
+
   @Nullable
-  private static RuntimeConfigurationProducer findPreferredProducer(final Location location, final ConfigurationContext context) {
-    final List<RuntimeConfigurationProducer> producers = findPreferredProducers(location, context, true);
+  private static ConfigurationFromContext findConfigurationFromContext(final Location location, final ConfigurationContext context) {
+    final List<ConfigurationFromContext> producers = getConfigurationsFromContext(location, context, true);
     if (producers != null){
       return producers.get(0);
     }
