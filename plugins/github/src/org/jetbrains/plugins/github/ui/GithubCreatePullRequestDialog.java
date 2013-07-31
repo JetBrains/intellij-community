@@ -21,10 +21,12 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.github.GithubSettings;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -102,5 +104,19 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     }
 
     return null;
+  }
+
+  public void setRequestTitle(String title) {
+    myGithubCreatePullRequestPanel.setTitle(title);
+  }
+
+  @TestOnly
+  public void setBranch(String branch) {
+    myGithubCreatePullRequestPanel.setBranch(branch);
+  }
+
+  @TestOnly
+  public List<Object> getBranches() {
+    return myGithubCreatePullRequestPanel.getBranches();
   }
 }

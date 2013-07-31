@@ -17,11 +17,14 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.github.GithubSettings;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author Aleksey Pivovarov
@@ -96,5 +99,18 @@ public class GithubCreatePullRequestPanel {
 
   public JComponent getTitleTextField() {
     return myTitleTextField;
+  }
+
+  public void setTitle(String title) {
+    myTitleTextField.setText(title);
+  }
+
+  @TestOnly
+  public List<Object> getBranches() {
+    List<Object> ret = new ArrayList<Object>();
+    for (int i = 0; i < myBranchComboBox.getItemCount(); i++) {
+      ret.add(myBranchComboBox.getItemAt(i));
+    }
+    return ret;
   }
 }
