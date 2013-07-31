@@ -6,11 +6,11 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
+import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import icons.TasksIcons;
 import org.apache.axis.utils.XMLChar;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
@@ -243,7 +243,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public Icon getIcon() {
-        return TasksIcons.Youtrack;
+        return LocalTaskImpl.getIconFromType(getType(), isIssue());
       }
 
       @NotNull

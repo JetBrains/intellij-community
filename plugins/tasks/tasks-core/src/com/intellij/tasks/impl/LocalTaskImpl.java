@@ -254,7 +254,11 @@ public class LocalTaskImpl extends LocalTask {
     if (customIcon != null) {
       return IconLoader.getIcon(customIcon, LocalTask.class);
     }
-    switch (myType) {
+    return getIconFromType(myType, isIssue());
+  }
+
+  public static Icon getIconFromType(TaskType type, boolean issue) {
+    switch (type) {
       case BUG:
         return TasksIcons.Bug;
       case EXCEPTION:
@@ -263,7 +267,7 @@ public class LocalTaskImpl extends LocalTask {
         return TasksIcons.Feature;
       default:
       case OTHER:
-        return isIssue() ? TasksIcons.Other : TasksIcons.Unknown;
+        return issue ? TasksIcons.Other : TasksIcons.Unknown;
     }
   }
 
