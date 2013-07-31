@@ -16,12 +16,6 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.ui.DialogWrapper;
-import git4idea.test.TestDialogHandler;
-import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.intellij.dvcs.test.Executor.cd;
 
@@ -57,28 +51,5 @@ public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
     checkRemoteConfigured();
     checkLastCommitPushed();
-  }
-
-  public void testLoadBranches() throws Exception {
-    final List<String> expected = new ArrayList<String>();
-    expected.add(myLogin1 + ":master");
-    expected.add(myLogin2 + ":master");
-    expected.add(myLogin2 + ":file2");
-
-    myDialogManager.registerDialogHandler(GithubCreatePullRequestDialog.class, new TestDialogHandler<GithubCreatePullRequestDialog>() {
-      @Override
-      public int handleDialog(GithubCreatePullRequestDialog dialog) {
-        try {
-          Thread.sleep(3000);
-        }
-        catch (InterruptedException ignore) {
-        }
-        List<Object> loaded = dialog.getBranches();
-        assertContainsElements(loaded, expected);
-        return DialogWrapper.CANCEL_EXIT_CODE;
-      }
-    });
-
-    GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
   }
 }
