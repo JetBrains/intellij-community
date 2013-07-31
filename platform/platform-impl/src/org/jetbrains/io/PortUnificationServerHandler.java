@@ -79,15 +79,14 @@ final class PortUnificationServerHandler extends SimpleChannelUpstreamHandler {
   }
 
   @Override
-  public void messageReceived(
-    ChannelHandlerContext context, MessageEvent e) throws Exception {
+  public void messageReceived(ChannelHandlerContext context, MessageEvent e) throws Exception {
     Object m = e.getMessage();
     if (!(m instanceof ChannelBuffer)) {
       context.sendUpstream(e);
       return;
     }
 
-    ChannelBuffer input = (ChannelBuffer) m;
+    ChannelBuffer input = (ChannelBuffer)m;
     if (!input.readable()) {
       return;
     }
