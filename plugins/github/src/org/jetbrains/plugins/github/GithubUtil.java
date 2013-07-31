@@ -263,7 +263,7 @@ public class GithubUtil {
   }
 
   @Nullable
-  public static String findGithubUpstreamRemote(@NotNull GitRepository repository) {
+  public static String findUpstreamRemote(@NotNull GitRepository repository) {
     for (GitRemote gitRemote : repository.getRemotes()) {
       final String remoteName = gitRemote.getName();
       if ("upstream".equals(remoteName)) {

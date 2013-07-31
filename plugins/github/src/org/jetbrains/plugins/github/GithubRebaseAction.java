@@ -115,7 +115,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     new Task.Backgroundable(project, "Rebasing GitHub fork...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        String upstreamRemoteUrl = GithubUtil.findGithubUpstreamRemote(gitRepository);
+        String upstreamRemoteUrl = GithubUtil.findUpstreamRemote(gitRepository);
 
         if (upstreamRemoteUrl == null) {
           LOG.info("Configuring upstream remote");
