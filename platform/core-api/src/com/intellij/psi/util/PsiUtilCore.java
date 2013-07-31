@@ -29,6 +29,7 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -454,7 +455,7 @@ public class PsiUtilCore {
 
   public static void ensureValid(@NotNull PsiElement element) {
     if (!element.isValid()) {
-      Thread.yield();
+      TimeoutUtil.sleep(1); // to see if processing in another thread suddenly makes the element valid again (which is a bug)
       if (element.isValid()) {
         LOG.error("PSI resurrected: " + element + " of " + element.getClass());
         return;
