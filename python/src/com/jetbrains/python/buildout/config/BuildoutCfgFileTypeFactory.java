@@ -12,5 +12,6 @@ import org.jetbrains.annotations.NotNull;
 public class BuildoutCfgFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
     consumer.consume(BuildoutCfgFileType.INSTANCE, new ExactFileNameMatcher(BuildoutFacet.BUILDOUT_CFG, true));
+    consumer.consume(BuildoutCfgFileType.INSTANCE, "ini");
   }
 }
