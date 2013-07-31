@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -144,6 +145,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
     }
+    if (!myEditor.isStickySelection()) {
+      CopyPasteManager.getInstance().stopKillRings();
+    }
+
     myDesiredX = -1;
     int column = pos.column;
     int line = pos.line;
@@ -258,6 +263,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
+    }
+    if (!myEditor.isStickySelection()) {
+      CopyPasteManager.getInstance().stopKillRings();
     }
     SelectionModelImpl selectionModel = myEditor.getSelectionModel();
     final int leadSelectionOffset = selectionModel.getLeadSelectionOffset();
@@ -426,6 +434,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
     }
+    if (!myEditor.isStickySelection()) {
+      CopyPasteManager.getInstance().stopKillRings();
+    }
+
     myReportCaretMoves = true;
     try {
       return doMoveToLogicalPosition(pos, locateBeforeSoftWrap, debugBuffer, fireListeners);

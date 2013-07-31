@@ -15,9 +15,13 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.ide.KillRingTransferable;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.io.IOException;
 
 /**
@@ -88,5 +92,20 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     configureFromFileText(getTestName(false) + ".txt", before);
     killToWordEnd();
     checkResultByText(after);
-  } 
+  }
+
+  public void testSubsequentKillsInterleavedByCaretMove() throws Exception {
+    String text = "<caret>first second third";
+    configureFromFileText(getTestName(false) + ".txt", text);
+    killToWordEnd();
+    checkResultByText(" second third");
+    
+    getEditor().getCaretModel().moveCaretRelatively(1, 0, false, false, false);
+    getEditor().getCaretModel().moveCaretRelatively(-1, 0, false, false, false);
+    killToWordEnd();
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals(" second", string);
+  }
 }
