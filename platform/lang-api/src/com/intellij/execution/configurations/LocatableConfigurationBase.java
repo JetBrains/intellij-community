@@ -24,18 +24,18 @@ import org.jdom.Element;
  * @author yole
  */
 public abstract class LocatableConfigurationBase extends RunConfigurationBase implements LocatableConfiguration {
-  private static final String ATTR_NAME_CHANGED_BY_USER = "nameChangedByUser";
+  private static final String ATTR_NAME_IS_GENERATED = "nameIsGenerated";
+
+  private boolean myNameIsGenerated;
 
   protected LocatableConfigurationBase(Project project,
                                        ConfigurationFactory factory, String name) {
     super(project, factory, name);
   }
 
-  private boolean myNameChangedByUser;
-
   @Override
   public boolean isGeneratedName() {
-    return suggestedName() != null && !myNameChangedByUser;
+    return suggestedName() != null && myNameIsGenerated;
   }
 
   /**
@@ -43,7 +43,7 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
    */
   public void setGeneratedName() {
     setName(suggestedName());
-    myNameChangedByUser = false;
+    myNameIsGenerated = true;
   }
 
   @Override
@@ -52,20 +52,20 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
   }
 
   public void setNameChangedByUser(boolean nameChangedByUser) {
-    myNameChangedByUser = nameChangedByUser;
+    myNameIsGenerated = !nameChangedByUser;
   }
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    myNameChangedByUser = "true".equals(element.getAttributeValue(ATTR_NAME_CHANGED_BY_USER));
+    myNameIsGenerated = "true".equals(element.getAttributeValue(ATTR_NAME_IS_GENERATED));
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    if (suggestedName() != null && myNameChangedByUser) {
-      element.setAttribute(ATTR_NAME_CHANGED_BY_USER, "true");
+    if (myNameIsGenerated && suggestedName() != null) {
+      element.setAttribute(ATTR_NAME_IS_GENERATED, "true");
     }
   }
 
