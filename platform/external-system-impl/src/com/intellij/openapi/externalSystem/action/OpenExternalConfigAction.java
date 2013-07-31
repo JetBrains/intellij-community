@@ -25,6 +25,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class OpenExternalConfigAction extends AnAction implements DumbAware {
 
+  public OpenExternalConfigAction() {
+    getTemplatePresentation().setText(ExternalSystemBundle.message("action.open.config.text", "external"));
+    getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.open.config.description", "external"));
+  }
+
   @Override
   public void update(AnActionEvent e) {
     ProjectSystemId externalSystemId = ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());
@@ -33,7 +38,7 @@ public class OpenExternalConfigAction extends AnAction implements DumbAware {
       return;
     }
 
-    e.getPresentation().setText(ExternalSystemBundle.message("action.open.config.text"));
+    e.getPresentation().setText(ExternalSystemBundle.message("action.open.config.text", externalSystemId.getReadableName()));
     e.getPresentation().setDescription(ExternalSystemBundle.message("action.open.config.description", externalSystemId.getReadableName()));
     e.getPresentation().setIcon(ExternalSystemUiUtil.getUiAware(externalSystemId).getProjectIcon());
 

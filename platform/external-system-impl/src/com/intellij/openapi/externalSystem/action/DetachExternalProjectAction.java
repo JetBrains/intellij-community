@@ -52,7 +52,7 @@ import java.util.List;
 public class DetachExternalProjectAction extends AnAction implements DumbAware {
 
   public DetachExternalProjectAction() {
-    getTemplatePresentation().setText(ExternalSystemBundle.message("action.detach.external.project.text"));
+    getTemplatePresentation().setText(ExternalSystemBundle.message("action.detach.external.project.text", "external"));
     getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.detach.external.project.description"));
     getTemplatePresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Remove : AllIcons.ToolbarDecorator.Remove);
   }
@@ -71,6 +71,10 @@ public class DetachExternalProjectAction extends AnAction implements DumbAware {
     {
       return;
     }
+    
+    e.getPresentation().setText(
+      ExternalSystemBundle.message("action.detach.external.project.text",info.externalSystemId.getReadableName())
+    );
 
     ExternalSystemTasksTreeModel allTasksModel = ExternalSystemDataKeys.ALL_TASKS_MODEL.getData(e.getDataContext());
     if (allTasksModel != null) {

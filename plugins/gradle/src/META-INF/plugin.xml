@@ -68,22 +68,5 @@
                       namedArgsProvider="org.jetbrains.plugins.gradle.service.resolve.GradleProjectApplyArgsProvider"/>
     
   </extensions>
-
-  <actions>
-
-    <!-- Tool window toolbar actions -->
-    <action id="Gradle.RefreshProject" class="com.intellij.openapi.externalSystem.action.RefreshAllExternalProjectsAction" icon="AllIcons.Actions.Refresh"/>
-    <action id="Gradle.OpenScript" class="org.jetbrains.plugins.gradle.action.GradleOpenScriptAction" icon="GradleIcons.GradleNavigate"/>
-    <action id="Gradle.Help.ToolWindow" class="org.jetbrains.plugins.gradle.action.GradleToolWindowHelpAction" icon="AllIcons.Actions.Help"/>
-    <group id="Gradle.ChangeActionsToolbar">
-      <reference id="Gradle.RefreshProject"/>
-      <reference id="Gradle.OpenScript"/>
-      <reference id="Gradle.Help.ToolWindow"/>
-    </group>
-
-    <group id="Gradle.TasksGroup">
-      <reference ref="RunContextGroup"/>
-    </group>
-  </actions>
-
+  
 </idea-plugin>
