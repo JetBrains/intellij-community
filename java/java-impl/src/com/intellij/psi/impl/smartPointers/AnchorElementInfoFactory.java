@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.IStubElementType;
@@ -27,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.AnchorElementInfoFactory");
-
   @Override
   @Nullable
   public SmartPointerElementInfo createElementInfo(@NotNull PsiElement element) {

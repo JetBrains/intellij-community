@@ -51,13 +51,14 @@ public class SelfElementInfo implements SmartPointerElementInfo {
          anchor.getContainingFile().getLanguage());
   }
   public SelfElementInfo(@NotNull Project project,
-                         @NotNull ProperTextRange anchor,
+                         @NotNull ProperTextRange range,
                          @NotNull Class anchorClass,
                          @NotNull PsiFile containingFile,
                          @NotNull Language language) {
     myLanguage = language;
     myVirtualFile = PsiUtilCore.getVirtualFile(containingFile);
     myType = anchorClass;
+    assert !PsiFile.class.isAssignableFrom(anchorClass) : "FileElementInfo must be used for files";
 
     myProject = project;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
@@ -67,25 +68,8 @@ public class SelfElementInfo implements SmartPointerElementInfo {
       return;
     }
 
-    //if (file.getTextLength() != document.getTextLength()) {
-    //  final String docText = document.getText();
-    //  file.accept(new PsiRecursiveElementWalkingVisitor() {
-    //    @Override
-    //    public void visitElement(PsiElement element) {
-    //      super.visitElement(element);
-    //      TextRange elementRange = element.getTextRange();
-    //      final String rangeText = docText.length() < elementRange.getEndOffset() ? "(IOOBE: "+elementRange +" is out of (0,"+docText.length()+"))" : elementRange.substring(docText);
-    //      final String elemText = element.getText();
-    //      if (!rangeText.equals(elemText)) {
-    //        throw new AssertionError("PSI text doesn't equal to the document's one: element: " + element + "\ndocText=" + rangeText + "\npsiText: " + elemText);
-    //      }
-    //    }
-    //  });
-    //  LOG.error("File=" + file);
-    //}
-
     mySyncMarkerIsValid = true;
-    setRange(anchor);
+    setRange(range);
   }
 
   protected void setRange(@NotNull Segment range) {
@@ -173,8 +157,9 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     return findElementInside(file, syncStartOffset, syncEndOffset, myType, myLanguage);
   }
 
-  protected PsiFile restoreFile() {
-    return restoreFileFromVirtual(myVirtualFile, myProject);
+  @Override
+  public PsiFile restoreFile() {
+    return restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
   }
 
   protected static PsiElement findElementInside(@NotNull PsiFile file, int syncStartOffset, int syncEndOffset, @NotNull Class type, @NotNull Language language) {

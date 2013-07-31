@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,8 @@ interface SmartPointerElementInfo {
 
   @Nullable
   PsiElement restoreElement();
+
+  PsiFile restoreFile();
 
   int elementHashCode(); // must be immutable
   boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other);
