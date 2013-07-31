@@ -18,10 +18,10 @@ import java.util.List;
  * @author vlan
  */
 public class PyCallableTypeImpl implements PyCallableType {
-  @NotNull private final List<PyType> myParameterTypes;
+  @Nullable private final List<PyType> myParameterTypes;
   @Nullable private final PyType myReturnType;
 
-  public PyCallableTypeImpl(@NotNull List<PyType> parameterTypes, @Nullable PyType returnType) {
+  public PyCallableTypeImpl(@Nullable List<PyType> parameterTypes, @Nullable PyType returnType) {
     myParameterTypes = parameterTypes;
     myReturnType = returnType;
   }
@@ -61,6 +61,7 @@ public class PyCallableTypeImpl implements PyCallableType {
   @Override
   public String getName() {
     return String.format("(%s) -> %s",
+                         myParameterTypes != null ?
                          StringUtil.join(myParameterTypes,
                                          new Function<PyType, String>() {
                                            @Override
@@ -68,7 +69,8 @@ public class PyCallableTypeImpl implements PyCallableType {
                                              return type != null ? type.getName() : PyNames.UNKNOWN_TYPE;
                                            }
                                          },
-                                         ", "),
+                                         ", ") :
+                         "...",
                          myReturnType != null ? myReturnType.getName() : PyNames.UNKNOWN_TYPE);
   }
 

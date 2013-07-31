@@ -228,6 +228,16 @@ public class PyTypeChecker {
         collectGenerics(tuple.getElementType(i), context, collected, visited);
       }
     }
+    else if (type instanceof PyCallableType) {
+      final PyCallableType callable = (PyCallableType)type;
+      final List<PyType> parameters = callable.getParameterTypes(context);
+      if (parameters != null) {
+        for (PyType parameter : parameters) {
+          collectGenerics(parameter, context, collected, visited);
+        }
+      }
+      collectGenerics(callable.getCallType(context, null), context, collected, visited);
+    }
   }
 
   @Nullable
@@ -261,6 +271,19 @@ public class PyTypeChecker {
           results.add(subst);
         }
         return new PyTupleType((PyTupleType)type, results.toArray(new PyType[results.size()]));
+      }
+      else if (type instanceof PyCallableType) {
+        final PyCallableType callable = (PyCallableType)type;
+        List<PyType> substParams = null;
+        final List<PyType> parameters = callable.getParameterTypes(context);
+        if (parameters != null) {
+          substParams = new ArrayList<PyType>();
+          for (PyType parameter : parameters) {
+            substParams.add(substitute(parameter, substitutions, context));
+          }
+        }
+        final PyType substResult = substitute(callable.getCallType(context, null), substitutions, context);
+        return new PyCallableTypeImpl(substParams, substResult);
       }
     }
     return type;
