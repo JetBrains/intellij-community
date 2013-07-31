@@ -386,6 +386,7 @@ public class IdeaApplication {
   private void loadProject() {
     Project project = null;
     if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
+      LOG.info("IdeaApplication.loadProject");
       project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(myArgs), null);
     }
 
