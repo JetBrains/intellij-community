@@ -216,7 +216,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     if (value instanceof PsiElement) {
       NavigationUtil.activateFileWithPsiElement((PsiElement)value, true);
       return;
-    } else if (value instanceof VirtualFile) {
+    } else if (isVirtualFile(value)) {
       OpenFileDescriptor navigatable = new OpenFileDescriptor(project, (VirtualFile)value);
       if (navigatable.canNavigate()) {
         navigatable.navigate(true);
@@ -338,15 +338,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       gotoAction = StringUtil.isEmpty(gotoAction) ? "Actions" : "Actions (" + gotoAction + ")";
       String gotoSettings = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ShowSettings"));
       gotoSettings = StringUtil.isEmpty(gotoAction) ? "Preferences" : "Preferences (" + gotoSettings + ")";
+      String toolWindows = "Tool Windows";
       if (prevValue == null) { // firstElement
         if (value instanceof PsiElement)return gotoClass;
-        if (value instanceof VirtualFile)return gotoFile;
-        if (value instanceof Map.Entry)return gotoAction;
+        if (isVirtualFile(value))return gotoFile;
+        if (isToolWindowAction(value)) return toolWindows;
+        if (isSetting(value)) return gotoSettings;
+        if (isActionValue(value))return gotoAction;
         return gotoSettings;
       } else {
-        if (!(prevValue instanceof VirtualFile) && value instanceof VirtualFile) return gotoFile;
-        if (!(prevValue instanceof OptionDescription) && value instanceof OptionDescription) return gotoSettings;
-        if (!(prevValue instanceof Map.Entry) && value instanceof Map.Entry) return gotoAction;
+        if (!isVirtualFile(prevValue) && isVirtualFile(value)) return gotoFile;
+        if (!isSetting(prevValue) && isSetting(value)) return gotoSettings;
+        if (!isToolWindowAction(prevValue) && isToolWindowAction(value)) return toolWindows;
+        if ((!isActionValue(prevValue) || isToolWindowAction(prevValue)) && isActionValue(value)) return gotoAction;
       }
       return null;
     }
@@ -361,9 +365,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           assert name != null;
           append(name);
         }
-        else if (value instanceof VirtualFile) {
+        else if (isVirtualFile(value)) {
           append(((VirtualFile)value).getName());
-        } else if (value instanceof Map.Entry) {
+        } else if (isActionValue(value)) {
           final Map.Entry actionWithParentGroup = (Map.Entry)value;
           final AnAction anAction = (AnAction)actionWithParentGroup.getKey();
           final Presentation templatePresentation = anAction.getTemplatePresentation();
@@ -384,7 +388,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             setIcon(icon);
           }
         }
-        else if (value instanceof OptionDescription) {
+        else if (isSetting(value)) {
           String hit = ((OptionDescription)value).getHit();
           if (hit == null) {
             hit = ((OptionDescription)value).getOption();
@@ -410,6 +414,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         token.finish();
       }
     }
+  }
+
+  private static boolean isActionValue(Object prevValue) {
+    return prevValue instanceof Map.Entry;
+  }
+
+  private static boolean isSetting(Object o) {
+    return o instanceof OptionDescription;
+  }
+
+  private static boolean isVirtualFile(Object o) {
+    return o instanceof VirtualFile;
   }
 
   private class CalcThread implements Runnable {
@@ -493,7 +509,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
           for (Object object : objects) {
             myProgressIndicator.checkCanceled();
-            if (object instanceof Map.Entry) {
+            if (isActionValue(object)) {
               final AnAction action = (AnAction)((Map.Entry)object).getKey();
               if (!addedActions.add(action)) continue;
             }
@@ -506,9 +522,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         Collections.sort(actionsAndSettings, new Comparator<Object>() {
           @Override
           public int compare(Object o1, Object o2) {
-            final boolean b1 = o1 instanceof OptionDescription;
-            final boolean b2 = o2 instanceof OptionDescription;
-            return b1 == b2 ? 0 : b1 ? 1 : -1;
+            final boolean b1 = isSetting(o1);
+            final boolean b2 = isSetting(o2);
+            final boolean t1 = isToolWindowAction(o1);
+            final boolean t2 = isToolWindowAction(o2);
+            return t1 == t2 ? b1 == b2  ? 0 : b1 ? 1 : -1 : t1 ? -1 : 1;
           }
         });
 
@@ -606,6 +624,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         ProgressManager.getInstance().runProcess(this, myProgressIndicator);
       }
     }
+  }
+
+  private static boolean isToolWindowAction(Object o) {
+    return isActionValue(o) && ((Map.Entry)o).getKey() instanceof ActivateToolWindowAction;
   }
 
   private void fillConfigurablesIds(String pathToParent, Configurable[] configurables) {
