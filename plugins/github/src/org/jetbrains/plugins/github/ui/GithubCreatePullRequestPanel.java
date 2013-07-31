@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,6 +31,7 @@ public class GithubCreatePullRequestPanel {
   private JTextArea myDescriptionTextArea;
   private JComboBox myBranchComboBox;
   private JPanel myPanel;
+  private AsyncProcessIcon myAsyncProcessIcon;
 
   public GithubCreatePullRequestPanel() {
     myDescriptionTextArea.setBorder(BorderFactory.createEtchedBorder());
@@ -86,7 +88,12 @@ public class GithubCreatePullRequestPanel {
   }
 
   public void setBusy(boolean busy) {
-    // TODO: add busy icon
+    if (busy) {
+      myAsyncProcessIcon.resume();
+    }
+    else {
+      myAsyncProcessIcon.suspend();
+    }
   }
 
   public JComboBox getComboBox() {
@@ -99,5 +106,9 @@ public class GithubCreatePullRequestPanel {
 
   public void setTitle(String title) {
     myTitleTextField.setText(title);
+  }
+
+  private void createUIComponents() {
+    myAsyncProcessIcon = new AsyncProcessIcon("Loading available branches");
   }
 }
