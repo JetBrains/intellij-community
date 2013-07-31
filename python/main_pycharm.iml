@@ -46,6 +46,7 @@
     <orderEntry type="module" module-name="IntelliLang-js" />
     <orderEntry type="module" module-name="IntelliLang-python" />
     <orderEntry type="module" module-name="IntelliLang-xml" />
+    <orderEntry type="module" module-name="ini4idea" />
   </component>
 </module>
 

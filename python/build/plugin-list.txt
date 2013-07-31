@@ -57,3 +57,4 @@ IntelliLang
 IntelliLang-xml
 IntelliLang-js
 IntelliLang-python
+ini4idea
