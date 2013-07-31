@@ -19,6 +19,7 @@ import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.net.NetUtils;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -33,7 +34,6 @@ import org.jetbrains.ide.PooledThreadExecutor;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
@@ -113,23 +113,12 @@ public class BuiltInServer implements Disposable {
     }
   }
 
-  // IDEA-91436 idea <121 binds to 127.0.0.1, but >=121 must be available not only from localhost
-  // but if we bind only to any local port (0.0.0.0), instance of idea <121 can bind to our ports and any request to us will be intercepted
-  // so, we bind to 127.0.0.1 and 0.0.0.0
   private int bind(int firstPort, int portsCount, boolean tryAnyPort, ServerBootstrap bootstrap) {
-    InetAddress localAddress;
-    try {
-      localAddress = InetAddress.getByName("127.0.0.1");
-    }
-    catch (UnknownHostException e) {
-      LOG.error(e);
-      return -1;
-    }
-
+    InetAddress loopbackAddress = NetUtils.getLoopbackAddress();
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;
       try {
-        openChannels.add(bootstrap.bind(new InetSocketAddress(localAddress, port)));
+        openChannels.add(bootstrap.bind(new InetSocketAddress(loopbackAddress, port)));
         return port;
       }
       catch (ChannelException e) {
@@ -150,7 +139,7 @@ public class BuiltInServer implements Disposable {
     if (tryAnyPort) {
       LOG.info("We cannot bind to our default range, so, try to bind to any free port");
       try {
-        Channel channel = bootstrap.bind(new InetSocketAddress(localAddress, 0));
+        Channel channel = bootstrap.bind(new InetSocketAddress(loopbackAddress, 0));
         openChannels.add(channel);
         return ((InetSocketAddress)channel.getLocalAddress()).getPort();
       }

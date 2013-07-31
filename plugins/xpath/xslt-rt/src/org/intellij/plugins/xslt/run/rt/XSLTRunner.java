@@ -100,7 +100,7 @@ public class XSLTRunner implements XSLTMain {
                         } else {
                             result = new StreamResult(new OutputStreamWriter(socketStream, "UTF-8"));
                         }
-                    } catch (SocketTimeoutException e) {
+                    } catch (SocketTimeoutException ignored) {
                         System.err.println("Plugin did not connect to runner within timeout. Run aborted.");
                         return;
                     }

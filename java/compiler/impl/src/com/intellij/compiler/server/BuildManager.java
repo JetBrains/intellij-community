@@ -103,7 +103,6 @@ import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -959,6 +958,7 @@ public class BuildManager implements ApplicationComponent{
   private int startListening() throws Exception {
     final ChannelFactory channelFactory = new NioServerSocketChannelFactory(myPooledThreadExecutor, myPooledThreadExecutor, 1);
     final SimpleChannelUpstreamHandler channelRegistrar = new SimpleChannelUpstreamHandler() {
+      @Override
       public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         myAllOpenChannels.add(e.getChannel());
         super.channelOpen(ctx, e);
@@ -971,6 +971,7 @@ public class BuildManager implements ApplicationComponent{
       }
     };
     ChannelPipelineFactory pipelineFactory = new ChannelPipelineFactory() {
+      @Override
       public ChannelPipeline getPipeline() throws Exception {
         return Channels.pipeline(
           channelRegistrar,
@@ -987,7 +988,7 @@ public class BuildManager implements ApplicationComponent{
     bootstrap.setOption("child.tcpNoDelay", true);
     bootstrap.setOption("child.keepAlive", true);
     final int listenPort = NetUtils.findAvailableSocketPort();
-    final Channel serverChannel = bootstrap.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), listenPort));
+    final Channel serverChannel = bootstrap.bind(new InetSocketAddress(NetUtils.getLoopbackAddress(), listenPort));
     myAllOpenChannels.add(serverChannel);
     return listenPort;
   }
@@ -1222,6 +1223,7 @@ public class BuildManager implements ApplicationComponent{
       super(path);
     }
 
+    @Override
     public String getValue() {
       if (myPath.length == 1) {
         final String name = FileNameCache.getVFileName(myPath[0]);
@@ -1245,6 +1247,7 @@ public class BuildManager implements ApplicationComponent{
       super(path);
     }
 
+    @Override
     public String getValue() {
       if (myPath.length > 0) {
         final StringBuilder buf = new StringBuilder();
