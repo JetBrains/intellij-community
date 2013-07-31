@@ -126,6 +126,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (!PyNames.INIT.equals(name)) {
       cat.addItem(escaper.apply("\nInferred type: "));
       getTypeDescription(fun, cat);
+      cat.addItem(BR);
     }
     return cat;
   }

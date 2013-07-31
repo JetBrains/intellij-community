@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
@@ -144,12 +145,15 @@ public class PyTypeChecker {
       final PyCallableType expectedCallable = (PyCallableType)expected;
       final PyCallableType actualCallable = (PyCallableType)actual;
       if (expectedCallable.isCallable() && actualCallable.isCallable()) {
-        final List<PyType> expectedParameters = expectedCallable.getParameterTypes(context);
-        final List<PyType> actualParameters = actualCallable.getParameterTypes(context);
+        final List<Pair<String, PyType>> expectedParameters = expectedCallable.getParameters(context);
+        final List<Pair<String, PyType>> actualParameters = actualCallable.getParameters(context);
         if (expectedParameters != null && actualParameters != null) {
           final int size = Math.min(expectedParameters.size(), actualParameters.size());
           for (int i = 0; i < size; i++) {
-            if (!match(expectedParameters.get(i), actualParameters.get(i), context, substitutions, recursive)) {
+            final Pair<String, PyType> expectedParam = expectedParameters.get(i);
+            final Pair<String, PyType> actualParam = actualParameters.get(i);
+            // TODO: Check named and star params, not only positional ones
+            if (!match(expectedParam.getSecond(), actualParam.getSecond(), context, substitutions, recursive)) {
               return false;
             }
           }
@@ -230,10 +234,12 @@ public class PyTypeChecker {
     }
     else if (type instanceof PyCallableType) {
       final PyCallableType callable = (PyCallableType)type;
-      final List<PyType> parameters = callable.getParameterTypes(context);
+      final List<Pair<String, PyType>> parameters = callable.getParameters(context);
       if (parameters != null) {
-        for (PyType parameter : parameters) {
-          collectGenerics(parameter, context, collected, visited);
+        for (Pair<String, PyType> parameter : parameters) {
+          if (parameter != null) {
+            collectGenerics(parameter.getSecond(), context, collected, visited);
+          }
         }
       }
       collectGenerics(callable.getCallType(context, null), context, collected, visited);
@@ -274,12 +280,12 @@ public class PyTypeChecker {
       }
       else if (type instanceof PyCallableType) {
         final PyCallableType callable = (PyCallableType)type;
-        List<PyType> substParams = null;
-        final List<PyType> parameters = callable.getParameterTypes(context);
+        List<Pair<String, PyType>> substParams = null;
+        final List<Pair<String, PyType>> parameters = callable.getParameters(context);
         if (parameters != null) {
-          substParams = new ArrayList<PyType>();
-          for (PyType parameter : parameters) {
-            substParams.add(substitute(parameter, substitutions, context));
+          substParams = new ArrayList<Pair<String, PyType>>();
+          for (Pair<String, PyType> parameter : parameters) {
+            substParams.add(Pair.create(parameter.getFirst(), substitute(parameter.getSecond(), substitutions, context)));
           }
         }
         final PyType substResult = substitute(callable.getCallType(context, null), substitutions, context);

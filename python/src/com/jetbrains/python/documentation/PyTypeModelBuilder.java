@@ -4,9 +4,10 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.Callable;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.types.*;
@@ -108,10 +109,15 @@ public class PyTypeModelBuilder {
 
   static class FunctionType extends TypeModel {
     private TypeModel returnType;
-    private Collection<TypeModel> parameters;
+    @Nullable private Collection<TypeModel> parameters;
 
-    FunctionType(@NotNull TypeModel returnType, Collection<TypeModel> parameters) {
-      this.returnType = returnType;
+    FunctionType(@Nullable TypeModel returnType, @Nullable Collection<TypeModel> parameters) {
+      if (returnType != null) {
+        this.returnType = returnType;
+      }
+      else {
+        this.returnType = _(PyNames.UNKNOWN_TYPE);
+      }
       this.parameters = parameters;
     }
 
@@ -188,6 +194,9 @@ public class PyTypeModelBuilder {
           }));
       }
     }
+    else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
+      result = build((PyCallableType)type);
+    }
     if (result == null) {
       result = type != null ? _(type.getName()) : _(PyNames.UNKNOWN_TYPE);
     }
@@ -195,9 +204,23 @@ public class PyTypeModelBuilder {
     return result;
   }
 
-  public TypeModel build(PyFunction function) {
-    final PyType returnType = function.getReturnType(myContext, null);
-    return new FunctionType(build(returnType, true), Collections2.transform(Lists.newArrayList(function.getParameterList().getParameters()),
+  private TypeModel build(@NotNull PyCallableType type) {
+    List<TypeModel> parameterModels = null;
+    final List<Pair<String, PyType>> parameters = type.getParameters(myContext);
+    if (parameters != null) {
+      parameterModels = new ArrayList<TypeModel>();
+      for (Pair<String, PyType> parameter : parameters) {
+        parameterModels.add(new ParamType(parameter.getFirst(), build(parameter.getSecond(), true)));
+      }
+    }
+    final PyType ret = type.getCallType(myContext, null);
+    final TypeModel returnType = build(ret, true);
+    return new FunctionType(returnType, parameterModels);
+  }
+
+  public TypeModel build(Callable callable) {
+    final PyType returnType = callable.getReturnType(myContext, null);
+    return new FunctionType(build(returnType, true), Collections2.transform(Lists.newArrayList(callable.getParameterList().getParameters()),
                                                                             new Function<PyParameter, TypeModel>() {
                                                                               @Override
                                                                               public TypeModel apply(PyParameter p) {
@@ -208,7 +231,8 @@ public class PyTypeModelBuilder {
                                                                                   if (t != null) {
                                                                                     paramType = build(t, true);
                                                                                   }
-                                                                                  return new ParamType(np.getName(), paramType);
+                                                                                  final String name = PyFunctionType.getParameterName(np);
+                                                                                  return new ParamType(name, paramType);
                                                                                 }
                                                                                 return new ParamType(p.toString(), null);
                                                                               }
@@ -343,10 +367,15 @@ public class PyTypeModelBuilder {
         return;
       }
       add("(");
-      processListCommaSeparated(function.parameters, ", ");
+      final Collection<TypeModel> parameters = function.parameters;
+      if (parameters != null) {
+        processListCommaSeparated(parameters, ", ");
+      }
+      else {
+        add("...");
+      }
       add(") -> ");
       function.returnType.accept(this);
-      add("\n");
       myDepth--;
     }
 

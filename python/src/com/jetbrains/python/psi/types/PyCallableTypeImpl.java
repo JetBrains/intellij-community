@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
@@ -18,11 +19,11 @@ import java.util.List;
  * @author vlan
  */
 public class PyCallableTypeImpl implements PyCallableType {
-  @Nullable private final List<PyType> myParameterTypes;
+  @Nullable private final List<Pair<String, PyType>> myParameters;
   @Nullable private final PyType myReturnType;
 
-  public PyCallableTypeImpl(@Nullable List<PyType> parameterTypes, @Nullable PyType returnType) {
-    myParameterTypes = parameterTypes;
+  public PyCallableTypeImpl(@Nullable List<Pair<String, PyType>> parameters, @Nullable PyType returnType) {
+    myParameters = parameters;
     myReturnType = returnType;
   }
 
@@ -39,8 +40,8 @@ public class PyCallableTypeImpl implements PyCallableType {
 
   @Nullable
   @Override
-  public List<PyType> getParameterTypes(@NotNull TypeEvalContext context) {
-    return myParameterTypes;
+  public List<Pair<String, PyType>> getParameters(@NotNull TypeEvalContext context) {
+    return myParameters;
   }
 
   @Nullable
@@ -61,12 +62,25 @@ public class PyCallableTypeImpl implements PyCallableType {
   @Override
   public String getName() {
     return String.format("(%s) -> %s",
-                         myParameterTypes != null ?
-                         StringUtil.join(myParameterTypes,
-                                         new Function<PyType, String>() {
+                         myParameters != null ?
+                         StringUtil.join(myParameters,
+                                         new Function<Pair<String, PyType>, String>() {
                                            @Override
-                                           public String fun(PyType type) {
-                                             return type != null ? type.getName() : PyNames.UNKNOWN_TYPE;
+                                           public String fun(Pair<String, PyType> param) {
+                                             if (param != null) {
+                                               final StringBuilder builder = new StringBuilder();
+                                               final String name = param.getFirst();
+                                               final PyType type = param.getSecond();
+                                               if (name != null) {
+                                                 builder.append(name);
+                                                 if (type != null) {
+                                                   builder.append(": ");
+                                                 }
+                                               }
+                                               builder.append(type != null ? type.getName() : PyNames.UNKNOWN_TYPE);
+                                               return builder.toString();
+                                             }
+                                             return PyNames.UNKNOWN_TYPE;
                                            }
                                          },
                                          ", ") :
