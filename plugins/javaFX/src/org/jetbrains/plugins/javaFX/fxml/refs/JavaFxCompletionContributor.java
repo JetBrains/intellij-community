@@ -43,8 +43,7 @@ public class JavaFxCompletionContributor extends CompletionContributor {
       final XmlTag xmlTag = (XmlTag)reference.getElement();
 
       List<String> namespaces = Arrays.asList(xmlTag.knownNamespaces());
-      final List<XmlElementDescriptor> variants =
-        TagNameVariantCollector.<XmlElementDescriptor>getTagDescriptors(xmlTag, namespaces, null);
+      final List<XmlElementDescriptor> variants = TagNameVariantCollector.getTagDescriptors(xmlTag, namespaces, null);
       for (XmlElementDescriptor descriptor : variants) {
         final String descriptorName = descriptor.getName(reference.getElement());
         if (descriptorName != null) {
