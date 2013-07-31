@@ -1467,11 +1467,11 @@ public abstract class ChooseByNameBase {
     public void run() {
       showCard(SEARCHING_CARD, 200);
 
-      final Set<Object> elements = new LinkedHashSet<Object>();
-      Runnable calculation = new Runnable() {
+      ProgressManager.getInstance().runProcess(new Runnable() {
+        @Override
         public void run() {
-          ProgressManager.getInstance().runProcess(new Runnable() {
-            @Override
+          final Set<Object> elements = new LinkedHashSet<Object>();
+          Runnable calculation = new Runnable() {
             public void run() {
               ApplicationManager.getApplication().runReadAction(new Runnable() {
                 @Override
@@ -1487,36 +1487,36 @@ public abstract class ChooseByNameBase {
                 }
               });
             }
-          }, myCancelled);
-        }
-      };
+          };
+          calculation.run();
 
-      calculation.run();
-
-      if (myCancelled.isCanceled()) {
-        myShowCardAlarm.cancelAllRequests();
-        return;
-      }
-
-      final String cardToShow;
-      if (elements.isEmpty() && !myCheckboxState) {
-        myScopeExpanded = true;
-        myCheckboxState = true;
-        calculation.run();
-      }
-      cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
-      showCard(cardToShow, 0);
-
-      final Set<Object> filtered = filter(elements);
-
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!myCancelled.isCanceled()) {
-            myCallback.consume(filtered);
+          if (myCancelled.isCanceled()) {
+            myShowCardAlarm.cancelAllRequests();
+            return;
           }
+
+          final String cardToShow;
+          if (elements.isEmpty() && !myCheckboxState) {
+            myScopeExpanded = true;
+            myCheckboxState = true;
+            calculation.run();
+          }
+          cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
+          showCard(cardToShow, 0);
+
+          final Set<Object> filtered = filter(elements);
+
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (!myCancelled.isCanceled()) {
+                myCallback.consume(filtered);
+              }
+            }
+          }, myModalityState);
         }
-      }, myModalityState);
+      }, myCancelled);
+
     }
 
     private void addElementsByPattern(@NotNull String pattern,
