@@ -14,7 +14,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.$;
@@ -62,11 +64,11 @@ public class PyTypeModelBuilder {
 
   static class CollectionOf extends TypeModel {
     private String collectionName;
-    private TypeModel elementType;
+    private List<TypeModel> elementTypes;
 
-    private CollectionOf(String collectionName, TypeModel elementType) {
+    private CollectionOf(String collectionName, List<TypeModel> elementTypes) {
       this.collectionName = collectionName;
-      this.elementType = elementType;
+      this.elementTypes = elementTypes;
     }
 
     @Override
@@ -145,8 +147,19 @@ public class PyTypeModelBuilder {
     if (type instanceof PyCollectionType) {
       final String name = type.getName();
       final PyType elementType = ((PyCollectionType)type).getElementType(myContext);
-      if (elementType != null) {
-        result = new CollectionOf(name, build(elementType, true));
+      final List<TypeModel> elementTypes = new ArrayList<TypeModel>();
+      if (elementType instanceof PyTupleType) {
+        final PyTupleType tupleType = (PyTupleType)elementType;
+        final int n = tupleType.getElementCount();
+        for (int i = 0; i < n; i++) {
+          elementTypes.add(build(tupleType.getElementType(i), true));
+        }
+      }
+      else if (elementType != null) {
+        elementTypes.add(build(elementType, true));
+      }
+      if (!elementTypes.isEmpty()) {
+        result = new CollectionOf(name, elementTypes);
       }
     }
     else if (type instanceof PyUnionType && allowUnions) {
@@ -288,8 +301,9 @@ public class PyTypeModelBuilder {
         return;
       }
       addType(collectionOf.collectionName);
-      add(" of ");
-      collectionOf.elementType.accept(this);
+      add("[");
+      processListCommaSeparated(collectionOf.elementTypes, ", ");
+      add("]");
       myDepth--;
     }
 
