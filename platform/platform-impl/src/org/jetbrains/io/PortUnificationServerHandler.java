@@ -145,6 +145,6 @@ final class PortUnificationServerHandler extends SimpleChannelUpstreamHandler {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
-    ExceptionLoggers.log(event.getCause(), BuiltInServer.LOG);
+    NettyUtil.log(event.getCause(), BuiltInServer.LOG);
   }
 }

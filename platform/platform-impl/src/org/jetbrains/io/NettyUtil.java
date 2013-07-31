@@ -20,7 +20,7 @@ import org.jboss.netty.channel.ChannelException;
 
 import java.io.IOException;
 
-public final class ExceptionLoggers {
+public final class NettyUtil {
   public static void log(Throwable throwable, Logger log) {
     if (isAsWarning(throwable)) {
       log.warn(throwable);
