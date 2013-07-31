@@ -176,8 +176,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     //         <caret>
     //     }
     // Formatter removes such white spaces, i.e. keeps only line feed symbol. But we want to preserve caret position then.
-    // So, we check if it should be preserved and restore it after formatting if necessary
+    // So, if 'virtual space in editor' is enabled, we save target visual column. Caret indent is ensured otherwise
     int visualColumnToRestore = -1;
+    String caretIndentToRestore = null;
+    RangeMarker caretRangeMarker = null;
 
     if (editor != null) {
       Document document = editor.getDocument();
@@ -197,6 +199,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       }
       if (fixCaretPosition) {
         visualColumnToRestore = editor.getCaretModel().getVisualPosition().column;
+        caretIndentToRestore = document.getText(TextRange.create(lineStartOffset, caretOffset));
+        caretRangeMarker = document.createRangeMarker(lineStartOffset, caretOffset);
       }
     }
 
@@ -241,14 +245,30 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       return;
     }
 
-    if (visualColumnToRestore < 0) {
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      return;
+    boolean virtualSpaceEnabled = editor.getSettings().isVirtualSpace();
+
+    if (virtualSpaceEnabled) {
+      if (visualColumnToRestore < 0) {
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        return;
+      }
+      CaretModel caretModel = editor.getCaretModel();
+      VisualPosition position = caretModel.getVisualPosition();
+      if (visualColumnToRestore != position.column) {
+        caretModel.moveToVisualPosition(new VisualPosition(position.line, visualColumnToRestore));
+      }
     }
-    CaretModel caretModel = editor.getCaretModel();
-    VisualPosition position = caretModel.getVisualPosition();
-    if (visualColumnToRestore != position.column) {
-      caretModel.moveToVisualPosition(new VisualPosition(position.line, visualColumnToRestore));
+    else {
+      if (caretRangeMarker == null || !caretRangeMarker.isValid() || caretIndentToRestore == null) {
+        return;
+      }
+      int offset = caretRangeMarker.getStartOffset();
+      caretRangeMarker.dispose();
+      if (editor.getCaretModel().getVisualPosition().column == visualColumnToRestore) {
+        return;
+      }
+      Document document = editor.getDocument();
+      document.replaceString(document.getLineStartOffset(document.getLineNumber(offset)), offset, caretIndentToRestore);
     }
   }
 
