@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInspection.ui;
 
-import com.intellij.openapi.ui.Messages;
-
 import javax.swing.*;
 import java.text.ParseException;
 
@@ -34,11 +32,11 @@ public class RegExInputVerifier extends InputVerifier {
         try {
           formatter.stringToValue(ftf.getText());
         } catch (final ParseException e) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(e.getMessage(), "Malformed Naming Pattern");
-            }
-          });
+          //SwingUtilities.invokeLater(new Runnable() {
+          //  public void run() {
+          //    Messages.showErrorDialog(e.getMessage(), "Malformed Naming Pattern");
+          //  }
+          //});
         }
       }
     }
