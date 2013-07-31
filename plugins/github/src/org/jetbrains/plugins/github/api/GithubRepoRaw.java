@@ -75,7 +75,7 @@ class GithubRepoRaw implements DataConstructor {
   @SuppressWarnings("ConstantConditions")
   @NotNull
   public GithubRepo createRepo() {
-    return new GithubRepo(name, fullName, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.createUser());
+    return new GithubRepo(name, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.createUser());
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -83,7 +83,7 @@ class GithubRepoRaw implements DataConstructor {
   public GithubRepoDetailed createRepoDetailed() {
     GithubRepo parent = this.parent == null ? null : this.parent.createRepo();
     GithubRepo source = this.source == null ? null : this.source.createRepo();
-    return new GithubRepoDetailed(name, fullName, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.createUser(),
+    return new GithubRepoDetailed(name, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.createUser(),
                                   parent, source);
   }
 

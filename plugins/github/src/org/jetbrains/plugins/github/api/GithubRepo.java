@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GithubRepo {
   @NotNull private String myName;
-  @NotNull private String myFullName;
   @NotNull private String myDescription;
 
   private boolean myIsPrivate;
@@ -37,7 +36,6 @@ public class GithubRepo {
   @NotNull private GithubUser myOwner;
 
   public GithubRepo(@NotNull String name,
-                    @NotNull String fullName,
                     @NotNull String description,
                     boolean isPrivate,
                     boolean isFork,
@@ -46,7 +44,6 @@ public class GithubRepo {
                     @Nullable String defaultBranch,
                     @NotNull GithubUser owner) {
     myName = name;
-    myFullName = fullName;
     myDescription = description;
     myIsPrivate = isPrivate;
     myIsFork = isFork;
@@ -63,7 +60,7 @@ public class GithubRepo {
 
   @NotNull
   public String getFullName() {
-    return myFullName;
+    return getUserName() + "/" + getName();
   }
 
   @NotNull

@@ -26,7 +26,6 @@ public class GithubRepoDetailed extends GithubRepo {
   @Nullable private GithubRepo mySource;
 
   public GithubRepoDetailed(@NotNull String name,
-                            @NotNull String fullName,
                             @NotNull String description,
                             boolean isPrivate,
                             boolean isFork,
@@ -36,7 +35,7 @@ public class GithubRepoDetailed extends GithubRepo {
                             @NotNull GithubUser owner,
                             @Nullable GithubRepo parent,
                             @Nullable GithubRepo source) {
-    super(name, fullName, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner);
+    super(name, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner);
     myParent = parent;
     mySource = source;
   }
