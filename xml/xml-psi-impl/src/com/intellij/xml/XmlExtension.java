@@ -67,12 +67,15 @@ public abstract class XmlExtension {
 
     public final String name;
     public final String namespace;
-    public @Nullable final PsiElement declaration;
 
-    public TagInfo(String name, String namespace, @Nullable PsiElement declaration) {
+    public TagInfo(String name, String namespace) {
       this.name = name;
       this.namespace = namespace;
-      this.declaration = declaration;
+    }
+
+    @Nullable
+    public PsiElement getDeclaration() {
+      return null;
     }
   }
 
