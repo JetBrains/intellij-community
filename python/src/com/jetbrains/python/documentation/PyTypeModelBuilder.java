@@ -89,6 +89,19 @@ public class PyTypeModelBuilder {
     }
   }
 
+  static class UnknownType extends TypeModel {
+    private final TypeModel type;
+
+    private UnknownType(TypeModel type) {
+      this.type = type;
+    }
+
+    @Override
+    void accept(TypeVisitor visitor) {
+      visitor.unknown(this);
+    }
+  }
+
   private static TypeModel _(String name) {
     return new NamedType(name);
   }
@@ -162,8 +175,8 @@ public class PyTypeModelBuilder {
       }
     }
     else if (type instanceof PyUnionType && allowUnions) {
-      if (type instanceof PyDynamicallyEvaluatedType) {
-        result = build(((PyDynamicallyEvaluatedType)type).exclude(null, myContext), true);
+      if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type)) {
+        result = new UnknownType(build(((PyUnionType)type).excludeNull(), true));
       }
       else {
         result = new OneOf(
@@ -182,7 +195,6 @@ public class PyTypeModelBuilder {
     return result;
   }
 
-
   public TypeModel build(PyFunction function) {
     final PyType returnType = function.getReturnType(myContext, null);
     return new FunctionType(build(returnType, true), Collections2.transform(Lists.newArrayList(function.getParameterList().getParameters()),
@@ -191,8 +203,7 @@ public class PyTypeModelBuilder {
                                                                               public TypeModel apply(PyParameter p) {
                                                                                 final PyNamedParameter np = p.getAsNamed();
                                                                                 if (np != null) {
-                                                                                  TypeModel paramType =
-                                                                                    _(PyNames.UNKNOWN_TYPE);
+                                                                                  TypeModel paramType = _(PyNames.UNKNOWN_TYPE);
                                                                                   final PyType t = myContext.getType(np);
                                                                                   if (t != null) {
                                                                                     paramType = build(t, true);
@@ -214,6 +225,8 @@ public class PyTypeModelBuilder {
     void function(FunctionType type);
 
     void param(ParamType text);
+
+    void unknown(UnknownType type);
   }
 
   private static class TypeToStringVisitor extends TypeNameVisitor {
@@ -231,6 +244,15 @@ public class PyTypeModelBuilder {
 
     public String getString() {
       return myStringBuilder.toString();
+    }
+
+    @Override
+    public void unknown(UnknownType type) {
+      final TypeModel nested = type.type;
+      if (nested != null) {
+        nested.accept(this);
+      }
+      add(" | " + PyNames.UNKNOWN_TYPE);
     }
   }
 
@@ -345,6 +367,11 @@ public class PyTypeModelBuilder {
         param.type.accept(this);
       }
       myDepth--;
+    }
+
+    @Override
+    public void unknown(UnknownType type) {
+      type.type.accept(this);
     }
   }
 }
