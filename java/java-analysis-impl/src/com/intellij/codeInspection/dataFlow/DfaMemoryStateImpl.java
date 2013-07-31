@@ -292,6 +292,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (value instanceof DfaVariableValue) {
         myVariableStates.put(var, getVariableState((DfaVariableValue)value).clone());
       }
+      else if (value instanceof DfaBoxedValue) {
+        getVariableState(var).setNullable(false);
+      }
     }
 
     if (getVariableState(var).isNotNull()) {
