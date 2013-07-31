@@ -26,7 +26,7 @@ import java.util.Collection;
 class XsltChooseByNameContributor implements ChooseByNameContributor {
     @NotNull
     public String[] getNames(Project project, boolean includeNonProjectItems) {
-        final Collection<String> symbols = XsltSymbolIndex.getSymbolNames(project, includeNonProjectItems);
+        final Collection<String> symbols = XsltSymbolIndex.getSymbolNames(project);
       return ArrayUtil.toStringArray(symbols);
     }
 
