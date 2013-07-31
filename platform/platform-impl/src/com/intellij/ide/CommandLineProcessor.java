@@ -169,8 +169,8 @@ public class CommandLineProcessor {
         if (StringUtil.isQuotedString(arg)) {
           arg = StringUtil.stripQuotesAroundValue(arg);
         }
-        if (currentDirectory != null && !new File(arg).isAbsolute()) {
-          arg = new File(currentDirectory, arg).getAbsolutePath();
+        if (!new File(arg).isAbsolute()) {
+          arg = currentDirectory != null ? new File(currentDirectory, arg).getAbsolutePath() : new File(arg).getAbsolutePath();
         }
         if (line != -1) {
           final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
