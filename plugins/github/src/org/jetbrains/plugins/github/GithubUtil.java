@@ -188,7 +188,7 @@ public class GithubUtil {
   public static GithubAuthData getValidAuthDataFromConfig(@Nullable Project project, @NotNull ProgressIndicator indicator) {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
     try {
-      checkAuthData(auth, GithubSettings.getInstance().getLogin());
+      checkAuthData(auth);
       return auth;
     }
     catch (GithubAuthenticationException e) {
@@ -200,7 +200,8 @@ public class GithubUtil {
     }
   }
 
-  public static void checkAuthData(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
+  @NotNull
+  public static GithubUserDetailed checkAuthData(@NotNull GithubAuthData auth) throws IOException {
     if (StringUtil.isEmptyOrSpaces(auth.getHost())) {
       throw new GithubAuthenticationException("Target host not defined");
     }
@@ -225,18 +226,16 @@ public class GithubUtil {
     }
 
     try {
-      testConnection(auth, login);
+      return testConnection(auth);
     }
     catch (JsonException e) {
       throw new GithubAuthenticationException("Can't get user info", e);
     }
   }
 
-  private static void testConnection(@NotNull GithubAuthData auth, @Nullable String login) throws IOException {
-    GithubUserDetailed user = GithubApiUtil.getCurrentUserDetailed(auth);
-    if (login != null && !login.equalsIgnoreCase(user.getLogin())) {
-      throw new GithubAuthenticationException("Wrong login");
-    }
+  @NotNull
+  private static GithubUserDetailed testConnection(@NotNull GithubAuthData auth) throws IOException {
+    return GithubApiUtil.getCurrentUserDetailed(auth);
   }
 
   /*

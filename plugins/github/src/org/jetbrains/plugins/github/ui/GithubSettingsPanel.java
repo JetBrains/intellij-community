@@ -22,10 +22,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.github.GithubAuthData;
-import org.jetbrains.plugins.github.GithubAuthenticationException;
-import org.jetbrains.plugins.github.GithubSettings;
-import org.jetbrains.plugins.github.GithubUtil;
+import org.jetbrains.plugins.github.*;
+import org.jetbrains.plugins.github.api.GithubUserDetailed;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -79,7 +77,12 @@ public class GithubSettingsPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         try {
-          GithubUtil.checkAuthData(getAuthData(), getLogin());
+          GithubUserDetailed user = GithubUtil.checkAuthData(getAuthData());
+          if (!getLogin().equalsIgnoreCase(user.getLogin())) {
+            setLogin(user.getLogin());
+            Messages.showInfoMessage(myPane, "Login doesn't match credentials. Fixed", "Success");
+            return;
+          }
           Messages.showInfoMessage(myPane, "Connection successful", "Success");
         }
         catch (GithubAuthenticationException ex) {

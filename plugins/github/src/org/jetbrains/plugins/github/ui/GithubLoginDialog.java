@@ -6,8 +6,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubAuthData;
+import org.jetbrains.plugins.github.GithubAuthenticationException;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
+import org.jetbrains.plugins.github.api.GithubUserDetailed;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -68,7 +70,13 @@ public class GithubLoginDialog extends DialogWrapper {
   protected void doOKAction() {
     final GithubAuthData auth = myGithubLoginPanel.getAuthData();
     try {
-      GithubUtil.checkAuthData(auth, myGithubLoginPanel.getLogin());
+      GithubUserDetailed user = GithubUtil.checkAuthData(auth);
+      if (!myGithubLoginPanel.getLogin().equalsIgnoreCase(user.getLogin())) {
+        myGithubLoginPanel.setLogin(user.getLogin());
+        setErrorText("Login doesn't match credentials. Fixed");
+        return;
+      }
+
       saveCredentials(auth);
       if (mySettings.isSavePasswordMakesSense()) {
         mySettings.setSavePassword(myGithubLoginPanel.isSavePasswordSelected());
