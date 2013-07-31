@@ -42,16 +42,22 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
   private static void replacePrint(PsiElement expression, PyElementGenerator elementGenerator) {
     StringBuilder stringBuilder = new StringBuilder("print (");
 
-    PsiElement whiteSpace = expression.getContainingFile().findElementAt(expression.getTextOffset() + expression.getTextLength());
+    final PsiElement whiteSpace = expression.getContainingFile().findElementAt(expression.getTextOffset() + expression.getTextLength());
     PsiElement next = null;
     if (whiteSpace instanceof PsiWhiteSpace) {
-      if (!whiteSpace.getText().contains("\n"))
+      final String whiteSpaceText = whiteSpace.getText();
+      if (!whiteSpaceText.contains("\n")) {
         next = whiteSpace.getNextSibling();
+        while (next instanceof PsiWhiteSpace && whiteSpaceText.contains("\\")) {
+          next = next.getNextSibling();
+        }
+      }
     }
     else
       next = whiteSpace;
 
     RemoveUnnecessaryBackslashQuickFix.removeBackSlash(next);
+    if (whiteSpace != null) whiteSpace.delete();
     if (next != null) {
       final String text = next.getText();
       stringBuilder.append(text);
