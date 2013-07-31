@@ -5,12 +5,12 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.ChainIterable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,6 @@ import static com.jetbrains.python.documentation.DocumentationBuilderKit.combUp;
  * @author traff
  */
 public class PyTypeModelBuilder {
-  @NonNls static final String UNKNOWN = "unknown";
   private final Map<PyType, TypeModel> myVisited = Maps.newHashMap();
   private final TypeEvalContext myContext;
 
@@ -139,7 +138,7 @@ public class PyTypeModelBuilder {
       return evaluated;
     }
     if (myVisited.containsKey(type)) { //already evaluating?
-      return type != null ? _(type.getName()) : _(UNKNOWN);
+      return type != null ? _(type.getName()) : _(PyNames.UNKNOWN_TYPE);
     }
     myVisited.put(type, null); //mark as evaluating
 
@@ -177,7 +176,7 @@ public class PyTypeModelBuilder {
       }
     }
     if (result == null) {
-      result = type != null ? _(type.getName()) : _(UNKNOWN);
+      result = type != null ? _(type.getName()) : _(PyNames.UNKNOWN_TYPE);
     }
     myVisited.put(type, result);
     return result;
@@ -193,7 +192,7 @@ public class PyTypeModelBuilder {
                                                                                 final PyNamedParameter np = p.getAsNamed();
                                                                                 if (np != null) {
                                                                                   TypeModel paramType =
-                                                                                    _(UNKNOWN);
+                                                                                    _(PyNames.UNKNOWN_TYPE);
                                                                                   final PyType t = myContext.getType(np);
                                                                                   if (t != null) {
                                                                                     paramType = build(t, true);

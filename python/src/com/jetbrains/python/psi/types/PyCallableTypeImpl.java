@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedExpression;
@@ -64,11 +65,11 @@ public class PyCallableTypeImpl implements PyCallableType {
                                          new Function<PyType, String>() {
                                            @Override
                                            public String fun(PyType type) {
-                                             return type != null ? type.getName() : "unknown";
+                                             return type != null ? type.getName() : PyNames.UNKNOWN_TYPE;
                                            }
                                          },
                                          ", "),
-                         myReturnType != null ? myReturnType.getName() : "unknown");
+                         myReturnType != null ? myReturnType.getName() : PyNames.UNKNOWN_TYPE);
   }
 
   @Override
