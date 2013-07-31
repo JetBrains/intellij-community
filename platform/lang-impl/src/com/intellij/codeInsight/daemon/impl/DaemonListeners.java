@@ -186,7 +186,6 @@ public class DaemonListeners implements Disposable {
           return; //no need to stop daemon if something happened in the console
         }
 
-        stopDaemon(true, "Caret move");
         myDaemonCodeAnalyzer.hideLastIntentionHint();
       }
     }, this);
@@ -564,9 +563,10 @@ public class DaemonListeners implements Disposable {
   }
 
   private static class MyEditorMouseListener extends EditorMouseAdapter {
+    @NotNull
     private final TooltipController myTooltipController;
 
-    public MyEditorMouseListener(TooltipController tooltipController) {
+    public MyEditorMouseListener(@NotNull TooltipController tooltipController) {
       myTooltipController = tooltipController;
     }
 
