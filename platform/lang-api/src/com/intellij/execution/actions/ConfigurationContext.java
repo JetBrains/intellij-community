@@ -124,6 +124,10 @@ public class ConfigurationContext {
     return myLocation;
   }
 
+  public PsiElement getPsiLocation() {
+    return myLocation.getPsiElement();
+  }
+
   @Nullable
   public RunnerAndConfigurationSettings findExisting() {
     if (myExistingConfiguration != null) return myExistingConfiguration.get();

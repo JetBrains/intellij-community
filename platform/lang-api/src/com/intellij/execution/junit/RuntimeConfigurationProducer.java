@@ -95,6 +95,11 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     return myConfiguration;
   }
 
+  public void setConfiguration(RunnerAndConfigurationSettings configuration) {
+    assert isClone;
+    myConfiguration = configuration;
+  }
+
   @Nullable
   protected abstract RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context);
 

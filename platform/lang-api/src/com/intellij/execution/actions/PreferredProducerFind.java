@@ -113,7 +113,7 @@ class PreferredProducerFind {
     }
 
     for (RunConfigurationProducer producer : Extensions.getExtensions(RunConfigurationProducer.EP_NAME)) {
-      ConfigurationFromContext fromContext = producer.createConfigurationFromContext(context);
+      ConfigurationFromContext fromContext = producer.findOrCreateConfigurationFromContext(context);
       if (fromContext != null) {
         configurationsFromContext.add(fromContext);
       }

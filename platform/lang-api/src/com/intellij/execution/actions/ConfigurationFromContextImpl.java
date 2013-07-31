@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class ConfigurationFromContextImpl extends ConfigurationFromContext {
-  private final RunnerAndConfigurationSettings myConfigurationSettings;
+  private RunnerAndConfigurationSettings myConfigurationSettings;
   private final PsiElement mySourceElement;
 
   public ConfigurationFromContextImpl(RunnerAndConfigurationSettings settings, PsiElement element) {
@@ -35,6 +35,11 @@ public class ConfigurationFromContextImpl extends ConfigurationFromContext {
   @Override
   public RunnerAndConfigurationSettings getConfigurationSettings() {
     return myConfigurationSettings;
+  }
+
+  @Override
+  public void setConfigurationSettings(RunnerAndConfigurationSettings configurationSettings) {
+    myConfigurationSettings = configurationSettings;
   }
 
   @NotNull

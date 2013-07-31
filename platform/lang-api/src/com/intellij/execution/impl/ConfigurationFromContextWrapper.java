@@ -45,6 +45,11 @@ public class ConfigurationFromContextWrapper extends ConfigurationFromContext {
     return myProducer.getConfiguration();
   }
 
+  @Override
+  public void setConfigurationSettings(RunnerAndConfigurationSettings configurationSettings) {
+    myProducer.setConfiguration(configurationSettings);
+  }
+
   @NotNull
   @Override
   public PsiElement getSourceElement() {

@@ -33,6 +33,8 @@ public abstract class ConfigurationFromContext {
   @NotNull
   public abstract RunnerAndConfigurationSettings getConfigurationSettings();
 
+  public abstract void setConfigurationSettings(RunnerAndConfigurationSettings configurationSettings);
+
   @NotNull
   public RunConfiguration getConfiguration() {
     return getConfigurationSettings().getConfiguration();
