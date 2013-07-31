@@ -2,7 +2,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -27,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -235,7 +236,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
         }
         // Guess the type from file-local usages
         if (context.allowLocalUsages(this)) {
-          final Ref<PyType> ref = Ref.create(null);
+          final List<PyType> types = new ArrayList<PyType>();
           processLocalCalls(func, new Processor<PyCallExpression>() {
             @Override
             public boolean process(@NotNull PyCallExpression call) {
@@ -247,8 +248,8 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
                   if (argument != null) {
                     final PyType type = context.getType(argument);
                     if (type != null) {
-                      ref.set(type);
-                      return false;
+                      types.add(type);
+                      return true;
                     }
                   }
                 }
@@ -256,7 +257,9 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
               return true;
             }
           });
-          return ref.get();
+          if (!types.isEmpty()) {
+            return PyUnionType.createWeakType(PyUnionType.union(types));
+          }
         }
       }
     }
