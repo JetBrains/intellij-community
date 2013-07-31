@@ -333,7 +333,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, Object object, PsiElement element) {
 
     if (object instanceof XmlExtension.TagInfo) {
-      return ((XmlExtension.TagInfo)object).declaration;
+      return ((XmlExtension.TagInfo)object).getDeclaration();
     }
 
     final PsiElement originalElement = element;
