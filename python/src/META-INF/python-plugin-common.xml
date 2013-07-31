@@ -840,6 +840,8 @@
                             implementationClass="com.jetbrains.web2py.completion.Web2PyBuiltinCompletionContributor"/>
 
     <!-- Pyramid && Chameleon -->
+    <configurationType implementation="com.jetbrains.pyramid.run.PyramidRunConfigurationType"/>
+
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.pyramid.annotator.PyramidViewLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.pyramid.annotator.PyramidTemplateLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.pyramid.annotator.PyramidTemplateLineMarkerProvider"/>
