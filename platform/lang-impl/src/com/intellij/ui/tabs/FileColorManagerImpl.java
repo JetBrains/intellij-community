@@ -171,8 +171,16 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   @Nullable
   @Override
-  public Color getRendererBackground(VirtualFile file) {
-    return getRendererBackground(PsiManager.getInstance(myProject).findFile(file));
+  public Color getRendererBackground(VirtualFile vFile) {
+    if (vFile == null) return null;
+
+    if (isEnabled()) {
+      final Color fileColor = getFileColor(vFile);
+      if (fileColor != null) return fileColor;
+    }
+
+    //todo[kb] slightly_green for darcula
+    return FileEditorManager.getInstance(myProject).isFileOpen(vFile) && !UIUtil.isUnderDarcula() ? LightColors.SLIGHTLY_GREEN : null;
   }
 
   @Nullable
@@ -180,16 +188,10 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   public Color getRendererBackground(PsiFile file) {
     if (file == null) return null;
 
-    if (isEnabled()) {
-      final Color fileColor = getFileColor(file);
-      if (fileColor != null) return fileColor;
-    }
-
     final VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return null;
 
-    //todo[kb] slightly_green for darcula
-    return FileEditorManager.getInstance(myProject).isFileOpen(vFile) && !UIUtil.isUnderDarcula() ? LightColors.SLIGHTLY_GREEN : null;
+    return getRendererBackground(vFile);
   }
 
   @Override
