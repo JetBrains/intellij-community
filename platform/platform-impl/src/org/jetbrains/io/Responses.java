@@ -92,12 +92,16 @@ public final class Responses {
   }
 
   public static void send(HttpResponse response, HttpRequest request, ChannelHandlerContext context) {
+    send(response, context.getChannel(), request);
+  }
+
+  public static void send(HttpResponse response, Channel channel, @Nullable HttpRequest request) {
     ChannelBuffer content = response.getContent();
     setContentLength(response, content == ChannelBuffers.EMPTY_BUFFER ? 0 : content.readableBytes());
 
-    boolean keepAlive = addKeepAliveIfNeed(response, request);
+    boolean keepAlive = request != null && addKeepAliveIfNeed(response, request);
     addCommonHeaders(response);
-    send(response, context, !keepAlive);
+    send(response, channel, !keepAlive);
   }
 
   public static boolean addKeepAliveIfNeed(HttpResponse response, HttpRequest request) {
@@ -136,15 +140,14 @@ public final class Responses {
   }
 
   public static void send(HttpResponse response, ChannelHandlerContext context) {
-    send(response, context, true);
+    send(response, context.getChannel(), true);
   }
 
   public static void send(HttpResponseStatus status, ChannelHandlerContext context) {
     send(new DefaultHttpResponse(HTTP_1_1, status), context);
   }
 
-  public static void send(HttpResponse response, ChannelHandlerContext context, boolean close) {
-    Channel channel = context.getChannel();
+  private static void send(HttpResponse response, Channel channel, boolean close) {
     if (!channel.isOpen()) {
       return;
     }

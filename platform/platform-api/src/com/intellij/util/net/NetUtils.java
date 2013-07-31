@@ -99,8 +99,8 @@ public class NetUtils {
     final ServerSocket serverSocket = new ServerSocket(0);
     try {
       int port = serverSocket.getLocalPort();
-      //workaround for linux : calling close() immediately after opening socket
-      //may result that socket is not closed
+      // workaround for linux : calling close() immediately after opening socket
+      // may result that socket is not closed
       synchronized (serverSocket) {
         try {
           serverSocket.wait(1);
@@ -110,7 +110,8 @@ public class NetUtils {
         }
       }
       return port;
-    } finally {
+    }
+    finally {
       serverSocket.close();
     }
   }
@@ -150,8 +151,7 @@ public class NetUtils {
         localHostString = "127.0.0.1";
       }
     }
-    catch (UnknownHostException e) {
-      // ignore
+    catch (UnknownHostException ignored) {
     }
     return localHostString;
   }
