@@ -16,11 +16,21 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.Consumer;
+import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelException;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
 
 import java.io.IOException;
+import java.net.SocketAddress;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class NettyUtil {
+  public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 8;
+
   public static void log(Throwable throwable, Logger log) {
     if (isAsWarning(throwable)) {
       log.warn(throwable);
@@ -28,6 +38,29 @@ public final class NettyUtil {
     else {
       log.error(throwable);
     }
+  }
+
+  public static void connectClient(final ClientBootstrap bootstrap, final SocketAddress remoteAddress, final Consumer<Channel> consumer, final ActionCallback asyncResult) {
+    connect(bootstrap, remoteAddress, consumer, asyncResult, DEFAULT_CONNECT_ATTEMPT_COUNT);
+  }
+
+  public static void connect(final ClientBootstrap bootstrap, final SocketAddress remoteAddress, final Consumer<Channel> consumer, final ActionCallback asyncResult, final int attemptCount) {
+    final AtomicInteger attemptCounter = new AtomicInteger(1);
+    bootstrap.connect(remoteAddress).addListener(new ChannelFutureListener() {
+      @Override
+      public void operationComplete(ChannelFuture future) throws Exception {
+        if (future.isSuccess()) {
+          consumer.consume(future.getChannel());
+        }
+        else if (attemptCounter.incrementAndGet() > attemptCount) {
+          asyncResult.reject("cannot connect");
+        }
+        else if (!asyncResult.isRejected()) {
+          Thread.sleep(300);
+          bootstrap.connect(remoteAddress).addListener(this);
+        }
+      }
+    });
   }
 
   private static boolean isAsWarning(Throwable throwable) {
