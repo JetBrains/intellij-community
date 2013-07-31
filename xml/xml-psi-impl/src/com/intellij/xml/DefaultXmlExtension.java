@@ -52,9 +52,9 @@ public class DefaultXmlExtension extends XmlExtension {
     final List<TagInfo> set = new ArrayList<TagInfo>();
     for (int i = 0; i < descriptors.size(); i++) {
       XmlElementDescriptor descriptor = descriptors.get(i);
-      String name = descriptor.getName(context);
-      final int pos = name.indexOf(':');
-      final String s = pos >= 0 ? name.substring(pos + 1) : name;
+      String qualifiedName = descriptor.getName(context);
+      final int pos = qualifiedName.indexOf(':');
+      final String name = pos >= 0 ? qualifiedName.substring(pos + 1) : qualifiedName;
       set.add(new TagInfo(name, nsInfo.get(i), descriptors.get(i).getDeclaration()));
     }
     return set;
