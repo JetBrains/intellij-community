@@ -48,6 +48,8 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
     final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
     final PsiFile containingFile = psiElement.getContainingFile();
+    if (containingFile == null) return null;
+
     PsiFile topLevelFile = InjectedLanguageManager.getInstance(containingFile.getProject()).getTopLevelFile(containingFile);
 
     if (!(topLevelFile instanceof PsiJavaFile) || topLevelFile instanceof JspFile) {
