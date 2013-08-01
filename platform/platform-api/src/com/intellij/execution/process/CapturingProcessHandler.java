@@ -33,6 +33,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
 
   public CapturingProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
+    addProcessListener(new CapturingProcessAdapter(myOutput));
   }
 
   public CapturingProcessHandler(final Process process) {
