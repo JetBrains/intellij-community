@@ -39,4 +39,15 @@ public class Normal8CompletionTest extends LightFixtureCompletionTestCase {
     configureByFile("SelfStaticsOnly.java");
     assertStringItems("ba", "bar");
   }
+
+  public void testFinishWithColon() {
+    myFixture.configureByText "a.java", """
+class Foo {{ Object o = Fo<caret>x }}
+"""
+    myFixture.completeBasic()
+    myFixture.type('::')
+    myFixture.checkResult """
+class Foo {{ Object o = Foo::<caret>x }}
+"""
+  }
 }
