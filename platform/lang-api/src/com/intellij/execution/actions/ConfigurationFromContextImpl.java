@@ -23,10 +23,12 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class ConfigurationFromContextImpl extends ConfigurationFromContext {
+  private final RunConfigurationProducer myConfigurationProducer;
   private RunnerAndConfigurationSettings myConfigurationSettings;
   private final PsiElement mySourceElement;
 
-  public ConfigurationFromContextImpl(RunnerAndConfigurationSettings settings, PsiElement element) {
+  public ConfigurationFromContextImpl(RunConfigurationProducer producer, RunnerAndConfigurationSettings settings, PsiElement element) {
+    myConfigurationProducer = producer;
     myConfigurationSettings = settings;
     mySourceElement = element;
   }
@@ -46,5 +48,15 @@ public class ConfigurationFromContextImpl extends ConfigurationFromContext {
   @Override
   public PsiElement getSourceElement() {
     return mySourceElement;
+  }
+
+  @Override
+  public boolean isPreferredTo(ConfigurationFromContext other) {
+    return myConfigurationProducer.isPreferredConfiguration(this, other);
+  }
+
+  @Override
+  public boolean isProducedBy(Class<? extends RunConfigurationProducer> producerClass) {
+    return producerClass.isInstance(myConfigurationProducer);
   }
 }

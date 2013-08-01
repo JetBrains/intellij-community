@@ -63,6 +63,10 @@ public abstract class ConfigurationFromContext {
     return true;
   }
 
+  public boolean isProducedBy(Class<? extends RunConfigurationProducer> producerClass) {
+    return false;
+  }
+
   public static final Comparator<ConfigurationFromContext> COMPARATOR = new Comparator<ConfigurationFromContext>() {
     @Override
     public int compare(ConfigurationFromContext configuration1, ConfigurationFromContext configuration2) {

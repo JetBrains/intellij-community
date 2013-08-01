@@ -60,12 +60,16 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     if (!setupConfigurationFromContext((T)settings.getConfiguration(), context, locationRef)) {
       return null;
     }
-    return new ConfigurationFromContextImpl(settings, locationRef.get());
+    return new ConfigurationFromContextImpl(this, settings, locationRef.get());
   }
 
   protected abstract boolean setupConfigurationFromContext(T configuration, ConfigurationContext context, Ref<PsiElement> sourceElement);
 
   public abstract boolean isConfigurationFromContext(T configuration, ConfigurationContext context);
+
+  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+    return true;
+  }
 
   public ConfigurationFromContext findOrCreateConfigurationFromContext(ConfigurationContext context) {
     Location location = context.getLocation();
