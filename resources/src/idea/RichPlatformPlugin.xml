@@ -365,12 +365,6 @@
     <exportable serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
     <schemeOwner serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
 
-    <!-- File Exclusions -->
-    <!--
-    <projectService serviceInterface="com.intellij.openapi.file.exclude.ProjectFileExclusionManager"
-                    serviceImplementation="com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl"/>
-    <projectConfigurable instance="com.intellij.openapi.file.exclude.ui.ExcludedFilesConfigurable"/>
-    -->
     <fileTypeFactory implementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory"/>
     <applicationService serviceInterface="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"
                     serviceImplementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"/>
