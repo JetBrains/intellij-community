@@ -46,6 +46,11 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * Context for creating run configurations from a location in the source code.
+ *
+ * @see RunConfigurationProducer
+ */
 public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.ConfigurationContext");
   private final Location<PsiElement> myLocation;
@@ -96,6 +101,12 @@ public class ConfigurationContext {
     myLocation = new PsiLocation<PsiElement>(project, myModule, element);
   }
 
+  /**
+   * Returns the configuration created from this context.
+   *
+   * @return the configuration, or null if none of the producers were able to create a configuration from this context.
+   */
+  @Nullable
   public RunnerAndConfigurationSettings getConfiguration() {
     if (myConfiguration == null) createConfiguration();
     return myConfiguration;
@@ -120,14 +131,31 @@ public class ConfigurationContext {
     return myConfiguration;
   }
 
+  /**
+   * Returns the source code location for this context.
+   *
+   * @return the source code location, or null if no source code fragment is currently selected.
+   */
+  @Nullable
   public Location getLocation() {
     return myLocation;
   }
 
+  /**
+   * Returns the PSI element at caret for this context.
+   *
+   * @return the PSI element, or null if no source code fragment is currently selected.
+   */
+  @Nullable
   public PsiElement getPsiLocation() {
-    return myLocation.getPsiElement();
+    return myLocation != null ? myLocation.getPsiElement() : null;
   }
 
+  /**
+   * Finds an existing run configuration matching the context.
+   *
+   * @return an existing configuration, or null if none was found.
+   */
   @Nullable
   public RunnerAndConfigurationSettings findExisting() {
     if (myExistingConfiguration != null) return myExistingConfiguration.get();
@@ -205,7 +233,9 @@ public class ConfigurationContext {
     return RunManager.getInstance(getProject());
   }
 
-  public Project getProject() { return myLocation.getProject(); }
+  public Project getProject() {
+    return myLocation.getProject();
+  }
 
   public Module getModule() {
     return myModule;

@@ -28,23 +28,45 @@ import java.util.Comparator;
  * Describes a run configuration being created by a context run action.
  *
  * @author yole
+ * @see RunConfigurationProducer
  */
 public abstract class ConfigurationFromContext {
+  /**
+   * Returns the created run configuration settings.
+   *
+   * @return the created run configuration settings.
+   */
   @NotNull
   public abstract RunnerAndConfigurationSettings getConfigurationSettings();
 
   public abstract void setConfigurationSettings(RunnerAndConfigurationSettings configurationSettings);
 
+  /**
+   * Returns the run configuration object for the created configuration.
+   *
+   * @return the run configuration object.
+   */
   @NotNull
   public RunConfiguration getConfiguration() {
     return getConfigurationSettings().getConfiguration();
   }
 
+  /**
+   * Returns the type of the created configuration.
+   *
+   * @return the configuration type.
+   */
   @NotNull
   public ConfigurationType getConfigurationType() {
     return getConfiguration().getType();
   }
 
+  /**
+   * Returns the element from which this configuration was created. Configurations created from a lower-level element (for example, a
+   * method) take precedence over configurations created from a higher-level element (for example, a class).
+   *
+   * @return the PSI element from which the configuration was created.
+   */
   @NotNull
   public abstract PsiElement getSourceElement();
 
@@ -59,14 +81,30 @@ public abstract class ConfigurationFromContext {
     startRunnable.run();
   }
 
+  /**
+   * Checks if this configuration should be discarded in favor of another configuration created from the same context.
+   *
+   * @param other another configuration created from the same context.
+   * @return true if this configuration is at least as good as the other one; false if this configuration should be discarded and the
+   * other one should be used instead.
+   */
   public boolean isPreferredTo(ConfigurationFromContext other) {
     return true;
   }
 
+  /**
+   * Checks if this configuration was created by the specified producer.
+   *
+   * @param producerClass the run configuration producer class.
+   * @return true if the configuration was created by this producer, false otherwise.
+   */
   public boolean isProducedBy(Class<? extends RunConfigurationProducer> producerClass) {
     return false;
   }
 
+  /**
+   * Compares configurations according to precedence.
+   */
   public static final Comparator<ConfigurationFromContext> COMPARATOR = new Comparator<ConfigurationFromContext>() {
     @Override
     public int compare(ConfigurationFromContext configuration1, ConfigurationFromContext configuration2) {
@@ -86,6 +124,9 @@ public abstract class ConfigurationFromContext {
     }
   };
 
+  /**
+   * Compares configurations according to configuration type name.
+   */
   public static final Comparator<ConfigurationFromContext> NAME_COMPARATOR = new Comparator<ConfigurationFromContext>() {
     @Override
     public int compare(final ConfigurationFromContext p1, final ConfigurationFromContext p2) {
