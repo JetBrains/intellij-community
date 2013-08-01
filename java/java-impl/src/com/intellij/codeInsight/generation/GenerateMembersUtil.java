@@ -495,14 +495,6 @@ public class GenerateMembersUtil {
     }
   }
 
-  public static boolean shouldAddOverrideAnnotation(PsiElement context, boolean interfaceMethod) {
-    CodeStyleSettings style = CodeStyleSettingsManager.getSettings(context.getProject());
-    if (!style.INSERT_OVERRIDE_ANNOTATION) return false;
-
-    if (interfaceMethod) return PsiUtil.isLanguageLevel6OrHigher(context);
-    return PsiUtil.isLanguageLevel5OrHigher(context);
-  }
-
   public static void setupGeneratedMethod(PsiMethod method) {
     PsiClass base = method.getContainingClass().getSuperClass();
     PsiMethod overridden = base == null ? null : base.findMethodBySignature(method, true);
