@@ -869,6 +869,7 @@
                     implementationClass="com.jetbrains.pyramid.templates.formatter.ChameleonFormattingModelBuilder"/>
     <lang.whiteSpaceFormattingStrategy language="Chameleon"
                                        implementationClass="com.jetbrains.pyramid.templates.formatter.ChameleonWhiteSpaceFormattingStrategy"/>
+    <typedHandler implementation="com.jetbrains.pyramid.templates.completion.ChameleonSubstitutionHandler" id="ChameleonBracesHandler"/>
   </extensions>
 
   <extensionPoints>
