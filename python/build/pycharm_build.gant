@@ -188,6 +188,7 @@ private layoutPlugins(layouts) {
     }
     layouts.layoutPlugin("puppet")
     layouts.layoutPlugin("fileWatcher")
+    layouts.layoutPlugin("ini4idea")
   }
 
   layouts.layoutPlugins()
