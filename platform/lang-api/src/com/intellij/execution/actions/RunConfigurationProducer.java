@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,10 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     myConfigurationFactory = configurationType.getConfigurationFactories()[0];
   }
 
+  public ConfigurationFactory getConfigurationFactory() {
+    return myConfigurationFactory;
+  }
+
   public ConfigurationType getConfigurationType() {
     return myConfigurationFactory.getType();
   }
@@ -51,13 +56,14 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @Nullable
   public ConfigurationFromContext createConfigurationFromContext(ConfigurationContext context) {
     final RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
-    if (!setupConfigurationFromContext((T)settings.getConfiguration(), context)) {
+    final Ref<PsiElement> locationRef = new Ref<PsiElement>(context.getPsiLocation());
+    if (!setupConfigurationFromContext((T)settings.getConfiguration(), context, locationRef)) {
       return null;
     }
-    return new ConfigurationFromContextImpl(settings, context.getPsiLocation());
+    return new ConfigurationFromContextImpl(settings, locationRef.get());
   }
 
-  protected abstract boolean setupConfigurationFromContext(T configuration, ConfigurationContext context);
+  protected abstract boolean setupConfigurationFromContext(T configuration, ConfigurationContext context, Ref<PsiElement> sourceElement);
 
   public abstract boolean isConfigurationFromContext(T configuration, ConfigurationContext context);
 

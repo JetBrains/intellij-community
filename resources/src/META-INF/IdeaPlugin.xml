@@ -1154,7 +1154,7 @@
     <configurationType implementation="com.intellij.execution.applet.AppletConfigurationType"/>
     <configurationProducer implementation="com.intellij.execution.applet.AppletConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
-    <configurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
 
     <javaExpressionSurrounder implementation="com.intellij.debugger.codeinsight.JavaWithRuntimeCastSurrounder"/>
