@@ -25,6 +25,7 @@ import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class CreateAction extends BaseRunConfigurationAction {
   }
 
   @Override
-  protected void updatePresentation(final Presentation presentation, final String actionText, final ConfigurationContext context) {
+  protected void updatePresentation(final Presentation presentation, @NotNull final String actionText, final ConfigurationContext context) {
     choosePolicy(context).update(presentation, context, actionText);
   }
 
@@ -66,7 +67,7 @@ public class CreateAction extends BaseRunConfigurationAction {
       myType = type;
     }
 
-    public void update(final Presentation presentation, final ConfigurationContext context, final String actionText) {
+    public void update(final Presentation presentation, final ConfigurationContext context, @NotNull final String actionText) {
       updateText(presentation, actionText);
       updateIcon(presentation, context);
     }
@@ -185,7 +186,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     public void perform(final ConfigurationContext context) {}
 
     @Override
-    public void update(final Presentation presentation, final ConfigurationContext context, final String actionText) {
+    public void update(final Presentation presentation, final ConfigurationContext context, @NotNull final String actionText) {
       super.update(presentation, context, actionText);
       presentation.setVisible(false);
     }
