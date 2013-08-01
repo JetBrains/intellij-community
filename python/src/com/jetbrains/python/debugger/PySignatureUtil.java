@@ -4,6 +4,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -49,7 +50,7 @@ public class PySignatureUtil {
       return type.getName();
     }
     else {
-      return "unknown";
+      return PyNames.UNKNOWN_TYPE;
     }
   }
 

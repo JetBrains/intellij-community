@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.types;
 
+import com.jetbrains.python.PyNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -34,6 +35,6 @@ public class PyDynamicallyEvaluatedType extends PyUnionType {
   @Override
   public String getName() {
     PyType res = excludeNull();
-    return res != null ? res.getName() : "unknown";
+    return res != null ? res.getName() : PyNames.UNKNOWN_TYPE;
   }
 }

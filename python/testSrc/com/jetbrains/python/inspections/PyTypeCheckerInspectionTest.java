@@ -198,4 +198,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testMapReturnElementType() {
     doTest();
   }
+
+  // PY-10413
+  public void testFunctionParameterReturnType() {
+    doTest();
+  }
 }

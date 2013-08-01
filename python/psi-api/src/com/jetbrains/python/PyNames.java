@@ -136,6 +136,7 @@ public class PyNames {
 
   public static final String NOT_IMPLEMENTED_ERROR = "NotImplementedError";
 
+  public static final String UNKNOWN_TYPE = "unknown";
 
   /**
    * Contains all known predefined names of "__foo__" form.

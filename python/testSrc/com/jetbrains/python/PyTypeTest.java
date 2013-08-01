@@ -25,18 +25,18 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testBinaryExprType() {
-    doTest("int or long or float or complex",
+    doTest("int",
            "expr = 1 + 2");
-    doTest("str or unicode",
+    doTest("str | unicode",
            "expr = '1' + '2'");
-    doTest("str or unicode",
+    doTest("str",
            "expr = '%s' % ('a')");
-    doTest("list",
+    doTest("list[int]",
            "expr = [1] + [2]");
   }
 
   public void testAssignmentChainBinaryExprType() {
-    doTest("int or long or float or complex",
+    doTest("int",
            "class C(object):\n" +
            "    def __add__(self, other):\n" +
            "        return -1\n" +
@@ -56,7 +56,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnionOfTuples() {
-    doTest("(int or str, str or int)",
+    doTest("(int | str, str | int)",
            "def x():\n" +
            "  if True:\n" +
            "    return (1, 'a')\n" +
@@ -80,7 +80,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testSet() {
-    doTest("set of int",
+    doTest("set[int]",
            "expr = {1, 2, 3}");
   }
 
@@ -112,10 +112,18 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testPropertyType() {
-    doTest("unknown",
+    doTest("property",
            "class C:\n" +
-           "    x = property(lambda self: object(), None, None)\n" +
-           "expr = C.x");
+           "    x = property(lambda self: 'foo', None, None)\n" +
+           "expr = C.x\n");
+  }
+
+  public void testPropertyInstanceType() {
+    doTest("str",
+           "class C:\n" +
+           "    x = property(lambda self: 'foo', None, None)\n" +
+           "c = C()\n" +
+           "expr = c.x\n");
   }
 
   public void testIterationType() {
@@ -129,7 +137,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testSliceType() {
-    doTest("list of int",
+    doTest("list[int]",
            "l = [1, 2, 3]; expr = l[0:1]");
   }
 
@@ -215,15 +223,12 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnknownTypeInUnion() {
-    final String text = "def f(c, x):\n" +
-                        "    if c:\n" +
-                        "        return 1\n" +
-                        "    return x\n" +
-                        "expr = f(1, g())\n";
-    PyExpression expr = parseExpr(text);
-    PyType t = getTypeEvalContext(expr).getType(expr);
-    assertTrue(PyTypeChecker.isUnknown(t));
-    doTest("int", text);
+    doTest("int | unknown",
+           "def f(c, x):\n" +
+           "    if c:\n" +
+           "        return 1\n" +
+           "    return x\n" +
+           "expr = f(1, g())\n");
   }
 
   public void testIsInstance() {
@@ -341,7 +346,7 @@ public class PyTypeTest extends PyTestCase {
   public void testYieldFromType() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON33);
     try {
-      doTest("str or int or float",
+      doTest("str | int | float",
              "def subgen():\n" +
              "    for i in [1, 2, 3]:\n" +
              "        yield i\n" +
@@ -429,7 +434,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-7215
   public void testFunctionWithNestedGenerator() {
-    doTest("list of int",
+    doTest("list[int]",
            "def f():\n" +
            "    def g():\n" +
            "        yield 10\n" +
@@ -468,7 +473,7 @@ public class PyTypeTest extends PyTestCase {
 
   // EA-40207
   public void testRecursion() {
-    doTest("list of list",
+    doTest("list[list]",
            "def f():\n" +
            "    return [f()]\n" +
            "expr = f()\n");
@@ -533,7 +538,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testLogicalAndExpression() {
-    doTest("str or int",
+    doTest("str | int",
            "expr = 'foo' and 2");
   }
 
@@ -552,16 +557,17 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testParameterFromUsages() {
-    doTest("int",
+    doTest("int | str | unknown",
            "def foo(bar):\n" +
            "    expr = bar\n" +
            "def use_foo(x):\n" +
            "    foo(x)\n" +
-           "    foo(3)\n");
+           "    foo(3)\n" +
+           "    foo('bar')\n");
   }
 
   public void testUpperBoundGeneric() {
-    doTest("int or str",
+    doTest("int | str",
            "def foo(x):\n" +
            "    '''\n" +
            "    :type x: T <= int or str\n" +
@@ -649,20 +655,11 @@ public class PyTypeTest extends PyTestCase {
     return myFixture.findElementByText("expr", PyExpression.class);
   }
 
-  private static String msg(PyType expected, PyType actual, TypeEvalContext context) {
-    return String.format("Expected: %s, actual: %s",
-                         PythonDocumentationProvider.getTypeName(expected, context),
-                         PythonDocumentationProvider.getTypeName(actual, context));
-  }
-
   private void doTest(final String expectedType, final String text) {
     PyExpression expr = parseExpr(text);
     TypeEvalContext context = getTypeEvalContext(expr);
     PyType actual = context.getType(expr);
-    PyType expected = PyTypeParser.getTypeByName(expr, expectedType);
-    if (expected != null) {
-      assertNotNull(context.printTrace(), actual);
-      assertTrue(msg(expected, actual, context), PyTypeChecker.match(expected, actual, context));
-    }
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
+    assertEquals(expectedType, actualType);
   }
 }
