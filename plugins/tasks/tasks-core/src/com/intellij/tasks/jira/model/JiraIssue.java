@@ -1,21 +1,5 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.intellij.tasks.jira.model;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,107 +9,47 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class JiraIssue {
-  /**
-   * JIRA by default will return enormous amount of fields for every task.
-   * "fields" query parameter may be used for filtering however
-   */
-  public static final String REQUIRED_RESPONSE_FIELDS = "id,key,summary,description," +
-                                                         "created,updated,duedate,resolutiondate" +
-                                                         "assignee,reporter,issuetype,comment,status";
-
-  private String id;
-  private String key;
-  private String self;
-  private Fields fields;
-
-  @Override
+public abstract class JiraIssue {
   public String toString() {
-    return String.format("JiraIssue(id=%s, summary=%s)", id, fields.summary);
+    return String.format("JiraIssue(key=%s, summary=%s)", getKey(), getSummary());
   }
 
   @NotNull
-  public String getId() {
-    return id;
-  }
+  public abstract String getKey();
 
   @NotNull
-  public String getKey() {
-    return key;
-  }
+  public abstract String getIssueUrl();
 
   @NotNull
-  public String getIssueUrl() {
-    return self;
-  }
-
-  @NotNull
-  public String getSummary() {
-    return fields.summary;
-  }
-
-  @NotNull
-  public String getDescription() {
-    return fields.description;
-  }
-
-  @NotNull
-  public Date getCreated() {
-    return fields.created;
-  }
-
-  @NotNull
-  public Date getUpdated() {
-    return fields.updated;
-  }
+  public abstract String getSummary();
 
   @Nullable
-  public Date getResolutionDate() {
-    return fields.resolutiondate;
-  }
-
-  @Nullable
-  public Date getDueDate() {
-    return fields.duedate;
-  }
+  public abstract String getDescription();
 
   @NotNull
-  public JiraIssueType getIssueType() {
-    return fields.issuetype;
-  }
-
-  @Nullable
-  public JiraUser getAssignee() {
-    return fields.assignee;
-  }
-
-  @Nullable
-  public JiraUser getReporter() {
-    return fields.reporter;
-  }
+  public abstract Date getCreated();
 
   @NotNull
-  public List<JiraComment> getComments() {
-    return fields.comment == null ? ContainerUtil.<JiraComment>emptyList() : fields.comment.getComments();
-  }
+  public abstract Date getUpdated();
 
-  public JiraStatus getStatus() {
-    return fields.status;
-  }
+  @Nullable
+  public abstract Date getResolutionDate();
 
-  public static class Fields {
-    private String summary;
-    private String description;
-    private Date created;
-    private Date updated;
-    private Date resolutiondate;
-    private Date duedate;
-    private JiraResponseWrapper.Comments comment;
+  @Nullable
+  public abstract Date getDueDate();
 
-    private JiraUser assignee;
-    private JiraUser reporter;
+  @NotNull
+  public abstract JiraIssueType getIssueType();
 
-    private JiraIssueType issuetype;
-    private JiraStatus status;
-  }
+  @Nullable
+  public abstract JiraUser getAssignee();
+
+  @Nullable
+  public abstract JiraUser getReporter();
+
+  @NotNull
+  public abstract List<JiraComment> getComments();
+
+  @NotNull
+  public abstract JiraStatus getStatus();
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.jira.model;
 
+import com.intellij.tasks.jira.model.api2.JiraIssueApi2;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,11 +44,15 @@ public abstract class JiraResponseWrapper {
     return total;
   }
 
-  public static class Issues extends JiraResponseWrapper {
-    private List<JiraIssue> issues = ContainerUtil.emptyList();
+  /**
+   * JSON representation of issue differs dramatically between REST API 2.0 and 2.0alpha1,
+   * that's why this wrapper was generified and JiraIssue extracted to abstract class
+   */
+  public static class Issues<T extends JiraIssue> extends JiraResponseWrapper {
+    private List<T> issues = ContainerUtil.emptyList();
 
     @NotNull
-    public List<JiraIssue> getIssues() {
+    public List<T> getIssues() {
       return issues;
     }
   }

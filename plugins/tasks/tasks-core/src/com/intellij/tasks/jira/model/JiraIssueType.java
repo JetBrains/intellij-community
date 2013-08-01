@@ -15,25 +15,21 @@
  */
 package com.intellij.tasks.jira.model;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Mikhail Golubev
  */
 public class JiraIssueType {
 
-  private String id;
   private String self;
   private String name;
   private String description;
   private String iconUrl;
-  private boolean subtask;
 
   @Override
   public String toString() {
     return String.format("JiraIssueType(name=%s)", name);
-  }
-
-  public String getId() {
-    return id;
   }
 
   public String getIssueTypeUrl() {
@@ -44,15 +40,21 @@ public class JiraIssueType {
     return name;
   }
 
-  public String getDescription() {
-    return description;
-  }
-
+  /**
+   * Will be available in JIRA > 5.x.x and omitted in earlier releases
+   * due to REST API differences.
+   */
+  @Nullable
   public String getIconUrl() {
     return iconUrl;
   }
 
-  public boolean isSubtask() {
-    return subtask;
+  /**
+   * Will be available in JIRA > 5.x.x and omitted in earlier releases
+   * due to REST API differences.
+   */
+  @Nullable
+  public String getDescription() {
+    return description;
   }
 }
