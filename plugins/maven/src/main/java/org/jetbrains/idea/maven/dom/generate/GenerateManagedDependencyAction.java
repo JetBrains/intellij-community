@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.dom.generate;
 
+import com.google.common.base.Predicates;
+import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -32,7 +34,6 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,10 +55,14 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
 
     @Override
     protected MavenDomDependency doGenerate(@NotNull final MavenDomProjectModel mavenModel, final Editor editor) {
-      Collection<MavenDomDependency> managingDependencies = collectManagingDependencies(mavenModel);
+      Set<DependencyConflictId> existingDependencies = collectExistingDependencies(mavenModel);
+      Map<DependencyConflictId, MavenDomDependency> managingDependencies = collectManagingDependencies(mavenModel);
+
+      Map<DependencyConflictId, MavenDomDependency> unexistManagingDeps = Maps.filterKeys(managingDependencies,
+                                                                                          Predicates.not(Predicates.in(existingDependencies)));
 
       final List<MavenDomDependency> dependenciesToOverride =
-        GenerateDependencyUtil.chooseDependencies(managingDependencies, mavenModel.getManager().getProject());
+        GenerateDependencyUtil.chooseDependencies(unexistManagingDeps.values(), mavenModel.getManager().getProject());
 
       if (!dependenciesToOverride.isEmpty()) {
         return new WriteCommandAction<MavenDomDependency>(editor.getProject(), mavenModel.getXmlTag().getContainingFile()) {
@@ -88,10 +93,7 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
     }
   }
 
-  @NotNull
-  public static Collection<MavenDomDependency> collectManagingDependencies(@NotNull final MavenDomProjectModel model) {
-    final Map<DependencyConflictId, MavenDomDependency> dependencies = new HashMap<DependencyConflictId, MavenDomDependency>();
-
+  private static Set<DependencyConflictId> collectExistingDependencies(@NotNull final MavenDomProjectModel model) {
     final Set<DependencyConflictId> existingDependencies = new HashSet<DependencyConflictId>();
     for (MavenDomDependency dependency : model.getDependencies().getDependencies()) {
       DependencyConflictId id = DependencyConflictId.create(dependency);
@@ -100,20 +102,26 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
       }
     }
 
+    return existingDependencies;
+  }
+
+  @NotNull
+  public static Map<DependencyConflictId, MavenDomDependency> collectManagingDependencies(@NotNull final MavenDomProjectModel model) {
+    final Map<DependencyConflictId, MavenDomDependency> dependencies = new HashMap<DependencyConflictId, MavenDomDependency>();
+
     Processor<MavenDomDependency> collectProcessor = new Processor<MavenDomDependency>() {
       public boolean process(MavenDomDependency dependency) {
-        if (!model.equals(dependency.getParentOfType(MavenDomProjectModel.class, true))) {
-          DependencyConflictId id = DependencyConflictId.create(dependency);
-          if (id != null && !existingDependencies.contains(id) && !dependencies.containsKey(id)) {
-            dependencies.put(id, dependency);
-          }
+        DependencyConflictId id = DependencyConflictId.create(dependency);
+        if (id != null && !dependencies.containsKey(id)) {
+          dependencies.put(id, dependency);
         }
+
         return false;
       }
     };
 
     MavenDomProjectProcessorUtils.processDependenciesInDependencyManagement(model, collectProcessor, model.getManager().getProject());
 
-    return dependencies.values();
+    return dependencies;
   }
 }
