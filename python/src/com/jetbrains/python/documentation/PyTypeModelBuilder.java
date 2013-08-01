@@ -318,11 +318,11 @@ public class PyTypeModelBuilder {
         add("...");
         return;
       }
-      processListCommaSeparated(oneOf.oneOfTypes, " | ");
+      processList(oneOf.oneOfTypes, " | ");
       myDepth--;
     }
 
-    private void processListCommaSeparated(Collection<TypeModel> list, String separator) {
+    private void processList(Collection<TypeModel> list, String separator) {
       boolean first = true;
       for (TypeModel t : list) {
         if (!first) {
@@ -347,7 +347,7 @@ public class PyTypeModelBuilder {
       }
       addType(collectionOf.collectionName);
       add("[");
-      processListCommaSeparated(collectionOf.elementTypes, ", ");
+      processList(collectionOf.elementTypes, ", ");
       add("]");
       myDepth--;
     }
@@ -369,7 +369,7 @@ public class PyTypeModelBuilder {
       add("(");
       final Collection<TypeModel> parameters = function.parameters;
       if (parameters != null) {
-        processListCommaSeparated(parameters, ", ");
+        processList(parameters, ", ");
       }
       else {
         add("...");
