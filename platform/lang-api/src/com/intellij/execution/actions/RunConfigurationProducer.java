@@ -32,6 +32,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 /**
+ * Supports creating run configurations from context (by right-clicking a code element in the source editor or the project view).
+ *
+ * @since 13
  * @author yole
  */
 public abstract class RunConfigurationProducer<T extends RunConfiguration> {
@@ -54,6 +57,13 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     return myConfigurationFactory.getType();
   }
 
+  /**
+   * Creates a run configuration from the context.
+   *
+   * @param context contains the information about a location in the source code.
+   * @return a container with a prepared run configuration and the context element from which it was created, or null if the context is
+   * not applicable to this run configuration producer.
+   */
   @Nullable
   public ConfigurationFromContext createConfigurationFromContext(ConfigurationContext context) {
     final RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
@@ -64,18 +74,60 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     return new ConfigurationFromContextImpl(this, settings, locationRef.get());
   }
 
+  /**
+   * Sets up a configuration based on the specified context.
+   *
+   * @param configuration a clone of the template run configuration of the specified type
+   * @param context       contains the information about a location in the source code.
+   * @param sourceElement a reference to the source element for the run configuration (by default contains the element at caret,
+   *                      can be updated by the producer to point to a higher-level element in the tree).
+   *
+   * @return true if the context is applicable to this run configuration producer, false if the context is not applicable and the
+   * configuration should be discarded.
+   */
   protected abstract boolean setupConfigurationFromContext(T configuration, ConfigurationContext context, Ref<PsiElement> sourceElement);
 
+  /**
+   * Checks if the specified configuration was created from the specified context.
+   * @param configuration a configuration instance.
+   * @param context       contains the information about a location in the source code.
+   * @return true if this configuration was created from the specified context, false otherwise.
+   */
   public abstract boolean isConfigurationFromContext(T configuration, ConfigurationContext context);
 
+  /**
+   * When two configurations are created from the same context by two different producers, checks if the configuration created by
+   * this producer should be discarded in favor of the other one.
+   *
+   * @param self  a configuration created by this producer.
+   * @param other a configuration created by another producer.
+   * @return true if the configuration created by this producer is at least as good as the other one; false if this configuration
+   * should be discarded and the other one should be used instead.
+   */
   public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
     return true;
   }
 
+  /**
+   * Called before a configuration created from context by this producer is first executed. Can be used to show additional UI for
+   * customizing the created configuration.
+   *
+   * @param configuration a configuration created by this producer.
+   * @param context       the context
+   * @param startRunnable the runnable that needs to be called after additional customization is complete.
+   */
   public void onFirstRun(ConfigurationFromContext configuration, ConfigurationContext context, Runnable startRunnable) {
     startRunnable.run();
   }
 
+  /**
+   * Searches the list of existing run configurations to find one created from this context. Returns one if found, or tries to create
+   * a new configuration from this context if not found.
+   *
+   * @param context contains the information about a location in the source code.
+   * @return a configuration (new or existing) matching the context, or null if the context is not applicable to this producer.
+   */
+  @Nullable
   public ConfigurationFromContext findOrCreateConfigurationFromContext(ConfigurationContext context) {
     Location location = context.getLocation();
     if (location == null) {
@@ -107,6 +159,12 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     return fromContext;
   }
 
+  /**
+   * Searches the list of existing run configurations to find one created from this context. Returns one if found.
+   *
+   * @param context contains the information about a location in the source code.
+   * @return an existing configuration matching the context, or null if no such configuration is found.
+   */
   @Nullable
   public RunnerAndConfigurationSettings findExistingConfiguration(ConfigurationContext context) {
     final RunManager runManager = RunManager.getInstance(context.getProject());
