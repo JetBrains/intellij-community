@@ -198,30 +198,22 @@ public class GithubApiUtil {
       case HttpStatus.SC_NOT_FOUND:
         throw new GithubAuthenticationException("Request response: " + getErrorMessage(method));
       default:
-        throw new HttpException(code + ": " + method.getStatusText());
+        throw new HttpException(code + ": " + getErrorMessage(method));
     }
   }
 
   @NotNull
   private static String getErrorMessage(@NotNull HttpMethod method) {
-    String message = null;
     try {
       InputStream resp = method.getResponseBodyAsStream();
       if (resp != null) {
         GithubErrorMessageRaw error = fromJson(parseResponse(resp), GithubErrorMessageRaw.class);
-        message = error.getMessage();
+        return method.getStatusText() + " - " + error.getMessage();
       }
     }
-    catch (IOException e) {
-      message = null;
+    catch (IOException ignore) {
     }
-
-    if (message != null) {
-      return message;
-    }
-    else {
-      return method.getStatusText();
-    }
+    return method.getStatusText();
   }
 
   @NotNull
