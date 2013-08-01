@@ -412,17 +412,17 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * @return null if the only item was auto-completed
    */
-  @Nullable LookupElement[] completeBasic();
+  LookupElement[] completeBasic();
 
   /**
    * @return null if the only item was auto-completed
    */
-  @Nullable LookupElement[] complete(CompletionType type);
+  LookupElement[] complete(CompletionType type);
 
   /**
    * @return null if the only item was auto-completed
    */
-  @Nullable LookupElement[] complete(CompletionType type, int invocationCount);
+  LookupElement[] complete(CompletionType type, int invocationCount);
 
   void checkResult(final String text);
 
