@@ -5,10 +5,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
@@ -18,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
@@ -84,11 +82,29 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
     });
   }
 
+  @Nullable
+  private static VirtualFile findPomXml(@NotNull DataContext dataContext) {
+    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    if (file == null) return null;
+
+    if (file.isDirectory()) {
+      file = file.findChild("pom.xml");
+      if (file == null) return null;
+    }
+
+    MavenProjectsManager manager = MavenActionUtil.getProjectsManager(dataContext);
+
+    MavenProject mavenProject = manager.findProject(file);
+    if (mavenProject == null) return null;
+
+    return file;
+  }
+
   @Override
   public void actionPerformed(AnActionEvent event) {
     final Project project = MavenActionUtil.getProject(event.getDataContext());
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(event.getDataContext());
-    assert file != null;
+    final VirtualFile file = findPomXml(event.getDataContext());
+    if (file == null) return;
 
     if (MavenServerManager.getInstance().isUseMaven2()) {
       showUnsupportedNotification(project, file);
@@ -102,15 +118,7 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
     Presentation p = e.getPresentation();
 
-    boolean visible = false;
-
-    final MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e.getDataContext());
-
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-    if (file != null) {
-      MavenProject mavenProject = manager.findProject(file);
-      visible = mavenProject != null;
-    }
+    boolean visible = findPomXml(e.getDataContext()) != null;
 
     p.setVisible(visible);
   }
