@@ -68,6 +68,7 @@ public class JpsAndroidModuleProperties {
   @Tag(AndroidCommonUtils.INCLUDE_ASSETS_FROM_LIBRARIES_ELEMENT_NAME)
   public boolean myIncludeAssetsFromLibraries = false;
 
+  public boolean COMPILE_CUSTOM_GENERATED_SOURCES = true;
   @Tag("resOverlayFolders")
   @AbstractCollection(surroundWithTag = false, elementTag = "path", elementValueAttribute = "")
   public List<String> RES_OVERLAY_FOLDERS = new ArrayList<String>(Arrays.asList("/res-overlay"));

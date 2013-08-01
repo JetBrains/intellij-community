@@ -99,6 +99,10 @@ public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModu
   }
 
   @Override
+  public boolean isCopyCustomGeneratedSources() {
+    return myProperties.COMPILE_CUSTOM_GENERATED_SOURCES;
+  }
+
   public File getManifestFile() {
     File manifestFile = findFileByRelativeModulePath(myProperties.MANIFEST_FILE_RELATIVE_PATH, false);
     return manifestFile != null ? canonizeFilePath(manifestFile) : null;

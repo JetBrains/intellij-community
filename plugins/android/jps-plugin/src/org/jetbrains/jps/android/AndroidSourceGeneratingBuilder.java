@@ -276,6 +276,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final JpsModule module = entry.getKey();
       final MyModuleData data = entry.getValue();
 
+      if (!data.getAndroidExtension().isCopyCustomGeneratedSources()) {
+        continue;
+      }
       final ModuleBuildTarget moduleTarget = new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION);
       final AndroidGenSourcesCopyingStorage storage = context.getProjectDescriptor().dataManager.getStorage(
         moduleTarget, AndroidGenSourcesCopyingStorage.PROVIDER);
