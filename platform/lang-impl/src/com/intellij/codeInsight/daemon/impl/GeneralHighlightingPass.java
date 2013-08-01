@@ -201,8 +201,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final List<PsiElement> outside = new ArrayList<PsiElement>();
     try {
       final HighlightVisitor[] filteredVisitors = filterVisitors(highlightVisitors, myFile);
-      Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside,
-                                     false, FILE_FILTER);
+      List<ProperTextRange> insideRanges = new ArrayList<ProperTextRange>();
+      List<ProperTextRange> outsideRanges = new ArrayList<ProperTextRange>();
+      Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, insideRanges, outside,
+                                     outsideRanges, false, FILE_FILTER);
 
       setProgressLimit((long)(inside.size()+outside.size()));
 
@@ -212,7 +214,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         highlightTodos(myFile, myDocument.getCharsSequence(), myStartOffset, myEndOffset, progress, myPriorityRange, gotHighlights, outsideResult);
       }
 
-      collectHighlights(inside, new Runnable() {
+      Runnable after1 = new Runnable() {
         @Override
         public void run() {
           // all infos for the "injected fragment for the host which is inside" are indeed inside
@@ -220,12 +222,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           Set<HighlightInfo> injectedResult = new THashSet<HighlightInfo>();
           final Set<PsiFile> injected = new THashSet<PsiFile>();
           getInjectedPsiFiles(inside, outside, progress, injected);
-          if (!addInjectedPsiHighlights(injected, progress, Collections.synchronizedSet(injectedResult))) throw new ProcessCanceledException();
+          if (!addInjectedPsiHighlights(injected, progress, Collections.synchronizedSet(injectedResult)))
+            throw new ProcessCanceledException();
           final List<HighlightInfo> injectionsOutside = new ArrayList<HighlightInfo>(gotHighlights.size());
 
           Set<HighlightInfo> result;
           synchronized (injectedResult) {
-          // sync here because all writes happened in another thread
+            // sync here because all writes happened in another thread
             result = injectedResult;
           }
           for (HighlightInfo info : result) {
@@ -243,7 +246,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           }
 
           final ProperTextRange priorityIntersection = myPriorityRange.intersection(new TextRange(myStartOffset, myEndOffset));
-          if ((!inside.isEmpty() || !gotHighlights.isEmpty()) && priorityIntersection != null) { // do not apply when there were no elements to highlight
+          if ((!inside.isEmpty() || !gotHighlights.isEmpty()) &&
+              priorityIntersection != null) { // do not apply when there were no elements to highlight
             // clear infos found in visible area to avoid applying them twice
             final List<HighlightInfo> toApplyInside = new ArrayList<HighlightInfo>(gotHighlights);
             myHighlights.addAll(toApplyInside);
@@ -257,9 +261,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                 MarkupModel markupModel = DocumentMarkupModel.forDocument(myDocument, myProject, true);
 
                 UpdateHighlightersUtil.setHighlightersInRange(myProject, myDocument, priorityIntersection, getColorsScheme(), toApplyInside,
-                                                                (MarkupModelEx)markupModel, Pass.UPDATE_ALL);
+                                                              (MarkupModelEx)markupModel, Pass.UPDATE_ALL);
                 if (myEditor != null) {
-                    new ShowAutoImportPass(myProject, myFile, myEditor).applyInformationToEditor();
+                  new ShowAutoImportPass(myProject, myFile, myEditor).applyInformationToEditor();
                 }
               }
             });
@@ -284,7 +288,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             }
           };
         }
-      }, outside, progress, filteredVisitors, gotHighlights, forceHighlightParents);
+      };
+      collectHighlights(inside, insideRanges, after1, outside, outsideRanges, progress, filteredVisitors, gotHighlights, forceHighlightParents);
 
       if (myUpdateAll) {
         ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().setErrorFoundFlag(myDocument, myErrorFound);
@@ -589,8 +594,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private void collectHighlights(@NotNull final List<PsiElement> elements1,
+                                 @NotNull final List<ProperTextRange> ranges1,
                                  @NotNull final Runnable after1,
                                  @NotNull final List<PsiElement> elements2,
+                                 @NotNull final List<ProperTextRange> ranges2,
                                  @NotNull final ProgressIndicator progress,
                                  @NotNull final HighlightVisitor[] visitors,
                                  @NotNull final Set<HighlightInfo> gotHighlights,
@@ -627,6 +634,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       public void run() {
         Stack<Pair<TextRange, List<HighlightInfo>>> nested = new Stack<Pair<TextRange, List<HighlightInfo>>>();
         boolean failed = false;
+        List<ProperTextRange> ranges = ranges1;
         //noinspection unchecked
         for (List<PsiElement> elements : new List[]{elements1, elements2}) {
           nested.clear();
@@ -672,7 +680,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               nextLimit = i + chunkSize;
             }
 
-            TextRange elementRange = element.getTextRange();
+            TextRange elementRange = ranges.get(i);
             List<HighlightInfo> infosForThisRange = holder.size() == 0 ? null : new ArrayList<HighlightInfo>(holder.size());
             for (int j = 0; j < holder.size(); j++) {
               final HighlightInfo info = holder.get(j);
@@ -716,7 +724,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             }
           }
           advanceProgress(elements.size() - (nextLimit-chunkSize));
-          if (elements == elements1) after1.run();
+          if (elements == elements1) {
+            after1.run();
+            ranges = ranges2;
+          }
         }
       }
     };

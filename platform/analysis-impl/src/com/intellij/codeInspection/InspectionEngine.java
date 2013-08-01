@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
@@ -103,7 +104,8 @@ public class InspectionEngine {
 
     TextRange range = file.getTextRange();
     final LocalInspectionToolSession session = new LocalInspectionToolSession(file, range.getStartOffset(), range.getEndOffset());
-    Divider.divideInsideAndOutside(file, range.getStartOffset(), range.getEndOffset(), range, elements, Collections.<PsiElement>emptyList(), true, Condition.TRUE);
+    Divider.divideInsideAndOutside(file, range.getStartOffset(), range.getEndOffset(), range, elements, new ArrayList<ProperTextRange>(),
+                                   Collections.<PsiElement>emptyList(), Collections.<ProperTextRange>emptyList(), true, Condition.TRUE);
 
     boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tools, indicator, failFastOnAcquireReadAction,
                                                                                new Processor<LocalInspectionTool>() {

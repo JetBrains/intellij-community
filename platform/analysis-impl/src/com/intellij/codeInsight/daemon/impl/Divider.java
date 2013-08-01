@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -41,14 +42,16 @@ public class Divider {
                                             int endOffset,
                                             @NotNull TextRange range,
                                             @NotNull List<PsiElement> inside,
+                                            @NotNull List<ProperTextRange> insideRanges,
                                             @NotNull List<PsiElement> outside,
+                                            @NotNull List<ProperTextRange> outsideRanges,
                                             boolean includeParents,
                                             @NotNull Condition<PsiFile> filter) {
     final FileViewProvider viewProvider = file.getViewProvider();
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile psiRoot = viewProvider.getPsi(language);
       if (filter.value(psiRoot)) {
-        divideInsideAndOutside(psiRoot, startOffset, endOffset, range, inside, outside, includeParents);
+        divideInsideAndOutside(psiRoot, startOffset, endOffset, range, inside, insideRanges, outside, outsideRanges, includeParents);
       }
     }
   }
@@ -58,7 +61,9 @@ public class Divider {
                                              int endOffset,
                                              @NotNull TextRange range,
                                              @NotNull List<PsiElement> inside,
+                                             @NotNull List<ProperTextRange> insideRanges,
                                              @NotNull List<PsiElement> outside,
+                                             @NotNull List<ProperTextRange> outsideRanges,
                                              boolean includeParents) {
     final int currentOffset = root.getTextRange().getStartOffset();
     final Condition<PsiElement>[] filters = Extensions.getExtensions(CollectHighlightsUtil.EP_NAME);
@@ -102,9 +107,11 @@ public class Divider {
         if (startOffset <= start && offset <= endOffset) {
           if (range.containsRange(start, offset)) {
             inside.add(element);
+            insideRanges.add(new ProperTextRange(start, offset));
           }
           else {
             outside.add(element);
+            outsideRanges.add(new ProperTextRange(start, offset));
           }
         }
 
@@ -129,8 +136,15 @@ public class Divider {
                           CollectHighlightsUtil.findCommonParent(root, startOffset, endOffset);
       while (parent != null && parent != root) {
         parent = parent.getParent();
-        if (parent != null) outside.add(parent);
+        if (parent != null) {
+          outside.add(parent);
+          TextRange textRange = parent.getTextRange();
+          outsideRanges.add(ProperTextRange.create(textRange));
+        }
       }
     }
+
+    assert inside.size() == insideRanges.size();
+    assert outside.size() == outsideRanges.size();
   }
 }
