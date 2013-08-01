@@ -840,6 +840,10 @@
     <annotator language="Web2Py" implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyAnnotator"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.web2py.completion.Web2PyBuiltinCompletionContributor"/>
+    <lang.formatter language="Web2Py"
+                    implementationClass="com.jetbrains.web2py.templates.formatter.Web2PyFormattingModelBuilder"/>
+    <lang.whiteSpaceFormattingStrategy language="Chameleon"
+                                       implementationClass="com.jetbrains.web2py.templates.formatter.Web2PyWhiteSpaceFormattingStrategy"/>
 
     <!-- Pyramid && Chameleon -->
     <configurationType implementation="com.jetbrains.pyramid.run.PyramidRunConfigurationType"/>
@@ -860,6 +864,11 @@
     <completion.contributor language="XML" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonNamespaceCompletionContributor"/>
     <completion.contributor language="HTML" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonNamespaceCompletionContributor"/>
     <completion.contributor language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonNamespaceCompletionContributor"/>
+
+    <lang.formatter language="Chameleon"
+                    implementationClass="com.jetbrains.pyramid.templates.formatter.ChameleonFormattingModelBuilder"/>
+    <lang.whiteSpaceFormattingStrategy language="Chameleon"
+                                       implementationClass="com.jetbrains.pyramid.templates.formatter.ChameleonWhiteSpaceFormattingStrategy"/>
   </extensions>
 
   <extensionPoints>
