@@ -275,6 +275,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
           final GithubAuthData auth = info.getAuthData();
           final GithubRepoDetailed repo = info.getRepo();
           final GithubRepo parent = repo.getParent();
+          final GithubRepo source = repo.getSource();
 
           result.addAll(getBranches(auth, repo.getUserName(), repo.getName()));
 
@@ -282,9 +283,11 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
             result.addAll(getBranches(auth, parent.getUserName(), parent.getName()));
           }
 
-          if (upstreamPath != null &&
-              !StringUtil.equalsIgnoreCase(upstreamPath.getUser(), repo.getUserName()) &&
-              (parent == null || !StringUtil.equalsIgnoreCase(upstreamPath.getUser(), parent.getUserName()))) {
+          if (source != null && !equals(source, parent)) {
+            result.addAll(getBranches(auth, source.getUserName(), source.getName()));
+          }
+
+          if (upstreamPath != null && !equals(upstreamPath, repo) && !equals(upstreamPath, parent) && !equals(upstreamPath, source)) {
             result.addAll(getBranches(auth, upstreamPath.getUser(), upstreamPath.getRepository()));
           }
         }
@@ -313,6 +316,20 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
             return user + ":" + branch.getName();
           }
         });
+      }
+
+      private boolean equals(@NotNull GithubRepo repo1, @Nullable GithubRepo repo2) {
+        if (repo2 == null) {
+          return false;
+        }
+        return StringUtil.equalsIgnoreCase(repo1.getUserName(), repo2.getUserName());
+      }
+
+      private boolean equals(@NotNull GithubFullPath repo1, @Nullable GithubRepo repo2) {
+        if (repo2 == null) {
+          return false;
+        }
+        return StringUtil.equalsIgnoreCase(repo1.getUser(), repo2.getUserName());
       }
     }.execute();
   }
