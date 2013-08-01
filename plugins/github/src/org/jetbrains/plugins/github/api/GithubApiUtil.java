@@ -603,7 +603,7 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubBranch> getRepoBranches(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/branches";
+    String path = "/repos/" + user + "/" + repo + "/branches?per_page=100";
 
     PagedRequest<GithubBranch, GithubBranchRaw> request =
       new PagedRequest<GithubBranch, GithubBranchRaw>(auth, path, GithubBranch.class, GithubBranchRaw[].class);
@@ -616,7 +616,7 @@ public class GithubApiUtil {
                                           @NotNull String user,
                                           @NotNull String repo,
                                           @NotNull String forkUser) throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/forks";
+    String path = "/repos/" + user + "/" + repo + "/forks?per_page=100";
 
     PagedRequest<GithubRepo, GithubRepoRaw> request =
       new PagedRequest<GithubRepo, GithubRepoRaw>(auth, path, GithubRepo.class, GithubRepoRaw[].class);
