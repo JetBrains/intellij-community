@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
@@ -41,7 +42,7 @@ public class PyJavaMethodType implements PyCallableType {
 
   @Nullable
   @Override
-  public List<PyType> getParameters(@NotNull TypeEvalContext context) {
+  public List<Pair<String, PyType>> getParameters(@NotNull TypeEvalContext context) {
     return null;
   }
 
