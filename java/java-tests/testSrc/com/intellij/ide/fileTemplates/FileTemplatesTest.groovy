@@ -1,25 +1,19 @@
-package com.intellij.ide.fileTemplates;
+package com.intellij.ide.fileTemplates
+import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
+import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.JavaDirectoryService
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiManager
+import com.intellij.testFramework.IdeaTestCase
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.util.properties.EncodingAwareProperties
 
-import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.properties.EncodingAwareProperties;
-
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.*;
-
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class FileTemplatesTest extends IdeaTestCase {
   public void testAllTemplates() throws Exception {
     final File testsDir = new File(PathManagerEx.getTestDataPath()+"/ide/fileTemplates");
@@ -96,7 +90,7 @@ public class FileTemplatesTest extends IdeaTestCase {
     String name = "myclass";
     FileTemplate template = FileTemplateManager.getInstance().addInternal(name/*+"ForTest"*/, "java");
     try {
-      template.setText("package ${PACKAGE_NAME}; public class ${NAME} {}");
+      template.setText('package ${PACKAGE_NAME}; public class ${NAME} {}');
 
       File temp = FileUtil.createTempDirectory(getTestName(true), "");
 
