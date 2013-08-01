@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.removemiddleman;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -99,7 +100,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
       } else {
         access = getterName + "()";
         if (getter == null) {
-          getter = PropertyUtil.generateGetterPrototype(field);
+          getter = GenerateMembersUtil.generateGetterPrototype(field);
         }
       }
       usages.add(new InlineDelegatingCall(call, paramPermutation, access, delegatedMethod.getName()));

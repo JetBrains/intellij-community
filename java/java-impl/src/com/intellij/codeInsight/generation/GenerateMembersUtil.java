@@ -33,6 +33,7 @@ import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -549,5 +550,28 @@ public class GenerateMembersUtil {
         psiAnnotation.delete();
       }
     }
+  }
+
+  @Nullable
+  public static PsiMethod generateGetterPrototype(@NotNull PsiField field) {
+    return annotateOnOverrideImplement(field.getContainingClass(), PropertyUtil.generateGetterPrototype(field));
+  }
+
+  @Nullable
+  public static PsiMethod generateSetterPrototype(@NotNull PsiField field) {
+    return annotateOnOverrideImplement(field.getContainingClass(), PropertyUtil.generateSetterPrototype(field));
+  }
+
+  @Nullable
+  private static PsiMethod annotateOnOverrideImplement(@Nullable PsiClass targetClass, @Nullable PsiMethod generated) {
+    if (generated == null || targetClass == null) return generated;
+
+    if (CodeStyleSettingsManager.getSettings(targetClass.getProject()).INSERT_OVERRIDE_ANNOTATION) {
+      PsiMethod superMethod = targetClass.findMethodBySignature(generated, true);
+      if (superMethod != null && superMethod.getContainingClass() != targetClass) {
+        OverrideImplementUtil.annotateOnOverrideImplement(generated, targetClass, superMethod, true);
+      }
+    }
+    return generated;
   }
 }
