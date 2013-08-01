@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -85,97 +86,106 @@ public class AndroidPropertyFilesUpdater extends AbstractProjectComponent {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-            final List<VirtualFile> toAskFiles = new ArrayList<VirtualFile>();
-            final List<AndroidFacet> toAskFacets = new ArrayList<AndroidFacet>();
-            final List<Runnable> toAskChanges = new ArrayList<Runnable>();
-
-            final List<VirtualFile> files = new ArrayList<VirtualFile>();
-            final List<Runnable> changes = new ArrayList<Runnable>();
-
-            for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-              final AndroidFacet facet = AndroidFacet.getInstance(module);
-
-              if (facet != null) {
-                final String updatePropertyFiles = facet.getProperties().UPDATE_PROPERTY_FILES;
-                final boolean ask = updatePropertyFiles.isEmpty();
-
-                if (!ask && !Boolean.parseBoolean(updatePropertyFiles)) {
-                  continue;
-                }
-                final Pair<VirtualFile, List<Runnable>> pair = updateProjectPropertiesIfNecessary(facet);
-
-                if (pair != null) {
-                  if (ask) {
-                    toAskFacets.add(facet);
-                    toAskFiles.add(pair.getFirst());
-                    toAskChanges.addAll(pair.getSecond());
-                  }
-                  else {
-                    files.add(pair.getFirst());
-                    changes.addAll(pair.getSecond());
-                  }
-                }
+            StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+              @Override
+              public void run() {
+                updatePropertyFilesIfNecessary();
               }
-            }
-
-            /* We should expire old notification even if there are no properties to update in current event.
-             For example, user changed "is library" setting to 'true', the notification was shown, but user ignored it.
-             Then he changed the setting to 'false' again. New notification won't be shown, because the value of
-             "android.library" in project.properties is correct. However if the old notification was not expired,
-             user may press on it, and "android.library" property will be changed to 'false'. */
-            if (myNotification != null && !myNotification.isExpired()) {
-              myNotification.expire();
-            }
-
-            if (changes.size() > 0 || toAskChanges.size() > 0) {
-              if (toAskChanges.size() > 0) {
-                askUserIfUpdatePropertyFile(myProject, toAskFacets, new Processor<MyResult>() {
-                  @Override
-                  public boolean process(MyResult result) {
-                    if (result == MyResult.NEVER) {
-                      for (AndroidFacet facet : toAskFacets) {
-                        facet.getProperties().UPDATE_PROPERTY_FILES = Boolean.FALSE.toString();
-                      }
-                      return true;
-                    }
-                    else if (result == MyResult.ALWAYS) {
-                      for (AndroidFacet facet : toAskFacets) {
-                        facet.getProperties().UPDATE_PROPERTY_FILES = Boolean.TRUE.toString();
-                      }
-                    }
-                    if (ReadonlyStatusHandler.ensureFilesWritable(myProject, toAskFiles.toArray(new VirtualFile[toAskFiles.size()]))) {
-                      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                        @Override
-                        public void run() {
-                          for (Runnable change : toAskChanges) {
-                            change.run();
-                          }
-                        }
-                      });
-                    }
-                    return true;
-                  }
-                });
-              }
-
-              if (changes.size() > 0 && ReadonlyStatusHandler.ensureFilesWritable(
-                myProject, files.toArray(new VirtualFile[files.size()]))) {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    for (Runnable change : changes) {
-                      change.run();
-                    }
-                  }
-                });
-              }
-            }
+            });
           }
         }, myProject.getDisposed());
       }
     });
+  }
+
+  private void updatePropertyFilesIfNecessary() {
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+    final List<VirtualFile> toAskFiles = new ArrayList<VirtualFile>();
+    final List<AndroidFacet> toAskFacets = new ArrayList<AndroidFacet>();
+    final List<Runnable> toAskChanges = new ArrayList<Runnable>();
+
+    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<Runnable> changes = new ArrayList<Runnable>();
+
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      final AndroidFacet facet = AndroidFacet.getInstance(module);
+
+      if (facet != null) {
+        final String updatePropertyFiles = facet.getProperties().UPDATE_PROPERTY_FILES;
+        final boolean ask = updatePropertyFiles.isEmpty();
+
+        if (!ask && !Boolean.parseBoolean(updatePropertyFiles)) {
+          continue;
+        }
+        final Pair<VirtualFile, List<Runnable>> pair = updateProjectPropertiesIfNecessary(facet);
+
+        if (pair != null) {
+          if (ask) {
+            toAskFacets.add(facet);
+            toAskFiles.add(pair.getFirst());
+            toAskChanges.addAll(pair.getSecond());
+          }
+          else {
+            files.add(pair.getFirst());
+            changes.addAll(pair.getSecond());
+          }
+        }
+      }
+    }
+
+    /* We should expire old notification even if there are no properties to update in current event.
+     For example, user changed "is library" setting to 'true', the notification was shown, but user ignored it.
+     Then he changed the setting to 'false' again. New notification won't be shown, because the value of
+     "android.library" in project.properties is correct. However if the old notification was not expired,
+     user may press on it, and "android.library" property will be changed to 'false'. */
+    if (myNotification != null && !myNotification.isExpired()) {
+      myNotification.expire();
+    }
+
+    if (changes.size() > 0 || toAskChanges.size() > 0) {
+      if (toAskChanges.size() > 0) {
+        askUserIfUpdatePropertyFile(myProject, toAskFacets, new Processor<MyResult>() {
+          @Override
+          public boolean process(MyResult result) {
+            if (result == MyResult.NEVER) {
+              for (AndroidFacet facet : toAskFacets) {
+                facet.getProperties().UPDATE_PROPERTY_FILES = Boolean.FALSE.toString();
+              }
+              return true;
+            }
+            else if (result == MyResult.ALWAYS) {
+              for (AndroidFacet facet : toAskFacets) {
+                facet.getProperties().UPDATE_PROPERTY_FILES = Boolean.TRUE.toString();
+              }
+            }
+            if (ReadonlyStatusHandler.ensureFilesWritable(myProject, toAskFiles.toArray(new VirtualFile[toAskFiles.size()]))) {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                  for (Runnable change : toAskChanges) {
+                    change.run();
+                  }
+                }
+              });
+            }
+            return true;
+          }
+        });
+      }
+
+      if (changes.size() > 0 && ReadonlyStatusHandler.ensureFilesWritable(
+        myProject, files.toArray(new VirtualFile[files.size()]))) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            for (Runnable change : changes) {
+              change.run();
+            }
+          }
+        });
+      }
+    }
   }
 
   @Nullable
