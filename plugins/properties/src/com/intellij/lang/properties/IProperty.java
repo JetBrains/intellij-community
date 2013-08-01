@@ -54,5 +54,6 @@ public interface IProperty extends Navigatable, Iconable {
   @Nullable
   String getDocCommentText();
 
+  @NotNull
   PsiElement getPsiElement();
 }
