@@ -50,12 +50,12 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
   }
 
   @Override
-  public void onFirstRun(ConfigurationFromContext fromContext, final ConfigurationContext context, final Runnable performRunnable) {
+  public void onFirstRun(final ConfigurationFromContext fromContext, final ConfigurationContext context, final Runnable performRunnable) {
 
     final InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-        ((JUnitConfiguration)context.getConfiguration().getConfiguration()).bePatternConfiguration(classes, method);
+        ((JUnitConfiguration)fromContext.getConfiguration()).bePatternConfiguration(classes, method);
         super.runForClasses(classes, method, context, performRunnable);
       }
 
@@ -64,7 +64,7 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
                                  PsiMethod psiMethod,
                                  ConfigurationContext context,
                                  Runnable performRunnable) {
-        ((JUnitConfiguration)context.getConfiguration().getConfiguration()).beClassConfiguration(aClass);
+        ((JUnitConfiguration)fromContext.getConfiguration()).beClassConfiguration(aClass);
         super.runForClass(aClass, psiMethod, context, performRunnable);
       }
     };

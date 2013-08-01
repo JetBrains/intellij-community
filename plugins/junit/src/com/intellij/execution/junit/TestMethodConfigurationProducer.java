@@ -60,13 +60,13 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
   }
 
   @Override
-  public void onFirstRun(ConfigurationFromContext configuration, final ConfigurationContext context, final Runnable performRunnable) {
-    final PsiMethod psiMethod = (PsiMethod)configuration.getSourceElement();
+  public void onFirstRun(final ConfigurationFromContext fromContext, final ConfigurationContext context, final Runnable performRunnable) {
+    final PsiMethod psiMethod = (PsiMethod)fromContext.getSourceElement();
     final PsiClass containingClass = psiMethod.getContainingClass();
     final InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-        ((JUnitConfiguration)context.getConfiguration().getConfiguration()).bePatternConfiguration(classes, method);
+        ((JUnitConfiguration)fromContext.getConfiguration()).bePatternConfiguration(classes, method);
         super.runForClasses(classes, method, context, performRunnable);
       }
 
@@ -77,12 +77,12 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
                                  Runnable performRunnable) {
         final Project project = psiMethod.getProject();
         final MethodLocation methodLocation = new MethodLocation(project, psiMethod, PsiLocation.fromPsiElement(aClass));
-        ((JUnitConfiguration)context.getConfiguration().getConfiguration()).beMethodConfiguration(methodLocation);
+        ((JUnitConfiguration)fromContext.getConfiguration()).beMethodConfiguration(methodLocation);
         super.runForClass(aClass, psiMethod, context, performRunnable);
       }
     };
     if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass)) return;
-    super.onFirstRun(configuration, context, performRunnable);
+    super.onFirstRun(fromContext, context, performRunnable);
   }
 }
 

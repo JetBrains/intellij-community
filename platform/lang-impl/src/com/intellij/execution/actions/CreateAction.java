@@ -74,7 +74,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
       final List<ConfigurationFromContext> fromContext = context.getConfigurationsFromContext();
       if (fromContext != null && fromContext.size() == 1) { //hide fuzzy icon when multiple run configurations are possible
-        presentation.setIcon(context.getConfiguration().getFactory().getIcon());
+        presentation.setIcon(fromContext.iterator().next().getConfiguration().getFactory().getIcon());
       }
     }
 
