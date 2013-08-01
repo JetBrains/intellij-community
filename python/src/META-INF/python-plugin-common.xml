@@ -857,6 +857,9 @@
     <editorHighlighterProvider filetype="Chameleon" implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonEditorHighlighterProvider"/>
     <lang.syntaxHighlighterFactory key="Chameleon"
                                    implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonHighlighterFactory"/>
+    <completion.contributor language="XML" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonNamespaceCompletionContributor"/>
+    <completion.contributor language="HTML" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonNamespaceCompletionContributor"/>
+    <completion.contributor language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonNamespaceCompletionContributor"/>
   </extensions>
 
   <extensionPoints>
