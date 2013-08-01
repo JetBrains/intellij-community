@@ -59,4 +59,9 @@ public class ConfigurationFromContextImpl extends ConfigurationFromContext {
   public boolean isProducedBy(Class<? extends RunConfigurationProducer> producerClass) {
     return producerClass.isInstance(myConfigurationProducer);
   }
+
+  @Override
+  public void onFirstRun(ConfigurationContext context, Runnable startRunnable) {
+    myConfigurationProducer.onFirstRun(this, context, startRunnable);
+  }
 }

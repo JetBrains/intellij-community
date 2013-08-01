@@ -17,21 +17,17 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -39,29 +35,25 @@ import java.util.List;
 import java.util.Set;
 
 public class PatternConfigurationProducer extends JUnitConfigurationProducer {
-
-
-  private PsiElement[] myElements;
-
-  protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
-    final Project project = location.getProject();
+  @Override
+  protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
+                                                  ConfigurationContext context,
+                                                  Ref<PsiElement> sourceElement) {
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
-    myElements = collectPatternElements(context, classes);
-    if (classes.size() <= 1) return null;
-    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
-    final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
+    PsiElement[] elements = collectPatternElements(context, classes);
+    if (classes.size() <= 1) return false;
+    sourceElement.set(elements[0]);
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     data.setPatterns(classes);
     data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
-    data.setScope(setupPackageConfiguration(context, project, configuration, data.getScope()));
+    data.setScope(setupPackageConfiguration(context, configuration, data.getScope()));
     configuration.setGeneratedName();
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
-    return settings;
+    return true;
   }
 
   @Override
-  protected Module findModule(ModuleBasedConfiguration configuration, Module contextModule) {
-    final Set<String> patterns = ((JUnitConfiguration)configuration).getPersistentData().getPatterns();
+  protected Module findModule(JUnitConfiguration configuration, Module contextModule) {
+    final Set<String> patterns = configuration.getPersistentData().getPatterns();
     return findModule(configuration, contextModule, patterns);
   }
 
@@ -143,25 +135,16 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
     }
   }
 
-  public PsiElement getSourceElement() {
-    return myElements[0];
-  }
-
   @Override
-  protected RunnerAndConfigurationSettings findExistingByElement(@NotNull Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
-                                                                 ConfigurationContext context) {
+  public boolean isConfigurationFromContext(JUnitConfiguration unitConfiguration, ConfigurationContext context) {
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
     collectPatternElements(context, classes);
-    for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
-      final JUnitConfiguration unitConfiguration = (JUnitConfiguration)existingConfiguration.getConfiguration();
-      final TestObject testobject = unitConfiguration.getTestObject();
-      if (testobject instanceof TestsPattern) {
-        if (Comparing.equal(classes, unitConfiguration.getPersistentData().getPatterns())) {
-          return existingConfiguration;
-        }
+    final TestObject testobject = unitConfiguration.getTestObject();
+    if (testobject instanceof TestsPattern) {
+      if (Comparing.equal(classes, unitConfiguration.getPersistentData().getPatterns())) {
+        return true;
       }
     }
-    return null;
+    return false;
   }
 }

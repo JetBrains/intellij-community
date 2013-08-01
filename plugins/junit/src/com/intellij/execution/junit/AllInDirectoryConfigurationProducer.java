@@ -16,7 +16,6 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit2.info.LocationUtil;
 import com.intellij.openapi.module.Module;
@@ -64,7 +63,6 @@ public class AllInDirectoryConfigurationProducer extends JUnitConfigurationProdu
     data.setDirName(virtualFile.getPath());
     data.TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY;
     configuration.setGeneratedName();
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, context.getLocation());
     return true;
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -69,6 +70,10 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
 
   public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
     return true;
+  }
+
+  public void onFirstRun(ConfigurationFromContext configuration, ConfigurationContext context, Runnable startRunnable) {
+    startRunnable.run();
   }
 
   public ConfigurationFromContext findOrCreateConfigurationFromContext(ConfigurationContext context) {
@@ -120,5 +125,14 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
       return RunManager.getInstance(context.getProject()).createConfiguration(original.clone(), myConfigurationFactory);
     }
     return RunManager.getInstance(context.getProject()).createRunConfiguration("", myConfigurationFactory);
+  }
+
+  public static RunConfigurationProducer getInstance(Class<? extends RunConfigurationProducer> aClass) {
+    for (RunConfigurationProducer producer : Extensions.getExtensions(EP_NAME)) {
+      if (aClass.isInstance(producer)) {
+        return producer;
+      }
+    }
+    return null;
   }
 }

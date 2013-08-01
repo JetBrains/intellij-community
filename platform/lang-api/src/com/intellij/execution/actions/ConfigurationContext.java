@@ -142,12 +142,13 @@ public class ConfigurationContext {
     }
 
     final List<RuntimeConfigurationProducer> producers = findPreferredProducers();
-    if (producers == null) return null;
     if (myRuntimeConfiguration != null) {
-      for (RuntimeConfigurationProducer producer : producers) {
-        final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
-        if (configuration != null && configuration.getConfiguration() == myRuntimeConfiguration) {
-          myExistingConfiguration.set(configuration);
+      if (producers != null) {
+        for (RuntimeConfigurationProducer producer : producers) {
+          final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
+          if (configuration != null && configuration.getConfiguration() == myRuntimeConfiguration) {
+            myExistingConfiguration.set(configuration);
+          }
         }
       }
       for (RunConfigurationProducer producer : Extensions.getExtensions(RunConfigurationProducer.EP_NAME)) {
@@ -157,10 +158,12 @@ public class ConfigurationContext {
         }
       }
     }
-    for (RuntimeConfigurationProducer producer : producers) {
-      final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
-      if (configuration != null) {
-        myExistingConfiguration.set(configuration);
+    if (producers != null) {
+      for (RuntimeConfigurationProducer producer : producers) {
+        final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
+        if (configuration != null) {
+          myExistingConfiguration.set(configuration);
+        }
       }
     }
     for (RunConfigurationProducer producer : Extensions.getExtensions(RunConfigurationProducer.EP_NAME)) {

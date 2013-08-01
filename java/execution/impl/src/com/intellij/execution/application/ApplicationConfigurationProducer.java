@@ -16,7 +16,6 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationUtil;
@@ -51,7 +50,7 @@ public class ApplicationConfigurationProducer extends JavaRunConfigurationProduc
       final PsiClass aClass = method.getContainingClass();
       if (ConfigurationUtil.MAIN_CLASS.value(aClass)) {
         sourceElement.set(method);
-        setupConfiguration(configuration, aClass, context, location);
+        setupConfiguration(configuration, aClass, context);
         return true;
       }
       currentElement = method.getParent();
@@ -59,18 +58,16 @@ public class ApplicationConfigurationProducer extends JavaRunConfigurationProduc
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(element);
     if (aClass == null) return false;
     sourceElement.set(aClass);
-    setupConfiguration(configuration, aClass, context, location);
+    setupConfiguration(configuration, aClass, context);
     return true;
   }
 
   private void setupConfiguration(ApplicationConfiguration configuration,
                                   final PsiClass aClass,
-                                  final ConfigurationContext context,
-                                  Location location) {
+                                  final ConfigurationContext context) {
     configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(aClass);
     configuration.setGeneratedName();
     setupConfigurationModule(context, configuration);
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
   }
 
   @Nullable

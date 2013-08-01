@@ -19,11 +19,12 @@ package com.intellij.execution.junit;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -32,27 +33,22 @@ import java.util.Iterator;
 import java.util.List;
 
 public class TestMethodConfigurationProducer extends JUnitConfigurationProducer {
-  private Location<PsiMethod> myMethodLocation;
-
-  protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
-    final Project project = location.getProject();
+  @Override
+  protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
+                                                  ConfigurationContext context,
+                                                  Ref<PsiElement> sourceElement) {
     if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
-      return null;
+      return false;
     }
-    myMethodLocation = getTestMethod(location);
-    if (myMethodLocation == null) return null;
-    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
-    final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
+    Location<PsiMethod> methodLocation = getTestMethod(context.getLocation());
+    if (methodLocation == null) return false;
+    sourceElement.set(methodLocation.getPsiElement());
     setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();
-    configuration.beMethodConfiguration(myMethodLocation);
+    configuration.beMethodConfiguration(methodLocation);
     configuration.restoreOriginalModule(originalModule);
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
-    return settings;
-  }
-
-  public PsiElement getSourceElement() {
-    return myMethodLocation.getPsiElement();
+    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, context.getLocation());
+    return true;
   }
 
   private static Location<PsiMethod> getTestMethod(final Location<?> location) {
@@ -64,8 +60,8 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
   }
 
   @Override
-  public void perform(final ConfigurationContext context, final Runnable performRunnable) {
-    final PsiMethod psiMethod = myMethodLocation.getPsiElement();
+  public void onFirstRun(ConfigurationFromContext configuration, final ConfigurationContext context, final Runnable performRunnable) {
+    final PsiMethod psiMethod = (PsiMethod)configuration.getSourceElement();
     final PsiClass containingClass = psiMethod.getContainingClass();
     final InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
@@ -86,7 +82,7 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
       }
     };
     if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass)) return;
-    super.perform(context, performRunnable);
+    super.onFirstRun(configuration, context, performRunnable);
   }
 }
 
