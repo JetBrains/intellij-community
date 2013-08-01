@@ -252,6 +252,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           invokeLater(new Runnable() {
             @Override
             public void run() {
+              LOG.info("ApplicationImpl.externalInstanceListener invocation");
               String currentDirectory = args.isEmpty() ? null : args.get(0);
               List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
               final Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);

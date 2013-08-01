@@ -32,7 +32,7 @@ import java.net.*;
  * @author yole
  */
 public class NetUtils {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.NetUtils");
+  private static final Logger LOG = Logger.getInstance(NetUtils.class);
 
   private NetUtils() {
   }
@@ -54,6 +54,16 @@ public class NetUtils {
     }
     else {
       return canConnectToRemoteSocket(host, port);
+    }
+  }
+
+  public static InetAddress getLoopbackAddress() {
+    try {
+      //  todo use JDK 7 InetAddress.getLoopbackAddress()
+      return InetAddress.getByName("127.0.0.1");
+    }
+    catch (UnknownHostException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -99,8 +109,8 @@ public class NetUtils {
     final ServerSocket serverSocket = new ServerSocket(0);
     try {
       int port = serverSocket.getLocalPort();
-      //workaround for linux : calling close() immediately after opening socket
-      //may result that socket is not closed
+      // workaround for linux : calling close() immediately after opening socket
+      // may result that socket is not closed
       synchronized (serverSocket) {
         try {
           serverSocket.wait(1);
@@ -110,7 +120,8 @@ public class NetUtils {
         }
       }
       return port;
-    } finally {
+    }
+    finally {
       serverSocket.close();
     }
   }
@@ -150,8 +161,7 @@ public class NetUtils {
         localHostString = "127.0.0.1";
       }
     }
-    catch (UnknownHostException e) {
-      // ignore
+    catch (UnknownHostException ignored) {
     }
     return localHostString;
   }

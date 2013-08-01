@@ -62,7 +62,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -1012,18 +1011,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
         PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
         return elements.length == 0 ? null : elements;
-      }
-      if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        PsiElement[] psiElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
-        if (psiElements == null) return null;
-        Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
-        for (PsiElement element : psiElements) {
-          final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-          if (virtualFile != null) {
-            files.add(virtualFile);
-          }
-        }
-        return files.size() > 0 ? VfsUtil.toVirtualFileArray(files) : null;
       }
       if (LangDataKeys.MODULE.is(dataId)) {
         VirtualFile[] virtualFiles = (VirtualFile[])getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName());

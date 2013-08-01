@@ -47,7 +47,7 @@ abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelUpstreamHan
   @Override
   public final void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
     try {
-      ExceptionLoggers.log(event.getCause(), BuiltInServer.LOG);
+      NettyUtil.log(event.getCause(), BuiltInServer.LOG);
     }
     finally {
       context.setAttachment(null);

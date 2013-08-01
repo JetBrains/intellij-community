@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author traff
  */
 public class CapturingProcessAdapter extends ProcessAdapter {
-  private ProcessOutput myOutput;
+  private final ProcessOutput myOutput;
 
   public CapturingProcessAdapter(ProcessOutput output) {
     myOutput = output;

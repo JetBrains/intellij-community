@@ -179,10 +179,10 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     }
     ExternalSystemNode<ExternalProjectPojo> moduleNode = findProjectNode(externalProjectConfigPath);
     if (moduleNode == null) {
-      LOG.warn(String.format(
-        "Can't proceed tasks for module which external config path is '%s'. Reason: no such module node is found. Tasks: %s",
-        externalProjectConfigPath, tasks
-      ));
+//      LOG.warn(String.format(
+//        "Can't proceed tasks for module which external config path is '%s'. Reason: no such module node is found. Tasks: %s",
+//        externalProjectConfigPath, tasks
+//      ));
       return;
     }
     Set<ExternalTaskExecutionInfo> toAdd = ContainerUtilRt.newHashSet();

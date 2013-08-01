@@ -36,7 +36,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   @NotNull protected final Process myProcess;
   @Nullable protected final String myCommandLine;
   protected final ProcessWaitFor myWaitFor;
-  @Nullable private final Charset myCharset;
+  @Nullable protected final Charset myCharset;
 
   public BaseOSProcessHandler(@NotNull final Process process, @Nullable final String commandLine, @Nullable Charset charset) {
     myProcess = process;

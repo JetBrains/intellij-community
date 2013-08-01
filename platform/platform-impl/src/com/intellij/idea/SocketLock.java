@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +109,7 @@ public class SocketLock {
       try {
         FileUtil.writeToFile(portMarker, Integer.toString(port).getBytes());
       }
-      catch (IOException e) {
+      catch (IOException ignored) {
         FileUtil.asyncDelete(portMarker);
       }
     }
@@ -138,14 +139,14 @@ public class SocketLock {
 
     try {
       try {
-        ServerSocket serverSocket = new ServerSocket(portNumber, 50, InetAddress.getByName("127.0.0.1"));
+        ServerSocket serverSocket = new ServerSocket(portNumber, 50, NetUtils.getLoopbackAddress());
         serverSocket.close();
         return ActivateStatus.NO_INSTANCE;
       }
-      catch (IOException e) {
+      catch (IOException ignored) {
       }
 
-      Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), portNumber);
+      Socket socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
       socket.setSoTimeout(300);
 
       DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -154,7 +155,7 @@ public class SocketLock {
         try {
           result.add(in.readUTF());
         }
-        catch (IOException e) {
+        catch (IOException ignored) {
           break;
         }
       }
@@ -168,7 +169,7 @@ public class SocketLock {
             return ActivateStatus.ACTIVATED;
           }
         }
-        catch(IOException e) {
+        catch(IOException ignored) {
         }
         return ActivateStatus.CANNOT_ACTIVATE;
       }
@@ -197,7 +198,6 @@ public class SocketLock {
       }
       catch (IOException e) {
         LOG.info(e);
-        continue;
       }
     }
 
@@ -238,7 +238,7 @@ public class SocketLock {
           }
         }
       }
-      catch (Throwable e) {
+      catch (Throwable ignored) {
       }
     }
   }

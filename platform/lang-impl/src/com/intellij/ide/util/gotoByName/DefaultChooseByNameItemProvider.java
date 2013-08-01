@@ -227,8 +227,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       @NotNull
       @Override
       public Pair<String, MinusculeMatcher> fun(String s) {
-        String namePattern = getNamePattern(base, s);
-        return Pair.create(addSearchAnywherePatternDecorationIfNeeded(base, namePattern), buildPatternMatcher(namePattern, NameUtil.MatchingCaseSensitivity.NONE));
+        String namePattern = addSearchAnywherePatternDecorationIfNeeded(base, getNamePattern(base, s));
+        return Pair.create(namePattern, buildPatternMatcher(namePattern, NameUtil.MatchingCaseSensitivity.NONE));
       }
     });
   }

@@ -250,19 +250,52 @@ public class HgLogCommand {
     }
     else {
       Map<String, String> copies = new HashMap<String, String>();
-
       assert fileListString != null; // checked via StringUtil
-      String[] filesList = fileListString.split("\\)");
+      //hg copied files output looks like: "target1 (source1)target2 (source2)target3 ....  (target_n)"
+      //so we should split i-1 source from i target.
+      // If some sources or targets contatins '(' we suppose that it has Regular Bracket sequence and perform appropriate string parsing.
+      //if it fails just return. (to avoid  ArrayIndexOutOfBoundsException)
+      String[] filesList = fileListString.split("\\s");
+      String target = filesList[0];
 
-      for (String files : filesList) {
-        String[] file = files.split(" \\(");
-        String target = file[0];
-        String source = file[1];
-
-        copies.put(source, target);
+      for (int i = 1; i < filesList.length; ++i) {
+        String source = filesList[i];
+        int afterRightBraceIndex = findRightBracePosition(source);
+        if (afterRightBraceIndex == -1) {
+          break;
+        }
+        copies.put(source.substring(0, afterRightBraceIndex), target);
+        if (afterRightBraceIndex >= source.length()) {                  //the last 'word' in str
+          break;
+        }
+        target = source.substring(afterRightBraceIndex);
       }
-
       return copies;
     }
+  }
+
+  private static int findRightBracePosition(@NotNull String str) {
+    if (!str.startsWith("(")) {
+      LOG.info("Unexpected output during parse copied files in log command " + str);
+      return -1;
+    }
+    int len = str.length();
+    int depth = 0;
+    for (int i = 0; i < len; ++i) {
+      char c = str.charAt(i);
+      switch (c) {
+        case '(':
+          depth++;
+          break;
+        case ')':
+          depth--;
+          break;
+      }
+      if (depth == 0) {
+        return i + 1;
+      }
+    }
+    LOG.info("Unexpected output during parse copied files in log command " + str);
+    return -1;
   }
 }

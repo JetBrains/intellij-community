@@ -91,13 +91,17 @@ public final class Responses {
     send(response, request, context);
   }
 
-  public static void send(HttpResponse response, HttpRequest request, ChannelHandlerContext context) {
+  public static void send(HttpResponse response, @Nullable HttpRequest request, ChannelHandlerContext context) {
+    send(response, context.getChannel(), request);
+  }
+
+  public static void send(HttpResponse response, Channel channel, @Nullable HttpRequest request) {
     ChannelBuffer content = response.getContent();
     setContentLength(response, content == ChannelBuffers.EMPTY_BUFFER ? 0 : content.readableBytes());
 
-    boolean keepAlive = addKeepAliveIfNeed(response, request);
+    boolean keepAlive = request != null && addKeepAliveIfNeed(response, request);
     addCommonHeaders(response);
-    send(response, context, !keepAlive);
+    send(response, channel, !keepAlive);
   }
 
   public static boolean addKeepAliveIfNeed(HttpResponse response, HttpRequest request) {
@@ -136,15 +140,14 @@ public final class Responses {
   }
 
   public static void send(HttpResponse response, ChannelHandlerContext context) {
-    send(response, context, true);
+    send(response, context.getChannel(), true);
   }
 
   public static void send(HttpResponseStatus status, ChannelHandlerContext context) {
     send(new DefaultHttpResponse(HTTP_1_1, status), context);
   }
 
-  public static void send(HttpResponse response, ChannelHandlerContext context, boolean close) {
-    Channel channel = context.getChannel();
+  private static void send(HttpResponse response, Channel channel, boolean close) {
     if (!channel.isOpen()) {
       return;
     }
@@ -160,16 +163,20 @@ public final class Responses {
   }
 
   public static void sendStatus(HttpRequest request, ChannelHandlerContext context, HttpResponseStatus responseStatus, @Nullable String description) {
-    sendStatus(new DefaultHttpResponse(HTTP_1_1, responseStatus), request, context, description);
+    sendStatus(new DefaultHttpResponse(HTTP_1_1, responseStatus), request, context.getChannel(), description);
   }
 
   public static void sendStatus(HttpResponse response, HttpRequest request, ChannelHandlerContext context) {
-    sendStatus(response, request, context, null);
+    sendStatus(response, request, context.getChannel(), null);
   }
 
-  public static void sendStatus(HttpResponse response, HttpRequest request, ChannelHandlerContext context, @Nullable String description) {
+  public static void sendStatus(HttpResponseStatus responseStatus, Channel channel) {
+    sendStatus(new DefaultHttpResponse(HTTP_1_1, responseStatus), null, channel, null);
+  }
+
+  private static void sendStatus(HttpResponse response, @Nullable HttpRequest request, Channel channel, @Nullable String description) {
     response.setHeader(CONTENT_TYPE, "text/html");
-    if (request.getMethod() != HttpMethod.HEAD) {
+    if (request == null || request.getMethod() != HttpMethod.HEAD) {
       String message = response.getStatus().toString();
 
       StringBuilder builder = new StringBuilder();
@@ -181,7 +188,7 @@ public final class Responses {
 
       response.setContent(ChannelBuffers.copiedBuffer(builder, CharsetUtil.UTF_8));
     }
-    send(response, request, context);
+    send(response, channel, request);
   }
 
   public static void sendOptionsResponse(String allowHeaders, HttpRequest request, ChannelHandlerContext context) {

@@ -369,7 +369,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     if (prevTemplate != selectedValue) {
       LOG.assertTrue(myEditor != null, "selected:" + selectedValue + "; prev:" + prevTemplate);
       //selection has changed
-      if (myEditor.isModified()) {
+      if (myEditor.isModified() && Arrays.asList(myCurrentTab.getTemplates()).contains(prevTemplate)) {
         try {
           myModified = true;
           myEditor.apply();

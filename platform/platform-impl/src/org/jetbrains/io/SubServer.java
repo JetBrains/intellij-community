@@ -16,6 +16,7 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.util.net.NetUtils;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
@@ -23,7 +24,6 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.CustomPortServerManager;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 final class SubServer implements CustomPortServerManager.CustomPortService, Disposable {
@@ -43,11 +43,11 @@ final class SubServer implements CustomPortServerManager.CustomPortService, Disp
     }
 
     try {
-      openChannels.add(bootstrap.bind(user.isAvailableExternally() ? new InetSocketAddress(port) : new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port)));
+      openChannels.add(bootstrap.bind(user.isAvailableExternally() ? new InetSocketAddress(port) : new InetSocketAddress(NetUtils.getLoopbackAddress(), port)));
       return true;
     }
     catch (Exception e) {
-      ExceptionLoggers.log(e, BuiltInServer.LOG);
+      NettyUtil.log(e, BuiltInServer.LOG);
       user.cannotBind(e, port);
       return false;
     }

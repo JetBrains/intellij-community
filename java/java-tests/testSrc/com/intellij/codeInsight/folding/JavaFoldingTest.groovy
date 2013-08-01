@@ -222,8 +222,11 @@ class Test {
     myFixture.addClass('interface Runnable3 { void run(); }')
     myFixture.addClass('interface Runnable4 { void run(); }')
     myFixture.addClass('abstract class MyAction { public abstract void run(); public void registerVeryCustomShortcutSet() {} }')
+    myFixture.addClass('abstract class MyAction2 { public abstract void run(); public void registerVeryCustomShortcutSet() {} }')
     def text = """\
 class Test {
+  MyAction2 action2;
+
   void test() {
     Runnable r = new Runnable() {
       public void run() {
@@ -250,6 +253,11 @@ class Test {
         System.out.println();
       }
     }.registerVeryCustomShortcutSet();
+    action2 = new MyAction2() {
+      public void run() {
+        System.out.println();
+      }
+    }
   }
 
   void foo(Object o) {}
@@ -264,6 +272,7 @@ class Test {
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable3(")).placeholderText == '(Runnable3) () -> { '
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable4(")).placeholderText == '() -> { '
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction(")).placeholderText == '(MyAction) () -> { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction2(")).placeholderText == '(MyAction2) () -> { '
   }
 
   public void "test closure folding when overriding one method of many"() {

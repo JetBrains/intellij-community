@@ -17,6 +17,7 @@ package com.intellij.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.TagNameVariantCollector;
@@ -27,6 +28,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -51,11 +53,17 @@ public class DefaultXmlExtension extends XmlExtension {
     List<XmlElementDescriptor> descriptors = TagNameVariantCollector.getTagDescriptors(context, namespaces, nsInfo);
     final List<TagInfo> set = new ArrayList<TagInfo>();
     for (int i = 0; i < descriptors.size(); i++) {
-      XmlElementDescriptor descriptor = descriptors.get(i);
-      String name = descriptor.getName(context);
-      final int pos = name.indexOf(':');
-      final String s = pos >= 0 ? name.substring(pos + 1) : name;
-      set.add(new TagInfo(name, nsInfo.get(i), descriptors.get(i).getDeclaration()));
+      final XmlElementDescriptor descriptor = descriptors.get(i);
+      String qualifiedName = descriptor.getName(context);
+      final int pos = qualifiedName.indexOf(':');
+      final String name = pos >= 0 ? qualifiedName.substring(pos + 1) : qualifiedName;
+      set.add(new TagInfo(name, nsInfo.get(i)) {
+        @Nullable
+        @Override
+        public PsiElement getDeclaration() {
+          return descriptor.getDeclaration();
+        }
+      });
     }
     return set;
   }

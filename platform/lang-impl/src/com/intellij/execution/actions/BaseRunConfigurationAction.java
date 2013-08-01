@@ -218,11 +218,14 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   public static String suggestRunActionName(final LocatableConfiguration configuration) {
     if (configuration instanceof LocatableConfigurationBase && configuration.isGeneratedName()) {
-      return ((LocatableConfigurationBase) configuration).getActionName();
+      String actionName = ((LocatableConfigurationBase)configuration).getActionName();
+      if (actionName != null) {
+        return actionName;
+      }
     }
     return ProgramRunnerUtil.shortenName(configuration.getName(), 0);
   }
 
-  protected abstract void updatePresentation(Presentation presentation, String actionText, ConfigurationContext context);
+  protected abstract void updatePresentation(Presentation presentation, @NotNull String actionText, ConfigurationContext context);
 
 }

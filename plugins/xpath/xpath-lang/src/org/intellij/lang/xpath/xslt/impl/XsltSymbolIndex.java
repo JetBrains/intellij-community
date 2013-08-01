@@ -163,7 +163,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
     }
 
     @SuppressWarnings({ "UnusedDeclaration" })
-    public static Collection<String> getSymbolNames(Project project, boolean includeNonProjectItems) {
+    public static Collection<String> getSymbolNames(Project project) {
         return FileBasedIndex.getInstance().getAllKeys(NAME, project);
     }
 

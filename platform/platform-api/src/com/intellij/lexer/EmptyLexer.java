@@ -18,51 +18,10 @@ package com.intellij.lexer;
 import com.intellij.lang.Language;
 import com.intellij.psi.tree.IElementType;
 
-public class EmptyLexer extends LexerBase {
-  private CharSequence myBuffer;
-  private int myStartOffset;
-  private int myEndOffset;
-
+public class EmptyLexer extends DummyLexer {
   private static final IElementType EMPTY_TOKEN_TYPE = new IElementType("empty token", Language.ANY);
 
-  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
-    myBuffer = buffer;
-    myStartOffset = startOffset;
-    myEndOffset = endOffset;
+  public EmptyLexer() {
+    super(EMPTY_TOKEN_TYPE);
   }
-
-  public CharSequence getBufferSequence() {
-    return myBuffer;
-  }
-
-  public int getState() {
-    return 0;
-  }
-
-  public IElementType getTokenType() {
-    return (myStartOffset < myEndOffset ? EMPTY_TOKEN_TYPE : null);
-  }
-
-  public int getTokenStart() {
-    return myStartOffset;
-  }
-
-  public int getTokenEnd() {
-    return myEndOffset;
-  }
-
-  public void advance() {
-    myStartOffset = myEndOffset;
-  }
-
-  public LexerPosition getCurrentPosition() {
-    return new LexerPositionImpl(0, getState());
-  }
-
-  public void restore(LexerPosition position) {}
-
-  public int getBufferEnd() {
-    return myEndOffset;
-  }
-
 }
