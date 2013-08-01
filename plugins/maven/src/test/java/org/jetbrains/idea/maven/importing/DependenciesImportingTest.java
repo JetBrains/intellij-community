@@ -2400,33 +2400,56 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assert "Maven: junit:junit:4.0".equals(((LibraryOrderEntry)orderEntries[1]).getLibraryName());
     assert orderEntries[2] instanceof JdkOrderEntry;
     assert orderEntries[3] instanceof ModuleSourceOrderEntry;
+  }
 
-    //// swap dependencies position
-    //createModulePom("m1", "<groupId>test</groupId>" +
-    //                      "<artifactId>m1</artifactId>" +
-    //                      "<version>1</version>" +
-    //
-    //                      "<dependencies>" +
-    //                      "  <dependency>" +
-    //                      "    <groupId>junit</groupId>" +
-    //                      "    <artifactId>junit</artifactId>" +
-    //                      "    <version>4.0</version>" +
-    //                      "  </dependency>" +
-    //                      "  <dependency>" +
-    //                      "    <groupId>test</groupId>" +
-    //                      "    <artifactId>m2</artifactId>" +
-    //                      "    <version>1</version>" +
-    //                      "  </dependency>" +
-    //                      "</dependencies>");
-    //importProject();
-    //
-    //// JDK was moved to begin back
-    //orderEntries = ModuleRootManager.getInstance(getModule("m1")).getOrderEntries();
-    //assert orderEntries.length == 4;
-    //assert orderEntries[0] instanceof JdkOrderEntry;
-    //assert orderEntries[1] instanceof ModuleSourceOrderEntry;
-    //assert ((ModuleOrderEntry)orderEntries[2]).getModuleName().equals("m2");
-    //assert "Maven: junit:junit:4.0".equals(((LibraryOrderEntry)orderEntries[3]).getLibraryName());
+  public void testSaveJdkPositionSystemDependency() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>m1</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>test</groupId>" +
+                     "    <artifactId>systemDep</artifactId>" +
+                     "    <version>1</version>" +
+                     "    <scope>system</scope>" +
+                     "    <systemPath>${java.home}/lib/rt.jar</systemPath>" +
+                     "  </dependency>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>4.0</version>" +
+                     "  </dependency>" +
+
+                     "</dependencies>");
+    importProject();
+
+    new WriteAction() {
+      @Override
+      protected void run(Result result) throws Throwable {
+        ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
+        OrderEntry[] orderEntries = rootModel.getOrderEntries().clone();
+        assert orderEntries.length == 4;
+        assert orderEntries[0] instanceof JdkOrderEntry;
+        assert orderEntries[1] instanceof ModuleSourceOrderEntry;
+        assert "Maven: test:systemDep:1".equals(((LibraryOrderEntry)orderEntries[2]).getLibraryName());
+        assert "Maven: junit:junit:4.0".equals(((LibraryOrderEntry)orderEntries[3]).getLibraryName());
+
+        rootModel.rearrangeOrderEntries(new OrderEntry[]{orderEntries[2], orderEntries[3], orderEntries[0], orderEntries[1]});
+
+        rootModel.commit();
+      }
+    }.execute();
+
+    resolveDependenciesAndImport();
+
+    // JDK position was saved
+    OrderEntry[] orderEntries = ModuleRootManager.getInstance(getModule("m1")).getOrderEntries();
+    assert orderEntries.length == 4;
+    assert "Maven: test:systemDep:1".equals(((LibraryOrderEntry)orderEntries[0]).getLibraryName());
+    assert "Maven: junit:junit:4.0".equals(((LibraryOrderEntry)orderEntries[1]).getLibraryName());
+    assert orderEntries[2] instanceof JdkOrderEntry;
+    assert orderEntries[3] instanceof ModuleSourceOrderEntry;
   }
 
 }
