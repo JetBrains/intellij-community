@@ -17,7 +17,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.projectView.impl.TransferableWrapper;
+import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
