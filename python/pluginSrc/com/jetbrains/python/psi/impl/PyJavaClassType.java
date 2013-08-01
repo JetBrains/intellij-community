@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -98,7 +99,7 @@ public class PyJavaClassType implements PyClassLikeType {
 
   @Nullable
   @Override
-  public List<PyType> getParameters(@NotNull TypeEvalContext context) {
+  public List<Pair<String, PyType>> getParameters(@NotNull TypeEvalContext context) {
     return null;
   }
 
