@@ -314,7 +314,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void setupSdkPaths(Sdk sdk) {
+  public void setupSdkPaths(@NotNull Sdk sdk) {
     final File jdkHome = new File(sdk.getHomePath());
     List<VirtualFile> classes = findClasses(jdkHome, false);
     VirtualFile sources = findSources(jdkHome);
@@ -427,10 +427,6 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public JavaSdkVersion getVersion(@NotNull Sdk sdk) {
-    return getVersion1(sdk);
-  }
-
-  private static JavaSdkVersion getVersion1(Sdk sdk) {
     String version = sdk.getVersionString();
     if (version == null) return null;
     return JdkVersionUtil.getVersion(version);
