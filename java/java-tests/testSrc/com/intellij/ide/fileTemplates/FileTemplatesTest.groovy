@@ -88,8 +88,17 @@ public class FileTemplatesTest extends IdeaTestCase {
   }
 
   public void "test collect undefined attribute names"() {
-    String name = "myclass";
-    FileTemplate template = addTestTemplate(name, '${ABC} ${DEF} ${NAME}')
+    FileTemplate template = addTestTemplate("myclass", '${ABC} ${DEF} ${NAME}')
+    Properties properties = new Properties()
+    properties.NAME = 'zzz'
+    assert template.getUnsetAttributes(properties) as Set == ['ABC', 'DEF'] as Set
+  }
+
+  public void "test collect undefined attribute names from included templates"() {
+    def included = addTestTemplate("included", '${ABC} ${DEF}')
+    assert included == FileTemplateManager.instance.getTemplate("included.java")
+
+    FileTemplate template = addTestTemplate("myclass", '#parse("included.java") ${DEF} ${NAME}')
     Properties properties = new Properties()
     properties.NAME = 'zzz'
     assert template.getUnsetAttributes(properties) as Set == ['ABC', 'DEF'] as Set
@@ -116,7 +125,7 @@ public class FileTemplatesTest extends IdeaTestCase {
   }
 
   private FileTemplate addTestTemplate(String name, String text) {
-    FileTemplate template = FileTemplateManager.getInstance().addInternal(name, "java");
+    FileTemplate template = FileTemplateManager.getInstance().addTemplate(name, "java");
     disposeOnTearDown({ FileTemplateManager.getInstance().removeTemplate(template) } as Disposable)
     template.setText(text);
     template
