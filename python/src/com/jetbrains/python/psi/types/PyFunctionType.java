@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -7,6 +8,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -35,8 +37,15 @@ public class PyFunctionType implements PyCallableType {
 
   @Nullable
   @Override
-  public List<PyType> getParameterTypes(@NotNull TypeEvalContext context) {
-    return null;
+  public List<Pair<String, PyType>> getParameters(@NotNull TypeEvalContext context) {
+    final List<Pair<String, PyType>> result = new ArrayList<Pair<String, PyType>>();
+    for (PyParameter parameter : myCallable.getParameterList().getParameters()) {
+      if (parameter instanceof PyNamedParameter) {
+        final PyNamedParameter namedParameter = (PyNamedParameter)parameter;
+        result.add(Pair.create(getParameterName(namedParameter), context.getType(namedParameter)));
+      }
+    }
+    return result;
   }
 
   @Override
@@ -69,5 +78,17 @@ public class PyFunctionType implements PyCallableType {
   @NotNull
   public Callable getCallable() {
     return myCallable;
+  }
+
+  @Nullable
+  public static String getParameterName(@NotNull PyNamedParameter namedParameter) {
+    String name = namedParameter.getName();
+    if (namedParameter.isPositionalContainer()) {
+      name = "*" + name;
+    }
+    else if (namedParameter.isKeywordContainer()) {
+      name = "**" + name;
+    }
+    return name;
   }
 }

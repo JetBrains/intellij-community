@@ -4,17 +4,20 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.Callable;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.ChainIterable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.$;
@@ -24,7 +27,6 @@ import static com.jetbrains.python.documentation.DocumentationBuilderKit.combUp;
  * @author traff
  */
 public class PyTypeModelBuilder {
-  @NonNls static final String UNKNOWN = "unknown";
   private final Map<PyType, TypeModel> myVisited = Maps.newHashMap();
   private final TypeEvalContext myContext;
 
@@ -62,11 +64,11 @@ public class PyTypeModelBuilder {
 
   static class CollectionOf extends TypeModel {
     private String collectionName;
-    private TypeModel elementType;
+    private List<TypeModel> elementTypes;
 
-    private CollectionOf(String collectionName, TypeModel elementType) {
+    private CollectionOf(String collectionName, List<TypeModel> elementTypes) {
       this.collectionName = collectionName;
-      this.elementType = elementType;
+      this.elementTypes = elementTypes;
     }
 
     @Override
@@ -88,16 +90,34 @@ public class PyTypeModelBuilder {
     }
   }
 
+  static class UnknownType extends TypeModel {
+    private final TypeModel type;
+
+    private UnknownType(TypeModel type) {
+      this.type = type;
+    }
+
+    @Override
+    void accept(TypeVisitor visitor) {
+      visitor.unknown(this);
+    }
+  }
+
   private static TypeModel _(String name) {
     return new NamedType(name);
   }
 
   static class FunctionType extends TypeModel {
     private TypeModel returnType;
-    private Collection<TypeModel> parameters;
+    @Nullable private Collection<TypeModel> parameters;
 
-    FunctionType(@NotNull TypeModel returnType, Collection<TypeModel> parameters) {
-      this.returnType = returnType;
+    FunctionType(@Nullable TypeModel returnType, @Nullable Collection<TypeModel> parameters) {
+      if (returnType != null) {
+        this.returnType = returnType;
+      }
+      else {
+        this.returnType = _(PyNames.UNKNOWN_TYPE);
+      }
       this.parameters = parameters;
     }
 
@@ -137,7 +157,7 @@ public class PyTypeModelBuilder {
       return evaluated;
     }
     if (myVisited.containsKey(type)) { //already evaluating?
-      return type != null ? _(type.getName()) : _(UNKNOWN);
+      return type != null ? _(type.getName()) : _(PyNames.UNKNOWN_TYPE);
     }
     myVisited.put(type, null); //mark as evaluating
 
@@ -145,13 +165,24 @@ public class PyTypeModelBuilder {
     if (type instanceof PyCollectionType) {
       final String name = type.getName();
       final PyType elementType = ((PyCollectionType)type).getElementType(myContext);
-      if (elementType != null) {
-        result = new CollectionOf(name, build(elementType, true));
+      final List<TypeModel> elementTypes = new ArrayList<TypeModel>();
+      if (elementType instanceof PyTupleType) {
+        final PyTupleType tupleType = (PyTupleType)elementType;
+        final int n = tupleType.getElementCount();
+        for (int i = 0; i < n; i++) {
+          elementTypes.add(build(tupleType.getElementType(i), true));
+        }
+      }
+      else if (elementType != null) {
+        elementTypes.add(build(elementType, true));
+      }
+      if (!elementTypes.isEmpty()) {
+        result = new CollectionOf(name, elementTypes);
       }
     }
     else if (type instanceof PyUnionType && allowUnions) {
-      if (type instanceof PyDynamicallyEvaluatedType) {
-        result = build(((PyDynamicallyEvaluatedType)type).exclude(null, myContext), true);
+      if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type)) {
+        result = new UnknownType(build(((PyUnionType)type).excludeNull(), true));
       }
       else {
         result = new OneOf(
@@ -163,29 +194,45 @@ public class PyTypeModelBuilder {
           }));
       }
     }
+    else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
+      result = build((PyCallableType)type);
+    }
     if (result == null) {
-      result = type != null ? _(type.getName()) : _(UNKNOWN);
+      result = type != null ? _(type.getName()) : _(PyNames.UNKNOWN_TYPE);
     }
     myVisited.put(type, result);
     return result;
   }
 
+  private TypeModel build(@NotNull PyCallableType type) {
+    List<TypeModel> parameterModels = null;
+    final List<Pair<String, PyType>> parameters = type.getParameters(myContext);
+    if (parameters != null) {
+      parameterModels = new ArrayList<TypeModel>();
+      for (Pair<String, PyType> parameter : parameters) {
+        parameterModels.add(new ParamType(parameter.getFirst(), build(parameter.getSecond(), true)));
+      }
+    }
+    final PyType ret = type.getCallType(myContext, null);
+    final TypeModel returnType = build(ret, true);
+    return new FunctionType(returnType, parameterModels);
+  }
 
-  public TypeModel build(PyFunction function) {
-    final PyType returnType = function.getReturnType(myContext, null);
-    return new FunctionType(build(returnType, true), Collections2.transform(Lists.newArrayList(function.getParameterList().getParameters()),
+  public TypeModel build(Callable callable) {
+    final PyType returnType = callable.getReturnType(myContext, null);
+    return new FunctionType(build(returnType, true), Collections2.transform(Lists.newArrayList(callable.getParameterList().getParameters()),
                                                                             new Function<PyParameter, TypeModel>() {
                                                                               @Override
                                                                               public TypeModel apply(PyParameter p) {
                                                                                 final PyNamedParameter np = p.getAsNamed();
                                                                                 if (np != null) {
-                                                                                  TypeModel paramType =
-                                                                                    _(UNKNOWN);
+                                                                                  TypeModel paramType = _(PyNames.UNKNOWN_TYPE);
                                                                                   final PyType t = myContext.getType(np);
                                                                                   if (t != null) {
                                                                                     paramType = build(t, true);
                                                                                   }
-                                                                                  return new ParamType(np.getName(), paramType);
+                                                                                  final String name = PyFunctionType.getParameterName(np);
+                                                                                  return new ParamType(name, paramType);
                                                                                 }
                                                                                 return new ParamType(p.toString(), null);
                                                                               }
@@ -202,6 +249,8 @@ public class PyTypeModelBuilder {
     void function(FunctionType type);
 
     void param(ParamType text);
+
+    void unknown(UnknownType type);
   }
 
   private static class TypeToStringVisitor extends TypeNameVisitor {
@@ -219,6 +268,15 @@ public class PyTypeModelBuilder {
 
     public String getString() {
       return myStringBuilder.toString();
+    }
+
+    @Override
+    public void unknown(UnknownType type) {
+      final TypeModel nested = type.type;
+      if (nested != null) {
+        nested.accept(this);
+      }
+      add(" | " + PyNames.UNKNOWN_TYPE);
     }
   }
 
@@ -260,17 +318,15 @@ public class PyTypeModelBuilder {
         add("...");
         return;
       }
-      add("one of (");
-      processListCommaSeparated(oneOf.oneOfTypes);
-      add(")");
+      processList(oneOf.oneOfTypes, " | ");
       myDepth--;
     }
 
-    private void processListCommaSeparated(Collection<TypeModel> list) {
+    private void processList(Collection<TypeModel> list, String separator) {
       boolean first = true;
       for (TypeModel t : list) {
         if (!first) {
-          add(", ");
+          add(separator);
         }
         else {
           first = false;
@@ -290,8 +346,9 @@ public class PyTypeModelBuilder {
         return;
       }
       addType(collectionOf.collectionName);
-      add(" of ");
-      collectionOf.elementType.accept(this);
+      add("[");
+      processList(collectionOf.elementTypes, ", ");
+      add("]");
       myDepth--;
     }
 
@@ -310,10 +367,15 @@ public class PyTypeModelBuilder {
         return;
       }
       add("(");
-      processListCommaSeparated(function.parameters);
+      final Collection<TypeModel> parameters = function.parameters;
+      if (parameters != null) {
+        processList(parameters, ", ");
+      }
+      else {
+        add("...");
+      }
       add(") -> ");
       function.returnType.accept(this);
-      add("\n");
       myDepth--;
     }
 
@@ -334,6 +396,11 @@ public class PyTypeModelBuilder {
         param.type.accept(this);
       }
       myDepth--;
+    }
+
+    @Override
+    public void unknown(UnknownType type) {
+      type.type.accept(this);
     }
   }
 }

@@ -230,7 +230,7 @@ public class PyTypeParser {
           new Function<Pair<Pair<ParseResult, List<ParseResult>>, ParseResult>, ParseResult>() {
             @Override
             public ParseResult fun(Pair<Pair<ParseResult, List<ParseResult>>, ParseResult> value) {
-              final List<PyType> parameterTypes = new ArrayList<PyType>();
+              final List<Pair<String, PyType>> parameters = new ArrayList<Pair<String, PyType>>();
               final ParseResult returnResult = value.getSecond();
               ParseResult result;
               final Pair<ParseResult, List<ParseResult>> firstPair = value.getFirst();
@@ -238,17 +238,17 @@ public class PyTypeParser {
                 final ParseResult first = firstPair.getFirst();
                 final List<ParseResult> second = firstPair.getSecond();
                 result = first;
-                parameterTypes.add(first.getType());
+                parameters.add(Pair.<String, PyType>create(null, first.getType()));
                 for (ParseResult r : second) {
                   result = result.merge(r);
-                  parameterTypes.add(r.getType());
+                  parameters.add(Pair.<String, PyType>create(null, r.getType()));
                 }
                 result = result.merge(returnResult);
               }
               else {
                 result = returnResult;
               }
-              return result.withType(new PyCallableTypeImpl(parameterTypes, returnResult.getType()));
+              return result.withType(new PyCallableTypeImpl(parameters, returnResult.getType()));
             }
           })
         .named("callable-expr");
@@ -449,7 +449,7 @@ public class PyTypeParser {
       final String name = token.getText().toString();
       final TextRange range = token.getRange();
 
-      if ("unknown".equals(name)) {
+      if (PyNames.UNKNOWN_TYPE.equals(name)) {
         return EMPTY_RESULT;
       }
       else if (PyNames.NONE.equals(name)) {

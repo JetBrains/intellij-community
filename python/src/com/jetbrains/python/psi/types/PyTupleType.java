@@ -42,9 +42,9 @@ public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType 
     return "(" + StringUtil.join(myElementTypes, new Function<PyType, String>() {
       @Nullable
       public String fun(PyType pyType) {
-        return pyType == null ? "unknown" : pyType.getName();
+        return pyType == null ? PyNames.UNKNOWN_TYPE : pyType.getName();
       }
-    }, ",") + ")";
+    }, ", ") + ")";
   }
 
   @Override

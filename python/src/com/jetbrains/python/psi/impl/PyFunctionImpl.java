@@ -252,7 +252,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
     final PyClass listClass = cache.getClass("list");
     final PyStatementList statements = getStatementList();
-    final Set<PyType> types = new HashSet<PyType>();
+    final Set<PyType> types = new LinkedHashSet<PyType>();
     if (statements != null && listClass != null) {
       statements.accept(new PyRecursiveElementVisitor() {
         @Override

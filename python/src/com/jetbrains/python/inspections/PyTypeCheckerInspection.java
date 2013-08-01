@@ -63,7 +63,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyExpression source = node.getForPart().getSource();
       if (source != null) {
         final PyType type = myTypeEvalContext.getType(source);
-        if (type != null && !PyABCUtil.isSubtype(type, PyNames.ITERABLE)) {
+        if (!PyTypeChecker.isUnknown(type) && !PyABCUtil.isSubtype(type, PyNames.ITERABLE)) {
           registerProblem(source, String.format("Expected 'collections.Iterable', got '%s' instead",
                                                 PythonDocumentationProvider.getTypeName(type, myTypeEvalContext)));
         }
