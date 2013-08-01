@@ -24,14 +24,12 @@ import com.intellij.codeInsight.daemon.impl.quickfix.VariableArrayTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import org.intellij.lang.annotations.Pattern;
@@ -168,8 +166,10 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new UncheckedWarningsVisitor(isOnTheFly){
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
+    return new UncheckedWarningsVisitor(isOnTheFly, PsiUtil.getLanguageLevel(session.getFile())){
       @Override
       protected void registerProblem(@NotNull String message, @NotNull PsiElement psiElement, @NotNull LocalQuickFix[] quickFixes) {
         holder.registerProblem(psiElement, message, quickFixes);
@@ -179,10 +179,12 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
 
   private abstract class UncheckedWarningsVisitor extends JavaElementVisitor {
     private final boolean myOnTheFly;
+    @NotNull private final LanguageLevel myLanguageLevel;
     private final LocalQuickFix[] myGenerifyFixes;
 
-    public UncheckedWarningsVisitor(boolean onTheFly) {
+    public UncheckedWarningsVisitor(boolean onTheFly, @NotNull LanguageLevel level) {
       myOnTheFly = onTheFly;
+      myLanguageLevel = level;
       myGenerifyFixes = onTheFly ? new LocalQuickFix[]{new GenerifyFileFix()} : LocalQuickFix.EMPTY_ARRAY;
     }
 
@@ -192,9 +194,9 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       if (IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION) return;
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return;
+      if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return;
       final JavaResolveResult result = expression.advancedResolve(false);
-      if (JavaGenericsUtil.isUncheckedWarning(expression, result)) {
+      if (JavaGenericsUtil.isUncheckedWarning(expression, result, PsiUtil.getLanguageLevel(expression))) {
         registerProblem("Unchecked generics array creation for varargs parameter", expression, LocalQuickFix.EMPTY_ARRAY);
       }
     }
@@ -203,9 +205,9 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     public void visitNewExpression(PsiNewExpression expression) {
       super.visitNewExpression(expression);
       if (IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION) return;
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return;
+      if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return;
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
-      if (JavaGenericsUtil.isUncheckedWarning(classReference, expression.resolveMethodGenerics())) {
+      if (classReference != null && JavaGenericsUtil.isUncheckedWarning(classReference, expression.resolveMethodGenerics(), myLanguageLevel)) {
         registerProblem("Unchecked generics array creation for varargs parameter", classReference, LocalQuickFix.EMPTY_ARRAY);
       }
     }
