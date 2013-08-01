@@ -58,9 +58,10 @@ public final class DefaultLanguageInjector implements MultiHostInjector {
           final InjectedLanguage injectedLanguage =
             InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
 
+          List<TextRange> ranges = injection.getInjectedArea(host);
           final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list =
-            new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
-          for (TextRange range : injection.getInjectedArea(host)) {
+            new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>(ranges.size());
+          for (TextRange range : ranges) {
             list.add(Trinity.create((PsiLanguageInjectionHost)host, injectedLanguage, range));
           }
           //if (host.getChildren().length > 0) {
