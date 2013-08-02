@@ -47,6 +47,8 @@
     <orderEntry type="module" module-name="IntelliLang-python" />
     <orderEntry type="module" module-name="IntelliLang-xml" />
     <orderEntry type="module" module-name="ini4idea" />
+    <orderEntry type="module" module-name="textmate" />
+    <orderEntry type="module" module-name="coffeescript" />
   </component>
 </module>
 
