@@ -49,7 +49,7 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
    * @param resolved_callee what to map parameters of
    * @param context optional shared type evaluator / cache.
    */
-  public void mapArguments(PyCallExpression.PyMarkedCallee resolved_callee, @Nullable TypeEvalContext context) {
+  public void mapArguments(PyCallExpression.PyMarkedCallee resolved_callee, @NotNull TypeEvalContext context) {
     PyExpression[] arguments = myArgumentList.getArguments();
     myMarkedCallee = resolved_callee;
     List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
@@ -206,11 +206,9 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     if (cnt < parameters.length && cnt < positional_index && myTupleArg != null) {
       // check length of myTupleArg
       PyType tuple_arg_type = null;
-      if (context != null) {
-        final PyExpression expression = PsiTreeUtil.getChildOfType(myTupleArg, PyExpression.class);
-        if (expression != null) {
-          tuple_arg_type = context.getType(expression);
-        }
+      final PyExpression expression = PsiTreeUtil.getChildOfType(myTupleArg, PyExpression.class);
+      if (expression != null) {
+        tuple_arg_type = context.getType(expression);
       }
       int tuple_length;
       boolean tuple_length_known;
