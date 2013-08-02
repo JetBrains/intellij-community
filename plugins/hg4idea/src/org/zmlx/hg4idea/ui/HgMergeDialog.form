@@ -42,6 +42,7 @@
             </constraints>
             <properties>
               <enabled value="true"/>
+              <font name="Monospaced"/>
             </properties>
           </component>
           <component id="e6ad1" class="javax.swing.JComboBox" binding="tagSelector">
@@ -50,6 +51,7 @@
             </constraints>
             <properties>
               <enabled value="false"/>
+              <font name="Monospaced"/>
             </properties>
           </component>
           <hspacer id="2892f">
@@ -108,6 +110,7 @@
             </constraints>
             <properties>
               <enabled value="false"/>
+              <font name="Monospaced"/>
             </properties>
           </component>
         </children>
