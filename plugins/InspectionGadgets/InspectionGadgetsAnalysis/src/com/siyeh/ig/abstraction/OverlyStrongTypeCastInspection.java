@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -41,8 +40,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "overly.strong.type.cast.display.name");
+    return InspectionGadgetsBundle.message("overly.strong.type.cast.display.name");
   }
 
   @Override
@@ -50,17 +48,14 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
   protected String buildErrorString(Object... infos) {
     final PsiType expectedType = (PsiType)infos[0];
     final String typeText = expectedType.getPresentableText();
-    return InspectionGadgetsBundle.message(
-      "overly.strong.type.cast.problem.descriptor", typeText);
+    return InspectionGadgetsBundle.message("overly.strong.type.cast.problem.descriptor", typeText);
   }
 
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "overly.strong.type.cast.ignore.in.matching.instanceof.option"),
-      this, "ignoreInMatchingInstanceof");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("overly.strong.type.cast.ignore.in.matching.instanceof.option"),
+                                          this, "ignoreInMatchingInstanceof");
   }
 
   @Override
@@ -73,21 +68,17 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "overly.strong.type.cast.weaken.quickfix");
+      return InspectionGadgetsBundle.message("overly.strong.type.cast.weaken.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement castTypeElement = descriptor.getPsiElement();
-      final PsiTypeCastExpression expression =
-        (PsiTypeCastExpression)castTypeElement.getParent();
+      final PsiTypeCastExpression expression = (PsiTypeCastExpression)castTypeElement.getParent();
       if (expression == null) {
         return;
       }
-      final PsiType expectedType =
-        ExpectedTypeUtils.findExpectedType(expression, true);
+      final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
       if (expectedType == null) {
         return;
       }
@@ -96,9 +87,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
         return;
       }
       @NonNls
-      final String newExpression =
-        '(' + expectedType.getCanonicalText() + ')' +
-        operand.getText();
+      final String newExpression = '(' + expectedType.getCanonicalText() + ')' + operand.getText();
       replaceExpressionAndShorten(expression, newExpression);
     }
   }
@@ -108,12 +97,10 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
     return new OverlyStrongTypeCastVisitor();
   }
 
-  private class OverlyStrongTypeCastVisitor
-    extends BaseInspectionVisitor {
+  private class OverlyStrongTypeCastVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeCastExpression(
-      @NotNull PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
       final PsiExpression operand = expression.getOperand();
       if (operand == null) {
@@ -127,8 +114,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
       if (type == null) {
         return;
       }
-      final PsiType expectedType =
-        ExpectedTypeUtils.findExpectedType(expression, true);
+      final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
       if (expectedType == null) {
         return;
       }
@@ -140,7 +126,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
         return;
       }
       if (expectedType.isAssignableFrom(operandType)) {
-        //then it's redundant, and caught by the built-in exception
+        //then it's redundant, and caught by the built-in inspection
         return;
       }
       if (isTypeParameter(expectedType)) {
@@ -153,19 +139,15 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
           return;
         }
       }
-      if (type instanceof PsiPrimitiveType ||
-          expectedType instanceof PsiPrimitiveType) {
+      if (type instanceof PsiPrimitiveType || expectedType instanceof PsiPrimitiveType) {
         return;
       }
-      if (PsiPrimitiveType.getUnboxedType(type) != null ||
-          PsiPrimitiveType.getUnboxedType(expectedType) != null) {
+      if (PsiPrimitiveType.getUnboxedType(type) != null || PsiPrimitiveType.getUnboxedType(expectedType) != null) {
         return;
       }
       if (expectedType instanceof PsiClassType) {
-        final PsiClassType expectedClassType =
-          (PsiClassType)expectedType;
-        final PsiClassType expectedRawType =
-          expectedClassType.rawType();
+        final PsiClassType expectedClassType = (PsiClassType)expectedType;
+        final PsiClassType expectedRawType = expectedClassType.rawType();
         if (type.equals(expectedRawType)) {
           return;
         }
@@ -180,8 +162,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
           return;
         }
       }
-      if (ignoreInMatchingInstanceof &&
-          InstanceOfUtils.hasAgreeingInstanceof(expression)) {
+      if (ignoreInMatchingInstanceof && InstanceOfUtils.hasAgreeingInstanceof(expression)) {
         return;
       }
       final PsiTypeElement castTypeElement = expression.getCastType();
@@ -197,10 +178,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
       }
       final PsiClassType classType = (PsiClassType)type;
       final PsiClass aClass = classType.resolve();
-      if (aClass == null) {
-        return false;
-      }
-      return aClass instanceof PsiTypeParameter;
+      return aClass != null && aClass instanceof PsiTypeParameter;
     }
   }
 }

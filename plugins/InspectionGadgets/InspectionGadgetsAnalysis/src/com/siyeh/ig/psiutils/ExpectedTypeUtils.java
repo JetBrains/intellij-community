@@ -279,6 +279,29 @@ public class ExpectedTypeUtils {
     }
 
     @Override
+    public void visitForeachStatement(PsiForeachStatement statement) {
+      final PsiExpression iteratedValue = statement.getIteratedValue();
+      if (iteratedValue == null) {
+        expectedType = null;
+        return;
+      }
+      final PsiType iteratedValueType = iteratedValue.getType();
+      if (!(iteratedValueType instanceof PsiClassType)) {
+        expectedType = null;
+        return;
+      }
+      final PsiClassType classType = (PsiClassType)iteratedValueType;
+      final PsiType[] parameters = classType.getParameters();
+      final PsiClass iterableClass = ClassUtils.findClass(CommonClassNames.JAVA_LANG_ITERABLE, statement);
+      if (iterableClass == null) {
+        expectedType = null;
+      }
+      else {
+        expectedType = JavaPsiFacade.getElementFactory(statement.getProject()).createType(iterableClass, parameters);
+      }
+    }
+
+    @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
       expectedType = PsiType.BOOLEAN;
     }
