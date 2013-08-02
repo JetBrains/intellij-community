@@ -27,15 +27,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.PsiFieldStub;
-import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.MethodsProcessor;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,9 +81,6 @@ public class PsiScopesUtil {
       if (scope == maxScope) break;
       prevParent = scope;
       scope = prevParent.getContext();
-      if (scope != null && scope != prevParent.getParent() && !scope.isValid()) {
-        break;
-      }
       processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
     }
 
