@@ -45,6 +45,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.PsiBundle;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -244,8 +245,13 @@ public class ExternalSystemFacadeManager {
                                                  key.getIdeProjectLocationHash(),
                                                  key.getExternalSystemId(),
                                                  key.getExternalProjectConfigPath());
-      data.put(newKey, data.get(key));
+      V value = data.get(key);
+      data.put(newKey, value);
       data.remove(key);
+      if (value instanceof Consumer) {
+        //noinspection unchecked
+        ((Consumer)value).consume(newKey);
+      }
     }
   }
   
@@ -265,7 +271,7 @@ public class ExternalSystemFacadeManager {
     final RemoteExternalSystemFacade facade = myFacadeWrappers.get(key);
     if (facade == null) {
       final RemoteExternalSystemFacade newFacade = (RemoteExternalSystemFacade)Proxy.newProxyInstance(
-        ExternalSystemFacadeManager.class.getClassLoader(), new Class[]{RemoteExternalSystemFacade.class}, new MyHandler(key)
+        ExternalSystemFacadeManager.class.getClassLoader(), new Class[]{RemoteExternalSystemFacade.class, Consumer.class}, new MyHandler(key)
       );
       myFacadeWrappers.putIfAbsent(key, newFacade);
     }
@@ -408,16 +414,22 @@ public class ExternalSystemFacadeManager {
   }
   
   private class MyHandler implements InvocationHandler {
-    
-    @NotNull private final IntegrationKey myKey;
+
+    @NotNull private final AtomicReference<IntegrationKey> myKey = new AtomicReference<IntegrationKey>();
 
     MyHandler(@NotNull IntegrationKey key) {
-      myKey = key;
+      myKey.set(key);
     }
-
+    
+    @Nullable
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-      return doInvoke(myKey, findProject(myKey), method, args, REMOTE_FAIL_RECOVERY_ATTEMPTS_NUMBER);
+      if ("consume".equals(method.getName())) {
+        myKey.set((IntegrationKey)args[0]);
+        return null;
+      }
+      Project project = findProject(myKey.get());
+      return doInvoke(myKey.get(), project, method, args, REMOTE_FAIL_RECOVERY_ATTEMPTS_NUMBER);
     }
   }
 }

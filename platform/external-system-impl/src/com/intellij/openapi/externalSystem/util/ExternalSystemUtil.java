@@ -206,7 +206,7 @@ public class ExternalSystemUtil {
     ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
 
       @NotNull
-      private final Set<String> myExternalModuleNames = ContainerUtilRt.newHashSet();
+      private final Set<String> myExternalModulePaths = ContainerUtilRt.newHashSet();
 
       @Override
       public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
@@ -215,7 +215,7 @@ public class ExternalSystemUtil {
         }
         Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(externalProject, ProjectKeys.MODULE);
         for (DataNode<ModuleData> node : moduleNodes) {
-          myExternalModuleNames.add(node.getData().getName());
+          myExternalModulePaths.add(node.getData().getLinkedExternalProjectPath());
         }
         ExternalSystemApiUtil.executeProjectChangeAction(true, new Runnable() {
           @Override
@@ -225,7 +225,7 @@ public class ExternalSystemUtil {
               public void run() {
                 projectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), project, true);
               }
-            }); 
+            });
           }
         });
         if (--counter[0] <= 0) {
@@ -245,7 +245,8 @@ public class ExternalSystemUtil {
 
         for (Module module : platformFacade.getModules(project)) {
           String s = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-          if (externalSystemIdAsString.equals(s) && !myExternalModuleNames.contains(module.getName())) {
+          String p = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+          if (externalSystemIdAsString.equals(s) && !myExternalModulePaths.contains(p)) {
             orphanIdeModules.add(module);
           }
         }
