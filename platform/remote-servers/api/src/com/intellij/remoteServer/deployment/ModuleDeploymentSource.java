@@ -15,29 +15,22 @@
  */
 package com.intellij.remoteServer.deployment;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModulePointer;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.io.File;
 
 /**
  * @author nik
  */
-public interface DeploymentSource {
-  @Nullable
-  File getFile();
-
-  @Nullable
-  String getFilePath();
-
+public interface ModuleDeploymentSource extends DeploymentSource {
   @NotNull
-  String getPresentableName();
+  ModulePointer getModulePointer();
 
   @Nullable
-  Icon getIcon();
+  Module getModule();
 
-  boolean isValid();
-
-  boolean isArchive();
+  @Nullable
+  VirtualFile getContentRoot();
 }

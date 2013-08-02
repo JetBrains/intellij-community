@@ -16,6 +16,7 @@
 package com.intellij.remoteServer.deployment;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import org.jdom.Element;
@@ -31,6 +32,9 @@ public abstract class DeploymentSourceUtil {
 
   @NotNull
   public abstract ArtifactDeploymentSource createArtifactDeploymentSource(@NotNull ArtifactPointer artifactPointer);
+
+  @NotNull
+  public abstract ModuleDeploymentSource createModuleDeploymentSource(@NotNull ModulePointer modulePointer);
 
   public abstract DeploymentSource loadDeploymentSource(@NotNull Element element, @NotNull Project project);
 
