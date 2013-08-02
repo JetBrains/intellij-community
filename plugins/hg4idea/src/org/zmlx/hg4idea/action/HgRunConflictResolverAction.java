@@ -27,7 +27,7 @@ import java.util.Collection;
 public class HgRunConflictResolverAction extends HgAbstractGlobalAction {
 
   @Override
-  public void execute(final Project project, Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
+  public void execute(@NotNull final Project project, @NotNull Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
     final VirtualFile repository;
     if (repos.size() > 1) {
       repository = letUserSelectRepository(repos, project, selectedRepo);

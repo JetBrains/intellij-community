@@ -25,7 +25,6 @@ import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 public class HgUpdateToDialog extends DialogWrapper {
@@ -41,8 +40,8 @@ public class HgUpdateToDialog extends DialogWrapper {
   private JRadioButton tagOption;
   private JComboBox tagSelector;
   private HgRepositorySelectorComponent hgRepositorySelectorComponent;
-  private Map<VirtualFile, List<HgTagBranch>> branchesForRepos;
-  private Map<VirtualFile, List<HgTagBranch>> tagsForRepos;
+  private Map<VirtualFile, Collection<HgTagBranch>> branchesForRepos;
+  private Map<VirtualFile, Collection<HgTagBranch>> tagsForRepos;
 
   public HgUpdateToDialog(Project project) {
     super(project, false);

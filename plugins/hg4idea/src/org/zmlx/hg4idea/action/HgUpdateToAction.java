@@ -35,7 +35,9 @@ import java.util.Collection;
 
 public class HgUpdateToAction extends HgAbstractGlobalAction {
 
-  protected void execute(final Project project, final Collection<VirtualFile> repos, @Nullable final VirtualFile selectedRepo) {
+  protected void execute(@NotNull final Project project,
+                         @NotNull final Collection<VirtualFile> repos,
+                         @Nullable final VirtualFile selectedRepo) {
     HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<HgBranchesAndTags>() {
       @Override
       public void consume(HgBranchesAndTags info) {
