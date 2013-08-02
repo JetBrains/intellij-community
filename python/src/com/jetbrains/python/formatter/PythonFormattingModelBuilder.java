@@ -65,7 +65,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       TokenSet.orSet(PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens(), CLASS_OR_FUNCTION);
 
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
-    return new SpacingBuilder(settings)
+    return new SpacingBuilder(commonSettings)
       .betweenInside(STATEMENT_OR_DECLARATION, CLASS_OR_FUNCTION, file).blankLines(pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS)
       .betweenInside(CLASS_OR_FUNCTION, STATEMENT_OR_DECLARATION, file).blankLines(pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS)
       .between(IMPORT_STATEMENTS, TokenSet.andNot(STATEMENT_OR_DECLARATION, IMPORT_STATEMENTS)).blankLines(commonSettings.BLANK_LINES_AFTER_IMPORTS)
