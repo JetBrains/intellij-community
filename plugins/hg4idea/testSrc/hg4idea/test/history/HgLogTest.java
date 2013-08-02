@@ -39,7 +39,7 @@ public class HgLogTest extends HgPlatformTest {
     myRepository.refresh(false, true);
     hg("commit -m a ");
     HgLogCommand logCommand = new HgLogCommand(myProject);
-    logCommand.setFollowCopies(true);
+    logCommand.setFollowCopies(false);
     VirtualFile copiedFile = myRepository.findChild(copiedFileName);
     assert copiedFile != null;
     final HgFile hgFile = new HgFile(myRepository, VfsUtilCore.virtualToIoFile(copiedFile));
