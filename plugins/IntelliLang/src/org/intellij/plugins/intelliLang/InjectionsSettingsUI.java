@@ -866,7 +866,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
       this.cfg = cfg;
       this.title = title;
       bundledInjections.addAll(cfg.getDefaultInjections());
-      originalInjections = ContainerUtil
+      originalInjections = new ArrayList<BaseInjection>(ContainerUtil
         .concat(InjectorUtils.getActiveInjectionSupportIds(), new Function<String, Collection<? extends BaseInjection>>() {
           public Collection<? extends BaseInjection> fun(final String s) {
             return ContainerUtil.findAll(
@@ -878,7 +878,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
                 }
               });
           }
-        });
+        }));
       sortInjections(originalInjections);
       reset();
     }
