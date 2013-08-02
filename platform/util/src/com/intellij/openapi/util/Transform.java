@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.util;
 
+/**
+ * @deprecated use com.intellij.util.Function
+ */
 public interface Transform <S, T> {
   T transform(S s);
 }
