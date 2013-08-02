@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.Comparing;
@@ -364,6 +365,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
       final VirtualFile moduleFile = getModuleFile();
       if (moduleFile == null) return;
       if (moduleFile.equals(event.getFile())) {
+        ModuleImpl.this.putUserData(ModuleListener.OLD_NAME_KEY, myName);
         myName = moduleNameByFileName(moduleFile.getName());
         ModuleManagerImpl.getInstanceImpl(getProject()).fireModuleRenamedByVfsEvent(ModuleImpl.this);
       }

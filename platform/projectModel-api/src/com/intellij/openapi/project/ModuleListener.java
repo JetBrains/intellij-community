@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Key;
 
 import java.util.EventListener;
 import java.util.List;
@@ -24,6 +25,8 @@ import java.util.List;
  * @author max
  */
 public interface ModuleListener extends EventListener {
+  Key<String> OLD_NAME_KEY = Key.create("module.rename.old.name");
+
   void moduleAdded(Project project, Module module);
 
   void beforeModuleRemoved(Project project, Module module);

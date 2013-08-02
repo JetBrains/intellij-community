@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -305,6 +306,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   protected void fireModulesRenamed(List<Module> modules) {
     if (!modules.isEmpty()) {
       myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules);
+      for (Module module : modules) {
+        module.putUserData(ModuleListener.OLD_NAME_KEY, null);
+      }
     }
   }
 
@@ -967,12 +971,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
         modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
         final List<Module> modules = new ArrayList<Module>();
-        for (final Module moduleToBeRenamed : modulesToBeRenamed) {
-          ModuleEx module = (ModuleEx)moduleToBeRenamed;
-          moduleModel.myPathToModule.remove(moduleToBeRenamed.getModuleFilePath());
-          modules.add(moduleToBeRenamed);
-          module.rename(modulesToNewNamesMap.get(moduleToBeRenamed));
-          moduleModel.myPathToModule.put(moduleToBeRenamed.getModuleFilePath(), module);
+        for (final Module module : modulesToBeRenamed) {
+          module.putUserData(ModuleListener.OLD_NAME_KEY, module.getName());
+          moduleModel.myPathToModule.remove(module.getModuleFilePath());
+          modules.add(module);
+          ((ModuleEx)module).rename(modulesToNewNamesMap.get(module));
+          moduleModel.myPathToModule.put(module.getModuleFilePath(), module);
         }
 
         moduleModel.myIsWritable = false;
