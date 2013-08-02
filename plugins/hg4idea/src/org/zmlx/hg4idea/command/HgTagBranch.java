@@ -12,18 +12,25 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.zmlx.hg4idea.HgRevisionNumber;
 
 public final class HgTagBranch {
 
+  private static final int SPACINGAFTERFIRSTLETTER = 20;
+
   private final String name;
   private final String description;
   private final HgRevisionNumber head;
+  private final String presentation;
 
   public HgTagBranch(String name, String description, HgRevisionNumber head) {
     this.name = name;
     this.description = description;
     this.head = head;
+    int whitespaceNum = SPACINGAFTERFIRSTLETTER - name.length();
+    String presentationName = whitespaceNum <= 0 ? name.substring(0, SPACINGAFTERFIRSTLETTER - 4).concat("...") : name;
+    presentation = String.format("%s%s%s", presentationName, whitespaceNum > 0 ? StringUtil.repeatSymbol(' ', whitespaceNum) : " ", head);
   }
 
   public String getName() {
@@ -40,7 +47,6 @@ public final class HgTagBranch {
 
   @Override
   public String toString() {
-    return description;
+    return presentation;
   }
-
 }

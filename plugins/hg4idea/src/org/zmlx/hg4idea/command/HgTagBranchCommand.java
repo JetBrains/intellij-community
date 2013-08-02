@@ -63,6 +63,10 @@ public class HgTagBranchCommand {
     return new HgCommandExecutor(project).executeInCurrentThread(repo, "tags", null);
   }
 
+  public HgCommandResult collectBookmarks() {
+    return new HgCommandExecutor(project).executeInCurrentThread(repo, "bookmarks", null);
+  }
+
   public static List<HgTagBranch> parseResult(HgCommandResult result) {
     List<HgTagBranch> branches = new LinkedList<HgTagBranch>();
     for (final String line : result.getOutputLines()) {
@@ -71,7 +75,7 @@ public class HgTagBranchCommand {
         HgRevisionNumber hgRevisionNumber = HgRevisionNumber.getInstance(
           matcher.group(REVISION_INDEX), matcher.group(CHANGESET_INDEX)
         );
-        branches.add(new HgTagBranch(matcher.group(NAME_INDEX).trim(), line,  hgRevisionNumber));
+        branches.add(new HgTagBranch(matcher.group(NAME_INDEX).trim(), line.trim(), hgRevisionNumber));
       }
     }
     return branches;

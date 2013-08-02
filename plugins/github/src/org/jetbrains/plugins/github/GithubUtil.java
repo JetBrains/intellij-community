@@ -318,7 +318,7 @@ public class GithubUtil {
     return findGithubRemoteUrl(repository) != null;
   }
 
-  static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
+  public static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(enabled);
   }

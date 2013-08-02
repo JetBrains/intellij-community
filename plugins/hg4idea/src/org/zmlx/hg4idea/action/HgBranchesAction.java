@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryImpl;
@@ -31,7 +32,7 @@ import java.util.Collection;
 public class HgBranchesAction extends HgAbstractGlobalAction {
 
   @Override
-  protected void execute(Project project, Collection<VirtualFile> repositories, @Nullable VirtualFile selectedRepo) {
+  protected void execute(@NotNull Project project, @NotNull Collection<VirtualFile> repositories, @Nullable VirtualFile selectedRepo) {
     HgRepository repository;
     if (selectedRepo != null) {
       repository = HgRepositoryImpl.getInstance(selectedRepo, project, project);

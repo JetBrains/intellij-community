@@ -20,11 +20,11 @@ import static hg4idea.test.HgExecutor.hg;
  */
 public class HgLogTest extends HgPlatformTest {
 
-  public void testParceCopiedWihoutBraces() throws HgCommandException {
+  public void testParseCopiedWithoutBraces() throws HgCommandException {
     parseCopied("f.txt");
   }
 
-  public void testParceCopiedWithBraces() throws HgCommandException {
+  public void testParseCopiedWithBraces() throws HgCommandException {
     parseCopied("(f.txt)");
   }
 
@@ -39,7 +39,7 @@ public class HgLogTest extends HgPlatformTest {
     myRepository.refresh(false, true);
     hg("commit -m a ");
     HgLogCommand logCommand = new HgLogCommand(myProject);
-    logCommand.setFollowCopies(true);
+    logCommand.setFollowCopies(false);
     VirtualFile copiedFile = myRepository.findChild(copiedFileName);
     assert copiedFile != null;
     final HgFile hgFile = new HgFile(myRepository, VfsUtilCore.virtualToIoFile(copiedFile));

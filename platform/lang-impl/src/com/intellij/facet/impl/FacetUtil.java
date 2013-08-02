@@ -79,8 +79,7 @@ public class FacetUtil {
       throws InvalidDataException {
     if (config != null) {
       if (configuration instanceof PersistentStateComponent) {
-        Class<?> stateClass = ComponentSerializationUtil.getStateClass(((PersistentStateComponent<?>)configuration).getClass());
-        ((PersistentStateComponent)configuration).loadState(XmlSerializer.deserialize(config, stateClass));
+        ComponentSerializationUtil.loadComponentState((PersistentStateComponent)configuration, config);
       }
       else {
         configuration.readExternal(config);

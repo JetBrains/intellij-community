@@ -76,17 +76,10 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
     for (SpecificSettingsState settingsState : state.getSpecificStates()) {
       XDebuggerSettings<?> settings = findSettings(settingsState.getId());
       if (settings != null) {
-        loadState(settings, settingsState.getSettingsElement());
+        ComponentSerializationUtil.loadComponentState(settings, settingsState.getSettingsElement());
       }
     }
   }
-
-  private static <T> void loadState(final XDebuggerSettings<T> settings, final Element settingsElement) {
-    Class stateClass = ComponentSerializationUtil.getStateClass(settings.getClass());
-    //noinspection unchecked
-    settings.loadState((T)XmlSerializer.deserialize(settingsElement, stateClass));
-  }
-
 
   private XDebuggerSettings findSettings(String id) {
     initSettings();

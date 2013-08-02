@@ -104,16 +104,11 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
   private static <C extends ServerConfiguration> RemoteServerImpl<C> createConfiguration(ServerType<C> type, RemoteServerState server) {
     C configuration = type.createDefaultConfiguration();
     PersistentStateComponent<?> serializer = configuration.getSerializer();
-    loadConfiguration(server, serializer);
+    ComponentSerializationUtil.loadComponentState(serializer, server.myConfiguration);
     return new RemoteServerImpl<C>(server.myName, type, configuration);
   }
 
-  private static <S> void loadConfiguration(RemoteServerState server, PersistentStateComponent<S> serializer) {
-    S deserialize = (S)XmlSerializer.deserialize(server.myConfiguration, ComponentSerializationUtil.getStateClass(serializer.getClass()));
-    serializer.loadState(deserialize);
-  }
-
-  @Nullable 
+  @Nullable
   private static ServerType<?> findServerType(@NotNull String typeId) {
     for (ServerType serverType : ServerType.EP_NAME.getExtensions()) {
       if (serverType.getId().equals(typeId)) {

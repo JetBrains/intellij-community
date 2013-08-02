@@ -34,6 +34,7 @@ import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.table.TablePassInfo;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.JBInsets;
@@ -2269,9 +2270,9 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public Dimension getMinimumSize() {
-    return computeSize(new Transform<JComponent, Dimension>() {
+    return computeSize(new Function<JComponent, Dimension>() {
       @Override
-      public Dimension transform(JComponent component) {
+      public Dimension fun(JComponent component) {
         return component.getMinimumSize();
       }
     }, 1);
@@ -2279,20 +2280,20 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public Dimension getPreferredSize() {
-    return computeSize(new Transform<JComponent, Dimension>() {
+    return computeSize(new Function<JComponent, Dimension>() {
       @Override
-      public Dimension transform(JComponent component) {
+      public Dimension fun(JComponent component) {
         return component.getPreferredSize();
       }
     }, 3);
   }
 
-  private Dimension computeSize(Transform<JComponent, Dimension> transform, int tabCount) {
+  private Dimension computeSize(Function<JComponent, Dimension> transform, int tabCount) {
     Dimension size = new Dimension();
     for (TabInfo each : myVisibleInfos) {
       final JComponent c = each.getComponent();
       if (c != null) {
-        final Dimension eachSize = transform.transform(c);
+        final Dimension eachSize = transform.fun(c);
         size.width = Math.max(eachSize.width, size.width);
         size.height = Math.max(eachSize.height, size.height);
       }

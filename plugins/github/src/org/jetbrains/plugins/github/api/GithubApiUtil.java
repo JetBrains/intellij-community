@@ -61,27 +61,34 @@ public class GithubApiUtil {
   @Nullable
   private static JsonElement postRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable String requestBody)
     throws IOException {
-    return request(auth, path, requestBody, HttpVerb.POST).getJsonElement();
+    return request(auth, path, requestBody, null, HttpVerb.POST).getJsonElement();
   }
 
   @Nullable
   private static JsonElement deleteRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
-    return request(auth, path, null, HttpVerb.DELETE).getJsonElement();
+    return request(auth, path, null, null, HttpVerb.DELETE).getJsonElement();
   }
 
   @Nullable
   private static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
-    return request(auth, path, null, HttpVerb.GET).getJsonElement();
+    return request(auth, path, null, null, HttpVerb.GET).getJsonElement();
+  }
+
+  @Nullable
+  private static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable Collection<Header> headers)
+    throws IOException {
+    return request(auth, path, null, headers, HttpVerb.GET).getJsonElement();
   }
 
   @NotNull
   private static ResponsePage request(@NotNull GithubAuthData auth,
                                       @NotNull String path,
                                       @Nullable String requestBody,
+                                      @Nullable Collection<Header> headers,
                                       @NotNull HttpVerb verb) throws IOException {
     HttpMethod method = null;
     try {
-      method = doREST(auth, path, requestBody, verb);
+      method = doREST(auth, path, requestBody, headers, verb);
 
       checkStatusCode(method);
 
@@ -121,6 +128,7 @@ public class GithubApiUtil {
   private static HttpMethod doREST(@NotNull final GithubAuthData auth,
                                    @NotNull String path,
                                    @Nullable final String requestBody,
+                                   @Nullable final Collection<Header> headers,
                                    @NotNull final HttpVerb verb) throws IOException {
     HttpClient client = getHttpClient(auth.getBasicAuth());
     String uri = GithubUrlUtil.getApiUrl(auth.getHost()) + path;
@@ -152,7 +160,11 @@ public class GithubApiUtil {
           if (tokenAuth != null) {
             method.addRequestHeader("Authorization", "token " + tokenAuth.getToken());
           }
-          method.addRequestHeader("Accept", "application/vnd.github.preview"); //TODO: remove after end of preview period. ~ october 2013
+          if (headers != null) {
+            for (Header header : headers) {
+              method.addRequestHeader(header);
+            }
+          }
           return method;
         }
       });
@@ -231,8 +243,8 @@ public class GithubApiUtil {
   }
 
   private static class ResponsePage {
-    @Nullable private JsonElement response;
-    @Nullable private String nextPage;
+    @Nullable private final JsonElement response;
+    @Nullable private final String nextPage;
 
     public ResponsePage() {
       this(null, null);
@@ -272,21 +284,20 @@ public class GithubApiUtil {
     }
   }
 
-  static class PagedRequest<T, R extends DataConstructor> {
-    @NotNull private GithubAuthData myAuth;
+  public static class PagedRequest<T> {
     @Nullable private String myNextPage;
-    @NotNull private Class<T> myResult;
-    @NotNull private Class<R[]> myRawArray;
+    @NotNull private final Class<T> myResult;
+    @NotNull private final Class<? extends DataConstructor[]> myRawArray;
 
-    public PagedRequest(@NotNull GithubAuthData auth, @NotNull String path, @NotNull Class<T> result, @NotNull Class<R[]> rawArray) {
-      myAuth = auth;
+    @SuppressWarnings("NullableProblems")
+    public PagedRequest(@NotNull String path, @NotNull Class<T> result, @NotNull Class<? extends DataConstructor[]> rawArray) {
       myNextPage = path;
       myResult = result;
       myRawArray = rawArray;
     }
 
     @NotNull
-    public List<T> next() throws IOException {
+    public List<T> next(@NotNull GithubAuthData auth) throws IOException {
       if (myNextPage == null) {
         throw new NoSuchElementException();
       }
@@ -294,7 +305,7 @@ public class GithubApiUtil {
       String page = myNextPage;
       myNextPage = null;
 
-      ResponsePage response = request(myAuth, page, null, HttpVerb.GET);
+      ResponsePage response = request(auth, page, null, null, HttpVerb.GET);
 
       if (response.getJsonElement() == null) {
         throw new HttpException("Empty response");
@@ -307,7 +318,7 @@ public class GithubApiUtil {
       myNextPage = response.getNextPage();
 
       List<T> result = new ArrayList<T>();
-      for (R raw : fromJson(response.getJsonElement().getAsJsonArray(), myRawArray)) {
+      for (DataConstructor raw : fromJson(response.getJsonElement().getAsJsonArray(), myRawArray)) {
         result.add(createDataFromRaw(raw, myResult));
       }
       return result;
@@ -318,10 +329,10 @@ public class GithubApiUtil {
     }
 
     @NotNull
-    public List<T> getAll() throws IOException {
+    public List<T> getAll(@NotNull GithubAuthData auth) throws IOException {
       List<T> result = new ArrayList<T>();
       while (hasNext()) {
-        result.addAll(next());
+        result.addAll(next(auth));
       }
       return result;
     }
@@ -359,7 +370,7 @@ public class GithubApiUtil {
   public static Collection<String> getTokenScopes(@NotNull GithubAuthData auth) throws IOException {
     HttpMethod method = null;
     try {
-      method = doREST(auth, "", null, HttpVerb.HEAD);
+      method = doREST(auth, "", null, null, HttpVerb.HEAD);
 
       checkStatusCode(method);
 
@@ -420,10 +431,9 @@ public class GithubApiUtil {
     String path = user == null ? "/user/repos" : "/users/" + user + "/repos?per_page=100";
 
 
-    PagedRequest<GithubRepo, GithubRepoRaw> request =
-      new PagedRequest<GithubRepo, GithubRepoRaw>(auth, path, GithubRepo.class, GithubRepoRaw[].class);
+    PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
 
-    return request.getAll();
+    return request.getAll(auth);
   }
 
   @NotNull
@@ -500,10 +510,9 @@ public class GithubApiUtil {
       path = "/repos/" + user + "/" + repo + "/issues?assignee=" + assigned + "&per_page=100";
     }
 
-    PagedRequest<GithubIssue, GithubIssueRaw> request =
-      new PagedRequest<GithubIssue, GithubIssueRaw>(auth, path, GithubIssue.class, GithubIssueRaw[].class);
+    PagedRequest<GithubIssue> request = new PagedRequest<GithubIssue>(path, GithubIssue.class, GithubIssueRaw[].class);
 
-    return request.getAll();
+    return request.getAll(auth);
   }
 
   @NotNull
@@ -515,7 +524,8 @@ public class GithubApiUtil {
     query = URLEncoder.encode("@" + user + "/" + repo + " " + query, "UTF-8");
     String path = "/search/issues?q=" + query;
 
-    JsonElement result = getRequest(auth, path);
+    //TODO: remove header after end of preview period. ~ october 2013
+    JsonElement result = getRequest(auth, path, Collections.singletonList(new Header("Accept", "application/vnd.github.preview")));
 
     return createDataFromRaw(fromJson(result, GithubIssuesSearchResultRaw.class), GithubIssuesSearchResult.class).getIssues();
   }
@@ -535,10 +545,10 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments?per_page=100";
 
-    PagedRequest<GithubIssueComment, GithubIssueCommentRaw> request =
-      new PagedRequest<GithubIssueComment, GithubIssueCommentRaw>(auth, path, GithubIssueComment.class, GithubIssueCommentRaw[].class);
+    PagedRequest<GithubIssueComment> request =
+      new PagedRequest<GithubIssueComment>(path, GithubIssueComment.class, GithubIssueCommentRaw[].class);
 
-    return request.getAll();
+    return request.getAll(auth);
   }
 
   @NotNull
@@ -564,10 +574,17 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/pulls?per_page=100";
 
-    PagedRequest<GithubPullRequest, GithubPullRequestRaw> request =
-      new PagedRequest<GithubPullRequest, GithubPullRequestRaw>(auth, path, GithubPullRequest.class, GithubPullRequestRaw[].class);
+    PagedRequest<GithubPullRequest> request =
+      new PagedRequest<GithubPullRequest>(path, GithubPullRequest.class, GithubPullRequestRaw[].class);
 
-    return request.getAll();
+    return request.getAll(auth);
+  }
+
+  @NotNull
+  public static PagedRequest<GithubPullRequest> getPullRequests(@NotNull String user, @NotNull String repo) {
+    String path = "/repos/" + user + "/" + repo + "/pulls?per_page=100";
+
+    return new PagedRequest<GithubPullRequest>(path, GithubPullRequest.class, GithubPullRequestRaw[].class);
   }
 
   @NotNull
@@ -575,10 +592,9 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/commits?per_page=100";
 
-    PagedRequest<GithubCommit, GithubCommitRaw> request =
-      new PagedRequest<GithubCommit, GithubCommitRaw>(auth, path, GithubCommit.class, GithubCommitRaw[].class);
+    PagedRequest<GithubCommit> request = new PagedRequest<GithubCommit>(path, GithubCommit.class, GithubCommitRaw[].class);
 
-    return request.getAll();
+    return request.getAll(auth);
   }
 
   @NotNull
@@ -586,10 +602,9 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/files?per_page=100";
 
-    PagedRequest<GithubFile, GithubFileRaw> request =
-      new PagedRequest<GithubFile, GithubFileRaw>(auth, path, GithubFile.class, GithubFileRaw[].class);
+    PagedRequest<GithubFile> request = new PagedRequest<GithubFile>(path, GithubFile.class, GithubFileRaw[].class);
 
-    return request.getAll();
+    return request.getAll(auth);
   }
 
   @NotNull
@@ -597,10 +612,9 @@ public class GithubApiUtil {
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/branches?per_page=100";
 
-    PagedRequest<GithubBranch, GithubBranchRaw> request =
-      new PagedRequest<GithubBranch, GithubBranchRaw>(auth, path, GithubBranch.class, GithubBranchRaw[].class);
+    PagedRequest<GithubBranch> request = new PagedRequest<GithubBranch>(path, GithubBranch.class, GithubBranchRaw[].class);
 
-    return request.getAll();
+    return request.getAll(auth);
   }
 
   @Nullable
@@ -610,11 +624,10 @@ public class GithubApiUtil {
                                           @NotNull String forkUser) throws IOException {
     String path = "/repos/" + user + "/" + repo + "/forks?per_page=100";
 
-    PagedRequest<GithubRepo, GithubRepoRaw> request =
-      new PagedRequest<GithubRepo, GithubRepoRaw>(auth, path, GithubRepo.class, GithubRepoRaw[].class);
+    PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
 
     while (request.hasNext()) {
-      for (GithubRepo fork : request.next()) {
+      for (GithubRepo fork : request.next(auth)) {
         if (StringUtil.equalsIgnoreCase(fork.getUserName(), forkUser)) {
           return fork;
         }

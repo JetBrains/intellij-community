@@ -1,8 +1,22 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.io;
 
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.handler.codec.compression.ZlibDecoder;
@@ -25,7 +39,7 @@ import java.security.KeyStore;
 import java.security.Security;
 
 @ChannelHandler.Sharable
-final class PortUnificationServerHandler extends SimpleChannelUpstreamHandler {
+final class PortUnificationServerHandler extends Decoder {
   private static final AtomicNotNullLazyValue<SSLContext> SSL_SERVER_CONTEXT = new AtomicNotNullLazyValue<SSLContext>() {
     @NotNull
     @Override
@@ -58,8 +72,6 @@ final class PortUnificationServerHandler extends SimpleChannelUpstreamHandler {
   private final ChannelGroup openChannels;
   private final DelegatingHttpRequestHandler delegatingHttpRequestHandler;
 
-  private ChannelBuffer cumulation;
-
   public PortUnificationServerHandler(ChannelGroup openChannels) {
     this(new DelegatingHttpRequestHandler(), openChannels, true, true);
   }
@@ -86,29 +98,9 @@ final class PortUnificationServerHandler extends SimpleChannelUpstreamHandler {
       return;
     }
 
-    ChannelBuffer input = (ChannelBuffer)m;
-    if (!input.readable()) {
-      return;
-    }
-
-    if (cumulation == null) {
-      if (input.readableBytes() < 5) {
-        cumulation = context.getChannel().getConfig().getBufferFactory().getBuffer(8);
-        cumulation.writeBytes(input);
-      }
-      else {
-        decode(context, input, e.getRemoteAddress());
-      }
-    }
-    else {
-      if ((cumulation.readableBytes() + input.readableBytes()) < 5) {
-        cumulation.writeBytes(input);
-      }
-      else {
-        ChannelBuffer compositeBuffer = ChannelBuffers.wrappedBuffer(cumulation, input);
-        cumulation = null;
-        decode(context, compositeBuffer, e.getRemoteAddress());
-      }
+    ChannelBuffer buffer = getBufferIfSufficient((ChannelBuffer)m, 5, context);
+    if (buffer != null) {
+      decode(context, buffer, e.getRemoteAddress());
     }
   }
 

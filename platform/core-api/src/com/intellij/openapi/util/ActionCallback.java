@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -191,6 +190,9 @@ public class ActionCallback implements Disposable {
 
   @Override
   public void dispose() {
+    // avoid memory leak in case: myDone executed but myRejected still keep doWhenRejected listeners (and vice versa)
+    myDone.clear();
+    myRejected.clear();
   }
 
   @NotNull
@@ -202,6 +204,7 @@ public class ActionCallback implements Disposable {
       }
     };
   }
+
   @NotNull
   public Runnable createSetRejectedRunnable() {
     return new Runnable() {
