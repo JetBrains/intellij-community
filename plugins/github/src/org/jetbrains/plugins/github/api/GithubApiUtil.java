@@ -61,27 +61,34 @@ public class GithubApiUtil {
   @Nullable
   private static JsonElement postRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable String requestBody)
     throws IOException {
-    return request(auth, path, requestBody, HttpVerb.POST).getJsonElement();
+    return request(auth, path, requestBody, null, HttpVerb.POST).getJsonElement();
   }
 
   @Nullable
   private static JsonElement deleteRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
-    return request(auth, path, null, HttpVerb.DELETE).getJsonElement();
+    return request(auth, path, null, null, HttpVerb.DELETE).getJsonElement();
   }
 
   @Nullable
   private static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
-    return request(auth, path, null, HttpVerb.GET).getJsonElement();
+    return request(auth, path, null, null, HttpVerb.GET).getJsonElement();
+  }
+
+  @Nullable
+  private static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable Collection<Header> headers)
+    throws IOException {
+    return request(auth, path, null, headers, HttpVerb.GET).getJsonElement();
   }
 
   @NotNull
   private static ResponsePage request(@NotNull GithubAuthData auth,
                                       @NotNull String path,
                                       @Nullable String requestBody,
+                                      @Nullable Collection<Header> headers,
                                       @NotNull HttpVerb verb) throws IOException {
     HttpMethod method = null;
     try {
-      method = doREST(auth, path, requestBody, verb);
+      method = doREST(auth, path, requestBody, headers, verb);
 
       checkStatusCode(method);
 
@@ -121,6 +128,7 @@ public class GithubApiUtil {
   private static HttpMethod doREST(@NotNull final GithubAuthData auth,
                                    @NotNull String path,
                                    @Nullable final String requestBody,
+                                   @Nullable final Collection<Header> headers,
                                    @NotNull final HttpVerb verb) throws IOException {
     HttpClient client = getHttpClient(auth.getBasicAuth());
     String uri = GithubUrlUtil.getApiUrl(auth.getHost()) + path;
@@ -152,7 +160,11 @@ public class GithubApiUtil {
           if (tokenAuth != null) {
             method.addRequestHeader("Authorization", "token " + tokenAuth.getToken());
           }
-          method.addRequestHeader("Accept", "application/vnd.github.preview"); //TODO: remove after end of preview period. ~ october 2013
+          if (headers != null) {
+            for (Header header : headers) {
+              method.addRequestHeader(header);
+            }
+          }
           return method;
         }
       });
@@ -293,7 +305,7 @@ public class GithubApiUtil {
       String page = myNextPage;
       myNextPage = null;
 
-      ResponsePage response = request(auth, page, null, HttpVerb.GET);
+      ResponsePage response = request(auth, page, null, null, HttpVerb.GET);
 
       if (response.getJsonElement() == null) {
         throw new HttpException("Empty response");
@@ -358,7 +370,7 @@ public class GithubApiUtil {
   public static Collection<String> getTokenScopes(@NotNull GithubAuthData auth) throws IOException {
     HttpMethod method = null;
     try {
-      method = doREST(auth, "", null, HttpVerb.HEAD);
+      method = doREST(auth, "", null, null, HttpVerb.HEAD);
 
       checkStatusCode(method);
 
@@ -512,7 +524,8 @@ public class GithubApiUtil {
     query = URLEncoder.encode("@" + user + "/" + repo + " " + query, "UTF-8");
     String path = "/search/issues?q=" + query;
 
-    JsonElement result = getRequest(auth, path);
+    //TODO: remove header after end of preview period. ~ october 2013
+    JsonElement result = getRequest(auth, path, Collections.singletonList(new Header("Accept", "application/vnd.github.preview")));
 
     return createDataFromRaw(fromJson(result, GithubIssuesSearchResultRaw.class), GithubIssuesSearchResult.class).getIssues();
   }
