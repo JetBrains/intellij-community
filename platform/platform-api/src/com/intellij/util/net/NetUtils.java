@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -60,14 +61,14 @@ public class NetUtils {
   public static InetAddress getLoopbackAddress() {
     try {
       //  todo use JDK 7 InetAddress.getLoopbackAddress()
-      return InetAddress.getByName("127.0.0.1");
+      return InetAddress.getByName(null);
     }
     catch (UnknownHostException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public static boolean isLocalhost(String host) {
+  public static boolean isLocalhost(@NotNull String host) {
     return host.equals("localhost") || host.equals("127.0.0.1");
   }
 
