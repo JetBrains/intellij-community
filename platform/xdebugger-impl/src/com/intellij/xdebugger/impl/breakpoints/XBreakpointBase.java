@@ -71,12 +71,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     myBreakpointManager = breakpointManager;
     myProperties = type.createProperties();
     if (myProperties != null) {
-      //noinspection unchecked
-      Element element = myState.getPropertiesElement();
-      if (element != null) {
-        //noinspection unchecked
-        myProperties.loadState(XmlSerializer.deserialize(element, ComponentSerializationUtil.getStateClass(myProperties.getClass())));
-      }
+      ComponentSerializationUtil.loadComponentState(myProperties, myState.getPropertiesElement());
     }
   }
 
