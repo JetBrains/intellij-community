@@ -20,11 +20,11 @@ import static hg4idea.test.HgExecutor.hg;
  */
 public class HgLogTest extends HgPlatformTest {
 
-  public void testParceCopiedWihoutBraces() throws HgCommandException {
+  public void testParseCopiedWithoutBraces() throws HgCommandException {
     parseCopied("f.txt");
   }
 
-  public void testParceCopiedWithBraces() throws HgCommandException {
+  public void testParseCopiedWithBraces() throws HgCommandException {
     parseCopied("(f.txt)");
   }
 
