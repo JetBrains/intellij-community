@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -37,13 +36,11 @@ public class PyFunctionType implements PyCallableType {
 
   @Nullable
   @Override
-  public List<Pair<String, PyType>> getParameters(@NotNull TypeEvalContext context) {
-    final List<Pair<String, PyType>> result = new ArrayList<Pair<String, PyType>>();
+  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+    final List<PyCallableParameter> result = new ArrayList<PyCallableParameter>();
     for (PyParameter parameter : myCallable.getParameterList().getParameters()) {
-      if (parameter instanceof PyNamedParameter) {
-        final PyNamedParameter namedParameter = (PyNamedParameter)parameter;
-        result.add(Pair.create(getParameterName(namedParameter), context.getType(namedParameter)));
-      }
+      final PyType type = parameter instanceof PyTypedElement ? context.getType((PyTypedElement)parameter) : null;
+      result.add(new PyCallableParameterImpl(parameter, type));
     }
     return result;
   }

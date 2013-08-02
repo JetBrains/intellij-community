@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
@@ -19,10 +18,10 @@ import java.util.List;
  * @author vlan
  */
 public class PyCallableTypeImpl implements PyCallableType {
-  @Nullable private final List<Pair<String, PyType>> myParameters;
+  @Nullable private final List<PyCallableParameter> myParameters;
   @Nullable private final PyType myReturnType;
 
-  public PyCallableTypeImpl(@Nullable List<Pair<String, PyType>> parameters, @Nullable PyType returnType) {
+  public PyCallableTypeImpl(@Nullable List<PyCallableParameter> parameters, @Nullable PyType returnType) {
     myParameters = parameters;
     myReturnType = returnType;
   }
@@ -40,7 +39,7 @@ public class PyCallableTypeImpl implements PyCallableType {
 
   @Nullable
   @Override
-  public List<Pair<String, PyType>> getParameters(@NotNull TypeEvalContext context) {
+  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return myParameters;
   }
 
@@ -61,16 +60,17 @@ public class PyCallableTypeImpl implements PyCallableType {
   @Nullable
   @Override
   public String getName() {
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback();
     return String.format("(%s) -> %s",
                          myParameters != null ?
                          StringUtil.join(myParameters,
-                                         new Function<Pair<String, PyType>, String>() {
+                                         new Function<PyCallableParameter, String>() {
                                            @Override
-                                           public String fun(Pair<String, PyType> param) {
+                                           public String fun(PyCallableParameter param) {
                                              if (param != null) {
                                                final StringBuilder builder = new StringBuilder();
-                                               final String name = param.getFirst();
-                                               final PyType type = param.getSecond();
+                                               final String name = param.getName();
+                                               final PyType type = param.getType();
                                                if (name != null) {
                                                  builder.append(name);
                                                  if (type != null) {

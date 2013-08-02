@@ -4,7 +4,6 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.Callable;
@@ -206,11 +205,11 @@ public class PyTypeModelBuilder {
 
   private TypeModel build(@NotNull PyCallableType type) {
     List<TypeModel> parameterModels = null;
-    final List<Pair<String, PyType>> parameters = type.getParameters(myContext);
+    final List<PyCallableParameter> parameters = type.getParameters(myContext);
     if (parameters != null) {
       parameterModels = new ArrayList<TypeModel>();
-      for (Pair<String, PyType> parameter : parameters) {
-        parameterModels.add(new ParamType(parameter.getFirst(), build(parameter.getSecond(), true)));
+      for (PyCallableParameter parameter : parameters) {
+        parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(), true)));
       }
     }
     final PyType ret = type.getCallType(myContext, null);
