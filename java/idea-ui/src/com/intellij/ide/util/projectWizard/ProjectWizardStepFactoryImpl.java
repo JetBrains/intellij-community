@@ -136,7 +136,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   @Override
-  public ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder, ModulesProvider modulesProvider) {
+  public ModuleWizardStep createSupportForFrameworksStep(@NotNull WizardContext context, @NotNull ModuleBuilder builder, @NotNull ModulesProvider modulesProvider) {
     Map<String,Boolean> availableFrameworks = builder.getAvailableFrameworks();
     if (FrameworkSupportUtil.getProviders(builder).isEmpty() || availableFrameworks != null && availableFrameworks.isEmpty()) {
       return null;
@@ -146,7 +146,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   @Override
-  public ModuleWizardStep createJavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
+  public ModuleWizardStep createJavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
    return new JavaSettingsStep(settingsStep, moduleBuilder, sdkFilter);
   }
 }

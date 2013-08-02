@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.project.ProjectBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -32,11 +33,13 @@ public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleT
     super(WEB_MODULE);
   }
 
+  @NotNull
   @Override
   public String getName() {
     return ProjectBundle.message("module.web.title");
   }
 
+  @NotNull
   @Override
   public String getDescription() {
     return ProjectBundle.message("module.web.description");

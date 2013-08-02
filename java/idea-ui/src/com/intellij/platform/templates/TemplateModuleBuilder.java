@@ -83,7 +83,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   @Override
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     ModuleBuilder builder = myType.createModuleBuilder();
     builder.setAvailableFrameworks(Collections.<String, Boolean>emptyMap());
     return builder.createWizardSteps(wizardContext, modulesProvider);

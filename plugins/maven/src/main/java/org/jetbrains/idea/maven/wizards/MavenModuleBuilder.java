@@ -35,6 +35,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import icons.MavenIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
@@ -119,7 +120,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   }
 
   @Override
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     return new ModuleWizardStep[]{
       new MavenModuleWizardStep(wizardContext.getProject(), this, wizardContext),
       new SelectPropertiesStep(wizardContext.getProject(), this)
