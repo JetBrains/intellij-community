@@ -17,31 +17,27 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
-/*
-* @author S. Weinreuter
-*/
+/**
+ * @author S. Weinreuter
+ */
 public abstract class IdeaPluginImpl implements IdeaPlugin {
 
   private final NullableLazyValue<String> myPluginId = new VolatileNullableLazyValue<String>() {
     @Nullable
     @Override
     protected String compute() {
-      final XmlTag tag = getXmlTag();
-      if (tag == null) {
-        return null;
+      String pluginId = null;
+      if (DomUtil.hasXml(getId())) {
+        pluginId = getId().getStringValue();
       }
-
-      final XmlTag idTag = tag.findFirstSubTag("id");
-      if (idTag != null) {
-        return idTag.getValue().getTrimmedText();
+      else if (DomUtil.hasXml(getName())) {
+        pluginId = getName().getStringValue();
       }
-
-      final XmlTag name = tag.findFirstSubTag("name");
-      return name != null ? name.getValue().getTrimmedText() : null;
+      return pluginId != null ? pluginId.trim() : null;
     }
   };
 
