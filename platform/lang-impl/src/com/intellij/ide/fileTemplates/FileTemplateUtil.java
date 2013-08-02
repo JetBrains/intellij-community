@@ -174,7 +174,7 @@ public class FileTemplateUtil{
         if (literal instanceof ASTStringLiteral && literal.jjtGetNumChildren() == 0) {
           Token firstToken = literal.getFirstToken();
           if (firstToken != null) {
-            String s = StringUtil.trimEnd(StringUtil.trimStart(firstToken.toString(), "\""), "\"");
+            String s = StringUtil.unquoteString(firstToken.toString());
             final FileTemplate includedTemplate = FileTemplateManager.getInstance().getTemplate(s);
             if (includedTemplate != null && visitedIncludes.add(s)) {
               SimpleNode template = RuntimeSingleton.parse(new StringReader(includedTemplate.getText()), "MyTemplate");
