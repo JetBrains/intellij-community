@@ -36,4 +36,8 @@ public class AutoUnboxing {
         Boolean c = Boolean.TRUE & false;
         Long d = Integer.valueOf(2) & 1L;
     }
+
+    private boolean noWarn(Integer i1, Integer i2) {
+      return i1 == i2;
+    }
 }
