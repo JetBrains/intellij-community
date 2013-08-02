@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -266,6 +266,7 @@ libraryLicense(name: "bouncy-castle", version: "1.48", license: "MIT License", u
 libraryLicense(name: "kXML2", libraryName: "kxml2", version: "2.3.0", license: "BSD", url: "http://sourceforge.net/projects/kxml/")
 libraryLicense(name: "Lombok AST", libraryName: "lombok-ast", version: "0.2.1", license: "MIT", url: "http://projectlombok.org/", licenseUrl: "http://opensource.org/licenses/mit-license.php")
 libraryLicense(name: "fxg-utils", libraryName: "fxg-utils", version: "4.9.1", license: "Apache 2.0", url: "http://flex.apache.org", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
+libraryLicense(name: "jayatana", libraryName: "jayatana", version: "1.2.4", license: "MIT License", url: "https://code.google.com/p/java-swing-ayatana/", licenseUrl: "http://opensource.org/licenses/mit-license.php")
 jetbrainsLibrary("JPS")
 jetbrainsLibrary("Maven Embedder")
 jetbrainsLibrary("tcServiceMessages")
