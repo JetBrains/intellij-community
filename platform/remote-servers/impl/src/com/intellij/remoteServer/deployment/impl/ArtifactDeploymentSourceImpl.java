@@ -6,7 +6,6 @@ import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.remoteServer.deployment.ArtifactDeploymentSource;
-import com.intellij.remoteServer.deployment.DeploymentSource;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,7 +14,7 @@ import java.io.File;
 /**
  * @author nik
  */
-public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource, DeploymentSource {
+public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource {
   private final ArtifactPointer myPointer;
 
   public ArtifactDeploymentSourceImpl(@NotNull ArtifactPointer pointer) {
@@ -70,6 +69,12 @@ public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource, D
   @Override
   public boolean isValid() {
     return getArtifact() != null;
+  }
+
+  @Override
+  public boolean isArchive() {
+    Artifact artifact = getArtifact();
+    return artifact != null && !(artifact.getRootElement() instanceof ArtifactRootElement<?>);
   }
 
   @Override

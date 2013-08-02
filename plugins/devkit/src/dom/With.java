@@ -17,10 +17,7 @@ package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
-import com.intellij.util.xml.Attribute;
-import com.intellij.util.xml.Convert;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.PluginFieldNameConverter;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
@@ -30,6 +27,7 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
  */
 public interface With extends DomElement {
   @NotNull
+  @Stubbed
   @Attribute("attribute")
   @Convert(PluginFieldNameConverter.class)
   GenericAttributeValue<PsiField> getAttribute();
@@ -40,6 +38,7 @@ public interface With extends DomElement {
   GenericAttributeValue<PsiField> getTag();
 
   @NotNull
+  @Stubbed
   @Attribute("implements")
   @Convert(PluginPsiClassConverter.class)
   GenericAttributeValue<PsiClass> getImplements();

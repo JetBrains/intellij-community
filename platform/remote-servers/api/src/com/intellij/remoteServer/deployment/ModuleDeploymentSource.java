@@ -13,32 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.dom.impl;
+package com.intellij.remoteServer.deployment;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.util.xml.DomFileDescription;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
-
-import javax.swing.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModulePointer;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author mike
+ * @author nik
  */
-public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> {
+public interface ModuleDeploymentSource extends DeploymentSource {
+  @NotNull
+  ModulePointer getModulePointer();
 
-  public PluginXmlDomFileDescription() {
-    super(IdeaPlugin.class, "idea-plugin");
-  }
+  @Nullable
+  Module getModule();
 
-  @Override
-  public Icon getFileIcon(@Iconable.IconFlags int flags) {
-    return AllIcons.Nodes.Plugin;
-  }
-
-  @Override
-  public boolean hasStubs() {
-    return true;
-  }
-
+  @Nullable
+  VirtualFile getContentRoot();
 }

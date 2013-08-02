@@ -15,12 +15,15 @@
  */
 package com.intellij.remoteServer.deployment.impl;
 
+import com.intellij.openapi.module.ModulePointer;
+import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.remoteServer.deployment.ArtifactDeploymentSource;
 import com.intellij.remoteServer.deployment.DeploymentSource;
 import com.intellij.remoteServer.deployment.DeploymentSourceUtil;
+import com.intellij.remoteServer.deployment.ModuleDeploymentSource;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,10 +38,21 @@ public class DeploymentSourceUtilImpl extends DeploymentSourceUtil {
   }
 
   @Override
+  @NotNull
+  public ModuleDeploymentSource createModuleDeploymentSource(@NotNull ModulePointer modulePointer) {
+    return new ModuleDeploymentSourceImpl(modulePointer);
+  }
+
+  @Override
   public DeploymentSource loadDeploymentSource(@NotNull Element element, @NotNull Project project) {
     ArtifactPointerManager artifactPointerManager = ArtifactPointerManager.getInstance(project);
     Element artifact = element.getChild("artifact");
-    return createArtifactDeploymentSource(artifactPointerManager.createPointer(artifact.getAttributeValue("name")));
+    if (artifact != null) {
+      return createArtifactDeploymentSource(artifactPointerManager.createPointer(artifact.getAttributeValue("name")));
+    }
+    Element module = element.getChild("module");
+    ModulePointerManager modulePointerManager = ModulePointerManager.getInstance(project);
+    return createModuleDeploymentSource(modulePointerManager.create(module.getAttributeValue("name")));
   }
 
   @Override
@@ -46,6 +60,10 @@ public class DeploymentSourceUtilImpl extends DeploymentSourceUtil {
     if (source instanceof ArtifactDeploymentSource) {
       String artifactName = ((ArtifactDeploymentSource)source).getArtifactPointer().getArtifactName();
       element.addContent(new Element("artifact").setAttribute("name", artifactName));
+    }
+    else if (source instanceof ModuleDeploymentSource) {
+      String moduleName = ((ModuleDeploymentSource)source).getModulePointer().getModuleName();
+      element.addContent(new Element("module").setAttribute("name", moduleName));
     }
   }
 }

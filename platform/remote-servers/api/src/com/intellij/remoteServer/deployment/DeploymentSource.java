@@ -38,4 +38,6 @@ public interface DeploymentSource {
   Icon getIcon();
 
   boolean isValid();
+
+  boolean isArchive();
 }
