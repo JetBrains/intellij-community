@@ -128,6 +128,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     }
 
 
+    @NotNull
     @Override
     public EmptyModuleBuilder createModuleBuilder() {
       return new EmptyModuleBuilder() {
