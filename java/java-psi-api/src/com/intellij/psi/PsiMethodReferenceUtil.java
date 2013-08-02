@@ -33,7 +33,7 @@ public class PsiMethodReferenceUtil {
   public static ThreadLocal<Map<PsiMethodReferenceExpression, PsiType>> ourRefs = new ThreadLocal<Map<PsiMethodReferenceExpression, PsiType>>();
 
   public static final Logger LOG = Logger.getInstance("#" + PsiMethodReferenceUtil.class.getName());
-  
+
   public static class QualifierResolveResult {
     private final PsiClass myContainingClass;
     private final PsiSubstitutor mySubstitutor;
@@ -72,7 +72,8 @@ public class PsiMethodReferenceUtil {
     return false;
   }
 
-  public static QualifierResolveResult getQualifierResolveResult(PsiMethodReferenceExpression methodReferenceExpression) {
+  @NotNull
+  public static QualifierResolveResult getQualifierResolveResult(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
     PsiClass containingClass = null;
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     final PsiExpression expression = methodReferenceExpression.getQualifierExpression();
@@ -106,7 +107,7 @@ public class PsiMethodReferenceUtil {
     }
     return new QualifierResolveResult(containingClass, substitutor, false);
   }
-  
+
   public static boolean isAcceptable(@Nullable final PsiMethodReferenceExpression methodReferenceExpression, PsiType left) {
     if (methodReferenceExpression == null) return false;
     if (left instanceof PsiIntersectionType) {
@@ -145,7 +146,7 @@ public class PsiMethodReferenceUtil {
         final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(subst);
 
         final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(left);
-        
+
         PsiType returnType = PsiTypesUtil.patchMethodGetClassReturnType(methodReferenceExpression, methodReferenceExpression,
                                                                         (PsiMethod)resolve, null,
                                                                         PsiUtil.getLanguageLevel(methodReferenceExpression));
@@ -209,7 +210,7 @@ public class PsiMethodReferenceUtil {
              resolveResult.getSubstitutor().equals(psiSubstitutor) ||
              emptyOrRaw(containingClass, psiSubstitutor) ||
              emptyOrRaw(receiverClass, resolveResult.getSubstitutor());
-    } 
+    }
     return false;
   }
 
@@ -245,7 +246,7 @@ public class PsiMethodReferenceUtil {
   public static boolean areAcceptable(MethodSignature signature1,
                                       MethodSignature signature2,
                                       PsiClass psiClass,
-                                      PsiSubstitutor psiSubstitutor, 
+                                      PsiSubstitutor psiSubstitutor,
                                       boolean isVarargs) {
     int offset = 0;
     final PsiType[] signatureParameterTypes1 = signature1.getParameterTypes();
@@ -271,7 +272,7 @@ public class PsiMethodReferenceUtil {
         if (!(signatureParameterTypes2[i] instanceof PsiArrayType)) {
           return false;
         }
-        if (!TypeConversionUtil.isAssignable(((PsiArrayType)signatureParameterTypes2[i]).getComponentType(), type1) && 
+        if (!TypeConversionUtil.isAssignable(((PsiArrayType)signatureParameterTypes2[i]).getComponentType(), type1) &&
             !TypeConversionUtil.isAssignable(signatureParameterTypes2[i], type1)) {
           return false;
         }

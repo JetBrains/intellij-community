@@ -940,7 +940,7 @@ public class ExpectedTypesProvider {
       }
 
       ParameterTypeInferencePolicy policy = forCompletion ? CompletionParameterTypeInferencePolicy.INSTANCE : DefaultParameterTypeInferencePolicy.INSTANCE;
-      
+
       Set<ExpectedTypeInfo> array = new LinkedHashSet<ExpectedTypeInfo>();
       for (CandidateInfo candidateInfo : methodCandidates) {
         PsiMethod method = (PsiMethod)candidateInfo.getElement();

@@ -43,7 +43,7 @@ public class LambdaUtil {
   public static PsiType getFunctionalInterfaceReturnType(PsiLambdaExpression expr) {
     return getFunctionalInterfaceReturnType(expr.getFunctionalInterfaceType());
   }
-  
+
   @Nullable
   public static PsiType getFunctionalInterfaceReturnType(@Nullable PsiType functionalInterfaceType) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
@@ -416,7 +416,7 @@ public class LambdaUtil {
     PsiElement parent = expression.getParent();
     PsiElement element = expression;
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiConditionalExpression) {
-      if (parent instanceof PsiConditionalExpression && 
+      if (parent instanceof PsiConditionalExpression &&
           ((PsiConditionalExpression)parent).getThenExpression() != element &&
           ((PsiConditionalExpression)parent).getElseExpression() != element) break;
       element = parent;
@@ -679,7 +679,7 @@ public class LambdaUtil {
   enum TypeKind {
     PRIMITIVE, REFERENCE, NONE_DETERMINED
   }
-  
+
   private static int isMoreSpecific(PsiType returnType, PsiType returnType1, PsiType lambdaType) {
     if (returnType == PsiType.VOID || returnType1 == PsiType.VOID) return 0;
     TypeKind typeKind = TypeKind.PRIMITIVE;
@@ -776,8 +776,8 @@ public class LambdaUtil {
   }
 
   @Nullable
-  public static String checkFunctionalInterface(PsiAnnotation annotation) {
-    if (PsiUtil.isLanguageLevel8OrHigher(annotation) && Comparing.strEqual(annotation.getQualifiedName(), JAVA_LANG_FUNCTIONAL_INTERFACE)) {
+  public static String checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Comparing.strEqual(annotation.getQualifiedName(), JAVA_LANG_FUNCTIONAL_INTERFACE)) {
       final PsiAnnotationOwner owner = annotation.getOwner();
       if (owner instanceof PsiModifierList) {
         final PsiElement parent = ((PsiModifierList)owner).getParent();
@@ -789,8 +789,10 @@ public class LambdaUtil {
     return null;
   }
 
-  public static boolean isValidQualifier4InterfaceStaticMethodCall(@NotNull PsiMethod method, @NotNull PsiReferenceExpression methodReferenceExpression) {
-    if (PsiUtil.isLanguageLevel8OrHigher(methodReferenceExpression)) {
+  public static boolean isValidQualifier4InterfaceStaticMethodCall(@NotNull PsiMethod method,
+                                                                   @NotNull PsiReferenceExpression methodReferenceExpression,
+                                                                   @NotNull LanguageLevel languageLevel) {
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass != null && containingClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC)) {
@@ -800,7 +802,7 @@ public class LambdaUtil {
     }
     return true;
   }
-  
+
   static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
     private PsiMethod myMethod;
     private final PsiClass myClass;

@@ -321,14 +321,15 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     public JavaResolveResult[] resolve(@NotNull PsiJavaReference ref, boolean incompleteCode) {
       PsiJavaCodeReferenceElementImpl referenceElement = (PsiJavaCodeReferenceElementImpl)ref;
       int kind = referenceElement.getKind();
-      JavaResolveResult[] result = referenceElement.resolve(kind);
+      PsiFile containingFile = referenceElement.getContainingFile();
+      JavaResolveResult[] result = referenceElement.resolve(kind, containingFile);
 
       if (incompleteCode && result.length == 0 && kind != CLASS_FQ_NAME_KIND && kind != CLASS_FQ_OR_PACKAGE_NAME_KIND) {
-        VariableResolverProcessor processor = new VariableResolverProcessor(referenceElement);
+        VariableResolverProcessor processor = new VariableResolverProcessor(referenceElement, containingFile);
         PsiScopesUtil.resolveAndWalk(processor, referenceElement, null, incompleteCode);
         result = processor.getResult();
         if (result.length == 0 && kind == CLASS_NAME_KIND) {
-          result = referenceElement.resolve(PACKAGE_NAME_KIND);
+          result = referenceElement.resolve(PACKAGE_NAME_KIND, containingFile);
         }
       }
 
@@ -379,7 +380,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return subst;
   }
 
-  private JavaResolveResult[] resolve(final int kind) {
+  private JavaResolveResult[] resolve(final int kind, PsiFile containingFile) {
     switch (kind) {
       case CLASS_FQ_NAME_KIND: {
         // TODO: support type parameters in FQ names
@@ -390,8 +391,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         if (aClass == null) return JavaResolveResult.EMPTY_ARRAY;
 
         if (!isQualified() && text.equals(aClass.getQualifiedName())) {
-          PsiFile file = getContainingFile();
-          if (file instanceof PsiJavaFile && !((PsiJavaFile)file).getPackageName().isEmpty()) {
+          if (containingFile instanceof PsiJavaFile && !((PsiJavaFile)containingFile).getPackageName().isEmpty()) {
             // classes in default (unnamed) package cannot be referenced from other packages
             return JavaResolveResult.EMPTY_ARRAY;
           }
@@ -431,7 +431,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         if (!(classNameElement instanceof PsiIdentifier)) return JavaResolveResult.EMPTY_ARRAY;
         final String className = classNameElement.getText();
 
-        final ClassResolverProcessor processor = new ClassResolverProcessor(className, this, getContainingFile());
+        final ClassResolverProcessor processor = new ClassResolverProcessor(className, this, containingFile);
         resultElement.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, result.getSubstitutor()), this, this);
         return processor.getResult();
       }
@@ -439,7 +439,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         final PsiElement classNameElement = getReferenceNameElement();
         if (!(classNameElement instanceof PsiIdentifier)) return JavaResolveResult.EMPTY_ARRAY;
         final String className = classNameElement.getText();
-        final ClassResolverProcessor processor = new ClassResolverProcessor(className, this, getContainingFile());
+        final ClassResolverProcessor processor = new ClassResolverProcessor(className, this, containingFile);
         PsiScopesUtil.resolveAndWalk(processor, this, null);
         return processor.getResult();
       }
@@ -456,16 +456,16 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
       case CLASS_OR_PACKAGE_NAME_KIND: {
         int classKind = kind == CLASS_OR_PACKAGE_NAME_KIND ? CLASS_NAME_KIND : CLASS_FQ_NAME_KIND;
-        JavaResolveResult[] result = resolve(classKind);
+        JavaResolveResult[] result = resolve(classKind,containingFile);
 
         if (result.length == 1 && !result[0].isAccessible()) {
-          JavaResolveResult[] packageResult = resolve(PACKAGE_NAME_KIND);
+          JavaResolveResult[] packageResult = resolve(PACKAGE_NAME_KIND,containingFile);
           if (packageResult.length != 0) {
             result = packageResult;
           }
         }
         else if (result.length == 0) {
-          result = resolve(PACKAGE_NAME_KIND);
+          result = resolve(PACKAGE_NAME_KIND,containingFile);
         }
 
         return result;

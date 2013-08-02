@@ -41,8 +41,8 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   private final PsiClass myAccessClass;
   private PsiElement myCurrentFileContext = null;
 
-  public VariableResolverProcessor(PsiJavaCodeReferenceElement place) {
-    super(place.getText(), ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>(), place);
+  public VariableResolverProcessor(@NotNull PsiJavaCodeReferenceElement place, PsiFile placeFile) {
+    super(place.getText(), ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>(), place, placeFile);
 
     PsiElement referenceName = place.getReferenceNameElement();
     if (referenceName instanceof PsiIdentifier){

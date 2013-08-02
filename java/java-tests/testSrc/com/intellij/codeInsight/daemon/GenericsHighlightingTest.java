@@ -20,8 +20,6 @@ import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspec
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -45,9 +43,9 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     return getTestName(false).contains("Jdk14") ? IdeaTestUtil.getMockJdk14() : super.getProjectJDK();
   }
 
-  private void doTest(LanguageLevel languageLevel, JavaSdkVersion sdkVersion, boolean checkWarnings) {
+  private void doTest(@NotNull LanguageLevel languageLevel, @NotNull JavaSdkVersion sdkVersion, boolean checkWarnings) {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(languageLevel);
-    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(sdkVersion, myTestRootDisposable);
+    IdeaTestUtil.setTestVersion(sdkVersion, getModule(), myTestRootDisposable);
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
   private void doTest5(boolean checkWarnings) { doTest(LanguageLevel.JDK_1_5, JavaSdkVersion.JDK_1_6, checkWarnings); }
@@ -180,7 +178,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testTypeArgumentsGivenOnRawType() { doTest7Incompatibility(false); }
   public void testSelectFromTypeParameter() { doTest5(false); }
   public void testTypeArgumentsGivenOnAnonymousClassCreation() { doTest5(false); }
-  
+
   public void testIDEA94011() { doTest5(false); }
   public void testDifferentTypeParamsInOverloadedMethods() { doTest5(true); }
   public void testIDEA91626() { doTest5(true); }
@@ -309,7 +307,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA109556() { doTest5(false); }
   public void testIDEA107440() { doTest5(false); }
   public void testIDEA57289() { doTest5(false); }
-  
+
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
     assertNotNull(collectionsClass);

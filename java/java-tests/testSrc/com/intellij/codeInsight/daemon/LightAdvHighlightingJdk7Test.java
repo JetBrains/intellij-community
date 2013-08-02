@@ -30,10 +30,9 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +48,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
 
   private void doTest(boolean checkWarnings, boolean checkInfos, Class<?>... classes) {
     setLanguageLevel(LanguageLevel.JDK_1_7);
-    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_7, myTestRootDisposable);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, getModule(), myTestRootDisposable);
     enableInspectionTools(classes);
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }

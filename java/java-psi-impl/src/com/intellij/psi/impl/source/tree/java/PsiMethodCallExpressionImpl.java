@@ -151,8 +151,9 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       PsiReferenceExpression methodExpression = call.getMethodExpression();
       PsiType theOnly = null;
       final JavaResolveResult[] results = methodExpression.multiResolve(false);
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
       for (int i = 0; i < results.length; i++) {
-        final PsiType type = getResultType(call, methodExpression, results[i]);
+        final PsiType type = getResultType(call, methodExpression, results[i], languageLevel);
         if (type == null) {
           return null;
         }
@@ -169,11 +170,13 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     }
 
     @Nullable
-    private static PsiType getResultType(PsiExpression call, PsiReferenceExpression methodExpression, JavaResolveResult result) {
+    private static PsiType getResultType(PsiExpression call,
+                                         PsiReferenceExpression methodExpression,
+                                         JavaResolveResult result,
+                                         @NotNull final LanguageLevel languageLevel) {
       final PsiMethod method = (PsiMethod)result.getElement();
       if (method == null) return null;
 
-      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
       boolean is15OrHigher = languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
       final PsiType getClassReturnType = PsiTypesUtil.patchMethodGetClassReturnType(call, methodExpression, method,
                                                                                     new Condition<IElementType>() {

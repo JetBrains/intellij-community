@@ -217,11 +217,14 @@ public class PsiScopesUtil {
     return true;
   }
 
-  public static void setupAndRunProcessor(MethodsProcessor processor, PsiCallExpression call, boolean dummyImplicitConstructor)
-    throws MethodProcessorSetupFailedException {
+  public static void setupAndRunProcessor(@NotNull MethodsProcessor processor,
+                                          @NotNull PsiCallExpression call,
+                                          boolean dummyImplicitConstructor)
+  throws MethodProcessorSetupFailedException {
     if (call instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)call;
       final PsiJavaCodeReferenceElement ref = methodCall.getMethodExpression();
+
 
       processor.setArgumentList(methodCall.getArgumentList());
       processor.obtainTypeArguments(methodCall);
@@ -403,9 +406,9 @@ public class PsiScopesUtil {
     return true;
   }
 
-  private static boolean processQualifierResult(JavaResolveResult qualifierResult,
-                                                final MethodsProcessor processor,
-                                                PsiMethodCallExpression methodCall) throws MethodProcessorSetupFailedException {
+  private static boolean processQualifierResult(@NotNull JavaResolveResult qualifierResult,
+                                                @NotNull MethodsProcessor processor,
+                                                @NotNull PsiMethodCallExpression methodCall) throws MethodProcessorSetupFailedException {
     PsiElement resolve = qualifierResult.getElement();
 
     if (resolve == null) {

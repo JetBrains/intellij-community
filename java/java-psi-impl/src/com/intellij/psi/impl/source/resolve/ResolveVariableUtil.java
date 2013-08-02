@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -20,19 +19,19 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class ResolveVariableUtil {
-  public static PsiVariable resolveVariable(
-          PsiJavaCodeReferenceElement ref,
-          boolean[] problemWithAccess,
-          boolean[] problemWithStatic
-          ) {
+  public static PsiVariable resolveVariable(@NotNull PsiJavaCodeReferenceElement ref,
+                                            boolean[] problemWithAccess,
+                                            boolean[] problemWithStatic
+  ) {
 
     /*
     long time1 = System.currentTimeMillis();
     */
 
-    final VariableResolverProcessor processor = new VariableResolverProcessor(ref);
+    final VariableResolverProcessor processor = new VariableResolverProcessor(ref, ref.getContainingFile());
     PsiScopesUtil.resolveAndWalk(processor, ref, null);
 
     /*
@@ -41,13 +40,13 @@ public class ResolveVariableUtil {
     Statistics.resolveVariableCount++;
     */
     final JavaResolveResult[] result = processor.getResult();
-    if(result.length != 1) return null;
-    final PsiVariable refVar = (PsiVariable) result[0].getElement();
+    if (result.length != 1) return null;
+    final PsiVariable refVar = (PsiVariable)result[0].getElement();
 
-    if (problemWithAccess != null){
+    if (problemWithAccess != null) {
       problemWithAccess[0] = !result[0].isAccessible();
     }
-    if (problemWithStatic != null){
+    if (problemWithStatic != null) {
       problemWithStatic[0] = !result[0].isStaticsScopeCorrect();
     }
 

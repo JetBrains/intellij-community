@@ -124,23 +124,28 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     if (operands.length == 0) return;
     boolean hasLiteral = false;
     InjectedLanguage tempInjectedLanguage = null;
+    PsiFile containingFile = null;
     for (PsiElement operand : operands) {
       if (PsiUtilEx.isStringOrCharacterLiteral(operand)) {
-        tempInjectedLanguage = myTemporaryPlacesRegistry.getLanguageFor((PsiLanguageInjectionHost)operand);
+        if (containingFile == null) {
+          containingFile = operands[0].getContainingFile();
+        }
+
+        tempInjectedLanguage = myTemporaryPlacesRegistry.getLanguageFor((PsiLanguageInjectionHost)operand, containingFile);
         hasLiteral = true;
         if (tempInjectedLanguage != null) break;
       }
     }
     if (!hasLiteral) return;
     final Language tempLanguage = tempInjectedLanguage == null ? null : tempInjectedLanguage.getLanguage();
-    final PsiFile containingFile = operands[0].getContainingFile();
+    final PsiFile finalContainingFile = containingFile;
     InjectionProcessor injectionProcessor = new InjectionProcessor(myConfiguration, operands) {
       @Override
       protected void processInjection(Language language,
                                       List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                       boolean settingsAvailable,
                                       boolean unparsable) {
-        InjectorUtils.registerInjection(language, list, containingFile, registrar);
+        InjectorUtils.registerInjection(language, list, finalContainingFile, registrar);
         InjectorUtils.registerSupport(mySupport, settingsAvailable, registrar);
         InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable ? Boolean.TRUE : null);
       }

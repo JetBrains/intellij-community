@@ -18,6 +18,7 @@ package com.intellij.psi.infos;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ik,dsl
@@ -34,7 +35,13 @@ public class CandidateInfo implements JavaResolveResult {
   private final PsiElement myCurrentFileResolveContext;
   private boolean myPackagePrefixPackageReference;
 
-  private CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, Boolean accessProblem, boolean staticsProblem, PsiElement currFileContext, PsiElement place, PsiClass accessClass) {
+  private CandidateInfo(PsiElement candidate,
+                        PsiSubstitutor substitutor,
+                        Boolean accessProblem,
+                        boolean staticsProblem,
+                        PsiElement currFileContext,
+                        PsiElement place,
+                        PsiClass accessClass) {
     myCandidate = candidate;
     myAccessProblem = accessProblem;
     myStaticsProblem = staticsProblem;
@@ -68,7 +75,7 @@ public class CandidateInfo implements JavaResolveResult {
     this(candidate, substitutor, null, null, false, null);
   }
 
-  public CandidateInfo(CandidateInfo candidate, PsiSubstitutor newSubstitutor){
+  public CandidateInfo(@NotNull CandidateInfo candidate, PsiSubstitutor newSubstitutor){
     this(candidate.myCandidate, newSubstitutor, candidate.myPlace, null, candidate.myStaticsProblem, candidate.myCurrentFileResolveContext);
     myAccessProblem = candidate.myAccessProblem;
   }
