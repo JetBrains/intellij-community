@@ -231,9 +231,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       result.addElement(LookupElementBuilder.create("*"));
     }
 
-    Set<String> usedWords = addReferenceVariants(parameters, result, inheritors);
-
     addKeywords(parameters, result);
+
+    Set<String> usedWords = addReferenceVariants(parameters, result, inheritors);
 
     if (psiElement().inside(PsiLiteralExpression.class).accepts(position)) {
       PsiReference reference = position.getContainingFile().findReferenceAt(parameters.getOffset());
