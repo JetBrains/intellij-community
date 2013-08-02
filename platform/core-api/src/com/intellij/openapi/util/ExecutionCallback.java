@@ -100,6 +100,9 @@ class ExecutionCallback {
     toRun.run();
   }
 
+  synchronized void clear() {
+    myRunnables = null;
+  }
 
   private synchronized boolean signalExecution() {
     return ++myCurrentCount >= myCountToExecution;

@@ -190,6 +190,9 @@ public class ActionCallback implements Disposable {
 
   @Override
   public void dispose() {
+    // avoid memory leak in case: myDone executed but myRejected still keep doWhenRejected listeners (and vice versa)
+    myDone.clear();
+    myRejected.clear();
   }
 
   @NotNull
@@ -201,6 +204,7 @@ public class ActionCallback implements Disposable {
       }
     };
   }
+
   @NotNull
   public Runnable createSetRejectedRunnable() {
     return new Runnable() {
