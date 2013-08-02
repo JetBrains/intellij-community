@@ -437,6 +437,14 @@ public class PythonCompletionTest extends PyTestCase {
     }
   }
 
+  public void testIdentifiersInPlainDocstring() {
+    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
+    settings.setFormat(DocStringFormat.PLAIN);
+    myFixture.configureByFile("completion/identifiersInPlainDocstring.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/identifiersInPlainDocstring.after.py");
+  }
+
   public void testNoneInArgList() {  // PY-3464
     doTest3K();
   }
