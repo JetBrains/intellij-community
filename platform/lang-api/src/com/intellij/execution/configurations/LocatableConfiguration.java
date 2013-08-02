@@ -18,8 +18,8 @@ package com.intellij.execution.configurations;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Base class for configurations that can be created from context (a location in a file) by implementations of
- * {@link com.intellij.execution.junit.RuntimeConfigurationProducer}.
+ * Base interface that should be used for configurations that can be created from context (a location in a file) by implementations of
+ * {@link com.intellij.execution.actions.RunConfigurationProducer}
  *
  * @author anna
  * @see LocatableConfigurationBase

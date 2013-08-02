@@ -35,6 +35,13 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Base implementation of {@link RunProfileState}. Takes care of putting together a process and a console and wrapping them into an
+ * {@link ExecutionResult}. Does not contain any logic for actually starting the process.
+ *
+ * @see com.intellij.execution.configurations.JavaCommandLineState
+ * @see GeneralCommandLine
+ */
 public abstract class CommandLineState implements RunProfileState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.CommandLineState");
   private TextConsoleBuilder myConsoleBuilder;
@@ -84,6 +91,14 @@ public abstract class CommandLineState implements RunProfileState {
                            : null;
   }
 
+  /**
+   * Starts the process.
+   *
+   * @return the handler for the running process
+   * @throws ExecutionException if the execution failed.
+   * @see GeneralCommandLine
+   * @see com.intellij.execution.process.OSProcessHandler
+   */
   @NotNull
   protected abstract ProcessHandler startProcess() throws ExecutionException;
 

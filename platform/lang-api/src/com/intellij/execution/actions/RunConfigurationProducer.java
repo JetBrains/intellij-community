@@ -32,7 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 /**
- * Supports creating run configurations from context (by right-clicking a code element in the source editor or the project view).
+ * Supports creating run configurations from context (by right-clicking a code element in the source editor or the project view). Typically,
+ * run configurations that can be created from context should extend the {@link com.intellij.execution.configurations.LocatableConfigurationBase} class.
  *
  * @since 13
  * @author yole
