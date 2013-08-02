@@ -870,6 +870,8 @@
     <lang.whiteSpaceFormattingStrategy language="Chameleon"
                                        implementationClass="com.jetbrains.pyramid.templates.formatter.ChameleonWhiteSpaceFormattingStrategy"/>
     <typedHandler implementation="com.jetbrains.pyramid.templates.completion.ChameleonSubstitutionHandler" id="ChameleonBracesHandler"/>
+    <highlightRangeExtension implementation="com.jetbrains.pyramid.templates.highlighting.ChameleonAnnotatingVisitor"/>
+    <annotator language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonAnnotatingVisitor"/>
   </extensions>
 
   <extensionPoints>
