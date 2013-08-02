@@ -397,6 +397,7 @@ public class PropertyUtil {
     return ArrayUtil.toStringArray(result);
   }
 
+  @Nullable
   public static PsiMethod generateGetterPrototype(@NotNull PsiField field) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
     Project project = field.getProject();
@@ -422,14 +423,17 @@ public class PropertyUtil {
     }
   }
 
+  @Nullable
   public static PsiMethod generateSetterPrototype(PsiField field) {
     return generateSetterPrototype(field, field.getContainingClass());
   }
 
+  @Nullable
   public static PsiMethod generateSetterPrototype(PsiField field, final PsiClass containingClass) {
     return generateSetterPrototype(field, containingClass, false);
   }
 
+  @Nullable
   public static PsiMethod generateSetterPrototype(PsiField field, final PsiClass containingClass, boolean returnSelf) {
     Project project = field.getProject();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);

@@ -16,9 +16,6 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit2.info.LocationUtil;
 import com.intellij.openapi.module.Module;
@@ -27,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -34,17 +32,18 @@ import com.intellij.psi.PsiPackage;
 
 
 public class AllInDirectoryConfigurationProducer extends JUnitConfigurationProducer {
-  private PsiDirectory myDir = null;
-
-  protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
-    final Project project = location.getProject();
-    final PsiElement element = location.getPsiElement();
-    if (!(element instanceof PsiDirectory)) return null;
-    final PsiPackage aPackage = checkPackage(element);
-    if (aPackage == null) return null;
+  @Override
+  protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
+                                                  ConfigurationContext context,
+                                                  Ref<PsiElement> sourceElement) {
+    final Project project = configuration.getProject();
+    final PsiElement element = context.getPsiLocation();
+    if (!(element instanceof PsiDirectory)) return false;
+    final PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(element);
+    if (aPackage == null) return false;
     final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
-    if (module == null) return null;
+    if (module == null) return false;
     final ContentEntry[] entries = ModuleRootManager.getInstance(module).getContentEntries();
     int testRootCount = 0;
     for (ContentEntry entry : entries) {
@@ -57,21 +56,13 @@ public class AllInDirectoryConfigurationProducer extends JUnitConfigurationProdu
         }
       }
     }
-    if (testRootCount < 2) return null;
-    myDir = (PsiDirectory)element;
-    if (!LocationUtil.isJarAttached(location, aPackage, JUnitUtil.TESTCASE_CLASS)) return null;
-    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
-    final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
+    if (testRootCount < 2) return false;
+    if (!LocationUtil.isJarAttached(context.getLocation(), aPackage, JUnitUtil.TESTCASE_CLASS)) return false;
     setupConfigurationModule(context, configuration);
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     data.setDirName(virtualFile.getPath());
     data.TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY;
     configuration.setGeneratedName();
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
-    return settings;
-  }
-
-  public PsiElement getSourceElement() {
-    return myDir;
+    return true;
   }
 }

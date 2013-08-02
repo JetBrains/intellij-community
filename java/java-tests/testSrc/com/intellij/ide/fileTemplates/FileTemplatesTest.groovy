@@ -1,25 +1,20 @@
-package com.intellij.ide.fileTemplates;
+package com.intellij.ide.fileTemplates
+import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.JavaDirectoryService
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiManager
+import com.intellij.testFramework.IdeaTestCase
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.util.properties.EncodingAwareProperties
 
-import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.properties.EncodingAwareProperties;
-
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.*;
-
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class FileTemplatesTest extends IdeaTestCase {
   public void testAllTemplates() throws Exception {
     final File testsDir = new File(PathManagerEx.getTestDataPath()+"/ide/fileTemplates");
@@ -92,28 +87,47 @@ public class FileTemplatesTest extends IdeaTestCase {
     assertNotNull(catchBodyTemplate);
   }
 
+  public void "test collect undefined attribute names"() {
+    FileTemplate template = addTestTemplate("myclass", '${ABC} ${DEF} ${NAME}')
+    Properties properties = new Properties()
+    properties.NAME = 'zzz'
+    assert template.getUnsetAttributes(properties) as Set == ['ABC', 'DEF'] as Set
+  }
+
+  public void "test collect undefined attribute names from included templates"() {
+    def included = addTestTemplate("included", '${ABC} ${DEF}')
+    assert included == FileTemplateManager.instance.getTemplate("included.java")
+
+    FileTemplate template = addTestTemplate("myclass", '#parse("included.java") ${DEF} ${NAME}')
+    Properties properties = new Properties()
+    properties.NAME = 'zzz'
+    assert template.getUnsetAttributes(properties) as Set == ['ABC', 'DEF'] as Set
+  }
+
   public void testDefaultPackage() throws Exception {
     String name = "myclass";
-    FileTemplate template = FileTemplateManager.getInstance().addInternal(name/*+"ForTest"*/, "java");
-    try {
-      template.setText("package ${PACKAGE_NAME}; public class ${NAME} {}");
+    FileTemplate template = addTestTemplate(name, 'package ${PACKAGE_NAME}; public class ${NAME} {}')
 
-      File temp = FileUtil.createTempDirectory(getTestName(true), "");
+    File temp = FileUtil.createTempDirectory(getTestName(true), "");
 
-      myFilesToDelete.add(temp);
-      final VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    myFilesToDelete.add(temp);
+    final VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
 
-      PsiTestUtil.addSourceRoot(getModule(), tempDir);
+    PsiTestUtil.addSourceRoot(getModule(), tempDir);
 
-      VirtualFile sourceRoot = ModuleRootManager.getInstance(getModule()).getSourceRoots()[0];
-      PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(sourceRoot);
+    VirtualFile sourceRoot = ModuleRootManager.getInstance(getModule()).getSourceRoots()[0];
+    PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(sourceRoot);
 
-      PsiClass psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory, "XXX", name);
-      assertNotNull(psiClass);
-      assertEquals("public class XXX {\n}", psiClass.getContainingFile().getText());
-    }
-    finally {
-      FileTemplateManager.getInstance().removeTemplate(template);
-    }
+    PsiClass psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory, "XXX", name);
+    assertNotNull(psiClass);
+    assertEquals("public class XXX {\n}", psiClass.getContainingFile().getText());
+    FileTemplateManager.getInstance().removeTemplate(template);
+  }
+
+  private FileTemplate addTestTemplate(String name, String text) {
+    FileTemplate template = FileTemplateManager.getInstance().addTemplate(name, "java");
+    disposeOnTearDown({ FileTemplateManager.getInstance().removeTemplate(template) } as Disposable)
+    template.setText(text);
+    template
   }
 }

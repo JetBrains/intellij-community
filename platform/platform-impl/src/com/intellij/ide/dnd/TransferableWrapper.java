@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.projectView.impl;
+package com.intellij.ide.dnd;
 
-import com.intellij.ide.dnd.FileFlavorProvider;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 

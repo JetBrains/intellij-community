@@ -1,9 +1,10 @@
 package com.intellij.execution;
 
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -142,12 +143,10 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
                                                         final Class producerClass,
                                                         final MapDataContext dataContext) {
     ConfigurationContext context = createContext(psiElement, dataContext);
-    RuntimeConfigurationProducer producer = RuntimeConfigurationProducer.getInstance(producerClass);
+    RunConfigurationProducer producer = RunConfigurationProducer.getInstance(producerClass);
     assert producer != null;
-    producer = producer.createProducer((Location)dataContext.getData(Location.LOCATION), context);
-    RunnerAndConfigurationSettings settings = context.updateConfiguration(producer);
-    assert settings != null;
-    return (JUnitConfiguration)settings.getConfiguration();
+    ConfigurationFromContext fromContext = producer.createConfigurationFromContext(context);
+    return (JUnitConfiguration)fromContext.getConfiguration();
   }
 
   protected final <T extends RunConfiguration> T createConfiguration(PsiElement psiElement) {

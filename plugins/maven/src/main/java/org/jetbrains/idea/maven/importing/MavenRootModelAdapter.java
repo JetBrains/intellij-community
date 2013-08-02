@@ -326,6 +326,10 @@ public class MavenRootModelAdapter {
     Library.ModifiableModel modifiableModel = library.getModifiableModel();
     updateUrl(modifiableModel, OrderRootType.CLASSES, artifact, null, null, true);
     modifiableModel.commit();
+
+    if (myOrderEntriesBeforeJdk.contains(libraryName)) {
+      moveLastOrderEntryBeforeJdk();
+    }
   }
 
   public void addLibraryDependency(MavenArtifact artifact,
@@ -349,7 +353,7 @@ public class MavenRootModelAdapter {
     LibraryOrderEntry e = myRootModel.addLibraryEntry(library);
     e.setScope(scope);
 
-    if (myOrderEntriesBeforeJdk.contains(e.getLibraryName())) {
+    if (myOrderEntriesBeforeJdk.contains(libraryName)) {
       moveLastOrderEntryBeforeJdk();
     }
   }

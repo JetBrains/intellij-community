@@ -50,6 +50,11 @@ public class GenerateConstructorTest extends LightCodeInsightTestCase {
   public void testFinalFieldPreselection() throws Exception { doTest(true); }
   public void testSubstitution() throws Exception { doTest(true); }
 
+  public void testFieldPrefixCoincidence() throws Exception {
+    CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().FIELD_NAME_PREFIX = "m";
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

@@ -704,7 +704,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return null;
     StubTree stubHolder = (StubTree)tree;
-    tree.setDebugInfo(tree.getDebugInfo() + "\n  loaded at " + vFile.getTimeStamp() + "; mod stamp" + getModificationStamp() + "; viewProvider=" + getViewProvider());
 
     synchronized (PsiLock.LOCK) {
       if (getTreeElement() != null) return null;

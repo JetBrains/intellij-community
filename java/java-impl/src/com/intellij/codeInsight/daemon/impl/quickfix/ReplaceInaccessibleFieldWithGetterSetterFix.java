@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -98,7 +99,7 @@ public class ReplaceInaccessibleFieldWithGetterSetterFix extends LocalQuickFixAn
           }
         }
         else if (PsiUtil.isAccessedForReading((PsiExpression)place)) {
-          final PsiMethod getterPrototype = PropertyUtil.generateGetterPrototype(psiField);
+          final PsiMethod getterPrototype = GenerateMembersUtil.generateGetterPrototype(psiField);
           final PsiMethod getter = containingClass.findMethodBySignature(getterPrototype, true);
           if (getter != null && PsiUtil.isAccessible(getter, place, accessObjectClass)) {
             QuickFixAction.registerQuickFixAction(error, new ReplaceInaccessibleFieldWithGetterSetterFix(place, getter, false));

@@ -30,9 +30,11 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 
 public class JavaCharFilter extends CharFilter {
 
@@ -67,9 +69,16 @@ public class JavaCharFilter extends CharFilter {
     if (c == ':') {
       PsiFile file = lookup.getPsiFile();
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(lookup.getEditor().getDocument());
-      PsiElement element = lookup.getPsiElement();
-      if (PsiTreeUtil.getParentOfType(element, PsiSwitchLabelStatement.class) != null ||
-          PsiTreeUtil.getParentOfType(element, PsiConditionalExpression.class) != null) {
+      PsiElement leaf = file.findElementAt(lookup.getEditor().getCaretModel().getOffset() - 1);
+      if (PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_8)) {
+        PsiStatement statement = PsiTreeUtil.getParentOfType(leaf, PsiStatement.class);
+        if (statement == null ||
+            statement.getTextRange().getStartOffset() != leaf.getTextRange().getStartOffset()) { // not typing a statement label
+          return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+        }
+      }
+      if (PsiTreeUtil.getParentOfType(leaf, PsiSwitchLabelStatement.class) != null ||
+          PsiTreeUtil.getParentOfType(leaf, PsiConditionalExpression.class) != null) {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
       return Result.HIDE_LOOKUP;

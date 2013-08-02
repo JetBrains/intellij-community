@@ -73,7 +73,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       }
       if (element instanceof PsiFileStub) {
         StubTree tree = new StubTree((PsiFileStub)element);
-        tree.setDebugInfo("created from file content, timestamp=" + vFile.getTimeStamp());
+        tree.setDebugInfo("created from file content");
         return tree;
       }
     }
@@ -124,10 +124,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
         return processError(vFile, "No stub serializer: " + vFile.getPresentableUrl() + ": " + e.getMessage(), e);
       }
       ObjectStubTree tree = stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
-      tree.setDebugInfo("created from index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) + 
-                        ", wasIndexedAlready=" + wasIndexedAlready + 
-                        ", docSaved=" + saved +
-                        ", queried at " + vFile.getTimeStamp());
+      tree.setDebugInfo("created from index");
       return tree;
     }
     else if (size != 0) {

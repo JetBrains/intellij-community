@@ -748,8 +748,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     String suffix = getSuffixByVariableKind(variableKind);
     boolean doDecapitalize = false;
 
-    if (name.startsWith(prefix) && name.length() > prefix.length()) {
-      name = name.substring(prefix.length());
+    int pLength = prefix.length();
+    if (pLength > 0 && name.startsWith(prefix) && name.length() > pLength &&
+        // check it's not just a long camel word that happens to begin with the specified prefix
+        (!Character.isJavaIdentifierPart(prefix.charAt(pLength - 1)) || Character.isUpperCase(name.charAt(pLength)))) {
+      name = name.substring(pLength);
       doDecapitalize = true;
     }
 
