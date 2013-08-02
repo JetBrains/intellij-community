@@ -68,7 +68,6 @@ public class SequenceIteratorTest extends TestCase {
     int cnt = 0;
     while (iterator.hasNext()) {
       Integer next = iterator.next();
-      System.out.println(next);
       ++ cnt;
     }
     Assert.assertEquals(arr1.length + arr2.length + arr3.length, cnt);
@@ -83,7 +82,6 @@ public class SequenceIteratorTest extends TestCase {
     int cnt = 0;
     while (iterator.hasNext()) {
       Integer next = iterator.next();
-      System.out.println(next);
       ++ cnt;
     }
     Assert.assertEquals(arr1.length, cnt);
@@ -94,7 +92,6 @@ public class SequenceIteratorTest extends TestCase {
     int cnt = 0;
     while (iterator.hasNext()) {
       Integer next = iterator.next();
-      System.out.println(next);
       ++ cnt;
     }
     Assert.assertEquals(1, cnt);
@@ -105,7 +102,6 @@ public class SequenceIteratorTest extends TestCase {
     int cnt = 0;
     while (iterator.hasNext()) {
       Integer next = iterator.next();
-      System.out.println(next);
       ++ cnt;
     }
     Assert.assertEquals(0, cnt);
@@ -117,7 +113,6 @@ public class SequenceIteratorTest extends TestCase {
     int cnt = 0;
     while (iterator.hasNext()) {
       Integer next = iterator.next();
-      System.out.println(next);
       ++ cnt;
     }
     Assert.assertEquals(0, cnt);
@@ -133,10 +128,8 @@ public class SequenceIteratorTest extends TestCase {
     int cnt = 0;
     while (iterator.hasNext()) {
       Integer next = iterator.next();
-      System.out.println("next: " + next);
       if ((cnt - 2) % 5 == 0) {
         iterator.remove();
-        System.out.println("REMOVED");
       }
       ++ cnt;
     }
@@ -181,7 +174,6 @@ public class SequenceIteratorTest extends TestCase {
     int sum = 0;
     while (iterator.hasNext()) {
       Integer next = iterator.next();
-      System.out.println(next);
       ++ cnt;
       sum += next;
     }
@@ -222,7 +214,6 @@ public class SequenceIteratorTest extends TestCase {
       compose(Arrays.<Iterator<Integer>>asList(list1.iterator(), list2.iterator(), list3.iterator()));
     while (iterator.hasNext()) {
       Integer next = iterator.next();
-      System.out.println(next);
       iterator.remove();
     }
     Assert.assertTrue(list1.isEmpty());
@@ -239,7 +230,6 @@ public class SequenceIteratorTest extends TestCase {
       compose(Arrays.<Iterator<Integer>>asList(list1.iterator(), list2.iterator(), list3.iterator()));
     while (iterator.hasNext()) {
       Integer next = iterator.next();
-      System.out.println(next);
       iterator.remove();
     }
     Assert.assertTrue(list1.isEmpty());
