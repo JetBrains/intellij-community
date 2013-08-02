@@ -35,7 +35,7 @@ import java.util.List;
 public class HtmlScriptLanguageInjector implements MultiHostInjector {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement host) {
-    if (!(host instanceof XmlText) || !HtmlUtil.isHtmlTagContainingFile(host)) {
+    if (!host.isValid() || !(host instanceof XmlText) || !HtmlUtil.isHtmlTagContainingFile(host)) {
       return;
     }
     XmlTag scriptTag = ((XmlText)host).getParentTag();
