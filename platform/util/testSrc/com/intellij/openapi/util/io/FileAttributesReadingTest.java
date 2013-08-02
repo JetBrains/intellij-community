@@ -421,7 +421,6 @@ public class FileAttributesReadingTest {
   private static FileAttributes getAttributes(@NotNull final File file, final boolean checkList) {
     final FileAttributes attributes = FileSystemUtil.getAttributes(file);
     assertNotNull(attributes);
-    System.out.println(attributes + ": " + file);
 
     if (SystemInfo.isWindows && checkList) {
       final String parent = file.getParent();
