@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,6 @@ public class OpenProjectAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setVisible(ActionPlaces.WELCOME_SCREEN.equals(e.getPlace()));
+    e.getPresentation().setEnabledAndVisible(ActionPlaces.WELCOME_SCREEN.equals(e.getPlace()));
   }
 }
