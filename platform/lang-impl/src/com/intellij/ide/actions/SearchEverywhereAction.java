@@ -20,11 +20,13 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -40,6 +42,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -54,8 +57,10 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -124,7 +129,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myAlarm.addRequest(new Runnable() {
           @Override
           public void run() {
-            if (StringUtil.isEmpty(pattern)) {
+            if (StringUtil.isEmpty(pattern.trim())) {
               //noinspection SSBasedInspection
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
@@ -440,10 +445,84 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     @Override
     public void run() {
+      if (pattern.trim().length() == 0) {
+        return;
+      }
+
       if (myClassModel == null) {
         myClassModel = new GotoClassModel2(project);
         myFileModel = new GotoFileModel(project);
-        myActionModel = new GotoActionModel(project, myFocusComponent);
+        myActionModel = new GotoActionModel(project, myFocusComponent) {
+          @Override
+          public boolean matches(@NotNull String name, @NotNull String pattern) {
+            final AnAction anAction = ActionManager.getInstance().getAction(name);
+            if (anAction == null) return true;
+            return NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE).matches(
+              anAction.getTemplatePresentation().getText());
+          }
+
+          @NotNull
+          @Override
+          public Object[] getElementsByName(String id, boolean checkBoxState, String pattern) {
+            final HashMap<AnAction, String> map = new HashMap<AnAction, String>();
+            final AnAction act = myActionManager.getAction(id);
+            if (act != null) {
+              map.put(act, myActionsMap.get(act));
+              if (checkBoxState) {
+                final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
+                for (AnAction action : map.keySet()) { //do not add already included actions
+                  ids.remove(getActionId(action));
+                }
+                if (ids.contains(id)) {
+                  final AnAction anAction = myActionManager.getAction(id);
+                  map.put(anAction, null);
+                }
+              }
+            }
+            Object[] objects = map.entrySet().toArray(new Map.Entry[map.size()]);
+            if (Comparing.strEqual(id, SETTINGS_KEY)) {
+              final Set<String> words = myIndex.getProcessedWords(pattern);
+              Set<OptionDescription> optionDescriptions = null;
+              final String actionManagerName = myActionManager.getComponentName();
+              for (String word : words) {
+                final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)myIndex).getAcceptableDescriptions(word);
+                if (descriptions != null) {
+                  for (Iterator<OptionDescription> iterator = descriptions.iterator(); iterator.hasNext(); ) {
+                    OptionDescription description = iterator.next();
+                    if (actionManagerName.equals(description.getPath())) {
+                      iterator.remove();
+                    }
+                  }
+                  if (!descriptions.isEmpty()) {
+                    if (optionDescriptions == null) {
+                      optionDescriptions = descriptions;
+                    }
+                    else {
+                      optionDescriptions.retainAll(descriptions);
+                    }
+                  }
+                } else {
+                  optionDescriptions = null;
+                  break;
+                }
+              }
+              if (optionDescriptions != null && !optionDescriptions.isEmpty()) {
+                Set<String> currentHits = new HashSet<String>();
+                for (Iterator<OptionDescription> iterator = optionDescriptions.iterator(); iterator.hasNext(); ) {
+                  OptionDescription description = iterator.next();
+                  final String hit = description.getHit();
+                  if (hit == null || !currentHits.add(hit.trim())) {
+                    iterator.remove();
+                  }
+                }
+                final Object[] descriptions = optionDescriptions.toArray();
+                Arrays.sort(descriptions);
+                objects = ArrayUtil.mergeArrays(objects, descriptions);
+              }
+            }
+            return objects;
+          }
+        };
         myClasses = myClassModel.getNames(false);
         myFiles = myFileModel.getNames(false);
         myActions = myActionModel.getNames(true);
@@ -491,7 +570,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               if (object instanceof PsiFile) {
                 object = ((PsiFile)object).getVirtualFile();
               }
-              if (!alreadyAddedFiles.contains(object)) {
+              if (object instanceof VirtualFile && !alreadyAddedFiles.contains((VirtualFile)object) && !((VirtualFile)object).isDirectory()) {
                 myProgressIndicator.checkCanceled();
                 listModel.addElement(object);
                 filesCounter++;
@@ -501,10 +580,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         }
 
-        Set<AnAction> addedActions = new HashSet<AnAction>();
+        final Set<AnAction> addedActions = new HashSet<AnAction>();
         final List<Object> actionsAndSettings = new ArrayList<Object>();
         for (MatchResult o : actions) {
-          if (actionsCount > 15) break;
+          //if (actionsCount > 15) break;
           myProgressIndicator.checkCanceled();
           Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
           for (Object object : objects) {
@@ -515,7 +594,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             }
             actionsAndSettings.add(object);
             actionsCount++;
-            if (actionsCount > 15) break;
+            //if (actionsCount > 15) break;
           }
         }
 
@@ -547,7 +626,29 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         @Override
         public void run() {
           myProgressIndicator.checkCanceled();
-          myList.setModel(listModel);
+          final DataContext dataContext = DataManager.getInstance().getDataContext(myContextComponent);
+          int settings = 0;
+          int actions = 0;
+          final DefaultListModel model = new DefaultListModel();
+          for (Object o : listModel.toArray()) {
+            if (isSetting(o)) {
+              if (settings < 15) {
+                settings++;
+                model.addElement(o);
+              }
+            } else if (isActionValue(o)) {
+              if (actions < 15) {
+                final AnActionEvent event = GotoActionModel.updateActionBeforeShow((AnAction)((Map.Entry)o).getKey(), dataContext);
+                if (event.getPresentation().isEnabledAndVisible()) {
+                  actions++;
+                  model.addElement(o);
+                }
+              }
+            } else {
+              model.addElement(o);
+            }
+          }
+          myList.setModel(model);
           if (myPopup == null || !myPopup.isVisible()) {
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(field.getTextEditor(), myList);
             myPopup = JBPopupFactory.getInstance()
@@ -586,12 +687,23 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       });
     }
 
-    private List<MatchResult> collectResults(String pattern, String[] names, ChooseByNameModel model) {
+    private List<MatchResult> collectResults(String pattern, String[] names, final ChooseByNameModel model) {
+      if (names == null) return Collections.emptyList();
+      final String trimmedPattern = pattern.trim();
       if (!pattern.startsWith("*") && pattern.length() > 1) {
         pattern = "*" + pattern;
       }
       final ArrayList<MatchResult> results = new ArrayList<MatchResult>();
-      MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+
+      MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE) {
+        @Override
+        public boolean matches(@NotNull String name) {
+          if (!(model instanceof GotoActionModel) && trimmedPattern.indexOf(' ') > 0 && name.trim().indexOf(' ') < 0) {
+            return false;
+          }
+          return super.matches(name);
+        }
+      };
       MatchResult result;
 
       for (String name : names) {
@@ -612,6 +724,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           results.add(result);
         }
       }
+
+      Collections.sort(results, new Comparator<MatchResult>() {
+        @Override
+        public int compare(MatchResult o1, MatchResult o2) {
+          return o1.compareTo(o2);
+        }
+      });
       return results;
     }
 
