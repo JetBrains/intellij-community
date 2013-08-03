@@ -51,14 +51,14 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @Nullable private final Project myProject;
   private final Component myContextComponent;
 
-  private final ActionManager myActionManager = ActionManager.getInstance();
+  protected final ActionManager myActionManager = ActionManager.getInstance();
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
   private Pattern myCompiledPattern;
 
-  private final SearchableOptionsRegistrar myIndex;
-  private final Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
+  protected final SearchableOptionsRegistrar myIndex;
+  protected final Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
     @Override
     public int compare(AnAction o1, AnAction o2) {
       int compare = Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
