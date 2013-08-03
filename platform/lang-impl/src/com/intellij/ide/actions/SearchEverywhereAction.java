@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -71,6 +72,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Konstantin Bulenkov
@@ -92,6 +94,20 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private AnActionEvent myActionEvent;
   private Component myContextComponent;
   private CalcThread myCalcThread;
+  private static AtomicBoolean ourShiftCanBeUsed = new AtomicBoolean(false);
+
+  static {
+    IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
+      @Override
+      public boolean dispatch(AWTEvent event) {
+        if (event instanceof KeyEvent) {
+          ourShiftCanBeUsed.set((((KeyEvent)event).getKeyCode() != KeyEvent.VK_SHIFT) || event.getID() != KeyEvent.KEY_PRESSED);
+        }
+        return false;
+      }
+    }, null);
+
+  }
 
   public SearchEverywhereAction() {
     createSearchField();
@@ -112,7 +128,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(Registry.is("search.everywhere.enabled"));
+    e.getPresentation().setEnabledAndVisible(!ourShiftCanBeUsed.get() && Registry.is("search.everywhere.enabled"));
   }
 
 
