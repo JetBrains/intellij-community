@@ -2,6 +2,9 @@ package org.editorconfig.configmanagement;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -29,10 +32,11 @@ public class CodeStyleManager implements FileEditorManagerListener, WindowFocusL
     private static final Logger LOG = 
             Logger.getInstance("#org.editorconfig.configmanagement.CodeStyleManager");
     private final CodeStyleSettingsManager codeStyleSettingsManager;
+    private final Project project;
 
     public CodeStyleManager(Project project) {
         codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(project);
-        //projectWindow.addWindowFocusListener(this);
+        this.project = project;
     }
 
     @Override
@@ -49,6 +53,21 @@ public class CodeStyleManager implements FileEditorManagerListener, WindowFocusL
     public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         VirtualFile file = event.getNewFile();
         applySettings(file);
+    }
+
+    @Override
+    public void windowGainedFocus(WindowEvent e) {
+        Editor currentEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        if (currentEditor != null) {
+            Document currentDocument = currentEditor.getDocument();
+            VirtualFile currentFile = FileDocumentManager.getInstance().getFile(currentDocument);
+            applySettings(currentFile);
+        }
+    }
+
+    @Override
+    public void windowLostFocus(WindowEvent e) {
+        // Not used
     }
     
     private void applySettings(VirtualFile file) {
@@ -146,16 +165,5 @@ public class CodeStyleManager implements FileEditorManagerListener, WindowFocusL
                 throw new InvalidConfigException(indentStyleKey, indentStyle, filePath);
             }
         }
-    }
-
-    @Override
-    public void windowGainedFocus(WindowEvent e) {
-        LOG.debug("Gained focus");
-
-    }
-
-    @Override
-    public void windowLostFocus(WindowEvent e) {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 }
