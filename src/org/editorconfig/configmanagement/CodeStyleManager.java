@@ -93,6 +93,10 @@ public class CodeStyleManager implements FileEditorManagerListener, WindowFocusL
         catch(InvalidConfigException e) {
             LOG.warn(e.getMessage());
         }
+        // Set indent_size to tab_width if indent_size == "tab"
+        if (indentSize.equals("tab")) {
+            indentSize = tabWidth;
+        }
         // Apply tab_width if set, or fall back to indent_size
         if (tabWidth.isEmpty()) {
             tabWidth = indentSize;
