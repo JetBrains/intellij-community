@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,10 +54,10 @@ class ContentTabLabel extends BaseLabel {
 
   public void update() {
     if (!myLayout.isToDrawTabs()) {
-      setHorizontalAlignment(JLabel.LEFT);
+      setHorizontalAlignment(SwingConstants.LEFT);
       setBorder(null);
     } else {
-      setHorizontalAlignment(JLabel.CENTER);
+      setHorizontalAlignment(SwingConstants.CENTER);
       setBorder(new EmptyBorder(0, 8, 0, 8));
     }
 
@@ -71,16 +71,16 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected Color getActiveFg(boolean selected) {
-    if (contentManager().getContentCount() > 1) {
-      return selected ? Color.white : super.getActiveFg(selected);
+    if (contentManager().getContentCount() > 1 && selected) {
+      return Gray._255;
     }
     return super.getActiveFg(selected);
   }
 
   @Override
   protected Color getPassiveFg(boolean selected) {
-    if (contentManager().getContentCount() > 1) {
-      return selected && !UIUtil.isUnderDarcula() ? Gray._255 : super.getPassiveFg(selected);
+    if (contentManager().getContentCount() > 1 && selected && !UIUtil.isUnderDarcula()) {
+      return Gray._255;
     }
     return super.getPassiveFg(selected);
   }
