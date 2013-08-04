@@ -4,6 +4,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -71,22 +72,28 @@ public class CodeStyleManager implements FileEditorManagerListener, WindowFocusL
     }
     
     private void applySettings(VirtualFile file) {
-        // Always drop any current temporary settings so that the defaults will be applied if
-        // this is a non-editorconfig-managed file
-        codeStyleSettingsManager.dropTemporarySettings();
-        // Prepare a new settings object, which will maintain the standard settings if no
-        // editorconfig settings apply
-        CodeStyleSettings currentSettings = codeStyleSettingsManager.getCurrentSettings();
-        CodeStyleSettings newSettings = new CodeStyleSettings();
-        newSettings.copyFrom(currentSettings);
-        // Get editorconfig settings
-        String filePath = file.getCanonicalPath();
-        SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
-        List<OutPair> outPairs = settingsProvider.getOutPairs(filePath);
-        // Apply editorconfig settings for the current editor
-        applyCodeStyleSettings(outPairs, newSettings, filePath);
-        codeStyleSettingsManager.setTemporarySettings(newSettings);
-        LOG.debug("Applied code style settings for: " + filePath);
+        if (file != null) {
+            // Always drop any current temporary settings so that the defaults will be applied if
+            // this is a non-editorconfig-managed file
+            codeStyleSettingsManager.dropTemporarySettings();
+            // Prepare a new settings object, which will maintain the standard settings if no
+            // editorconfig settings apply
+            CodeStyleSettings currentSettings = codeStyleSettingsManager.getCurrentSettings();
+            CodeStyleSettings newSettings = new CodeStyleSettings();
+            newSettings.copyFrom(currentSettings);
+            // Get editorconfig settings
+            String filePath = file.getCanonicalPath();
+            SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
+            List<OutPair> outPairs = settingsProvider.getOutPairs(filePath);
+            // Apply editorconfig settings for the current editor
+            applyCodeStyleSettings(outPairs, newSettings, filePath);
+            codeStyleSettingsManager.setTemporarySettings(newSettings);
+            LOG.debug("Applied code style settings for: " + filePath);
+            EditorEx currentEditor = (EditorEx) FileEditorManager.getInstance(project).getSelectedTextEditor();
+            if (currentEditor != null){
+                currentEditor.reinitSettings();
+            }
+        }
     }
 
     private void applyCodeStyleSettings(List<OutPair> outPairs,
