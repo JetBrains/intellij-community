@@ -10,15 +10,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.core.EditorConfig.OutPair;
+import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.utils.ConfigConverter;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.util.Collection;
 import java.util.List;
 
-public class CodeStyleManager implements FileEditorManagerListener {
+public class CodeStyleManager implements FileEditorManagerListener, WindowFocusListener {
     // Handles the following EditorConfig settings:
     private static final String indentSizeKey = "indent_size";
     private static final String tabWidthKey = "tab_width";
@@ -30,6 +32,7 @@ public class CodeStyleManager implements FileEditorManagerListener {
 
     public CodeStyleManager(Project project) {
         codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(project);
+        //projectWindow.addWindowFocusListener(this);
     }
 
     @Override
@@ -139,5 +142,16 @@ public class CodeStyleManager implements FileEditorManagerListener {
                 throw new InvalidConfigException(indentStyleKey, indentStyle, filePath);
             }
         }
+    }
+
+    @Override
+    public void windowGainedFocus(WindowEvent e) {
+        LOG.debug("Gained focus");
+
+    }
+
+    @Override
+    public void windowLostFocus(WindowEvent e) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 }

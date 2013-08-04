@@ -3,7 +3,8 @@ package org.editorconfig.plugincomponents;
 import com.intellij.AppTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.util.messages.MessageBus;
 import org.editorconfig.configmanagement.EditorSettingsManager;
@@ -12,22 +13,27 @@ import org.picocontainer.MutablePicoContainer;
 
 public class ConfigAppComponent implements ApplicationComponent {
     public ConfigAppComponent() {
-        // Register app-level config managers, other classes
-        MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-
-        // Register EditorSettingsManager (handles stripping trailing whitespaces, newlines)
-        EditorSettingsManager editorSettingsManager = new EditorSettingsManager();
-        bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, editorSettingsManager);
-        bus.connect().subscribe(DoneSavingTopic.DONE_SAVING, editorSettingsManager);
+        // Load a couple replacement classes to provide extra events
+        ComponentManagerImpl componentManager = (ComponentManagerImpl) ApplicationManager.getApplication();
+        MutablePicoContainer container = (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer();
 
         // Register replacement FileDocumentManager
         String fileDocumentManagerKey = FileDocumentManager.class.getName();
-        ComponentConfig config = new ComponentConfig();
-        config.setInterfaceClass(FileDocumentManager.class.getName());
-        config.setImplementationClass(ReplacementFileDocumentManager.class.getName());
-        MutablePicoContainer container = (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer();
         container.unregisterComponent(fileDocumentManagerKey);
-        container.registerComponentImplementation(fileDocumentManagerKey, ReplacementFileDocumentManager.class);
+        componentManager.registerComponentImplementation(FileDocumentManager.class, ReplacementFileDocumentManager.class);
+
+        // Register replacement EditorSettingsExternalizable
+        String editorSettingsExternalizableKey = EditorSettingsExternalizable.class.getName();
+        container.unregisterComponent(editorSettingsExternalizableKey);
+        componentManager.registerComponentImplementation(EditorSettingsExternalizable.class, ReplacementEditorSettingsExternalizable.class);
+
+        // Create EditorSettingsManager and register event listeners
+        MessageBus bus = ApplicationManager.getApplication().getMessageBus();
+        EditorSettingsManager editorSettingsManager = new EditorSettingsManager();
+        bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, editorSettingsManager);
+        bus.connect().subscribe(DoneSavingTopic.DONE_SAVING, editorSettingsManager);
+        EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+        editorSettings.addPropertyChangeListener(editorSettingsManager);
     }
 
     public void initComponent() {

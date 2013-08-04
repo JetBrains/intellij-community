@@ -12,45 +12,40 @@ import org.editorconfig.plugincomponents.DoneSavingListener;
 import org.editorconfig.utils.ConfigConverter;
 import org.jetbrains.annotations.NotNull;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.List;
 
-public class EditorSettingsManager implements DoneSavingListener, FileDocumentManagerListener {
+public class EditorSettingsManager implements DoneSavingListener, FileDocumentManagerListener, PropertyChangeListener {
     // Handles the following EditorConfig settings:
     private static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
     private static final String insertFinalNewlineKey = "insert_final_newline";
 
     private static final Logger LOG = Logger.getInstance("#org.editorconfig.configmanagement.EditorSettingsManager");
 
-    private String originalStripTrailingSpaces;
-    private boolean originalEnsureNewline;
-    private boolean originalSettingsSaved;
+    private boolean defaultEnsureNewline;
+    private String defaultStripTrailingSpaces;
 
     public EditorSettingsManager() {
+        saveDefaultEditorSettings();
     }
     
     @Override
     public void doneSavingDocument(@NotNull Document document) {
         // This is only fired after the end of a save-one operation (not after a save-all operation)
         LOG.debug("Done saving one document");
-        revertToOriginalEditorSettings();
+        revertToDefaultEditorSettings();
     }
 
     @Override
     public void doneSavingAllDocuments() {
         LOG.debug("Done saving all documents");
-        revertToOriginalEditorSettings();
-
+        revertToDefaultEditorSettings();
     }
 
     @Override
     public void beforeAllDocumentsSaving() {
-        LOG.debug("Saving all documents");
-        if (originalSettingsSaved) {
-            // There's no reason default settings should be stored now, because they are
-            // wiped out after every save-one or save-all operation
-            LOG.error("Unexpected default editor settings found");
-        }
-        saveOriginalEditorSettings();
+        // Not used
     }
 
     @Override
@@ -58,10 +53,6 @@ public class EditorSettingsManager implements DoneSavingListener, FileDocumentMa
         // This is fired when any document is saved, regardless of whether it is part of a save-all or
         // a save-one operation
         LOG.debug("Saving one document");
-        if (originalSettingsSaved) {
-            revertToOriginalEditorSettings();
-        }
-        saveOriginalEditorSettings();
         VirtualFile file = FileDocumentManager.getInstance().getFile(document);
         applySettings(file);
     }
@@ -90,7 +81,13 @@ public class EditorSettingsManager implements DoneSavingListener, FileDocumentMa
     public void unsavedDocumentsDropped() {
         //Not used
     }
-    
+
+    @Override
+    public void propertyChange(PropertyChangeEvent event) {
+        // This should only happen when ensureEOL or stripSpaces changes
+        saveDefaultEditorSettings();
+    }
+
     private void applySettings(VirtualFile file) {
         // Get editorconfig settings
         String filePath = file.getCanonicalPath();
@@ -101,21 +98,16 @@ public class EditorSettingsManager implements DoneSavingListener, FileDocumentMa
         
     }
 
-    private void saveOriginalEditorSettings() {
+    private void saveDefaultEditorSettings() {
         EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-        originalEnsureNewline = editorSettings.isEnsureNewLineAtEOF();
-        originalStripTrailingSpaces = editorSettings.getStripTrailingSpaces();
-        LOG.debug("Saved original editor settings");
+        defaultEnsureNewline = editorSettings.isEnsureNewLineAtEOF();
+        defaultStripTrailingSpaces = editorSettings.getStripTrailingSpaces();
     }
 
-    private void revertToOriginalEditorSettings() {
+    private void revertToDefaultEditorSettings() {
         EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-        editorSettings.setEnsureNewLineAtEOF(originalEnsureNewline);
-        editorSettings.setStripTrailingSpaces(originalStripTrailingSpaces);
-        originalEnsureNewline = false;
-        originalStripTrailingSpaces = null;
-        originalSettingsSaved = false;
-        LOG.debug("Reverted to original editor settings");
+        editorSettings.setEnsureNewLineAtEOF(defaultEnsureNewline);
+        editorSettings.setStripTrailingSpaces(defaultStripTrailingSpaces);
     }
 
     private void applyEditorSettings(List<EditorConfig.OutPair> outPairs, String filePath) {
@@ -139,12 +131,15 @@ public class EditorSettingsManager implements DoneSavingListener, FileDocumentMa
     private void applyTrimTrailingWhitespace(EditorSettingsExternalizable editorSettings,
                                              String trimTrailingWhitespace, String filePath)
                                                 throws InvalidConfigException {
-        if (!trimTrailingWhitespace.isEmpty()) {
+        if (trimTrailingWhitespace.isEmpty()) {
+            editorSettings.setStripTrailingSpaces(defaultStripTrailingSpaces);
+        } else {
             if (trimTrailingWhitespace.equals("true")) {
                 editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
             } else if (trimTrailingWhitespace.equals("false")) {
                 editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
             } else {
+                editorSettings.setStripTrailingSpaces(defaultStripTrailingSpaces);
                 throw new InvalidConfigException(trimTrailingWhitespaceKey, trimTrailingWhitespace, filePath);
             }
         }
@@ -152,11 +147,14 @@ public class EditorSettingsManager implements DoneSavingListener, FileDocumentMa
 
     private void applyInsertFinalNewline(EditorSettingsExternalizable editorSettings, String insertFinalNewline,
                                          String filePath) throws InvalidConfigException {
-        if (!insertFinalNewline.isEmpty()) {
+        if (insertFinalNewline.isEmpty()) {
+            editorSettings.setEnsureNewLineAtEOF(defaultEnsureNewline);
+        } else {
             if (insertFinalNewline.equals("true") || insertFinalNewline.equals("false")) {
                 editorSettings.setEnsureNewLineAtEOF(insertFinalNewline.equals("true"));
             }
             else {
+                editorSettings.setEnsureNewLineAtEOF(defaultEnsureNewline);
                 throw new InvalidConfigException(insertFinalNewlineKey, insertFinalNewline, filePath);
             }
         }

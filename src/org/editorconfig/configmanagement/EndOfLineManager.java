@@ -10,10 +10,10 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.core.EditorConfig;
-import org.editorconfig.utils.ConfigConverter;
 import org.editorconfig.plugincomponents.DoneSavingListener;
+import org.editorconfig.plugincomponents.SettingsProviderComponent;
+import org.editorconfig.utils.ConfigConverter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -26,7 +26,6 @@ public class EndOfLineManager implements FileDocumentManagerListener, DoneSaving
     private final Logger LOG = Logger.getInstance("#org.editorconfig.codestylesettings.EndOfLineManager");
     private final Project project;
     private final List<Document> documentsToChange = new ArrayList<Document>();
-
 
     private static final String CR = Character.toString((char) 13);
     private static final String LF = Character.toString((char) 10);
@@ -42,27 +41,6 @@ public class EndOfLineManager implements FileDocumentManagerListener, DoneSaving
 
     public EndOfLineManager(Project project) {
         this.project = project;
-    }
-
-    public void initComponent() {
-        // TODO: insert component initialization logic here
-    }
-
-    public void disposeComponent() {
-        // TODO: insert component disposal logic here
-    }
-
-    @NotNull
-    public String getComponentName() {
-        return "EndOfLineManager";
-    }
-
-    public void projectOpened() {
-        // Not used
-    }
-
-    public void projectClosed() {
-        // Not used
     }
 
     @Override
@@ -112,6 +90,7 @@ public class EndOfLineManager implements FileDocumentManagerListener, DoneSaving
     public void doneSavingDocument(@NotNull Document document) {
         applySettings();
     }
+
     private void applySettings() {
         for (Document document:documentsToChange){
             final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
