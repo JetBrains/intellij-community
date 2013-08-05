@@ -36,7 +36,7 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
   private final int myTaskIndex;
   private final int myPriority;
   private final boolean myFailFastOnAcquireReadAction;
-  private volatile boolean myParentThreadHasReadAccess;
+  private volatile boolean myRunInReadAction;
   private volatile boolean myReportExceptions;
 
   PrioritizedFutureTask(final Callable<T> callable,
@@ -53,8 +53,8 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
     myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
   }
 
-  public void beforeRun(boolean parentThreadHasReadAccess, boolean reportExceptions) {
-    myParentThreadHasReadAccess = parentThreadHasReadAccess;
+  public void beforeRun(boolean runInReadAction, boolean reportExceptions) {
+    myRunInReadAction = runInReadAction;
     myReportExceptions = reportExceptions;
   }
 
@@ -93,7 +93,7 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
         }
       }
     };
-    if (myParentThreadHasReadAccess) {
+    if (myRunInReadAction) {
       // have to start "real" read action so that we cannot start write action until we are finished here
       if (myFailFastOnAcquireReadAction) {
         if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable)) {

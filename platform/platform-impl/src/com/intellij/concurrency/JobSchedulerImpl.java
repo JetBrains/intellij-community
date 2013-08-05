@@ -62,8 +62,8 @@ public class JobSchedulerImpl extends JobScheduler implements Disposable {
     return ourQueue.poll();
   }
 
-  static void submitTask(PrioritizedFutureTask future, boolean callerHasReadAccess, boolean reportExceptions) {
-    future.beforeRun(callerHasReadAccess, reportExceptions);
+  static void submitTask(@NotNull PrioritizedFutureTask future, boolean runInReadAction, boolean reportExceptions) {
+    future.beforeRun(runInReadAction, reportExceptions);
     ourExecutor.executeTask(future);
   }
 
@@ -72,12 +72,12 @@ public class JobSchedulerImpl extends JobScheduler implements Disposable {
       super(CORES_COUNT, Integer.MAX_VALUE, 60 * 10, TimeUnit.SECONDS, ourQueue, WORKERS_FACTORY);
     }
 
-    private void executeTask(final PrioritizedFutureTask task) {
+    private void executeTask(@NotNull PrioritizedFutureTask task) {
       super.execute(task);
     }
 
     @Override
-    public void execute(Runnable command) {
+    public void execute(@NotNull Runnable command) {
       throw new IllegalStateException("Use executeTask() to submit PrioritizedFutureTasks only");
     }
   }
