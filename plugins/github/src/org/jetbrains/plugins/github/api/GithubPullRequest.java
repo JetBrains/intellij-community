@@ -29,7 +29,7 @@ public class GithubPullRequest {
   private long myNumber;
   @NotNull private String myState;
   @NotNull private String myTitle;
-  @NotNull private String myBody;
+  @NotNull private String myBodyHtml;
 
   @NotNull private String myHtmlUrl;
   @NotNull private String myDiffUrl;
@@ -91,7 +91,7 @@ public class GithubPullRequest {
   public GithubPullRequest(long number,
                            @NotNull String state,
                            @NotNull String title,
-                           @Nullable String body,
+                           @Nullable String bodyHtml,
                            @NotNull String htmlUrl,
                            @NotNull String diffUrl,
                            @NotNull String patchUrl,
@@ -106,7 +106,7 @@ public class GithubPullRequest {
     myNumber = number;
     myState = state;
     myTitle = title;
-    myBody = StringUtil.notNullize(body);
+    myBodyHtml = StringUtil.notNullize(bodyHtml);
     myHtmlUrl = htmlUrl;
     myDiffUrl = diffUrl;
     myPatchUrl = patchUrl;
@@ -135,8 +135,8 @@ public class GithubPullRequest {
   }
 
   @NotNull
-  public String getBody() {
-    return myBody;
+  public String getBodyHtml() {
+    return myBodyHtml;
   }
 
   @NotNull

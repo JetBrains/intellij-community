@@ -29,6 +29,7 @@ class GithubPullRequestRaw implements DataConstructor {
   @Nullable public String state;
   @Nullable public String title;
   @Nullable public String body;
+  @Nullable public String bodyHtml;
 
   @Nullable public String url;
   @Nullable public String htmlUrl;
@@ -71,7 +72,7 @@ class GithubPullRequestRaw implements DataConstructor {
 
   @NotNull
   public GithubPullRequest createPullRequest() {
-    return new GithubPullRequest(number, state, title, body, htmlUrl, diffUrl, patchUrl, issueUrl, createdAt, updatedAt, closedAt, mergedAt,
+    return new GithubPullRequest(number, state, title, bodyHtml, htmlUrl, diffUrl, patchUrl, issueUrl, createdAt, updatedAt, closedAt, mergedAt,
                                  user.createUser(), head.create(), base.create());
   }
 

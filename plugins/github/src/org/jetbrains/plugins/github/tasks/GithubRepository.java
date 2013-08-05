@@ -193,7 +193,7 @@ public class GithubRepository extends BaseRepositoryImpl {
     return ContainerUtil.map2Array(result, Comment.class, new Function<GithubIssueComment, Comment>() {
       @Override
       public Comment fun(GithubIssueComment comment) {
-        return new GithubComment(comment.getCreatedAt(), comment.getUser().getLogin(), comment.getBody(), comment.getUser().getGravatarId(),
+        return new GithubComment(comment.getCreatedAt(), comment.getUser().getLogin(), comment.getBodyHtml(), comment.getUser().getGravatarId(),
                                  comment.getUser().getHtmlUrl());
       }
     });

@@ -26,7 +26,7 @@ public class GithubIssueComment {
   private long myId;
 
   @NotNull private String myHtmlUrl;
-  @NotNull private String myBody;
+  @NotNull private String myBodyHtml;
 
   @NotNull private Date myCreatedAt;
   @NotNull private Date myUpdatedAt;
@@ -35,13 +35,13 @@ public class GithubIssueComment {
 
   public GithubIssueComment(long id,
                             @NotNull String htmlUrl,
-                            @NotNull String body,
+                            @NotNull String bodyHtml,
                             @NotNull Date createdAt,
                             @NotNull Date updatedAt,
                             @NotNull GithubUser user) {
     myId = id;
     myHtmlUrl = htmlUrl;
-    myBody = body;
+    myBodyHtml = bodyHtml;
     myCreatedAt = createdAt;
     myUpdatedAt = updatedAt;
     myUser = user;
@@ -57,8 +57,8 @@ public class GithubIssueComment {
   }
 
   @NotNull
-  public String getBody() {
-    return myBody;
+  public String getBodyHtml() {
+    return myBodyHtml;
   }
 
   @NotNull
