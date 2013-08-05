@@ -15,16 +15,14 @@
  */
 package com.siyeh.ipp.base;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.psiutils.BoolUtils;
@@ -46,7 +44,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element){
-    if (!isWritable(project, element)) {
+    if (prepareForWriting() && !FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
       return;
     }
     final PsiElement matchingElement = findMatchingElement(element, editor);
@@ -54,6 +52,10 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
       return;
     }
     processIntention(editor, matchingElement);
+  }
+
+  protected boolean prepareForWriting() {
+    return true;
   }
 
   protected abstract void processIntention(@NotNull PsiElement element);
@@ -191,16 +193,6 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
   @Override
   public boolean startInWriteAction() {
     return true;
-  }
-
-  private static boolean isWritable(Project project, PsiElement element) {
-    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-    if (virtualFile == null) {
-      return true;
-    }
-    final ReadonlyStatusHandler readonlyStatusHandler = ReadonlyStatusHandler.getInstance(project);
-    final ReadonlyStatusHandler.OperationStatus operationStatus = readonlyStatusHandler.ensureFilesWritable(virtualFile);
-    return !operationStatus.hasReadonlyFiles();
   }
 
   private String getPrefix() {
