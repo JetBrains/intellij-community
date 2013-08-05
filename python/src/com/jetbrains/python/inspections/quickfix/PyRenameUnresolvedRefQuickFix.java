@@ -58,7 +58,7 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
 
     List<PyReferenceExpression> refs = collectExpressionsToRename(referenceExpression, parentScope);
 
-    LookupElement[] items = collectLookupItems(referenceExpression, parentScope);
+    LookupElement[] items = collectLookupItems(parentScope);
     final String name = referenceExpression.getReferencedName();
 
     ReferenceNameExpression refExpr = new ReferenceNameExpression(items, name);
@@ -120,13 +120,13 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
     return null;
   }
 
-  private static LookupElement[] collectLookupItems(@NotNull final PyReferenceExpression referenceExpression,
-                                                    @NotNull final ScopeOwner parentScope) {
+  private static LookupElement[] collectLookupItems(@NotNull final ScopeOwner parentScope) {
     Set<LookupElement> items = new LinkedHashSet<LookupElement>();
 
     final Collection<String> usedNames = PyRefactoringUtil.collectUsedNames(parentScope);
     for (String name : usedNames) {
-      items.add(LookupElementBuilder.create(name));
+      if (name != null)
+        items.add(LookupElementBuilder.create(name));
     }
 
     return items.toArray(new LookupElement[items.size()]);
