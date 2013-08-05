@@ -37,9 +37,12 @@ public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
                                                          "var = " + expression.getText());
 
       expression = expression.replace(assignment);
+      if (expression == null) return;
       expression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(expression);
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(expression);
-      builder.replaceElement(((PyAssignmentStatement)expression).getLeftHandSideExpression(), "var");
+      final PyExpression leftHandSideExpression = ((PyAssignmentStatement)expression).getLeftHandSideExpression();
+      assert leftHandSideExpression != null;
+      builder.replaceElement(leftHandSideExpression, "var");
       builder.run();
     }
   }
