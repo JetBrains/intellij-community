@@ -254,9 +254,9 @@ public class HighlightInfo implements Segment {
   }
 
   @NotNull
-  private static HighlightInfoFilter[] getFilters() {
-    return ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
-  }
+  private static final HighlightInfoFilter[] FILTERS =
+    ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
+
 
   public boolean needUpdateOnTyping() {
     return isFlagSet(NEEDS_UPDATE_ON_TYPING_FLAG);
@@ -588,7 +588,7 @@ public class HighlightInfo implements Segment {
                      "Custom type demands element to detect its text attributes");
 
       PsiFile file = psiElement == null ? null : psiElement.getContainingFile();
-      for (HighlightInfoFilter filter : getFilters()) {
+      for (HighlightInfoFilter filter : FILTERS) {
         if (!filter.accept(info, file)) {
           return null;
         }

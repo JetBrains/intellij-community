@@ -193,7 +193,7 @@ public class JavaResolveUtil {
       if (placeParent instanceof PsiClass && !(placeParent instanceof PsiAnonymousClass)) {
         final boolean isTypeParameter = placeParent instanceof PsiTypeParameter;
         if (isTypeParameter && isAtLeast17 == null) {
-          isAtLeast17 = JavaVersionService.getInstance().isAtLeast(place, JavaSdkVersion.JDK_1_7);
+          isAtLeast17 = JavaVersionService.getInstance().isAtLeast(placeParent, JavaSdkVersion.JDK_1_7);
         }
         if (!isTypeParameter || isAtLeast17) {
           PsiClass aClass = (PsiClass)placeParent;
