@@ -45,7 +45,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
 
   @NotNull
   public String getText() {
-    return "Un-inject Language";
+    return "Un-inject Language/Reference";
   }
 
   @NotNull
@@ -57,9 +57,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
     final int offset = editor.getCaretModel().getOffset();
     PsiElement element = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
     if (element == null) {
-      PsiReference reference = file.findReferenceAt(offset);
-      if (reference == null) return false;
-      return reference.getElement().getUserData(InjectedReferencesContributor.INJECTED_REFERENCE) != null;
+      return InjectedReferencesContributor.isInjected(file.findReferenceAt(offset));
     }
     return element.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT) != null;
   }
