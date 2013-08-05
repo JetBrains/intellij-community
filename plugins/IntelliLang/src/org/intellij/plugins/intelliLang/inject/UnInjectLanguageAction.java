@@ -78,8 +78,8 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
       if (reference != null) {
         PsiElement element = reference.getElement();
         LanguageInjectionSupport support = element.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT);
-        if (support != null && element instanceof PsiLanguageInjectionHost) {
-          support.removeInjectionInPlace((PsiLanguageInjectionHost)element);
+        if (support != null) {
+          support.removeInjection(element);
           ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
         }
       }

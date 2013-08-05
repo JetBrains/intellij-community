@@ -100,7 +100,11 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
   }
 
   public boolean removeInjectionInPlace(final PsiLanguageInjectionHost host) {
-    if (!isMine(host)) return false;
+    return removeInjection(host);
+  }
+
+  @Override
+  public boolean removeInjection(PsiElement host) {
     final Project project = host.getProject();
     final Configuration configuration = Configuration.getProjectInstance(project);
     final ArrayList<BaseInjection> injections = collectInjections(host, configuration);
@@ -319,7 +323,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     }
   }
 
-  private static ArrayList<BaseInjection> collectInjections(final PsiLanguageInjectionHost host,
+  private static ArrayList<BaseInjection> collectInjections(final PsiElement host,
                                         final Configuration configuration) {
     final ArrayList<BaseInjection> result = new ArrayList<BaseInjection>();
     final PsiElement element = host instanceof XmlText? ((XmlText)host).getParentTag() :

@@ -6,6 +6,7 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction;
 import org.intellij.plugins.intelliLang.references.FileReferenceInjector;
+import org.jdom.Element;
 
 /**
  * @author Dmitry Avdeev
@@ -38,11 +39,22 @@ public class ReferenceInjectionTest extends LightPlatformCodeInsightFixtureTestC
     InjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile(), new FileReferenceInjector());
     assertNotNull(myFixture.getReferenceAtCaretPosition());
 
-    //Configuration configuration = Configuration.getInstance();
-    //Element element = configuration.getState();
-    //configuration.loadState(element);
+    Configuration configuration = Configuration.getInstance();
+    Element element = configuration.getState();
+    configuration.loadState(element);
 
     ((PsiModificationTrackerImpl)PsiManager.getInstance(getProject()).getModificationTracker()).incCounter();
+    assertNotNull(myFixture.getReferenceAtCaretPosition());
+
+    UnInjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile());
+    assertNull(myFixture.getReferenceAtCaretPosition());
+  }
+
+  public void testInjectIntoTagValue() throws Exception {
+    myFixture.configureByText("foo.xml", "<foo xmlns=\"http://foo.bar\" <bar>x<caret>xx</bar>/>");
+    assertNull(myFixture.getReferenceAtCaretPosition());
+
+    InjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile(), new FileReferenceInjector());
     assertNotNull(myFixture.getReferenceAtCaretPosition());
 
     UnInjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile());
