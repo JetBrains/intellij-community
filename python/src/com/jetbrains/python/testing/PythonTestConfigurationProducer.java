@@ -67,12 +67,12 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
 
       settings = createConfigurationFromClass(location, pyElement);
       if (settings != null) return settings;
-    }
 
-    final VirtualFile virtualFile = location.getVirtualFile();
-    if (virtualFile != null && virtualFile.getFileType() instanceof PythonFileType)
-      settings = createConfigurationFromFile(location, element);
-    if (settings != null) return settings;
+      final VirtualFile virtualFile = location.getVirtualFile();
+      if (virtualFile != null && virtualFile.getFileType() instanceof PythonFileType)
+        settings = createConfigurationFromFile(location, pyElement);
+      if (settings != null) return settings;
+    }
 
     return null;
   }
