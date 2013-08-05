@@ -1238,5 +1238,32 @@ public class PyUtil {
     }
     return element;
   }
-}
 
+  @NotNull
+  public static List<PyParameter> getParameters(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+    PyType type = context.getType(callable);
+    if (type instanceof PyUnionType) {
+      type = ((PyUnionType)type).excludeNull();
+    }
+    if (type instanceof PyCallableType) {
+      final PyCallableType callableType = (PyCallableType)type;
+      final List<PyCallableParameter> callableTypeParameters = callableType.getParameters(context);
+      if (callableTypeParameters != null) {
+        boolean allParametersDefined = true;
+        final List<PyParameter> parameters = new ArrayList<PyParameter>();
+        for (PyCallableParameter callableParameter : callableTypeParameters) {
+          final PyParameter parameter = callableParameter.getParameter();
+          if (parameter == null) {
+            allParametersDefined = false;
+            break;
+          }
+          parameters.add(parameter);
+        }
+        if (allParametersDefined) {
+          return parameters;
+        }
+      }
+    }
+    return Arrays.asList(callable.getParameterList().getParameters());
+  }
+}
