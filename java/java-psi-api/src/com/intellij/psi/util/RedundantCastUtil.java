@@ -464,12 +464,15 @@ public class RedundantCastUtil {
       PsiType opType = operand.getType();
       final PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(typeCast);
       if (expectedTypeByParent != null) {
-        final PsiDeclarationStatement declarationStatement =
-          (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(operand.getProject()).createStatementFromText(
-            expectedTypeByParent.getCanonicalText() + " l = " + operand.getText() + ";", parent);
-        final PsiExpression initializer = ((PsiLocalVariable)declarationStatement.getDeclaredElements()[0]).getInitializer();
-        LOG.assertTrue(initializer != null, operand.getText());
-        opType = initializer.getType();
+        try {
+          final PsiDeclarationStatement declarationStatement =
+            (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(operand.getProject()).createStatementFromText(
+              expectedTypeByParent.getCanonicalText() + " l = " + operand.getText() + ";", parent);
+          final PsiExpression initializer = ((PsiLocalVariable)declarationStatement.getDeclaredElements()[0]).getInitializer();
+          LOG.assertTrue(initializer != null, operand.getText());
+          opType = initializer.getType();
+        }
+        catch (IncorrectOperationException ignore) {}
       }
 
       if (opType == null) return;
