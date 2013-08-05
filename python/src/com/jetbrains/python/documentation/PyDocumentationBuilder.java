@@ -458,29 +458,30 @@ class PyDocumentationBuilder {
   public static String[] removeCommonIndentation(String docstring) {
     // detect common indentation
     String[] lines = LineTokenizer.tokenize(docstring, false);
-    boolean is_first = true;
-    int cut_width = Integer.MAX_VALUE;
+    boolean isFirst = true;
+    int cutWidth = Integer.MAX_VALUE;
     int firstIndentedLine = 0;
     for (String frag : lines) {
       if (frag.length() == 0) continue;
-      int pad_width = 0;
+      int padWidth = 0;
       final Matcher matcher = ourSpacesPattern.matcher(frag);
       if (matcher.find()) {
-        pad_width = matcher.end();
+        padWidth = matcher.end();
       }
-      if (is_first) {
-        is_first = false;
-        if (pad_width == 0) {    // first line may have zero padding
+      if (isFirst) {
+        isFirst = false;
+        if (padWidth == 0) {    // first line may have zero padding
           firstIndentedLine = 1;
           continue;
         }
       }
-      if (pad_width < cut_width) cut_width = pad_width;
+      if (padWidth < cutWidth) cutWidth = padWidth;
     }
     // remove common indentation
-    if (cut_width > 0 && cut_width < Integer.MAX_VALUE) {
+    if (cutWidth > 0 && cutWidth < Integer.MAX_VALUE) {
       for (int i = firstIndentedLine; i < lines.length; i += 1) {
-        if (lines[i].length() > 0) lines[i] = lines[i].substring(cut_width);
+        if (lines[i].length() > cutWidth)
+          lines[i] = lines[i].substring(cutWidth);
       }
     }
     List<String> result = new ArrayList<String>();
@@ -501,10 +502,10 @@ class PyDocumentationBuilder {
       final String path = file.getPath();
       RootFinder finder = new RootFinder(path);
       RootVisitorHost.visitRoots(followed, finder);
-      final String root_path = finder.getResult();
-      if (root_path != null) {
-        String after_part = path.substring(root_path.length());
-        myProlog.addWith(TagSmall, $(root_path).addWith(TagBold, $(after_part)));
+      final String rootPath = finder.getResult();
+      if (rootPath != null) {
+        String afterPart = path.substring(rootPath.length());
+        myProlog.addWith(TagSmall, $(rootPath).addWith(TagBold, $(afterPart)));
       }
       else {
         myProlog.addWith(TagSmall, $(path));
