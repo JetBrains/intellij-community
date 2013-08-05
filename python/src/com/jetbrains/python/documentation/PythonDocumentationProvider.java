@@ -499,7 +499,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   public static String generateDocumentationContentStub(PyFunction element, String offset, boolean checkReturn) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
-
+    if (module == null) return "";
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
     String result = "";
     if (documentationSettings.isEpydocFormat(element.getContainingFile())) {
