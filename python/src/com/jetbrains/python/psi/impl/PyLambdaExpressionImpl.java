@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -24,6 +25,12 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
   }
 
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+      final PyType type = provider.getCallableType(this, context);
+      if (type != null) {
+        return type;
+      }
+    }
     return new PyFunctionType(this);
   }
 

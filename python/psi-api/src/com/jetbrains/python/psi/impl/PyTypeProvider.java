@@ -31,4 +31,7 @@ public interface PyTypeProvider {
 
   @Nullable
   PyType getContextManagerVariableType(PyClass contextManager, PyExpression withExpression, TypeEvalContext context);
+
+  @Nullable
+  PyType getCallableType(@NotNull Callable callable, @NotNull TypeEvalContext context);
 }
