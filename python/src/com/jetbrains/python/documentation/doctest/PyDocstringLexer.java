@@ -73,4 +73,7 @@ public class PyDocstringLexer extends PythonIndentingLexer {
       myLineHasSignificantTokens = true;
     }
   }
+  @Override
+  protected void checkStartState(int startOffset, int initialState) {
+  }
 }

@@ -180,7 +180,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     setStartState();
   }
 
-  private static void checkStartState(int startOffset, int initialState) {
+  protected void checkStartState(int startOffset, int initialState) {
     if (DUMP_TOKENS) {
       System.out.println("\n--- LEXER START---");
     }
