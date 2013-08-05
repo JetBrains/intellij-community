@@ -22,6 +22,7 @@ package com.intellij.concurrency;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -60,6 +61,7 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
   @Override
   public void run() {
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         try {
           if (myJob.isCanceled()) {
@@ -114,7 +116,8 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
     }
   }
 
-  public int compareTo(final PrioritizedFutureTask o) {
+  @Override
+  public int compareTo(@NotNull final PrioritizedFutureTask o) {
     int priorityDelta = myPriority - o.myPriority;
     if (priorityDelta != 0) return priorityDelta;
     if (myJobIndex != o.myJobIndex) return myJobIndex < o.myJobIndex ? -1 : 1;

@@ -21,6 +21,7 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -34,7 +35,9 @@ public class JobSchedulerImpl extends JobScheduler implements Disposable {
   private static final ThreadFactory WORKERS_FACTORY = new ThreadFactory() {
     private int threadSeq;
 
-    public synchronized Thread newThread(final Runnable r) {
+    @NotNull
+    @Override
+    public synchronized Thread newThread(@NotNull final Runnable r) {
       @NonNls String name = "JobScheduler pool " + threadSeq + "/" + CORES_COUNT;
       final Thread thread = new Thread(r, name);
       thread.setPriority(Thread.NORM_PRIORITY);
@@ -50,6 +53,7 @@ public class JobSchedulerImpl extends JobScheduler implements Disposable {
     return ourQueue.size();
   }
 
+  @Override
   public void dispose() {
     ((ThreadPoolExecutor)getScheduler()).getQueue().clear();
   }
