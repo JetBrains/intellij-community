@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** @deprecated use {@link ModuleListener#OLD_NAME_KEY} (to remove in IDEA 14) */
+/** @deprecated use {@link ModuleListener#modulesRenamed(Project, java.util.List, com.intellij.util.Function)} (to remove in IDEA 14) */
 @SuppressWarnings("UnusedDeclaration")
 public abstract class ModuleNameTracker extends ModuleAdapter {
   private final Map<Module, String> myModulesNames = new HashMap<Module, String>();
