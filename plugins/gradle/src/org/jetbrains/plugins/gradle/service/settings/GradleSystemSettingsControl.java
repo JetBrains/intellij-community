@@ -136,12 +136,16 @@ public class GradleSystemSettingsControl implements ExternalSystemSettingsContro
     return (myServiceDirectoryPathModifiedByUser
            && !Comparing.equal(ExternalSystemApiUtil.normalizePath(myServiceDirectoryPathField.getText()),
                                ExternalSystemApiUtil.normalizePath(myInitialSettings.getServiceDirectoryPath())))
-           || myInitialSettings.getGradleVmOptions() != null && !Comparing.equal(trimIfPossible(myGradleVmOptionsField.getText()), trimIfPossible(myInitialSettings.getGradleVmOptions()));
+           || !Comparing.equal(trimIfPossible(myGradleVmOptionsField.getText()), trimIfPossible(myInitialSettings.getGradleVmOptions()));
   }
 
   @Nullable
   private static String trimIfPossible(@Nullable String s) {
-    return s == null ? null : s.trim();
+    if (s == null) {
+      return null;
+    }
+    String result = s.trim();
+    return result.isEmpty() ? null : result;
   }
 
   @Override
