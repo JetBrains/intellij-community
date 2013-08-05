@@ -40,6 +40,7 @@ public abstract class ProgressManager {
         ProgressManager.ourInstance.doCheckCanceled();
       }
 
+
       @Override
       public NonCancelableSection startNonCancelableSection() {
         return ProgressManager.ourInstance.startNonCancelableSection();
@@ -209,13 +210,6 @@ public abstract class ProgressManager {
       if (set) {
         myThreadIndicator.set(oldIndicator);
       }
-
-      if (progress != null) {
-        synchronized (progress) {
-          progress.notifyAll();
-        }
-      }
     }
   }
-
 }

@@ -261,7 +261,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           if (callbackWhileWaiting != null) {
             callbackWhileWaiting.run();
           }
-          progress.waitFor(50);
           UIUtil.dispatchAllInvocationEvents();
           Throwable savedException = PassExecutorService.getSavedException(progress);
           if (savedException != null) throw savedException;
@@ -270,11 +269,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           throw e;
         }
         catch (Error e) {
-          e.printStackTrace();
           throw e;
         }
         catch (Throwable e) {
-          e.printStackTrace();
           throw new RuntimeException(e);
         }
       }
@@ -299,16 +296,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   @TestOnly
-  public void cleanupAfterTest(boolean dispose) {
+  public void cleanupAfterTest() {
     if (!myProject.isOpen()) return;
-    //stopProcess(false);
-    //if (dispose) {
-    //  projectClosed();
-    //  Disposer.dispose(myStatusBarUpdater);
-    //  myStatusBarUpdater = null;
-    //  Disposer.dispose(myDaemonListeners);
-    //  myDaemonListeners = null;
-    //}
     setUpdateByTimerEnabled(false);
     waitForTermination();
   }
