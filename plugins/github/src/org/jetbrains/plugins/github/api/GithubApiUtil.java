@@ -84,7 +84,7 @@ public class GithubApiUtil {
   private static ResponsePage request(@NotNull GithubAuthData auth,
                                       @NotNull String path,
                                       @Nullable String requestBody,
-                                      @NotNull Collection<Header> headers,
+                                      @Nullable Collection<Header> headers,
                                       @NotNull HttpVerb verb) throws IOException {
     HttpMethod method = null;
     try {
@@ -128,7 +128,7 @@ public class GithubApiUtil {
   private static HttpMethod doREST(@NotNull final GithubAuthData auth,
                                    @NotNull String path,
                                    @Nullable final String requestBody,
-                                   @NotNull final Collection<Header> headers,
+                                   @Nullable final Collection<Header> headers,
                                    @NotNull final HttpVerb verb) throws IOException {
     HttpClient client = getHttpClient(auth.getBasicAuth());
     String uri = GithubUrlUtil.getApiUrl(auth.getHost()) + path;
@@ -160,8 +160,10 @@ public class GithubApiUtil {
           if (tokenAuth != null) {
             method.addRequestHeader("Authorization", "token " + tokenAuth.getToken());
           }
-          for (Header header : headers) {
-            method.addRequestHeader(header);
+          if (headers != null) {
+            for (Header header : headers) {
+              method.addRequestHeader(header);
+            }
           }
           return method;
         }
