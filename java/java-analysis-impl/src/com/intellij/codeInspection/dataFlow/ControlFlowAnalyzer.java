@@ -1673,7 +1673,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(expression.resolve() instanceof PsiField ? new FieldReferenceInstruction(expression, null) : new PopInstruction());
     }
 
-    addInstruction(new PushInstruction(getExpressionDfaValue(expression), expression, PsiUtil.isAccessedForReading(expression)));
+    boolean referenceRead = PsiUtil.isAccessedForReading(expression) && !PsiUtil.isAccessedForWriting(expression);
+    addInstruction(new PushInstruction(getExpressionDfaValue(expression), expression, referenceRead));
 
     finishElement(expression);
   }
