@@ -532,12 +532,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
     myLoaded = true;
 
+    createLocatorFile();
+  }
+
+  private static void createLocatorFile() {
     File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
     try {
       byte[] data = PathManager.getHomePath().getBytes("UTF-8");
       FileUtil.writeToFile(locatorFile, data);
     }
-    catch (Exception e) {
+    catch (IOException e) {
       LOG.warn("can't store a location in '" + locatorFile + "'", e);
     }
   }

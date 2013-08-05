@@ -51,11 +51,11 @@ public class DirectoryData {
   }
 
   public VirtualFile getBase() {
-    return myBase;
+    return myBase.findChild("dirData");
   }
 
   public void clear() {
-    final File ioFile = new File(myBase.getPath());
+    final File ioFile = new File(getBase().getPath());
     final File[] files = ioFile.listFiles();
     for (File file : files) {
       FileUtil.delete(file);
@@ -70,7 +70,7 @@ public class DirectoryData {
           final List<VirtualFile> currentLevel = new ArrayList<VirtualFile>();
           final List<VirtualFile> nextLevel = new ArrayList<VirtualFile>();
 
-          currentLevel.add(myBase);
+          currentLevel.add(myBase.createChildDirectory(this, "dirData"));
           for (int i = 0; i < myLevels; i++) {
             for (VirtualFile file : currentLevel) {
               String numberInRow;
@@ -101,7 +101,8 @@ public class DirectoryData {
             currentLevel.addAll(nextLevel);
             nextLevel.clear();
           }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
           myException = e;
         }
       }
