@@ -33,6 +33,10 @@ public class ExpectedTypeUtils {
 
   @Nullable
   public static PsiType findExpectedType(@NotNull PsiExpression expression, boolean calculateTypeForComplexReferences) {
+    return findExpectedType(expression, calculateTypeForComplexReferences, false);
+  }
+
+  public static PsiType findExpectedType(PsiExpression expression, boolean calculateTypeForComplexReferences, boolean reportCasts) {
     PsiElement context = expression.getParent();
     PsiExpression wrappedExpression = expression;
     while (context instanceof PsiParenthesizedExpression) {
@@ -42,7 +46,7 @@ public class ExpectedTypeUtils {
     if (context == null) {
       return null;
     }
-    final ExpectedTypeVisitor visitor = new ExpectedTypeVisitor(wrappedExpression, calculateTypeForComplexReferences);
+    final ExpectedTypeVisitor visitor = new ExpectedTypeVisitor(wrappedExpression, calculateTypeForComplexReferences, reportCasts);
     context.accept(visitor);
     return visitor.getExpectedType();
   }
@@ -92,11 +96,13 @@ public class ExpectedTypeUtils {
 
     @NotNull private final PsiExpression wrappedExpression;
     private final boolean calculateTypeForComplexReferences;
+    private final boolean reportCasts;
     private PsiType expectedType = null;
 
-    ExpectedTypeVisitor(@NotNull PsiExpression wrappedExpression, boolean calculateTypeForComplexReferences) {
+    ExpectedTypeVisitor(@NotNull PsiExpression wrappedExpression, boolean calculateTypeForComplexReferences, boolean reportCasts) {
       this.wrappedExpression = wrappedExpression;
       this.calculateTypeForComplexReferences = calculateTypeForComplexReferences;
+      this.reportCasts = reportCasts;
     }
 
     public PsiType getExpectedType() {
@@ -292,6 +298,13 @@ public class ExpectedTypeUtils {
       }
       else {
         expectedType = type;
+      }
+    }
+
+    @Override
+    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+      if (reportCasts) {
+        expectedType = expression.getType();
       }
     }
 
