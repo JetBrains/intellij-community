@@ -123,7 +123,7 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
   public void appendCoverageArgument(final String sessionDataFilePath, final String[] patterns, final SimpleJavaParameters javaParameters,
                                      final boolean collectLineInfo, final boolean isSampling) {
     StringBuffer argument = new StringBuffer("-javaagent:");
-    final String agentPath = PathUtil.getJarPathForClass(org.jacoco.agent.rt_yczshm.core.data.ExecutionData.class);
+    final String agentPath = PathUtil.getJarPathForClass(org.jacoco.agent.rt.RT.class);
     final String parentPath = handleSpacesInPath(agentPath);
     argument.append(parentPath).append(File.separator).append(new File(agentPath).getName());
     argument.append("=");
