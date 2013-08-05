@@ -57,4 +57,5 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA108285() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(false, false); }
   public void testClassObjectAccessibility() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(false, false); }
   public void testRedundantCastInConditionalExpression() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
+  public void testJava5CastConventions() { setLanguageLevel(LanguageLevel.JDK_1_5); doTest(true, false); }
 }
