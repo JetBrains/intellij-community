@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -59,6 +60,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -108,6 +110,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }, null);
 
   }
+
+  private int myTopHitsCount;
 
   public SearchEverywhereAction() {
     createSearchField();
@@ -334,7 +338,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         cmp = panel;
       }
 
-      String title = getTitle(value, index == 0 ? null : list.getModel().getElementAt(index -1));
+      String title = getTitle(index, value, index == 0 ? null : list.getModel().getElementAt(index -1));
       if (title == null) {
         return cmp;
       } else {
@@ -350,7 +354,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
-    private String getTitle(Object value, Object prevValue) {
+    private String getTitle(int index, Object value, Object prevValue) {
+      if (index == 0 && myTopHitsCount > 0) {
+        return myTopHitsCount == 1 ? "Top Hit" : "Top Hits";
+      }
+      if (index < myTopHitsCount) {
+        return null;
+      }
+      if (index == myTopHitsCount) {
+        prevValue = null;
+      }
       String gotoClass = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoClass"));
       gotoClass = StringUtil.isEmpty(gotoClass) ? "Classes" : "Classes (" + gotoClass + ")";
       String gotoFile = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoFile"));
@@ -389,8 +402,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         else if (isVirtualFile(value)) {
           append(((VirtualFile)value).getName());
         } else if (isActionValue(value)) {
-          final Map.Entry actionWithParentGroup = (Map.Entry)value;
-          final AnAction anAction = (AnAction)actionWithParentGroup.getKey();
+          final Map.Entry actionWithParentGroup = value instanceof Map.Entry ? (Map.Entry)value : null;
+          final AnAction anAction = actionWithParentGroup == null ? (AnAction)value : (AnAction)actionWithParentGroup.getKey();
           final Presentation templatePresentation = anAction.getTemplatePresentation();
           final Icon icon = templatePresentation.getIcon();
 
@@ -401,7 +414,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
           append(templatePresentation.getText());
 
-          final String groupName = (String)actionWithParentGroup.getValue();
+          final String groupName = actionWithParentGroup == null ? null : (String)actionWithParentGroup.getValue();
           if (!StringUtil.isEmpty(groupName)) {
             setLocationString(groupName);
           }
@@ -437,8 +450,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  private static boolean isActionValue(Object prevValue) {
-    return prevValue instanceof Map.Entry;
+  private static boolean isActionValue(Object o) {
+    return o instanceof Map.Entry || o instanceof AnAction;
   }
 
   private static boolean isSetting(Object o) {
@@ -646,7 +659,28 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           int settings = 0;
           int actions = 0;
           final DefaultListModel model = new DefaultListModel();
+
+          final String pattern = field.getText();
+          final Consumer<Object> consumer = new Consumer<Object>() {
+            @Override
+            public void consume(Object o) {
+              if (isSetting(o) || isVirtualFile(o) || isActionValue(o) || o instanceof PsiElement) {
+                model.addElement(o);
+              }
+            }
+          };
+
+          for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
+            provider.consumeTopHits(pattern, consumer);
+          }
+
+          myTopHitsCount = model.size();
+
           for (Object o : listModel.toArray()) {
+            if (model.contains(o)) {
+              continue;
+            }
+
             if (isSetting(o)) {
               if (settings < 15) {
                 settings++;
@@ -654,10 +688,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               }
             } else if (isActionValue(o)) {
               if (actions < 15) {
-                final AnActionEvent event = GotoActionModel.updateActionBeforeShow((AnAction)((Map.Entry)o).getKey(), dataContext);
+                final AnAction action = (AnAction)((Map.Entry)o).getKey();
+
+                if (model.contains(action)) {
+                  continue;
+                }
+
+                final AnActionEvent event = GotoActionModel.updateActionBeforeShow(action, dataContext);
                 if (event.getPresentation().isEnabledAndVisible()) {
                   actions++;
-                  model.addElement(o);
+                  model.addElement(action);
                 }
               }
             } else {
@@ -762,7 +802,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private static boolean isToolWindowAction(Object o) {
-    return isActionValue(o) && ((Map.Entry)o).getKey() instanceof ActivateToolWindowAction;
+    return isActionValue(o) && (o instanceof Map.Entry && ((Map.Entry)o).getKey() instanceof ActivateToolWindowAction);
   }
 
   private void fillConfigurablesIds(String pathToParent, Configurable[] configurables) {
