@@ -26,7 +26,7 @@ public class GithubRepoDetailed extends GithubRepo {
   @Nullable private GithubRepo mySource;
 
   public GithubRepoDetailed(@NotNull String name,
-                            @NotNull String description,
+                            @Nullable String description,
                             boolean isPrivate,
                             boolean isFork,
                             @NotNull String htmlUrl,

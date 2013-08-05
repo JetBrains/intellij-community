@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ public class GithubIssue {
                      long number,
                      @NotNull String state,
                      @NotNull String title,
-                     @NotNull String body,
+                     @Nullable String body,
                      @NotNull GithubUser user,
                      @Nullable GithubUser assignee,
                      @Nullable Date closedAt,
@@ -51,7 +52,7 @@ public class GithubIssue {
     myNumber = number;
     myState = state;
     myTitle = title;
-    myBody = body;
+    myBody = StringUtil.notNullize(body);
     myUser = user;
     myAssignee = assignee;
     myClosedAt = closedAt;

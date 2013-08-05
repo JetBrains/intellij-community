@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +91,7 @@ public class GithubPullRequest {
   public GithubPullRequest(long number,
                            @NotNull String state,
                            @NotNull String title,
-                           @NotNull String body,
+                           @Nullable String body,
                            @NotNull String htmlUrl,
                            @NotNull String diffUrl,
                            @NotNull String patchUrl,
@@ -105,7 +106,7 @@ public class GithubPullRequest {
     myNumber = number;
     myState = state;
     myTitle = title;
-    myBody = body;
+    myBody = StringUtil.notNullize(body);
     myHtmlUrl = htmlUrl;
     myDiffUrl = diffUrl;
     myPatchUrl = patchUrl;

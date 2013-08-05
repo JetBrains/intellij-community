@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public class GithubRepo {
   @NotNull private GithubUser myOwner;
 
   public GithubRepo(@NotNull String name,
-                    @NotNull String description,
+                    @Nullable String description,
                     boolean isPrivate,
                     boolean isFork,
                     @NotNull String htmlUrl,
@@ -44,7 +45,7 @@ public class GithubRepo {
                     @Nullable String defaultBranch,
                     @NotNull GithubUser owner) {
     myName = name;
-    myDescription = description;
+    myDescription = StringUtil.notNullize(description);
     myIsPrivate = isPrivate;
     myIsFork = isFork;
     myHtmlUrl = htmlUrl;
