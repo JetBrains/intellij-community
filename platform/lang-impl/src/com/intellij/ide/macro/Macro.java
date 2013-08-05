@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -56,9 +57,7 @@ public abstract class Macro {
     return myCachedPreview;
   }
 
-  /**
-   * @return never null
-   */
+  @NotNull
   static String getPath(VirtualFile file) {
     return file.getPath().replace('/', File.separatorChar);
   }
