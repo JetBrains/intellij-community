@@ -178,4 +178,5 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA63731() { doTest(false, false); }
   public void testIDEA62056() { doTest(false, false); }
   public void testIDEA78916() { doTest(false, false); }
+  public void testIDEA111420() { doTest(false, false); }
 }
