@@ -35,8 +35,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.net.URL;
 import java.util.List;
 
 /**
@@ -142,7 +144,12 @@ public class AppUIUtil {
 
   private static void registerFont(@NonNls String name) {
     try {
-      InputStream is = AppUIUtil.class.getResourceAsStream(name);
+      URL url = AppUIUtil.class.getResource(name);
+      if (url == null) {
+        throw new IOException("Resource missing: " + name);
+      }
+
+      InputStream is = url.openStream();
       try {
         Font font = Font.createFont(Font.TRUETYPE_FONT, is);
         GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
