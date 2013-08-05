@@ -169,7 +169,10 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new UncheckedWarningsVisitor(isOnTheFly, PsiUtil.getLanguageLevel(session.getFile())){
+    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(session.getFile());
+    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return super.buildVisitor(holder, isOnTheFly, session);
+
+    return new UncheckedWarningsVisitor(isOnTheFly, languageLevel){
       @Override
       protected void registerProblem(@NotNull String message, @NotNull PsiElement psiElement, @NotNull LocalQuickFix[] quickFixes) {
         holder.registerProblem(psiElement, message, quickFixes);
@@ -194,9 +197,8 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       if (IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION) return;
-      if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return;
       final JavaResolveResult result = expression.advancedResolve(false);
-      if (JavaGenericsUtil.isUncheckedWarning(expression, result, PsiUtil.getLanguageLevel(expression))) {
+      if (JavaGenericsUtil.isUncheckedWarning(expression, result, myLanguageLevel)) {
         registerProblem("Unchecked generics array creation for varargs parameter", expression, LocalQuickFix.EMPTY_ARRAY);
       }
     }
@@ -205,7 +207,6 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     public void visitNewExpression(PsiNewExpression expression) {
       super.visitNewExpression(expression);
       if (IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION) return;
-      if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return;
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       if (classReference != null && JavaGenericsUtil.isUncheckedWarning(classReference, expression.resolveMethodGenerics(), myLanguageLevel)) {
         registerProblem("Unchecked generics array creation for varargs parameter", classReference, LocalQuickFix.EMPTY_ARRAY);
@@ -216,7 +217,6 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     public void visitTypeCastExpression(PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
       if (IGNORE_UNCHECKED_CAST) return;
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return;
       final PsiTypeElement typeElement = expression.getCastType();
       if (typeElement == null) return;
       final PsiType castType = typeElement.getType();
@@ -236,7 +236,6 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     @Override
     public void visitCallExpression(PsiCallExpression callExpression) {
       super.visitCallExpression(callExpression);
-      if (!PsiUtil.isLanguageLevel5OrHigher(callExpression)) return;
       final JavaResolveResult result = callExpression.resolveMethodGenerics();
       final String description = getUncheckedCallDescription(result);
       if (description != null) {
@@ -275,7 +274,6 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     public void visitVariable(PsiVariable variable) {
       super.visitVariable(variable);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
-      if (!PsiUtil.isLanguageLevel5OrHigher(variable)) return;
       PsiExpression initializer = variable.getInitializer();
       if (initializer == null || initializer instanceof PsiArrayInitializerExpression) return;
       final PsiType initializerType = initializer.getType();
@@ -287,13 +285,11 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     public void visitForeachStatement(PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
-      if (!PsiUtil.isLanguageLevel5OrHigher(statement)) return;
       final PsiParameter parameter = statement.getIterationParameter();
       final PsiType parameterType = parameter.getType();
       final PsiExpression iteratedValue = statement.getIteratedValue();
       if (iteratedValue == null) return;
       final PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-      if (!PsiUtil.isLanguageLevel5OrHigher(statement)) return;
       checkRawToGenericsAssignment(parameter, parameterType, itemType, true, myOnTheFly ? getChangeVariableTypeFixes(parameter, itemType) : LocalQuickFix.EMPTY_ARRAY);
     }
 
@@ -301,7 +297,6 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
-      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return;
       if (!"=".equals(expression.getOperationSign().getText())) return;
       PsiExpression lExpr = expression.getLExpression();
       PsiExpression rExpr = expression.getRExpression();
@@ -323,7 +318,6 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     public void visitArrayInitializerExpression(PsiArrayInitializerExpression arrayInitializer) {
       super.visitArrayInitializerExpression(arrayInitializer);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
-      if (!PsiUtil.isLanguageLevel5OrHigher(arrayInitializer)) return;
       final PsiType type = arrayInitializer.getType();
       if (!(type instanceof PsiArrayType)) return;
       final PsiType componentType = ((PsiArrayType)type).getComponentType();
@@ -374,7 +368,6 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
       if (IGNORE_UNCHECKED_OVERRIDING) return;
-      if (!PsiUtil.isLanguageLevel5OrHigher(method)) return;
       if (!method.isConstructor()) {
         List<HierarchicalMethodSignature> superMethodSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
         if (!superMethodSignatures.isEmpty() && !method.hasModifierProperty(PsiModifier.STATIC)) {
@@ -405,7 +398,6 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     public void visitReturnStatement(PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
-      if (!PsiUtil.isLanguageLevel5OrHigher(statement)) return;
       final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
       if (method != null) {
         final PsiType returnType = method.getReturnType();
