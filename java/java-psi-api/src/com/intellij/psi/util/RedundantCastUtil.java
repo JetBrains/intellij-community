@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -494,7 +493,10 @@ public class RedundantCastUtil {
         }
       }
       else {
-        if (TypeConversionUtil.isAssignable(castTo, opType, false)) {
+        if (parent instanceof PsiInstanceOfExpression && opType instanceof PsiPrimitiveType) {
+          return;
+        }
+        if (parent instanceof PsiInstanceOfExpression || TypeConversionUtil.isAssignable(castTo, opType, false)) {
           addToResults(typeCast);
         }
       }
