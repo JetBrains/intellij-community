@@ -21,6 +21,8 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -223,24 +225,32 @@ public class HgBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        UpdatedFiles updatedFiles = UpdatedFiles.create();
-        HgMergeCommand hgMergeCommand = new HgMergeCommand(myProject, mySelectedRepository.getRoot());
+        final UpdatedFiles updatedFiles = UpdatedFiles.create();
+        final HgMergeCommand hgMergeCommand = new HgMergeCommand(myProject, mySelectedRepository.getRoot());
         hgMergeCommand.setBranch(myBranchName);
-        //hgMergeCommand.setRevision(myBranchName.getHead().getChangeset());
-        HgCommandResultNotifier notifier = new HgCommandResultNotifier(myProject);
-        try {
-          new HgHeadMerger(myProject, hgMergeCommand)
-            .merge(mySelectedRepository.getRoot(), updatedFiles, HgRevisionNumber.NULL_REVISION_NUMBER);
-          new HgConflictResolver(myProject, updatedFiles).resolve(mySelectedRepository.getRoot());
-        }
-        catch (VcsException exception) {
-          if (exception.isWarning()) {
-            notifier.notifyWarning("Warning during merge", exception.getMessage());
+        final HgCommandResultNotifier notifier = new HgCommandResultNotifier(myProject);
+        new Task.Backgroundable(myProject, "Merging changes...") {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            try {
+              new HgHeadMerger(myProject, hgMergeCommand)
+                .merge(mySelectedRepository.getRoot(), updatedFiles, HgRevisionNumber.NULL_REVISION_NUMBER);
+              new HgConflictResolver(myProject, updatedFiles).resolve(mySelectedRepository.getRoot());
+            }
+
+            catch (VcsException exception) {
+              if (exception.isWarning()) {
+                notifier.notifyWarning("Warning during merge", exception.getMessage());
+              }
+              else {
+                notifier.notifyError(null, "Exception during merge", exception.getMessage());
+              }
+            }
+            catch (Exception e1) {
+              HgAbstractGlobalAction.handleException(myProject, e1);
+            }
           }
-          else {
-            notifier.notifyError(null, "Exception during merge", exception.getMessage());
-          }
-        }
+        }.queue();
       }
     }
 
