@@ -406,7 +406,14 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   public void testEpydocParamTag() {
-    doTest();
+    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getModule());
+    settings.setFormat(DocStringFormat.EPYTEXT);
+    try {
+      doTest();
+    }
+    finally {
+      settings.setFormat(DocStringFormat.PLAIN);
+    }
   }
 
   public void testEpydocTags() {
