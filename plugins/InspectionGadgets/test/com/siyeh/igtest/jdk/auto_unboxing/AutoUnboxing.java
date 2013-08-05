@@ -40,4 +40,17 @@ public class AutoUnboxing {
     private boolean noWarn(Integer i1, Integer i2) {
       return i1 == i2;
     }
+
+    void m(Boolean b) {
+        assert b;
+    }
+
+    void n(Integer i) {
+      switch(i) {
+        case 1: break;
+        case 2: break;
+        case 3: break;
+        default:
+      }
+    }
 }

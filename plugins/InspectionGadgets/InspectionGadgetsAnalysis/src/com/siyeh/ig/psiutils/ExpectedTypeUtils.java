@@ -90,11 +90,11 @@ public class ExpectedTypeUtils {
       operatorAssignmentOps.add(JavaTokenType.GTGTGTEQ);
     }
 
-    private final PsiExpression wrappedExpression;
+    @NotNull private final PsiExpression wrappedExpression;
     private final boolean calculateTypeForComplexReferences;
     private PsiType expectedType = null;
 
-    ExpectedTypeVisitor(PsiExpression wrappedExpression, boolean calculateTypeForComplexReferences) {
+    ExpectedTypeVisitor(@NotNull PsiExpression wrappedExpression, boolean calculateTypeForComplexReferences) {
       this.wrappedExpression = wrappedExpression;
       this.calculateTypeForComplexReferences = calculateTypeForComplexReferences;
     }
@@ -114,6 +114,17 @@ public class ExpectedTypeUtils {
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
       expectedType = variable.getType();
+    }
+
+    @Override
+    public void visitAssertStatement(PsiAssertStatement statement) {
+      final PsiExpression condition = statement.getAssertCondition();
+      if (wrappedExpression == condition) {
+        expectedType = PsiType.BOOLEAN;
+      }
+      else {
+        expectedType = TypeUtils.getStringType(statement);
+      }
     }
 
     @Override
@@ -269,6 +280,22 @@ public class ExpectedTypeUtils {
     }
 
     @Override
+    public void visitSwitchStatement(PsiSwitchStatement statement) {
+      final PsiExpression expression = statement.getExpression();
+      if (expression == null) {
+        return;
+      }
+      final PsiType type = expression.getType();
+      final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(type);
+      if (unboxedType != null) {
+        expectedType = unboxedType;
+      }
+      else {
+        expectedType = type;
+      }
+    }
+
+    @Override
     public void visitWhileStatement(@NotNull PsiWhileStatement whileStatement) {
       expectedType = PsiType.BOOLEAN;
     }
@@ -374,6 +401,11 @@ public class ExpectedTypeUtils {
       if (method != null) {
         expectedType = method.getReturnType();
       }
+    }
+
+    @Override
+    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+      expectedType = TypeUtils.getObjectType(expression);
     }
 
     @Override
