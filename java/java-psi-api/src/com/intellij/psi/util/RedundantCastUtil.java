@@ -505,6 +505,24 @@ public class RedundantCastUtil {
             return;
           }
         }
+        if (parent instanceof PsiThrowStatement) {
+          final PsiClass thrownClass = PsiUtil.resolveClassInType(opType);
+          if (InheritanceUtil.isInheritor(thrownClass, false, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
+            addToResults(typeCast);
+            return;
+          }
+          if (InheritanceUtil.isInheritor(thrownClass, false, CommonClassNames.JAVA_LANG_THROWABLE)) {
+            final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+            if (method != null) {
+              for (PsiClassType thrownType : method.getThrowsList().getReferencedTypes()) {
+                if (TypeConversionUtil.isAssignable(thrownType, opType, false)) {
+                  addToResults(typeCast);
+                  return;
+                }
+              }
+            }
+          }
+        }
         if (parent instanceof PsiInstanceOfExpression || TypeConversionUtil.isAssignable(castTo, opType, false)) {
           addToResults(typeCast);
         }
