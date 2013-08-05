@@ -16,7 +16,6 @@
 
 package org.intellij.plugins.intelliLang.inject.xml;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
@@ -89,13 +88,13 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     return false;
   }
 
-  public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {
+  public boolean addInjectionInPlace(final String id, final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
     if (psiElement instanceof XmlAttributeValue) {
-      return doInjectInAttributeValue((XmlAttributeValue)psiElement, language.getID());
+      return doInjectInAttributeValue((XmlAttributeValue)psiElement, id);
     }
     else if (psiElement instanceof XmlText) {
-      return doInjectInXmlText((XmlText)psiElement, language.getID());
+      return doInjectInXmlText((XmlText)psiElement, id);
     }
     return false;
   }

@@ -16,7 +16,6 @@
 
 package org.intellij.plugins.intelliLang.inject;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -46,10 +45,6 @@ import javax.swing.*;
 public abstract class AbstractLanguageInjectionSupport extends LanguageInjectionSupport {
 
   public boolean useDefaultInjector(final PsiElement host) {
-    return false;
-  }
-
-  public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {
     return false;
   }
 

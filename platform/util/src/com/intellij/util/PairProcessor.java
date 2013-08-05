@@ -26,5 +26,11 @@ public interface PairProcessor<S, T> {
       return true;
     }
   };
+  PairProcessor FALSE = new PairProcessor() {
+    @Override
+    public boolean process(Object o, Object o1) {
+      return false;
+    }
+  };
   boolean process(S s, T t);
 }

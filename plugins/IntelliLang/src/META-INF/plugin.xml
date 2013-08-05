@@ -16,7 +16,9 @@
   <extensionPoints>
     <extensionPoint name="languageSupport" interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport"/>
     <extensionPoint name="injectionConfig" beanClass="org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean"/>
+    <extensionPoint name="referenceInjector" interface="org.intellij.plugins.intelliLang.references.ReferenceInjector"/>
   </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
     <intentionAction>
@@ -48,5 +50,12 @@
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$Prj"/>
     <compileServer.plugin classpath="intellilang-jps-plugin.jar"/>
 
+    <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.references.InjectedReferencesContributor"/>
+
   </extensions>
+
+  <extensions defaultExtensionNs="org.intellij.intelliLang">
+    <referenceInjector implementation="org.intellij.plugins.intelliLang.references.FileReferenceInjector"/>
+  </extensions>
+
 </idea-plugin>

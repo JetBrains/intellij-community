@@ -17,12 +17,9 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -32,6 +29,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBList;
@@ -39,14 +38,13 @@ import com.intellij.util.FileContentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.ui.EmptyIcon;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.references.Injectable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -80,12 +78,13 @@ public class InjectLanguageAction implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    doChooseLanguageToInject(editor, new Processor<Language>() {
-      public boolean process(final Language language) {
-        if (project.isDisposed()) return false;
+    doChooseLanguageToInject(editor, new Processor<Injectable>() {
+      public boolean process(final Injectable injectable) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            invokeImpl(project, editor, file, language);
+            if (!project.isDisposed()) {
+              invokeImpl(project, editor, file, injectable);
+            }
           }
         });
         return false;
@@ -93,46 +92,50 @@ public class InjectLanguageAction implements IntentionAction {
     });
   }
 
-  private static void invokeImpl(Project project, Editor editor, PsiFile file, Language language) {
+  public static void invokeImpl(Project project, Editor editor, PsiFile file, Injectable injectable) {
     final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return;
-    if (defaultFunctionalityWorked(host, language)) return;
+    if (defaultFunctionalityWorked(host, injectable.getId())) return;
+
     try {
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
-        if (support.addInjectionInPlace(language, host)) return;
+        if (support.addInjectionInPlace(injectable, host)) {
+          ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+          return;
+        }
       }
-      TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host);
+      TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(injectable, host);
     }
     finally {
-      FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+      if (injectable.getLanguage() != null) {    // no need for reference injection
+        FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+      }
     }
   }
 
-  private static boolean defaultFunctionalityWorked(final PsiLanguageInjectionHost host, final Language language) {
-    return Configuration.getProjectInstance(host.getProject()).setHostInjectionEnabled(host, Collections.singleton(language.getID()), true);
+  private static boolean defaultFunctionalityWorked(final PsiLanguageInjectionHost host, String id) {
+    return Configuration.getProjectInstance(host.getProject()).setHostInjectionEnabled(host, Collections.singleton(id), true);
   }
 
-  private static boolean doChooseLanguageToInject(Editor editor, final Processor<Language> onChosen) {
-    final Language[] languages = InjectedLanguage.getAvailableLanguages();
-    Arrays.sort(languages, LanguageUtil.LANGUAGE_COMPARATOR);
+  private static boolean doChooseLanguageToInject(Editor editor, final Processor<Injectable> onChosen) {
+    final List<Injectable> injectables = Injectable.getAllInjectables();
 
-    final JList list = new JBList(languages);
-    list.setCellRenderer(new ListCellRendererWrapper<Language>() {
+    final JList list = new JBList(injectables);
+    list.setCellRenderer(new ListCellRendererWrapper<Injectable>() {
       @Override
-      public void customize(JList list, Language language, int index, boolean selected, boolean hasFocus) {
-        final FileType ft = language.getAssociatedFileType();
-        setIcon(ft != null ? ft.getIcon() : EmptyIcon.ICON_16);
-        setText(language.getDisplayName() + (ft != null ? " (" + ft.getDescription() + ")" : ""));
+      public void customize(JList list, Injectable language, int index, boolean selected, boolean hasFocus) {
+        setIcon(language.getIcon());
+        setText(language.getDisplayName());
       }
     });
     new PopupChooserBuilder(list).setItemChoosenCallback(new Runnable() {
       public void run() {
-        onChosen.process((Language)list.getSelectedValue());
+        onChosen.process((Injectable)list.getSelectedValue());
       }
     }).setFilteringEnabled(new Function<Object, String>() {
       @Override
       public String fun(Object language) {
-        return ((Language)language).getDisplayName();
+        return ((Injectable)language).getDisplayName();
       }
     })
       .createPopup().showInBestPositionFor(editor);

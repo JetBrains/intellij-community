@@ -17,7 +17,6 @@ package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.compiler.PatternCompiler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -25,9 +24,6 @@ import org.intellij.plugins.intelliLang.util.StringMatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
-import java.util.List;
 
 import static org.intellij.plugins.intelliLang.inject.InjectorUtils.appendStringPattern;
 
@@ -149,6 +145,15 @@ public class XmlAttributeInjection extends AbstractTagInjection {
       result.append(".withParent(").append(XmlTagInjection.getPatternString(injection)).append(")");
     }
     return result.toString();
+  }
+
+  @Override
+  public boolean acceptForReference(PsiElement element) {
+    if (element instanceof XmlAttributeValue) {
+      PsiElement parent = element.getParent();
+      return parent instanceof XmlAttribute && acceptsPsiElement(parent);
+    }
+    return false;
   }
 
 }
