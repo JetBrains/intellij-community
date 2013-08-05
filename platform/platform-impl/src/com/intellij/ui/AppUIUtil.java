@@ -45,7 +45,6 @@ import java.util.List;
  * @author yole
  */
 public class AppUIUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.AppUIUtil");
   private static final String VENDOR_PREFIX = "jetbrains-";
 
   public static void updateWindowIcon(@NotNull Window window) {
@@ -159,7 +158,7 @@ public class AppUIUtil {
       }
     }
     catch (Exception e) {
-      LOG.error("Cannot register font: " + name, e);
+      Logger.getInstance(AppUIUtil.class).error("Cannot register font: " + name, e);
     }
   }
 
