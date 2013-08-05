@@ -53,8 +53,10 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiAssignmentExpression assignment = getAssignmentUnderCaret(editor, file);
+    PsiAssignmentExpression assignment = getAssignmentUnderCaret(editor, file);
     if (assignment == null) return false;
+    PsiElement parent = assignment.getParent();
+    if (!(parent instanceof PsiExpressionStatement)) return false;
     PsiField field = getAssignedField(assignment);
     if (field == null || field.hasInitializer()) return false;
     PsiClass psiClass = field.getContainingClass();
