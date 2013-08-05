@@ -165,7 +165,10 @@ public class PyTypeModelBuilder {
         final PyTupleType tupleType = (PyTupleType)elementType;
         final int n = tupleType.getElementCount();
         for (int i = 0; i < n; i++) {
-          elementTypes.add(build(tupleType.getElementType(i), true));
+          final PyType t = tupleType.getElementType(i);
+          if (t != null) {
+            elementTypes.add(build(t, true));
+          }
         }
       }
       else if (elementType != null) {
