@@ -397,6 +397,10 @@ public class PropertyUtil {
     return ArrayUtil.toStringArray(result);
   }
 
+  /**
+   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateGetterPrototype(com.intellij.psi.PsiField)} 
+   * to add @Override annotation
+   */
   @Nullable
   public static PsiMethod generateGetterPrototype(@NotNull PsiField field) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
@@ -423,16 +427,28 @@ public class PropertyUtil {
     }
   }
 
+  /**
+   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSetterPrototype(com.intellij.psi.PsiField)}
+   * to add @Override annotation
+   */
   @Nullable
   public static PsiMethod generateSetterPrototype(PsiField field) {
     return generateSetterPrototype(field, field.getContainingClass());
   }
 
+  /**
+   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSetterPrototype(com.intellij.psi.PsiField)}
+   * to add @Override annotation
+   */
   @Nullable
   public static PsiMethod generateSetterPrototype(PsiField field, final PsiClass containingClass) {
     return generateSetterPrototype(field, containingClass, false);
   }
 
+  /**
+   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSetterPrototype(com.intellij.psi.PsiField)}
+   * to add @Override annotation
+   */
   @Nullable
   public static PsiMethod generateSetterPrototype(PsiField field, final PsiClass containingClass, boolean returnSelf) {
     Project project = field.getProject();
