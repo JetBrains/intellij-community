@@ -5,13 +5,15 @@ import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
-import com.jediterm.pty.PtyProcess;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
+import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Map;
@@ -36,7 +38,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   protected PtyProcess createProcess() throws ExecutionException {
     Map<String, String> envs = new HashMap<String, String>(System.getenv());
     envs.put("TERM", "xterm");
-    return new PtyProcess(myCommand[0], myCommand, envs);
+    try {
+      return PtyProcess.exec(myCommand, envs, null);
+    }
+    catch (IOException e) {
+      throw new ExecutionException(e);
+    }
   }
 
   @Override
@@ -51,7 +58,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected String getTerminalConnectionName(PtyProcess process) {
-    return process.getCommandLineString();
+    return StringUtil.join(myCommand);
   }
 
   private static class PtyProcessHandler extends ProcessHandler implements TaskExecutor {

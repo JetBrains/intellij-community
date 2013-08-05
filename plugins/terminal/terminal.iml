@@ -20,9 +20,9 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="jpty">
+      <library name="pty4j">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/JPty.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/pty4j-0.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
