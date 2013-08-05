@@ -34,7 +34,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -95,7 +94,7 @@ public abstract class PassExecutorService implements Disposable {
     mySubmittedPasses.clear();
   }
 
-  public void submitPasses(Map<FileEditor, HighlightingPass[]> passesMap, DaemonProgressIndicator updateProgress, final int jobPriority) {
+  public void submitPasses(@NotNull Map<FileEditor, HighlightingPass[]> passesMap, @NotNull DaemonProgressIndicator updateProgress, final int jobPriority) {
     if (isDisposed()) return;
     int id = 1;
 
@@ -197,6 +196,7 @@ public abstract class PassExecutorService implements Disposable {
     }
   }
 
+  @NotNull
   private ScheduledPass createScheduledPass(@NotNull List<FileEditor> fileEditors,
                                             @NotNull TextEditorHighlightingPass pass,
                                             @NotNull Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted,
@@ -238,14 +238,14 @@ public abstract class PassExecutorService implements Disposable {
     return scheduledPass;
   }
 
-  private ScheduledPass findOrCreatePredecessorPass(final List<FileEditor> fileEditors,
-                                                    final Document document,
-                                                    final Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted,
-                                                    final List<TextEditorHighlightingPass> textEditorHighlightingPasses,
-                                                    final List<ScheduledPass> freePasses,
-                                                    List<ScheduledPass> dependentPasses,
-                                                    final DaemonProgressIndicator updateProgress,
-                                                    final AtomicInteger myThreadsToStartCountdown,
+  private ScheduledPass findOrCreatePredecessorPass(@NotNull List<FileEditor> fileEditors,
+                                                    Document document,
+                                                    @NotNull Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted,
+                                                    @NotNull List<TextEditorHighlightingPass> textEditorHighlightingPasses,
+                                                    @NotNull List<ScheduledPass> freePasses,
+                                                    @NotNull List<ScheduledPass> dependentPasses,
+                                                    @NotNull DaemonProgressIndicator updateProgress,
+                                                    @NotNull AtomicInteger myThreadsToStartCountdown,
                                                     final int jobPriority,
                                                     final int predecessorId) {
     Pair<Document, Integer> predKey = Pair.create(document, predecessorId);
@@ -258,7 +258,7 @@ public abstract class PassExecutorService implements Disposable {
     return predecessor;
   }
 
-  private static TextEditorHighlightingPass findPassById(final int id, final List<TextEditorHighlightingPass> textEditorHighlightingPasses) {
+  private static TextEditorHighlightingPass findPassById(final int id, @NotNull List<TextEditorHighlightingPass> textEditorHighlightingPasses) {
     TextEditorHighlightingPass textEditorPass = null;
     for (TextEditorHighlightingPass found : textEditorHighlightingPasses) {
       if (found.getId() == id) {
@@ -269,7 +269,7 @@ public abstract class PassExecutorService implements Disposable {
     return textEditorPass;
   }
 
-  private void submit(final ScheduledPass pass) {
+  private void submit(@NotNull ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
       Job<Void> job = JobLauncher.getInstance().submitToJobThread(pass.myJobPriority, pass, new Consumer<Future>() {
         @Override
@@ -342,7 +342,7 @@ public abstract class PassExecutorService implements Disposable {
         }
       }
 
-      ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
+      ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
         @Override
         public void run() {
           boolean success = ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
@@ -379,7 +379,7 @@ public abstract class PassExecutorService implements Disposable {
             myUpdateProgress.cancel();
           }
         }
-      },myUpdateProgress);
+      }, myUpdateProgress);
 
       log(myUpdateProgress, myPass, "Finished. ");
 
@@ -468,6 +468,7 @@ public abstract class PassExecutorService implements Disposable {
 
   protected abstract void afterApplyInformationToEditor(TextEditorHighlightingPass pass, FileEditor fileEditor, ProgressIndicator updateProgress);
 
+  @NotNull
   public List<TextEditorHighlightingPass> getAllSubmittedPasses() {
     List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(mySubmittedPasses.size());
     for (ScheduledPass scheduledPass : mySubmittedPasses.keySet()) {
