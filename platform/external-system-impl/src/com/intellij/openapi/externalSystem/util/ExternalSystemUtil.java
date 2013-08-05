@@ -76,8 +76,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.*;
 import java.util.List;
 
@@ -154,30 +152,6 @@ public class ExternalSystemUtil {
       }
     }
     return null;
-  }
-
-  /**
-   * {@link RemoteUtil#unwrap(Throwable) unwraps} given exception if possible and builds error message for it.
-   *
-   * @param e  exception to process
-   * @return error message for the given exception
-   */
-  @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
-  @NotNull
-  public static String buildErrorMessage(@NotNull Throwable e) {
-    Throwable unwrapped = RemoteUtil.unwrap(e);
-    String reason = unwrapped.getLocalizedMessage();
-    if (!StringUtil.isEmpty(reason)) {
-      return reason;
-    }
-    else if (unwrapped.getClass() == ExternalSystemException.class) {
-      return String.format("exception during working with external system: %s", ((ExternalSystemException)unwrapped).getOriginalReason());
-    }
-    else {
-      StringWriter writer = new StringWriter();
-      unwrapped.printStackTrace(new PrintWriter(writer));
-      return writer.toString();
-    }
   }
 
   /**
@@ -411,7 +385,7 @@ public class ExternalSystemUtil {
           callback.onSuccess(externalProject);
           return;
         }
-        String message = buildErrorMessage(error);
+        String message = ExternalSystemApiUtil.buildErrorMessage(error);
         if (StringUtil.isEmpty(message)) {
           message = String.format(
             "Can't resolve %s project at '%s'. Reason: %s",
@@ -423,7 +397,7 @@ public class ExternalSystemUtil {
 
         ExternalSystemIdeNotificationManager notificationManager = ServiceManager.getService(ExternalSystemIdeNotificationManager.class);
         if (notificationManager != null) {
-          notificationManager.processExternalProjectRefreshError(message, project, projectName, externalSystemId);
+          notificationManager.processExternalProjectRefreshError(error, project, projectName, externalSystemId);
         }
       }
     };
@@ -476,7 +450,7 @@ public class ExternalSystemUtil {
     }
 
     String name = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
-    RunnerAndConfigurationSettings settings = RunManagerEx.getInstanceEx(project).createConfiguration(name, configurationType.getFactory());
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(name, configurationType.getFactory());
     ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)settings.getConfiguration();
     runConfiguration.getSettings().setExternalProjectPath(taskSettings.getExternalProjectPath());
     runConfiguration.getSettings().setTaskNames(taskSettings.getTaskNames());
