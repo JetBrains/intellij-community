@@ -499,6 +499,12 @@ public class RedundantCastUtil {
         if (parent instanceof PsiInstanceOfExpression && opType instanceof PsiPrimitiveType) {
           return;
         }
+        if (parent instanceof PsiForeachStatement) {
+          if (InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(opType), false, CommonClassNames.JAVA_LANG_ITERABLE)) {
+            addToResults(typeCast);
+            return;
+          }
+        }
         if (parent instanceof PsiInstanceOfExpression || TypeConversionUtil.isAssignable(castTo, opType, false)) {
           addToResults(typeCast);
         }
