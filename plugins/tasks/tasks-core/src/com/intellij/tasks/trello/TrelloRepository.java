@@ -266,42 +266,38 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   /**
    * Make GET request to specified URL and return HTTP entity of result as Reader object
    */
-  private Reader makeRequest(String url) throws IOException {
+  private String makeRequest(String url) throws IOException {
     HttpClient client = getHttpClient();
     HttpMethod method = new GetMethod(url);
     configureHttpMethod(method);
-    client.executeMethod(method);
-    // Can't use HttpMethod#getResponseBodyAsString because Trello doesn't specify encoding
-    // in Content-Type header and by default this method decodes from Latin-1
-    String entityContent = StreamUtil.readText(method.getResponseBodyAsStream(), "utf-8");
+    String entityContent;
+    try {
+      client.executeMethod(method);
+      // Can't use HttpMethod#getResponseBodyAsString because Trello doesn't specify encoding
+      // in Content-Type header and by default this method decodes from Latin-1
+      entityContent = StreamUtil.readText(method.getResponseBodyAsStream(), "utf-8");
+    }
+    finally {
+      method.releaseConnection();
+    }
     LOG.debug(entityContent);
     //return new InputStreamReader(method.getResponseBodyAsStream(), "utf-8");
-    return new StringReader(entityContent);
+    return entityContent;
   }
 
   @NotNull
   private <T> T makeRequestAndDeserializeJsonResponse(String url, Type type) throws IOException {
-    Reader entityStream = makeRequest(url);
-    try {
-      // javac 1.6.0_23 bug workaround
-      // TrelloRepository.java:286: type parameters of <T>T cannot be determined; no unique maximal instance exists for type variable T with upper bounds T,java.lang.Object
-      //noinspection unchecked
-      return (T)TrelloUtil.GSON.fromJson(entityStream, type);
-    }
-    finally {
-      entityStream.close();
-    }
+    String entityStream = makeRequest(url);
+    // javac 1.6.0_23 bug workaround
+    // TrelloRepository.java:286: type parameters of <T>T cannot be determined; no unique maximal instance exists for type variable T with upper bounds T,java.lang.Object
+    //noinspection unchecked
+    return (T)TrelloUtil.GSON.fromJson(entityStream, type);
   }
 
   @NotNull
   private <T> T makeRequestAndDeserializeJsonResponse(String url, Class<T> cls) throws IOException {
-    Reader entityStream = makeRequest(url);
-    try {
-      return TrelloUtil.GSON.fromJson(entityStream, cls);
-    }
-    finally {
-      entityStream.close();
-    }
+    String entityStream = makeRequest(url);
+    return TrelloUtil.GSON.fromJson(entityStream, cls);
   }
 
   @Override
