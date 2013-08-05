@@ -146,14 +146,4 @@ public class XmlAttributeInjection extends AbstractTagInjection {
     }
     return result.toString();
   }
-
-  @Override
-  public boolean acceptForReference(PsiElement element) {
-    if (element instanceof XmlAttributeValue) {
-      PsiElement parent = element.getParent();
-      return parent instanceof XmlAttribute && acceptsPsiElement(parent);
-    }
-    return false;
-  }
-
 }

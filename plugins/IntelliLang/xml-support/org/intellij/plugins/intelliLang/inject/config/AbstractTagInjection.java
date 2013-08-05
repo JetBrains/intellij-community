@@ -18,6 +18,8 @@ package org.intellij.plugins.intelliLang.inject.config;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.PsiElement;
@@ -219,5 +221,15 @@ public class AbstractTagInjection extends BaseInjection {
 
   public void setApplyToSubTagTexts(final boolean applyToSubTagTexts) {
     myApplyToSubTagTexts = applyToSubTagTexts;
+  }
+
+
+  @Override
+  public boolean acceptForReference(PsiElement element) {
+    if (element instanceof XmlAttributeValue) {
+      PsiElement parent = element.getParent();
+      return parent instanceof XmlAttribute && acceptsPsiElement(parent);
+    }
+    return false;
   }
 }
