@@ -152,7 +152,7 @@ public class PyTypeChecker {
             final PyCallableParameter expectedParam = expectedParameters.get(i);
             final PyCallableParameter actualParam = actualParameters.get(i);
             // TODO: Check named and star params, not only positional ones
-            if (!match(expectedParam.getType(), actualParam.getType(), context, substitutions, recursive)) {
+            if (!match(expectedParam.getType(context), actualParam.getType(context), context, substitutions, recursive)) {
               return false;
             }
           }
@@ -237,7 +237,7 @@ public class PyTypeChecker {
       if (parameters != null) {
         for (PyCallableParameter parameter : parameters) {
           if (parameter != null) {
-            collectGenerics(parameter.getType(), context, collected, visited);
+            collectGenerics(parameter.getType(context), context, collected, visited);
           }
         }
       }
@@ -284,9 +284,9 @@ public class PyTypeChecker {
         if (parameters != null) {
           substParams = new ArrayList<PyCallableParameter>();
           for (PyCallableParameter parameter : parameters) {
-            final PyType substType = substitute(parameter.getType(), substitutions, context);
+            final PyType substType = substitute(parameter.getType(context), substitutions, context);
             final PyCallableParameter subst = parameter.getParameter() != null ?
-                                              new PyCallableParameterImpl(parameter.getParameter(), substType) :
+                                              new PyCallableParameterImpl(parameter.getParameter()) :
                                               new PyCallableParameterImpl(parameter.getName(), substType);
             substParams.add(subst);
           }

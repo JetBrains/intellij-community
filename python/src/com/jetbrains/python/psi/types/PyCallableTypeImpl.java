@@ -70,7 +70,7 @@ public class PyCallableTypeImpl implements PyCallableType {
                                              if (param != null) {
                                                final StringBuilder builder = new StringBuilder();
                                                final String name = param.getName();
-                                               final PyType type = param.getType();
+                                               final PyType type = param.getType(context);
                                                if (name != null) {
                                                  builder.append(name);
                                                  if (type != null) {

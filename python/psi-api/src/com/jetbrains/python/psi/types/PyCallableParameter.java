@@ -12,7 +12,7 @@ public interface PyCallableParameter {
   String getName();
 
   @Nullable
-  PyType getType();
+  PyType getType(@NotNull TypeEvalContext context);
 
   @Nullable
   PyParameter getParameter();

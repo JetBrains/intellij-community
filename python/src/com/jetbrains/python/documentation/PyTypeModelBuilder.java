@@ -209,7 +209,7 @@ public class PyTypeModelBuilder {
     if (parameters != null) {
       parameterModels = new ArrayList<TypeModel>();
       for (PyCallableParameter parameter : parameters) {
-        parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(), true)));
+        parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(myContext), true)));
       }
     }
     final PyType ret = type.getCallType(myContext, null);

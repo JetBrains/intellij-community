@@ -39,8 +39,7 @@ public class PyFunctionType implements PyCallableType {
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     final List<PyCallableParameter> result = new ArrayList<PyCallableParameter>();
     for (PyParameter parameter : myCallable.getParameterList().getParameters()) {
-      final PyType type = parameter instanceof PyTypedElement ? context.getType((PyTypedElement)parameter) : null;
-      result.add(new PyCallableParameterImpl(parameter, type));
+      result.add(new PyCallableParameterImpl(parameter));
     }
     return result;
   }
