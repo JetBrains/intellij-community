@@ -149,9 +149,12 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     Collection<VirtualFile> pkgDirs = pkg.directories.collect { it.virtualFile }
     Collection<VirtualFile> pkgChildren = pkgDirs.collect { it.children as List }.flatten()
     PsiFile javaSrc = psiManager.findFile(pkgChildren.find { it.name == 'LibraryClass.java' })
-    assert !javaSrc.node.parsed
+    assert !javaSrc.contentsLoaded
+    assert !javaSrc.stub
 
     assert pkg.containsClassNamed('LibraryClass')
+    assert !javaSrc.contentsLoaded
+    assert !javaSrc.stub
     assert !javaSrc.node.parsed
   }
 
