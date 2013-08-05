@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgBookmarkCreateCommand;
 import org.zmlx.hg4idea.command.HgBranchCreateCommand;
 import org.zmlx.hg4idea.command.HgMergeCommand;
@@ -256,9 +257,9 @@ public class HgBranchPopupActions {
 
     private static class UpdateToAction extends DumbAwareAction {
 
-      private final Project myProject;
-      private final HgRepository mySelectedRepository;
-      private final String myBranch;
+      @NotNull private final Project myProject;
+      @NotNull private final HgRepository mySelectedRepository;
+      @NotNull private final String myBranch;
 
       public UpdateToAction(@NotNull Project project,
                             @NotNull HgRepository selectedRepository,
@@ -272,14 +273,20 @@ public class HgBranchPopupActions {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final VirtualFile repository = mySelectedRepository.getRoot();
-        HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(myProject, repository);
+        final HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(myProject, repository);
         hgUpdateCommand.setBranch(myBranch);
-        HgCommandResult result = hgUpdateCommand.execute();
-        if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-          new HgCommandResultNotifier(myProject).notifyError(result, "", "Update failed");
-          new HgConflictResolver(myProject).resolve(repository);
-        }
-        myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
+        new Task.Backgroundable(myProject, HgVcsMessages.message("action.hg4idea.updateTo.description", myBranch)) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            HgCommandResult result = hgUpdateCommand.execute();
+            assert myProject != null;  // myProject couldn't be null, see annotation for updateTo action
+            if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+              new HgCommandResultNotifier(myProject).notifyError(result, "", "Update failed");
+              new HgConflictResolver(myProject).resolve(repository);
+            }
+            myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
+          }
+        }.queue();
       }
     }
   }
