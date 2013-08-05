@@ -215,11 +215,7 @@ public class CoreApplicationEnvironment {
 
       @Override
       public NonCancelableSection startNonCancelableSection() {
-        return new NonCancelableSection() {
-          @Override
-          public void done() {
-          }
-        };
+        return NonCancelableSection.EMPTY;
       }
     };
   }
