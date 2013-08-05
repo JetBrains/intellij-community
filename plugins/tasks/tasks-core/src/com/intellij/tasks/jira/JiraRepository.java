@@ -99,7 +99,7 @@ public class JiraRepository extends BaseRepositoryImpl {
       myRestApiVersion = discoverRestApiVersion();
     }
     JiraIssue issue = myRestApiVersion.findIssue(id);
-    return issue == null? null : new JiraTask(issue, this);
+    return issue == null ? null : new JiraTask(issue, this);
   }
 
   @Nullable
@@ -159,22 +159,31 @@ public class JiraRepository extends BaseRepositoryImpl {
     finally {
       method.releaseConnection();
     }
+    if (statusCode == HttpStatus.SC_OK) {
+      return entityContent;
+    }
+    else if (method.getResponseHeader("Content-Type") != null) {
+      Header header = method.getResponseHeader("Content-Type");
+      if (header.getValue().startsWith("application/json")) {
+        JsonObject object = JiraUtil.GSON.fromJson(entityContent, JsonObject.class);
+        if (object.has("errorMessages")) {
+          String reason = StringUtil.join(object.getAsJsonArray("errorMessages"), " ");
+          // something meaningful to user, e.g. invalid field name in JQL query
+          LOG.warn(reason);
+          throw new Exception("Search failed. Reason: " + reason);
+        }
+      }
+    }
+    if (method.getResponseHeader("X-Authentication-Denied-Reason") != null) {
+      Header header = method.getResponseHeader("X-Authentication-Denied-Reason");
+      // only in JIRA >= 5.x.x
+      if (header.getValue().startsWith("CAPTCHA_CHALLENGE")) {
+        throw new Exception("Login failed. Enter captcha in web-interface.");
+      }
+    }
     if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
       throw new Exception(LOGIN_FAILED_CHECK_YOUR_PERMISSIONS);
     }
-    else if (statusCode != HttpStatus.SC_OK) {
-      String reason = method.getStatusText();
-      Header contentType = method.getResponseHeader("Content-Type");
-      if (contentType.getValue().startsWith("application/json")) {
-        JsonObject object = JiraUtil.GSON.fromJson(entityContent, JsonObject.class);
-        if (object.has("errorMessages")) {
-          reason = StringUtil.join(object.getAsJsonArray("errorMessages"), " ");
-          // something meaningful to user, e.g. invalid field name in JQL query
-          LOG.warn(reason);
-        }
-      }
-      throw new Exception("Request failed with error: " + reason);
-    }
-    return entityContent;
+    throw new Exception("Request failed with error: " + HttpStatus.getStatusText(method.getStatusCode()));
   }
 }

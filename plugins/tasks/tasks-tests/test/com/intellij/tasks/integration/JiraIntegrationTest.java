@@ -69,8 +69,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   public void testJqlQuery() throws Exception {
     myRepository.setUsername("deva");
     myRepository.setPassword("deva");
-    myRepository.setSearchQuery("assignee = currentUser() AND project = PRJONE");
-    assertEquals(5, myRepository.getIssues("", 50, 0).length);
+    myRepository.setSearchQuery("assignee = currentUser() AND summary ~ 'animal'");
+    assertEquals(1, myRepository.getIssues("", 50, 0).length);
   }
 
   /**
@@ -85,7 +85,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
       fail();
     }
     catch (Exception e) {
-      assertEquals("Request failed with error: \"Field 'foo' does not exist or you do not have permission to view it.\"", e.getMessage());
+      assertEquals("Search failed. Reason: \"Field 'foo' does not exist or you do not have permission to view it.\"", e.getMessage());
     }
   }
 
