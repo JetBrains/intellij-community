@@ -69,7 +69,7 @@ public class PyStringLiteralLexer extends LexerBase {
 
     // which quote char?
     char c = buffer.charAt(i);
-    assert (c == '"') || (c == '\'') : "String must be quoted by single or double quote";
+    assert (c == '"') || (c == '\'') : "String must be quoted by single or double quote. Found '" + c + "' in string " + buffer;
     myQuoteChar = c;
 
     // calculate myEnd at last
