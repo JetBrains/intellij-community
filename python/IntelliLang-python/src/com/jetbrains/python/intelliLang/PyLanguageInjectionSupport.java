@@ -1,6 +1,6 @@
 package com.jetbrains.python.intelliLang;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.jetbrains.python.patterns.PythonPatterns;
 import com.jetbrains.python.psi.PyElement;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
@@ -26,7 +26,12 @@ public class PyLanguageInjectionSupport extends AbstractLanguageInjectionSupport
   }
 
   @Override
-  public boolean useDefaultInjector(PsiElement host) {
+  public boolean isApplicableTo(PsiLanguageInjectionHost host) {
     return host instanceof PyElement;
+  }
+
+  @Override
+  public boolean useDefaultInjector(PsiLanguageInjectionHost host) {
+    return true;
   }
 }
