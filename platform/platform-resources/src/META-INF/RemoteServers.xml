@@ -5,11 +5,11 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.remoteServer.configuration.RemoteServersManager"
-                        serviceImplementation="com.intellij.remoteServer.configuration.impl.RemoteServersManagerImpl"/>
+                        serviceImplementation="com.intellij.remoteServer.impl.configuration.RemoteServersManagerImpl"/>
     <applicationService serviceInterface="com.intellij.remoteServer.configuration.deployment.DeploymentSourceUtil"
-                        serviceImplementation="com.intellij.remoteServer.configuration.deployment.impl.DeploymentSourceUtilImpl"/>
+                        serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeploymentSourceUtilImpl"/>
     <projectService serviceInterface="com.intellij.remoteServer.runtime.ServerConnectionManager"
-                    serviceImplementation="com.intellij.remoteServer.runtime.impl.ServerConnectionManagerImpl"/>
+                    serviceImplementation="com.intellij.remoteServer.impl.runtime.ServerConnectionManagerImpl"/>
     <applicationConfigurable instance="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable"/>
     <programRunner implementation="com.intellij.remoteServer.impl.runtime.DeployToServerRunner"/>
   </extensions>
