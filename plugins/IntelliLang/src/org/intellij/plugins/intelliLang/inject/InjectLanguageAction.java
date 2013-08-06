@@ -15,6 +15,8 @@
  */
 package org.intellij.plugins.intelliLang.inject;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
@@ -26,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -33,7 +36,8 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.ColoredListCellRendererWrapper;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.Function;
@@ -110,11 +114,16 @@ public class InjectLanguageAction implements IntentionAction {
           return;
         }
       }
-      TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host);
+      if (TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host)) {
+        HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXml(language.getDisplayName()) + " was temporarily injected");
+      }
     }
     finally {
       if (injectable.getLanguage() != null) {    // no need for reference injection
         FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+      }
+      else {
+        DaemonCodeAnalyzer.getInstance(project).restart();
       }
     }
   }
@@ -127,11 +136,15 @@ public class InjectLanguageAction implements IntentionAction {
     final List<Injectable> injectables = Injectable.getAllInjectables();
 
     final JList list = new JBList(injectables);
-    list.setCellRenderer(new ListCellRendererWrapper<Injectable>() {
+    list.setCellRenderer(new ColoredListCellRendererWrapper<Injectable>() {
       @Override
-      public void customize(JList list, Injectable language, int index, boolean selected, boolean hasFocus) {
+      protected void doCustomize(JList list, Injectable language, int index, boolean selected, boolean hasFocus) {
         setIcon(language.getIcon());
-        setText(language.getDisplayName());
+        append(language.getDisplayName());
+        String description = language.getAdditionalDescription();
+        if (description != null) {
+          append(description, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
       }
     });
     new PopupChooserBuilder(list).setItemChoosenCallback(new Runnable() {

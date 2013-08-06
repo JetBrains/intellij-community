@@ -66,6 +66,21 @@ public class ReferenceInjectionTest extends LightPlatformCodeInsightFixtureTestC
     assertNull(myFixture.getReferenceAtCaretPosition());
   }
 
+  public void testInjectIntoJava() throws Exception {
+    myFixture.configureByText("Foo.java", "class Foo {\n" +
+                                          "    String bar() {\n" +
+                                          "        return \"ba<caret>r.xml\";\n" +
+                                          "    }    \n" +
+                                          "}");
+    assertNull(myFixture.getReferenceAtCaretPosition());
+
+    InjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile(), new FileReferenceInjector());
+    assertNotNull(myFixture.getReferenceAtCaretPosition());
+
+    UnInjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile());
+    assertNull(myFixture.getReferenceAtCaretPosition());
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

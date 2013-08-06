@@ -684,6 +684,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   public void showInformationHint(@NotNull Editor editor, @NotNull JComponent component, boolean showByBalloon) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     LightweightHint hint = new LightweightHint(component);
     Point p = getHintPosition(hint, editor, ABOVE);
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
