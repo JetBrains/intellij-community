@@ -4,7 +4,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.deployment.DeploymentConfigurator;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import org.jetbrains.annotations.NotNull;
 

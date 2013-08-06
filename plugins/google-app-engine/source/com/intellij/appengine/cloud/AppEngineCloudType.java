@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.remoteServer.ServerType;
-import com.intellij.remoteServer.deployment.*;
+import com.intellij.remoteServer.configuration.deployment.*;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.ui.FormBuilder;

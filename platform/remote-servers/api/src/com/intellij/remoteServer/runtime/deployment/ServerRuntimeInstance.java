@@ -1,7 +1,7 @@
 package com.intellij.remoteServer.runtime.deployment;
 
-import com.intellij.remoteServer.deployment.DeploymentConfiguration;
-import com.intellij.remoteServer.deployment.DeploymentSource;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
+import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import org.jetbrains.annotations.NotNull;
 
 /**
