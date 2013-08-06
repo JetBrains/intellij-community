@@ -63,6 +63,7 @@ public class ActionCallback implements Disposable {
 
   public void setDone() {
     if (myDone.setExecuted()) {
+      myRejected.clear();
       Disposer.dispose(this);
     }
   }
@@ -81,6 +82,7 @@ public class ActionCallback implements Disposable {
 
   public void setRejected() {
     if (myRejected.setExecuted()) {
+      myDone.clear();
       Disposer.dispose(this);
     }
   }
@@ -190,9 +192,6 @@ public class ActionCallback implements Disposable {
 
   @Override
   public void dispose() {
-    // avoid memory leak in case: myDone executed but myRejected still keep doWhenRejected listeners (and vice versa)
-    myDone.clear();
-    myRejected.clear();
   }
 
   @NotNull

@@ -100,6 +100,9 @@ class ExecutionCallback {
     toRun.run();
   }
 
+  /**
+   * Avoid memory leak in case: myDone executed but myRejected still keep doWhenRejected listeners (and vice versa)
+   */
   synchronized void clear() {
     myRunnables = null;
   }

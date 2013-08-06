@@ -97,7 +97,8 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       });
     }
     else {
-      final AnAction action = (AnAction)((Map.Entry)element).getKey();
+      //element could be AnAction (SearchEverywhere)
+      final AnAction action = element instanceof AnAction ? ((AnAction)element) : (AnAction)((Map.Entry)element).getKey();
       if (action != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override

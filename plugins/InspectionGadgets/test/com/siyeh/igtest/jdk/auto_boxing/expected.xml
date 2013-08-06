@@ -93,4 +93,18 @@
     <description>Auto-boxing &lt;code&gt;o instanceof String&lt;/code&gt; #loc</description>
   </problem>
 
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>58</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;b&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>59</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;b&lt;/code&gt; #loc</description>
+  </problem>
+
 </problems>

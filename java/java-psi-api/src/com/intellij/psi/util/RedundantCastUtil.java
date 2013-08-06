@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -465,12 +464,15 @@ public class RedundantCastUtil {
       PsiType opType = operand.getType();
       final PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(typeCast);
       if (expectedTypeByParent != null) {
-        final PsiDeclarationStatement declarationStatement =
-          (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(operand.getProject()).createStatementFromText(
-            expectedTypeByParent.getCanonicalText() + " l = " + operand.getText() + ";", parent);
-        final PsiExpression initializer = ((PsiLocalVariable)declarationStatement.getDeclaredElements()[0]).getInitializer();
-        LOG.assertTrue(initializer != null, operand.getText());
-        opType = initializer.getType();
+        try {
+          final PsiDeclarationStatement declarationStatement =
+            (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(operand.getProject()).createStatementFromText(
+              expectedTypeByParent.getCanonicalText() + " l = " + operand.getText() + ";", parent);
+          final PsiExpression initializer = ((PsiLocalVariable)declarationStatement.getDeclaredElements()[0]).getInitializer();
+          LOG.assertTrue(initializer != null, operand.getText());
+          opType = initializer.getType();
+        }
+        catch (IncorrectOperationException ignore) {}
       }
 
       if (opType == null) return;
@@ -494,7 +496,34 @@ public class RedundantCastUtil {
         }
       }
       else {
-        if (TypeConversionUtil.isAssignable(castTo, opType, false)) {
+        if (parent instanceof PsiInstanceOfExpression && opType instanceof PsiPrimitiveType) {
+          return;
+        }
+        if (parent instanceof PsiForeachStatement) {
+          if (InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(opType), false, CommonClassNames.JAVA_LANG_ITERABLE)) {
+            addToResults(typeCast);
+            return;
+          }
+        }
+        if (parent instanceof PsiThrowStatement) {
+          final PsiClass thrownClass = PsiUtil.resolveClassInType(opType);
+          if (InheritanceUtil.isInheritor(thrownClass, false, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
+            addToResults(typeCast);
+            return;
+          }
+          if (InheritanceUtil.isInheritor(thrownClass, false, CommonClassNames.JAVA_LANG_THROWABLE)) {
+            final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+            if (method != null) {
+              for (PsiClassType thrownType : method.getThrowsList().getReferencedTypes()) {
+                if (TypeConversionUtil.isAssignable(thrownType, opType, false)) {
+                  addToResults(typeCast);
+                  return;
+                }
+              }
+            }
+          }
+        }
+        if (parent instanceof PsiInstanceOfExpression || TypeConversionUtil.isAssignable(castTo, opType, false)) {
           addToResults(typeCast);
         }
       }

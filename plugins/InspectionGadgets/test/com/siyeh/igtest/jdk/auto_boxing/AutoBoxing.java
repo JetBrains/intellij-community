@@ -53,4 +53,9 @@ public class AutoBoxing {
     void doInstanceof(Object o) {
         Boolean b = o instanceof String;
     }
+
+    void m(boolean b) {
+      System.out.println((Boolean)b);
+      final Object o1 = (Object) b;
+    }
 }

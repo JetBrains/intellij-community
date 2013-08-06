@@ -67,11 +67,7 @@ public abstract class LanguageInjectionSupport {
 
   public final boolean addInjectionInPlace(final Injectable injectable, final PsiLanguageInjectionHost psiElement) {
     if (injectable.getLanguage() == null) {
-      boolean result = addInjectionInPlace(injectable.getId(), psiElement);
-      if (result) {
-        psiElement.putUserData(INJECTOR_SUPPORT, this);
-      }
-      return result;
+      return addInjectionInPlace(injectable.getId(), psiElement);
     }
     else {
       return addInjectionInPlace(injectable.getLanguage(), psiElement);
@@ -79,6 +75,10 @@ public abstract class LanguageInjectionSupport {
   }
 
   public abstract boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement);
+
+  public boolean removeInjection(final PsiElement psiElement) {
+    return psiElement instanceof PsiLanguageInjectionHost && removeInjectionInPlace((PsiLanguageInjectionHost)psiElement);
+  }
 
   public abstract boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement);
 

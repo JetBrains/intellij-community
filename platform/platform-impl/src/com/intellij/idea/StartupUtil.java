@@ -81,8 +81,6 @@ public class StartupUtil {
 
     if (!Main.isHeadless()) {
       AppUIUtil.updateFrameClass();
-      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
-      AppUIUtil.registerBundledFonts();
 
       newConfigFolder = PathManager.ensureConfigFolderExists(true);
       if (newConfigFolder) {
@@ -100,6 +98,11 @@ public class StartupUtil {
     startLogging(log);
     fixProcessEnvironment(log);
     loadSystemLibraries(log);
+
+    if (!Main.isHeadless()) {
+      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+      AppUIUtil.registerBundledFonts();
+    }
 
     appStarter.start(newConfigFolder);
   }

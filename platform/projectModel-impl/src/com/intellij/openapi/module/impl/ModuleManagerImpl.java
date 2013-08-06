@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -39,6 +38,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.StringInterner;
@@ -303,12 +304,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     myMessageBus.syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(myProject, module);
   }
 
-  protected void fireModulesRenamed(List<Module> modules) {
+  protected void fireModulesRenamed(List<Module> modules, final Map<Module, String> oldNames) {
     if (!modules.isEmpty()) {
-      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules);
-      for (Module module : modules) {
-        module.putUserData(ModuleListener.OLD_NAME_KEY, null);
-      }
+      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules, new Function<Module, String>() {
+        @Override
+        public String fun(Module module) {
+          return oldNames.get(module);
+        }
+      });
     }
   }
 
@@ -970,9 +973,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         final Map<Module, String> modulesToNewNamesMap = moduleModel.myModuleToNewName;
         final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
         modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
-        final List<Module> modules = new ArrayList<Module>();
+
+        List<Module> modules = new ArrayList<Module>();
+        Map<Module, String> oldNames = ContainerUtil.newHashMap();
         for (final Module module : modulesToBeRenamed) {
-          module.putUserData(ModuleListener.OLD_NAME_KEY, module.getName());
+          oldNames.put(module, module.getName());
           moduleModel.myPathToModule.remove(module.getModuleFilePath());
           modules.add(module);
           ((ModuleEx)module).rename(modulesToNewNamesMap.get(module));
@@ -996,17 +1001,17 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
           cleanCachedStuff();
         }
         cleanCachedStuff();
-        fireModulesRenamed(modules);
+        fireModulesRenamed(modules, oldNames);
         cleanCachedStuff();
       }
     }, false, true);
   }
 
-  void fireModuleRenamedByVfsEvent(@NotNull final Module module) {
+  void fireModuleRenamedByVfsEvent(@NotNull final Module module, @NotNull final String oldName) {
     ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(new Runnable() {
       @Override
       public void run() {
-        fireModulesRenamed(Collections.singletonList(module));
+        fireModulesRenamed(Collections.singletonList(module), Collections.singletonMap(module, oldName));
       }
     }, false, true);
   }

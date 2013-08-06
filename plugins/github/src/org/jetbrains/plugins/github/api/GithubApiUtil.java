@@ -45,6 +45,9 @@ public class GithubApiUtil {
   private static final int CONNECTION_TIMEOUT = 5000;
   private static final Logger LOG = GithubUtil.LOG;
 
+  private static final Header ACCEPT_HTML_BODY_MARKUP = new Header("Accept", "application/vnd.github.v3.html+json");
+  private static final Header ACCEPT_NEW_SEARCH_API = new Header("Accept", "application/vnd.github.preview");
+
   @NotNull private static final Gson gson = initGson();
 
   private static Gson initGson() {
@@ -59,25 +62,22 @@ public class GithubApiUtil {
   }
 
   @Nullable
-  private static JsonElement postRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable String requestBody)
+  private static JsonElement postRequest(@NotNull GithubAuthData auth,
+                                         @NotNull String path,
+                                         @Nullable String requestBody,
+                                         @NotNull Header... headers) throws IOException {
+    return request(auth, path, requestBody, Arrays.asList(headers), HttpVerb.POST).getJsonElement();
+  }
+
+  @Nullable
+  private static JsonElement deleteRequest(@NotNull GithubAuthData auth, @NotNull String path, @NotNull Header... headers)
     throws IOException {
-    return request(auth, path, requestBody, null, HttpVerb.POST).getJsonElement();
+    return request(auth, path, null, Arrays.asList(headers), HttpVerb.DELETE).getJsonElement();
   }
 
   @Nullable
-  private static JsonElement deleteRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
-    return request(auth, path, null, null, HttpVerb.DELETE).getJsonElement();
-  }
-
-  @Nullable
-  private static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path) throws IOException {
-    return request(auth, path, null, null, HttpVerb.GET).getJsonElement();
-  }
-
-  @Nullable
-  private static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path, @Nullable Collection<Header> headers)
-    throws IOException {
-    return request(auth, path, null, headers, HttpVerb.GET).getJsonElement();
+  private static JsonElement getRequest(@NotNull GithubAuthData auth, @NotNull String path, @NotNull Header... headers) throws IOException {
+    return request(auth, path, null, Arrays.asList(headers), HttpVerb.GET).getJsonElement();
   }
 
   @NotNull
@@ -286,14 +286,19 @@ public class GithubApiUtil {
 
   public static class PagedRequest<T> {
     @Nullable private String myNextPage;
+    @NotNull private final Collection<Header> myHeaders;
     @NotNull private final Class<T> myResult;
     @NotNull private final Class<? extends DataConstructor[]> myRawArray;
 
     @SuppressWarnings("NullableProblems")
-    public PagedRequest(@NotNull String path, @NotNull Class<T> result, @NotNull Class<? extends DataConstructor[]> rawArray) {
+    public PagedRequest(@NotNull String path,
+                        @NotNull Class<T> result,
+                        @NotNull Class<? extends DataConstructor[]> rawArray,
+                        @NotNull Header... headers) {
       myNextPage = path;
       myResult = result;
       myRawArray = rawArray;
+      myHeaders = Arrays.asList(headers);
     }
 
     @NotNull
@@ -305,7 +310,7 @@ public class GithubApiUtil {
       String page = myNextPage;
       myNextPage = null;
 
-      ResponsePage response = request(auth, page, null, null, HttpVerb.GET);
+      ResponsePage response = request(auth, page, null, myHeaders, HttpVerb.GET);
 
       if (response.getJsonElement() == null) {
         throw new HttpException("Empty response");
@@ -525,7 +530,8 @@ public class GithubApiUtil {
     String path = "/search/issues?q=" + query;
 
     //TODO: remove header after end of preview period. ~ october 2013
-    JsonElement result = getRequest(auth, path, Collections.singletonList(new Header("Accept", "application/vnd.github.preview")));
+    //TODO: Use bodyHtml for issues - preview does not support this feature
+    JsonElement result = getRequest(auth, path, ACCEPT_NEW_SEARCH_API);
 
     return createDataFromRaw(fromJson(result, GithubIssuesSearchResultRaw.class), GithubIssuesSearchResult.class).getIssues();
   }
@@ -546,7 +552,7 @@ public class GithubApiUtil {
     String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments?per_page=100";
 
     PagedRequest<GithubIssueComment> request =
-      new PagedRequest<GithubIssueComment>(path, GithubIssueComment.class, GithubIssueCommentRaw[].class);
+      new PagedRequest<GithubIssueComment>(path, GithubIssueComment.class, GithubIssueCommentRaw[].class, ACCEPT_HTML_BODY_MARKUP);
 
     return request.getAll(auth);
   }
@@ -566,7 +572,8 @@ public class GithubApiUtil {
   public static GithubPullRequest getPullRequest(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, int id)
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/pulls/" + id;
-    return createDataFromRaw(fromJson(getRequest(auth, path), GithubPullRequestRaw.class), GithubPullRequest.class);
+    return createDataFromRaw(fromJson(getRequest(auth, path, ACCEPT_HTML_BODY_MARKUP), GithubPullRequestRaw.class),
+                             GithubPullRequest.class);
   }
 
   @NotNull
@@ -575,7 +582,7 @@ public class GithubApiUtil {
     String path = "/repos/" + user + "/" + repo + "/pulls?per_page=100";
 
     PagedRequest<GithubPullRequest> request =
-      new PagedRequest<GithubPullRequest>(path, GithubPullRequest.class, GithubPullRequestRaw[].class);
+      new PagedRequest<GithubPullRequest>(path, GithubPullRequest.class, GithubPullRequestRaw[].class, ACCEPT_HTML_BODY_MARKUP);
 
     return request.getAll(auth);
   }
@@ -584,7 +591,7 @@ public class GithubApiUtil {
   public static PagedRequest<GithubPullRequest> getPullRequests(@NotNull String user, @NotNull String repo) {
     String path = "/repos/" + user + "/" + repo + "/pulls?per_page=100";
 
-    return new PagedRequest<GithubPullRequest>(path, GithubPullRequest.class, GithubPullRequestRaw[].class);
+    return new PagedRequest<GithubPullRequest>(path, GithubPullRequest.class, GithubPullRequestRaw[].class, ACCEPT_HTML_BODY_MARKUP);
   }
 
   @NotNull

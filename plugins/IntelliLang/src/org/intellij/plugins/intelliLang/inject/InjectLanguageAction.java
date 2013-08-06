@@ -26,10 +26,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ListCellRendererWrapper;
@@ -40,6 +37,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.references.Injectable;
+import org.intellij.plugins.intelliLang.references.InjectedReferencesContributor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +47,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class InjectLanguageAction implements IntentionAction {
-  @NonNls private static final String INJECT_LANGUAGE_FAMILY = "Inject Language";
+  @NonNls private static final String INJECT_LANGUAGE_FAMILY = "Inject Language/Reference";
 
   @NotNull
   public String getText() {
@@ -65,7 +63,10 @@ public class InjectLanguageAction implements IntentionAction {
     final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return false;
     final List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host);
-    return injectedPsi == null || injectedPsi.isEmpty();
+    if (injectedPsi == null || injectedPsi.isEmpty()) {
+      return !InjectedReferencesContributor.isInjected(file.findReferenceAt(editor.getCaretModel().getOffset()));
+    }
+    return true;
   }
 
   @Nullable

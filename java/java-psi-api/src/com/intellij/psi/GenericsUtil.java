@@ -70,8 +70,18 @@ public class GenericsUtil {
     }
 
     if (type1 instanceof PsiArrayType && type2 instanceof PsiArrayType) {
-      final PsiType componentType = getLeastUpperBound(((PsiArrayType)type1).getComponentType(),
-                                                       ((PsiArrayType)type2).getComponentType(), compared, manager);
+      final PsiType componentType1 = ((PsiArrayType)type1).getComponentType();
+      final PsiType componentType2 = ((PsiArrayType)type2).getComponentType();
+      final PsiType componentType = getLeastUpperBound(componentType1, componentType2, compared, manager);
+      if (componentType1 instanceof PsiPrimitiveType && 
+          componentType2 instanceof PsiPrimitiveType && 
+          componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        final GlobalSearchScope resolveScope = GlobalSearchScope.allScope(manager.getProject());
+        final PsiClassType cloneable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_CLONEABLE, resolveScope);
+        final PsiClassType serializable = factory.createTypeByFQClassName(CommonClassNames.JAVA_IO_SERIALIZABLE, resolveScope);
+        return PsiIntersectionType.createIntersection(componentType, cloneable, serializable);
+      }
       return componentType.createArrayType();
     }
     if (type1 instanceof PsiIntersectionType) {

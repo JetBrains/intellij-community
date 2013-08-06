@@ -18,13 +18,16 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.impl.source.xml.XmlAttributeReference;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
+import com.intellij.xml.NamespaceAwareXmlAttributeDescriptor;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -68,7 +71,8 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
                                   XmlAttribute attribute,
                                   @Nullable InsertHandler<LookupElement> replacementInsertHandler) {
     final XmlTag tag = attribute.getParent();
-    final XmlExtension extension = XmlExtension.getExtension(tag.getContainingFile());
+    final PsiFile file = tag.getContainingFile();
+    final XmlExtension extension = XmlExtension.getExtension(file);
     final String prefix = attribute.getName().contains(":") && ((XmlAttributeImpl) attribute).getRealLocalName().length() > 0
                           ? attribute.getNamespacePrefix() + ":"
                           : null;
@@ -80,6 +84,29 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
     for (XmlAttributeDescriptor descriptor : descriptors) {
       if (isValidVariant(attribute, descriptor, attributes, extension)) {
         String name = descriptor.getName(tag);
+
+        InsertHandler<LookupElement> insertHandler = XmlAttributeInsertHandler.INSTANCE;
+
+        if (replacementInsertHandler != null) {
+          insertHandler = replacementInsertHandler;
+        }
+        else if (descriptor instanceof NamespaceAwareXmlAttributeDescriptor) {
+          final String namespace = ((NamespaceAwareXmlAttributeDescriptor)descriptor).getNamespace();
+
+          if (file instanceof XmlFile &&
+              namespace != null &&
+              namespace.length() > 0 &&
+              !name.contains(":") &&
+              tag.getPrefixByNamespace(namespace) == null) {
+            String suggestedPrefix = ExtendedTagInsertHandler.suggestPrefix((XmlFile)file, namespace);
+
+            if (suggestedPrefix != null) {
+              suggestedPrefix = makePrefixUnique(suggestedPrefix, tag);
+              name = suggestedPrefix + ":" + name;
+              insertHandler = new XmlAttributeInsertHandler(namespace, suggestedPrefix);
+            }
+          }
+        }
         if (prefix == null || name.startsWith(prefix)) {
           if (prefix != null && name.length() > prefix.length()) {
             name = descriptor.getName(tag).substring(prefix.length());
@@ -94,12 +121,25 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
           }
           element = element
             .withCaseSensitivity(caseSensitive)
-            .withInsertHandler(replacementInsertHandler != null ? replacementInsertHandler : XmlAttributeInsertHandler.INSTANCE);
+            .withInsertHandler(insertHandler);
           result.addElement(
             descriptor.isRequired() ? PrioritizedLookupElement.withPriority(element.appendTailText("(required)", true), 100) : element);
         }
       }
     }
+  }
+
+  @NotNull
+  private static String makePrefixUnique(@NotNull String basePrefix, @NotNull XmlTag context) {
+    if (context.getNamespaceByPrefix(basePrefix).isEmpty()) {
+      return basePrefix;
+    }
+    int i = 1;
+
+    while (!context.getNamespaceByPrefix(basePrefix + i).isEmpty()) {
+      i++;
+    }
+    return basePrefix + i;
   }
 
   private static boolean isValidVariant(XmlAttribute attribute,

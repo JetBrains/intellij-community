@@ -21,16 +21,34 @@ import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.XmlNamespaceHelper;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
 
 /**
 * @author peter
 */
 public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
   public static final XmlAttributeInsertHandler INSTANCE = new XmlAttributeInsertHandler();
+
+  private final String myNamespacePrefixToInsert;
+  private final String myNamespaceToInsert;
+
+  public XmlAttributeInsertHandler() {
+    this(null, null);
+  }
+
+  public XmlAttributeInsertHandler(@Nullable String namespaceToInsert, @Nullable String namespacePrefixToInsert) {
+    myNamespaceToInsert = namespaceToInsert;
+    myNamespacePrefixToInsert = namespacePrefixToInsert;
+  }
 
   public void handleInsert(InsertionContext context, LookupElement item) {
     final Editor editor = context.getEditor();
@@ -68,5 +86,15 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     editor.getSelectionModel().removeSelection();
     AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor);
+
+    if (myNamespaceToInsert != null && file instanceof XmlFile) {
+      final XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(context.getFile());
+
+      if (helper != null) {
+        PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
+        helper.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(myNamespaceToInsert),
+                                          myNamespacePrefixToInsert, null);
+      }
+    }
   }
 }
