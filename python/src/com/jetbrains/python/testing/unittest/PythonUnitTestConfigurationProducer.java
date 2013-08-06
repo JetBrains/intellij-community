@@ -5,14 +5,16 @@
 package com.jetbrains.python.testing.unittest;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.testing.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -22,7 +24,7 @@ public class PythonUnitTestConfigurationProducer extends PythonTestConfiguration
     super(PythonTestConfigurationType.getInstance().PY_UNITTEST_FACTORY);
   }
 
-  protected boolean isAvailable(Location location) {
+  protected boolean isAvailable(@NotNull final Location location) {
     PsiElement element = location.getPsiElement();
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module == null) return false;
@@ -33,43 +35,25 @@ public class PythonUnitTestConfigurationProducer extends PythonTestConfiguration
     return false;
   }
 
-  @Nullable
-  protected RunnerAndConfigurationSettings createConfigurationFromFunction(Location location, PyElement element) {
-    final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from function");
-    final PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)settings.getConfiguration();
-
-    PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
-    if (configuration.isPureUnittest() && !isUnitTestFunction(pyFunction))
-      return null;
-
-    return super.createConfigurationFromFunction(location, element);
-  }
-
-  @Nullable
-  protected RunnerAndConfigurationSettings createConfigurationFromClass(Location location, PyElement element) {
-    final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from class");
-    final PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)settings.getConfiguration();
-
-    PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-    if (configuration.isPureUnittest() && !isUnitTestCaseClass(pyClass)) return null;
-    return super.createConfigurationFromClass(location, element);
-  }
-
-  private static boolean isUnitTestFunction(PyFunction pyFunction) {
-    if (pyFunction == null || !PythonUnitTestUtil.isUnitTestCaseFunction(pyFunction)) return false;
-    return true;
-  }
-
-  private static boolean isUnitTestCaseClass(PyClass pyClass) {
-    if (pyClass == null || !PythonUnitTestUtil.isUnitTestCaseClass(pyClass)) return false;
-    return true;
+  @Override
+  protected boolean isTestFunction(@NotNull final PyFunction pyFunction,
+                                   @Nullable final AbstractPythonTestRunConfiguration configuration) {
+    final boolean isTestFunction = super.isTestFunction(pyFunction, configuration);
+    return isTestFunction || (configuration instanceof PythonUnitTestRunConfiguration &&
+           !((PythonUnitTestRunConfiguration)configuration).isPureUnittest());
   }
 
   @Override
-  protected boolean isTestFile(PsiElement file) {
-    if (file == null || !(file instanceof PyFile)) return false;
-    if (PyNames.SETUP_DOT_PY.equals(((PyFile)file).getName())) return true;
-    final List<PyStatement> testCases = getTestCaseClassesFromFile((PyFile)file);
+  protected boolean isTestClass(@NotNull PyClass pyClass, @Nullable final AbstractPythonTestRunConfiguration configuration) {
+    final boolean isTestClass = super.isTestClass(pyClass, configuration);
+    return isTestClass || (configuration instanceof PythonUnitTestRunConfiguration &&
+                           !((PythonUnitTestRunConfiguration)configuration).isPureUnittest());
+  }
+
+  @Override
+  protected boolean isTestFile(@NotNull final PyFile file) {
+    if (PyNames.SETUP_DOT_PY.equals(file.getName())) return true;
+    final List<PyStatement> testCases = getTestCaseClassesFromFile(file);
     if (testCases.isEmpty()) return false;
     return true;
   }

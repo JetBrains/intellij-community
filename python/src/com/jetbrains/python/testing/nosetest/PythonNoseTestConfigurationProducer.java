@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PythonNoseTestConfigurationProducer extends
                                                  PythonTestConfigurationProducer {
@@ -15,8 +17,8 @@ public class PythonNoseTestConfigurationProducer extends
     super(PythonTestConfigurationType.getInstance().PY_NOSETEST_FACTORY);
   }
 
-  protected boolean isAvailable(Location location) {
-    PsiElement element = location.getPsiElement();
+  protected boolean isAvailable(@NotNull final Location location) {
+    final PsiElement element = location.getPsiElement();
     Module module = location.getModule();
     if (module == null) module = ModuleManager.getInstance(element.getProject()).getModules()[0];
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
@@ -25,7 +27,7 @@ public class PythonNoseTestConfigurationProducer extends
   }
 
   @Override
-  protected boolean isTestFunction(PyFunction pyFunction) {
-    return pyFunction != null && PythonUnitTestUtil.isTestCaseFunction(pyFunction, false);
+  protected boolean isTestFunction(@NotNull final PyFunction pyFunction, @Nullable final AbstractPythonTestRunConfiguration configuration) {
+    return PythonUnitTestUtil.isTestCaseFunction(pyFunction, false);
   }
 }

@@ -120,13 +120,13 @@
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
 
-    <configurationProducer implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer"/>
     <testSrcLocator implementation="com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider"/>
 
     <configurationProducer implementation="com.jetbrains.python.testing.pytest.PyTestConfigurationProducer"/>
-    <configurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
-    <configurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
-    <configurationProducer implementation="com.jetbrains.python.testing.attest.PythonAtTestConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.attest.PythonAtTestConfigurationProducer"/>
 
     <!-- <referenceImporter implementation="com.jetbrains.python.codeInsight.imports.PythonReferenceImporter"/> -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
