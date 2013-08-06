@@ -480,7 +480,7 @@ class PyDocumentationBuilder {
     // remove common indentation
     if (cutWidth > 0 && cutWidth < Integer.MAX_VALUE) {
       for (int i = firstIndentedLine; i < lines.length; i += 1) {
-        if (lines[i].length() > cutWidth)
+        if (lines[i].length() >= cutWidth)
           lines[i] = lines[i].substring(cutWidth);
       }
     }
