@@ -616,19 +616,31 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     final Map<PsiTypeParameter, PsiType> map1 = classSubstitutor1.getSubstitutionMap();
     final Map<PsiTypeParameter, PsiType> map2 = classSubstitutor2.getSubstitutionMap();
     if (map1.size() == 1 && map2.size() == 1) {
+      boolean leftAssignable = InheritanceUtil.isInheritorOrSelf(aClass2, aClass1, true);
+      boolean rightAssignable = InheritanceUtil.isInheritorOrSelf(aClass1, aClass2, true);
       final PsiType t1 = map1.values().iterator().next();
       final PsiType t2 = map2.values().iterator().next();
 
       boolean raw1 = t1 instanceof PsiClassType && ((PsiClassType)t1).hasParameters();
       boolean raw2 = t2 instanceof PsiClassType && ((PsiClassType)t2).hasParameters();
-      if (!raw1 && raw2) return Specifics.FIRST;
-      if (raw1 && !raw2) return Specifics.SECOND;
+      if (!raw1 && raw2) return leftAssignable ? Specifics.FIRST : Specifics.NEITHER;
+      if (raw1 && !raw2) return rightAssignable ? Specifics.SECOND : Specifics.NEITHER;
 
       final PsiTypeParameter p1 = map1.keySet().iterator().next();
       final PsiTypeParameter p2 = map2.keySet().iterator().next();
-      final Specifics specifics = checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, p1, p2);
-      if (specifics != null) return specifics;
-      return chooseHigherDimension(t1, t2);
+      Specifics specifics = checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, p1, p2);
+      if (specifics == null) {
+        specifics = chooseHigherDimension(t1, t2);
+      }
+      if (specifics != null) {
+        if (specifics == Specifics.FIRST) {
+          if (leftAssignable && !rightAssignable) return Specifics.NEITHER;
+        }
+        else if (specifics == Specifics.SECOND) {
+          if (rightAssignable && !leftAssignable) return Specifics.NEITHER;
+        }
+      }
+      return specifics;
     }
     return null;
   }
