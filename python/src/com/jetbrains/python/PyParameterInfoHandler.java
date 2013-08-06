@@ -10,6 +10,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -110,12 +111,14 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     final PyArgumentList argList = prevResult.getArgumentList();
     if (!argList.isValid()) return;
     // really we need to redo analysis every UI update; findElementForParameterInfo isn't called while typing
-    final CallArgumentsMapping argumentsMapping = argList.analyzeCall(PyResolveContext.noImplicits());
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argList.getContainingFile());
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
+    final CallArgumentsMapping argumentsMapping = argList.analyzeCall(resolveContext);
     final PyMarkedCallee marked = argumentsMapping.getMarkedCallee();
     if (marked == null) return; // resolution failed
     final Callable callable = marked.getCallable();
 
-    final List<PyParameter> parameterList = Arrays.asList(callable.getParameterList().getParameters());
+    final List<PyParameter> parameterList = PyUtil.getParameters(callable, typeEvalContext);
     final List<PyNamedParameter> namedParameters = new ArrayList<PyNamedParameter>(parameterList.size());
 
     // param -> hint index. indexes are not contiguous, because some hints are parentheses.
@@ -123,7 +126,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     // formatting of hints: hint index -> flags. this includes flags for parens.
     final Map<Integer, EnumSet<ParameterInfoUIContextEx.Flag>> hintFlags = new HashMap<Integer, EnumSet<ParameterInfoUIContextEx.Flag>>();
 
-    final List<String> hintsList = buildParameterListHint(callable, namedParameters, parameterToIndex, hintFlags);
+    final List<String> hintsList = buildParameterListHint(parameterList, namedParameters, parameterToIndex, hintFlags);
 
     final int currentParamOffset = context.getCurrentParameterIndex(); // in Python mode, we get an offset here, not an index!
 
@@ -268,19 +271,18 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   /**
    * builds the textual picture and the list of named parameters
    *
-   * @param callable is a parameter list owner
+   * @param parameters parameters of a callable
    * @param namedParameters used to collect all named parameters of callable
    * @param parameterToIndex used to collect info about parameter indexes
    * @param hintFlags mark parameter as deprecated/highlighted/strikeout
    */
-  private static List<String> buildParameterListHint(@NotNull final Callable callable,
+  private static List<String> buildParameterListHint(@NotNull List<PyParameter> parameters,
                                                      @NotNull final List<PyNamedParameter> namedParameters,
                                                      @NotNull final Map<PyNamedParameter, Integer> parameterToIndex,
                                                      @NotNull final Map<Integer, EnumSet<ParameterInfoUIContextEx.Flag>> hintFlags) {
-
     final List<String> hintsList = new ArrayList<String>();
     ParamHelper.walkDownParamArray(
-      callable.getParameterList().getParameters(),
+      parameters.toArray(new PyParameter[parameters.size()]),
       new ParamHelper.ParamWalker() {
         public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) {
           hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterInfoUIContextEx.Flag.class));

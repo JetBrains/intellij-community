@@ -15,9 +15,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.console.PydevConsoleRunner;
@@ -122,7 +124,19 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     ChainIterable<String> cat = new ChainIterable<String>();
     final String name = fun.getName();
     cat.addItem("def ").addWith(func_name_wrapper, $(name));
-    cat.addItem(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
+    final TypeEvalContext context = TypeEvalContext.userInitiated(fun.getContainingFile());
+    final List<PyParameter> parameters = PyUtil.getParameters(fun, context);
+    final String paramStr = "(" +
+                            StringUtil.join(parameters,
+                                            new Function<PyParameter, String>() {
+                                              @Override
+                                              public String fun(PyParameter parameter) {
+                                                return PyUtil.getReadableRepr(parameter, false);
+                                              }
+                                            },
+                                            ", ") +
+                            ")";
+    cat.addItem(escaper.apply(paramStr));
     if (!PyNames.INIT.equals(name)) {
       cat.addItem(escaper.apply("\nInferred type: "));
       getTypeDescription(fun, cat);
@@ -157,16 +171,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return String.format("Inferred type: %s", getTypeName(context.getType(element), context));
   }
 
-  public static String getTypeDescription(@NotNull PyFunction fun) {
-    final TypeEvalContext context = TypeEvalContext.userInitiated(fun.getContainingFile());
-    PyTypeModelBuilder builder = new PyTypeModelBuilder(context);
-    return builder.build(fun).asString();
-  }
-
   public static void getTypeDescription(@NotNull PyFunction fun, ChainIterable<String> body) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(fun.getContainingFile());
     PyTypeModelBuilder builder = new PyTypeModelBuilder(context);
-    builder.build(fun).toBodyWithLinks(body, fun);
+    builder.build(context.getType(fun), true).toBodyWithLinks(body, fun);
   }
 
   public static String getTypeName(@Nullable PyType type, @NotNull final TypeEvalContext context) {
@@ -552,27 +560,28 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   private static String generateContent(PyFunction function, String offset, String prefix, boolean checkReturn) {
     //TODO: this code duplicates PyDocstringGenerator in some parts
 
-    PyParameter[] list = function.getParameterList().getParameters();
-    StringBuilder builder = new StringBuilder(offset);
+    final StringBuilder builder = new StringBuilder(offset);
+    final TypeEvalContext context = TypeEvalContext.userInitiated(function.getContainingFile());
     PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
 
-    for (PyParameter p : list) {
-      if (p.getText().equals(PyNames.CANONICAL_SELF) || p.getName() == null) {
+    for (PyParameter p : PyUtil.getParameters(function, context)) {
+      final String parameterName = p.getName();
+      if (p.getText().equals(PyNames.CANONICAL_SELF) || parameterName == null) {
         continue;
       }
-      String argType = signature == null ? null : signature.getArgTypeQualifiedName(p.getName());
+      String argType = signature == null ? null : signature.getArgTypeQualifiedName(parameterName);
 
       if (argType == null) {
         builder.append(prefix);
         builder.append("param ");
-        builder.append(p.getName());
+        builder.append(parameterName);
         builder.append(": ");
         builder.append(offset);
       }
       if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB || argType != null) {
         builder.append(prefix);
         builder.append("type ");
-        builder.append(p.getName());
+        builder.append(parameterName);
         builder.append(": ");
         if (signature != null) {
           builder.append(PySignatureUtil.getShortestImportableName(function, argType));

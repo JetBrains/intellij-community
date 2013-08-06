@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
@@ -77,9 +78,9 @@ public class PyCallByClassInspection extends PyInspection {
                 CallArgumentsMapping analysis = arglist.analyzeCall(resolveWithoutImplicits());
                 final PyCallExpression.PyMarkedCallee markedCallee = analysis.getMarkedCallee();
                 if (markedCallee != null  && markedCallee.getModifier() != STATICMETHOD) {
-                  PyParameter[] params = markedCallee.getCallable().getParameterList().getParameters();
-                  if (params.length > 0 && params[0] instanceof PyNamedParameter) {
-                    PyNamedParameter first_param = (PyNamedParameter)params[0];
+                  final List<PyParameter> params = PyUtil.getParameters(markedCallee.getCallable(), myTypeEvalContext);
+                  if (params.size() > 0 && params.get(0) instanceof PyNamedParameter) {
+                    PyNamedParameter first_param = (PyNamedParameter)params.get(0);
                     for (Map.Entry<PyExpression, PyNamedParameter> entry : analysis.getPlainMappedParams().entrySet()) {
                       // we ignore *arg and **arg which we cannot analyze
                       if (entry.getValue() == first_param) {

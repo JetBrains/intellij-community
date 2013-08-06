@@ -2,14 +2,9 @@ package com.jetbrains.python.documentation;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.Callable;
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NotNull;
@@ -170,7 +165,10 @@ public class PyTypeModelBuilder {
         final PyTupleType tupleType = (PyTupleType)elementType;
         final int n = tupleType.getElementCount();
         for (int i = 0; i < n; i++) {
-          elementTypes.add(build(tupleType.getElementType(i), true));
+          final PyType t = tupleType.getElementType(i);
+          if (t != null) {
+            elementTypes.add(build(t, true));
+          }
         }
       }
       else if (elementType != null) {
@@ -206,37 +204,16 @@ public class PyTypeModelBuilder {
 
   private TypeModel build(@NotNull PyCallableType type) {
     List<TypeModel> parameterModels = null;
-    final List<Pair<String, PyType>> parameters = type.getParameters(myContext);
+    final List<PyCallableParameter> parameters = type.getParameters(myContext);
     if (parameters != null) {
       parameterModels = new ArrayList<TypeModel>();
-      for (Pair<String, PyType> parameter : parameters) {
-        parameterModels.add(new ParamType(parameter.getFirst(), build(parameter.getSecond(), true)));
+      for (PyCallableParameter parameter : parameters) {
+        parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(myContext), true)));
       }
     }
     final PyType ret = type.getCallType(myContext, null);
     final TypeModel returnType = build(ret, true);
     return new FunctionType(returnType, parameterModels);
-  }
-
-  public TypeModel build(Callable callable) {
-    final PyType returnType = callable.getReturnType(myContext, null);
-    return new FunctionType(build(returnType, true), Collections2.transform(Lists.newArrayList(callable.getParameterList().getParameters()),
-                                                                            new Function<PyParameter, TypeModel>() {
-                                                                              @Override
-                                                                              public TypeModel apply(PyParameter p) {
-                                                                                final PyNamedParameter np = p.getAsNamed();
-                                                                                if (np != null) {
-                                                                                  TypeModel paramType = _(PyNames.UNKNOWN_TYPE);
-                                                                                  final PyType t = myContext.getType(np);
-                                                                                  if (t != null) {
-                                                                                    paramType = build(t, true);
-                                                                                  }
-                                                                                  final String name = PyFunctionType.getParameterName(np);
-                                                                                  return new ParamType(name, paramType);
-                                                                                }
-                                                                                return new ParamType(p.toString(), null);
-                                                                              }
-                                                                            }));
   }
 
   private interface TypeVisitor {

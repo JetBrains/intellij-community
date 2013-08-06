@@ -102,6 +102,12 @@ public class PyTypeProviderBase implements PyTypeProvider {
     return null;
   }
 
+  @Nullable
+  @Override
+  public PyType getCallableType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+    return null;
+  }
+
   protected void registerSelfReturnType(String classQualifiedName, Collection<String> methods) {
     registerReturnType(classQualifiedName, methods, mySelfTypeCallback);
   }

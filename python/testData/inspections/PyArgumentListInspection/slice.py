@@ -1,0 +1,5 @@
+print(slice(<warning descr="Parameter 'start' unfilled">)</warning>)
+print(slice(1))
+print(slice(1, 2))
+print(slice(1, 2, 3))
+print(slice(1, 2, 3, <warning descr="Unexpected argument">4</warning>))

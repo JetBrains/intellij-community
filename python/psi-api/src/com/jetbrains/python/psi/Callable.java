@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
  * @author dcheryasov
  */
-public interface Callable extends PyElement {
+public interface Callable extends PyTypedElement {
 
   /**
    * @return a list of parameters passed to this callable, possibly empty.
