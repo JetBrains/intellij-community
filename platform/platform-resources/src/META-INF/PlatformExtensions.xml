@@ -305,5 +305,6 @@
                      groupKey="group.names.portability.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeStyle.InconsistentLineSeparatorsInspection"/>
     <search.topHitProvider implementation="com.intellij.platform.DefaultPlatformTopHitProvider"/>
+    <search.topHitProvider implementation="com.intellij.ide.ui.UISimpleSettingsProvider"/>
   </extensions>
 </idea-plugin>
