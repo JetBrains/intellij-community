@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
@@ -27,7 +28,7 @@ import com.intellij.openapi.startup.StartupActivity;
 public class QuickDocOnMouseOverStartupActivity implements StartupActivity {
 
   @Override
-  public void runActivity(Project project) {
+  public void runActivity(@NotNull Project project) {
     if (EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()) {
       ServiceManager.getService(QuickDocOnMouseOverManager.class).setEnabled(true);
     }
