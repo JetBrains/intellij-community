@@ -99,7 +99,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
 
   @Override
   public Icon getIcon(final boolean open) {
-    return ModuleType.get(myModule).getIcon();
+    return myModule.isDisposed() ? null : ModuleType.get(myModule).getIcon();
   }
 
   public Module getModule() {
