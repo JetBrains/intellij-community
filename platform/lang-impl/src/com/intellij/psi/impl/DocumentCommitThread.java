@@ -159,10 +159,10 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
       }
     }
     if (task != null) {
-      Collection<Document> unc = task.project.isDisposed() ? Collections.<Document>emptyList() :
-        ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(task.project)).getUncommittedDocumentsUnsafe();
-      if (!unc.isEmpty()) {
-        s += "; Uncommitted: " + unc;
+      boolean stillUncommitted = !task.project.isDisposed() &&
+                                 ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(task.project)).isInUncommittedSet(task.document);
+      if (stillUncommitted) {
+        s += "; Uncommitted: " + task.document;
       }
     }
 
@@ -267,7 +267,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
         log("Pulled", task, false, indicator);
 
-        if (project.isDisposed() || !((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).getUncommittedDocumentsUnsafe().contains(document)) {
+        if (project.isDisposed() || !((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).isInUncommittedSet(document)) {
           log("Abandon and proceed to next",task, false);
           return;
         }
@@ -469,10 +469,9 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
         if (synchronously) {
           assert success;
         }
-        Collection<Document> unc = documentManager.getUncommittedDocumentsUnsafe();
         log("after call finishCommit",task, synchronously, success);
         if (synchronously || success) {
-          assert !unc.contains(document) : unc;
+          assert !documentManager.isInUncommittedSet(document);
         }
         if (!success) {
           // add document back to the queue

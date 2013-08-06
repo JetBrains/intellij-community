@@ -111,7 +111,7 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
   }
 
   @Override
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     return myExternalProjectSettingsControl == null
            ? ModuleWizardStep.EMPTY_ARRAY
            : new ModuleWizardStep[]{new ExternalModuleSettingsStep<S>(myExternalProjectSettingsControl)};
@@ -164,13 +164,13 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
     //noinspection unchecked
     settings.linkProject(externalProjectSettings);
   }
-  
+
   @NotNull
   protected abstract S createSettings();
 
   /**
    * Asks external system-specific module builder to prepare external system config file if necessary.
-   * 
+   *
    * @param contentRootDir  new module's content root dir
    * @return                external system config file created by the external system-specific implementation (if any);
    *                        <code>null</code> as an indication that no external system config file has been created

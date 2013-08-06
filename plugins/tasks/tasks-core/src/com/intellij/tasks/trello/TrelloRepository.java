@@ -43,10 +43,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Mikhail Golubev
@@ -237,21 +236,24 @@ public final class TrelloRepository extends BaseRepositoryImpl {
 
   @NotNull
   private List<TrelloCard> fetchCards() throws Exception {
+    boolean fromList = false;
     // choose most appropriate card provider
-    String url;
+    String baseUrl;
     if (myCurrentList != null) {
-      url = TrelloUtil.TRELLO_API_BASE_URL + "/lists/" + myCurrentList.getId() + "/cards?actions=commentCard&filter=all";
+      baseUrl = TrelloUtil.TRELLO_API_BASE_URL + "/lists/" + myCurrentList.getId() + "/cards";
+      fromList = true;
     }
     else if (myCurrentBoard != null) {
-      url = TrelloUtil.TRELLO_API_BASE_URL + "/boards/" + myCurrentBoard.getId() + "/cards?actions=commentCard&filter=all";
+      baseUrl = TrelloUtil.TRELLO_API_BASE_URL + "/boards/" + myCurrentBoard.getId() + "/cards";
     }
     else if (myCurrentUser != null) {
-      url = TrelloUtil.TRELLO_API_BASE_URL + "/members/me/cards/?actions=commentCard&filter=all";
+      baseUrl = TrelloUtil.TRELLO_API_BASE_URL + "/members/me/cards";
     }
     else {
       throw new IllegalStateException("Not configured");
     }
-    List<TrelloCard> cards = makeRequestAndDeserializeJsonResponse(url, TrelloUtil.LIST_OF_CARDS_TYPE);
+    String allCardsUrl = baseUrl + "?actions=commentCard&filter=all";
+    List<TrelloCard> cards = makeRequestAndDeserializeJsonResponse(allCardsUrl, TrelloUtil.LIST_OF_CARDS_TYPE);
     LOG.debug("Total " + cards.size() + " cards downloaded");
     List<TrelloCard> filtered = ContainerUtil.filter(cards, new Condition<TrelloCard>() {
       @Override
@@ -260,48 +262,64 @@ public final class TrelloRepository extends BaseRepositoryImpl {
       }
     });
     LOG.debug("Total " + filtered.size() + " cards after filtering");
+    if (!fromList) {
+      // fix for IDEA-111470 and IDEA-111475
+      // Select IDs of visible cards, e.d. cards that either archived explicitly or belong to archived list
+      // This information can't be extracted from single card description, because its 'closed' field
+      // reflects only the card state and doesn't show state of parental list and board.
+      // According to Trello REST API "filter=visible" parameter may be used only when fetching cards for
+      // particular board or user.
+      String visibleCardsUrl = baseUrl + "?filter=visible&fields=none";
+      List<TrelloCard> visibleCards = makeRequestAndDeserializeJsonResponse(visibleCardsUrl, TrelloUtil.LIST_OF_CARDS_TYPE);
+      LOG.debug("Total " + visibleCards.size() + " visible cards");
+      Set<String> visibleCardsIDs = ContainerUtil.map2Set(visibleCards, new Function<TrelloCard, String>() {
+        @Override
+        public String fun(TrelloCard card) {
+          return card.getId();
+        }
+      });
+      for (TrelloCard card : filtered) {
+        card.setVisible(visibleCardsIDs.contains(card.getId()));
+      }
+    }
     return filtered;
   }
 
   /**
    * Make GET request to specified URL and return HTTP entity of result as Reader object
    */
-  private Reader makeRequest(String url) throws IOException {
+  private String makeRequest(String url) throws IOException {
     HttpClient client = getHttpClient();
     HttpMethod method = new GetMethod(url);
     configureHttpMethod(method);
-    client.executeMethod(method);
-    // Can't use HttpMethod#getResponseBodyAsString because Trello doesn't specify encoding
-    // in Content-Type header and by default this method decodes from Latin-1
-    String entityContent = StreamUtil.readText(method.getResponseBodyAsStream(), "utf-8");
+    String entityContent;
+    try {
+      client.executeMethod(method);
+      // Can't use HttpMethod#getResponseBodyAsString because Trello doesn't specify encoding
+      // in Content-Type header and by default this method decodes from Latin-1
+      entityContent = StreamUtil.readText(method.getResponseBodyAsStream(), "utf-8");
+    }
+    finally {
+      method.releaseConnection();
+    }
     LOG.debug(entityContent);
     //return new InputStreamReader(method.getResponseBodyAsStream(), "utf-8");
-    return new StringReader(entityContent);
+    return entityContent;
   }
 
   @NotNull
   private <T> T makeRequestAndDeserializeJsonResponse(String url, Type type) throws IOException {
-    Reader entityStream = makeRequest(url);
-    try {
-      // javac 1.6.0_23 bug workaround
-      // TrelloRepository.java:286: type parameters of <T>T cannot be determined; no unique maximal instance exists for type variable T with upper bounds T,java.lang.Object
-      //noinspection unchecked
-      return (T)TrelloUtil.GSON.fromJson(entityStream, type);
-    }
-    finally {
-      entityStream.close();
-    }
+    String entityStream = makeRequest(url);
+    // javac 1.6.0_23 bug workaround
+    // TrelloRepository.java:286: type parameters of <T>T cannot be determined; no unique maximal instance exists for type variable T with upper bounds T,java.lang.Object
+    //noinspection unchecked
+    return (T)TrelloUtil.GSON.fromJson(entityStream, type);
   }
 
   @NotNull
   private <T> T makeRequestAndDeserializeJsonResponse(String url, Class<T> cls) throws IOException {
-    Reader entityStream = makeRequest(url);
-    try {
-      return TrelloUtil.GSON.fromJson(entityStream, cls);
-    }
-    finally {
-      entityStream.close();
-    }
+    String entityStream = makeRequest(url);
+    return TrelloUtil.GSON.fromJson(entityStream, cls);
   }
 
   @Override

@@ -19,10 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.Consumer;
 import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelException;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.*;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -71,5 +68,17 @@ public final class NettyUtil {
 
     return (throwable instanceof IOException && message.equals("An existing connection was forcibly closed by the remote host")) ||
            (throwable instanceof ChannelException && message.startsWith("Failed to bind to: "));
+  }
+
+  // applicable only in case of ClientBootstrap&OioClientSocketChannelFactory
+  public static void closeAndReleaseFactory(Channel channel) {
+    ChannelFactory channelFactory = channel.getFactory();
+    try {
+      channel.close().awaitUninterruptibly();
+    }
+    finally {
+      // in our case it does nothing, we don't use ExecutorService, but we are aware of future changes
+      channelFactory.releaseExternalResources();
+    }
   }
 }

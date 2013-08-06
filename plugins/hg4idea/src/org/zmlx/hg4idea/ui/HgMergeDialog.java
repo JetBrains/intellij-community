@@ -43,16 +43,19 @@ public class HgMergeDialog extends DialogWrapper {
   private JTextField revisionTxt;
   private JRadioButton branchOption;
   private JRadioButton tagOption;
+  private JRadioButton bookmarkOption;
   private JComboBox branchSelector;
   private JComboBox tagSelector;
+  private JComboBox bookmarkSelector;
   private JPanel contentPanel;
   private HgRepositorySelectorComponent hgRepositorySelectorComponent;
   private JRadioButton otherHeadRadioButton;
   private JLabel otherHeadLabel;
 
   private HgRevisionNumber otherHead;
-  private Map<VirtualFile, List<HgTagBranch>> branchesForRepos;
-  private Map<VirtualFile, List<HgTagBranch>> tagsForRepos;
+  private Map<VirtualFile, Collection<HgTagBranch>> branchesForRepos;
+  private Map<VirtualFile, Collection<HgTagBranch>> tagsForRepos;
+  private Map<VirtualFile, Collection<HgTagBranch>> bookmarksForRepos;
 
   public HgMergeDialog(Project project,
                        Collection<VirtualFile> roots,
@@ -61,6 +64,7 @@ public class HgMergeDialog extends DialogWrapper {
     this.project = project;
     branchesForRepos = branchesAndTags.getBranchesForRepos();
     tagsForRepos = branchesAndTags.getTagsForRepos();
+    bookmarksForRepos = branchesAndTags.getBookmarksForRepos();
     setRoots(roots, selectedRepo);
     hgRepositorySelectorComponent.setTitle("Select repository to merge");
     hgRepositorySelectorComponent.addActionListener(new ActionListener() {
@@ -76,6 +80,7 @@ public class HgMergeDialog extends DialogWrapper {
     };
     branchOption.addChangeListener(changeListener);
     tagOption.addChangeListener(changeListener);
+    bookmarkOption.addChangeListener(changeListener);
     revisionOption.addChangeListener(changeListener);
     otherHeadRadioButton.addChangeListener(changeListener);
     setTitle("Merge");
@@ -100,6 +105,10 @@ public class HgMergeDialog extends DialogWrapper {
     return tagOption.isSelected() ? (HgTagBranch) tagSelector.getSelectedItem() : null;
   }
 
+  public HgTagBranch getBookmark() {
+    return bookmarkOption.isSelected() ? (HgTagBranch)bookmarkSelector.getSelectedItem() : null;
+  }
+
   public String getRevision() {
     return revisionOption.isSelected() ? revisionTxt.getText() : null;
   }
@@ -112,6 +121,7 @@ public class HgMergeDialog extends DialogWrapper {
     VirtualFile repo = getRepository();
     loadBranches(repo);
     loadTags(repo);
+    loadBookmarks(repo);
     loadHeads(repo);
   }
 
@@ -119,6 +129,7 @@ public class HgMergeDialog extends DialogWrapper {
     revisionTxt.setEnabled(revisionOption.isSelected());
     branchSelector.setEnabled(branchOption.isSelected());
     tagSelector.setEnabled(tagOption.isSelected());
+    bookmarkSelector.setEnabled(bookmarkOption.isSelected());
   }
 
   private void loadBranches(VirtualFile root) {
@@ -129,6 +140,11 @@ public class HgMergeDialog extends DialogWrapper {
   private void loadTags(VirtualFile root) {
     assert tagsForRepos.get(root) != null : "No inforamtion about root " + root;
     tagSelector.setModel(new DefaultComboBoxModel(tagsForRepos.get(root).toArray()));
+  }
+
+  private void loadBookmarks(VirtualFile root) {
+    assert tagsForRepos.get(root) != null : "No inforamtion about root " + root;
+    bookmarkSelector.setModel(new DefaultComboBoxModel(bookmarksForRepos.get(root).toArray()));
   }
 
   private void loadHeads(final VirtualFile root) {

@@ -34,10 +34,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Ensures that all external system sub-projects are correctly represented at the external system tool window.
@@ -82,8 +79,40 @@ public class ToolWindowModuleService extends AbstractToolWindowService<ModuleDat
     }
 
     AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
-    HashMap<ExternalProjectPojo,Collection<ExternalProjectPojo>> projects = ContainerUtilRt.newHashMap(settings.getAvailableProjects());
+    Set<String> pathsToForget = detectRenamedProjects(data, settings.getAvailableProjects());
+    if (!pathsToForget.isEmpty()) {
+      settings.forgetExternalProjects(pathsToForget);
+    }
+    Map<ExternalProjectPojo,Collection<ExternalProjectPojo>> projects = ContainerUtilRt.newHashMap(settings.getAvailableProjects());
     projects.putAll(data);
     settings.setAvailableProjects(projects);
+  }
+  
+  @NotNull
+  private static Set<String> detectRenamedProjects(@NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> currentInfo,
+                                                   @NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> oldInfo)
+  {
+    Map<String/* external config path */, String/* project name */> map = ContainerUtilRt.newHashMap();
+    for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : currentInfo.entrySet()) {
+      map.put(entry.getKey().getPath(), entry.getKey().getName());
+      for (ExternalProjectPojo pojo : entry.getValue()) {
+        map.put(pojo.getPath(), pojo.getName());
+      }
+    }
+
+    Set<String> result = ContainerUtilRt.newHashSet();
+    for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : oldInfo.entrySet()) {
+      String newName = map.get(entry.getKey().getPath());
+      if (newName != null && !newName.equals(entry.getKey().getName())) {
+        result.add(entry.getKey().getPath());
+      }
+      for (ExternalProjectPojo pojo : entry.getValue()) {
+        newName = map.get(pojo.getPath());
+        if (newName != null && !newName.equals(pojo.getName())) {
+          result.add(pojo.getPath());
+        }
+      }
+    }
+    return result;
   }
 }

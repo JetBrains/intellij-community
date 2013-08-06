@@ -39,7 +39,8 @@ public class InheritanceImplUtil {
   public static boolean isInheritor(@NotNull final PsiClass candidateClass, @NotNull PsiClass baseClass, final boolean checkDeep) {
     if (baseClass instanceof PsiAnonymousClass) return false;
     if (!checkDeep) return isInheritor(candidateClass, baseClass, false, null);
-    
+
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(candidateClass.getQualifiedName())) return false;
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName())) return true;
     Map<PsiClass, Boolean> map = CachedValuesManager.getManager(candidateClass.getProject()).
       getCachedValue(candidateClass, new CachedValueProvider<Map<PsiClass, Boolean>>() {
@@ -50,7 +51,7 @@ public class InheritanceImplUtil {
           return Result.create(map, candidateClass);
         }
       });
-    
+
     Boolean computed = map.get(baseClass);
     if (computed == null) {
       computed = isInheritor(candidateClass, baseClass, true, null);

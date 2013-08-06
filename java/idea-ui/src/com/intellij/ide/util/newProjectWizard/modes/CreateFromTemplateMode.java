@@ -102,7 +102,7 @@ public class CreateFromTemplateMode extends WizardMode {
 
   @Nullable
   @Override
-  protected StepSequence createSteps(WizardContext context, @NotNull ModulesProvider modulesProvider) {
+  protected StepSequence createSteps(@NotNull WizardContext context, @NotNull ModulesProvider modulesProvider) {
     MultiMap<TemplatesGroup, ProjectTemplate> map = getTemplatesMap(context);
     StepSequence sequence = new StepSequence();
     for (ProjectTemplate template : map.values()) {

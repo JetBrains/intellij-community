@@ -20,6 +20,8 @@ import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Base interface for run configurations that support the "Make before launch" task.
+ *
  * @author spleaner
  */
 public interface RunProfileWithCompileBeforeLaunchOption extends RunProfile {

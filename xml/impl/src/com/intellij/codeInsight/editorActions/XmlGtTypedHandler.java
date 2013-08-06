@@ -32,6 +32,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -125,7 +126,8 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
             return Result.CONTINUE; // already seen /
           }
           element = parent.getPrevSibling();
-        } else if (parent instanceof XmlTag && !(element.getPrevSibling() instanceof XmlTag)) {
+        } else if (parent instanceof XmlTag && !(element.getPrevSibling() instanceof XmlTag) &&
+                   !(element.getPrevSibling() instanceof OuterLanguageElement)) {
           element = parent;
         } else if (parent instanceof XmlAttributeValue) {
           element = parent;
@@ -147,7 +149,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
         element = element.getParent().getParent();
       }
 
-      while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
+      while(element instanceof PsiWhiteSpace || element instanceof OuterLanguageElement) element = element.getPrevSibling();
       if (element instanceof XmlDocument) {   // hack for closing tags in RHTML
         element = element.getLastChild();
       }

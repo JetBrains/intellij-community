@@ -53,7 +53,7 @@ public class StepSequence {
     myCommonFinishingSteps.add(Pair.create(step, suitableTypes));
   }
 
-  public void addStepsForBuilder(AbstractModuleBuilder builder, WizardContext wizardContext, ModulesProvider modulesProvider) {
+  public void addStepsForBuilder(@NotNull AbstractModuleBuilder builder, @NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     String id = builder.getBuilderId();
     if (!mySpecificSteps.containsKey(id)) {
       mySpecificSteps.put(id, Arrays.asList(builder.createWizardSteps(wizardContext, modulesProvider)));

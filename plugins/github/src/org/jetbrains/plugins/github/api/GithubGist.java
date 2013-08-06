@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,13 +75,13 @@ public class GithubGist {
   }
 
   public GithubGist(@NotNull String id,
-                    @NotNull String description,
+                    @Nullable String description,
                     boolean isPublic,
                     @NotNull String htmlUrl,
                     @NotNull List<GistFile> files,
                     @Nullable GithubUser user) {
     myId = id;
-    myDescription = description;
+    myDescription = StringUtil.notNullize(description);
     myIsPublic = isPublic;
     myHtmlUrl = htmlUrl;
     myFiles = files;

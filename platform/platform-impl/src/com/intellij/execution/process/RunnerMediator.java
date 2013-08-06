@@ -17,6 +17,7 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
@@ -89,8 +90,9 @@ public class RunnerMediator {
       if (path != null && new File(path).exists()) {
         return path;
       }
-      if (new File(STANDARD_RUNNERW).exists()) {
-        return STANDARD_RUNNERW;
+      File runnerw = new File(PathManager.getBinPath(), STANDARD_RUNNERW);
+      if (runnerw.exists()) {
+        return runnerw.getPath();
       }
       return null;
     }

@@ -30,10 +30,9 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +48,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
 
   private void doTest(boolean checkWarnings, boolean checkInfos, Class<?>... classes) {
     setLanguageLevel(LanguageLevel.JDK_1_7);
-    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_7, myTestRootDisposable);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, getModule(), myTestRootDisposable);
     enableInspectionTools(classes);
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
@@ -157,7 +156,6 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testMethodReferences() { doTest(false, true, false); }
   public void testUsedMethodsByMethodReferences() { doTest(true, true, false); }
   public void testLambdaExpressions() { doTest(false, true, false); }
-  public void testJava7CastConventions() { doTest(false, true, false); }
   public void testUncheckedWarning() { doTest(true, false); }
   public void testUncheckedWarningIDEA59290() { doTest(true, false); }
   public void testUncheckedWarningIDEA70620() { doTest(true, false); }
@@ -180,4 +178,5 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA63731() { doTest(false, false); }
   public void testIDEA62056() { doTest(false, false); }
   public void testIDEA78916() { doTest(false, false); }
+  public void testIDEA111420() { doTest(false, false); }
 }

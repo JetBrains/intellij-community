@@ -15,12 +15,12 @@
  */
 package com.intellij.tasks.jira.model;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Mikhail Golubev
  */
 public class JiraUser {
-  private String emailAddress;
-  private boolean active;
   private String name, displayName;
   private String self;
 
@@ -29,22 +29,17 @@ public class JiraUser {
     return String.format("JiraUser(name=%s)", name);
   }
 
-  public String getEmailAddress() {
-    return emailAddress;
-  }
-
-  public boolean isActive() {
-    return active;
-  }
-
+  @NotNull
   public String getName() {
     return name;
   }
 
+  @NotNull
   public String getDisplayName() {
     return displayName;
   }
 
+  @NotNull
   public String getUserUrl() {
     return self;
   }

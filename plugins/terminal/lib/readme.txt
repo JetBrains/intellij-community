@@ -1,4 +1,5 @@
 * JNA - Java Native Access - https://github.com/twall/jna
-* JPty - https://github.com/jawi/JPty, this jar should be built manually to exclude purejavacomm and jna from it
+* pty4j - Java PTY implementation - https://github.com/traff/pty4j
 * purejavacomm - we use forked version that fixes JNA and YourKit Profiler incompatibility - https://github.com/traff/purejavacomm
 * jediterm-pty - PTY terminal from https://github.com/traff/jediterm
+* libwinpty.dll and winpty-agent.exe - Windows PTY native implementation used by pty4j, we use forked version from https://github.com/traff/winpty 

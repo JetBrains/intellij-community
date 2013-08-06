@@ -20,10 +20,11 @@ import javax.swing.*;
  */
 public class XmlProperty implements IProperty, PomRenameableTarget, PsiTarget {
 
+  @NotNull
   private final XmlTag myTag;
   private final XmlPropertiesFile myPropertiesFile;
 
-  public XmlProperty(XmlTag tag, XmlPropertiesFile xmlPropertiesFile) {
+  public XmlProperty(@NotNull XmlTag tag, XmlPropertiesFile xmlPropertiesFile) {
     myTag = tag;
     myPropertiesFile = xmlPropertiesFile;
   }
@@ -78,6 +79,7 @@ public class XmlProperty implements IProperty, PomRenameableTarget, PsiTarget {
     return null;
   }
 
+  @NotNull
   @Override
   public PsiElement getPsiElement() {
     return myTag;

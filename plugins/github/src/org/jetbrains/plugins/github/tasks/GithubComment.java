@@ -17,7 +17,6 @@ package org.jetbrains.plugins.github.tasks;
 
 import com.intellij.tasks.impl.SimpleComment;
 import com.intellij.util.text.DateFormatUtil;
-import com.petebevin.markdown.MarkdownProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +55,6 @@ public class GithubComment extends SimpleComment {
     }
     builder.append("</td></tr></table>");
 
-    builder.append(new MarkdownProcessor().markdown(getText())).append("<br>");
+    builder.append(getText()).append("<br>");
   }
 }

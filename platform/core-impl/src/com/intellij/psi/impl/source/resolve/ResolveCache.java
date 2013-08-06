@@ -139,18 +139,12 @@ public class ResolveCache {
     return reference == null ? null : reference.get();
   }
 
-  public PsiElement resolveWithCaching(@NotNull PsiReference ref,
-                                       @NotNull Resolver resolver,
-                                       boolean needToPreventRecursion,
-                                       boolean incompleteCode) {
-    return resolve(ref, resolver, needToPreventRecursion, incompleteCode, false, ref.getElement().isPhysical());
-  }
-
   @Nullable
-  public <TRef extends PsiReference, TResult>TResult resolveWithCaching(@NotNull TRef ref,
-                                       @NotNull AbstractResolver<TRef, TResult> resolver,
-                                       boolean needToPreventRecursion,
-                                       boolean incompleteCode) {
+  public <TRef extends PsiReference, TResult>
+         TResult resolveWithCaching(@NotNull TRef ref,
+                                    @NotNull AbstractResolver<TRef, TResult> resolver,
+                                    boolean needToPreventRecursion,
+                                    boolean incompleteCode) {
     return resolve(ref, resolver, needToPreventRecursion, incompleteCode, false, ref.getElement().isPhysical());
   }
 

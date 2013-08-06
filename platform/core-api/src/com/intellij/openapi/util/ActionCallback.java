@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -64,6 +63,7 @@ public class ActionCallback implements Disposable {
 
   public void setDone() {
     if (myDone.setExecuted()) {
+      myRejected.clear();
       Disposer.dispose(this);
     }
   }
@@ -82,6 +82,7 @@ public class ActionCallback implements Disposable {
 
   public void setRejected() {
     if (myRejected.setExecuted()) {
+      myDone.clear();
       Disposer.dispose(this);
     }
   }
@@ -202,6 +203,7 @@ public class ActionCallback implements Disposable {
       }
     };
   }
+
   @NotNull
   public Runnable createSetRejectedRunnable() {
     return new Runnable() {

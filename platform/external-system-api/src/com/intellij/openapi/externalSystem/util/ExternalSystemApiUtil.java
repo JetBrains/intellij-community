@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.util;
 
+import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -22,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -45,6 +47,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -438,5 +442,29 @@ public class ExternalSystemApiUtil {
       return ((ExternalSystemAutoImportAware)manager).getAffectedExternalProjectPath(externalProjectPath, project);
     }
     return null;
+  }
+
+  /**
+   * {@link RemoteUtil#unwrap(Throwable) unwraps} given exception if possible and builds error message for it.
+   *
+   * @param e  exception to process
+   * @return error message for the given exception
+   */
+  @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
+  @NotNull
+  public static String buildErrorMessage(@NotNull Throwable e) {
+    Throwable unwrapped = RemoteUtil.unwrap(e);
+    String reason = unwrapped.getLocalizedMessage();
+    if (!StringUtil.isEmpty(reason)) {
+      return reason;
+    }
+    else if (unwrapped.getClass() == ExternalSystemException.class) {
+      return String.format("exception during working with external system: %s", ((ExternalSystemException)unwrapped).getOriginalReason());
+    }
+    else {
+      StringWriter writer = new StringWriter();
+      unwrapped.printStackTrace(new PrintWriter(writer));
+      return writer.toString();
+    }
   }
 }

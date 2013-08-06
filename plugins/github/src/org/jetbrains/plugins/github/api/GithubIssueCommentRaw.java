@@ -30,6 +30,7 @@ class GithubIssueCommentRaw implements DataConstructor {
   @Nullable public String url;
   @Nullable public String htmlUrl;
   @Nullable public String body;
+  @Nullable public String bodyHtml;
 
   @Nullable public Date createdAt;
   @Nullable public Date updatedAt;
@@ -39,7 +40,7 @@ class GithubIssueCommentRaw implements DataConstructor {
   @SuppressWarnings("ConstantConditions")
   @NotNull
   public GithubIssueComment createIssueComment() {
-    return new GithubIssueComment(id, htmlUrl, body, createdAt, updatedAt, user.createUser());
+    return new GithubIssueComment(id, htmlUrl, bodyHtml, createdAt, updatedAt, user.createUser());
   }
 
   @SuppressWarnings("unchecked")

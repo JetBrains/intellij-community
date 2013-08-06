@@ -26,9 +26,11 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -312,7 +314,10 @@ public class HighlightMethodUtil {
   }
 
   @Nullable
-  static HighlightInfo checkMethodCall(PsiMethodCallExpression methodCall, PsiResolveHelper resolveHelper) {
+  static HighlightInfo checkMethodCall(@NotNull PsiMethodCallExpression methodCall,
+                                       @NotNull PsiResolveHelper resolveHelper,
+                                       @NotNull LanguageLevel languageLevel,
+                                       @NotNull JavaSdkVersion javaSdkVersion) {
     PsiExpressionList list = methodCall.getArgumentList();
     PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
     JavaResolveResult[] results = referenceToMethod.multiResolve(true);
@@ -327,7 +332,7 @@ public class HighlightMethodUtil {
     if (resolved instanceof PsiMethod && resolveResult.isValidResult()) {
       TextRange fixRange = getFixRange(methodCall);
       highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, fixRange);
-      if (highlightInfo == null && !LambdaUtil.isValidQualifier4InterfaceStaticMethodCall((PsiMethod)resolved, methodCall.getMethodExpression())) {
+      if (highlightInfo == null && !LambdaUtil.isValidQualifier4InterfaceStaticMethodCall((PsiMethod)resolved, methodCall.getMethodExpression(), languageLevel)) {
         highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip("Static method may be invoked on containing interface class only").range(fixRange).create();
       }
     }
@@ -364,7 +369,7 @@ public class HighlightMethodUtil {
             highlightInfo = GenericsHighlightUtil.checkInferredTypeArguments(resolvedMethod, methodCall, substitutor);
           }
           else {
-            highlightInfo = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, methodExpression, substitutor);
+            highlightInfo = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, methodExpression, substitutor, javaSdkVersion);
           }
         }
       }
@@ -384,7 +389,8 @@ public class HighlightMethodUtil {
       }
     }
     if (highlightInfo == null) {
-      highlightInfo = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, referenceToMethod, substitutor);
+      highlightInfo = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, referenceToMethod, substitutor,
+                                                                                     javaSdkVersion);
     }
     return highlightInfo;
   }
@@ -860,7 +866,7 @@ public class HighlightMethodUtil {
   }
 
   @Nullable
-  static HighlightInfo checkMethodCanHaveBody(PsiMethod method) {
+  static HighlightInfo checkMethodCanHaveBody(PsiMethod method, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
     PsiClass aClass = method.getContainingClass();
     boolean hasNoBody = method.getBody() == null;
     boolean isInterface = aClass != null && aClass.isInterface();
@@ -887,7 +893,7 @@ public class HighlightMethodUtil {
         }
       }
       else if (isExtension) {
-        return HighlightUtil.checkExtensionMethodsFeature(method);
+        return HighlightUtil.checkExtensionMethodsFeature(method, languageLevel,containingFile);
       }
     }
     else if (isExtension) {
@@ -983,7 +989,7 @@ public class HighlightMethodUtil {
    * @return error if static method overrides instance method or
    *         instance method overrides static. see JLS 8.4.6.1, 8.4.6.2
    */
-  static HighlightInfo checkStaticMethodOverride(PsiMethod method) {
+  static HighlightInfo checkStaticMethodOverride(@NotNull PsiMethod method,@NotNull PsiFile containingFile) {
     // constructors are not members and therefor don't override class methods
     if (method.isConstructor()) {
       return null;
@@ -997,7 +1003,7 @@ public class HighlightMethodUtil {
                             : MethodSignatureUtil.findMethodBySignature(superClass, method, true);
 
     boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    HighlightInfo highlightInfo = checkStaticMethodOverride(aClass, method, isStatic,superClass, superMethod);
+    HighlightInfo highlightInfo = checkStaticMethodOverride(aClass, method, isStatic,superClass, superMethod,containingFile);
     if (highlightInfo != null) return highlightInfo;
     if (!isStatic) {
       // all methods in interface are instance, so no possible errors in this case
@@ -1007,15 +1013,15 @@ public class HighlightMethodUtil {
     for (PsiClass aInterfaces : interfaces) {
         superClass = aInterfaces;
         superMethod = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(aClass, superClass, method.getSignature(PsiSubstitutor.EMPTY), true);
-        highlightInfo = checkStaticMethodOverride(aClass, method, true, superClass, superMethod);
+        highlightInfo = checkStaticMethodOverride(aClass, method, true, superClass, superMethod,containingFile);
         if (highlightInfo != null) return highlightInfo;
       }
     return null;
   }
 
-  private static HighlightInfo checkStaticMethodOverride(PsiClass aClass, PsiMethod method, boolean isMethodStatic, PsiClass superClass, PsiMethod superMethod) {
+  private static HighlightInfo checkStaticMethodOverride(PsiClass aClass, PsiMethod method, boolean isMethodStatic, PsiClass superClass, PsiMethod superMethod,@NotNull PsiFile containingFile) {
     if (superMethod == null) return null;
-    PsiManager manager = superMethod.getManager();
+    PsiManager manager = containingFile.getManager();
     PsiModifierList superModifierList = superMethod.getModifierList();
     PsiModifierList modifierList = method.getModifierList();
     if (superModifierList.hasModifierProperty(PsiModifier.PRIVATE)) return null;
@@ -1208,7 +1214,7 @@ public class HighlightMethodUtil {
   }
 
 
-  static void checkNewExpression(@NotNull PsiNewExpression expression, @NotNull HighlightInfoHolder holder) {
+  static void checkNewExpression(@NotNull PsiNewExpression expression, @NotNull HighlightInfoHolder holder, @NotNull JavaSdkVersion javaSdkVersion) {
     PsiType type = expression.getType();
     if (!(type instanceof PsiClassType)) return;
     PsiClassType.ClassResolveResult typeResult = ((PsiClassType)type).resolveGenerics();
@@ -1222,15 +1228,16 @@ public class HighlightMethodUtil {
     }
 
     PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
-    checkConstructorCall(typeResult, expression, type, classReference, holder);
+    checkConstructorCall(typeResult, expression, type, classReference, holder, javaSdkVersion);
   }
 
 
   public static void checkConstructorCall(PsiClassType.ClassResolveResult typeResolveResult,
-                                                   PsiConstructorCall constructorCall,
-                                                   PsiType type,
-                                                   PsiJavaCodeReferenceElement classReference,
-                                                   final HighlightInfoHolder holder) {
+                                          PsiConstructorCall constructorCall,
+                                          PsiType type,
+                                          PsiJavaCodeReferenceElement classReference,
+                                          final HighlightInfoHolder holder,
+                                          @NotNull JavaSdkVersion javaSdkVersion) {
     PsiExpressionList list = constructorCall.getArgumentList();
     if (list == null) return;
     PsiClass aClass = typeResolveResult.getElement();
@@ -1343,12 +1350,10 @@ public class HighlightMethodUtil {
         }
         else {
           if (constructorCall instanceof PsiNewExpression) {
-            HighlightInfo highlightInfo = GenericsHighlightUtil.checkReferenceTypeArgumentList(constructor,
-                                                                                               ((PsiNewExpression)constructorCall)
-                                                                                                 .getTypeArgumentList(),
-                                                                                               result.getSubstitutor(), false);
-            if (highlightInfo != null) {
-              holder.add(highlightInfo);
+            PsiReferenceParameterList typeArgumentList = ((PsiNewExpression)constructorCall).getTypeArgumentList();
+            HighlightInfo info = GenericsHighlightUtil.checkReferenceTypeArgumentList(constructor, typeArgumentList, result.getSubstitutor(), false, javaSdkVersion);
+            if (info != null) {
+              holder.add(info);
             }
           }
         }

@@ -20,6 +20,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -32,16 +33,19 @@ public class UnknownModuleType extends ModuleType {
     myModuleType = moduleType;
   }
 
+  @NotNull
   @Override
   public ModuleBuilder createModuleBuilder() {
     return myModuleType.createModuleBuilder();
   }
 
+  @NotNull
   @Override
   public String getName() {
     return ProjectBundle.message("module.type.unknown.name", myModuleType.getName());
   }
 
+  @NotNull
   @Override
   public String getDescription() {
     return myModuleType.getDescription();
@@ -57,8 +61,9 @@ public class UnknownModuleType extends ModuleType {
     return myModuleType.getIcon();
   }
 
+  @NotNull
   @Override
-  public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext, final ModuleBuilder moduleBuilder, final ModulesProvider modulesProvider) {
+  public ModuleWizardStep[] createWizardSteps(@NotNull final WizardContext wizardContext, @NotNull final ModuleBuilder moduleBuilder, @NotNull final ModulesProvider modulesProvider) {
     return myModuleType.createWizardSteps(wizardContext, moduleBuilder, modulesProvider);
   }
 

@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.intelliLang;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
@@ -30,11 +31,14 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
@@ -65,6 +69,12 @@ import java.util.*;
 public class Configuration implements PersistentStateComponent<Element>, ModificationTracker {
 
   static final Logger LOG = Logger.getInstance(Configuration.class.getName());
+  private static final Condition<BaseInjection> LANGUAGE_INJECTION_CONDITION = new Condition<BaseInjection>() {
+    @Override
+    public boolean value(BaseInjection o) {
+      return Language.findLanguageByID(o.getInjectedLanguageId()) != null;
+    }
+  };
 
   @State(
     name = Configuration.COMPONENT_NAME,
@@ -126,6 +136,13 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
       return myParentConfiguration.getDefaultInjections();
     }
 
+    @Override
+    protected Collection<BaseInjection> getAllInjections() {
+      Collection<BaseInjection> injections = super.getAllInjections();
+      injections.addAll(myParentConfiguration.getAllInjections());
+      return injections;
+    }
+
     @NotNull
     @Override
     public List<BaseInjection> getInjections(final String injectorId) {
@@ -149,8 +166,8 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
                                      List<? extends BaseInjection> originalInjections,
                                      boolean forceLevel) {
       if (!forceLevel && !originalInjections.isEmpty()) {
-        if (myParentConfiguration.replaceInjections(Collections.<BaseInjection>emptyList(), originalInjections, forceLevel)) {
-          myParentConfiguration.replaceInjections(newInjections, Collections.<BaseInjection>emptyList(), forceLevel);
+        if (myParentConfiguration.replaceInjections(Collections.<BaseInjection>emptyList(), originalInjections, false)) {
+          myParentConfiguration.replaceInjections(newInjections, Collections.<BaseInjection>emptyList(), false);
           return true;
         }
       }
@@ -190,6 +207,26 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
     }
   };
 
+  protected Collection<BaseInjection> getAllInjections() {
+    ArrayList<BaseInjection> injections = new ArrayList<BaseInjection>();
+    for (List<BaseInjection> list : myInjections.values()) {
+      injections.addAll(list);
+    }
+    return injections;
+  }
+
+  private CachedValue<MultiMap<String, BaseInjection>> myInjectionsById = new CachedValueImpl<MultiMap<String, BaseInjection>>(new CachedValueProvider<MultiMap<String, BaseInjection>>() {
+    @Nullable
+    @Override
+    public Result<MultiMap<String, BaseInjection>> compute() {
+      MultiMap<String, BaseInjection> map = new MultiMap<String, BaseInjection>();
+      for (BaseInjection injection : getAllInjections()) {
+        map.putValue(injection.getInjectedLanguageId(), injection);
+      }
+      return Result.create(map, Configuration.this);
+    }
+  });
+
   private volatile long myModificationCount;
 
   public Configuration() {
@@ -206,7 +243,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
       supports.put(support.getId(), support);
     }
     loadStateOld(element, supports.get(LanguageInjectionSupport.XML_SUPPORT_ID), supports.get(LanguageInjectionSupport.JAVA_SUPPORT_ID));
-    for (Element child : (List<Element>)element.getChildren("injection")){
+    for (Element child : element.getChildren("injection")){
       final String key = child.getAttributeValue("injector-id");
       final LanguageInjectionSupport support = supports.get(key);
       final BaseInjection injection = support == null ? new BaseInjection(key) : support.createInjection(child);
@@ -350,6 +387,10 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
     return Collections.emptyList();
   }
 
+  public Collection<BaseInjection> getInjectionsByLanguageId(String languageId) {
+    return myInjectionsById.getValue().get(languageId);
+  }
+
   @Nullable
   public static Configuration load(final InputStream is) throws IOException, JDOMException {
     try {
@@ -438,7 +479,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
     }
   }
 
-  public void configurationModified() {
+  private void configurationModified() {
     myModificationCount ++;
   }
 
@@ -492,6 +533,9 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
     }
   }
 
+  /**
+   * @param injectorId see {@link org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport#getId()}
+   */
   @NotNull
   public List<BaseInjection> getInjections(final String injectorId) {
     return Collections.unmodifiableList(myInjections.get(injectorId));
@@ -506,7 +550,10 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
                                 public boolean process(final List<? extends BaseInjection> add,
                                                        final List<? extends BaseInjection> remove) {
                                   replaceInjectionsWithUndoInner(add, remove);
-                                  FileContentUtil.reparseOpenedFiles();
+                                  if (ContainerUtil.find(add, LANGUAGE_INJECTION_CONDITION) != null || ContainerUtil.find(remove,
+                                                                                                                          LANGUAGE_INJECTION_CONDITION) != null) {
+                                    FileContentUtil.reparseOpenedFiles();
+                                  }
                                   return true;
                                 }
                               });

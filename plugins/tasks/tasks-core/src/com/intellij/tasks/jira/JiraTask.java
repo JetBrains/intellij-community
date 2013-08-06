@@ -33,7 +33,7 @@ import java.util.Date;
 /**
  * @author Dmitry Avdeev
  */
-class JiraTask extends Task {
+public class JiraTask extends Task {
 
   private final JiraIssue myJiraIssue;
   private final TaskRepository myRepository;
@@ -72,6 +72,7 @@ class JiraTask extends Task {
   public Icon getIcon() {
     JiraIssueType issueType = myJiraIssue.getIssueType();
     String iconUrl = issueType.getIconUrl();
+    // iconUrl will be null in JIRA versions prior 5.x.x
     final Icon icon = iconUrl == null
                       ? TasksIcons.JIRA
                       : isClosed() ? CachedIconLoader.getDisabledIcon(iconUrl) : CachedIconLoader.getIcon(iconUrl);
@@ -138,7 +139,6 @@ class JiraTask extends Task {
 
   @Override
   public String getIssueUrl() {
-    //return myJiraIssue.getIssueUrl();
     return myRepository.getUrl() + "/browse/" + myJiraIssue.getKey();
   }
 

@@ -55,6 +55,7 @@ import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
+import com.intellij.psi.injection.ReferenceInjector;
 import org.jdom.Document;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -866,19 +867,20 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
       this.cfg = cfg;
       this.title = title;
       bundledInjections.addAll(cfg.getDefaultInjections());
-      originalInjections = ContainerUtil
+      originalInjections = new ArrayList<BaseInjection>(ContainerUtil
         .concat(InjectorUtils.getActiveInjectionSupportIds(), new Function<String, Collection<? extends BaseInjection>>() {
           public Collection<? extends BaseInjection> fun(final String s) {
-            return ContainerUtil.findAll(
+            List<BaseInjection> injections =
               CfgInfo.this.cfg instanceof Configuration.Prj ? ((Configuration.Prj)CfgInfo.this.cfg).getOwnInjections(s) : CfgInfo.this.cfg
-                .getInjections(s),
-              new Condition<BaseInjection>() {
+                .getInjections(s);
+            return ContainerUtil.findAll(injections, new Condition<BaseInjection>() {
                 public boolean value(final BaseInjection injection) {
-                  return InjectedLanguage.findLanguageById(injection.getInjectedLanguageId()) != null;
+                  String id = injection.getInjectedLanguageId();
+                  return InjectedLanguage.findLanguageById(id) != null || ReferenceInjector.findById(id) != null;
                 }
               });
           }
-        });
+        }));
       sortInjections(originalInjections);
       reset();
     }

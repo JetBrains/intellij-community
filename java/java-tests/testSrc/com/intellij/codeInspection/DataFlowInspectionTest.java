@@ -175,6 +175,11 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.launchAction(myFixture.findSingleIntention("Replace with 'FOO'"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
+  public void testReportConstantReferences_NotInComplexAssignment() {
+    myFixture.addClass("package foo; public enum MyEnum { FOO }");
+    doTestReplaceConstantReferences();
+    assertEmpty(myFixture.filterAvailableIntentions("Replace with"));
+  }
   public void testReportConstantReferences_Switch() { doTestReplaceConstantReferences(); }
 
   public void testCheckFieldInitializers() {
@@ -279,4 +284,6 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testContractAnnotation() { doTest(); }
   public void testBoxingImpliesNotNull() { doTest(); }
+  public void testLargeIntegersAreNotEqualWhenBoxed() { doTest(); }
+  public void testNoGenericCCE() { doTest(); }
 }

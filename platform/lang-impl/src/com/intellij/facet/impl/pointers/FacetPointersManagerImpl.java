@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -224,7 +225,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
     }
 
     @Override
-    public void modulesRenamed(Project project, final List<Module> modules) {
+    public void modulesRenamed(Project project, List<Module> modules, Function<Module, String> oldNameProvider) {
       for (Module module : modules) {
         refreshPointers(module);
       }

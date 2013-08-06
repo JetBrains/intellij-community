@@ -47,7 +47,7 @@ public class SdkSettingsStep extends ModuleWizardStep {
   protected final ProjectSdksModel myModel;
   private final ModuleBuilder myModuleBuilder;
 
-  public SdkSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
+  public SdkSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
     myModuleBuilder = moduleBuilder;
 
     myWizardContext = settingsStep.getContext();

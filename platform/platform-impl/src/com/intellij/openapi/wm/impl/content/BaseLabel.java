@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
@@ -26,11 +27,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class BaseLabel extends JLabel {
-
-  protected static final int TAB_SHIFT = 1;
-  private static final Color DEFAULT_ACTIVE_FORE = UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black;
-  private static final Color DEFAULT_PASSIVE_FORE = UIUtil.isUnderDarcula()? UIUtil.getLabelDisabledForeground() : Gray._75;
-
   protected ToolWindowContentUi myUi;
 
   private Color myActiveFg;
@@ -40,9 +36,14 @@ public class BaseLabel extends JLabel {
   public BaseLabel(ToolWindowContentUi ui, boolean bold) {
     myUi = ui;
     setOpaque(false);
-    setActiveFg(DEFAULT_ACTIVE_FORE);
-    setPassiveFg(DEFAULT_PASSIVE_FORE);
     myBold = bold;
+  }
+
+  @Override
+  public void updateUI() {
+    setActiveFg(JBColor.foreground());
+    setPassiveFg(new JBColor(Gray._75, UIUtil.getLabelDisabledForeground()));
+    super.updateUI();
   }
 
   @Override
@@ -74,14 +75,14 @@ public class BaseLabel extends JLabel {
     setForeground(fore);
     super.paintComponent(_getGraphics((Graphics2D)g));
   }
-  
+
   protected Graphics _getGraphics(Graphics2D g) {
     if (!allowEngravement()) return g;
     Color foreground = getForeground();
     if (Color.BLACK.equals(foreground)) {
       return new EngravedTextGraphics(g);
-    } 
-    
+    }
+
     return g;
   }
 
@@ -90,18 +91,19 @@ public class BaseLabel extends JLabel {
   }
 
   protected Color getActiveFg(boolean selected) {
-    return DEFAULT_ACTIVE_FORE;
+    return myActiveFg;
   }
 
   protected Color getPassiveFg(boolean selected) {
-    return DEFAULT_PASSIVE_FORE;
+    return myPassiveFg;
   }
 
   protected void updateTextAndIcon(Content content, boolean isSelected) {
     if (content == null) {
       setText(null);
       setIcon(null);
-    } else {
+    }
+    else {
       setText(content.getDisplayName());
       setActiveFg(getActiveFg(isSelected));
       setPassiveFg(getPassiveFg(isSelected));
@@ -110,19 +112,20 @@ public class BaseLabel extends JLabel {
 
       final boolean show = Boolean.TRUE.equals(content.getUserData(ToolWindow.SHOW_CONTENT_ICON));
       if (show) {
-       if (isSelected) {
-         setIcon(content.getIcon());
-       } else {
-         setIcon(content.getIcon() != null ? new WatermarkIcon(content.getIcon(), .5f) : null);
-       }
-      } else {
+        if (isSelected) {
+          setIcon(content.getIcon());
+        }
+        else {
+          setIcon(content.getIcon() != null ? new WatermarkIcon(content.getIcon(), .5f) : null);
+        }
+      }
+      else {
         setIcon(null);
       }
 
       myBold = false; //isSelected;
     }
   }
-
 
   public Content getContent() {
     return null;

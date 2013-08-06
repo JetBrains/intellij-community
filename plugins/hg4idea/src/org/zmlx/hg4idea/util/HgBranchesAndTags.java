@@ -20,7 +20,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.HgTagBranch;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -29,25 +29,36 @@ import java.util.Map;
 
 public class HgBranchesAndTags {
 
-  @NotNull private final Map<VirtualFile, List<HgTagBranch>> branchesForRepos = new HashMap<VirtualFile, List<HgTagBranch>>();
-  @NotNull private final Map<VirtualFile, List<HgTagBranch>> tagsForRepos = new HashMap<VirtualFile, List<HgTagBranch>>();
+  @NotNull private final Map<VirtualFile, Collection<HgTagBranch>> branchesForRepos = new HashMap<VirtualFile, Collection<HgTagBranch>>();
+  @NotNull private final Map<VirtualFile, Collection<HgTagBranch>> tagsForRepos = new HashMap<VirtualFile, Collection<HgTagBranch>>();
+  @NotNull private final Map<VirtualFile, Collection<HgTagBranch>> bookmarks =
+    new java.util.HashMap<VirtualFile, Collection<HgTagBranch>>();
 
 
   @NotNull
-  public Map<VirtualFile, List<HgTagBranch>> getBranchesForRepos() {
+  public Map<VirtualFile, Collection<HgTagBranch>> getBranchesForRepos() {
     return branchesForRepos;
   }
 
-  public void addBranches(@NotNull VirtualFile repo, @NotNull List<HgTagBranch> branches) {
+  public void addBranches(@NotNull VirtualFile repo, @NotNull Collection<HgTagBranch> branches) {
     branchesForRepos.put(repo, branches);
   }
 
   @NotNull
-  public Map<VirtualFile, List<HgTagBranch>> getTagsForRepos() {
+  public Map<VirtualFile, Collection<HgTagBranch>> getTagsForRepos() {
     return tagsForRepos;
   }
 
-  public void addTags(@NotNull VirtualFile repo, @NotNull List<HgTagBranch> tags) {
+  public void addTags(@NotNull VirtualFile repo, @NotNull Collection<HgTagBranch> tags) {
     tagsForRepos.put(repo, tags);
+  }
+
+  @NotNull
+  public Map<VirtualFile, Collection<HgTagBranch>> getBookmarksForRepos() {
+    return bookmarks;
+  }
+
+  public void addBookmarks(@NotNull VirtualFile repo, @NotNull Collection<HgTagBranch> tags) {
+    bookmarks.put(repo, tags);
   }
 }

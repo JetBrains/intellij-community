@@ -16,11 +16,15 @@ public class CompletionUtilCoreImpl {
   @Nullable
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psi) {
     final PsiFile file = psi.getContainingFile();
-    if (file != null && file != file.getOriginalFile() && psi.getTextRange() != null) {
+    return getOriginalElement(psi, file);
+  }
+
+  public static <T extends PsiElement> T getOriginalElement(@NotNull T psi, PsiFile containingFile) {
+    if (containingFile != null && containingFile != containingFile.getOriginalFile() && psi.getTextRange() != null) {
       TextRange range = psi.getTextRange();
       Integer start = range.getStartOffset();
       Integer end = range.getEndOffset();
-      final Document document = file.getViewProvider().getDocument();
+      final Document document = containingFile.getViewProvider().getDocument();
       if (document != null) {
         Document hostDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
         OffsetTranslator translator = hostDocument.getUserData(OffsetTranslator.RANGE_TRANSLATION);
@@ -44,7 +48,7 @@ public class CompletionUtilCoreImpl {
         }
       }
       //noinspection unchecked
-      return (T)PsiTreeUtil.findElementOfClassAtRange(file.getOriginalFile(), start, end, psi.getClass());
+      return (T)PsiTreeUtil.findElementOfClassAtRange(containingFile.getOriginalFile(), start, end, psi.getClass());
     }
 
     return psi;

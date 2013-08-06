@@ -65,6 +65,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   @Override
   protected void copyExtraSettingsFrom(@NotNull GradleSettings settings) {
     myServiceDirectoryPath = settings.getServiceDirectoryPath();
+    myGradleVmOptions = settings.getGradleVmOptions();
   }
 
   @SuppressWarnings("unchecked")

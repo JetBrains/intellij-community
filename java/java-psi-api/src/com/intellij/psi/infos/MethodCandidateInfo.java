@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.infos;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Pair;
@@ -26,6 +27,7 @@ import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -62,7 +64,7 @@ public class MethodCandidateInfo extends CandidateInfo{
                              PsiElement currFileContext,
                              @Nullable PsiType[] argumentTypes,
                              PsiType[] typeArguments,
-                             final LanguageLevel languageLevel) {
+                             @NotNull LanguageLevel languageLevel) {
     super(candidate, substitutor, accessProblem, staticsProblem, currFileContext);
     myArgumentList = argumentList;
     myArgumentTypes = argumentTypes;
@@ -145,13 +147,13 @@ public class MethodCandidateInfo extends CandidateInfo{
     return (PsiMethod)super.getElement();
   }
 
-  public PsiSubstitutor inferTypeArguments(final ParameterTypeInferencePolicy policy) {
+  public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy) {
     return inferTypeArguments(policy, myArgumentList instanceof PsiExpressionList
                                       ? ((PsiExpressionList)myArgumentList).getExpressions()
                                       : PsiExpression.EMPTY_ARRAY);
   }
 
-  public PsiSubstitutor inferSubstitutorFromArgs(final ParameterTypeInferencePolicy policy, final PsiExpression[] arguments) {
+  public PsiSubstitutor inferSubstitutorFromArgs(@NotNull ParameterTypeInferencePolicy policy, final PsiExpression[] arguments) {
     if (myTypeArguments == null) {
       return inferTypeArguments(policy, arguments);
     }
@@ -167,8 +169,9 @@ public class MethodCandidateInfo extends CandidateInfo{
       return incompleteSubstitutor;
     }
   }
-  
-  public PsiSubstitutor inferTypeArguments(final ParameterTypeInferencePolicy policy, final PsiExpression[] arguments) {
+
+  public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy,
+                                           @NotNull PsiExpression[] arguments) {
     Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> map = CURRENT_CANDIDATE.get();
     if (map == null) {
       map = new ConcurrentWeakHashMap<PsiElement, Pair<PsiMethod, PsiSubstitutor>>();
@@ -179,18 +182,21 @@ public class MethodCandidateInfo extends CandidateInfo{
     try {
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
-      JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(method.getProject());
       if (!method.hasModifierProperty(PsiModifier.STATIC)) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, mySubstitutor)) {
+          Project project = containingClass.getProject();
+          JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
           return javaPsiFacade.getElementFactory().createRawSubstitutor(mySubstitutor, typeParameters);
         }
       }
 
       final PsiElement parent = getParent();
       if (parent == null) return PsiSubstitutor.EMPTY;
+      Project project = method.getProject();
+      JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
       return javaPsiFacade.getResolveHelper()
-        .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy);
+        .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy, myLanguageLevel);
     }
     finally {
       if (alreadyThere == null) map.remove(myArgumentList);

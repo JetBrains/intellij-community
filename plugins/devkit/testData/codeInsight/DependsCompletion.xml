@@ -1,0 +1,6 @@
+<idea-plugin>
+    <id>com.intellij.myPlugin</id>
+
+  <depends><caret></depends>
+
+</idea-plugin>

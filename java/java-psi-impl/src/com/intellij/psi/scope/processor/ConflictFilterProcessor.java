@@ -43,12 +43,13 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
                                  @NotNull ElementFilter filter,
                                  @NotNull PsiConflictResolver[] resolvers,
                                  @NotNull List<CandidateInfo> container,
-                                 @NotNull PsiElement place) {
+                                 @NotNull PsiElement place,
+                                 PsiFile placeFile) {
     super(filter, container);
     myResolvers = resolvers;
     myName = name;
     myPlace = place;
-    myPlaceFile = place.getContainingFile();
+    myPlaceFile = placeFile;
   }
 
   @Override

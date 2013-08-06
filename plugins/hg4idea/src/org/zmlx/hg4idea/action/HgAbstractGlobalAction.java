@@ -61,7 +61,9 @@ abstract class HgAbstractGlobalAction extends AnAction {
     e.getPresentation().setEnabled(enabled);
   }
 
-  protected abstract void execute(Project project, Collection<VirtualFile> repositories, @Nullable VirtualFile selectedRepo);
+  protected abstract void execute(@NotNull Project project,
+                                  @NotNull Collection<VirtualFile> repositories,
+                                  @Nullable VirtualFile selectedRepo);
 
   public static void handleException(@Nullable Project project, @NotNull Exception e) {
     handleException(project, "Error", e);

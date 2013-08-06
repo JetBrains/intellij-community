@@ -396,6 +396,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return text.toString();
   }
 
+  @NotNull
   @Override
   public PsiElement getPsiElement() {
     return this;

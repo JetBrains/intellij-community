@@ -436,8 +436,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     // Our aim is to make sub-project nodes contain corresponding TaskData nodes and add root project tasks to ProjectData node.
     // The later is achieved by composing all tasks from IdeaModule which corresponds to the IdeaProject plus all tasks
     // which are shared between all sub-projects.
-    
-    final String rootProjectPath = rootProjectNode.getData().getLinkedExternalProjectPath();
+
+    ProjectData projectData = rootProjectNode.getData();
+    final String rootProjectPath = projectData.getLinkedExternalProjectPath();
     Map<String/* module name */, Collection<TaskData>> tasksByModule = ContainerUtilRt.newHashMap();
     TObjectIntHashMap<Pair<String/* task name */, String /* task description */>> rootProjectTaskCandidates
       = new TObjectIntHashMap<Pair<String, String>>();
@@ -487,7 +488,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(rootProjectNode, ProjectKeys.MODULE);
     for (DataNode<ModuleData> moduleNode : moduleNodes) {
-      Collection<TaskData> tasks = tasksByModule.get(moduleNode.getData().getName());
+      ModuleData moduleData = moduleNode.getData();
+      if (rootProjectPath.equals(moduleData.getLinkedExternalProjectPath()) && !projectData.getName().equals(moduleData.getName())) {
+        moduleData.setName(projectData.getName());
+      }
+      Collection<TaskData> tasks = tasksByModule.get(moduleData.getName());
       if (tasks != null && !tasks.isEmpty()) {
         for (TaskData task : tasks) {
           moduleNode.createChild(ProjectKeys.TASK, task);

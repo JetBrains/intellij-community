@@ -254,9 +254,9 @@ public class HighlightInfo implements Segment {
   }
 
   @NotNull
-  private static HighlightInfoFilter[] getFilters() {
-    return ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
-  }
+  private static final HighlightInfoFilter[] FILTERS =
+    ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
+
 
   public boolean needUpdateOnTyping() {
     return isFlagSet(NEEDS_UPDATE_ON_TYPING_FLAG);
@@ -588,7 +588,7 @@ public class HighlightInfo implements Segment {
                      "Custom type demands element to detect its text attributes");
 
       PsiFile file = psiElement == null ? null : psiElement.getContainingFile();
-      for (HighlightInfoFilter filter : getFilters()) {
+      for (HighlightInfoFilter filter : FILTERS) {
         if (!filter.accept(info, file)) {
           return null;
         }
@@ -883,121 +883,5 @@ public class HighlightInfo implements Segment {
     if (highlighter == null) throw new RuntimeException("info not applied yet");
     if (!highlighter.isValid()) return "";
     return highlighter.getDocument().getText(TextRange.create(highlighter));
-  }
-
-
-  // Deprecated methods for plugin compatibility
-
-  /**
-   * @deprecated To be removed in idea 13. Use {@link HighlightInfo#newHighlightInfo(HighlightInfoType)} instead.
-   */
-  @Deprecated
-  @Nullable
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type,
-                                                  @NotNull PsiElement element,
-                                                  @Nullable String description) {
-    return createHighlightInfo(type, element, description, htmlEscapeToolTip(description));
-  }
-  /**
-   * @deprecated To be removed in idea 13. Use {@link HighlightInfo#newHighlightInfo(HighlightInfoType)} instead.
-   */
-  @Deprecated
-  @Nullable
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, @Nullable String description, @Nullable String toolTip) {
-    TextRange range = element.getTextRange();
-    int start = range.getStartOffset();
-    int end = range.getEndOffset();
-    return createHighlightInfo(type, element, start, end, description, toolTip);
-  }
-  /**
-   * @deprecated To be removed in idea 13. Use {@link HighlightInfo#newHighlightInfo(HighlightInfoType)} instead.
-   */
-  @Deprecated
-  @Nullable
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, @Nullable String description,
-                                                  @Nullable String toolTip,
-                                                  boolean isEndOfLine,
-                                                  @Nullable TextAttributes forcedAttributes) {
-    LOG.assertTrue(element != null || ArrayUtilRt.find(HighlightSeverity.DEFAULT_SEVERITIES, type.getSeverity(element)) != -1, "Custom type demands element to detect its text attributes");
-    HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, null, type, start, end, description, toolTip,
-                                                    type.getSeverity(element), isEndOfLine, null, false,0);
-    PsiFile file = element == null ? null : element.getContainingFile();
-    for (HighlightInfoFilter filter : getFilters()) {
-      if (!filter.accept(highlightInfo, file)) {
-        return null;
-      }
-    }
-    return highlightInfo;
-  }
-  /**
-   * @deprecated To be removed in idea 13. Use {@link HighlightInfo#newHighlightInfo(HighlightInfoType)} instead.
-   */
-  @Deprecated
-  @Nullable
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, @Nullable String description, @Nullable String toolTip) {
-    return createHighlightInfo(type, element, start, end, description, toolTip, false, null);
-  }
-  /**
-   * @deprecated To be removed in idea 13. Use {@link HighlightInfo#newHighlightInfo(HighlightInfoType)} instead.
-   */
-  @Deprecated
-  @Nullable
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, int start, int end, @Nullable String description) {
-    return createHighlightInfo(type, null, start, end, description, htmlEscapeToolTip(description));
-  }
-
-  /**
-   * @deprecated To be removed in idea 13. Use {@link HighlightInfo#newHighlightInfo(HighlightInfoType)} instead.
-   */
-  @Deprecated
-  @Nullable
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, @Nullable String description) {
-    return createHighlightInfo(type, textRange.getStartOffset(), textRange.getEndOffset(), description);
-  }
-
-  /**
-   * @deprecated To be removed in idea 13. Use {@link HighlightInfo#newHighlightInfo(HighlightInfoType)} instead.
-   */
-  @Deprecated
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange,
-                                                  @Nullable String description, @Nullable String toolTip, @Nullable TextAttributes textAttributes) {
-    // do not use HighlightInfoFilter
-    return new HighlightInfo(textAttributes, null, type, textRange.getStartOffset(), textRange.getEndOffset(), description,
-                             htmlEscapeToolTip(toolTip), type.getSeverity(null), false, null, false,0);
-  }
-  /**
-   * @deprecated To be removed in idea 13. Use {@link HighlightInfo#newHighlightInfo(HighlightInfoType)} instead.
-   */
-  @Deprecated
-  @Nullable
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull ASTNode childByRole, String localizedMessage) {
-    return createHighlightInfo(type, childByRole.getPsi(), localizedMessage);
-  }
-  /**
-   * @deprecated To be removed in idea 13. Use {@link HighlightInfo#newHighlightInfo(HighlightInfoType)} instead.
-   */
-  @Deprecated
-  public static HighlightInfo createHighlightInfo(@NotNull final HighlightInfoType type,
-                                                  @NotNull final PsiElement element,
-                                                  @Nullable final String message,
-                                                  @Nullable final TextAttributes attributes) {
-    TextRange textRange = element.getTextRange();
-    // do not use HighlightInfoFilter
-    return new HighlightInfo(attributes, null, type, textRange.getStartOffset(), textRange.getEndOffset(), message,
-                             htmlEscapeToolTip(message), type.getSeverity(element), false, Boolean.FALSE, false,0);
-  }
-
-  /**
-   * @deprecated To be removed in idea 13. Use {@link HighlightInfo#newHighlightInfo(HighlightInfoType)} instead.
-   */
-  @Deprecated
-  public static HighlightInfo createHighlightInfo(@NotNull final HighlightInfoType type,
-                                                  @NotNull final PsiElement element,
-                                                  @Nullable final String message,
-                                                  @Nullable final TextAttributesKey attributesKey) {
-    TextRange textRange = element.getTextRange();
-    // do not use HighlightInfoFilter
-    return new HighlightInfo(null, attributesKey, type, textRange.getStartOffset(), textRange.getEndOffset(), message,
-                             htmlEscapeToolTip(message), type.getSeverity(element), false, Boolean.FALSE, false,0);
   }
 }

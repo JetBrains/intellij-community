@@ -53,6 +53,7 @@ public class ModuleUtilCore {
 
   public static String getModuleNameInReadAction(@NotNull final Module module) {
     return new ReadAction<String>(){
+      @Override
       protected void run(final Result<String> result) throws Throwable {
         result.setResult(module.getName());
       }
@@ -79,16 +80,21 @@ public class ModuleUtilCore {
 
   @Nullable
   public static Module findModuleForPsiElement(@NotNull PsiElement element) {
-    if (!element.isValid()) return null;
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) {
+      if (!element.isValid()) return null;
+    }
+    else {
+      if (!containingFile.isValid()) return null;
+    }
 
-    Project project = element.getProject();
+    Project project = (containingFile == null ? element : containingFile).getProject();
     if (project.isDefault()) return null;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     if (element instanceof PsiFileSystemItem && (!(element instanceof PsiFile) || element.getContext() == null)) {
       VirtualFile vFile = ((PsiFileSystemItem)element).getVirtualFile();
       if (vFile == null) {
-        PsiFile containingFile = element.getContainingFile();
         vFile = containingFile == null ? null : containingFile.getOriginalFile().getVirtualFile();
         if (vFile == null) {
           return element.getUserData(KEY_MODULE);
@@ -112,7 +118,6 @@ public class ModuleUtilCore {
       }
       return fileIndex.getModuleForFile(vFile);
     }
-    PsiFile containingFile = element.getContainingFile();
     if (containingFile != null) {
       PsiElement context;
       while ((context = containingFile.getContext()) != null) {

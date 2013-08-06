@@ -47,11 +47,12 @@ public class JavaMethodResolveHelper {
   private final MethodCandidatesProcessor myProcessor;
   @Nullable private final PsiType[] myArgumentTypes;
 
-  public JavaMethodResolveHelper(final PsiElement argumentList, @Nullable final PsiType[] argumentTypes) {
+  public JavaMethodResolveHelper(@NotNull final PsiElement argumentList, PsiFile containingFile, @Nullable final PsiType[] argumentTypes) {
     myArgumentTypes = argumentTypes;
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(argumentList);
-    final PsiConflictResolver resolver = argumentTypes == null ? DuplicateConflictResolver.INSTANCE : new JavaMethodsConflictResolver(argumentList, argumentTypes);
-    myProcessor = new MethodResolverProcessor(argumentList, new PsiConflictResolver[]{resolver}) {
+    final PsiConflictResolver resolver = argumentTypes == null ? DuplicateConflictResolver.INSTANCE : new JavaMethodsConflictResolver(argumentList, argumentTypes,
+                                                                                                                                      languageLevel);
+    myProcessor = new MethodResolverProcessor(argumentList, containingFile, new PsiConflictResolver[]{resolver}) {
       @Override
       protected MethodCandidateInfo createCandidateInfo(final PsiMethod method, final PsiSubstitutor substitutor,
                                                         final boolean staticProblem,
@@ -74,7 +75,8 @@ public class JavaMethodResolveHelper {
                                                     PsiElement currentFileContext,
                                                     boolean accessProblem,
                                                     PsiElement argumentList,
-                                                    PsiType[] argumentTypes, LanguageLevel languageLevel) {
+                                                    PsiType[] argumentTypes,
+                                                    @NotNull LanguageLevel languageLevel) {
     return new MethodCandidateInfo(method, substitutor, accessProblem, staticProblem, argumentList, currentFileContext, argumentTypes,
                                    PsiType.EMPTY_ARRAY, languageLevel);
   }

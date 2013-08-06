@@ -22,9 +22,11 @@ package org.jetbrains.idea.devkit.dom;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.IdeaPluginConverter;
 
+@Stubbed
 @Convert(IdeaPluginConverter.class)
 public interface Dependency extends GenericDomValue<IdeaPlugin> {
   @NotNull

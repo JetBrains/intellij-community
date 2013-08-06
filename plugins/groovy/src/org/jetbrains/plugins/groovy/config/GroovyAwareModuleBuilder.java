@@ -20,6 +20,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import icons.JetgroovyIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.mvc.GroovySdkForNewModuleWizardStep;
 import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 
@@ -47,7 +48,7 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
   }
 
   @Override
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     return new ModuleWizardStep[]{new GroovySdkForNewModuleWizardStep(this, wizardContext, getFramework())};
   }
 

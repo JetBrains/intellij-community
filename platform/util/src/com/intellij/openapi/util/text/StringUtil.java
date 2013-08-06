@@ -2482,6 +2482,14 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
+   * Say smallPart = "op" and bigPart="open". Method returns true for "Ope" and false for "ops"
+   */
+  public static boolean isBetween(@NotNull String string, @NotNull String smallPart, @NotNull String bigPart) {
+    final String s = string.toLowerCase();
+    return s.startsWith(smallPart.toLowerCase()) && bigPart.toLowerCase().startsWith(s);
+  }
+
+  /**
    * Expirable CharSequence. Very useful to control external library execution time,
    * i.e. when java.util.regex.Pattern match goes out of control.
    */

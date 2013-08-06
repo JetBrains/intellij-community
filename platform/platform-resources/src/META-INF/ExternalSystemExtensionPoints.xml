@@ -5,5 +5,7 @@
                     interface="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService"/>
     <extensionPoint name="externalSystemConfigLocator"
                     interface="com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator"/>
+    <extensionPoint name="externalSystemNotificationExtension"
+                    interface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension"/>
   </extensionPoints>
 </idea-plugin>

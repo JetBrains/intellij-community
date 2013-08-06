@@ -193,5 +193,7 @@
     <extensionPoint name="customPortServerManager" interface="org.jetbrains.ide.CustomPortServerManager"/>
 
     <extensionPoint name="colorPickerListenerFactory" interface="com.intellij.ui.ColorPickerListenerFactory"/>
+
+    <extensionPoint name="search.topHitProvider" interface="com.intellij.ide.SearchTopHitProvider"/>
   </extensionPoints>
 </idea-plugin>

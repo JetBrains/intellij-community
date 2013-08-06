@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -55,13 +56,13 @@ public class CreateGetterSetterPropertyFromUsageFix extends CreatePropertyFromUs
 
   @Override
   protected void beforeTemplateFinished(PsiClass aClass, PsiField field) {
-    PsiMethod getterPrototype = PropertyUtil.generateGetterPrototype(field);
+    PsiMethod getterPrototype = GenerateMembersUtil.generateGetterPrototype(field);
     if (aClass.findMethodsBySignature(getterPrototype, false).length == 0) {
       aClass.add(getterPrototype);
     }
 
 
-    PsiMethod setterPrototype = PropertyUtil.generateSetterPrototype(field);
+    PsiMethod setterPrototype = GenerateMembersUtil.generateSetterPrototype(field);
     if (aClass.findMethodsBySignature(setterPrototype, false).length == 0) {
       aClass.add(setterPrototype);
     }

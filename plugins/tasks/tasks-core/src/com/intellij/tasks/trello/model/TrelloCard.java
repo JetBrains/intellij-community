@@ -49,6 +49,11 @@ public class TrelloCard extends TrelloModel {
   private List<TrelloLabel> labels;
   @SerializedName("actions")
   private List<TrelloCommentAction> comments = ContainerUtil.emptyList();
+  /**
+   * This field is not part of card representation downloaded from server
+   * and set explicitly in {@code com.intellij.tasks.trello.TrelloRepository}
+   */
+  private boolean isVisible = true;
 
   /**
    * Serialization constructor
@@ -152,5 +157,13 @@ public class TrelloCard extends TrelloModel {
         return label.getColor();
       }
     }));
+  }
+
+  public boolean isVisible() {
+    return isVisible;
+  }
+
+  public void setVisible(boolean visible) {
+    isVisible = visible;
   }
 }

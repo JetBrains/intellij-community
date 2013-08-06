@@ -237,19 +237,33 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
                                                     @NotNull GithubRepoDetailed repo,
                                                     @Nullable GithubFullPath upstreamPath) {
     String targetUser = onto.substring(0, onto.indexOf(':'));
+    @Nullable GithubRepo parent = repo.getParent();
+    @Nullable GithubRepo source = repo.getSource();
 
-    if (StringUtil.equalsIgnoreCase(targetUser, repo.getUserName())) {
+    if (isRepoOwner(targetUser, repo)) {
       return repo.getFullPath();
     }
-    if (repo.getParent() != null && StringUtil.equalsIgnoreCase(targetUser, repo.getParent().getUserName())) {
-      return repo.getParent().getFullPath();
+    if (parent != null && isRepoOwner(targetUser, parent)) {
+      return parent.getFullPath();
+    }
+    if (source != null && isRepoOwner(targetUser, source)) {
+      return source.getFullPath();
     }
     if (upstreamPath != null && StringUtil.equalsIgnoreCase(targetUser, upstreamPath.getUser())) {
       return upstreamPath;
     }
-    if (repo.getSource() != null) {
+    if (source != null) {
       try {
-        GithubRepo fork = GithubApiUtil.findForkByUser(auth, repo.getSource().getUserName(), repo.getSource().getName(), targetUser);
+        GithubRepoDetailed target = GithubApiUtil.getDetailedRepoInfo(auth, targetUser, repo.getName());
+        if (target.getSource() != null && StringUtil.equalsIgnoreCase(target.getSource().getUserName(), source.getUserName())) {
+          return target.getFullPath();
+        }
+      }
+      catch (IOException ignore) {
+      }
+
+      try {
+        GithubRepo fork = GithubApiUtil.findForkByUser(auth, source.getUserName(), source.getName(), targetUser);
         if (fork != null) {
           return fork.getFullPath();
         }
@@ -260,6 +274,10 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     }
 
     return null;
+  }
+
+  private static boolean isRepoOwner(@NotNull String user, @NotNull GithubRepo repo) {
+    return StringUtil.equalsIgnoreCase(user, repo.getUserName());
   }
 
   private static void initLoadAvailableBranches(@NotNull final Project project,
@@ -275,6 +293,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
           final GithubAuthData auth = info.getAuthData();
           final GithubRepoDetailed repo = info.getRepo();
           final GithubRepo parent = repo.getParent();
+          final GithubRepo source = repo.getSource();
 
           result.addAll(getBranches(auth, repo.getUserName(), repo.getName()));
 
@@ -282,9 +301,11 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
             result.addAll(getBranches(auth, parent.getUserName(), parent.getName()));
           }
 
-          if (upstreamPath != null &&
-              !StringUtil.equalsIgnoreCase(upstreamPath.getUser(), repo.getUserName()) &&
-              (parent == null || !StringUtil.equalsIgnoreCase(upstreamPath.getUser(), parent.getUserName()))) {
+          if (source != null && !equals(source, parent)) {
+            result.addAll(getBranches(auth, source.getUserName(), source.getName()));
+          }
+
+          if (upstreamPath != null && !equals(upstreamPath, repo) && !equals(upstreamPath, parent) && !equals(upstreamPath, source)) {
             result.addAll(getBranches(auth, upstreamPath.getUser(), upstreamPath.getRepository()));
           }
         }
@@ -313,6 +334,20 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
             return user + ":" + branch.getName();
           }
         });
+      }
+
+      private boolean equals(@NotNull GithubRepo repo1, @Nullable GithubRepo repo2) {
+        if (repo2 == null) {
+          return false;
+        }
+        return StringUtil.equalsIgnoreCase(repo1.getUserName(), repo2.getUserName());
+      }
+
+      private boolean equals(@NotNull GithubFullPath repo1, @Nullable GithubRepo repo2) {
+        if (repo2 == null) {
+          return false;
+        }
+        return StringUtil.equalsIgnoreCase(repo1.getUser(), repo2.getUserName());
       }
     }.execute();
   }

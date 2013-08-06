@@ -60,6 +60,10 @@ public abstract class LanguageInjectionSupport {
 
   public abstract boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement);
 
+  public boolean removeInjection(final PsiElement psiElement) {
+    return psiElement instanceof PsiLanguageInjectionHost && removeInjectionInPlace((PsiLanguageInjectionHost)psiElement);
+  }
+
   public abstract boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement);
 
   public abstract BaseInjection createInjection(final Element element);

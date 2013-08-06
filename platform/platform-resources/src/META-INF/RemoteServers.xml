@@ -5,15 +5,17 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.remoteServer.configuration.RemoteServersManager"
-                        serviceImplementation="com.intellij.remoteServer.configuration.impl.RemoteServersManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.remoteServer.deployment.DeploymentSourceUtil"
-                        serviceImplementation="com.intellij.remoteServer.deployment.impl.DeploymentSourceUtilImpl"/>
-    <applicationConfigurable instance="com.intellij.remoteServer.configuration.impl.RemoteServerListConfigurable"/>
-    <programRunner implementation="com.intellij.remoteServer.run.DeployToServerRunner"/>
+                        serviceImplementation="com.intellij.remoteServer.impl.configuration.RemoteServersManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.remoteServer.configuration.deployment.DeploymentSourceUtil"
+                        serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeploymentSourceUtilImpl"/>
+    <applicationService serviceInterface="com.intellij.remoteServer.runtime.ServerConnectionManager"
+                        serviceImplementation="com.intellij.remoteServer.impl.runtime.ServerConnectionManagerImpl"/>
+    <applicationConfigurable instance="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable"/>
+    <programRunner implementation="com.intellij.remoteServer.impl.runtime.DeployToServerRunner"/>
   </extensions>
   <application-components>
     <component>
-      <implementation-class>com.intellij.remoteServer.run.DeployToServerConfigurationTypesRegistrar</implementation-class>
+      <implementation-class>com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar</implementation-class>
     </component>
   </application-components>
 </idea-plugin>

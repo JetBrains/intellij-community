@@ -22,6 +22,6 @@ class CastInContexts {
     }
 
     {
-      int i = <error descr="Inconvertible types; cannot cast '<lambda expression>' to 'int'">(int) ()-> 1</error>;
+      int i = (int) <error descr="int is not a functional interface">()-> 1</error>;
     }
 }

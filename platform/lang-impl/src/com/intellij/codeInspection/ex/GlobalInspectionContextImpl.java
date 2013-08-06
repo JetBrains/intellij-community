@@ -391,7 +391,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
   }
 
-  private void runGlobalTools(AnalysisScope scope, InspectionManagerEx inspectionManager, List<Tools> globalTools) {
+  private void runGlobalTools(@NotNull AnalysisScope scope, @NotNull InspectionManagerEx inspectionManager, @NotNull List<Tools> globalTools) {
     final List<InspectionToolWrapper> needRepeatSearchRequest = new ArrayList<InspectionToolWrapper>();
 
     for (Tools tools : globalTools) {

@@ -308,7 +308,9 @@ public class MavenProjectImporter {
     if (result[0] == 1) return false;// NO
 
     for (Module each : obsoleteModules) {
-      myModuleModel.disposeModule(each);
+      if (!each.isDisposed()) {
+        myModuleModel.disposeModule(each);
+      }
     }
 
     return true;

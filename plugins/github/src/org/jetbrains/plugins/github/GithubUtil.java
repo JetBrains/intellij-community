@@ -53,6 +53,7 @@ public class GithubUtil {
 
   public static final Logger LOG = Logger.getInstance("github");
 
+  // TODO: these functions ugly inside and out
   @NotNull
   public static GithubAuthData runAndGetValidAuth(@Nullable Project project,
                                                   @NotNull ProgressIndicator indicator,
@@ -111,7 +112,13 @@ public class GithubUtil {
   public static <T> T runWithValidBasicAuth(@Nullable Project project,
                                             @NotNull ProgressIndicator indicator,
                                             @NotNull ThrowableConvertor<GithubAuthData, T, IOException> task) throws IOException {
-    GithubAuthData auth = GithubSettings.getInstance().getAuthData();
+    GithubAuthData auth;
+    if (GithubSettings.getInstance().getAuthType() == GithubAuthData.AuthType.BASIC) {
+      auth = GithubSettings.getInstance().getAuthData();
+    }
+    else {
+      auth = GithubAuthData.createAnonymous();
+    }
     try {
       if (auth.getAuthType() != GithubAuthData.AuthType.BASIC) {
         throw new GithubAuthenticationException("Bad authentication type");
@@ -311,7 +318,7 @@ public class GithubUtil {
     return findGithubRemoteUrl(repository) != null;
   }
 
-  static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
+  public static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(enabled);
   }

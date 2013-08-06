@@ -21,6 +21,7 @@
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -255,7 +256,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         field = PropertyUtil.findPropertyField(myProject, myInnerClass, name, false);
       }
       LOG.assertTrue(field != null, "i:" + i + "; output variables: " + Arrays.toString(outputVariables) + "; parameters: " + Arrays.toString(getMethod().getParameterList().getParameters()) + "; output field: " + outputField );
-      myInnerClass.add(PropertyUtil.generateGetterPrototype(field));
+      myInnerClass.add(GenerateMembersUtil.generateGetterPrototype(field));
     }
 
     PsiParameter[] params = getMethod().getParameterList().getParameters();

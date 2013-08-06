@@ -30,7 +30,7 @@ public class HgPullAction extends HgAbstractGlobalAction {
   }
 
   @Override
-  protected void execute(final Project project, Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
+  protected void execute(@NotNull final Project project, @NotNull Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
     final HgPullDialog dialog = new HgPullDialog(project);
     dialog.setRoots(repos, selectedRepo);
     dialog.show();

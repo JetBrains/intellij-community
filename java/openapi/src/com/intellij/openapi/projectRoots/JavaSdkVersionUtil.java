@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -26,14 +27,18 @@ import com.intellij.psi.PsiElement;
  */
 public class JavaSdkVersionUtil {
   public static boolean isAtLeast(PsiElement element, JavaSdkVersion minVersion) {
+    JavaSdkVersion version = getJavaSdkVersion(element);
+    return version == null || version.isAtLeast(minVersion);
+  }
+
+  public static JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
       if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-        final JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
-        return version != null && version.isAtLeast(minVersion);
+        return JavaSdk.getInstance().getVersion(sdk);
       }
     }
-    return true;
+    return null;
   }
 }

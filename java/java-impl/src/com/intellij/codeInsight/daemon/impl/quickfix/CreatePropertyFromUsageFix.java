@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -226,7 +227,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     PsiElement typeReference;
     PsiCodeBlock body;
     if (callText.startsWith(GET_PREFIX) || callText.startsWith(IS_PREFIX)) {
-      accessor = (PsiMethod)targetClass.add(PropertyUtil.generateGetterPrototype(field));
+      accessor = (PsiMethod)targetClass.add(GenerateMembersUtil.generateGetterPrototype(field));
       body = accessor.getBody();
       LOG.assertTrue(body != null, accessor.getText());
       fieldReference = ((PsiReturnStatement)body.getStatements()[0]).getReturnValue();

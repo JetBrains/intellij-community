@@ -626,7 +626,7 @@ public class HighlightClassUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkExtendsDuplicate(PsiJavaCodeReferenceElement element, PsiElement resolved) {
+  public static HighlightInfo checkExtendsDuplicate(PsiJavaCodeReferenceElement element, PsiElement resolved, @NotNull PsiFile containingFile) {
     if (!(element.getParent() instanceof PsiReferenceList)) return null;
     PsiReferenceList list = (PsiReferenceList)element.getParent();
     if (!(list.getParent() instanceof PsiClass)) return null;
@@ -634,9 +634,10 @@ public class HighlightClassUtil {
     PsiClass aClass = (PsiClass)resolved;
     PsiClassType[] referencedTypes = list.getReferencedTypes();
     int dupCount = 0;
+    PsiManager manager = containingFile.getManager();
     for (PsiClassType referencedType : referencedTypes) {
       PsiClass resolvedElement = referencedType.resolve();
-      if (resolvedElement != null && list.getManager().areElementsEquivalent(resolvedElement, aClass)) {
+      if (resolvedElement != null && manager.areElementsEquivalent(resolvedElement, aClass)) {
         dupCount++;
       }
     }

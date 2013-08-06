@@ -33,6 +33,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Base class for a configuration that is associated with a specific module. For example, Java run configurations use the selected module
+ * to determine the run classpath.
+ */
 public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunConfigurationModule> extends RuntimeConfiguration {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ModuleBasedConfiguration");
   private final ConfigurationModule myModule;

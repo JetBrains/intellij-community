@@ -522,4 +522,9 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   public String toString() {
     return result.toString();
   }
+
+  @NotNull
+  public PsiFile getHostPsiFile() {
+    return myHostPsiFile;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.util.Function;
 
 import java.util.EventListener;
 import java.util.List;
@@ -30,5 +31,5 @@ public interface ModuleListener extends EventListener {
 
   void moduleRemoved(Project project, Module module);
 
-  void modulesRenamed(Project project, List<Module> modules);
+  void modulesRenamed(Project project, List<Module> modules, Function<Module, String> oldNameProvider);
 }

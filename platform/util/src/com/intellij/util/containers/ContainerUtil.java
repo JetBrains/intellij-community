@@ -2036,4 +2036,17 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> Collection<T> toCollection(@NotNull Iterable<T> iterable) {
     return iterable instanceof Collection ? (Collection<T>)iterable : newArrayList(iterable);
   }
+
+  @NotNull
+  public static <T> List<T> toList(@NotNull Enumeration<T> enumeration) {
+    if (!enumeration.hasMoreElements()) {
+      return Collections.emptyList();
+    }
+
+    List<T> result = new SmartList<T>();
+    while (enumeration.hasMoreElements()) {
+      result.add(enumeration.nextElement());
+    }
+    return result;
+  }
 }

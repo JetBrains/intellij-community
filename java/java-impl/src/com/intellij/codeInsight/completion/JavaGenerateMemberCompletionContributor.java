@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.ui.RowIcon;
@@ -68,8 +67,8 @@ public class JavaGenerateMemberCompletionContributor {
     List<PsiMethod> prototypes = ContainerUtil.newArrayList();
     for (PsiField field : parent.getFields()) {
       if (!(field instanceof PsiEnumConstant)) {
-        prototypes.add(PropertyUtil.generateGetterPrototype(field));
-        prototypes.add(PropertyUtil.generateSetterPrototype(field));
+        prototypes.add(GenerateMembersUtil.generateGetterPrototype(field));
+        prototypes.add(GenerateMembersUtil.generateSetterPrototype(field));
       }
     }
     for (final PsiMethod prototype : prototypes) {

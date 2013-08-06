@@ -86,7 +86,7 @@ public class DetachExternalProjectAction extends AnAction implements DumbAware {
       recentTasksList.getModel().forgetTasksFrom(info.externalProject.getPath());
     }
     
-    info.localSettings.forgetExternalProject(Collections.singleton(info.externalProject.getPath()));
+    info.localSettings.forgetExternalProjects(Collections.singleton(info.externalProject.getPath()));
     info.settings.unlinkExternalProject(info.externalProject.getPath());
 
     // Process orphan modules.

@@ -76,6 +76,26 @@ class SomeOuterClassWithLongName {
 
   }
 
+  public void "test prefer nearby return types"() {
+    configureFromFileText "a.java", """
+class Singleton {
+    boolean add(Object o) {}
+
+}
+class Usage {
+    void foo() {
+        Singleton.get<caret>Instance().add("a");
+    }
+
+}
+"""
+    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable);
+    doAction("Create Method 'getInstance'")
+    def state = TemplateManagerImpl.getTemplateState(getEditor())
+    // parameter type
+    assert LookupManager.getActiveLookup(editor)?.currentItem?.lookupString == 'Singleton'
+  }
+
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createMethodFromUsage";

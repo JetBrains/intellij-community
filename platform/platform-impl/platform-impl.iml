@@ -37,6 +37,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="analysis-impl" />
+    <orderEntry type="library" name="jayatana" level="project" />
   </component>
 </module>
 

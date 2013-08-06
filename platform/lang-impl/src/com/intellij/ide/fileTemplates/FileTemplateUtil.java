@@ -46,10 +46,8 @@ import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.RuntimeSingleton;
 import org.apache.velocity.runtime.log.LogSystem;
 import org.apache.velocity.runtime.parser.ParseException;
-import org.apache.velocity.runtime.parser.node.ASTReference;
-import org.apache.velocity.runtime.parser.node.ASTSetDirective;
-import org.apache.velocity.runtime.parser.node.Node;
-import org.apache.velocity.runtime.parser.node.SimpleNode;
+import org.apache.velocity.runtime.parser.Token;
+import org.apache.velocity.runtime.parser.node.*;
 import org.apache.velocity.runtime.resource.Resource;
 import org.apache.velocity.runtime.resource.loader.ResourceLoader;
 import org.apache.velocity.util.StringUtils;
@@ -143,18 +141,19 @@ public class FileTemplateUtil{
     final Set<String> definedAttributes = new HashSet<String>();
     //noinspection HardCodedStringLiteral
     SimpleNode template = RuntimeSingleton.parse(new StringReader(templateContent), "MyTemplate");
-    collectAttributes(unsetAttributes, definedAttributes, template, propertiesNames, includeDummies);
+    collectAttributes(unsetAttributes, definedAttributes, template, propertiesNames, includeDummies, new HashSet<String>());
     for (String definedAttribute : definedAttributes) {
       unsetAttributes.remove(definedAttribute);
     }
     return ArrayUtil.toStringArray(unsetAttributes);
   }
 
-  private static void collectAttributes(Set<String> referenced, Set<String> defined, Node apacheNode, Set<String> propertiesNames, boolean includeDummies){
+  private static void collectAttributes(Set<String> referenced, Set<String> defined, Node apacheNode, final Set<String> propertiesNames, final boolean includeDummies, Set<String> visitedIncludes)
+    throws ParseException {
     int childCount = apacheNode.jjtGetNumChildren();
     for(int i = 0; i < childCount; i++){
       Node apacheChild = apacheNode.jjtGetChild(i);
-      collectAttributes(referenced, defined, apacheChild, propertiesNames, includeDummies);
+      collectAttributes(referenced, defined, apacheChild, propertiesNames, includeDummies, visitedIncludes);
       if (apacheChild instanceof ASTReference){
         ASTReference apacheReference = (ASTReference)apacheChild;
         String s = apacheReference.literal();
@@ -168,6 +167,20 @@ public class FileTemplateUtil{
         String attr = referenceToAttribute(lhs.literal(), false);
         if (attr != null) {
           defined.add(attr);
+        }
+      }
+      else if (apacheChild instanceof ASTDirective && "parse".equals(((ASTDirective)apacheChild).getDirectiveName()) && apacheChild.jjtGetNumChildren() == 1) {
+        Node literal = apacheChild.jjtGetChild(0);
+        if (literal instanceof ASTStringLiteral && literal.jjtGetNumChildren() == 0) {
+          Token firstToken = literal.getFirstToken();
+          if (firstToken != null) {
+            String s = StringUtil.unquoteString(firstToken.toString());
+            final FileTemplate includedTemplate = FileTemplateManager.getInstance().getTemplate(s);
+            if (includedTemplate != null && visitedIncludes.add(s)) {
+              SimpleNode template = RuntimeSingleton.parse(new StringReader(includedTemplate.getText()), "MyTemplate");
+              collectAttributes(referenced, defined, template, propertiesNames, includeDummies, visitedIncludes);
+            }
+          }
         }
       }
     }

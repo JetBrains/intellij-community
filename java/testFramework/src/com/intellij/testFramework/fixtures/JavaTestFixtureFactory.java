@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,14 @@
  */
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.testFramework.fixtures.impl.JavaTestFixtureFactoryImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public abstract class JavaTestFixtureFactory {
-  private static final JavaTestFixtureFactory ourInstance;
-
-  static {
-    try {
-      final Class<?> aClass = Class.forName("com.intellij.testFramework.fixtures.impl.JavaTestFixtureFactoryImpl");
-      ourInstance = (JavaTestFixtureFactory)aClass.newInstance();
-    }
-    catch (Exception e) {
-      throw new RuntimeException("Can't instantiate factory", e);
-    }
-  }
+  private static final JavaTestFixtureFactory ourInstance = new JavaTestFixtureFactoryImpl();
 
   public static JavaTestFixtureFactory getFixtureFactory() {
     return ourInstance;
@@ -43,14 +34,12 @@ public abstract class JavaTestFixtureFactory {
 
   public abstract JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirFixture);
 
-  /**
-   *
-   * @deprecated use {@link JavaTestFixtureFactory#createFixtureBuilder(String)}
-   */
+  /** @deprecated use {@link JavaTestFixtureFactory#createFixtureBuilder(String)} */
   //also implicitly initializes ourInstance and registers java module fixture builder
   public static TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder() {
     return IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
   }
+
   public static TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name) {
     return IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);
   }

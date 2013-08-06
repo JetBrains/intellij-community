@@ -67,7 +67,7 @@ public interface PsiResolveHelper {
    * @return the result of the resolve, or {@link JavaResolveResult#EMPTY} if the resolve failed.
    */
   @NotNull
-  JavaResolveResult[] multiResolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place);
+  JavaResolveResult[] multiResolveConstructor(@NotNull PsiClassType type, @NotNull PsiExpressionList argumentList, @NotNull PsiElement place);
 
   /**
    * Resolves a call expression and returns an array of possible resolve results.
@@ -78,7 +78,7 @@ public interface PsiResolveHelper {
    * @return the array of resolve results.
    */
   @NotNull
-  CandidateInfo[] getReferencedMethodCandidates(PsiCallExpression call, boolean dummyImplicitConstructor);
+  CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression call, boolean dummyImplicitConstructor);
 
   /**
    * Resolves a reference to a class, given the text of the reference and the context
@@ -128,7 +128,7 @@ public interface PsiResolveHelper {
                                           @NotNull PsiExpression[] arguments,
                                           @NotNull PsiSubstitutor partialSubstitutor,
                                           @Nullable PsiElement parent,
-                                          final ParameterTypeInferencePolicy policy);
+                                          @NotNull ParameterTypeInferencePolicy policy);
 
   @NotNull
   PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
@@ -136,9 +136,17 @@ public interface PsiResolveHelper {
                                     @NotNull PsiExpression[] arguments,
                                     @NotNull PsiSubstitutor partialSubstitutor,
                                     @NotNull PsiElement parent,
-                                    final ParameterTypeInferencePolicy policy);
+                                    @NotNull ParameterTypeInferencePolicy policy);
+  @NotNull
+  PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
+                                    @NotNull PsiParameter[] parameters,
+                                    @NotNull PsiExpression[] arguments,
+                                    @NotNull PsiSubstitutor partialSubstitutor,
+                                    @NotNull PsiElement parent,
+                                    @NotNull ParameterTypeInferencePolicy policy,
+                                    @NotNull LanguageLevel languageLevel);
 
-  @NotNull  
+  @NotNull
   PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
                                     @NotNull PsiType[] leftTypes,
                                     @NotNull PsiType[] rightTypes,

@@ -19,8 +19,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 /**
+ * Common base class that should be used for configurations that can be created from context by a {@link com.intellij.execution.actions.RunConfigurationProducer}}.
+ * It supports automatically generating a name for a configuration from its settings and keeping track of whether the name was changed by
+ * the user.
+ *
  * @author yole
  */
 public abstract class LocatableConfigurationBase extends RunConfigurationBase implements LocatableConfiguration {
@@ -81,6 +86,7 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
    *
    * @return the name of the action.
    */
+  @Nullable
   public String getActionName() {
     String name = getName();
     return name.length() < 20 ? name : name.substring(0, 20) + "...";

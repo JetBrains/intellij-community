@@ -1,5 +1,6 @@
 package com.intellij.tasks.jira;
 
+import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -7,14 +8,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.jira.model.JiraIssue;
-import com.intellij.tasks.jira.model.JiraResponseWrapper;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -29,7 +30,12 @@ public class JiraRepository extends BaseRepositoryImpl {
   public static final String LOGIN_FAILED_CHECK_YOUR_PERMISSIONS = "Login failed. Check your permissions.";
   public static final String REST_API_PATH_SUFFIX = "/rest/api/latest";
 
+  /**
+   * Default JQL query
+   */
   private String mySearchQuery = "assignee = currentUser() order by duedate";
+
+  private JiraRestApi myRestApiVersion;
 
   /**
    * Serialization constructor
@@ -64,8 +70,9 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   public Task[] getIssues(@Nullable String searchQuery, int max, long since) throws Exception {
-    HttpClient client = getHttpClient();
-    GetMethod method = new GetMethod(getUrl() + REST_API_PATH_SUFFIX + "/search");
+    if (myRestApiVersion == null) {
+      myRestApiVersion = discoverRestApiVersion();
+    }
     String jqlQuery = mySearchQuery;
     if (!StringUtil.isEmpty(searchQuery)) {
       if (JiraUtil.ANY_ISSUE_KEY_REGEX.matcher(searchQuery).matches()) {
@@ -75,24 +82,7 @@ public class JiraRepository extends BaseRepositoryImpl {
         jqlQuery += String.format(" and summary ~ \"%s\"", searchQuery);
       }
     }
-    method.setQueryString(new NameValuePair[]{
-      new NameValuePair("jql", jqlQuery),
-      // by default comment field will be skipped
-      //new NameValuePair("fields", "*all"),
-      new NameValuePair("fields", JiraIssue.REQUIRED_RESPONSE_FIELDS),
-      new NameValuePair("maxResults", String.valueOf(max))
-    });
-    LOG.debug("URI is " + method.getURI());
-    int statusCode = client.executeMethod(method);
-    LOG.debug("Status code is " + statusCode);
-    String entityContent = StreamUtil.readText(method.getResponseBodyAsStream(), "utf-8");
-    LOG.debug(entityContent);
-    if (statusCode != HttpStatus.SC_OK) {
-      return Task.EMPTY_ARRAY;
-    }
-    JiraResponseWrapper.Issues wrapper = JiraUtil.GSON.fromJson(entityContent, JiraResponseWrapper.Issues.class);
-    List<JiraIssue> issues = wrapper.getIssues();
-    LOG.debug("Total " + issues.size() + " issues downloaded");
+    List<JiraIssue> issues = myRestApiVersion.findIssues(jqlQuery, max);
     return ContainerUtil.map2Array(issues, Task.class, new Function<JiraIssue, Task>() {
       @Override
       public JiraTask fun(JiraIssue issue) {
@@ -105,34 +95,21 @@ public class JiraRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public Task findTask(String id) throws Exception {
-    HttpClient client = getHttpClient();
-    GetMethod method = new GetMethod(getUrl() + REST_API_PATH_SUFFIX + "/issue/" + id);
-    method.setQueryString("fields=" + encodeUrl(JiraIssue.REQUIRED_RESPONSE_FIELDS));
-    int statusCode = client.executeMethod(method);
-    LOG.debug("Status code is " + statusCode);
-    String entityContent = StreamUtil.readText(method.getResponseBodyAsStream(), "utf-8");
-    LOG.debug(entityContent);
-    if (statusCode != HttpStatus.SC_OK) {
-      return null;
+    if (myRestApiVersion == null) {
+      myRestApiVersion = discoverRestApiVersion();
     }
-    return new JiraTask(JiraUtil.GSON.fromJson(entityContent, JiraIssue.class), this);
+    JiraIssue issue = myRestApiVersion.findIssue(id);
+    return issue == null ? null : new JiraTask(issue, this);
   }
 
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
-    String uri = getUrl() + REST_API_PATH_SUFFIX + "/search?maxResults=1";
+    String uri = getUrl() + REST_API_PATH_SUFFIX + "/search?maxResults=1&jql=" + encodeUrl(mySearchQuery);
     return new HttpTestConnection<GetMethod>(new GetMethod(uri)) {
       @Override
       public void doTest(GetMethod method) throws Exception {
-        HttpClient client = getHttpClient();
-        int statusCode = client.executeMethod(myMethod);
-        if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-          throw new Exception(LOGIN_FAILED_CHECK_YOUR_PERMISSIONS);
-        }
-        else if (statusCode != HttpStatus.SC_OK) {
-          throw new Exception("Error while connecting to server: " + HttpStatus.getStatusText(statusCode));
-        }
+        executeMethod(method);
       }
     };
   }
@@ -146,12 +123,67 @@ public class JiraRepository extends BaseRepositoryImpl {
     return TIME_MANAGEMENT;
   }
 
-
   public String getSearchQuery() {
     return mySearchQuery;
   }
 
   public void setSearchQuery(String searchQuery) {
     mySearchQuery = searchQuery;
+  }
+
+  @NotNull
+  public JiraRestApi discoverRestApiVersion() throws Exception {
+    String responseBody;
+    try {
+      responseBody = executeMethod(new GetMethod(getUrl() + REST_API_PATH_SUFFIX + "/serverInfo"));
+    }
+    catch (Exception e) {
+      LOG.warn("Can't find out JIRA REST API version");
+      throw e;
+    }
+    JsonObject object = JiraUtil.GSON.fromJson(responseBody, JsonObject.class);
+    return JiraRestApi.fromJiraVersion(object.get("version").getAsString(), this);
+  }
+
+  @NotNull
+  public String executeMethod(HttpMethod method) throws Exception {
+    LOG.debug("URI is " + method.getURI());
+    int statusCode;
+    String entityContent;
+    try {
+      statusCode = getHttpClient().executeMethod(method);
+      LOG.debug("Status code is " + statusCode);
+      entityContent = StreamUtil.readText(method.getResponseBodyAsStream(), "utf-8");
+      LOG.debug(entityContent);
+    }
+    finally {
+      method.releaseConnection();
+    }
+    if (statusCode == HttpStatus.SC_OK) {
+      return entityContent;
+    }
+    else if (method.getResponseHeader("Content-Type") != null) {
+      Header header = method.getResponseHeader("Content-Type");
+      if (header.getValue().startsWith("application/json")) {
+        JsonObject object = JiraUtil.GSON.fromJson(entityContent, JsonObject.class);
+        if (object.has("errorMessages")) {
+          String reason = StringUtil.join(object.getAsJsonArray("errorMessages"), " ");
+          // something meaningful to user, e.g. invalid field name in JQL query
+          LOG.warn(reason);
+          throw new Exception("Search failed. Reason: " + reason);
+        }
+      }
+    }
+    if (method.getResponseHeader("X-Authentication-Denied-Reason") != null) {
+      Header header = method.getResponseHeader("X-Authentication-Denied-Reason");
+      // only in JIRA >= 5.x.x
+      if (header.getValue().startsWith("CAPTCHA_CHALLENGE")) {
+        throw new Exception("Login failed. Enter captcha in web-interface.");
+      }
+    }
+    if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+      throw new Exception(LOGIN_FAILED_CHECK_YOUR_PERMISSIONS);
+    }
+    throw new Exception("Request failed with error: " + HttpStatus.getStatusText(method.getStatusCode()));
   }
 }

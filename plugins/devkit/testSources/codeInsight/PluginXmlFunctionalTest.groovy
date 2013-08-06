@@ -31,6 +31,7 @@ import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.xml.DeprecatedClassUsageInspection
 import org.jetbrains.idea.devkit.inspections.*
+
 /**
  * @author peter
  */
@@ -87,6 +88,28 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
     configureByFile();
     myFixture.checkHighlighting(false, false, false);
+  }
+
+  public void testDependsCompletion() throws Throwable {
+    addPluginXml("platform", "<idea-plugin>\n" +
+                             "    <id>com.intellij</id>\n" +
+                             "    <module value=\"com.intellij.modules.vcs\"/>\n" +
+                             "</idea-plugin>");
+    addPluginXml("lang", "<idea-plugin>\n" +
+                         "    <id>com.intellij</id>\n" +
+                         "    <module value=\"com.intellij.modules.lang\"/>\n" +
+                         "    <module value=\"com.intellij.modules.lang.another\"/>\n" +
+                         "</idea-plugin>");
+    addPluginXml("custom", "<idea-plugin>\n" +
+                           "    <id>com.intellij.custom</id>\n" +
+                           "</idea-plugin>");
+    configureByFile();
+
+    myFixture.completeBasic()
+    assertSameElements(myFixture.lookupElementStrings,
+                       'com.intellij.modules.vcs',
+                       'com.intellij.modules.lang', 'com.intellij.modules.lang.another',
+                       'com.intellij.custom')
   }
 
   private void configureByFile() {

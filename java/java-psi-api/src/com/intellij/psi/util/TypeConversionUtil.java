@@ -29,6 +29,7 @@ import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -479,7 +480,7 @@ public class TypeConversionUtil {
       else {
         if (isPrimitiveAndNotNull(ltype)) {
           return rtype instanceof PsiClassType &&
-                 ((PsiClassType)rtype).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_7) &&
+                 ((PsiClassType)rtype).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5) &&
                  areTypesConvertible(ltype, rtype);
         }
         if (isPrimitiveAndNotNull(rtype)) {
@@ -1202,10 +1203,20 @@ public class TypeConversionUtil {
   public static boolean isPrimitiveWrapper(String typeName) {
     return PRIMITIVE_WRAPPER_TYPES.contains(typeName);
   }
+  @Contract("null -> false")
+  public static boolean isAssignableFromPrimitiveWrapper(final PsiType type) {
+    if (type == null) return false;
+    return isPrimitiveWrapper(type) ||
+           type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ||
+           type.equalsToText(CommonClassNames.JAVA_LANG_NUMBER);
+  }
+
+  @Contract("null -> false")
   public static boolean isPrimitiveWrapper(final PsiType type) {
     return type != null && isPrimitiveWrapper(type.getCanonicalText());
   }
 
+  @Contract("null -> false")
   public static boolean isComposite(final PsiType type) {
     return type instanceof PsiDisjunctionType || type instanceof PsiIntersectionType;
   }
@@ -1256,10 +1267,12 @@ public class TypeConversionUtil {
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
   }
 
+  @Contract("null -> null")
   public static PsiType erasure(@Nullable PsiType type) {
     return erasure(type, PsiSubstitutor.EMPTY);
   }
 
+  @Contract("null, _ -> null")
   public static PsiType erasure(@Nullable final PsiType type, @NotNull final PsiSubstitutor beforeSubstitutor) {
     if (type == null) return null;
     return type.accept(new PsiTypeVisitor<PsiType>() {

@@ -73,11 +73,11 @@ public abstract class AbstractExternalSystemLocalSettings {
   }
 
   /**
-   * Asks current settings to drop all information related to external project which root config is located at the given path.
+   * Asks current settings to drop all information related to external projects which root configs are located at the given paths.
    *
-   * @param linkedProjectPathsToForget  target root external project's path
+   * @param linkedProjectPathsToForget  target root external project paths
    */
-  public void forgetExternalProject(@NotNull Set<String> linkedProjectPathsToForget) {
+  public void forgetExternalProjects(@NotNull Set<String> linkedProjectPathsToForget) {
     Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> projects = myAvailableProjects.get();
     for (Iterator<Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>>> it = projects.entrySet().iterator(); it.hasNext(); ) {
       Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry = it.next();
@@ -184,24 +184,24 @@ public abstract class AbstractExternalSystemLocalSettings {
   private void pruneOutdatedEntries() {
     ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
     assert manager != null;
-    Set<String> toForget = ContainerUtilRt.newHashSet();
+    Set<String> pathsToForget = ContainerUtilRt.newHashSet();
     for (ExternalProjectPojo pojo : myAvailableProjects.get().keySet()) {
-      toForget.add(pojo.getPath());
+      pathsToForget.add(pojo.getPath());
     }
     for (String path : myAvailableTasks.get().keySet()) {
-      toForget.add(path);
+      pathsToForget.add(path);
     }
     for (ExternalTaskExecutionInfo taskInfo : myRecentTasks.get()) {
-      toForget.add(taskInfo.getSettings().getExternalProjectPath());
+      pathsToForget.add(taskInfo.getSettings().getExternalProjectPath());
     }
     
     AbstractExternalSystemSettings<?, ?, ?> settings = manager.getSettingsProvider().fun(myProject);
     for (ExternalProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
-      toForget.remove(projectSettings.getExternalProjectPath());
+      pathsToForget.remove(projectSettings.getExternalProjectPath());
     }
 
-    if (!toForget.isEmpty()) {
-      forgetExternalProject(toForget);
+    if (!pathsToForget.isEmpty()) {
+      forgetExternalProjects(pathsToForget);
     }
   }
 

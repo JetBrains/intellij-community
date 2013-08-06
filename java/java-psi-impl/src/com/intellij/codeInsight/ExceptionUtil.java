@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -403,7 +401,8 @@ public class ExceptionUtil {
                                                           boolean includeSelfCalls) {
     final JavaResolveResult result = methodCall.resolveMethodGenerics();
     final PsiMethod method = (PsiMethod)result.getElement();
-    if (!includeSelfCalls && method == PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class)) {
+    PsiMethod containingMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
+    if (!includeSelfCalls && method == containingMethod) {
       return Collections.emptyList();
     }
 
@@ -411,7 +410,8 @@ public class ExceptionUtil {
     if (method != null && !isArrayClone(method, methodCall) && methodCall instanceof PsiMethodCallExpression) {
       final PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();
       if (thrownExceptions.length > 0) {
-        final MethodResolverProcessor processor = new MethodResolverProcessor((PsiMethodCallExpression)methodCall);
+        PsiFile containingFile = (containingMethod == null ? methodCall : containingMethod).getContainingFile();
+        final MethodResolverProcessor processor = new MethodResolverProcessor((PsiMethodCallExpression)methodCall, containingFile);
         try {
           PsiScopesUtil.setupAndRunProcessor(processor, methodCall, false);
           final List<CandidateInfo> results = processor.getResults();
@@ -541,7 +541,7 @@ public class ExceptionUtil {
       List<PsiClassType> result = ContainerUtil.newArrayList();
 
       for (PsiClassType referencedType : referencedTypes) {
-        final PsiType type = substitutor.substitute(referencedType);
+        final PsiType type = GenericsUtil.eliminateWildcards(substitutor.substitute(referencedType), false);
         if (!(type instanceof PsiClassType)) continue;
         PsiClassType classType = (PsiClassType)type;
         PsiClass exceptionClass = ((PsiClassType)type).resolve();
