@@ -35,10 +35,10 @@ public class InjectedReferencesInspection extends LocalInspectionTool {
       @Override
       public void visitElement(PsiElement element) {
 
-        PsiReference[] references = element.getReferences();
-        if (element.getUserData(InjectedReferencesContributor.INJECTED_REFERENCE) != null) {
-          for (PsiReference reference : references) {
-            if (reference.isSoft() && reference.resolve() == null) {
+        PsiReference[] injected = element.getUserData(InjectedReferencesContributor.INJECTED_REFERENCES);
+        if (injected != null) {
+          for (PsiReference reference : injected) {
+            if (reference.resolve() == null) {
               holder.registerProblem(reference);
             }
           }

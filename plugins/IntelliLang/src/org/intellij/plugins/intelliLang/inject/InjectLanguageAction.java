@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.inject;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
@@ -115,6 +116,9 @@ public class InjectLanguageAction implements IntentionAction {
     finally {
       if (injectable.getLanguage() != null) {    // no need for reference injection
         FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+      }
+      else {
+        DaemonCodeAnalyzer.getInstance(project).restart();
       }
     }
   }
