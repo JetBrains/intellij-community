@@ -52,6 +52,9 @@
 
     <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.references.InjectedReferencesContributor"/>
 
+    <localInspection implementationClass="org.intellij.plugins.intelliLang.references.InjectedReferencesInspection"
+                     enabledByDefault="true" level="ERROR"
+                     displayName="Injected References" groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.intelliLang">

@@ -44,6 +44,11 @@ public class FileReferenceInjector extends ReferenceInjector {
   @Override
   public PsiReference[] getReferences(@NotNull PsiElement element, @NotNull ProcessingContext context, @NotNull TextRange range) {
     String text = range.substring(element.getText());
-    return new FileReferenceSet(text, element, range.getStartOffset(), null, true).getAllReferences();
+    return new FileReferenceSet(text, element, range.getStartOffset(), null, true) {
+      @Override
+      protected boolean isSoft() {
+        return true;
+      }
+    }.getAllReferences();
   }
 }
