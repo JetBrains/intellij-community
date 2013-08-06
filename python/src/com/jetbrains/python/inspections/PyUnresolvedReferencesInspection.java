@@ -653,7 +653,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (isDecoratedAsDynamic(cls, true)) {
           return true;
         }
-        if (hasUnresolvedDynamicMember((PyClassType)qtype, refText)) return true;
+        if (hasUnresolvedDynamicMember((PyClassType)qtype, reference, refText)) return true;
       }
       if (qtype instanceof CythonBuiltinType ||
           (qtype instanceof CythonType && reference instanceof PyOperatorReference)) {
@@ -668,9 +668,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       return false;
     }
 
-    private static boolean hasUnresolvedDynamicMember(@NotNull final PyClassType qtype, @NotNull final String refText) {
+    private static boolean hasUnresolvedDynamicMember(@NotNull final PyClassType qtype,
+                                                      PsiReference reference,
+                                                      @NotNull final String refText) {
       for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-        final Collection<PyDynamicMember> resolveResult = provider.getMembers(qtype);
+        final Collection<PyDynamicMember> resolveResult = provider.getMembers(qtype, reference.getElement());
         for (PyDynamicMember member : resolveResult) {
           if (member.getName().equals(refText)) return true;
         }

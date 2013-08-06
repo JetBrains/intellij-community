@@ -1,6 +1,7 @@
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -21,7 +22,7 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
   private Key<List<PyDynamicMember>> mySocketMembersKey = Key.create("socket.members");
 
   @Override
-  public Collection<PyDynamicMember> getMembers(PyClassType classType) {
+  public Collection<PyDynamicMember> getMembers(PyClassType classType, PsiElement location) {
     PyClass clazz = classType.getPyClass();
     final String qualifiedName = clazz.getQualifiedName();
     if ("socket._socketobject".equals(qualifiedName)) {

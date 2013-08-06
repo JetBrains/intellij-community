@@ -13,8 +13,8 @@ import java.util.Collection;
 public interface PyClassMembersProvider {
   ExtensionPointName<PyClassMembersProvider> EP_NAME = ExtensionPointName.create("Pythonid.pyClassMembersProvider");
 
-  Collection<PyDynamicMember> getMembers(PyClassType clazz);
+  Collection<PyDynamicMember> getMembers(PyClassType clazz, @Nullable PsiElement location);
 
   @Nullable
-  PsiElement resolveMember(PyClassType clazz, String name);
+  PsiElement resolveMember(PyClassType clazz, String name, @Nullable PsiElement location);
 }
