@@ -87,7 +87,12 @@ public class LambdaHighlightingUtil {
 
   @Nullable
   public static String checkInterfaceFunctional(PsiType functionalInterfaceType) {
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    if (functionalInterfaceType instanceof PsiIntersectionType) {
+      for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
+        if (checkInterfaceFunctional(type) == null) return null;
+      }
+    }
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(functionalInterfaceType));
     final PsiClass aClass = resolveResult.getElement();
     if (aClass != null) {
       if (checkReturnTypeApplicable(resolveResult, aClass)) {
@@ -95,7 +100,7 @@ public class LambdaHighlightingUtil {
       }
       return checkInterfaceFunctional(aClass);
     }
-    return null;
+    return functionalInterfaceType.getPresentableText() + " is not a functional interface";
   }
 
   private static boolean checkReturnTypeApplicable(PsiClassType.ClassResolveResult resolveResult, final PsiClass aClass) {

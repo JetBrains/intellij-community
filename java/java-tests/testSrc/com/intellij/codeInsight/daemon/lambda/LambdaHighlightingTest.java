@@ -89,6 +89,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testConflictResolution() throws Exception {doTest();}
   public void testIDEA108195() throws Exception {doTest();}
   public void testDiamondInference() throws Exception { doTest();}
+  public void testFunctionalInterfaceCheck() throws Exception { doTest();}
 
   private void doTest() {
     doTest(false);
