@@ -44,18 +44,32 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.references.Injectable;
+import com.intellij.psi.injection.Injectable;
 import org.intellij.plugins.intelliLang.references.InjectedReferencesContributor;
+import com.intellij.psi.injection.ReferenceInjector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class InjectLanguageAction implements IntentionAction {
   @NonNls private static final String INJECT_LANGUAGE_FAMILY = "Inject Language/Reference";
+
+  public static List<Injectable> getAllInjectables() {
+    Language[] languages = InjectedLanguage.getAvailableLanguages();
+    List<Injectable> list = new ArrayList<Injectable>();
+    for (Language language : languages) {
+      list.add(Injectable.fromLanguage(language));
+    }
+    list.addAll(Arrays.asList(ReferenceInjector.EXTENSION_POINT_NAME.getExtensions()));
+    Collections.sort(list);
+    return list;
+  }
 
   @NotNull
   public String getText() {
@@ -133,7 +147,7 @@ public class InjectLanguageAction implements IntentionAction {
   }
 
   private static boolean doChooseLanguageToInject(Editor editor, final Processor<Injectable> onChosen) {
-    final List<Injectable> injectables = Injectable.getAllInjectables();
+    final List<Injectable> injectables = getAllInjectables();
 
     final JList list = new JBList(injectables);
     list.setCellRenderer(new ColoredListCellRendererWrapper<Injectable>() {

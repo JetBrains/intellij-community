@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.plugins.intelliLang.references;
+package com.intellij.psi.injection;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ReferenceInjector extends Injectable {
 
-  final static ExtensionPointName<ReferenceInjector> EXTENSION_POINT_NAME = ExtensionPointName.create("org.intellij.intelliLang.referenceInjector");
+  public final static ExtensionPointName<ReferenceInjector> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.referenceInjector");
 
   @Override
   public final Language getLanguage() {

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
+import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import org.intellij.plugins.intelliLang.Configuration;

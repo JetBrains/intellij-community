@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
