@@ -6,6 +6,7 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction;
 import org.intellij.plugins.intelliLang.references.FileReferenceInjector;
+import org.intellij.plugins.intelliLang.references.InjectedReferencesInspection;
 import org.jdom.Element;
 
 /**
@@ -26,6 +27,10 @@ public class ReferenceInjectionTest extends LightPlatformCodeInsightFixtureTestC
     assertNotNull(myFixture.getReferenceAtCaretPosition());
     assertFalse(new InjectLanguageAction().isAvailable(getProject(), myFixture.getEditor(), myFixture.getFile()));
     assertTrue(new UnInjectLanguageAction().isAvailable(getProject(), myFixture.getEditor(), myFixture.getFile()));
+
+    myFixture.configureByText("bar.xml", "<foo xmlns=\"<error descr=\"URI is not registered (Settings | Project Settings | Schemas and DTDs)\">http://foo.bar</error>\" \n" +
+                                         "     xxx=\"<error descr=\"Cannot resolve file 'bar'\">b<caret>ar</error>\"/>");
+    myFixture.testHighlighting();
 
     UnInjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile());
     assertNull(myFixture.getReferenceAtCaretPosition());
@@ -59,5 +64,22 @@ public class ReferenceInjectionTest extends LightPlatformCodeInsightFixtureTestC
 
     UnInjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile());
     assertNull(myFixture.getReferenceAtCaretPosition());
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new InjectedReferencesInspection());
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myFixture.disableInspections(new InjectedReferencesInspection());
+    super.tearDown();
+  }
+
+  @Override
+  protected boolean isWriteActionRequired() {
+    return false;
   }
 }

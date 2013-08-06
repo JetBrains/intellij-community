@@ -38,6 +38,9 @@ public abstract class ReferenceInjector extends Injectable {
     return null;
   }
 
+  /**
+   * Generated references should be soft ({@link com.intellij.psi.PsiReference#isSoft()})
+   */
   @NotNull
   public abstract PsiReference[] getReferences(@NotNull PsiElement element, @NotNull final ProcessingContext context, @NotNull TextRange range);
 

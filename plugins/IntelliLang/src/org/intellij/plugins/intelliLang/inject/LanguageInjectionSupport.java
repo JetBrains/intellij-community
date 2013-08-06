@@ -28,7 +28,6 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.Consumer;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
-import org.intellij.plugins.intelliLang.references.Injectable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,22 +56,7 @@ public abstract class LanguageInjectionSupport {
 
   public abstract boolean useDefaultInjector(final PsiElement host);
 
-  public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {
-    return addInjectionInPlace(language.getID(), psiElement);
-  }
-
-  public boolean addInjectionInPlace(final String id, final PsiLanguageInjectionHost psiElement) {
-    return false;
-  }
-
-  public final boolean addInjectionInPlace(final Injectable injectable, final PsiLanguageInjectionHost psiElement) {
-    if (injectable.getLanguage() == null) {
-      return addInjectionInPlace(injectable.getId(), psiElement);
-    }
-    else {
-      return addInjectionInPlace(injectable.getLanguage(), psiElement);
-    }
-  }
+  public abstract boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement);
 
   public abstract boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement);
 

@@ -17,6 +17,7 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -26,7 +27,10 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ListCellRendererWrapper;
@@ -99,13 +103,14 @@ public class InjectLanguageAction implements IntentionAction {
     if (defaultFunctionalityWorked(host, injectable.getId())) return;
 
     try {
+      Language language = injectable.toLanguage();
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
-        if (support.addInjectionInPlace(injectable, host)) {
+        if (support.addInjectionInPlace(language, host)) {
           ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
           return;
         }
       }
-      TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(injectable, host);
+      TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host);
     }
     finally {
       if (injectable.getLanguage() != null) {    // no need for reference injection

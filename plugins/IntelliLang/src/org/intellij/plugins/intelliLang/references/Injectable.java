@@ -68,6 +68,10 @@ public abstract class Injectable implements Comparable<Injectable> {
     return list;
   }
 
+  public Language toLanguage() {
+    return getLanguage() == null ? new Language(getId(), false) {} : getLanguage();
+  }
+
   public static Injectable fromLanguage(final Language language) {
     return new Injectable() {
       @NotNull

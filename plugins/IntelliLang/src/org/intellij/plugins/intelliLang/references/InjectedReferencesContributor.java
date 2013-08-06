@@ -22,8 +22,10 @@ import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
+import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +39,7 @@ import java.util.List;
  */
 public class InjectedReferencesContributor extends PsiReferenceContributor {
 
-  private static final Key<ReferenceInjector> INJECTED_REFERENCE = Key.create("injected reference");
+  static final Key<ReferenceInjector> INJECTED_REFERENCE = Key.create("injected reference");
 
   public static boolean isInjected(@Nullable PsiReference reference) {
     return reference != null && reference.getElement().getUserData(INJECTED_REFERENCE) != null;
@@ -53,17 +55,30 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
         ReferenceInjector[] extensions = ReferenceInjector.EXTENSION_POINT_NAME.getExtensions();
         PsiReference[] references = new PsiReference[0];
         Configuration configuration = Configuration.getProjectInstance(element.getProject());
-        for (ReferenceInjector extension : extensions) {
-          Collection<BaseInjection> injections = configuration.getInjectionsByLanguageId(extension.getId());
+        for (ReferenceInjector injector : extensions) {
+          Collection<BaseInjection> injections = configuration.getInjectionsByLanguageId(injector.getId());
           for (BaseInjection injection : injections) {
             if (injection.acceptForReference(element)) {
-              element.putUserData(INJECTED_REFERENCE, extension);
+              element.putUserData(INJECTED_REFERENCE, injector);
               LanguageInjectionSupport support = InjectorUtils.findInjectionSupport(injection.getSupportId());
               element.putUserData(LanguageInjectionSupport.INJECTOR_SUPPORT, support);
               List<TextRange> area = injection.getInjectedArea(element);
               for (TextRange range : area) {
-                references = ArrayUtil.mergeArrays(references, extension.getReferences(element, context, range));
+                references = ArrayUtil.mergeArrays(references, injector.getReferences(element, context, range));
               }
+            }
+          }
+        }
+        if (element instanceof PsiLanguageInjectionHost) {
+          TemporaryPlacesRegistry registry = TemporaryPlacesRegistry.getInstance(element.getProject());
+          InjectedLanguage language = registry.getLanguageFor((PsiLanguageInjectionHost)element, element.getContainingFile());
+          if (language != null) {
+            ReferenceInjector injector = ReferenceInjector.findById(language.getID());
+            if (injector != null) {
+              element.putUserData(INJECTED_REFERENCE, injector);
+              element.putUserData(LanguageInjectionSupport.INJECTOR_SUPPORT, registry.getLanguageInjectionSupport());
+              TextRange range = ElementManipulators.getValueTextRange(element);
+              references = ArrayUtil.mergeArrays(references, injector.getReferences(element, context, range));
             }
           }
         }
