@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm.ex;
+package com.intellij.openapi.progress.util;
 
-import com.intellij.openapi.progress.TaskInfo;
-import com.intellij.openapi.progress.util.ProgressIndicatorStacked;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.containers.DoubleArrayList;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
-public interface ProgressIndicatorEx extends ProgressIndicatorStacked {
-  void addStateDelegate(@NotNull ProgressIndicatorEx delegate);
+public interface ProgressIndicatorStacked extends ProgressIndicator {
+  void initStateFrom(@NotNull ProgressIndicator indicator);
 
-  boolean isModalityEntered();
+  @NotNull
+  Stack<String> getTextStack();
 
-  void finish(@NotNull TaskInfo task);
+  @NotNull
+  DoubleArrayList getFractionStack();
 
-  boolean isFinished(@NotNull TaskInfo task);
+  @NotNull
+  Stack<String> getText2Stack();
 
-  boolean wasStarted();
-
-  void processFinish();
+  int getNonCancelableCount();
 }
