@@ -153,6 +153,16 @@ public class CoreApplicationEnvironment {
       }
 
       @Override
+      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
+                                                         ProgressIndicator progress,
+                                                         boolean runInReadAction,
+                                                         boolean failFastOnAcquireReadAction,
+                                                         @NotNull Processor<T> thingProcessor) {
+        return invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor);
+      }
+
+      @NotNull
+      @Override
       public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<? extends T> things,
                                                                            ProgressIndicator progress,
                                                                            boolean failFastOnAcquireReadAction,
@@ -161,12 +171,14 @@ public class CoreApplicationEnvironment {
         try {
           final boolean result = invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor);
           asyncFutureResult.set(result);
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
           asyncFutureResult.setException(t);
         }
         return asyncFutureResult;
       }
 
+      @NotNull
       @Override
       public Job<Void> submitToJobThread(int priority, @NotNull Runnable action, Consumer<Future> onDoneCallback) {
         action.run();
@@ -197,7 +209,7 @@ public class CoreApplicationEnvironment {
               return null;
             }
           });
-        return null;
+        return Job.NULL_JOB;
       }
     };
   }
