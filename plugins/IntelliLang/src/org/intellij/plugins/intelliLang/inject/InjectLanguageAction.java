@@ -36,7 +36,8 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.ColoredListCellRendererWrapper;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.Function;
@@ -135,11 +136,15 @@ public class InjectLanguageAction implements IntentionAction {
     final List<Injectable> injectables = Injectable.getAllInjectables();
 
     final JList list = new JBList(injectables);
-    list.setCellRenderer(new ListCellRendererWrapper<Injectable>() {
+    list.setCellRenderer(new ColoredListCellRendererWrapper<Injectable>() {
       @Override
-      public void customize(JList list, Injectable language, int index, boolean selected, boolean hasFocus) {
+      protected void doCustomize(JList list, Injectable language, int index, boolean selected, boolean hasFocus) {
         setIcon(language.getIcon());
-        setText(language.getDisplayName());
+        append(language.getDisplayName());
+        String description = language.getAdditionalDescription();
+        if (description != null) {
+          append(description, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
       }
     });
     new PopupChooserBuilder(list).setItemChoosenCallback(new Runnable() {

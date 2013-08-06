@@ -41,6 +41,11 @@ public abstract class Injectable implements Comparable<Injectable> {
   @NotNull
   public abstract String getDisplayName();
 
+  @Nullable
+  public String getAdditionalDescription() {
+    return null;
+  }
+
   @NotNull
   public Icon getIcon() {
     return EmptyIcon.ICON_16;
@@ -69,7 +74,12 @@ public abstract class Injectable implements Comparable<Injectable> {
   }
 
   public Language toLanguage() {
-    return getLanguage() == null ? new Language(getId(), false) {} : getLanguage();
+    return getLanguage() == null ? new Language(getId(), false) {
+      @Override
+      public String getDisplayName() {
+        return Injectable.this.getDisplayName();
+      }
+    } : getLanguage();
   }
 
   public static Injectable fromLanguage(final Language language) {
@@ -83,8 +93,14 @@ public abstract class Injectable implements Comparable<Injectable> {
       @NotNull
       @Override
       public String getDisplayName() {
+        return language.getDisplayName();
+      }
+
+      @Nullable
+      @Override
+      public String getAdditionalDescription() {
         final FileType ft = language.getAssociatedFileType();
-        return language.getDisplayName() + (ft != null ? " (" + ft.getDescription() + ")" : "");
+        return ft != null ? " (" + ft.getDescription() + ")" : null;
       }
 
       @NotNull
