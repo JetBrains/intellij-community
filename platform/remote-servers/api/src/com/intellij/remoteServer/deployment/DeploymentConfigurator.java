@@ -15,18 +15,22 @@
  */
 package com.intellij.remoteServer.deployment;
 
-import com.intellij.remoteServer.configuration.RemoteServer;
-import com.intellij.remoteServer.configuration.ServerConfiguration;
+import com.intellij.openapi.options.SettingsEditor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * @author nik
  */
-public abstract class Deployer<C extends ServerConfiguration> {
+public abstract class DeploymentConfigurator<D extends DeploymentConfiguration> {
   @NotNull
   public abstract List<DeploymentSource> getAvailableDeploymentSources();
 
-  public abstract void startDeployment(@NotNull RemoteServer<C> server, @NotNull DeploymentSource source);
+  @NotNull
+  public abstract D createDefaultConfiguration(@NotNull DeploymentSource source);
+
+  @Nullable
+  public abstract SettingsEditor<D> createEditor(@NotNull DeploymentSource source);
 }

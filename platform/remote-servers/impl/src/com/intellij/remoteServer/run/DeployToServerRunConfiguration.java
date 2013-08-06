@@ -22,36 +22,50 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.components.ComponentSerializationUtil;
+import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.deployment.Deployer;
-import com.intellij.remoteServer.deployment.DeploymentSource;
-import com.intellij.remoteServer.deployment.DeploymentSourceUtil;
+import com.intellij.remoteServer.deployment.*;
+import com.intellij.remoteServer.deployment.impl.ArtifactDeploymentSourceImpl;
+import com.intellij.remoteServer.deployment.impl.ModuleDeploymentSourceImpl;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
  */
-public class DeployToServerRunConfiguration<C extends ServerConfiguration> extends RunConfigurationBase {
-  public static final String SERVER_NAME_ATTRIBUTE = "server-name";
-  public static final String SOURCE_ELEMENT = "source";
-  private final ServerType<C> myServerType;
-  private final Deployer<C> myDeployer;
+public class DeployToServerRunConfiguration<S extends ServerConfiguration, D extends DeploymentConfiguration> extends RunConfigurationBase {
+  @NonNls public static final String SETTINGS_ELEMENT = "settings";
+  public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
+  private final ServerType<S> myServerType;
+  private final DeploymentConfigurator<D> myDeploymentConfigurator;
   private String myServerName;
   private DeploymentSource myDeploymentSource;
+  private D myDeploymentConfiguration;
 
-  public DeployToServerRunConfiguration(Project project, ConfigurationFactory factory, String name, ServerType<C> serverType) {
+  public DeployToServerRunConfiguration(Project project, ConfigurationFactory factory, String name, ServerType<S> serverType, DeploymentConfigurator<D> deploymentConfigurator) {
     super(project, factory, name);
     myServerType = serverType;
-    myDeployer = myServerType.createDeployer(project);
+    myDeploymentConfigurator = deploymentConfigurator;
   }
 
   public String getServerName() {
@@ -59,14 +73,14 @@ public class DeployToServerRunConfiguration<C extends ServerConfiguration> exten
   }
 
   @NotNull
-  public Deployer getDeployer() {
-    return myDeployer;
+  public DeploymentConfigurator<D> getDeploymentConfigurator() {
+    return myDeploymentConfigurator;
   }
 
   @NotNull
   @Override
   public SettingsEditor<DeployToServerRunConfiguration> getConfigurationEditor() {
-    return new DeployToServerSettingsEditor(myServerType, myDeployer, getProject());
+    return new DeployToServerSettingsEditor(myServerType, myDeploymentConfigurator, getProject());
   }
 
   @Nullable
@@ -77,7 +91,7 @@ public class DeployToServerRunConfiguration<C extends ServerConfiguration> exten
       throw new ExecutionException("Server is not specified");
     }
 
-    RemoteServer<C> server = RemoteServersManager.getInstance().findByName(serverName, myServerType);
+    RemoteServer<S> server = RemoteServersManager.getInstance().findByName(serverName, myServerType);
     if (server == null) {
       throw new ExecutionException("Server '" + serverName + " not found");
     }
@@ -86,7 +100,7 @@ public class DeployToServerRunConfiguration<C extends ServerConfiguration> exten
       throw new ExecutionException("Deployment is not selected");
     }
 
-    return new DeployToServerState(myDeployer, server, myDeploymentSource);
+    return new DeployToServerState(server, myDeploymentSource, myDeploymentConfiguration, env);
   }
 
   @Override
@@ -105,24 +119,138 @@ public class DeployToServerRunConfiguration<C extends ServerConfiguration> exten
     myDeploymentSource = deploymentSource;
   }
 
+  public D getDeploymentConfiguration() {
+    return myDeploymentConfiguration;
+  }
+
+  public void setDeploymentConfiguration(D deploymentConfiguration) {
+    myDeploymentConfiguration = deploymentConfiguration;
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    myServerName = element.getAttributeValue(SERVER_NAME_ATTRIBUTE);
-    Element sourceElement = element.getChild(SOURCE_ELEMENT);
-    myDeploymentSource = sourceElement != null ? DeploymentSourceUtil.getInstance().loadDeploymentSource(sourceElement, getProject()) : null;
+    ConfigurationState state = XmlSerializer.deserialize(element, ConfigurationState.class);
+    myServerName =  null;
+    myDeploymentSource = null;
+    if (state != null) {
+      myServerName = state.myServerName;
+      if (!state.myDeploymentItemState.isEmpty()) {
+        DeploymentItemState itemState = state.myDeploymentItemState.get(0);
+        myDeploymentSource = itemState.createSource(getProject());
+        myDeploymentConfiguration = myDeploymentConfigurator.createDefaultConfiguration(myDeploymentSource);
+        if (itemState.mySettings != null) {
+          ComponentSerializationUtil.loadComponentState(myDeploymentConfiguration.getSerializer(), itemState.mySettings);
+        }
+      }
+    }
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    if (myServerName != null) {
-      element.setAttribute(SERVER_NAME_ATTRIBUTE, myServerName);
-    }
+    ConfigurationState state = new ConfigurationState();
+    state.myServerName = myServerName;
     if (myDeploymentSource != null) {
-      Element source = new Element(SOURCE_ELEMENT);
-      DeploymentSourceUtil.getInstance().saveDeploymentSource(myDeploymentSource, source, getProject());
-      element.addContent(source);
+      DeploymentItemState itemState;
+      if (myDeploymentSource instanceof ArtifactDeploymentSource) {
+        itemState = new ArtifactDeploymentSettingsState(((ArtifactDeploymentSource)myDeploymentSource).getArtifactPointer().getArtifactName());
+      }
+      else if (myDeploymentSource instanceof ModuleDeploymentSource) {
+        itemState = new ModuleDeploymentSettingsState(((ModuleDeploymentSource)myDeploymentSource).getModulePointer().getModuleName());
+      }
+      else {
+        throw new WriteExternalException("Unknown source " + myDeploymentSource);
+      }
+      if (myDeploymentConfiguration != null) {
+        itemState.setSettings(XmlSerializer.serialize(myDeploymentConfiguration.getSerializer().getState(), SERIALIZATION_FILTERS));
+      }
+      state.myDeploymentItemState.add(itemState);
     }
+    XmlSerializer.serializeInto(state, element, SERIALIZATION_FILTERS);
     super.writeExternal(element);
+  }
+
+  public static class ConfigurationState {
+    @Attribute("server-name")
+    public String myServerName;
+
+    //in fact this collection has no more than one element
+    @Property(surroundWithTag = false)
+    @AbstractCollection(surroundWithTag = false,
+                        elementTypes = {ExternalFileDeploymentSettingsState.class, ArtifactDeploymentSettingsState.class, ModuleDeploymentSettingsState.class})
+    public List<DeploymentItemState> myDeploymentItemState = new ArrayList<DeploymentItemState>();
+  }
+
+  public static abstract class DeploymentItemState {
+    private Element mySettings;
+
+    @Tag(SETTINGS_ELEMENT)
+    public Element getSettings() {
+      return mySettings;
+    }
+
+    public void setSettings(Element settings) {
+      mySettings = settings;
+    }
+
+    @NotNull
+    public abstract DeploymentSource createSource(Project project);
+  }
+
+  @Tag("file")
+  public static class ExternalFileDeploymentSettingsState extends DeploymentItemState {
+    @Attribute("path")
+    public String myFilePath;
+
+    public ExternalFileDeploymentSettingsState() {
+    }
+
+    public ExternalFileDeploymentSettingsState(String filePath) {
+      myFilePath = filePath;
+    }
+
+    @NotNull
+    @Override
+    public DeploymentSource createSource(Project project) {
+      throw new UnsupportedOperationException("'createSource' not implemented in " + getClass().getName());
+    }
+  }
+
+  @Tag("artifact")
+  public static class ArtifactDeploymentSettingsState extends DeploymentItemState {
+    @Attribute("name")
+    public String myArtifactName;
+
+    public ArtifactDeploymentSettingsState() {
+    }
+
+    public ArtifactDeploymentSettingsState(String artifactName) {
+      myArtifactName = artifactName;
+    }
+
+    @NotNull
+    @Override
+    public DeploymentSource createSource(Project project) {
+      return new ArtifactDeploymentSourceImpl(ArtifactPointerManager.getInstance(project).createPointer(myArtifactName));
+    }
+  }
+
+  @Tag("module")
+  public static class ModuleDeploymentSettingsState extends DeploymentItemState {
+    @Attribute("name")
+    public String myModuleName;
+
+    public ModuleDeploymentSettingsState() {
+    }
+
+    public ModuleDeploymentSettingsState(String artifactName) {
+      myModuleName = artifactName;
+    }
+
+    @NotNull
+    @Override
+    public DeploymentSource createSource(Project project) {
+      return new ModuleDeploymentSourceImpl(ModulePointerManager.getInstance(project).create(myModuleName));
+    }
   }
 }

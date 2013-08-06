@@ -19,34 +19,40 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.deployment.Deployer;
+import com.intellij.remoteServer.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.deployment.DeploymentSource;
+import com.intellij.remoteServer.runtime.ServerConnection;
+import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public class DeployToServerState<C extends ServerConfiguration> implements RunProfileState {
-  @NotNull private final Deployer<C> myDeployer;
-  @NotNull private final RemoteServer<C> myServer;
+public class DeployToServerState<S extends ServerConfiguration, D extends DeploymentConfiguration> implements RunProfileState {
+  @NotNull private final RemoteServer<S> myServer;
   @NotNull private final DeploymentSource mySource;
+  @NotNull private final D myConfiguration;
+  @NotNull private final ExecutionEnvironment myEnvironment;
 
-  public DeployToServerState(@NotNull Deployer<C> deployer,
-                             @NotNull RemoteServer<C> server,
-                             @NotNull DeploymentSource deploymentSource) {
-    myDeployer = deployer;
+  public DeployToServerState(@NotNull RemoteServer<S> server,
+                             @NotNull DeploymentSource deploymentSource,
+                             @NotNull D deploymentConfiguration, @NotNull ExecutionEnvironment environment) {
     myServer = server;
     mySource = deploymentSource;
+    myConfiguration = deploymentConfiguration;
+    myEnvironment = environment;
   }
 
   @Nullable
   @Override
   public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-    myDeployer.startDeployment(myServer, mySource);
+    ServerConnection connection = ServerConnectionManager.getInstance(myEnvironment.getProject()).getOrCreateConnection(myServer);
+    connection.deploy(mySource, myConfiguration);
     return null;
   }
 }

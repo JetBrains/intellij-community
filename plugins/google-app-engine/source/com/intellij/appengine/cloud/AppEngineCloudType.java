@@ -18,16 +18,15 @@ package com.intellij.appengine.cloud;
 import com.intellij.appengine.actions.AppEngineUploader;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.remoteServer.ServerType;
-import com.intellij.remoteServer.configuration.RemoteServer;
-import com.intellij.remoteServer.deployment.ArtifactDeploymentSource;
-import com.intellij.remoteServer.deployment.Deployer;
-import com.intellij.remoteServer.deployment.DeploymentSource;
-import com.intellij.remoteServer.deployment.DeploymentSourceUtil;
+import com.intellij.remoteServer.deployment.*;
+import com.intellij.remoteServer.runtime.ServerConnector;
+import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.ui.FormBuilder;
 import icons.GoogleAppEngineIcons;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * @author nik
@@ -73,8 +73,16 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
 
   @NotNull
   @Override
-  public Deployer createDeployer(Project project) {
-    return new AppEngineDeployer(project);
+  public ServerConnector<?> createConnector(@NotNull AppEngineServerConfiguration configuration,
+                                            @NotNull Project project,
+                                            @NotNull Executor asyncTasksExecutor) {
+    return new AppEngineServerConnector(project, configuration);
+  }
+
+  @NotNull
+  @Override
+  public DeploymentConfigurator createDeployer(Project project) {
+    return new AppEngineDeploymentConfigurator(project);
   }
 
   private static class AppEngineCloudConfigurable implements UnnamedConfigurable {
@@ -113,10 +121,10 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
     }
   }
 
-  private static class AppEngineDeployer extends Deployer<AppEngineServerConfiguration> {
+  private static class AppEngineDeploymentConfigurator extends DeploymentConfigurator<DummyDeploymentConfiguration> {
     private final Project myProject;
 
-    public AppEngineDeployer(Project project) {
+    public AppEngineDeploymentConfigurator(Project project) {
       myProject = project;
     }
 
@@ -132,16 +140,53 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
       return sources;
     }
 
+    @NotNull
     @Override
-    public void startDeployment(@NotNull RemoteServer<AppEngineServerConfiguration> server,
-                                @NotNull DeploymentSource source) {
-      Artifact artifact = ((ArtifactDeploymentSource)source).getArtifact();
-      if (artifact == null) return;
+    public DummyDeploymentConfiguration createDefaultConfiguration(@NotNull DeploymentSource source) {
+      return new DummyDeploymentConfiguration();
+    }
 
-      AppEngineUploader uploader = AppEngineUploader.createUploader(myProject, artifact, server.getConfiguration());
-      if (uploader != null) {
-        uploader.startUploading();
-      }
+    @Override
+    public SettingsEditor<DummyDeploymentConfiguration> createEditor(@NotNull DeploymentSource source) {
+      return null;
+    }
+  }
+
+  private static class AppEngineServerConnector extends ServerConnector<DummyDeploymentConfiguration> {
+    private final Project myProject;
+    private final AppEngineServerConfiguration myConfiguration;
+
+    public AppEngineServerConnector(Project project, AppEngineServerConfiguration configuration) {
+      myProject = project;
+      myConfiguration = configuration;
+    }
+
+    @Override
+    public void connect(@NotNull ConnectionCallback<DummyDeploymentConfiguration> callback) {
+      callback.connected(new ServerRuntimeInstance<DummyDeploymentConfiguration>() {
+        @Override
+        public void deploy(@NotNull DeploymentSource source,
+                           @NotNull DummyDeploymentConfiguration configuration,
+                           @NotNull DeploymentOperationCallback callback) {
+          Artifact artifact = ((ArtifactDeploymentSource)source).getArtifact();
+          if (artifact == null) return;
+
+          AppEngineUploader uploader = AppEngineUploader.createUploader(myProject, artifact, myConfiguration);
+          if (uploader != null) {
+            uploader.startUploading();
+          }
+        }
+
+        @Override
+        public void undeploy(@NotNull DeploymentSource source,
+                             @NotNull DummyDeploymentConfiguration configuration,
+                             @NotNull DeploymentOperationCallback callback) {
+        }
+      });
+    }
+
+    @Override
+    public void disconnect() {
     }
   }
 }

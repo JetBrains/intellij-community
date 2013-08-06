@@ -8,6 +8,8 @@
                         serviceImplementation="com.intellij.remoteServer.configuration.impl.RemoteServersManagerImpl"/>
     <applicationService serviceInterface="com.intellij.remoteServer.deployment.DeploymentSourceUtil"
                         serviceImplementation="com.intellij.remoteServer.deployment.impl.DeploymentSourceUtilImpl"/>
+    <projectService serviceInterface="com.intellij.remoteServer.runtime.ServerConnectionManager"
+                    serviceImplementation="com.intellij.remoteServer.runtime.impl.ServerConnectionManagerImpl"/>
     <applicationConfigurable instance="com.intellij.remoteServer.configuration.impl.RemoteServerListConfigurable"/>
     <programRunner implementation="com.intellij.remoteServer.run.DeployToServerRunner"/>
   </extensions>

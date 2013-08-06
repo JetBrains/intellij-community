@@ -19,11 +19,14 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.deployment.Deployer;
+import com.intellij.remoteServer.deployment.DeploymentConfigurator;
+import com.intellij.remoteServer.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.deployment.DeploymentSource;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.ListCellRendererWrapper;
@@ -31,20 +34,29 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Comparator;
 
 /**
  * @author nik
  */
-public class DeployToServerSettingsEditor extends SettingsEditor<DeployToServerRunConfiguration> {
+public class DeployToServerSettingsEditor<S extends ServerConfiguration, D extends DeploymentConfiguration> extends SettingsEditor<DeployToServerRunConfiguration<S, D>> {
+  private final DeploymentConfigurator<D> myDeploymentConfigurator;
   private ComboBox myServerComboBox;
   private ComboBox mySourceComboBox;
   private final SortedComboBoxModel<String> myServerListModel;
   private final SortedComboBoxModel<DeploymentSource> mySourceListModel;
+  private SettingsEditor<D> myDeploymentSettingsEditor;
+  private DeploymentSource myLastSelection;
+  private JPanel myDeploymentSettingsComponent;
 
-  public DeployToServerSettingsEditor(final ServerType<?> type, Deployer deployer, Project project) {
+  public DeployToServerSettingsEditor(final ServerType<S> type, DeploymentConfigurator<D> deploymentConfigurator, Project project) {
+    myDeploymentConfigurator = deploymentConfigurator;
     myServerListModel = new SortedComboBoxModel<String>(String.CASE_INSENSITIVE_ORDER);
     for (RemoteServer<? extends ServerConfiguration> server : RemoteServersManager.getInstance().getServers(type)) {
       myServerListModel.add(server.getName());
@@ -67,7 +79,7 @@ public class DeployToServerSettingsEditor extends SettingsEditor<DeployToServerR
         return o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());
       }
     });
-    mySourceListModel.addAll(deployer.getAvailableDeploymentSources());
+    mySourceListModel.addAll(deploymentConfigurator.getAvailableDeploymentSources());
     mySourceComboBox = new ComboBox(mySourceListModel);
     mySourceComboBox.setRenderer(new ListCellRendererWrapper<DeploymentSource>() {
       @Override
@@ -77,22 +89,67 @@ public class DeployToServerSettingsEditor extends SettingsEditor<DeployToServerR
         setText(value.getPresentableName());
       }
     });
+
+    myDeploymentSettingsComponent = new JPanel(new BorderLayout());
+    mySourceComboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateDeploymentSettings(null);
+      }
+    });
+  }
+
+  private void updateDeploymentSettings(@Nullable D configuration) {
+    DeploymentSource selected = mySourceListModel.getSelectedItem();
+    if (Comparing.equal(selected, myLastSelection)) {
+      if (configuration != null && myDeploymentSettingsEditor != null) {
+        myDeploymentSettingsEditor.resetFrom(configuration);
+      }
+      return;
+    }
+
+    myDeploymentSettingsComponent.removeAll();
+    myDeploymentSettingsEditor = myDeploymentConfigurator.createEditor(selected);
+    if (myDeploymentSettingsEditor != null) {
+      Disposer.register(this, myDeploymentSettingsEditor);
+      myDeploymentSettingsComponent.add(BorderLayout.CENTER, myDeploymentSettingsEditor.getComponent());
+      if (configuration != null) {
+        myDeploymentSettingsEditor.resetFrom(configuration);
+      }
+    }
+    myLastSelection = selected;
   }
 
   @Override
-  protected void resetEditorFrom(DeployToServerRunConfiguration configuration) {
+  protected void resetEditorFrom(DeployToServerRunConfiguration<S,D> configuration) {
     String serverName = configuration.getServerName();
     if (serverName != null && !myServerListModel.getItems().contains(serverName)) {
       myServerListModel.add(serverName);
     }
     myServerComboBox.setSelectedItem(serverName);
     mySourceComboBox.setSelectedItem(configuration.getDeploymentSource());
+    updateDeploymentSettings(configuration.getDeploymentConfiguration());
   }
 
   @Override
-  protected void applyEditorTo(DeployToServerRunConfiguration configuration) throws ConfigurationException {
+  protected void applyEditorTo(DeployToServerRunConfiguration<S,D> configuration) throws ConfigurationException {
     configuration.setServerName(myServerListModel.getSelectedItem());
-    configuration.setDeploymentSource(mySourceListModel.getSelectedItem());
+    DeploymentSource deploymentSource = mySourceListModel.getSelectedItem();
+    configuration.setDeploymentSource(deploymentSource);
+
+    if (deploymentSource != null) {
+      D deployment = configuration.getDeploymentConfiguration();
+      if (deployment == null) {
+        deployment = myDeploymentConfigurator.createDefaultConfiguration(deploymentSource);
+        configuration.setDeploymentConfiguration(deployment);
+      }
+      if (myDeploymentSettingsEditor != null) {
+        myDeploymentSettingsEditor.applyTo(deployment);
+      }
+    }
+    else {
+      configuration.setDeploymentConfiguration(null);
+    }
   }
 
   @NotNull
@@ -101,6 +158,8 @@ public class DeployToServerSettingsEditor extends SettingsEditor<DeployToServerR
     return FormBuilder.createFormBuilder()
       .addLabeledComponent("Server:", myServerComboBox)
       .addLabeledComponent("Deployment:", mySourceComboBox)
+      .addSeparator()
+      .addComponent(myDeploymentSettingsComponent)
       .getPanel();
   }
 

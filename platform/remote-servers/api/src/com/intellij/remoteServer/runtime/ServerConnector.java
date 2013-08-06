@@ -1,0 +1,19 @@
+package com.intellij.remoteServer.runtime;
+
+import com.intellij.remoteServer.deployment.DeploymentConfiguration;
+import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * @author nik
+ */
+public abstract class ServerConnector<D extends DeploymentConfiguration> {
+  public abstract void connect(@NotNull ConnectionCallback<D> callback);
+
+  public abstract void disconnect();
+
+  public interface ConnectionCallback<D extends DeploymentConfiguration> {
+    void connected(@NotNull ServerRuntimeInstance<D> serverRuntimeInstance);
+    void connectionFailed(@NotNull String errorMessage);
+  }
+}

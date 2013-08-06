@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
+import com.intellij.remoteServer.deployment.DeploymentConfigurator;
 import com.intellij.remoteServer.deployment.DeploymentSource;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +58,7 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
       }
 
       if (deployConfiguration.getDeploymentSource() == null) {
-        List<DeploymentSource> sources = deployConfiguration.getDeployer().getAvailableDeploymentSources();
+        List<DeploymentSource> sources = deployConfiguration.getDeploymentConfigurator().getAvailableDeploymentSources();
         DeploymentSource source = ContainerUtil.getFirstItem(sources);
         if (source != null) {
           deployConfiguration.setDeploymentSource(source);
@@ -67,7 +68,8 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
 
     @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
-      return new DeployToServerRunConfiguration(project, this, "", myServerType);
+      DeploymentConfigurator<?> deploymentConfigurator = myServerType.createDeployer(project);
+      return new DeployToServerRunConfiguration(project, this, "", myServerType, deploymentConfigurator);
     }
   }
 }
