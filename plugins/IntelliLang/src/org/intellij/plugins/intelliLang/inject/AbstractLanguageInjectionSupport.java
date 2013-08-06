@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -36,6 +37,7 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionPanel;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,8 +47,19 @@ import javax.swing.*;
  */
 public abstract class AbstractLanguageInjectionSupport extends LanguageInjectionSupport {
 
-  public boolean useDefaultInjector(final PsiElement host) {
+  @Override
+  public boolean isApplicableTo(PsiLanguageInjectionHost host) {
+    return useDefaultInjector(host); // todo temporary plugin compatibility fix. TBR
+  }
+
+  public boolean useDefaultInjector(final PsiLanguageInjectionHost host) {
     return false;
+  }
+
+  @Nullable
+  @Override
+  public BaseInjection findInjectionComment(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef) {
+    return InjectorUtils.findCommentInjection(host, "comment", commentRef);
   }
 
   public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {

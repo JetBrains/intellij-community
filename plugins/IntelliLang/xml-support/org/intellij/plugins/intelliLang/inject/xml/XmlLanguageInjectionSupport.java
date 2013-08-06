@@ -24,15 +24,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,6 +46,7 @@ import org.intellij.plugins.intelliLang.inject.config.ui.XmlTagPanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.configurables.XmlAttributeInjectionConfigurable;
 import org.intellij.plugins.intelliLang.inject.config.ui.configurables.XmlTagInjectionConfigurable;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +58,8 @@ import java.util.Collections;
  * @author Gregory.Shrago
  */
 public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
+
+  @NonNls public static final String XML_SUPPORT_ID = "xml";
 
   private static boolean isMine(final PsiLanguageInjectionHost host) {
     if (host instanceof XmlAttributeValue) {
@@ -85,8 +86,16 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     return new Class[] {XmlPatterns.class};
   }
 
-  public boolean useDefaultInjector(final PsiElement host) {
-    return false;
+  @Override
+  public boolean isApplicableTo(PsiLanguageInjectionHost host) {
+    return host instanceof XmlElement;
+  }
+
+  @Nullable
+  @Override
+  public BaseInjection findInjectionComment(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef) {
+    if (host instanceof XmlAttributeValue) return null;
+    return InjectorUtils.findCommentInjection(host instanceof XmlText ? host.getParent() : host, getId(), commentRef);
   }
 
   @Override

@@ -1,15 +1,15 @@
 package org.intellij.plugins.intelliLang.inject;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.util.ArrayUtil;
+import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,29 +18,53 @@ import java.util.List;
  */
 public class CommentLanguageInjector implements MultiHostInjector {
 
+  private final LanguageInjectionSupport[] mySupports;
+  private final LanguageInjectionSupport myInjectorSupport = new AbstractLanguageInjectionSupport() {
+    @NotNull
+    @Override
+    public String getId() {
+      return "comment";
+    }
+
+    @Override
+    public boolean isApplicableTo(PsiLanguageInjectionHost host) {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    public Class[] getPatternClasses() {
+      return ArrayUtil.EMPTY_CLASS_ARRAY;
+    }
+  };
+
+
+  /** @noinspection UnusedParameters*/
+  public CommentLanguageInjector(Configuration configuration) {
+    List<LanguageInjectionSupport> supports = new ArrayList<LanguageInjectionSupport>(InjectorUtils.getActiveInjectionSupports());
+    supports.add(myInjectorSupport);
+    mySupports = ArrayUtil.toObjectArray(supports, LanguageInjectionSupport.class);
+  }
+
   @NotNull
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Collections.singletonList(PsiLanguageInjectionHost.class);
   }
 
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement context) {
+    if (!(context instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost)context).isValidHost()) return;
     PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
-    if (!host.isValidHost()) return;
-    if (context.getClass().getSimpleName().startsWith("XmlAttribute")) return; // no injection in XML attributes, they cannot be commented
-    ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
-    if (manipulator == null) return;
-    TextRange rangeInElement = manipulator.getRangeInElement(host);
-    if (rangeInElement.isEmpty()) return;
-    PsiElement anchor = rangeInElement.getStartOffset() == 0 ? context.getParent() : context; // handle XmlText
-    BaseInjection injection = InjectorUtils.findCommentInjection(anchor, "comment", Ref.<PsiComment>create());
-    //BaseInjection injection = InjectorUtils.findCommentInjection(context, "comment", Ref.<PsiComment>create());
-    if (injection == null) return;
-    InjectedLanguage injectedLanguage = InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
-    Language language = injectedLanguage != null ? injectedLanguage.getLanguage() : null;
-    if (language != null) {
-      Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> info =
-        Trinity.create(host, injectedLanguage, rangeInElement);
-      InjectorUtils.registerInjection(language, Collections.singletonList(info), context.getContainingFile(), registrar);
+
+    boolean applicableFound = false;
+    for (LanguageInjectionSupport support : mySupports) {
+      if (!support.isApplicableTo(host)) continue;
+      if (support == myInjectorSupport && applicableFound) continue;
+      applicableFound = true;
+
+      BaseInjection injection = support.findInjectionComment(host, null);
+      if (injection == null) continue;
+      if (!InjectorUtils.registerInjectionSimple(host, injection, support, registrar)) continue;
+      return;
     }
   }
 }

@@ -128,10 +128,10 @@ public class InjectLanguageAction implements IntentionAction {
     try {
       Language language = injectable.toLanguage();
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
-        if (support.addInjectionInPlace(language, host)) {
-          ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
-          return;
-        }
+        if (!support.isApplicableTo(host)) continue;
+        if (!support.addInjectionInPlace(language, host)) continue;
+        ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+        return;
       }
       if (TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host)) {
         HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXml(language.getDisplayName()) + " was temporarily injected");

@@ -61,6 +61,7 @@ import org.intellij.plugins.intelliLang.inject.config.ui.configurables.MethodPar
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,6 +75,8 @@ import static org.intellij.plugins.intelliLang.inject.config.MethodParameterInje
  * @author Gregory.Shrago
  */
 public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
+
+  @NonNls public static final String JAVA_SUPPORT_ID = "java";
 
   private static boolean isMine(final PsiLanguageInjectionHost psiElement) {
     return PsiUtilEx.isStringOrCharacterLiteral(psiElement);
@@ -93,6 +96,11 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return new Configurable[]{new AdvancedSettingsUI(project, configuration)};
   }
 
+  @Override
+  public boolean isApplicableTo(PsiLanguageInjectionHost host) {
+    return host instanceof PsiLiteralExpression;
+  }
+
   public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
     return doInjectInJava(psiElement.getProject(), psiElement, language.getID());
@@ -105,7 +113,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     final PsiLiteralExpression host = (PsiLiteralExpression)psiElement;
     final Project project = host.getProject();
     final Configuration configuration = Configuration.getProjectInstance(project);
-    collectInjections(host, configuration, injectionsMap, annotations);
+    collectInjections(host, configuration, this, injectionsMap, annotations);
 
     if (injectionsMap.isEmpty() && annotations.isEmpty()) return false;
     final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>(injectionsMap.keySet());
@@ -129,7 +137,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     final PsiLiteralExpression host = (PsiLiteralExpression)psiElement;
     final Project project = host.getProject();
     final Configuration configuration = Configuration.getProjectInstance(project);
-    collectInjections(host, configuration, injectionsMap, annotations);
+    collectInjections(host, configuration, this, injectionsMap, annotations);
     if (injectionsMap.isEmpty() || !annotations.isEmpty()) return false;
 
     final BaseInjection originalInjection = injectionsMap.keySet().iterator().next();
@@ -146,7 +154,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
 
   }
 
-  private BaseInjection showInjectionUI(final Project project, final MethodParameterInjection methodParameterInjection) {
+  private static BaseInjection showInjectionUI(final Project project, final MethodParameterInjection methodParameterInjection) {
     final AbstractInjectionPanel panel = new MethodParameterPanel(methodParameterInjection, project);
     panel.reset();
     final DialogBuilder builder = new DialogBuilder(project);
@@ -343,10 +351,12 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     }
   }
 
-  private static void collectInjections(final PsiLiteralExpression host, final Configuration configuration,
+  private static void collectInjections(PsiLiteralExpression host,
+                                        Configuration configuration,
+                                        JavaLanguageInjectionSupport support,
                                         final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap,
                                         final ArrayList<PsiElement> annotations) {
-    new ConcatenationInjector.InjectionProcessor(configuration, host) {
+    new ConcatenationInjector.InjectionProcessor(configuration, support, host) {
 
       @Override
       protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, BaseInjection injection) {

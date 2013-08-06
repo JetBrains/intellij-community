@@ -63,7 +63,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
 
   public XmlLanguageInjector(Configuration configuration) {
     myConfiguration = configuration;
-    mySupport = InjectorUtils.findNotNullInjectionSupport(LanguageInjectionSupport.XML_SUPPORT_ID);
+    mySupport = InjectorUtils.findNotNullInjectionSupport(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
   }
 
   @NotNull
@@ -104,7 +104,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
     if (place instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)place;
 
-      List<BaseInjection> injections = myConfiguration.getInjections(LanguageInjectionSupport.XML_SUPPORT_ID);
+      List<BaseInjection> injections = myConfiguration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, injectionsSize = injections.size(); i < injectionsSize; i++) {
         final BaseInjection injection = injections.get(i);
@@ -168,7 +168,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
         return;
       }
 
-      List<BaseInjection> injections = myConfiguration.getInjections(LanguageInjectionSupport.XML_SUPPORT_ID);
+      List<BaseInjection> injections = myConfiguration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = injections.size(); i < size; i++) {
         BaseInjection injection = injections.get(i);
@@ -236,7 +236,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
     Trinity<Long, Pattern, Collection<String>> index = myXmlIndex;
     if (index == null || myConfiguration.getModificationCount() != index.first.longValue()) {
       final Map<ElementPattern<?>, BaseInjection> map = new THashMap<ElementPattern<?>, BaseInjection>();
-      for (BaseInjection injection : myConfiguration.getInjections(LanguageInjectionSupport.XML_SUPPORT_ID)) {
+      for (BaseInjection injection : myConfiguration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID)) {
         for (InjectionPlace place : injection.getInjectionPlaces()) {
           if (!place.isEnabled() || place.getElementPattern() == null) continue;
           map.put(place.getElementPattern(), injection);

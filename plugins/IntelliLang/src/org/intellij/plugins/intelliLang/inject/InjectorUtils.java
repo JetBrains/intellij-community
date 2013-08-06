@@ -16,10 +16,8 @@
 
 package org.intellij.plugins.intelliLang.inject;
 
-import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -58,6 +56,32 @@ public class InjectorUtils {
   private InjectorUtils() {
   }
 
+
+  public static boolean registerInjectionSimple(@NotNull PsiLanguageInjectionHost host,
+                                                @NotNull BaseInjection injection,
+                                                @Nullable LanguageInjectionSupport support,
+                                                @NotNull MultiHostRegistrar registrar) {
+    Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
+    if (language == null) return false;
+
+    InjectedLanguage injectedLanguage =
+      InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
+
+    List<TextRange> ranges = injection.getInjectedArea(host);
+    List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = ContainerUtil.newArrayListWithExpectedSize(ranges.size());
+
+    for (TextRange range : ranges) {
+      list.add(Trinity.create(host, injectedLanguage, range));
+    }
+    //if (host.getChildren().length > 0) {
+    //  host.putUserData(LanguageInjectionSupport.HAS_UNPARSABLE_FRAGMENTS, Boolean.TRUE);
+    //}
+    registerInjection(language, list, host.getContainingFile(), registrar);
+    if (support != null) {
+      registerSupport(support, true, registrar);
+    }
+    return !ranges.isEmpty();
+  }
 
   public static void registerInjection(Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list, PsiFile containingFile, MultiHostRegistrar registrar) {
     // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
@@ -196,12 +220,12 @@ public class InjectorUtils {
     return true;
   }
 
-  public static BaseInjection findCommentInjection(PsiElement context, final String supportId, final Ref<PsiComment> causeRef) {
+  public static BaseInjection findCommentInjection(PsiElement context, final String supportId, final Ref<PsiElement> causeRef) {
     return findNearestComment(context, new NullableFunction<PsiComment, BaseInjection>() {
       @Nullable
       @Override
       public BaseInjection fun(PsiComment comment) {
-        causeRef.set(comment);
+        if (causeRef != null) causeRef.set(comment);
         String text = ElementManipulators.getValueText(comment).trim();
         return detectInjectionFromText(supportId, text);
       }
