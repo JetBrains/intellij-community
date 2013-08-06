@@ -268,6 +268,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         if (namesAlready != null) {
           namesAlready.add(name);
         }
+        if (PyUtil.isClassPrivateName(name)) {
+          continue;
+        }
         result.add(LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(member.getShortType()));
       }
     }
