@@ -61,7 +61,7 @@ public class CommentLanguageInjector implements MultiHostInjector {
       if (support == myInjectorSupport && applicableFound) continue;
       applicableFound = true;
 
-      BaseInjection injection = support.findInjectionComment(host, null);
+      BaseInjection injection = support.findCommentInjection(host, null);
       if (injection == null) continue;
       if (!InjectorUtils.registerInjectionSimple(host, injection, support, registrar)) continue;
       return;

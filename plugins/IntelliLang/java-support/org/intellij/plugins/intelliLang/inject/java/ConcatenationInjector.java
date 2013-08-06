@@ -307,7 +307,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       PsiElement anchor = owner.getFirstChild() instanceof PsiComment?
                           (owner.getModifierList() != null? owner.getModifierList() : owner.getTypeElement()) : owner;
       if (anchor == null) return true;
-      BaseInjection injection = mySupport.findInjectionComment(anchor, causeRef);
+      BaseInjection injection = mySupport.findCommentInjection(anchor, causeRef);
       return injection == null || processCommentInjectionInner(owner, causeRef.get(), injection);
     }
 

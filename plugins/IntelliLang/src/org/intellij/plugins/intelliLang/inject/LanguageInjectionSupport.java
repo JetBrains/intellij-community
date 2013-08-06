@@ -58,7 +58,7 @@ public abstract class LanguageInjectionSupport {
   public abstract boolean useDefaultInjector(PsiLanguageInjectionHost host);
 
   @Nullable
-  public abstract BaseInjection findInjectionComment(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef);
+  public abstract BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef);
 
   public abstract boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement);
 
