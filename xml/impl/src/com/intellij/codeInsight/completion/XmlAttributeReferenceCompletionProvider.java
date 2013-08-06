@@ -91,7 +91,7 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
           insertHandler = replacementInsertHandler;
         }
         else if (descriptor instanceof NamespaceAwareXmlAttributeDescriptor) {
-          final String namespace = ((NamespaceAwareXmlAttributeDescriptor)descriptor).getNamespace();
+          final String namespace = ((NamespaceAwareXmlAttributeDescriptor)descriptor).getNamespace(tag);
 
           if (file instanceof XmlFile &&
               namespace != null &&
