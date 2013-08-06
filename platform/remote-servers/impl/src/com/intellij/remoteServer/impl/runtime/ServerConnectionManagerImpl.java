@@ -1,13 +1,11 @@
 package com.intellij.remoteServer.impl.runtime;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -19,12 +17,6 @@ import java.util.Map;
  */
 public class ServerConnectionManagerImpl extends ServerConnectionManager {
   private Map<RemoteServer<?>, ServerConnection> myConnections = new HashMap<RemoteServer<?>, ServerConnection>();
-  private final PooledThreadExecutor myPooledThreadExecutor = new PooledThreadExecutor();
-  private final Project myProject;
-
-  public ServerConnectionManagerImpl(Project project) {
-    myProject = project;
-  }
 
   @NotNull
   @Override
@@ -33,7 +25,7 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
     ServerConnection connection = myConnections.get(server);
     if (connection == null) {
       ServerTaskExecutorImpl executor = new ServerTaskExecutorImpl();
-      connection = new ServerConnectionImpl(server, server.getType().createConnector(server.getConfiguration(), myProject, executor));
+      connection = new ServerConnectionImpl(server, server.getType().createConnector(server.getConfiguration(), executor));
       myConnections.put(server, connection);
     }
     return connection;

@@ -42,5 +42,5 @@ public abstract class ServerType<C extends ServerConfiguration> {
   public abstract DeploymentConfigurator<?> createDeployer(Project project);
 
   @NotNull
-  public abstract ServerConnector<?> createConnector(@NotNull C configuration, @NotNull Project project, @NotNull ServerTaskExecutor asyncTasksExecutor);
+  public abstract ServerConnector<?> createConnector(@NotNull C configuration, @NotNull ServerTaskExecutor asyncTasksExecutor);
 }

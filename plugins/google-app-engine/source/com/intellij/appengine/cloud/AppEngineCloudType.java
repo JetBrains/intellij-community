@@ -27,6 +27,7 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.deployment.*;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
+import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.ui.FormBuilder;
 import icons.GoogleAppEngineIcons;
@@ -74,9 +75,8 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
   @NotNull
   @Override
   public ServerConnector<?> createConnector(@NotNull AppEngineServerConfiguration configuration,
-                                            @NotNull Project project,
                                             @NotNull ServerTaskExecutor asyncTasksExecutor) {
-    return new AppEngineServerConnector(project, configuration);
+    return new AppEngineServerConnector(configuration);
   }
 
   @NotNull
@@ -153,40 +153,43 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
   }
 
   private static class AppEngineServerConnector extends ServerConnector<DummyDeploymentConfiguration> {
-    private final Project myProject;
     private final AppEngineServerConfiguration myConfiguration;
 
-    public AppEngineServerConnector(Project project, AppEngineServerConfiguration configuration) {
-      myProject = project;
+    public AppEngineServerConnector(AppEngineServerConfiguration configuration) {
       myConfiguration = configuration;
     }
 
     @Override
-    public void connect(@NotNull ConnectionCallback<DummyDeploymentConfiguration> callback) {
-      callback.connected(new ServerRuntimeInstance<DummyDeploymentConfiguration>() {
-        @Override
-        public void deploy(@NotNull DeploymentSource source,
-                           @NotNull DummyDeploymentConfiguration configuration,
-                           @NotNull DeploymentOperationCallback callback) {
-          Artifact artifact = ((ArtifactDeploymentSource)source).getArtifact();
-          if (artifact == null) return;
-
-          AppEngineUploader uploader = AppEngineUploader.createUploader(myProject, artifact, myConfiguration);
-          if (uploader != null) {
-            uploader.startUploading();
-          }
-        }
-
-        @Override
-        public void undeploy(@NotNull DeploymentSource source,
-                             @NotNull DummyDeploymentConfiguration configuration,
-                             @NotNull DeploymentOperationCallback callback) {
-        }
-      });
+    public void connect(@NotNull final ConnectionCallback<DummyDeploymentConfiguration> callback) {
+      callback.connected(new AppEngineRuntimeInstance(myConfiguration));
     }
 
     @Override
     public void disconnect() {
+    }
+  }
+
+  private static class AppEngineRuntimeInstance extends ServerRuntimeInstance<DummyDeploymentConfiguration> {
+    private final AppEngineServerConfiguration myConfiguration;
+
+    public AppEngineRuntimeInstance(AppEngineServerConfiguration configuration) {
+      myConfiguration = configuration;
+    }
+
+    @Override
+    public void deploy(@NotNull DeploymentTask<DummyDeploymentConfiguration> task, @NotNull DeploymentOperationCallback callback) {
+      Artifact artifact = ((ArtifactDeploymentSource)task.getSource()).getArtifact();
+      if (artifact == null) return;
+
+      AppEngineUploader uploader = AppEngineUploader.createUploader(task.getProject(), artifact, myConfiguration);
+      if (uploader != null) {
+        uploader.startUploading();
+      }
+    }
+
+    @Override
+    public void undeploy(@NotNull DeploymentTask<DummyDeploymentConfiguration> task,
+                         @NotNull DeploymentOperationCallback callback) {
     }
   }
 }

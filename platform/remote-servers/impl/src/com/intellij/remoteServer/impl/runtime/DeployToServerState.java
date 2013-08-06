@@ -25,6 +25,7 @@ import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
+import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import org.jetbrains.annotations.NotNull;
@@ -51,8 +52,8 @@ public class DeployToServerState<S extends ServerConfiguration, D extends Deploy
   @Nullable
   @Override
   public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-    ServerConnection connection = ServerConnectionManager.getInstance(myEnvironment.getProject()).getOrCreateConnection(myServer);
-    connection.deploy(mySource, myConfiguration);
+    ServerConnection connection = ServerConnectionManager.getInstance().getOrCreateConnection(myServer);
+    connection.deploy(new DeploymentTaskImpl(mySource, myConfiguration, myEnvironment.getProject()));
     return null;
   }
 }
