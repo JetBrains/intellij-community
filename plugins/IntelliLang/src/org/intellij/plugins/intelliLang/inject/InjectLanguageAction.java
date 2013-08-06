@@ -16,6 +16,7 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
@@ -27,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -111,7 +113,9 @@ public class InjectLanguageAction implements IntentionAction {
           return;
         }
       }
-      TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host);
+      if (TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host)) {
+        HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXml(language.getDisplayName()) + " was temporarily injected");
+      }
     }
     finally {
       if (injectable.getLanguage() != null) {    // no need for reference injection
