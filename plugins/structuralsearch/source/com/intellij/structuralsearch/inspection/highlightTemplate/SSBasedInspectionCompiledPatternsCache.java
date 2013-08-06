@@ -23,7 +23,7 @@ public class SSBasedInspectionCompiledPatternsCache implements StartupActivity {
   private static final Key<MatcherImpl.CompiledOptions> COMPILED_OPTIONS_KEY = Key.create("SSR_INSPECTION_COMPILED_OPTIONS_KEY");
 
   @Override
-  public void runActivity(final Project project) {
+  public void runActivity(@NotNull final Project project) {
      precompileConfigurations(project, null);
   }
 
