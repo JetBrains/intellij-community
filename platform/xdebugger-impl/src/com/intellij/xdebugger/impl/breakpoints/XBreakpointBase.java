@@ -345,7 +345,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   @Override
-  public int compareTo(Self self) {
+  public int compareTo(@NotNull Self self) {
     return myType.getBreakpointComparator().compare((Self)this, self);
   }
 
