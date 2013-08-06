@@ -26,6 +26,7 @@ import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.deployment.*;
 import com.intellij.remoteServer.runtime.ServerConnector;
+import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.ui.FormBuilder;
 import icons.GoogleAppEngineIcons;
@@ -36,7 +37,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 /**
  * @author nik
@@ -75,7 +75,7 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
   @Override
   public ServerConnector<?> createConnector(@NotNull AppEngineServerConfiguration configuration,
                                             @NotNull Project project,
-                                            @NotNull Executor asyncTasksExecutor) {
+                                            @NotNull ServerTaskExecutor asyncTasksExecutor) {
     return new AppEngineServerConnector(project, configuration);
   }
 

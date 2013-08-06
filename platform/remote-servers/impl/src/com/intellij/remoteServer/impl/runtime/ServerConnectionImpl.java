@@ -93,7 +93,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       }
 
       @Override
-      public void connectionFailed(@NotNull String errorMessage) {
+      public void errorOccurred(@NotNull String errorMessage) {
         myStatus = ConnectionStatus.DISCONNECTED;
         myRuntimeInstance = null;
         myStatusText = errorMessage;
@@ -118,7 +118,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     }
 
     @Override
-    public void failed(@NotNull String errorMessage) {
+    public void errorOccurred(@NotNull String errorMessage) {
       myDeploymentInfos.put(mySource, new DeploymentInformation(myFailedStatus, errorMessage));
     }
   }

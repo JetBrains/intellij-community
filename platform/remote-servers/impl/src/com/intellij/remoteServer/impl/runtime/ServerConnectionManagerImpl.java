@@ -1,11 +1,11 @@
 package com.intellij.remoteServer.impl.runtime;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
@@ -29,9 +29,10 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
   @NotNull
   @Override
   public <C extends ServerConfiguration> ServerConnection getOrCreateConnection(@NotNull RemoteServer<C> server) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ServerConnection connection = myConnections.get(server);
     if (connection == null) {
-      SequentialTaskExecutor executor = new SequentialTaskExecutor(myPooledThreadExecutor);
+      ServerTaskExecutorImpl executor = new ServerTaskExecutorImpl();
       connection = new ServerConnectionImpl(server, server.getType().createConnector(server.getConfiguration(), myProject, executor));
       myConnections.put(server, connection);
     }
@@ -41,6 +42,7 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
   @NotNull
   @Override
   public Collection<ServerConnection> getConnections() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return Collections.unmodifiableCollection(myConnections.values());
   }
 }
