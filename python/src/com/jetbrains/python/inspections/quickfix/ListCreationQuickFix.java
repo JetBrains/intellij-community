@@ -38,7 +38,10 @@ public class ListCreationQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     StringBuilder stringBuilder = new StringBuilder();
-    for (PyExpression expression : ((PyListLiteralExpression) myStatement.getAssignedValue()).getElements()) {
+    final PyExpression assignedValue = myStatement.getAssignedValue();
+    if (assignedValue == null) return;
+
+    for (PyExpression expression : ((PyListLiteralExpression)assignedValue).getElements()) {
       stringBuilder.append(expression.getText()).append(", ");
     }
     for (PyExpressionStatement statement: myStatements) {
@@ -46,7 +49,7 @@ public class ListCreationQuickFix implements LocalQuickFix {
         stringBuilder.append(expr.getText()).append(", ");
       statement.delete();
     }
-    myStatement.getAssignedValue().replace(
+    assignedValue.replace(
       elementGenerator.createExpressionFromText("[" + stringBuilder.substring(0, stringBuilder.length() - 2) + "]"));
   }
 }

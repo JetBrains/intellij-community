@@ -37,58 +37,54 @@ public class PyListCreationInspection extends PyInspection {
 
     @Override
     public void visitPyAssignmentStatement(PyAssignmentStatement node) {
-      if (node.getAssignedValue() instanceof PyListLiteralExpression) {
-        if (node.getTargets().length != 1) {
-          return;
-        }
-        final PyExpression target = node.getTargets()[0];
-        String name = target.getName();
-        if (name == null) {
-          return;
-        }
-        PyExpression statement = null;
-        PyStatement expressionStatement = PsiTreeUtil.getNextSiblingOfType(node, PyStatement.class);
-        if (!(expressionStatement instanceof PyExpressionStatement))
-          return;
-        statement = ((PyExpressionStatement)expressionStatement).getExpression();
-        ListCreationQuickFix quickFix = null;
-        boolean availableFix = false;
-loop:
-        while (statement instanceof PyCallExpression) {
-          PyCallExpression callExpression = (PyCallExpression)statement;
-          PyExpression callee = callExpression.getCallee();
-          if (callee instanceof PyQualifiedExpression) {
-            PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
-            String funcName = ((PyQualifiedExpression)callee).getReferencedName();
-            if (qualifier != null && qualifier.getText().equals(name) && "append".equals(funcName)) {
-              PyArgumentList argList = callExpression.getArgumentList();
-              if (argList != null) {
-                for (PyExpression argument : argList.getArguments()) {
-                  if (argument.getText().equals(name))
-                    break loop;
-                  if (!availableFix) {
-                    quickFix = new ListCreationQuickFix(node);
-                    availableFix = true;
-                  }
+      if (!(node.getAssignedValue() instanceof PyListLiteralExpression))return;
+      final PyExpression[] targets = node.getTargets();
+      if (targets.length != 1) return;
+      final PyExpression target = targets[0];
+      final String name = target.getName();
+      if (name == null) return;
+
+      PyStatement expressionStatement = PsiTreeUtil.getNextSiblingOfType(node, PyStatement.class);
+      if (!(expressionStatement instanceof PyExpressionStatement))
+        return;
+
+      ListCreationQuickFix quickFix = null;
+
+      final String message = "This list creation could be rewritten as a list literal";
+      while (expressionStatement instanceof PyExpressionStatement) {
+        final PyExpression statement = ((PyExpressionStatement)expressionStatement).getExpression();
+        if (!(statement instanceof PyCallExpression)) break;
+
+        final PyCallExpression callExpression = (PyCallExpression)statement;
+        final PyExpression callee = callExpression.getCallee();
+        if (callee instanceof PyQualifiedExpression) {
+          final PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
+          final String funcName = ((PyQualifiedExpression)callee).getReferencedName();
+          if (qualifier != null && name.equals(qualifier.getText()) && "append".equals(funcName)) {
+            final PyArgumentList argList = callExpression.getArgumentList();
+            if (argList != null) {
+              for (PyExpression argument : argList.getArguments()) {
+                if (argument.getText().equals(name)) {
+                  if (quickFix != null)
+                    registerProblem(node, message, quickFix);
+                  return;
                 }
-                if(availableFix)
-                  quickFix.addStatement((PyExpressionStatement)expressionStatement);
               }
+              if (quickFix == null) {
+                quickFix = new ListCreationQuickFix(node);
+              }
+              quickFix.addStatement((PyExpressionStatement)expressionStatement);
             }
           }
-          if (quickFix == null) {
-            return;
-          }
-          expressionStatement = PsiTreeUtil.getNextSiblingOfType(expressionStatement, PyStatement.class);
-          if (expressionStatement instanceof PyExpressionStatement)
-            statement = ((PyExpressionStatement)expressionStatement).getExpression();
-          else
-            statement = null;
         }
-        
-        if (availableFix) {
-          registerProblem(node, "This list creation could be rewritten as a list literal", quickFix);
+        if (quickFix == null) {
+          return;
         }
+        expressionStatement = PsiTreeUtil.getNextSiblingOfType(expressionStatement, PyStatement.class);
+      }
+
+      if (quickFix != null) {
+        registerProblem(node, message, quickFix);
       }
     }
   }
