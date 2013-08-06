@@ -11,11 +11,11 @@
     <projectService serviceInterface="com.intellij.remoteServer.runtime.ServerConnectionManager"
                     serviceImplementation="com.intellij.remoteServer.runtime.impl.ServerConnectionManagerImpl"/>
     <applicationConfigurable instance="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable"/>
-    <programRunner implementation="com.intellij.remoteServer.run.DeployToServerRunner"/>
+    <programRunner implementation="com.intellij.remoteServer.impl.runtime.DeployToServerRunner"/>
   </extensions>
   <application-components>
     <component>
-      <implementation-class>com.intellij.remoteServer.run.DeployToServerConfigurationTypesRegistrar</implementation-class>
+      <implementation-class>com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar</implementation-class>
     </component>
   </application-components>
 </idea-plugin>
