@@ -16,11 +16,10 @@
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,10 +54,14 @@ public class DirectoryData {
   }
 
   public void clear() {
-    final File ioFile = new File(getBase().getPath());
-    final File[] files = ioFile.listFiles();
-    for (File file : files) {
-      FileUtil.delete(file);
+    final VirtualFile base = getBase();
+    if (base != null) {
+      new WriteCommandAction.Simple(null) {
+        @Override
+        protected void run() throws Throwable {
+          base.delete(this);
+        }
+      }.execute().throwException();
     }
   }
 
@@ -70,7 +73,14 @@ public class DirectoryData {
           final List<VirtualFile> currentLevel = new ArrayList<VirtualFile>();
           final List<VirtualFile> nextLevel = new ArrayList<VirtualFile>();
 
-          currentLevel.add(myBase.createChildDirectory(this, "dirData"));
+          try {
+            myBase.createChildDirectory(this, "dirData");
+          }
+          catch (IOException ignored) {
+          }
+          VirtualFile newBase = getBase();
+          assert newBase != null;
+          currentLevel.add(newBase);
           for (int i = 0; i < myLevels; i++) {
             for (VirtualFile file : currentLevel) {
               String numberInRow;
