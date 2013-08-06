@@ -5,6 +5,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -22,10 +23,12 @@ public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends Modu
     super(PYTHON_MODULE);
   }
 
+  @NotNull
   public String getName() {
     return "Python Module";
   }
 
+  @NotNull
   public String getDescription() {
     return "Python modules are used for developing <b>Python</b> applications. Supported technologies include <b>Django, Google App Engine, Mako, Jinja2</b> and others.";
   }

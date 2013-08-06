@@ -11,6 +11,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.jetbrains.python.PythonModuleTypeBase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,10 +20,11 @@ import java.util.List;
  * @author yole
  */
 public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilderBase> {
+  @NotNull
   @Override
-  public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext,
-                                              final PythonModuleBuilderBase moduleBuilder,
-                                              final ModulesProvider modulesProvider) {
+  public ModuleWizardStep[] createWizardSteps(@NotNull final WizardContext wizardContext,
+                                              @NotNull final PythonModuleBuilderBase moduleBuilder,
+                                              @NotNull final ModulesProvider modulesProvider) {
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     final Project project = getProject(wizardContext);
     steps.add(new PythonSdkSelectStep(moduleBuilder, "reference.project.structure.sdk.python", project));
@@ -41,6 +43,7 @@ public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilderBa
     return project;
   }
 
+  @NotNull
   public PythonModuleBuilder createModuleBuilder() {
     return new PythonModuleBuilder();
   }
