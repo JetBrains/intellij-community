@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -25,7 +26,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,6 +46,7 @@ import com.intellij.util.FileContentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import com.intellij.psi.injection.Injectable;
 import org.intellij.plugins.intelliLang.references.InjectedReferencesContributor;
@@ -59,6 +63,7 @@ import java.util.List;
 
 public class InjectLanguageAction implements IntentionAction {
   @NonNls private static final String INJECT_LANGUAGE_FAMILY = "Inject Language/Reference";
+  public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
 
   public static List<Injectable> getAllInjectables() {
     Language[] languages = InjectedLanguage.getAvailableLanguages();
@@ -161,17 +166,29 @@ public class InjectLanguageAction implements IntentionAction {
         }
       }
     });
-    new PopupChooserBuilder(list).setItemChoosenCallback(new Runnable() {
+    JBPopup popup = new PopupChooserBuilder(list).setItemChoosenCallback(new Runnable() {
       public void run() {
-        onChosen.process((Injectable)list.getSelectedValue());
+        Injectable value = (Injectable)list.getSelectedValue();
+        onChosen.process(value);
+        PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, value.getId());
       }
     }).setFilteringEnabled(new Function<Object, String>() {
       @Override
       public String fun(Object language) {
         return ((Injectable)language).getDisplayName();
       }
-    })
-      .createPopup().showInBestPositionFor(editor);
+    }).createPopup();
+    final String lastInjected = PropertiesComponent.getInstance().getValue(LAST_INJECTED_LANGUAGE);
+    if (lastInjected != null) {
+      Injectable injectable = ContainerUtil.find(injectables, new Condition<Injectable>() {
+        @Override
+        public boolean value(Injectable injectable) {
+          return lastInjected.equals(injectable.getId());
+        }
+      });
+      list.setSelectedValue(injectable, true);
+    }
+    popup.showInBestPositionFor(editor);
     return true;
   }
 
