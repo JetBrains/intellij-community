@@ -22,9 +22,6 @@ public class PyClassMembersProviderBase implements PyClassMembersProvider {
   @Override
   public PsiElement resolveMember(PyClassType clazz, String name, PsiElement location) {
     final Collection<PyDynamicMember> members = getMembers(clazz, location);
-    if (members == null) {
-      return null;
-    }
     return resolveMemberByName(members, clazz, name);
   }
 
