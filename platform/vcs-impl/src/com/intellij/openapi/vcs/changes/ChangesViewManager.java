@@ -438,6 +438,12 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     element.setAttribute(ATT_SHOW_IGNORED, String.valueOf(SHOW_IGNORED_MODE));
   }
 
+  public void setShowFlattenMode(boolean state) {
+    SHOW_FLATTEN_MODE = state;
+    myView.setShowFlatten(SHOW_FLATTEN_MODE);
+    refreshView();
+  }
+
   @Override
   public void selectFile(final VirtualFile vFile) {
     if (vFile == null) return;
@@ -550,9 +556,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      SHOW_FLATTEN_MODE = !state;
-      myView.setShowFlatten(SHOW_FLATTEN_MODE);
-      refreshView();
+      setShowFlattenMode(!state);
     }
   }
 
