@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.PyClass;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -12,6 +13,7 @@ import java.util.Collections;
  * @author yole
  */
 public class PyClassMembersProviderBase implements PyClassMembersProvider {
+  @NotNull
   @Override
   public Collection<PyDynamicMember> getMembers(PyClassType clazz, PsiElement location) {
     return Collections.emptyList();

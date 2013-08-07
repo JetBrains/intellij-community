@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.PyClassMembersProviderBase;
 import com.jetbrains.python.psi.types.PyClassType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,6 +22,7 @@ import java.util.List;
 public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
   private Key<List<PyDynamicMember>> mySocketMembersKey = Key.create("socket.members");
 
+  @NotNull
   @Override
   public Collection<PyDynamicMember> getMembers(PyClassType classType, PsiElement location) {
     PyClass clazz = classType.getPyClass();
