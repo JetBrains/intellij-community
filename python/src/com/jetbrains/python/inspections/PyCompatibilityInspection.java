@@ -161,14 +161,30 @@ public class PyCompatibilityInspection extends PyInspection {
       StringBuilder message = new StringBuilder("Python version ");
       final PyExpression callee = node.getCallee();
       assert callee != null;
-      for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-        LanguageLevel languageLevel = myVersionsToProcess.get(i);
-        PsiReference reference = callee.getReference();
-        if (reference != null) {
-          PsiElement resolved = reference.resolve();
-          ProjectFileIndex ind = ProjectRootManager.getInstance(callee.getProject()).getFileIndex();
-          final String name = callee.getText();
-          if (resolved != null) {
+      PsiReference reference = callee.getReference();
+      if (reference != null) {
+        PsiElement resolved = reference.resolve();
+        ProjectFileIndex ind = ProjectRootManager.getInstance(callee.getProject()).getFileIndex();
+        if (resolved instanceof PyFunction) {
+          String name = ((PyFunction)resolved).getName();
+          final PyClass containingClass = ((PyFunction)resolved).getContainingClass();
+          if (containingClass != null) {
+            if (PyNames.INIT.equals(name))
+              name = callee.getText();
+            else
+              message = new StringBuilder("Class " + containingClass.getName() + " in python version ");
+            for (int i = 0; i != myVersionsToProcess.size(); ++i) {
+              LanguageLevel languageLevel = myVersionsToProcess.get(i);
+              if (UnsupportedFeaturesUtil.CLASS_METHODS.containsKey(containingClass.getName())) {
+                final Map<LanguageLevel, Set<String>> map = UnsupportedFeaturesUtil.CLASS_METHODS.get(containingClass.getName());
+                final Set<String> unsupportedMethods = map.get(languageLevel);
+                if (unsupportedMethods != null && unsupportedMethods.contains(name))
+                  len = appendLanguageLevel(message, len, languageLevel);
+              }
+            }
+          }
+          for (int i = 0; i != myVersionsToProcess.size(); ++i) {
+            LanguageLevel languageLevel = myVersionsToProcess.get(i);
             PsiFile file = resolved.getContainingFile();
             VirtualFile virtualFile = file.getVirtualFile();
             if (virtualFile != null && ind.isInLibraryClasses(virtualFile)) {
@@ -177,15 +193,9 @@ public class PyCompatibilityInspection extends PyInspection {
               }
             }
           }
-          //else {
-          //  if (!name.equals("print") && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
-          //    len = appendLanguageLevel(message, len, languageLevel);
-          //  }
-          //}
+          commonRegisterProblem(message, " not have method " + name, len, node, null, false);
         }
       }
-      commonRegisterProblem(message, " not have method " + callee.getText(),
-                            len, node, null, false);
     }
 
     @Override

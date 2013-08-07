@@ -25,16 +25,39 @@ import java.util.*;
 public class UnsupportedFeaturesUtil {
   public static Map<LanguageLevel, Set<String>> BUILTINS = new HashMap<LanguageLevel, Set<String>>();
   public static Map<LanguageLevel, Set<String>> MODULES = new HashMap<LanguageLevel, Set<String>>();
+  public static Map<String, Map<LanguageLevel, Set<String>>> CLASS_METHODS = new HashMap<String, Map<LanguageLevel, Set<String>>>();
 
   public static Vector<String> ALL_LANGUAGE_LEVELS;
   static {
     try {
       fillMaps();
+      fillTestCaseMethods();
     }
     catch (IOException e) {
       Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
       log.error("Cannot find \"versions.xml\". " + e.getMessage());
     }
+    fillAllLanguageLeves();
+  }
+
+  private static void fillTestCaseMethods() throws IOException {
+    final Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
+    final FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/class_method_versions.xml"));
+    try {
+      final XMLReader xr = XMLReaderFactory.createXMLReader();
+      final ClassMethodsParser parser = new ClassMethodsParser();
+      xr.setContentHandler(parser);
+      xr.parse(new InputSource(reader));
+    }
+    catch (SAXException e) {
+      log.error("Improperly formed \"class_method_versions.xml\". " + e.getMessage());
+    }
+    finally {
+      reader.close();
+    }
+  }
+
+  private static void fillAllLanguageLeves() {
     ALL_LANGUAGE_LEVELS = new Vector<String>();
     ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON24.toString());
     ALL_LANGUAGE_LEVELS.add(LanguageLevel.PYTHON25.toString());
@@ -157,6 +180,52 @@ public class UnsupportedFeaturesUtil {
 
     public void characters(char[] ch, int start, int length)
                                           throws SAXException {
+      myContent.write(ch, start, length);
+    }
+  }
+
+  static class ClassMethodsParser extends DefaultHandler {
+    private CharArrayWriter myContent = new CharArrayWriter();
+    private String myClassName = "";
+    private LanguageLevel myCurrentLevel;
+
+    public void startElement(String namespaceURI,
+                             String localName,
+                             String qName,
+                             Attributes attr) throws SAXException {
+      myContent.reset();
+      if (localName.equals("class_name")) {
+        myClassName = attr.getValue("name");
+        if (!CLASS_METHODS.containsKey(myClassName)) {
+          CLASS_METHODS.put(myClassName, new HashMap<LanguageLevel, Set<String>>());
+
+        }
+      }
+      if (localName.equals("python")) {
+        myCurrentLevel = LanguageLevel.fromPythonVersion(attr.getValue("version"));
+        if (myClassName != null) {
+          final Map<LanguageLevel, Set<String>> map = CLASS_METHODS.get(myClassName);
+          if (map != null)
+            map.put(myCurrentLevel, new HashSet<String>());
+        }
+      }
+    }
+
+    public void endElement(String namespaceURI,
+                           String localName,
+                           String qName) throws SAXException {
+      if (localName.equals("func")) {
+        Map<LanguageLevel, Set<String>> levelSetMap = CLASS_METHODS.get(myClassName);
+        if (levelSetMap != null) {
+          final Set<String> set = levelSetMap.get(myCurrentLevel);
+          if (set != null)
+            set.add(myContent.toString());
+        }
+      }
+    }
+
+    public void characters(char[] ch, int start, int length)
+      throws SAXException {
       myContent.write(ch, start, length);
     }
   }
