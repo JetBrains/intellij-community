@@ -17,6 +17,9 @@
 package com.intellij.ide.impl.dataRules;
 
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.usages.UsageTargetUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +30,10 @@ public class UsageTargetsRule implements GetDataRule {
   @Override
   @Nullable
   public Object getData(DataProvider dataProvider) {
+    Project project = PlatformDataKeys.PROJECT.getData(dataProvider);
+    if (project == null || DumbService.isDumb(project)) {
+      return null;
+    }
     return UsageTargetUtil.findUsageTargets(dataProvider);
   }
 }
