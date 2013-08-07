@@ -70,13 +70,13 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   @Override
-  public <T extends PomModelAspect> T getModelAspect(Class<T> aClass) {
+  public <T extends PomModelAspect> T getModelAspect(@NotNull Class<T> aClass) {
     //noinspection unchecked
     return (T)myAspects.get(aClass);
   }
 
   @Override
-  public void registerAspect(Class<? extends PomModelAspect> aClass, PomModelAspect aspect, Set<PomModelAspect> dependencies) {
+  public void registerAspect(@NotNull Class<? extends PomModelAspect> aClass, @NotNull PomModelAspect aspect, @NotNull Set<PomModelAspect> dependencies) {
     myAspects.put(aClass, aspect);
     final Iterator<PomModelAspect> iterator = dependencies.iterator();
     final List<PomModelAspect> deps = new ArrayList<PomModelAspect>();
@@ -110,12 +110,12 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   @Override
-  public void addModelListener(PomModelListener listener) {
+  public void addModelListener(@NotNull PomModelListener listener) {
     myListeners.add(listener);
   }
 
   @Override
-  public void addModelListener(final PomModelListener listener, Disposable parentDisposable) {
+  public void addModelListener(@NotNull final PomModelListener listener, @NotNull Disposable parentDisposable) {
     addModelListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -126,14 +126,14 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   @Override
-  public void removeModelListener(PomModelListener listener) {
+  public void removeModelListener(@NotNull PomModelListener listener) {
     myListeners.remove(listener);
   }
 
   private final Stack<Pair<PomModelAspect, PomTransaction>> myBlockedAspects = new Stack<Pair<PomModelAspect, PomTransaction>>();
 
   @Override
-  public void runTransaction(PomTransaction transaction) throws IncorrectOperationException{
+  public void runTransaction(@NotNull PomTransaction transaction) throws IncorrectOperationException{
     List<Throwable> throwables = new ArrayList<Throwable>(0);
     synchronized(PsiLock.LOCK){
       final PomModelAspect aspect = transaction.getTransactionAspect();
@@ -233,20 +233,20 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if (containingFileByTree != null) {
       boolean isFromCommit = ApplicationManager.getApplication().isDispatchThread() &&
                              ApplicationManager.getApplication().hasWriteAction(CommitToPsiFileAction.class);
-      if (!isFromCommit && !synchronizer.isIgnorePsiEvents()) { 
+      if (!isFromCommit && !synchronizer.isIgnorePsiEvents()) {
         reparseParallelTrees(containingFileByTree);
       }
     }
 
     if (progressIndicator != null) progressIndicator.finishNonCancelableSection();
   }
-  
+
   private void reparseParallelTrees(PsiFile changedFile) {
     List<PsiFile> allFiles = changedFile.getViewProvider().getAllFiles();
     if (allFiles.size() <= 1) {
       return;
     }
-    
+
     String newText = changedFile.getNode().getText();
     for (final PsiFile file : allFiles) {
       if (file != changedFile) {
@@ -266,7 +266,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   private void reparseFile(final PsiFile file, String newText, String oldText) {
     if (oldText.equals(newText)) return;
-    
+
     PsiToDocumentSynchronizer synchronizer =((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).getSynchronizer();
     int changeStart = StringUtil.commonPrefixLength(oldText, newText);
     int changeEnd = oldText.length() - StringUtil.commonSuffixLength(oldText, newText);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,27 +19,22 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author peter
- */
-public class CollectConsumer<T> implements Consumer<T> {
-  private final Collection<T> myResult;
-
-  public CollectConsumer(@NotNull Collection<T> result) {
-    myResult = result;
+public class SynchronizedCollectConsumer<T> extends CollectConsumer<T> {
+  public SynchronizedCollectConsumer(@NotNull Collection<T> result) {
+    super(result);
   }
-
-  public CollectConsumer() {
-    this(new SmartList<T>());
+  public SynchronizedCollectConsumer() {
+    super();
   }
 
   @Override
-  public void consume(T t) {
-    myResult.add(t);
+  public synchronized void consume(T t) {
+    super.consume(t);
   }
 
   @NotNull
-  public Collection<T> getResult() {
-    return myResult;
+  @Override
+  public synchronized Collection<T> getResult() {
+    return super.getResult();
   }
 }

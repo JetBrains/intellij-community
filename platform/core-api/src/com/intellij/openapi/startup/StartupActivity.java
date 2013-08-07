@@ -17,6 +17,7 @@ package com.intellij.openapi.startup;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -27,5 +28,5 @@ public interface StartupActivity {
 
   ExtensionPointName<StartupActivity> POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.postStartupActivity");
 
-  void runActivity(Project project);
+  void runActivity(@NotNull Project project);
 }

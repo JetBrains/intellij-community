@@ -20,12 +20,13 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.wm.ToolWindowManager;
+import org.jetbrains.annotations.NotNull;
 
 public class TipOfTheDayManager implements StartupActivity, DumbAware {
   private boolean myVeryFirstProjectOpening = true;
 
   @Override
-  public void runActivity(final Project project) {
+  public void runActivity(@NotNull final Project project) {
     if (!myVeryFirstProjectOpening || !GeneralSettings.getInstance().showTipsOnStartup()) {
       return;
     }
