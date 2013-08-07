@@ -69,6 +69,8 @@ public class PyNames {
 
   public static final String DIRNAME = "dirname";
   public static final String ABSPATH = "abspath";
+  public static final String NORMPATH = "normpath";
+  public static final String REALPATH = "realpath";
   public static final String JOIN = "join";
   public static final String REPLACE = "replace";
   public static final String FILE = "__file__";
@@ -122,6 +124,7 @@ public class PyNames {
   public static final String SET = "set";
 
   public static final String KEYS = "keys";
+  public static final String EXTEND = "extend";
 
   public static final String PASS = "pass";
 
