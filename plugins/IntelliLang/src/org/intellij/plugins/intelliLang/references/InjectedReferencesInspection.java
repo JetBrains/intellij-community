@@ -35,7 +35,7 @@ public class InjectedReferencesInspection extends LocalInspectionTool {
       @Override
       public void visitElement(PsiElement element) {
 
-        PsiReference[] injected = element.getUserData(InjectedReferencesContributor.INJECTED_REFERENCES);
+        PsiReference[] injected = InjectedReferencesContributor.getInjectedReferences(element);
         if (injected != null) {
           for (PsiReference reference : injected) {
             if (reference.resolve() == null) {

@@ -40,10 +40,15 @@ import java.util.List;
  */
 public class InjectedReferencesContributor extends PsiReferenceContributor {
 
-  static final Key<PsiReference[]> INJECTED_REFERENCES = Key.create("injected references");
+  private static final Key<PsiReference[]> INJECTED_REFERENCES = Key.create("injected references");
 
   public static boolean isInjected(@Nullable PsiReference reference) {
     return reference != null && reference.getElement().getUserData(INJECTED_REFERENCES) != null;
+  }
+
+  @Nullable
+  public static PsiReference[] getInjectedReferences(PsiElement element) {
+    return element.getUserData(INJECTED_REFERENCES);
   }
 
   @Override
