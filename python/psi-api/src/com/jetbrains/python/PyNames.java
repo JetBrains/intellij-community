@@ -122,6 +122,7 @@ public class PyNames {
   public static final String SET = "set";
 
   public static final String KEYS = "keys";
+  public static final String EXTEND = "extend";
 
   public static final String PASS = "pass";
 
