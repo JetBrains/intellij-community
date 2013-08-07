@@ -126,7 +126,7 @@ class PreferredProducerFind {
       final ConfigurationFromContext first = configurationsFromContext.get(0);
       for (Iterator<ConfigurationFromContext> it = configurationsFromContext.iterator(); it.hasNext();) {
         ConfigurationFromContext producer = it.next();
-        if (producer != first && ConfigurationFromContext.COMPARATOR.compare(producer, first) >= 0) {
+        if (producer != first && ConfigurationFromContext.COMPARATOR.compare(producer, first) > 0) {
           it.remove();
         }
       }
