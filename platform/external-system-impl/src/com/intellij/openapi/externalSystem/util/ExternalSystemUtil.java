@@ -41,6 +41,7 @@ import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefres
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator;
 import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemRecentTasksList;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
@@ -235,7 +236,7 @@ public class ExternalSystemUtil {
     Set<String> toRefresh = ContainerUtilRt.newHashSet();
     for (ExternalProjectSettings setting : projectsSettings) {
       Long oldModificationStamp = modificationStamps.get(setting.getExternalProjectPath());
-      long currentModificationStamp = getTimeStamp(setting.getExternalProjectPath());
+      long currentModificationStamp = getTimeStamp(setting.getExternalProjectPath(), externalSystemId);
       if (force || currentModificationStamp < 0 || oldModificationStamp == null || oldModificationStamp < currentModificationStamp) {
         toRefresh.add(setting.getExternalProjectPath());
       }
@@ -249,9 +250,21 @@ public class ExternalSystemUtil {
     }
   }
 
-  private static long getTimeStamp(@NotNull String path) {
+  private static long getTimeStamp(@NotNull String path, @NotNull ProjectSystemId externalSystemId) {
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
-    return vFile == null ? -1 : vFile.getTimeStamp();
+    if (vFile == null) {
+      return -1;
+    }
+    for (ExternalSystemConfigLocator locator : ExternalSystemConfigLocator.EP_NAME.getExtensions()) {
+      if (!externalSystemId.equals(locator.getTargetExternalSystemId())) {
+        continue;
+      }
+      VirtualFile adjusted = locator.adjust(vFile);
+      if (adjusted != null) {
+        vFile = adjusted;
+      }
+    }
+    return vFile.getTimeStamp();
   }
 
   /**
@@ -375,7 +388,7 @@ public class ExternalSystemUtil {
         task.execute(indicator);
         final Throwable error = task.getError();
         if (error == null) {
-          long stamp = getTimeStamp(externalProjectPath);
+          long stamp = getTimeStamp(externalProjectPath, externalSystemId);
           if (stamp > 0) {
             ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
             assert manager != null;
