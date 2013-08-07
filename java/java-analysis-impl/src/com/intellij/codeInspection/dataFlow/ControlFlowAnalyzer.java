@@ -1485,7 +1485,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     return Collections.emptyList();
   }
 
-  private static List<MethodContract> parseContract(String text) throws ParseException {
+  public static List<MethodContract> parseContract(String text) throws ParseException {
     List<MethodContract> result = ContainerUtil.newArrayList();
     for (String clause : StringUtil.replace(text, " ", "").split(";")) {
       String arrow = "->";
@@ -1516,7 +1516,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     throw new ParseException("Constraint should be one of: null, !null, true, false, exit, fail, _. Found: " + name);
   }
   
-  private static class ParseException extends Exception {
+  public static class ParseException extends Exception {
     private ParseException(String message) {
       super(message);
     }
