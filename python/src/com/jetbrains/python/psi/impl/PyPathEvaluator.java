@@ -41,7 +41,8 @@ public class PyPathEvaluator extends PyEvaluator {
     else if (call.isCalleeText(PyNames.JOIN) && args.length >= 1) {
       return evaluatePathInJoin(args, args.length);
     }
-    else if (call.isCalleeText(PyNames.NORMPATH) && args.length == 1) {
+    else if (call.isCalleeText(PyNames.NORMPATH, PyNames.REALPATH) && args.length == 1) {
+      // we don't care about the exact transformation performed by python but need to preserve the availability of the path
       return evaluate(args[0]);
     }
     else if (call.isCalleeText(PyNames.ABSPATH) && args.length == 1) {
