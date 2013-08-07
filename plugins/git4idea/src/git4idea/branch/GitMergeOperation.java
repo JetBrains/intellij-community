@@ -19,6 +19,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -159,8 +160,13 @@ class GitMergeOperation extends GitBranchOperation {
     switch (myDeleteOnMerge) {
       case DELETE:
         super.notifySuccess(message);
-        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-        brancher.deleteBranch(myBranchToMerge, new ArrayList<GitRepository>(getRepositories()));
+        ApplicationManager.getApplication().invokeLater(new Runnable() { // bg process needs to be started from the EDT
+          @Override
+          public void run() {
+            GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+            brancher.deleteBranch(myBranchToMerge, new ArrayList<GitRepository>(getRepositories()));
+          }
+        });
         break;
       case PROPOSE:
         String description = message + "<br/><a href='delete'>Delete " + myBranchToMerge + "</a>";
