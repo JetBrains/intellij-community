@@ -145,6 +145,9 @@ public class PyFileEvaluator {
       }
       return (List<String>) value;
     }
+    if (value instanceof String) {
+      return Collections.singletonList((String) value);
+    }
     return Collections.emptyList();
   }
 }
