@@ -74,7 +74,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   @Nullable
-  private static UsageType checkMatchingSignatureGroup(PyCallExpression call, UsageTarget[] targets, TypeEvalContext context) {
+  private static UsageType checkMatchingSignatureGroup(PyCallExpression call, UsageTarget[] targets, @NotNull TypeEvalContext context) {
     if (targets.length == 1 && targets[0] instanceof PsiElementUsageTarget) {
       final PsiElement element = ((PsiElementUsageTarget)targets[0]).getElement();
       if (element instanceof PyFunction) {

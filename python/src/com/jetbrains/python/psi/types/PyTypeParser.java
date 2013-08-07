@@ -230,7 +230,7 @@ public class PyTypeParser {
           new Function<Pair<Pair<ParseResult, List<ParseResult>>, ParseResult>, ParseResult>() {
             @Override
             public ParseResult fun(Pair<Pair<ParseResult, List<ParseResult>>, ParseResult> value) {
-              final List<Pair<String, PyType>> parameters = new ArrayList<Pair<String, PyType>>();
+              final List<PyCallableParameter> parameters = new ArrayList<PyCallableParameter>();
               final ParseResult returnResult = value.getSecond();
               ParseResult result;
               final Pair<ParseResult, List<ParseResult>> firstPair = value.getFirst();
@@ -238,10 +238,10 @@ public class PyTypeParser {
                 final ParseResult first = firstPair.getFirst();
                 final List<ParseResult> second = firstPair.getSecond();
                 result = first;
-                parameters.add(Pair.<String, PyType>create(null, first.getType()));
+                parameters.add(new PyCallableParameterImpl((String)null, first.getType()));
                 for (ParseResult r : second) {
                   result = result.merge(r);
-                  parameters.add(Pair.<String, PyType>create(null, r.getType()));
+                  parameters.add(new PyCallableParameterImpl((String)null, r.getType()));
                 }
                 result = result.merge(returnResult);
               }

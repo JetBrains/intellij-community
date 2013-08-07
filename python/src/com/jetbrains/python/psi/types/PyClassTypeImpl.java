@@ -135,7 +135,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                              @NotNull PyResolveContext resolveContext,
                                                              boolean inherited) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
-    PsiElement classMember = resolveByOverridingMembersProviders(this, name); //overriding members provers have priority to normal resolve
+    PsiElement classMember = resolveByOverridingMembersProviders(this, name, location); //overriding members provers have priority to normal resolve
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -211,7 +211,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (inherited) {
-      classMember = resolveByMembersProviders(this, name);  //ask providers after real class introspection as providers have less priority
+      classMember = resolveByMembersProviders(this, name, location);  //ask providers after real class introspection as providers have less priority
     }
 
     if (classMember != null) {
@@ -223,7 +223,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
           if (pyClass != null) {
-            PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name);
+            PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name, location);
 
             if (superMember != null) {
               return ResolveResultList.to(superMember);
@@ -279,7 +279,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @Nullable
   @Override
-  public List<Pair<String, PyType>> getParameters(@NotNull TypeEvalContext context) {
+  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return null;
   }
 
@@ -296,9 +296,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private static PsiElement resolveByMembersProviders(PyClassType aClass, String name) {
+  private static PsiElement resolveByMembersProviders(PyClassType aClass, String name, @Nullable PsiElement location) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      final PsiElement resolveResult = provider.resolveMember(aClass, name);
+      final PsiElement resolveResult = provider.resolveMember(aClass, name, location);
       if (resolveResult != null) return resolveResult;
     }
 
@@ -306,10 +306,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass, String name) {
+  private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass, String name, @Nullable PsiElement location) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       if (provider instanceof PyOverridingClassMembersProvider) {
-        final PsiElement resolveResult = provider.resolveMember(aClass, name);
+        final PsiElement resolveResult = provider.resolveMember(aClass, name, location);
         if (resolveResult != null) return resolveResult;
       }
     }
@@ -361,7 +361,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     // from providers
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      for (PyDynamicMember member : provider.getMembers(this)) {
+      for (PyDynamicMember member : provider.getMembers(this, location)) {
         final String name = member.getName();
         if (!namesAlready.contains(name)) {
           LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(getName());

@@ -103,6 +103,16 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-9978
+  public void testXRange() {
+    doTest();
+  }
+
+  // PY-9978
+  public void testSlice() {
+    doTest();
+  }
+
   public void testPy3k() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
     try {

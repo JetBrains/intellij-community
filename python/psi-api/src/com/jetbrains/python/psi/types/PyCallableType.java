@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,8 +31,8 @@ public interface PyCallableType extends PyType {
   /**
    * Returns the list of parameter types.
    *
-   * @return list of (name, type) pairs or null if not applicable. Name and type in pair may be null.
+   * @return list of parameter info null if not applicable.
    */
   @Nullable
-  List<Pair<String, PyType>> getParameters(@NotNull TypeEvalContext context);
+  List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context);
 }

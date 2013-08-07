@@ -240,4 +240,43 @@ public abstract class PyPsiPath {
       }
     }
   }
+
+  public static class ToAssignment extends PyPsiPath {
+    private final PyPsiPath myParent;
+    private final String myAssignee;
+
+    public ToAssignment(PyPsiPath parent, String assignee) {
+      myParent = parent;
+      myAssignee = assignee;
+    }
+
+    @Nullable
+    @Override
+    public PsiElement resolve(PsiElement context) {
+      PsiElement parent = myParent.resolve(context);
+      if (parent == null) {
+        return null;
+      }
+      AssignmentFinder finder = new AssignmentFinder(myAssignee);
+      parent.accept(finder);
+      return finder.myResult != null ? finder.myResult : parent;
+    }
+  }
+
+  private static class AssignmentFinder extends PyRecursiveElementVisitor {
+    private final String myAssignee;
+    private PsiElement myResult;
+
+    public AssignmentFinder(String assignee) {
+      myAssignee = assignee;
+    }
+
+    @Override
+    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+      PyExpression lhs = node.getLeftHandSideExpression();
+      if (lhs != null && myAssignee.equals(lhs.getText())) {
+        myResult = node;
+      }
+    }
+  }
 }

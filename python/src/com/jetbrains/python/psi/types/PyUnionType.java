@@ -29,17 +29,17 @@ public class PyUnionType implements PyType {
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext) {
     SmartList<RatedResolveResult> ret = new SmartList<RatedResolveResult>();
-    boolean all_nulls = true;
+    boolean allNulls = true;
     for (PyType member : myMembers) {
       if (member != null) {
-        List<? extends RatedResolveResult> result = member.resolveMember(name, null, direction, resolveContext);
+        List<? extends RatedResolveResult> result = member.resolveMember(name, location, direction, resolveContext);
         if (result != null) {
-          all_nulls = false;
+          allNulls = false;
           ret.addAll(result);
         }
       }
     }
-    return all_nulls ? null : ret;
+    return allNulls ? null : ret;
   }
 
   public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {

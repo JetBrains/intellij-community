@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.impl.PyKeywordArgumentProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -50,7 +51,11 @@ public class KeywordArgumentCompletionUtil {
     visited.add(def);
     boolean needSelf = def.getContainingClass() != null && def.getModifier() != PyFunction.Modifier.STATICMETHOD;
     final KwArgParameterCollector collector = new KwArgParameterCollector(needSelf, ret);
-    def.getParameterList().acceptChildren(collector);
+    final TypeEvalContext context = TypeEvalContext.userInitiated(def.getContainingFile());
+    final List<PyParameter> parameters = PyUtil.getParameters(def, context);
+    for (PyParameter parameter : parameters) {
+      parameter.accept(collector);
+    }
     if (collector.hasKwArgs()) {
       for (PyKeywordArgumentProvider provider : Extensions.getExtensions(PyKeywordArgumentProvider.EP_NAME)) {
         final List<String> arguments = provider.getKeywordArguments(def, callExpr);

@@ -13,13 +13,13 @@ import java.util.Collections;
  */
 public class PyClassMembersProviderBase implements PyClassMembersProvider {
   @Override
-  public Collection<PyDynamicMember> getMembers(PyClassType clazz) {
+  public Collection<PyDynamicMember> getMembers(PyClassType clazz, PsiElement location) {
     return Collections.emptyList();
   }
 
   @Override
-  public PsiElement resolveMember(PyClassType clazz, String name) {
-    final Collection<PyDynamicMember> members = getMembers(clazz);
+  public PsiElement resolveMember(PyClassType clazz, String name, PsiElement location) {
+    final Collection<PyDynamicMember> members = getMembers(clazz, location);
     return resolveMemberByName(members, clazz, name);
   }
 

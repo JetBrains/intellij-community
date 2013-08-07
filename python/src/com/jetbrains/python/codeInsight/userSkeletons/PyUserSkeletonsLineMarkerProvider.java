@@ -39,7 +39,7 @@ public class PyUserSkeletonsLineMarkerProvider implements LineMarkerProvider {
       final PyElement skeleton = getUserSkeleton(element);
       if (skeleton != null) {
         result.add(new LineMarkerInfo<PsiElement>(
-          element, element.getTextRange(), ICON, Pass.VISIBLE_LINE_MARKERS,
+          element, element.getTextRange(), ICON, Pass.UPDATE_OVERRIDEN_MARKERS,
           new Function<PsiElement, String>() {
             @Override
             public String fun(PsiElement e) {

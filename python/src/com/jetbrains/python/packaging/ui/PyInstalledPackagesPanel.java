@@ -57,7 +57,8 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   }
 
   private Sdk getSelectedSdk() {
-    return ((PyPackageManagementService) myPackageManagementService).getSdk();
+    PyPackageManagementService service = (PyPackageManagementService)myPackageManagementService;
+    return service != null ? service.getSdk() : null;
   }
 
   public void updateNotifications(@NotNull final Sdk selectedSdk) {

@@ -102,6 +102,11 @@ public class PyDynamicMember {
     return this;
   }
 
+  public PyDynamicMember toAssignment(String assignee) {
+    myPsiPath = new PyPsiPath.ToAssignment(myPsiPath, assignee);
+    return this;
+  }
+
   public PyDynamicMember toPsiElement(final PsiElement psiElement) {
     myPsiPath = new PyPsiPath() {
 

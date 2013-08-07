@@ -57,16 +57,17 @@ public class PyArgumentListInspection extends PyInspection {
           if (mkfunc != null && !mkfunc.isImplicitlyResolved()) {
             Callable callable = mkfunc.getCallable();
             int first_param_offset =  mkfunc.getImplicitOffset();
-            PyParameter[] params = callable.getParameterList().getParameters();
-            PyNamedParameter alleged_first_param = params.length < first_param_offset ? null : params[first_param_offset-1].getAsNamed();
+            final List<PyParameter> params = PyUtil.getParameters(callable, myTypeEvalContext);
+            final PyNamedParameter alleged_first_param = params.size() < first_param_offset ?
+                                                         null : params.get(first_param_offset-1).getAsNamed();
             if (alleged_first_param == null || alleged_first_param.isKeywordContainer()) {
               // no parameters left to pass function implicitly, or wrong param type
               registerProblem(deco, PyBundle.message("INSP.func.$0.lacks.first.arg", callable.getName())); // TODO: better names for anon lambdas
             }
             else {
               // possible unfilled params
-              for (int i=first_param_offset; i < params.length; i += 1) {
-                PyNamedParameter par = params[i].getAsNamed();
+              for (int i=first_param_offset; i < params.size(); i += 1) {
+                PyNamedParameter par = params.get(i).getAsNamed();
                 // param tuples, non-starred or non-default won't do
                 if (par == null || (! par.isKeywordContainer() && ! par.isPositionalContainer() && !par.hasDefaultValue())) {
                   String par_name;
@@ -87,7 +88,7 @@ public class PyArgumentListInspection extends PyInspection {
   public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder, final TypeEvalContext context, int implicitOffset) {
     if (node.getParent() instanceof PyClass) return; // class Foo(object) is also an arg list
     CallArgumentsMapping result = node.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context), implicitOffset);
-    highlightIncorrectArguments(holder, result);
+    highlightIncorrectArguments(holder, result, context);
     highlightMissingArguments(node, holder, result);
     highlightStarArgumentTypeMismatch(node, holder, context);
   }
@@ -96,7 +97,7 @@ public class PyArgumentListInspection extends PyInspection {
     inspectPyArgumentList(node, holder, context, 0);
   }
 
-  private static void highlightIncorrectArguments(ProblemsHolder holder, CallArgumentsMapping result) {
+  private static void highlightIncorrectArguments(ProblemsHolder holder, CallArgumentsMapping result, @NotNull TypeEvalContext context) {
     for (Map.Entry<PyExpression, EnumSet<CallArgumentsMapping.ArgFlag>> argEntry : result.getArgumentFlags().entrySet()) {
       EnumSet<CallArgumentsMapping.ArgFlag> flags = argEntry.getValue();
       if (!flags.isEmpty()) { // something's wrong
@@ -120,9 +121,9 @@ public class PyArgumentListInspection extends PyInspection {
           final PyCallExpression.PyMarkedCallee markedCallee = result.getMarkedCallee();
           String parameterName = null;
           if (markedCallee != null) {
-            final PyParameter[] parameters = markedCallee.getCallable().getParameterList().getParameters();
-            for (int i = parameters.length - 1; i >= 0; --i) {
-              final PyParameter param = parameters[i];
+            final List<PyParameter> parameters = PyUtil.getParameters(markedCallee.getCallable(), context);
+            for (int i = parameters.size() - 1; i >= 0; --i) {
+              final PyParameter param = parameters.get(i);
               if (param instanceof PyNamedParameter) {
                 final List<PyNamedParameter> unmappedParams = result.getUnmappedParams();
                 if (!((PyNamedParameter)param).isPositionalContainer() && !((PyNamedParameter)param).isKeywordContainer() &&

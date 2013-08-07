@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -15,7 +16,10 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -53,22 +57,16 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   private volatile Map<String, Property> myPropertyCache;
 
-  private class CachedAncestorsProvider implements CachedValueProvider<List<PyClassLikeType>> {
-    @Nullable private TypeEvalContext myCachedContext;
-
+  private class CachedAncestorsProvider implements ParameterizedCachedValueProvider<List<PyClassLikeType>, TypeEvalContext> {
     @Nullable
     @Override
-    public Result<List<PyClassLikeType>> compute() {
-      final TypeEvalContext context = myCachedContext != null ? myCachedContext : TypeEvalContext.codeInsightFallback();
+    public CachedValueProvider.Result<List<PyClassLikeType>> compute(@NotNull TypeEvalContext context) {
       final List<PyClassLikeType> ancestorTypes = isNewStyleClass() ? getMROAncestorTypes(context) : getOldStyleAncestorTypes(context);
-      return Result.create(ancestorTypes, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-    }
-
-    private void setTypeEvalContext(@Nullable TypeEvalContext cachedContext) {
-      myCachedContext = cachedContext;
+      return CachedValueProvider.Result.create(ancestorTypes, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }
   }
 
+  private final Key<ParameterizedCachedValue<List<PyClassLikeType>, TypeEvalContext>> myCachedValueKey = Key.create("cached ancestors");
   private final CachedAncestorsProvider myCachedAncestorsProvider = new CachedAncestorsProvider();
 
   @Override
@@ -1098,14 +1096,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @NotNull
   @Override
   public List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context) {
-    myCachedAncestorsProvider.setTypeEvalContext(context);
-    try {
-      // TODO: Return different cached copies depending on the type eval context parameters
-      return CachedValuesManager.getManager(getProject()).getCachedValue(this, myCachedAncestorsProvider);
-    }
-    finally {
-      myCachedAncestorsProvider.setTypeEvalContext(null);
-    }
+    // TODO: Return different cached copies depending on the type eval context parameters
+    final CachedValuesManager manager = CachedValuesManager.getManager(getProject());
+    return manager.getParameterizedCachedValue(this, myCachedValueKey, myCachedAncestorsProvider, false, context);
   }
 
   @NotNull

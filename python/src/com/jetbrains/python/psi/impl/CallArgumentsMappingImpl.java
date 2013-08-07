@@ -3,9 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyTupleType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +47,7 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
    * @param resolved_callee what to map parameters of
    * @param context optional shared type evaluator / cache.
    */
-  public void mapArguments(PyCallExpression.PyMarkedCallee resolved_callee, @Nullable TypeEvalContext context) {
+  public void mapArguments(PyCallExpression.PyMarkedCallee resolved_callee, @NotNull TypeEvalContext context) {
     PyExpression[] arguments = myArgumentList.getArguments();
     myMarkedCallee = resolved_callee;
     List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
@@ -75,8 +73,8 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
         }
       }
     }
+    final List<PyParameter> parameters = PyUtil.getParameters(myMarkedCallee.getCallable(), context);
     // prepare parameter slots
-    final PyParameter[] parameters = myMarkedCallee.getCallable().getParameterList().getParameters();
     Map<PyNamedParameter, PyExpression> slots = new LinkedHashMap<PyNamedParameter, PyExpression>();
     PyNamedParameter kwd_par = null;   // **param
     PyNamedParameter tuple_par = null; // *param
@@ -109,8 +107,8 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
       i += 1;
     }
     // rule out 'self' or other implicit params
-    for (i=0; i < implicit_offset && i < parameters.length; i+=1) {
-      slots.remove(parameters[i].getAsNamed());
+    for (i=0; i < implicit_offset && i < parameters.size(); i+=1) {
+      slots.remove(parameters.get(i).getAsNamed());
       positional_index += 1;
     }
     // now params to the left of positional_index are positional.
@@ -125,8 +123,8 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
         positional_bound = cnt;
         break;
       }
-      if (cnt < parameters.length && cnt < positional_index) {
-        final PyParameter par = parameters[cnt];
+      if (cnt < parameters.size() && cnt < positional_index) {
+        final PyParameter par = parameters.get(cnt);
         PyNamedParameter n_par = par.getAsNamed();
         if (n_par != null) {
           cnt += 1;
@@ -203,14 +201,12 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     // map *arg to positional params if possible
     boolean tuple_arg_not_exhausted = false;
     boolean tuple_dup_found = false;
-    if (cnt < parameters.length && cnt < positional_index && myTupleArg != null) {
+    if (cnt < parameters.size() && cnt < positional_index && myTupleArg != null) {
       // check length of myTupleArg
       PyType tuple_arg_type = null;
-      if (context != null) {
-        final PyExpression expression = PsiTreeUtil.getChildOfType(myTupleArg, PyExpression.class);
-        if (expression != null) {
-          tuple_arg_type = context.getType(expression);
-        }
+      final PyExpression expression = PsiTreeUtil.getChildOfType(myTupleArg, PyExpression.class);
+      if (expression != null) {
+        tuple_arg_type = context.getType(expression);
       }
       int tuple_length;
       boolean tuple_length_known;
@@ -223,8 +219,8 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
         tuple_length_known = false;
       }
       int mapped_params_count = 0;
-      while (cnt < parameters.length && cnt < positional_index && mapped_params_count < tuple_length) {
-        PyParameter par = parameters[cnt];
+      while (cnt < parameters.size() && cnt < positional_index && mapped_params_count < tuple_length) {
+        PyParameter par = parameters.get(cnt);
         if (par instanceof PySingleStarParameter) break;
         PyNamedParameter n_par = par.getAsNamed();
         if (slots.containsKey(n_par)) {
@@ -257,7 +253,7 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
       if (
         tuple_length_known && (mapped_params_count < tuple_length) || // not exhausted
         mapped_params_count == 0 // unknown length must consume at least first param
-      ) {
+        ) {
         tuple_arg_not_exhausted = true;
       }
     }
@@ -336,7 +332,6 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
           markArgument(arg, ArgFlag.IS_UNMAPPED);
         }
       }
-
     }
   }
 
