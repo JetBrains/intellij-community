@@ -25,6 +25,7 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -110,7 +111,7 @@ public class LookupManagerImpl extends LookupManager {
   }
 
   @Override
-  public LookupEx showLookup(final Editor editor,
+  public LookupEx showLookup(@NotNull final Editor editor,
                            @NotNull LookupElement[] items,
                            @NotNull final String prefix,
                            @NotNull final LookupArranger arranger) {
@@ -119,11 +120,12 @@ public class LookupManagerImpl extends LookupManager {
     }
 
     LookupImpl lookup = createLookup(editor, items, prefix, arranger);
-    return lookup != null && lookup.showLookup() ? lookup : null;
+    return lookup.showLookup() ? lookup : null;
   }
 
+  @NotNull
   @Override
-  public LookupImpl createLookup(final Editor editor,
+  public LookupImpl createLookup(@NotNull final Editor editor,
                                  @NotNull LookupElement[] items,
                                  @NotNull final String prefix,
                                  @NotNull final LookupArranger arranger) {
@@ -213,12 +215,13 @@ public class LookupManagerImpl extends LookupManager {
         myActiveLookup.addItem(item, matcher);
       }
       myActiveLookup.refreshUi(true, true);
-    } else {
+    }
+    else {
       alarm.cancelAllRequests(); // no items -> no doc
     }
 
     myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, null, myActiveLookup);
-    return myActiveLookup;
+    return lookup;
   }
 
   @Override
@@ -243,12 +246,23 @@ public class LookupManagerImpl extends LookupManager {
   }
 
   @Override
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
   }
 
   @Override
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener, @NotNull Disposable disposable) {
+    addPropertyChangeListener(listener);
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removePropertyChangeListener(listener);
+      }
+    });
+  }
+
+  @Override
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 

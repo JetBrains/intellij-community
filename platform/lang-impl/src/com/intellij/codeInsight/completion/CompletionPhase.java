@@ -180,12 +180,12 @@ public abstract class CompletionPhase implements Disposable {
         }
       }, this);
       if (indicator.isAutopopupCompletion()) {
-        // lookup is not visible, we have to check ourselves if editor retains focus 
+        // lookup is not visible, we have to check ourselves if editor retains focus
         ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListener() {
           @Override
           public void focusGained(Editor editor) {
           }
-  
+
           @Override
           public void focusLost(Editor editor) {
             indicator.closeAndFinish(true);
@@ -318,14 +318,12 @@ public abstract class CompletionPhase implements Disposable {
     private final Project project;
     private final EditorMouseAdapter mouseListener;
     private final CaretListener caretListener;
-    private final DocumentAdapter documentListener;
-    private final PropertyChangeListener lookupListener;
     private final SelectionListener selectionListener;
 
     public EmptyAutoPopup(CompletionProgressIndicator indicator) {
       super(indicator);
-      this.editor = indicator.getEditor();
-      this.project = indicator.getProject();
+      editor = indicator.getEditor();
+      project = indicator.getProject();
       MessageBusConnection connection = project.getMessageBus().connect(this);
       connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
         @Override
@@ -355,26 +353,24 @@ public abstract class CompletionPhase implements Disposable {
           stopAutoPopup();
         }
       };
-      documentListener = new DocumentAdapter() {
+
+      editor.addEditorMouseListener(mouseListener);
+      editor.getCaretModel().addCaretListener(caretListener);
+      editor.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         public void documentChanged(DocumentEvent e) {
           if (!TypedAction.isTypedActionInProgress()) {
             stopAutoPopup();
           }
         }
-      };
-      lookupListener = new PropertyChangeListener() {
+      }, this);
+      editor.getSelectionModel().addSelectionListener(selectionListener);
+      LookupManager.getInstance(project).addPropertyChangeListener(new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
           stopAutoPopup();
         }
-      };
-
-      editor.addEditorMouseListener(mouseListener);
-      editor.getCaretModel().addCaretListener(caretListener);
-      editor.getDocument().addDocumentListener(documentListener);
-      editor.getSelectionModel().addSelectionListener(selectionListener);
-      LookupManager.getInstance(project).addPropertyChangeListener(lookupListener);
+      }, this);
     }
 
     @Override
@@ -382,8 +378,6 @@ public abstract class CompletionPhase implements Disposable {
       editor.removeEditorMouseListener(mouseListener);
       editor.getCaretModel().removeCaretListener(caretListener);
       editor.getSelectionModel().removeSelectionListener(selectionListener);
-      editor.getDocument().removeDocumentListener(documentListener);
-      LookupManager.getInstance(project).removePropertyChangeListener(lookupListener);
     }
 
     private static void stopAutoPopup() {
