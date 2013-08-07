@@ -27,31 +27,31 @@ public class PyPathEvaluator extends PyEvaluator {
       return null;
     }
     VirtualFile vFile = expr.getContainingFile().getVirtualFile();
-    return new PyPathEvaluator(vFile == null ? null : vFile.getPath()).evaluate(expr);
+    Object result = new PyPathEvaluator(vFile == null ? null : vFile.getPath()).evaluate(expr);
+    return result instanceof String ? (String) result : null;
   }
 
-
   @Override
-  protected String evaluateCall(PyCallExpression call) {
+  protected Object evaluateCall(PyCallExpression call) {
     final PyExpression[] args = call.getArguments();
     if (call.isCalleeText(PyNames.DIRNAME) && args.length == 1) {
-      String argValue = evaluate(args[0]);
-      return argValue == null ? null : new File(argValue).getParent();
+      Object argValue = evaluate(args[0]);
+      return argValue instanceof String ? new File((String) argValue).getParent() : null;
     }
     else if (call.isCalleeText(PyNames.JOIN) && args.length >= 1) {
       return evaluatePathInJoin(args, args.length);
     }
     else if (call.isCalleeText(PyNames.ABSPATH) && args.length == 1) {
-      String argValue = evaluate(args[0]);
+      Object argValue = evaluate(args[0]);
       // relative to directory of 'containingFilePath', not file
-      if (argValue == null) {
+      if (!(argValue instanceof String)) {
         return null;
       }
-      if (FileUtil.isAbsolutePlatformIndependent(argValue)) {
+      if (FileUtil.isAbsolutePlatformIndependent((String)argValue)) {
         return argValue;
       }
       else {
-        String path = new File(new File(myContainingFilePath).getParent(), argValue).getPath();
+        String path = new File(new File(myContainingFilePath).getParent(), (String)argValue).getPath();
         return path.replace("\\", "/");
       }
     }
@@ -59,7 +59,7 @@ public class PyPathEvaluator extends PyEvaluator {
   }
 
   @Override
-  protected String evaluateReferenceExpression(PyReferenceExpression expr) {
+  protected Object evaluateReferenceExpression(PyReferenceExpression expr) {
     if (PyNames.PARDIR.equals(expr.getName())) {
       return "..";
     }
@@ -75,15 +75,15 @@ public class PyPathEvaluator extends PyEvaluator {
   public String evaluatePathInJoin(PyExpression[] args, int endElement) {
     String result = null;
     for (int i = 0; i < endElement; i++) {
-      String arg = evaluate(args[i]);
-      if (arg == null) {
+      Object arg = evaluate(args[i]);
+      if (!(arg instanceof String)) {
         return null;
       }
       if (result == null) {
-        result = arg;
+        result = (String)arg;
       }
       else {
-        result = new File(result, arg).getPath().replace("\\", "/");
+        result = new File(result, (String)arg).getPath().replace("\\", "/");
       }
     }
     return result;
