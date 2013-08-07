@@ -15,7 +15,7 @@ import java.awt.*;
 public class CommentsTabForm {
   private LabeledTextComponent myCommentsArea;
   private JPanel myContentPane;
-  private LabeledComponent<JTextField> myErrorComponent;
+  private LabeledComponent<JTextPane> myErrorComponent;
 
   public CommentsTabForm() {
     myCommentsArea.setTitle(DiagnosticBundle.message("error.dialog.comment.prompt"));
