@@ -85,8 +85,8 @@ public class OnOffButton extends JToggleButton {
     public void paint(Graphics gr, JComponent c) {
       final OnOffButton button = (OnOffButton)c;
       final Dimension size = button.getSize();
-      int w = size.width-4;
-      int h = size.height-4;
+      int w = size.width-8;
+      int h = size.height-6;
       if (h % 2 == 1) {
         h--;
       }
@@ -109,8 +109,11 @@ public class OnOffButton extends JToggleButton {
         g.drawRoundRect(0, 0, w, h, h, h);
         g.setColor(UIUtil.getLabelDisabledForeground());
         g.drawString(button.getOffText(), h + 4 , h - 4);
-        g.setColor(Gray._128);
-        g.fillOval(0, 0, h - 1, h - 1);
+        g.setColor(UIUtil.getBorderColor());
+        g.setPaint(new GradientPaint(h,0, Gray._178, 0,h, Gray._240));
+        g.fillOval(0, 0, h, h);
+        g.setColor(UIUtil.getBorderColor());
+        g.drawOval(0, 0, h, h);
       }
       g.translate(-1, -1);
     }
