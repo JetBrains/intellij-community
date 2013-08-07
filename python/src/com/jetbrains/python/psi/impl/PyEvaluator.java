@@ -6,16 +6,18 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
  */
 public class PyEvaluator {
   private Set<PyExpression> myVisited = new HashSet<PyExpression>();
+  private Map<String, Object> myNamespace;
+
+  public void setNamespace(Map<String, Object> namespace) {
+    myNamespace = namespace;
+  }
 
   public Object evaluate(PyExpression expr) {
     if (expr == null || myVisited.contains(expr)) {
@@ -49,24 +51,31 @@ public class PyEvaluator {
         Object lhs = evaluate(binaryExpr.getLeftExpression());
         Object rhs = evaluate(binaryExpr.getRightExpression());
         if (lhs != null && rhs != null) {
-          if (lhs instanceof String && rhs instanceof String) {
-            return (String) lhs + (String) rhs;
-          }
-          if (lhs instanceof List && rhs instanceof List) {
-            List<Object> result = new ArrayList<Object>();
-            result.addAll((List) lhs);
-            result.addAll((List) rhs);
-            return result;
-          }
-          return null;
+          return concatenate(lhs, rhs);
         }
       }
     }
     return null;
   }
 
+  public static Object concatenate(Object lhs, Object rhs) {
+    if (lhs instanceof String && rhs instanceof String) {
+      return (String) lhs + (String) rhs;
+    }
+    if (lhs instanceof List && rhs instanceof List) {
+      List<Object> result = new ArrayList<Object>();
+      result.addAll((List) lhs);
+      result.addAll((List) rhs);
+      return result;
+    }
+    return null;
+  }
+
   protected Object evaluateReferenceExpression(PyReferenceExpression expr) {
     if (expr.getQualifier() == null) {
+      if (myNamespace != null) {
+        return myNamespace.get(expr.getReferencedName());
+      }
       PsiElement result = expr.getReference(PyResolveContext.noImplicits()).resolve();
       if (result instanceof PyTargetExpression) {
         result = ((PyTargetExpression)result).findAssignedValue();
