@@ -24,7 +24,7 @@ public abstract class StructuredDocStringBase implements StructuredDocString {
   protected final Map<String, Substring> mySimpleTagValues = Maps.newHashMap();
   protected final Map<String, Map<Substring, Substring>> myArgTagValues = Maps.newHashMap();
 
-  private static final Pattern RE_STRICT_TAG_LINE = Pattern.compile("([a-z]+)(.*): (.*)");
+  private static final Pattern RE_STRICT_TAG_LINE = Pattern.compile("([a-z]+)([^:]*): (.*)");
   private static final Pattern RE_LOOSE_TAG_LINE = Pattern.compile("([a-z]+) ([a-zA-Z_0-9]*):?([^:]*)");
   private static final Pattern RE_ARG_TYPE = Pattern.compile("(.*) ([a-zA-Z_0-9]+)");
 

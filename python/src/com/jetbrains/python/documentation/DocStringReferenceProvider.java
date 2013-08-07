@@ -61,9 +61,9 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  private List<PsiReference> returnTypes(PsiElement element,
-                                         StructuredDocString docString,
-                                                 int offset) {
+  private static List<PsiReference> returnTypes(PsiElement element,
+                                                StructuredDocString docString,
+                                                int offset) {
     List<PsiReference> result = new ArrayList<PsiReference>();
 
     final Substring rtype = docString.getReturnTypeSubstring();
@@ -72,11 +72,11 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
     }
     return result;
   }
-  private List<PsiReference> referencesFromNames(PsiElement element,
-                                                 int offset,
-                                                 StructuredDocString docString,
-                                                 List<Substring> paramNames, 
-                                                 String refType) {
+  private static List<PsiReference> referencesFromNames(PsiElement element,
+                                                        int offset,
+                                                        StructuredDocString docString,
+                                                        List<Substring> paramNames,
+                                                        String refType) {
     List<PsiReference> result = new ArrayList<PsiReference>();
     for (Substring name : paramNames) {
       final String s = name.toString();
