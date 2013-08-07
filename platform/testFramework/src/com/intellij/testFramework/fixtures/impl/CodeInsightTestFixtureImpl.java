@@ -667,7 +667,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                              myFile.getName() +
                              " at caret position, offset " +
                              myEditor.getCaretModel().getOffset() + "\"" +
-                             " psi structure: " + DebugUtil.psiToString(myFile, true);
+                             " psi structure: " + DebugUtil.psiToString(myFile, true, true);
     return element;
   }
 

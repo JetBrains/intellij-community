@@ -541,7 +541,7 @@ public class ExceptionUtil {
       List<PsiClassType> result = ContainerUtil.newArrayList();
 
       for (PsiClassType referencedType : referencedTypes) {
-        final PsiType type = substitutor.substitute(referencedType);
+        final PsiType type = GenericsUtil.eliminateWildcards(substitutor.substitute(referencedType), false);
         if (!(type instanceof PsiClassType)) continue;
         PsiClassType classType = (PsiClassType)type;
         PsiClass exceptionClass = ((PsiClassType)type).resolve();

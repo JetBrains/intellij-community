@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.plugins.intelliLang.references;
+package com.intellij.psi.injection;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -26,18 +26,23 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * This will work only in presence of IntelliLang plugin.
+ *
  * @author Dmitry Avdeev
  *         Date: 01.08.13
  */
 public abstract class ReferenceInjector extends Injectable {
 
-  final static ExtensionPointName<ReferenceInjector> EXTENSION_POINT_NAME = ExtensionPointName.create("org.intellij.intelliLang.referenceInjector");
+  public final static ExtensionPointName<ReferenceInjector> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.referenceInjector");
 
   @Override
   public final Language getLanguage() {
     return null;
   }
 
+  /**
+   * Generated references should be soft ({@link com.intellij.psi.PsiReference#isSoft()})
+   */
   @NotNull
   public abstract PsiReference[] getReferences(@NotNull PsiElement element, @NotNull final ProcessingContext context, @NotNull TextRange range);
 

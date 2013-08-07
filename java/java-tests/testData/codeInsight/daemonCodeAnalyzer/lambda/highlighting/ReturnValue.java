@@ -48,7 +48,7 @@ class Test2 {
   }
 
   {
-    X<?> x = <error descr="No instance of type X<?> exists so that lambda expression can be type-checked">() -> 123</error>;
+    X<?> x = () -> 123;
     X<? extends Number> x1 = () -> 123;
     
   }

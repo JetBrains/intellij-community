@@ -23,7 +23,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Store value in tag like &lt;option name="optionName" value="optionValue"/&gt;
+ * <p>Store value in tag like {@code <option name="optionName" value="optionValue"/>}</p>
+ * <p>nameAttribute can be empty, in which case it is skipped: {@code <option value="optionValue" />}</p>
  *
  * @author nik
  */

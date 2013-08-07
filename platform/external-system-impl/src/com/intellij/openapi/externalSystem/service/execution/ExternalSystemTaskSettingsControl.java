@@ -117,7 +117,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
 
     String path = myOriginalSettings.getExternalProjectPath();
     if (StringUtil.isEmpty(path)) {
-      path = ExternalSystemApiUtil.getLastUsedExternalProjectPath(myExternalSystemId);
+      path = "";
     }
     myProjectPathField.setText(path);
     myTasksTextField.setText(StringUtil.join(myOriginalSettings.getTaskNames(), " "));

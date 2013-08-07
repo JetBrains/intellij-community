@@ -36,7 +36,11 @@ public class DocTagSelectioner extends WordSelectioner {
   @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
+    result.add(getDocTagRange((PsiDocTag)e, editorText, cursorOffset));
+    return result;
+  }
 
+  public static TextRange getDocTagRange(PsiDocTag e, CharSequence documentText, int minOffset) {
     TextRange range = e.getTextRange();
 
     int endOffset = range.getEndOffset();
@@ -49,7 +53,7 @@ public class DocTagSelectioner extends WordSelectioner {
 
       int childStartOffset = child.getTextRange().getStartOffset();
 
-      if (childStartOffset <= cursorOffset) {
+      if (childStartOffset <= minOffset) {
         break;
       }
 
@@ -71,10 +75,8 @@ public class DocTagSelectioner extends WordSelectioner {
       endOffset = Math.min(childStartOffset, endOffset);
     }
 
-    startOffset = CharArrayUtil.shiftBackward(editorText, startOffset - 1, "* \t") + 1;
+    startOffset = CharArrayUtil.shiftBackward(documentText, startOffset - 1, "* \t") + 1;
 
-    result.add(new TextRange(startOffset, endOffset));
-
-    return result;
+    return new TextRange(startOffset, endOffset);
   }
 }

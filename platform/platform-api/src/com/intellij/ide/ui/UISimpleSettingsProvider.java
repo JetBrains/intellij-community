@@ -23,10 +23,25 @@ import com.intellij.util.Consumer;
  */
 public class UISimpleSettingsProvider implements SearchTopHitProvider {
   private static UISettingsOptionDescription CYCLING_SCROLLING = new UISettingsOptionDescription("CYCLING_SCROLLING", "Cyclic scrolling", "appearance");
+  private static UISettingsOptionDescription MEMORY_INDICATOR = new UISettingsOptionDescription("SHOW_MEMORY_INDICATOR", "Show Memory Indicator", "appearance");
 
 
   @Override
   public void consumeTopHits(String pattern, Consumer<Object> collector) {
+    pattern = pattern.trim().toLowerCase();
+    if (pattern.startsWith("cyc") || pattern.startsWith("scr") || patternContains(pattern, "scroll")) {
+      collector.consume(CYCLING_SCROLLING);
+    } else if (patternContains(pattern, "memo")) {
+      collector.consume(MEMORY_INDICATOR);
+    }
+  }
 
+  private static boolean patternContains(String pattern, String search) {
+    for (String s : pattern.split(" ")) {
+      if (s.contains(search)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -4,6 +4,7 @@ import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
+import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,9 +21,12 @@ public interface ServerConnection<D extends DeploymentConfiguration> {
   String getStatusText();
 
 
-  void deploy(@NotNull DeploymentSource source, @NotNull D configuration);
+  void connect(@NotNull Runnable onFinished);
 
-  void undeploy(@NotNull DeploymentSource source, @NotNull D configuration);
+
+  void deploy(@NotNull DeploymentTask<D> task);
+
+  void undeploy(@NotNull DeploymentTask<D> task);
 
   @NotNull
   DeploymentStatus getDeploymentStatus(@NotNull DeploymentSource source);

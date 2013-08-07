@@ -31,9 +31,6 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class WebBrowserServiceImpl extends WebBrowserService {
   @Override
   public boolean canOpenInBrowser(@NotNull PsiElement psiElement) {
@@ -100,9 +97,9 @@ public class WebBrowserServiceImpl extends WebBrowserService {
 
   private static Pair<WebBrowserUrlProvider, Url> getProvider(PsiElement element, PsiFile psiFile) {
     Ref<Url> result = Ref.create();
-    List<WebBrowserUrlProvider> allProviders = Arrays.asList(WebBrowserUrlProvider.EP_NAME.getExtensions());
-    for (WebBrowserUrlProvider urlProvider : DumbService.getInstance(element.getProject()).filterByDumbAwareness(allProviders)) {
-      if (urlProvider.canHandleElement(element, psiFile, result)) {
+    DumbService dumbService = DumbService.getInstance(element.getProject());
+    for (WebBrowserUrlProvider urlProvider : WebBrowserUrlProvider.EP_NAME.getExtensions()) {
+      if ((!dumbService.isDumb() || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(element, psiFile, result)) {
         return Pair.create(urlProvider, result.get());
       }
     }

@@ -18,6 +18,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Attribute;
@@ -64,7 +65,9 @@ class OptionTagBinding implements Binding {
     Element targetElement = new Element(myTagName);
     Object value = accessor.read(o);
 
-    targetElement.setAttribute(myNameAttribute, myName);
+    if (!StringUtil.isEmpty(myNameAttribute)) {
+      targetElement.setAttribute(myNameAttribute, myName);
+    }
 
     if (value == null) return targetElement;
 
@@ -123,6 +126,9 @@ class OptionTagBinding implements Binding {
     Element e = (Element)node;
     if (!e.getName().equals(myTagName)) return false;
     String name = e.getAttributeValue(myNameAttribute);
+    if (StringUtil.isEmpty(myNameAttribute)) {
+      return name == null || name.equals(myName);
+    }
     return name != null && name.equals(myName);
   }
 

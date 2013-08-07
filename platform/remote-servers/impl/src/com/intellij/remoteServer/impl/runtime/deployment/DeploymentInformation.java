@@ -1,4 +1,4 @@
-package com.intellij.remoteServer.impl.runtime;
+package com.intellij.remoteServer.impl.runtime.deployment;
 
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import org.jetbrains.annotations.NotNull;

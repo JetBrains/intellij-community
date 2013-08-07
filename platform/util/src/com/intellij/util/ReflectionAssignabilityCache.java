@@ -19,6 +19,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 
 /**
  * @author peter
+ * @see ReflectionCache
  */
 public class ReflectionAssignabilityCache {
   private final ConcurrentFactoryMap<Class, ConcurrentFactoryMap<Class, Boolean>> myCache = new ConcurrentFactoryMap<Class, ConcurrentFactoryMap<Class, Boolean>>() {

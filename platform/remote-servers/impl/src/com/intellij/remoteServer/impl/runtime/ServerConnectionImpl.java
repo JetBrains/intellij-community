@@ -3,12 +3,13 @@ package com.intellij.remoteServer.impl.runtime;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
+import com.intellij.remoteServer.impl.runtime.deployment.DeploymentInformation;
 import com.intellij.remoteServer.runtime.ConnectionStatus;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
+import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
-import com.intellij.util.ParameterizedRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,23 +49,49 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   }
 
   @Override
-  public void deploy(@NotNull final DeploymentSource source, @NotNull final D configuration) {
-    runOnInstance(new ParameterizedRunnable<ServerRuntimeInstance<D>>() {
+  public void connect(@NotNull final Runnable onFinished) {
+    disconnect();
+    connectIfNeeded(new ServerConnector.ConnectionCallback<D>() {
       @Override
-      public void run(ServerRuntimeInstance<D> instance) {
-        myDeploymentInfos.put(source, new DeploymentInformation(DeploymentStatus.DEPLOYING));
-        instance.deploy(source, configuration, new UpdateDeploymentStatusCallback(source, DeploymentStatus.DEPLOYED,
-                                                                                  DeploymentStatus.NOT_DEPLOYED));
+      public void connected(@NotNull ServerRuntimeInstance<D> serverRuntimeInstance) {
+        onFinished.run();
+      }
+
+      @Override
+      public void errorOccurred(@NotNull String errorMessage) {
+        onFinished.run();
+      }
+    });
+  }
+
+  private void disconnect() {
+    if (myStatus == ConnectionStatus.CONNECTED) {
+      myRuntimeInstance = null;
+      myConnector.disconnect();
+      myStatus = ConnectionStatus.DISCONNECTED;
+    }
+  }
+
+  @Override
+  public void deploy(@NotNull final DeploymentTask<D> task) {
+    connectIfNeeded(new ConnectionCallbackBase<D>() {
+      @Override
+      public void connected(@NotNull ServerRuntimeInstance<D> instance) {
+        myDeploymentInfos.put(task.getSource(), new DeploymentInformation(DeploymentStatus.DEPLOYING));
+        instance.deploy(task, new UpdateDeploymentStatusCallback(task.getSource(), DeploymentStatus.DEPLOYED,
+                                                                    DeploymentStatus.NOT_DEPLOYED));
       }
     });
   }
 
   @Override
-  public void undeploy(@NotNull final DeploymentSource source, @NotNull final D configuration) {
-    runOnInstance(new ParameterizedRunnable<ServerRuntimeInstance<D>>() {
+  public void undeploy(@NotNull final DeploymentTask<D> task) {
+    connectIfNeeded(new ConnectionCallbackBase<D>() {
       @Override
-      public void run(ServerRuntimeInstance<D> instance) {
-        instance.undeploy(source, configuration, new UpdateDeploymentStatusCallback(source, DeploymentStatus.NOT_DEPLOYED, DeploymentStatus.DEPLOYED));
+      public void connected(@NotNull ServerRuntimeInstance<D> instance) {
+        myDeploymentInfos.put(task.getSource(), new DeploymentInformation(DeploymentStatus.UNDEPLOYING));
+        instance.undeploy(task, new UpdateDeploymentStatusCallback(task.getSource(), DeploymentStatus.NOT_DEPLOYED,
+                                                                      DeploymentStatus.DEPLOYED));
       }
     });
   }
@@ -76,10 +103,10 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     return information != null ? information.getStatus() : DeploymentStatus.NOT_DEPLOYED;
   }
 
-  private void runOnInstance(final ParameterizedRunnable<ServerRuntimeInstance<D>> action) {
+  private void connectIfNeeded(final ServerConnector.ConnectionCallback<D> callback) {
     final ServerRuntimeInstance<D> instance = myRuntimeInstance;
     if (instance != null) {
-      action.run(instance);
+      callback.connected(instance);
       return;
     }
 
@@ -89,16 +116,23 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
         myStatus = ConnectionStatus.CONNECTED;
         myRuntimeInstance = instance;
-        action.run(instance);
+        callback.connected(instance);
       }
 
       @Override
-      public void connectionFailed(@NotNull String errorMessage) {
+      public void errorOccurred(@NotNull String errorMessage) {
         myStatus = ConnectionStatus.DISCONNECTED;
         myRuntimeInstance = null;
         myStatusText = errorMessage;
+        callback.errorOccurred(errorMessage);
       }
     });
+  }
+
+  private static abstract class ConnectionCallbackBase<D extends DeploymentConfiguration> implements ServerConnector.ConnectionCallback<D> {
+    @Override
+    public void errorOccurred(@NotNull String errorMessage) {
+    }
   }
 
   private class UpdateDeploymentStatusCallback implements ServerRuntimeInstance.DeploymentOperationCallback {
@@ -118,7 +152,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     }
 
     @Override
-    public void failed(@NotNull String errorMessage) {
+    public void errorOccurred(@NotNull String errorMessage) {
       myDeploymentInfos.put(mySource, new DeploymentInformation(myFailedStatus, errorMessage));
     }
   }

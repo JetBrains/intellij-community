@@ -6,10 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
 import com.intellij.remoteServer.runtime.ServerConnector;
+import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.concurrent.Executor;
 
 /**
  * @author nik
@@ -42,5 +42,5 @@ public abstract class ServerType<C extends ServerConfiguration> {
   public abstract DeploymentConfigurator<?> createDeployer(Project project);
 
   @NotNull
-  public abstract ServerConnector<?> createConnector(@NotNull C configuration, @NotNull Project project, @NotNull Executor asyncTasksExecutor);
+  public abstract ServerConnector<?> createConnector(@NotNull C configuration, @NotNull ServerTaskExecutor asyncTasksExecutor);
 }

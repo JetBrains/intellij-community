@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,21 +284,16 @@ public class Alarm implements Disposable {
               myFuture = null;
             }
 
-            if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
-              try {
+            try {
+              if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
                 SwingUtilities.invokeAndWait(task);
               }
-              catch (Exception e) {
-                LOG.error(e);
-              }
-            }
-            else {
-              try {
+              else {
                 task.run();
               }
-              catch (Exception e) {
-                LOG.error(e);
-              }
+            }
+            catch (Exception e) {
+              LOG.error("Exception in task " + task, e);
             }
           }
         };

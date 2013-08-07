@@ -22,16 +22,17 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.Consumer;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
-import org.intellij.plugins.intelliLang.references.Injectable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Gregory.Shrago
@@ -45,9 +46,6 @@ public abstract class LanguageInjectionSupport {
   public static Key<LanguageInjectionSupport> INJECTOR_SUPPORT = Key.create("INJECTOR_SUPPORT");
   public static Key<LanguageInjectionSupport> SETTINGS_EDITOR = Key.create("SETTINGS_EDITOR");
 
-  @NonNls public static final String XML_SUPPORT_ID = "xml";
-  @NonNls public static final String JAVA_SUPPORT_ID = "java";
-
   @NonNls
   @NotNull
   public abstract String getId();
@@ -55,24 +53,14 @@ public abstract class LanguageInjectionSupport {
   @NotNull
   public abstract Class[] getPatternClasses();
 
-  public abstract boolean useDefaultInjector(final PsiElement host);
+  public abstract boolean isApplicableTo(PsiLanguageInjectionHost host);
 
-  public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {
-    return addInjectionInPlace(language.getID(), psiElement);
-  }
+  public abstract boolean useDefaultInjector(PsiLanguageInjectionHost host);
 
-  public boolean addInjectionInPlace(final String id, final PsiLanguageInjectionHost psiElement) {
-    return false;
-  }
+  @Nullable
+  public abstract BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef);
 
-  public final boolean addInjectionInPlace(final Injectable injectable, final PsiLanguageInjectionHost psiElement) {
-    if (injectable.getLanguage() == null) {
-      return addInjectionInPlace(injectable.getId(), psiElement);
-    }
-    else {
-      return addInjectionInPlace(injectable.getLanguage(), psiElement);
-    }
-  }
+  public abstract boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement);
 
   public abstract boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement);
 

@@ -49,7 +49,7 @@ public class ClassloaderUtil extends ClassUtilCore {
     return Logger.getInstance("ClassloaderUtil");
   }
 
-  public static UrlClassLoader initClassloader(final List<URL> classpathElements) throws Exception {
+  public static UrlClassLoader initClassloader(final List<URL> classpathElements, boolean updatePlugins) throws Exception {
     PathManager.loadProperties();
 
     addParentClasspath(classpathElements);
@@ -60,7 +60,7 @@ public class ClassloaderUtil extends ClassUtilCore {
     UrlClassLoader newClassLoader = new UrlClassLoader(classpathElements, null, true, true);
 
     // prepare plugins
-    if (!isLoadingOfExternalPluginsDisabled()) {
+    if (updatePlugins && !isLoadingOfExternalPluginsDisabled()) {
       try {
         StartupActionScriptManager.executeActionScript();
       }

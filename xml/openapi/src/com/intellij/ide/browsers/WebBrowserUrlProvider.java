@@ -35,26 +35,23 @@ public abstract class WebBrowserUrlProvider {
     }
   }
 
-  public boolean canHandleElement(@NotNull PsiElement element, @NotNull PsiFile psiFile, Ref<Url> result) {
+  public boolean canHandleElement(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull Ref<Url> result) {
     VirtualFile file = psiFile.getVirtualFile();
     if (file == null) {
       return false;
     }
 
-    Url url;
     try {
-      url = getUrl(element, psiFile, file);
+      Url url = getUrl(element, psiFile, file);
+      if (url != null) {
+        result.set(url);
+        return true;
+      }
     }
     catch (BrowserException ignored) {
-      return false;
     }
 
-    if (url == null) {
-      return false;
-    }
-
-    result.set(url);
-    return true;
+    return false;
   }
 
   @Nullable

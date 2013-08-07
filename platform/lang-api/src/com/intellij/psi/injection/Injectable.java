@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.plugins.intelliLang.references;
+package com.intellij.psi.injection;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.ui.EmptyIcon;
-import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -40,6 +35,11 @@ public abstract class Injectable implements Comparable<Injectable> {
 
   @NotNull
   public abstract String getDisplayName();
+
+  @Nullable
+  public String getAdditionalDescription() {
+    return null;
+  }
 
   @NotNull
   public Icon getIcon() {
@@ -57,15 +57,13 @@ public abstract class Injectable implements Comparable<Injectable> {
   @Nullable
   public abstract Language getLanguage();
 
-  public static List<Injectable> getAllInjectables() {
-    Language[] languages = InjectedLanguage.getAvailableLanguages();
-    List<Injectable> list = new ArrayList<Injectable>();
-    for (Language language : languages) {
-      list.add(fromLanguage(language));
-    }
-    list.addAll(Arrays.asList(ReferenceInjector.EXTENSION_POINT_NAME.getExtensions()));
-    Collections.sort(list);
-    return list;
+  public Language toLanguage() {
+    return getLanguage() == null ? new Language(getId(), false) {
+      @Override
+      public String getDisplayName() {
+        return Injectable.this.getDisplayName();
+      }
+    } : getLanguage();
   }
 
   public static Injectable fromLanguage(final Language language) {
@@ -79,8 +77,14 @@ public abstract class Injectable implements Comparable<Injectable> {
       @NotNull
       @Override
       public String getDisplayName() {
+        return language.getDisplayName();
+      }
+
+      @Nullable
+      @Override
+      public String getAdditionalDescription() {
         final FileType ft = language.getAssociatedFileType();
-        return language.getDisplayName() + (ft != null ? " (" + ft.getDescription() + ")" : "");
+        return ft != null ? " (" + ft.getDescription() + ")" : null;
       }
 
       @NotNull
