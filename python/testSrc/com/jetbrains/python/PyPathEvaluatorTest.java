@@ -24,6 +24,10 @@ public class PyPathEvaluatorTest extends PyTestCase {
     assertEquals("/foo/bar/db.sqlite3", doEvaluate("os.path.join(__file__, 'db.sqlite3'", "/foo/bar"));
   }
 
+  public void testNormPath() {  // PY-10194
+    assertEquals("/foo/bar/baz.py", doEvaluate("os.path.normpath(__file__)", "/foo/bar/baz.py"));
+  }
+
   public void testReplace() {
     assertEquals("/foo/Bar/Baz.py", doEvaluate("__file__.replace('b', 'B')", "/foo/bar/baz.py"));
   }

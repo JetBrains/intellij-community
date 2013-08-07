@@ -41,6 +41,9 @@ public class PyPathEvaluator extends PyEvaluator {
     else if (call.isCalleeText(PyNames.JOIN) && args.length >= 1) {
       return evaluatePathInJoin(args, args.length);
     }
+    else if (call.isCalleeText(PyNames.NORMPATH) && args.length == 1) {
+      return evaluate(args[0]);
+    }
     else if (call.isCalleeText(PyNames.ABSPATH) && args.length == 1) {
       Object argValue = evaluate(args[0]);
       // relative to directory of 'containingFilePath', not file

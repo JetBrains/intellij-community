@@ -69,6 +69,7 @@ public class PyNames {
 
   public static final String DIRNAME = "dirname";
   public static final String ABSPATH = "abspath";
+  public static final String NORMPATH = "normpath";
   public static final String JOIN = "join";
   public static final String REPLACE = "replace";
   public static final String FILE = "__file__";
