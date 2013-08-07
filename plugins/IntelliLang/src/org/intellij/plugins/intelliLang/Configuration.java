@@ -186,14 +186,10 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
   @NonNls public static final String COMPONENT_NAME = "LanguageInjectionConfiguration";
 
   // element names
-  @NonNls private static final String TAG_INJECTION_NAME = "TAGS";
-  @NonNls private static final String ATTRIBUTE_INJECTION_NAME = "ATTRIBUTES";
-  @NonNls private static final String PARAMETER_INJECTION_NAME = "PARAMETERS";
   @NonNls private static final String INSTRUMENTATION_TYPE_NAME = "INSTRUMENTATION";
   @NonNls private static final String LANGUAGE_ANNOTATION_NAME = "LANGUAGE_ANNOTATION";
   @NonNls private static final String PATTERN_ANNOTATION_NAME = "PATTERN_ANNOTATION";
   @NonNls private static final String SUBST_ANNOTATION_NAME = "SUBST_ANNOTATION";
-  @NonNls private static final String ENTRY_NAME = "entry";
   @NonNls private static final String RESOLVE_REFERENCES = "RESOLVE_REFERENCES";
   @NonNls private static final String LOOK_FOR_VAR_ASSIGNMENTS = "LOOK_FOR_VAR_ASSIGNMENTS";
   @NonNls private static final String USE_DFA_IF_AVAILABLE = "USE_DFA_IF_AVAILABLE";
@@ -242,7 +238,6 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       supports.put(support.getId(), support);
     }
-    loadStateOld(element, supports.get(LanguageInjectionSupport.XML_SUPPORT_ID), supports.get(LanguageInjectionSupport.JAVA_SUPPORT_ID));
     for (Element child : element.getChildren("injection")){
       final String key = child.getAttributeValue("injector-id");
       final LanguageInjectionSupport support = supports.get(key);
@@ -266,31 +261,6 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
       }
     }
     return places.length != 0 && result.length == 0? null : result;
-  }
-
-  private void loadStateOld(Element element, final LanguageInjectionSupport xmlSupport, final LanguageInjectionSupport javaSupport) {
-    if (xmlSupport != null) {
-      final Element xmlTagMarker = new Element("XmlTagInjection");
-      myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(TAG_INJECTION_NAME), new Factory<BaseInjection>() {
-        public BaseInjection create() {
-          return xmlSupport.createInjection(xmlTagMarker);
-        }
-      }));
-      final Element xmlAttributeMarker = new Element("XmlAttributeInjection");
-      myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(ATTRIBUTE_INJECTION_NAME), new Factory<BaseInjection>() {
-        public BaseInjection create() {
-          return xmlSupport.createInjection(xmlAttributeMarker);
-        }
-      }));
-    }
-    if (javaSupport != null) {
-      final Element javaMethodMarker = new Element("MethodParameterInjection");
-      myInjections.get(LanguageInjectionSupport.JAVA_SUPPORT_ID).addAll(readExternal(element.getChild(PARAMETER_INJECTION_NAME), new Factory<BaseInjection>() {
-        public BaseInjection create() {
-          return javaSupport.createInjection(javaMethodMarker);
-        }
-      }));
-    }
   }
 
   private static boolean readBoolean(Element element, String key, boolean defValue) {
@@ -359,20 +329,6 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
       }
     }
     return element;
-  }
-
-  @SuppressWarnings({"unchecked"})
-  private static <T extends BaseInjection> List<T> readExternal(Element element, Factory<T> factory) {
-    final List<T> injections = new ArrayList<T>();
-    if (element != null) {
-      final List<Element> list = element.getChildren(ENTRY_NAME);
-      for (Element entry : list) {
-        final T o = factory.create();
-        o.loadState(entry);
-        injections.add(o);
-      }
-    }
-    return injections;
   }
 
   public static Configuration getInstance() {

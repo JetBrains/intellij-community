@@ -15,11 +15,7 @@
  */
 package com.intellij.codeEditor.printing;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -160,8 +156,7 @@ class PrintManager {
             printerJob.cancel();
           }
           catch (Exception e) {
-            Notifications.Bus.notify(new Notification("Print", CommonBundle.getErrorTitle(), e.getMessage(), NotificationType.ERROR));
-            LOG.warn(e);
+            LOG.error(e);
           }
         }
       });

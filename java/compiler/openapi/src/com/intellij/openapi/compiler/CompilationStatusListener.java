@@ -26,7 +26,7 @@ public interface CompilationStatusListener extends EventListener {
   /**
    * Invoked in a Swing dispatch thread after the compilation is finished.
    *
-   * @param aborted  true if compilatioin has been cancelled
+   * @param aborted  true if compilation has been cancelled
    * @param errors   error count
    * @param warnings warning count
    * @param compileContext context for the finished compilation

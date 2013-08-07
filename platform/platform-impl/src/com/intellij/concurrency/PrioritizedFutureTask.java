@@ -22,6 +22,7 @@ package com.intellij.concurrency;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -35,7 +36,7 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
   private final int myTaskIndex;
   private final int myPriority;
   private final boolean myFailFastOnAcquireReadAction;
-  private volatile boolean myParentThreadHasReadAccess;
+  private volatile boolean myRunInReadAction;
   private volatile boolean myReportExceptions;
 
   PrioritizedFutureTask(final Callable<T> callable,
@@ -52,14 +53,15 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
     myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
   }
 
-  public void beforeRun(boolean parentThreadHasReadAccess, boolean reportExceptions) {
-    myParentThreadHasReadAccess = parentThreadHasReadAccess;
+  public void beforeRun(boolean runInReadAction, boolean reportExceptions) {
+    myRunInReadAction = runInReadAction;
     myReportExceptions = reportExceptions;
   }
 
   @Override
   public void run() {
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         try {
           if (myJob.isCanceled()) {
@@ -91,7 +93,7 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
         }
       }
     };
-    if (myParentThreadHasReadAccess) {
+    if (myRunInReadAction) {
       // have to start "real" read action so that we cannot start write action until we are finished here
       if (myFailFastOnAcquireReadAction) {
         if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable)) {
@@ -114,7 +116,8 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
     }
   }
 
-  public int compareTo(final PrioritizedFutureTask o) {
+  @Override
+  public int compareTo(@NotNull final PrioritizedFutureTask o) {
     int priorityDelta = myPriority - o.myPriority;
     if (priorityDelta != 0) return priorityDelta;
     if (myJobIndex != o.myJobIndex) return myJobIndex < o.myJobIndex ? -1 : 1;

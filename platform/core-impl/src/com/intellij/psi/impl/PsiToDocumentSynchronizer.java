@@ -53,7 +53,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     return pair != null ? pair.getFirst() : null;
   }
 
-  public boolean isInSynchronization(final Document document) {
+  public boolean isInSynchronization(@NotNull Document document) {
     return mySyncDocument == document;
   }
 
@@ -64,7 +64,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   private interface DocSyncAction {
-    void syncDocument(Document document, PsiTreeChangeEventImpl event);
+    void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event);
   }
 
   private void doSync(@NotNull final PsiTreeChangeEvent event, boolean force, @NotNull final DocSyncAction syncAction) {
@@ -107,7 +107,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     if (!(event.getChild() instanceof ForeignLeafPsiElement)) {
       doSync(event, false, new DocSyncAction() {
         @Override
-        public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
+        public void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event) {
           insertString(document, event.getOffset(), event.getChild().getText());
         }
     });
@@ -119,7 +119,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     if (!(event.getChild() instanceof ForeignLeafPsiElement)) {
       doSync(event, false, new DocSyncAction() {
         @Override
-        public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
+        public void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event) {
           deleteString(document, event.getOffset(), event.getOffset() + event.getOldLength());
         }
       });
@@ -130,7 +130,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   public void childReplaced(@NotNull final PsiTreeChangeEvent event) {
     doSync(event, false, new DocSyncAction() {
       @Override
-      public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
+      public void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event) {
         int oldLength = event.getOldChild() instanceof ForeignLeafPsiElement ? 0 : event.getOldLength();
         String newText = event.getNewChild() instanceof ForeignLeafPsiElement ? "" : event.getNewChild().getText();
         replaceString(document, event.getOffset(), event.getOffset() + oldLength, newText);
@@ -142,7 +142,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   public void childrenChanged(@NotNull final PsiTreeChangeEvent event) {
     doSync(event, false, new DocSyncAction() {
       @Override
-      public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
+      public void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event) {
         replaceString(document, event.getOffset(), event.getOffset() + event.getOldLength(), event.getParent().getText());
       }
     });
@@ -209,7 +209,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       fakeEvent.setFile(changeScope.getContainingFile());
       doSync(fakeEvent, true, new DocSyncAction() {
         @Override
-        public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
+        public void syncDocument(@NotNull Document document, @NotNull PsiTreeChangeEventImpl event) {
           doCommitTransaction(document, documentChangeTransaction);
         }
       });
@@ -220,7 +220,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
     return true;
   }
-  
+
   @TestOnly
   public void doCommitTransaction(@NotNull Document document){
     doCommitTransaction(document, getTransaction(document));

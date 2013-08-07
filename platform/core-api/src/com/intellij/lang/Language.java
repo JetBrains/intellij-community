@@ -221,4 +221,11 @@ public abstract class Language extends UserDataHolderBase {
     }
     return null;
   }
+
+  /** Fake language identifier without registering */
+  protected Language(String id, @SuppressWarnings("UnusedParameters") boolean register) {
+    myID = id;
+    myBaseLanguage = null;
+    myMimeTypes = null;
+  }
 }

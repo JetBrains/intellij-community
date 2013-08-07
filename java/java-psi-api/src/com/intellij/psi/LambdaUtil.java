@@ -484,23 +484,30 @@ public class LambdaUtil {
       }
     }
     else if (parent instanceof PsiReturnStatement) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-      if (method != null) {
-        return method.getReturnType();
+      final PsiLambdaExpression gParent = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
+      if (gParent != null) {
+        return getFunctionalInterfaceTypeByContainingLambda(gParent);
+      } else {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+        if (method != null) {
+          return method.getReturnType();
+        }
       }
     }
     else if (parent instanceof PsiLambdaExpression) {
-      final PsiType parentInterfaceType = ((PsiLambdaExpression)parent).getFunctionalInterfaceType();
-      if (parentInterfaceType != null) {
-        return getFunctionalInterfaceReturnType(parentInterfaceType);
-      }
+      return getFunctionalInterfaceTypeByContainingLambda((PsiLambdaExpression)parent);
     }
     return null;
   }
 
+  private static PsiType getFunctionalInterfaceTypeByContainingLambda(@NotNull PsiLambdaExpression parentLambda) {
+    final PsiType parentInterfaceType = parentLambda.getFunctionalInterfaceType();
+    return parentInterfaceType != null ? getFunctionalInterfaceReturnType(parentInterfaceType) : null;
+  }
+
   private static int adjustLambdaIdx(int lambdaIdx, PsiMethod resolve, PsiParameter[] parameters) {
     final int finalLambdaIdx;
-    if (((PsiMethod)resolve).isVarArgs() && lambdaIdx >= parameters.length) {
+    if (resolve.isVarArgs() && lambdaIdx >= parameters.length) {
       finalLambdaIdx = parameters.length - 1;
     } else {
       finalLambdaIdx = lambdaIdx;
@@ -524,7 +531,6 @@ public class LambdaUtil {
         final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(param, PsiLambdaExpression.class);
         if (lambdaExpression != null) {
 
-          final PsiParameterList parameterList = lambdaExpression.getParameterList();
           PsiType type = getFunctionalInterfaceType(lambdaExpression, true, parameterIndex);
           if (type == null) {
             type = getFunctionalInterfaceType(lambdaExpression, false);

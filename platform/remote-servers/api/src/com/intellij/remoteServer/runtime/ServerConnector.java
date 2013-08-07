@@ -12,8 +12,7 @@ public abstract class ServerConnector<D extends DeploymentConfiguration> {
 
   public abstract void disconnect();
 
-  public interface ConnectionCallback<D extends DeploymentConfiguration> {
+  public interface ConnectionCallback<D extends DeploymentConfiguration> extends RemoteOperationCallback {
     void connected(@NotNull ServerRuntimeInstance<D> serverRuntimeInstance);
-    void connectionFailed(@NotNull String errorMessage);
   }
 }

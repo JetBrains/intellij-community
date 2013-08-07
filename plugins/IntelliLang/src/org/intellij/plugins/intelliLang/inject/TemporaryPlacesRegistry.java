@@ -50,6 +50,11 @@ public class TemporaryPlacesRegistry {
       return "temp";
     }
 
+    @Override
+    public boolean isApplicableTo(PsiLanguageInjectionHost host) {
+      return true;
+    }
+
     @NotNull
     @Override
     public Class[] getPatternClasses() {

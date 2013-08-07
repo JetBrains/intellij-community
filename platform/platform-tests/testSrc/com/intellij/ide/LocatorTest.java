@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,7 +25,6 @@ import java.io.File;
 
 public class LocatorTest extends PlatformLangTestCase {
   public void test() throws Exception {
-    IdeaTestApplication.getInstance(null);
     File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
     assertTrue("doesn't exist: " + locatorFile.getPath(), locatorFile.exists());
     assertTrue("can't read: " + locatorFile.getPath(), locatorFile.canRead());

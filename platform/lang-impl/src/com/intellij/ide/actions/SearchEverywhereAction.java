@@ -21,6 +21,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.ide.util.gotoByName.*;
@@ -58,6 +59,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.OnOffButton;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -330,11 +332,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       Component cmp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (myLocationString != null) {
+      if (myLocationString != null || value instanceof BooleanOptionDescription) {
         final JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(UIUtil.getListBackground());
+        panel.setBackground(UIUtil.getListBackground(isSelected));
         panel.add(cmp, BorderLayout.CENTER);
-        panel.add(myLocation.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus), BorderLayout.EAST);
+        final Component rightComponent;
+        if (value instanceof BooleanOptionDescription) {
+          final OnOffButton button = new OnOffButton();
+          button.setSelected(((BooleanOptionDescription)value).isOptionEnabled());
+          rightComponent = button;
+        } else {
+          rightComponent = myLocation.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        }
+        panel.add(rightComponent, BorderLayout.EAST);
         cmp = panel;
       }
 

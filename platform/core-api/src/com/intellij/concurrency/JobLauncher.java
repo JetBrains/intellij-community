@@ -50,14 +50,23 @@ public abstract class JobLauncher {
                                                               boolean failFastOnAcquireReadAction,
                                                               @NotNull Processor<T> thingProcessor) throws ProcessCanceledException;
 
+  public abstract <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
+                                                              ProgressIndicator progress,
+                                                              boolean runInReadAction,
+                                                              boolean failFastOnAcquireReadAction,
+                                                              @NotNull Processor<T> thingProcessor);
+
+  @NotNull
   public abstract <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<? extends T> things,
                                                                                 ProgressIndicator progress,
                                                                                 boolean failFastOnAcquireReadAction,
                                                                                 @NotNull Processor<T> thingProcessor);
 
 
+  @NotNull
   public abstract Job<Void> submitToJobThread(int priority, @NotNull final Runnable action, @Nullable Consumer<Future> onDoneCallback);
 
+  @NotNull
   public Job<Void> submitToJobThread(int priority, @NotNull final Runnable action) {
     return submitToJobThread(priority, action, null);
   }

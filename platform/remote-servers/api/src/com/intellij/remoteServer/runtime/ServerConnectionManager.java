@@ -1,7 +1,6 @@
 package com.intellij.remoteServer.runtime;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -13,8 +12,8 @@ import java.util.Collection;
  */
 public abstract class ServerConnectionManager {
   @NotNull
-  public static ServerConnectionManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ServerConnectionManager.class);
+  public static ServerConnectionManager getInstance() {
+    return ServiceManager.getService(ServerConnectionManager.class);
   }
 
   @NotNull

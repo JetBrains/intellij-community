@@ -53,30 +53,34 @@ public class SpringLoadedPositionManager implements PositionManager {
   @NotNull
   @Override
   public List<ReferenceType> getAllClasses(final SourcePosition classPosition) throws NoDataException {
-    AccessToken accessToken = ReadAction.start();
+    int line;
+    String className;
 
+    AccessToken accessToken = ReadAction.start();
     try {
-      String className = findEnclosingName(classPosition);
+      className = findEnclosingName(classPosition);
       if (className == null) throw new NoDataException();
 
-      List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
-      if (referenceTypes.isEmpty()) throw new NoDataException();
-
-      Set<ReferenceType> res = new HashSet<ReferenceType>();
-
-      for (ReferenceType referenceType : referenceTypes) {
-        findNested(res, referenceType, classPosition);
-      }
-
-      if (res.isEmpty()) {
-        throw new NoDataException();
-      }
-
-      return new ArrayList<ReferenceType>(res);
+      line = classPosition.getLine();
     }
     finally {
       accessToken.finish();
     }
+
+    List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
+    if (referenceTypes.isEmpty()) throw new NoDataException();
+
+    Set<ReferenceType> res = new HashSet<ReferenceType>();
+
+    for (ReferenceType referenceType : referenceTypes) {
+      findNested(res, referenceType, line);
+    }
+
+    if (res.isEmpty()) {
+      throw new NoDataException();
+    }
+
+    return new ArrayList<ReferenceType>(res);
   }
 
   @NotNull
@@ -87,28 +91,18 @@ public class SpringLoadedPositionManager implements PositionManager {
 
   @Nullable
   private static String findEnclosingName(final SourcePosition position) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-
-    try {
-      PsiElement element = findElementAt(position);
-      while (true) {
-        element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, PsiClassImpl.class);
-        if (element == null
-            || (element instanceof GrTypeDefinition && !((GrTypeDefinition)element).isAnonymous())
-            || (element instanceof PsiClassImpl && ((PsiClassImpl)element).getName() != null)
-          ) {
-          break;
-        }
+    PsiElement element = findElementAt(position);
+    while (true) {
+      element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, PsiClassImpl.class);
+      if (element == null
+          || (element instanceof GrTypeDefinition && !((GrTypeDefinition)element).isAnonymous())
+          || (element instanceof PsiClassImpl && ((PsiClassImpl)element).getName() != null)
+        ) {
+        break;
       }
+    }
 
-      if (element != null) {
-        return getClassNameForJvm((PsiClass)element);
-      }
-      return null;
-    }
-    finally {
-      accessToken.finish();
-    }
+    return null;
   }
 
   @Nullable
@@ -167,7 +161,7 @@ public class SpringLoadedPositionManager implements PositionManager {
       && GENERATED_CLASS_NAME.matcher(name.substring(ownerClassName.length())).matches();
   }
   
-  private static void findNested(Set<ReferenceType> res, ReferenceType fromClass, SourcePosition classPosition) {
+  private static void findNested(Set<ReferenceType> res, ReferenceType fromClass, int line) {
     if (!fromClass.isPrepared()) return;
 
     List<ReferenceType> nestedTypes = fromClass.nestedTypes();
@@ -183,12 +177,12 @@ public class SpringLoadedPositionManager implements PositionManager {
         }
       }
       else {
-        findNested(res, nested, classPosition);
+        findNested(res, nested, line);
       }
     }
 
     try {
-      final int lineNumber = classPosition.getLine() + 1;
+      final int lineNumber = line + 1;
 
       ReferenceType effectiveRef = springLoadedGeneratedClass == null ? fromClass : springLoadedGeneratedClass;
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
@@ -73,21 +74,21 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
           XmlAttributeValue value = attribute.getValueElement();
           assert value != null;
           holder.registerProblem(attribute, "Namespace declaration is never used", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                 new RemoveNamespaceDeclarationFix(declaredPrefix, false));
+                                 new RemoveNamespaceDeclarationFix(declaredPrefix, false, !refCountHolder.isUsedNamespace(namespace)));
 
           XmlTag parent = attribute.getParent();
           if (declaredPrefix.length() == 0) {
             XmlAttribute location = getDefaultLocation(parent);
             if (location != null) {
               holder.registerProblem(location, NAMESPACE_LOCATION_IS_NEVER_USED, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                     new RemoveNamespaceDeclarationFix(declaredPrefix, true));
+                                     new RemoveNamespaceDeclarationFix(declaredPrefix, true, true));
             }
           }
           else if (!refCountHolder.isUsedNamespace(namespace)) {
             for (PsiReference reference : getLocationReferences(namespace, parent)) {
               if (!XmlHighlightVisitor.hasBadResolve(reference, false))
               holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,
-                                                 new RemoveNamespaceDeclarationFix(declaredPrefix, true));
+                                                 new RemoveNamespaceDeclarationFix(declaredPrefix, true, true));
             }
           }
         }
@@ -236,10 +237,12 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
     protected final String myPrefix;
     private final boolean myLocationFix;
+    private final boolean myRemoveLocation;
 
-    private RemoveNamespaceDeclarationFix(@Nullable String prefix, boolean locationFix) {
+    private RemoveNamespaceDeclarationFix(@Nullable String prefix, boolean locationFix, boolean removeLocation) {
       myPrefix = prefix;
       myLocationFix = locationFix;
+      myRemoveLocation = removeLocation;
     }
 
     @NotNull
@@ -306,17 +309,19 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       Document document = documentManager.getDocument(attribute.getContainingFile());
       assert document != null;
       attribute.delete();
-      if (prefix.length() == 0) {
-        XmlAttribute locationAttr = getDefaultLocation(parent);
-        if (locationAttr != null) {
-          locationAttr.delete();
+      if (myRemoveLocation) {
+        if (prefix.length() == 0) {
+          XmlAttribute locationAttr = getDefaultLocation(parent);
+          if (locationAttr != null) {
+            locationAttr.delete();
+          }
         }
-      }
-      else {
-        documentManager.doPostponedOperationsAndUnblockDocument(document);
-        PsiReference[] references = getLocationReferences(namespace, parent);
-        removeReferencesOrAttribute(references);
-        documentManager.commitDocument(document);
+        else {
+          documentManager.doPostponedOperationsAndUnblockDocument(document);
+          PsiReference[] references = getLocationReferences(namespace, parent);
+          removeReferencesOrAttribute(references);
+          documentManager.commitDocument(document);
+        }
       }
     }
 
@@ -349,7 +354,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     public static final String NAME = "Remove unused namespace location";
 
     private RemoveNamespaceLocationFix(String namespace) {
-      super(namespace, true);
+      super(namespace, true, true);
     }
 
     @NotNull
@@ -360,7 +365,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
     @Override
     protected void doRemove(Project project, XmlAttribute attribute, XmlTag parent) {
-      if (myPrefix.length() == 0) {
+      if (StringUtil.isEmpty(myPrefix)) {
         attribute.delete();
       }
       else {

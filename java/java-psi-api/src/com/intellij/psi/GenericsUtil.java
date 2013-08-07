@@ -120,7 +120,7 @@ public class GenericsUtil {
           PsiType mapping2 = subst2.substitute(parameter);
 
           if (mapping1 != null && mapping2 != null) {
-            substitutor = substitutor.put(parameter, getLeastContainingTypeArgument(mapping1, mapping2, compared, manager));
+            substitutor = substitutor.put(parameter, getLeastContainingTypeArgument(mapping1, mapping2, compared, manager, type1.equals(mapping1) && type2.equals(mapping2) ? aSuper : null, parameter));
           }
           else {
             substitutor = substitutor.put(parameter, null);
@@ -150,9 +150,23 @@ public class GenericsUtil {
   private static PsiType getLeastContainingTypeArgument(PsiType type1,
                                                         PsiType type2,
                                                         Set<Pair<PsiType, PsiType>> compared,
-                                                        PsiManager manager) {
+                                                        PsiManager manager,
+                                                        PsiClass nestedLayer, 
+                                                        PsiTypeParameter parameter) {
     Pair<PsiType, PsiType> types = new Pair<PsiType, PsiType>(type1, type2);
-    if (compared.contains(types)) return PsiWildcardType.createUnbounded(manager);
+    if (compared.contains(types)) {
+      if (nestedLayer != null) {
+        PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+        for (PsiTypeParameter param : PsiUtil.typeParametersIterable(nestedLayer)) {
+          subst = subst.put(param, PsiWildcardType.createUnbounded(manager));
+        }
+        subst = subst.put(parameter, getLeastContainingTypeArgument(type1, type2, compared, manager, null, null));
+
+        final PsiClassType boundType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(nestedLayer, subst);
+        return PsiWildcardType.createExtends(manager, boundType);
+      }
+      return PsiWildcardType.createUnbounded(manager);
+    }
     compared.add(types);
 
     try {
@@ -180,7 +194,7 @@ public class GenericsUtil {
         }
       }
       else if (type2 instanceof PsiWildcardType) {
-        return getLeastContainingTypeArgument(type2, type1, compared, manager);
+        return getLeastContainingTypeArgument(type2, type1, compared, manager, null, null);
       }
       //Done with wildcards
 

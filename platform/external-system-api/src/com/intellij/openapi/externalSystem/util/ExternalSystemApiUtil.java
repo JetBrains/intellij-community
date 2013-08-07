@@ -405,11 +405,22 @@ public class ExternalSystemApiUtil {
   @NotNull
   public static String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
     if (rootProjectPath == null) {
-      return new File(targetProjectPath).getParentFile().getName();
+      File rootProjectDir = new File(targetProjectPath);
+      if (rootProjectDir.isFile()) {
+        rootProjectDir = rootProjectDir.getParentFile();
+      }
+      return rootProjectDir.getName();
     }
-    File rootProjectDir = new File(rootProjectPath).getParentFile();
+    File rootProjectDir = new File(rootProjectPath);
+    if (rootProjectDir.isFile()) {
+      rootProjectDir = rootProjectDir.getParentFile();
+    }
+    File targetProjectDir = new File(targetProjectPath);
+    if (targetProjectDir.isFile()) {
+      targetProjectDir = targetProjectDir.getParentFile();
+    }
     StringBuilder buffer = new StringBuilder();
-    for (File f = new File(targetProjectPath).getParentFile(); f != null && !FileUtil.filesEqual(f, rootProjectDir); f = f.getParentFile()) {
+    for (File f = targetProjectDir; f != null && !FileUtil.filesEqual(f, rootProjectDir); f = f.getParentFile()) {
       buffer.insert(0, f.getName()).insert(0, ":");
     }
     buffer.insert(0, rootProjectDir.getName());

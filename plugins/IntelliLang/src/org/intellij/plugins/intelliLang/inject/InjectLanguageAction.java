@@ -15,39 +15,66 @@
  */
 package org.intellij.plugins.intelliLang.inject;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.ColoredListCellRendererWrapper;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.references.Injectable;
+import com.intellij.psi.injection.Injectable;
 import org.intellij.plugins.intelliLang.references.InjectedReferencesContributor;
+import com.intellij.psi.injection.ReferenceInjector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class InjectLanguageAction implements IntentionAction {
   @NonNls private static final String INJECT_LANGUAGE_FAMILY = "Inject Language/Reference";
+  public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
+
+  public static List<Injectable> getAllInjectables() {
+    Language[] languages = InjectedLanguage.getAvailableLanguages();
+    List<Injectable> list = new ArrayList<Injectable>();
+    for (Language language : languages) {
+      list.add(Injectable.fromLanguage(language));
+    }
+    list.addAll(Arrays.asList(ReferenceInjector.EXTENSION_POINT_NAME.getExtensions()));
+    Collections.sort(list);
+    return list;
+  }
 
   @NotNull
   public String getText() {
@@ -99,17 +126,23 @@ public class InjectLanguageAction implements IntentionAction {
     if (defaultFunctionalityWorked(host, injectable.getId())) return;
 
     try {
+      Language language = injectable.toLanguage();
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
-        if (support.addInjectionInPlace(injectable, host)) {
-          ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+        if (support.isApplicableTo(host) && support.addInjectionInPlace(language, host)) {
           return;
         }
       }
-      TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(injectable, host);
+      if (TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host)) {
+        HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXml(language.getDisplayName()) + " was temporarily injected");
+      }
     }
     finally {
       if (injectable.getLanguage() != null) {    // no need for reference injection
         FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+      }
+      else {
+        ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+        DaemonCodeAnalyzer.getInstance(project).restart();
       }
     }
   }
@@ -119,27 +152,43 @@ public class InjectLanguageAction implements IntentionAction {
   }
 
   private static boolean doChooseLanguageToInject(Editor editor, final Processor<Injectable> onChosen) {
-    final List<Injectable> injectables = Injectable.getAllInjectables();
+    final List<Injectable> injectables = getAllInjectables();
 
     final JList list = new JBList(injectables);
-    list.setCellRenderer(new ListCellRendererWrapper<Injectable>() {
+    list.setCellRenderer(new ColoredListCellRendererWrapper<Injectable>() {
       @Override
-      public void customize(JList list, Injectable language, int index, boolean selected, boolean hasFocus) {
+      protected void doCustomize(JList list, Injectable language, int index, boolean selected, boolean hasFocus) {
         setIcon(language.getIcon());
-        setText(language.getDisplayName());
+        append(language.getDisplayName());
+        String description = language.getAdditionalDescription();
+        if (description != null) {
+          append(description, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
       }
     });
-    new PopupChooserBuilder(list).setItemChoosenCallback(new Runnable() {
+    JBPopup popup = new PopupChooserBuilder(list).setItemChoosenCallback(new Runnable() {
       public void run() {
-        onChosen.process((Injectable)list.getSelectedValue());
+        Injectable value = (Injectable)list.getSelectedValue();
+        onChosen.process(value);
+        PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, value.getId());
       }
     }).setFilteringEnabled(new Function<Object, String>() {
       @Override
       public String fun(Object language) {
         return ((Injectable)language).getDisplayName();
       }
-    })
-      .createPopup().showInBestPositionFor(editor);
+    }).createPopup();
+    final String lastInjected = PropertiesComponent.getInstance().getValue(LAST_INJECTED_LANGUAGE);
+    if (lastInjected != null) {
+      Injectable injectable = ContainerUtil.find(injectables, new Condition<Injectable>() {
+        @Override
+        public boolean value(Injectable injectable) {
+          return lastInjected.equals(injectable.getId());
+        }
+      });
+      list.setSelectedValue(injectable, true);
+    }
+    popup.showInBestPositionFor(editor);
     return true;
   }
 
