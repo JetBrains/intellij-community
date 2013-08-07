@@ -622,6 +622,22 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
+  @Nullable
+  public static HighlightInfo checkUnderscore(@NotNull PsiIdentifier identifier, @NotNull PsiVariable variable) {
+    if ("_".equals(variable.getName()) && PsiUtil.isLanguageLevel8OrHigher(variable)) {
+      if (variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiLambdaExpression) {
+        String message = JavaErrorMessages.message("underscore.lambda.identifier");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(message).create();
+      }
+      else {
+        String message = JavaErrorMessages.message("underscore.identifier");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(identifier).descriptionAndTooltip(message).create();
+      }
+    }
+
+    return null;
+  }
+
   @NotNull
   public static String formatClass(@NotNull PsiClass aClass) {
     return formatClass(aClass, true);
