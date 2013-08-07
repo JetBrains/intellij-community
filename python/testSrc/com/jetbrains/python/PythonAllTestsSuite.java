@@ -115,7 +115,8 @@ public class PythonAllTestsSuite {
     PyChangeSignatureTest.class,
     PyCommenterTest.class,
     PyRegexpTest.class,
-    PyAddImportTest.class
+    PyAddImportTest.class,
+    PyPathEvaluatorTest.class
   };
 
   public static TestSuite suite() {

@@ -9,8 +9,6 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyPathEvaluator;
 
-import java.util.HashSet;
-
 /**
  * @author yole
  */
@@ -33,7 +31,7 @@ public class PyPathEvaluatorTest extends PyTestCase {
     PyFile file = (PyFile) myFixture.getFile();
     final PyTargetExpression expression = file.findTopLevelAttribute("TEMPLATES_DIR");
     final PyExpression value = expression.findAssignedValue();
-    final String result = FileUtil.toSystemIndependentName(PyPathEvaluator.evaluate(value, "", new HashSet<PyExpression>()));
+    final String result = FileUtil.toSystemIndependentName(new PyPathEvaluator("").evaluate(value));
     assertEquals(result, "/foo/templates");
   }
 
@@ -43,6 +41,6 @@ public class PyPathEvaluatorTest extends PyTestCase {
 
   private String doEvaluate(final String text, final String file) {
     final PyExpression expression = PyElementGenerator.getInstance(myFixture.getProject()).createExpressionFromText(text);
-    return FileUtil.toSystemIndependentName(PyPathEvaluator.evaluate(expression, file, new HashSet<PyExpression>()));
+    return FileUtil.toSystemIndependentName(new PyPathEvaluator(file).evaluate(expression));
   }
 }
