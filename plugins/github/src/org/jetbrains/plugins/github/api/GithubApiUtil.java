@@ -209,7 +209,7 @@ public class GithubApiUtil {
       case HttpStatus.SC_FORBIDDEN:
         throw new GithubAuthenticationException("Request response: " + getErrorMessage(method));
       default:
-        throw new HttpException(code + ": " + getErrorMessage(method));
+        throw new GithubStatusCodeException(code + ": " + getErrorMessage(method), code);
     }
   }
 
