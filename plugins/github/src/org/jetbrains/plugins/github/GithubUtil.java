@@ -268,10 +268,10 @@ public class GithubUtil {
         if (GithubUrlUtil.isGithubUrl(remoteUrl)) {
           final String remoteName = gitRemote.getName();
           if ("github".equals(remoteName) || "origin".equals(remoteName)) {
-            return new Pair<GitRemote, String>(gitRemote, remoteUrl);
+            return Pair.create(gitRemote, remoteUrl);
           }
           if (githubRemote == null) {
-            githubRemote = new Pair<GitRemote, String>(gitRemote, remoteUrl);
+            githubRemote = Pair.create(gitRemote, remoteUrl);
           }
           break;
         }
