@@ -59,6 +59,13 @@ public class PyFileEvaluatorTest extends PyTestCase {
     assertEquals("c", map.get("b"));
   }
 
+  public void testDictUpdate() {
+    PyFileEvaluator eval = doEvaluate("a={}\na.update({'b': 'c'})");
+    Map map = (Map) eval.getValue("a");
+    assertEquals(1, map.size());
+    assertEquals("c", map.get("b"));
+  }
+
   private PyFileEvaluator doEvaluate(String text) {
     PyFileEvaluator eval = new PyFileEvaluator();
     PyFile file = (PyFile)PsiFileFactory.getInstance(myFixture.getProject()).createFileFromText("a.py", PythonFileType.INSTANCE, text);

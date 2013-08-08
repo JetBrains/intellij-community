@@ -96,12 +96,15 @@ public class PyFileEvaluator {
         PyExpression callee = node.getCallee();
         if (callee instanceof PyReferenceExpression) {
           PyReferenceExpression calleeRef = (PyReferenceExpression)callee;
-          if (PyNames.EXTEND.equals(calleeRef.getReferencedName()) && node.getArguments().length == 1) {
-            PyExpression qualifier = calleeRef.getQualifier();
-            if (qualifier instanceof PyReferenceExpression) {
-              PyReferenceExpression qualifierRef = (PyReferenceExpression)qualifier;
-              if (qualifierRef.getQualifier() == null) {
+          PyExpression qualifier = calleeRef.getQualifier();
+          if (qualifier instanceof PyReferenceExpression) {
+            PyReferenceExpression qualifierRef = (PyReferenceExpression)qualifier;
+            if (qualifierRef.getQualifier() == null) {
+              if (PyNames.EXTEND.equals(calleeRef.getReferencedName()) && node.getArguments().length == 1) {
                 processExtendCall(node, qualifierRef.getReferencedName());
+              }
+              else if (PyNames.UPDATE.equals(calleeRef.getReferencedName()) && node.getArguments().length == 1) {
+                processUpdateCall(node, qualifierRef.getReferencedName());
               }
             }
           }
@@ -147,6 +150,16 @@ public class PyFileEvaluator {
       List<PyExpression> declarations = myDeclarations.get(nameBeingExtended);
       if (declarations != null) {
         PyPsiUtils.sequenceToList(declarations, arg);
+      }
+    }
+  }
+
+  private void processUpdateCall(PyCallExpression node, String name) {
+    Object value = myNamespace.get(name);
+    if (value instanceof Map) {
+      Object argValue = createEvaluator().evaluate(node.getArguments()[0]);
+      if (argValue instanceof Map) {
+        ((Map)value).putAll((Map)argValue);
       }
     }
   }
