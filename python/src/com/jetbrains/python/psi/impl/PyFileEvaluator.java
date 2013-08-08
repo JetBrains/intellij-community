@@ -145,4 +145,8 @@ public class PyFileEvaluator {
     }
     return Collections.emptyList();
   }
+
+  public Set<PyFile> getVisitedFiles() {
+    return myVisitedFiles;
+  }
 }
