@@ -1034,6 +1034,15 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
+   * @param appendTail specify whether additional values should be appended in front or after the list
+   * @return read-only list consisting of the elements from specified list with some additional values
+   */
+  @NotNull
+  public static <T> List<T> concat(boolean appendTail, @NotNull List<? extends T> list, T... values) {
+    return appendTail ? concat(list, list(values)) : concat(list(values), list);
+  }
+
+  /**
    * @return read-only list consisting of the two lists added together
    */
   @NotNull
