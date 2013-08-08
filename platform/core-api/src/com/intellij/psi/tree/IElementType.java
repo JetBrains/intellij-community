@@ -51,7 +51,7 @@ public class IElementType {
   };
 
   public static final short FIRST_TOKEN_INDEX = 1;
-  public static final short MAX_INDEXED_TYPES = 15000;
+  public static final short MAX_INDEXED_TYPES = 20000;
 
   private static short ourCounter = FIRST_TOKEN_INDEX;
   private static IElementType[] ourRegistry = new IElementType[700];
