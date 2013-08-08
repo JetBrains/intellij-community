@@ -122,13 +122,16 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     ProgressManager.getInstance().run(new Task.Modal(myProject, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          tokenRef.set(GithubUtil.runWithValidBasicAuth(myProject, indicator, new ThrowableConvertor<GithubAuthData, String, IOException>() {
-            @NotNull
-            @Override
-            public String convert(GithubAuthData auth) throws IOException {
-              return GithubApiUtil.getReadOnlyToken(auth, getRepoAuthor(), getRepoName(), "Intellij tasks plugin");
-            }
-          }));
+          tokenRef.set(GithubUtil.runWithValidBasicAuthForHost(myProject, indicator, getHost(),
+                                                               new ThrowableConvertor<GithubAuthData, String, IOException>() {
+                                                                 @NotNull
+                                                                 @Override
+                                                                 public String convert(GithubAuthData auth) throws IOException {
+                                                                   return GithubApiUtil
+                                                                     .getReadOnlyToken(auth, getRepoAuthor(), getRepoName(),
+                                                                                       "Intellij tasks plugin");
+                                                                 }
+                                                               }));
         }
         catch (IOException e) {
           exceptionRef.set(e);

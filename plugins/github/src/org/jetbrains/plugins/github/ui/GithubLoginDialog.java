@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubAuthData;
-import org.jetbrains.plugins.github.GithubAuthenticationException;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
 import org.jetbrains.plugins.github.api.GithubUserDetailed;
@@ -101,5 +100,9 @@ public class GithubLoginDialog extends DialogWrapper {
   @NotNull
   public GithubAuthData getAuthData() {
     return myGithubLoginPanel.getAuthData();
+  }
+
+  public void lockHost(String host) {
+    myGithubLoginPanel.lockHost(host);
   }
 }

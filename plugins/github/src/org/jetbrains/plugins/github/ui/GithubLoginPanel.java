@@ -31,7 +31,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -123,6 +123,11 @@ public class GithubLoginPanel {
   public void lockAuthType(@NotNull GithubAuthData.AuthType type) {
     setAuthType(type);
     myAuthTypeComboBox.setEnabled(false);
+  }
+
+  public void lockHost(@NotNull String host) {
+    setHost(host);
+    myHostTextField.setEnabled(false);
   }
 
   public void setSavePasswordSelected(boolean savePassword) {

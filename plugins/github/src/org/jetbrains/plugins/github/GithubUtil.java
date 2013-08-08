@@ -110,12 +110,15 @@ public class GithubUtil {
   }
 
   @NotNull
-  public static <T> T runWithValidBasicAuth(@Nullable Project project,
-                                            @NotNull ProgressIndicator indicator,
-                                            @NotNull ThrowableConvertor<GithubAuthData, T, IOException> task) throws IOException {
+  public static <T> T runWithValidBasicAuthForHost(@Nullable Project project,
+                                                   @NotNull ProgressIndicator indicator,
+                                                   @NotNull String host,
+                                                   @NotNull ThrowableConvertor<GithubAuthData, T, IOException> task) throws IOException {
+    GithubSettings settings = GithubSettings.getInstance();
     GithubAuthData auth;
-    if (GithubSettings.getInstance().getAuthType() == GithubAuthData.AuthType.BASIC) {
-      auth = GithubSettings.getInstance().getAuthData();
+    if (settings.getAuthType() == GithubAuthData.AuthType.BASIC &&
+        StringUtil.equalsIgnoreCase(GithubUrlUtil.getApiUrl(host), GithubUrlUtil.getApiUrl(settings.getHost()))) {
+      auth = settings.getAuthData();
     }
     else {
       auth = GithubAuthData.createAnonymous();
@@ -127,7 +130,7 @@ public class GithubUtil {
       return task.convert(auth);
     }
     catch (GithubAuthenticationException e) {
-      auth = getValidBasicAuthData(project, indicator);
+      auth = getValidBasicAuthDataForHost(project, indicator, host);
       if (auth == null) {
         throw new GithubAuthenticationCanceledException("Can't get valid credentials");
       }
@@ -135,7 +138,7 @@ public class GithubUtil {
     }
     catch (IOException e) {
       if (checkSSLCertificate(e, auth.getHost(), indicator)) {
-        return runWithValidBasicAuth(project, indicator, task);
+        return runWithValidBasicAuthForHost(project, indicator, host, task);
       }
       throw e;
     }
@@ -178,8 +181,11 @@ public class GithubUtil {
    * @return null if user canceled login dialog. Valid GithubAuthData otherwise.
    */
   @Nullable
-  public static GithubAuthData getValidBasicAuthData(@Nullable Project project, @NotNull ProgressIndicator indicator) {
+  public static GithubAuthData getValidBasicAuthDataForHost(@Nullable Project project,
+                                                            @NotNull ProgressIndicator indicator,
+                                                            @NotNull String host) {
     final GithubLoginDialog dialog = new GithubBasicLoginDialog(project);
+    dialog.lockHost(host);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
