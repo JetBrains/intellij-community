@@ -79,6 +79,12 @@ public class SocketLock {
     }
   }
 
+  private volatile int acquiredPort = -1;
+
+  public synchronized int getAcquiredPort () {
+    return acquiredPort;
+  }
+
   public synchronized ActivateStatus lock(String path, boolean markPort, String... args) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: lock(path='" + path + "')");
@@ -194,6 +200,7 @@ public class SocketLock {
 
         mySocket = new ServerSocket(i, 50, InetAddress.getByName("127.0.0.1"));
         port = i;
+        acquiredPort = port;
         break;
       }
       catch (IOException e) {

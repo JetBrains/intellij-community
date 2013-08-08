@@ -152,9 +152,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   private final PerformInBackgroundOption myCheckoutOption = new CheckoutInBackgroundOption();
   private final PerformInBackgroundOption myAddRemoveOption = new AddRemoveInBackgroundOption();
 
-  public VcsConfiguration() {
-  }
-
   public VcsConfiguration getState() {
     return this;
   }
