@@ -44,6 +44,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -59,6 +60,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -222,6 +224,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     myAlarm.cancelAllRequests();
     myList.setModel(new DefaultListModel());
+    myClassModel = null;
+    myFileModel = null;
+    myActionModel = null;
+    myClasses = null;
+    myFiles = null;
+    myActions = null;
 
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
@@ -373,7 +381,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       String title = getTitle(index, value, index == 0 ? null : list.getModel().getElementAt(index -1));
       myTitle.setText(title == null ? "" : title);
       myLeftPanel.removeAll();
-      myLeftPanel.setBackground(Gray._242);
+      myLeftPanel.setBackground(new JBColor(Gray._242, JBColor.background()));
       myMainPanel.removeAll();
       myLeftPanel.add(myTitle, BorderLayout.EAST);
       myMainPanel.add(myLeftPanel, BorderLayout.WEST);
@@ -501,7 +509,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myLeftWidth += 10;
       myTitle.setForeground(Gray._122);
       myTitle.setAlignmentY(BOTTOM_ALIGNMENT);
-      myLeftPanel.setBorder(new CompoundBorder(new CustomLineBorder(Gray._206, 0,0,0,1), new EmptyBorder(0,0,0,5)));
+      myLeftPanel.setBorder(new CompoundBorder(new CustomLineBorder(new JBColor(Gray._206, Gray._75), 0,0,0,1), new EmptyBorder(0,0,0,5)));
     }
 
     private Font getTitleFont() {
@@ -631,10 +639,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
         for (MatchResult o : classes) {
           if (clsCounter > 15) break;
-          myProgressIndicator.checkCanceled();
-          Object[] objects = myClassModel.getElementsByName(o.elementName, false, pattern);
+
+          Object[] objects = myClassModel.getElementsByName(o.elementName, false, pattern, myProgressIndicator);
           for (Object object : objects) {
-            myProgressIndicator.checkCanceled();
             if (!listModel.contains(object)) {
               listModel.addElement(object);
               clsCounter++;
@@ -650,16 +657,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         for (MatchResult o : files) {
           if (filesCounter > 15) break;
-          myProgressIndicator.checkCanceled();
           Object[] objects = myFileModel.getElementsByName(o.elementName, false, pattern, myProgressIndicator);
           for (Object object : objects) {
-            myProgressIndicator.checkCanceled();
             if (!listModel.contains(object)) {
               if (object instanceof PsiFile) {
                 object = ((PsiFile)object).getVirtualFile();
               }
               if (object instanceof VirtualFile && !alreadyAddedFiles.contains((VirtualFile)object) && !((VirtualFile)object).isDirectory()) {
-                myProgressIndicator.checkCanceled();
                 listModel.addElement(object);
                 filesCounter++;
               }
@@ -767,10 +771,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myRenderer.recalculateWidth();
           if (myPopup == null || !myPopup.isVisible()) {
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(field.getTextEditor(), myList);
-            myPopup = JBPopupFactory.getInstance()
-              .createListPopupBuilder(myList)
-              .setRequestFocus(false)
-              .createPopup();
+            final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(myList);
+            myPopup = builder.setRequestFocus(false).createPopup();
             Disposer.register(myPopup, new Disposable() {
               @Override
               public void dispose() {
@@ -793,7 +795,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             myPopup.cancel();
           } else {
             final Dimension size = myList.getPreferredSize();
-            myPopup.setSize(new Dimension(Math.min(600, Math.max(field.getWidth(), size.width + 15)), Math.min(600, size.height + 10)));
+            Dimension sz = new Dimension(Math.max(field.getWidth(), size.width), size.height);
+            if (sz.width > 800 || sz.height > 800) {
+              final int extra = new JBScrollPane().getVerticalScrollBar().getWidth();
+              sz = new Dimension(Math.min(800, Math.max(field.getWidth(), size.width + extra)), Math.min(800, size.height + extra));
+              sz.width += 16;
+            } else {
+              sz.height++;
+              sz.height++;
+              sz.width++;
+              sz.width++;
+            }
+            myPopup.setSize(sz);
             final Point screen = field.getLocationOnScreen();
             final int x = screen.x + field.getWidth() - myPopup.getSize().width;
 
@@ -823,7 +836,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       MatchResult result;
 
       for (String name : names) {
-        myProgressIndicator.checkCanceled();
+        //myProgressIndicator.checkCanceled();
         result = null;
         if (model instanceof CustomMatcherModel) {
           try {
