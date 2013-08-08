@@ -290,7 +290,7 @@ public class PsiUtilBase extends PsiUtilCore {
   }
 
   @Nullable
-  public static VirtualFile asVirtualFile(@Nullable Object element) {
+  public static VirtualFile asVirtualFile(@Nullable PsiElement element) {
     if (element instanceof PsiFileSystemItem) {
       PsiFileSystemItem psiFileSystemItem = (PsiFileSystemItem)element;
       return psiFileSystemItem.isValid() ? psiFileSystemItem.getVirtualFile() : null;

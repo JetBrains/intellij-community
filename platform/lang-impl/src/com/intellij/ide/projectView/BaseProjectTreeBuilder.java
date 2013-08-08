@@ -32,8 +32,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +70,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       AbstractTreeNode node = (AbstractTreeNode)element;
       final Object value = node.getValue();
       final ActionCallback callback = new ActionCallback();
-      final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(value);
+      final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(ObjectUtils.tryCast(value, PsiElement.class));
       final FocusRequestor focusRequestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
       batch(new Progressive() {
         @Override

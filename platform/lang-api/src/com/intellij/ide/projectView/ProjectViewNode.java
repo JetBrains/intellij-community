@@ -192,9 +192,10 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
       @Override
       public boolean value(final VirtualFile virtualFile) {
+        Value value;
         return contains(virtualFile)
                // in case of flattened packages, when package node a.b.c contains error file, node a.b might not.
-               && (getValue() instanceof PsiElement && Comparing.equal(PsiUtilCore.getVirtualFile(getValue()), virtualFile) ||
+               && ((value = getValue()) instanceof PsiElement && Comparing.equal(PsiUtilCore.getVirtualFile((PsiElement)value), virtualFile) ||
                    someChildContainsFile(virtualFile));
       }
     });
