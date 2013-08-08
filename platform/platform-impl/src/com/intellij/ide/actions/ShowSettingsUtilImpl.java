@@ -47,6 +47,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowSettingsUtilImpl");
   private AtomicBoolean myShown = new AtomicBoolean(false);
 
+  @Override
   public void showSettingsDialog(Project project, ConfigurableGroup[] group) {
     try {
       myShown.set(true);
@@ -73,6 +74,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     }
   }
 
+  @Override
   public void showSettingsDialog(@Nullable final Project project, final Class configurableClass) {
     assert Configurable.class.isAssignableFrom(configurableClass) : "Not a configurable: " + configurableClass.getName();
 
@@ -97,6 +99,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return null;
   }
 
+  @Override
   public void showSettingsDialog(@Nullable final Project project, @NotNull final String nameToSelect) {
     ConfigurableGroup[] group;
     if (project == null) {
@@ -176,6 +179,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return null;
   }
 
+  @Override
   public void showSettingsDialog(@NotNull final Project project, final Configurable toSelect) {
     _showSettingsDialog(project, new ConfigurableGroup[]{
       new ProjectConfigurablesGroup(project),
@@ -193,30 +197,37 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return groups.toArray(new ConfigurableGroup[groups.size()]);
   }
 
+  @Override
   public boolean editConfigurable(Project project, Configurable configurable) {
     return editConfigurable(project, createDimensionKey(configurable), configurable);
   }
 
+  @Override
   public <T extends Configurable> T findApplicationConfigurable(final Class<T> confClass) {
     return ConfigurableExtensionPointUtil.findApplicationConfigurable(confClass);
   }
 
+  @Override
   public <T extends Configurable> T findProjectConfigurable(final Project project, final Class<T> confClass) {
     return ConfigurableExtensionPointUtil.findProjectConfigurable(project, confClass);
   }
 
+  @Override
   public boolean editConfigurable(Project project, String dimensionServiceKey, @NotNull Configurable configurable) {
     return editConfigurable(null, project, configurable, dimensionServiceKey, null);
   }
 
+  @Override
   public boolean editConfigurable(Project project, Configurable configurable, Runnable advancedInitialization) {
     return editConfigurable(null, project, configurable, createDimensionKey(configurable), advancedInitialization);
   }
 
+  @Override
   public boolean editConfigurable(Component parent, Configurable configurable) {
     return editConfigurable(parent, configurable, null);
   }
 
+  @Override
   public boolean editConfigurable(final Component parent, final Configurable configurable, @Nullable final Runnable advancedInitialization) {
     return editConfigurable(parent, null, configurable, createDimensionKey(configurable), advancedInitialization);
   }
@@ -248,6 +259,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return "#" + displayName;
   }
 
+  @Override
   public boolean editConfigurable(Component parent, String dimensionServiceKey,Configurable configurable) {
     return editConfigurable(parent, null, configurable, dimensionServiceKey, null);
   }
