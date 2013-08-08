@@ -8,7 +8,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -37,7 +38,9 @@ import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.replace.ui.NavigateSearchResultsDialog;
 import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
-import com.intellij.ui.*;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -82,7 +85,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   protected SearchModel model;
   private JCheckBox openInNewTab;
-  private final Alarm myAlarm;
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
   protected final ExistingTemplatesComponent existingTemplatesComponent;
@@ -127,7 +130,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     existingTemplatesComponent = ExistingTemplatesComponent.getInstance(this.searchContext.getProject());
     model = new SearchModel(createConfiguration());
-    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
     init();
   }
@@ -197,23 +199,18 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       @Override
       public void run() {
         try {
-          GuiUtils.invokeAndWait(new Runnable() {
+          new WriteAction(){
             @Override
-            public void run() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  if (!isValid()) {
-                    getOKAction().setEnabled(false);
-                  }
-                  else {
-                    getOKAction().setEnabled(true);
-                    reportMessage(null, null);
-                  }
-                }
-              });
+            protected void run(Result result) throws Throwable {
+              if (!isValid()) {
+                getOKAction().setEnabled(false);
+              }
+              else {
+                getOKAction().setEnabled(true);
+                reportMessage(null, null);
+              }
             }
-          });
+          }.execute();
         }
         catch (Exception e) {
           e.printStackTrace();
