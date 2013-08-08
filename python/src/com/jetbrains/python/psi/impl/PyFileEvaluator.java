@@ -50,7 +50,7 @@ public class PyFileEvaluator {
         if (expression instanceof PyTargetExpression) {
           String name = expression.getName();
           PyExpression value = ((PyTargetExpression)expression).findAssignedValue();
-          myNamespace.put(name, createEvaluator().evaluate(value));
+          myNamespace.put(name, prepareEvaluator().evaluate(value));
           if (myDeclarationsToTrack.contains(name)) {
             List<PyExpression> declarations = new ArrayList<PyExpression>();
             PyPsiUtils.sequenceToList(declarations, value);
@@ -63,9 +63,9 @@ public class PyFileEvaluator {
           if (operand instanceof PyReferenceExpression && ((PyReferenceExpression)operand).getQualifier() == null) {
             Object currentValue = myNamespace.get(((PyReferenceExpression)operand).getReferencedName());
             if (currentValue instanceof Map) {
-              Object mapKey = createEvaluator().evaluate(indexExpression);
+              Object mapKey = prepareEvaluator().evaluate(indexExpression);
               if (mapKey != null) {
-                ((Map)currentValue).put(mapKey, createEvaluator().evaluate(node.getAssignedValue()));
+                ((Map)currentValue).put(mapKey, prepareEvaluator().evaluate(node.getAssignedValue()));
               }
             }
           }
@@ -79,7 +79,7 @@ public class PyFileEvaluator {
         if (target instanceof PyReferenceExpression && ((PyReferenceExpression)target).getQualifier() == null && name != null) {
           Object currentValue = myNamespace.get(name);
           if (currentValue != null) {
-            Object rhs = createEvaluator().evaluate(node.getValue());
+            Object rhs = prepareEvaluator().evaluate(node.getValue());
             myNamespace.put(name, PyEvaluator.concatenate(currentValue, rhs));
           }
           if (myDeclarationsToTrack.contains(name)) {
@@ -142,7 +142,7 @@ public class PyFileEvaluator {
 
       @Override
       public void visitPyReturnStatement(PyReturnStatement node) {
-        myReturnValue = createEvaluator().evaluate(node.getExpression());
+        myReturnValue = prepareEvaluator().evaluate(node.getExpression());
       }
     });
   }
@@ -152,7 +152,7 @@ public class PyFileEvaluator {
 
     Object value = myNamespace.get(nameBeingExtended);
     if (value instanceof List) {
-      Object argValue = createEvaluator().evaluate(arg);
+      Object argValue = prepareEvaluator().evaluate(arg);
       myNamespace.put(nameBeingExtended, PyEvaluator.concatenate(value, argValue));
     }
 
@@ -167,14 +167,20 @@ public class PyFileEvaluator {
   private void processUpdateCall(PyCallExpression node, String name) {
     Object value = myNamespace.get(name);
     if (value instanceof Map) {
-      Object argValue = createEvaluator().evaluate(node.getArguments()[0]);
+      Object argValue = prepareEvaluator().evaluate(node.getArguments()[0]);
       if (argValue instanceof Map) {
         ((Map)value).putAll((Map)argValue);
       }
     }
   }
 
-  private PyEvaluator createEvaluator() {
+  private PyEvaluator prepareEvaluator() {
+    PyEvaluator evaluator = createEvaluator();
+    evaluator.setNamespace(myNamespace);
+    return evaluator;
+  }
+
+  protected PyEvaluator createEvaluator() {
     return new PyPathEvaluator(myCurrentFilePath);
   }
 
