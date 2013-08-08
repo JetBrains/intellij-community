@@ -9,6 +9,12 @@ import com.jetbrains.python.psi.PyFunction;
  * @author yole
  */
 public class PyDeprecationTest extends PyTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.setCaresAboutInjection(false);
+  }
+
   public void testFunction() {
     myFixture.configureByText(PythonFileType.INSTANCE,
                               "def getstatus(file):\n" +
