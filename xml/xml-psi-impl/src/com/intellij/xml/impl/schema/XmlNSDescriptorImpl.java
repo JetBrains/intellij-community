@@ -851,7 +851,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   private MultiMap<String,XmlTag> mySubstitutions;
 
   public XmlElementDescriptor[] getSubstitutes(String localName, String namespace) {
-    initSubstitutes();
+    if (!initSubstitutes()) {
+      return XmlElementDescriptor.EMPTY_ARRAY;
+    }
     Collection<XmlTag> substitutions = mySubstitutions.get(localName);
     if (substitutions.isEmpty()) return XmlElementDescriptor.EMPTY_ARRAY;
     List<XmlElementDescriptor> result = new SmartList<XmlElementDescriptor>();
@@ -865,8 +867,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return result.toArray(new XmlElementDescriptor[result.size()]);
   }
 
-  private void initSubstitutes() {
-    if (mySubstitutions ==null) {
+  private boolean initSubstitutes() {
+    if (mySubstitutions == null && myTag != null) {
       mySubstitutions = new MultiMap<String, XmlTag>();
 
       if (myTag == null) return;
@@ -883,6 +885,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
         }
       }
     }
+    return mySubstitutions != null;
   }
 
   public PsiElement getDeclaration(){
