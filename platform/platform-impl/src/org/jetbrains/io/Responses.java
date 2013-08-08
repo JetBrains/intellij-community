@@ -158,10 +158,6 @@ public final class Responses {
     }
   }
 
-  public static void sendStatus(HttpRequest request, ChannelHandlerContext context, HttpResponseStatus responseStatus, @Nullable String description) {
-    sendStatus(request, context.getChannel(), responseStatus, description);
-  }
-
   public static void sendStatus(HttpRequest request, Channel channel, HttpResponseStatus responseStatus, @Nullable String description) {
     sendStatus(new DefaultHttpResponse(HTTP_1_1, responseStatus), request, channel, description);
   }
@@ -170,8 +166,8 @@ public final class Responses {
     sendStatus(request, channel, responseStatus, null);
   }
 
-  public static void sendStatus(HttpResponse response, HttpRequest request, ChannelHandlerContext context) {
-    sendStatus(response, request, context.getChannel(), null);
+  public static void sendStatus(HttpResponse response, HttpRequest request, Channel channel) {
+    sendStatus(response, request, channel, null);
   }
 
   public static void sendStatus(HttpResponseStatus responseStatus, Channel channel) {
