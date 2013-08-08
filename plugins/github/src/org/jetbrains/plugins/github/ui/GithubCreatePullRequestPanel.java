@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.ui;
 
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ import java.util.HashSet;
 public class GithubCreatePullRequestPanel {
   private JTextField myTitleTextField;
   private JTextArea myDescriptionTextArea;
-  private JComboBox myBranchComboBox;
+  private ComboBox myBranchComboBox;
   private JPanel myPanel;
   private AsyncProcessIcon myAsyncProcessIcon;
 
