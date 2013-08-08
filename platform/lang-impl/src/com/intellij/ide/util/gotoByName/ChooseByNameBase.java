@@ -790,8 +790,15 @@ public abstract class ChooseByNameBase {
         ownerWindow.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
       }
     }
-    myNames[index] = myModel.getNames(checkboxState);
-    assert myNames[index] != null : "Model "+myModel+ "("+myModel.getClass()+") returned null names";
+
+    if (index == 1 && myModel instanceof ContributorsBasedGotoByModel) {
+      // there is no way in indices to have different keys for project symbols vs libraries, we always have same ones
+      myNames[1] = myNames[0];
+      return;
+    } else {
+      myNames[index] = myModel.getNames(checkboxState);
+      assert myNames[index] != null : "Model "+myModel+ "("+myModel.getClass()+") returned null names";
+    }
 
     if (window != null) {
       window.setCursor(Cursor.getDefaultCursor());
