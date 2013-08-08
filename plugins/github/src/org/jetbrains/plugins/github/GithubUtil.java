@@ -35,7 +35,8 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.*;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubUserDetailed;
 import org.jetbrains.plugins.github.ui.GithubBasicLoginDialog;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
@@ -232,12 +233,7 @@ public class GithubUtil {
         throw new GithubAuthenticationException("Anonymous connection not allowed");
     }
 
-    try {
-      return testConnection(auth);
-    }
-    catch (JsonException e) {
-      throw new GithubAuthenticationException("Can't get user info", e);
-    }
+    return testConnection(auth);
   }
 
   @NotNull

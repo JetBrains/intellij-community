@@ -207,7 +207,6 @@ public class GithubApiUtil {
       case HttpStatus.SC_UNAUTHORIZED:
       case HttpStatus.SC_PAYMENT_REQUIRED:
       case HttpStatus.SC_FORBIDDEN:
-      case HttpStatus.SC_NOT_FOUND:
         throw new GithubAuthenticationException("Request response: " + getErrorMessage(method));
       default:
         throw new HttpException(code + ": " + getErrorMessage(method));
