@@ -29,11 +29,23 @@ public class PyEvaluator {
     }
     if (expr instanceof PySequenceExpression) {
       PyExpression[] elements = ((PySequenceExpression)expr).getElements();
-      List<Object> result = new ArrayList<Object>();
-      for (PyExpression element : elements) {
-        result.add(evaluate(element));
+      if (expr instanceof PyDictLiteralExpression) {
+        Map<Object, Object> result = new HashMap<Object, Object>();
+        for (PyKeyValueExpression keyValueExpression : ((PyDictLiteralExpression)expr).getElements()) {
+          Object dictKey = evaluate(keyValueExpression.getKey());
+          if (dictKey != null) {
+            result.put(dictKey, evaluate(keyValueExpression.getValue()));
+          }
+        }
+        return result;
       }
-      return result;
+      else {
+        List<Object> result = new ArrayList<Object>();
+        for (PyExpression element : elements) {
+          result.add(evaluate(element));
+        }
+        return result;
+      }
     }
     if (expr instanceof PyCallExpression) {
       return evaluateCall((PyCallExpression)expr);

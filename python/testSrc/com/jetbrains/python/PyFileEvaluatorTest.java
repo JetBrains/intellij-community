@@ -8,6 +8,7 @@ import com.jetbrains.python.psi.impl.PyFileEvaluator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -42,6 +43,20 @@ public class PyFileEvaluatorTest extends PyTestCase {
     assertEquals(2, list.size());
     assertEquals("b", list.get(0));
     assertEquals(new ArrayList<String>(Arrays.asList("c", "d")), list.get(1));
+  }
+
+  public void testDict() {
+    PyFileEvaluator eval = doEvaluate("a={'b': 'c'}");
+    Map map = (Map) eval.getValue("a");
+    assertEquals(1, map.size());
+    assertEquals("c", map.get("b"));
+  }
+
+  public void testDictAssign() {
+    PyFileEvaluator eval = doEvaluate("a={}\na['b']='c'");
+    Map map = (Map) eval.getValue("a");
+    assertEquals(1, map.size());
+    assertEquals("c", map.get("b"));
   }
 
   private PyFileEvaluator doEvaluate(String text) {

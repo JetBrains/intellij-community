@@ -52,6 +52,19 @@ public class PyFileEvaluator {
             myDeclarations.put(name, declarations);
           }
         }
+        else if (expression instanceof PySubscriptionExpression) {
+          PyExpression operand = ((PySubscriptionExpression)expression).getOperand();
+          PyExpression indexExpression = ((PySubscriptionExpression)expression).getIndexExpression();
+          if (operand instanceof PyReferenceExpression && ((PyReferenceExpression)operand).getQualifier() == null) {
+            Object currentValue = myNamespace.get(((PyReferenceExpression)operand).getReferencedName());
+            if (currentValue instanceof Map) {
+              Object mapKey = createEvaluator().evaluate(indexExpression);
+              if (mapKey != null) {
+                ((Map) currentValue).put(mapKey, createEvaluator().evaluate(node.getAssignedValue()));
+              }
+            }
+          }
+        }
       }
 
       @Override
