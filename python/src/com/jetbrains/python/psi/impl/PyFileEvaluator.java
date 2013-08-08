@@ -18,6 +18,7 @@ public class PyFileEvaluator {
   private final Set<PyFile> myVisitedFiles;
   private final Set<String> myDeclarationsToTrack = new HashSet<String>();
   private String myCurrentFilePath;
+  private Object myReturnValue;
 
   public PyFileEvaluator() {
     myVisitedFiles = new HashSet<PyFile>();
@@ -31,14 +32,18 @@ public class PyFileEvaluator {
     myDeclarationsToTrack.add(attrName);
   }
 
-  public void evaluate(PyFile file) {
-    VirtualFile vFile = file.getVirtualFile();
+  public void evaluate(PyElement element) {
+    VirtualFile vFile = element.getContainingFile().getVirtualFile();
     myCurrentFilePath = vFile != null ? vFile.getPath() : null;
-    if (myVisitedFiles.contains(file)) {
+    if (myVisitedFiles.contains(element)) {
       return;
     }
-    myVisitedFiles.add(file);
-    file.acceptChildren(new PyElementVisitor() {
+    myVisitedFiles.add((PyFile)element.getContainingFile());
+    PyElement statementContainer = element instanceof PyFunction ? ((PyFunction) element).getStatementList() : element;
+    if (statementContainer == null) {
+      return;
+    }
+    statementContainer.acceptChildren(new PyElementVisitor() {
       @Override
       public void visitPyAssignmentStatement(PyAssignmentStatement node) {
         PyExpression expression = node.getLeftHandSideExpression();
@@ -60,7 +65,7 @@ public class PyFileEvaluator {
             if (currentValue instanceof Map) {
               Object mapKey = createEvaluator().evaluate(indexExpression);
               if (mapKey != null) {
-                ((Map) currentValue).put(mapKey, createEvaluator().evaluate(node.getAssignedValue()));
+                ((Map)currentValue).put(mapKey, createEvaluator().evaluate(node.getAssignedValue()));
               }
             }
           }
@@ -133,6 +138,11 @@ public class PyFileEvaluator {
             }
           }
         }
+      }
+
+      @Override
+      public void visitPyReturnStatement(PyReturnStatement node) {
+        myReturnValue = createEvaluator().evaluate(node.getExpression());
       }
     });
   }
@@ -210,5 +220,9 @@ public class PyFileEvaluator {
   public List<PyExpression> getDeclarations(String name) {
     List<PyExpression> expressions = myDeclarations.get(name);
     return expressions != null ? expressions : Collections.<PyExpression>emptyList();
+  }
+
+  public Object getReturnValue() {
+    return myReturnValue;
   }
 }

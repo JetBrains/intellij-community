@@ -3,6 +3,7 @@ package com.jetbrains.python;
 import com.intellij.psi.PsiFileFactory;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyFileEvaluator;
 
 import java.util.ArrayList;
@@ -64,6 +65,14 @@ public class PyFileEvaluatorTest extends PyTestCase {
     Map map = (Map) eval.getValue("a");
     assertEquals(1, map.size());
     assertEquals("c", map.get("b"));
+  }
+
+  public void testFunction() {
+    PyFileEvaluator eval = new PyFileEvaluator();
+    PyFile file = (PyFile)PsiFileFactory.getInstance(myFixture.getProject()).createFileFromText("a.py", PythonFileType.INSTANCE, "def foo(): return 'a'");
+    PyFunction foo = file.findTopLevelFunction("foo");
+    eval.evaluate(foo);
+    assertEquals("a", eval.getReturnValue());
   }
 
   private PyFileEvaluator doEvaluate(String text) {
