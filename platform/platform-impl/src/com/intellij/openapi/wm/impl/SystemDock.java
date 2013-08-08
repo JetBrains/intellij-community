@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.MacDockDelegate;
 import com.intellij.ui.win.WinDockDelegate;
 
@@ -29,7 +30,7 @@ public class SystemDock {
   static {
     if (SystemInfo.isMac) {
       delegate = MacDockDelegate.getInstance();
-    } else if (SystemInfo.isWin7OrNewer) {
+    } else if (SystemInfo.isWin7OrNewer && Registry.is("windows.jumplist")) {
       delegate = WinDockDelegate.getInstance();
     }
   }
