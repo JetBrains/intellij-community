@@ -531,7 +531,6 @@ public class GithubApiUtil {
   }
 
   @NotNull
-
   public static List<GithubIssue> getIssuesQueried(@NotNull GithubAuthData auth,
                                                    @NotNull String user,
                                                    @NotNull String repo,
