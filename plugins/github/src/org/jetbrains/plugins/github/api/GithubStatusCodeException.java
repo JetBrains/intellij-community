@@ -15,21 +15,20 @@
  */
 package org.jetbrains.plugins.github.api;
 
-import org.jetbrains.annotations.NotNull;
+import java.io.IOException;
 
 /**
  * @author Aleksey Pivovarov
- *
- * All fields of the raw type are nullable by the nature of GSon parser;
- * but some of them are required, so we want them to be @NotNull in the actual data class,
- * otherwise there is an error in JSon data received from the server
- *
- * So we create Data class assuming that all required fields actually notnull and
- * catch exception if they are not.
- *
- * Probably, these interfaces shouldn't be used outside of GithubApiUtil.createDataFromRaw()
  */
-interface DataConstructor {
-  @NotNull
-  <T> T create(@NotNull Class<T> resultClass) throws IllegalArgumentException, NullPointerException, ClassCastException;
+public class GithubStatusCodeException extends IOException {
+  private final int myStatusCode;
+
+  public GithubStatusCodeException(String message, int statusCode) {
+    super(message);
+    myStatusCode = statusCode;
+  }
+
+  public int getStatusCode() {
+    return myStatusCode;
+  }
 }

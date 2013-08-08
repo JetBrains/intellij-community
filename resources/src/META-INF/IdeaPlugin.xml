@@ -399,6 +399,9 @@
     <applicationService serviceInterface="com.intellij.refactoring.JavaRefactoringSettings"
                         serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>
 
+    <applicationService serviceInterface="com.intellij.codeInsight.generation.OverrideImplementExploreUtil$MemberImplementorExplorersProvider"
+                        serviceImplementation="com.intellij.codeInsight.generation.MemberImplementorExplorersProviderImpl"/>
+
     <projectService serviceInterface="com.intellij.refactoring.RefactoringManager"
                     serviceImplementation="com.intellij.refactoring.RefactoringManager"/>
     <projectService serviceInterface="com.intellij.refactoring.listeners.JavaRefactoringListenerManager"

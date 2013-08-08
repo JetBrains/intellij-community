@@ -71,7 +71,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       return;
     }
 
-    if (StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin())) {
+    if (!GithubSettings.getInstance().isAuthConfigured()) {
       setVisibleEnabled(e, false, false);
       return;
     }

@@ -74,7 +74,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     return fileLineDisplayText(breakpoint.getPresentableFilePath(), breakpoint.getLine());
   }
 
-  private String fileLineDisplayText(String path, int line) {
+  private static String fileLineDisplayText(String path, int line) {
     return XDebuggerBundle.message("xbreakpoint.default.display.text", line + 1, path);
   }
 

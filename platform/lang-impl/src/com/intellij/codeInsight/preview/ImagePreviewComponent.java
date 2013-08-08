@@ -70,6 +70,7 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
     setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
   }
 
+  @Override
   @TestOnly
   public boolean isEqualTo(@Nullable PreviewHintComponent other) {
     if (!(other instanceof ImagePreviewComponent)) {
@@ -159,7 +160,7 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
                 }
               }
             }
-            catch (IOException e) {
+            catch (IOException ignored) {
               // nothing
             }
           }

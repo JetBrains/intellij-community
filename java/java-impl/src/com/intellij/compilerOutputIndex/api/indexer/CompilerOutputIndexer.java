@@ -3,13 +3,11 @@ package com.intellij.compilerOutputIndex.api.indexer;
 import com.intellij.compilerOutputIndex.api.fs.CompilerOutputFilesUtil;
 import com.intellij.compilerOutputIndex.api.fs.FileVisitorService;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileTask;
+import com.intellij.openapi.compiler.CompilationStatusAdapter;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -19,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IndexInfrastructure;
@@ -111,39 +110,22 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-      CompilerManager.getInstance(myProject).addAfterTask(new CompileTask() {
+      CompilerManager.getInstance(myProject).addCompilationStatusListener(new CompilationStatusAdapter() {
         @Override
-        public boolean execute(final CompileContext context) {
-          if (myEnabled.get() && myInProgress.compareAndSet(false, true)) {
-            myLock.lock();
+        public void fileGenerated(final String outputRoot, final String relativePath) {
+          if (myEnabled.get() && StringUtil.endsWith(relativePath, CompilerOutputFilesUtil.CLASS_FILES_SUFFIX)) {
             try {
-              context.getProgressIndicator().setText("Compiler output indexing in progress");
-              final Consumer<File> fileConsumer = new Consumer<File>() {
-                @Override
-                public void consume(final File file) {
-                  try {
-                    doIndexing(file, context.getProgressIndicator());
-                  }
-                  catch (ProcessCanceledException e0) {
-                    throw e0;
-                  }
-                  catch (RuntimeException e) {
-                    LOG.error(e);
-                  }
-                }
-              };
-              for (final Module module : context.getCompileScope().getAffectedModules()) {
-                CompilerOutputFilesUtil.iterateModuleClassFiles(module, fileConsumer);
-              }
+              doIndexing(new File(outputRoot, relativePath), null);
             }
-            finally {
-              myLock.unlock();
-              myInProgress.set(false);
+            catch (ProcessCanceledException e0) {
+              throw e0;
+            }
+            catch (RuntimeException e) {
+              LOG.error(e);
             }
           }
-          return true;
         }
-      });
+      }, myProject);
       if (needReindex) {
         reindexAllProjectInBackground();
       }
@@ -233,7 +215,7 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private void doIndexing(@NotNull final File file, @NotNull final ProgressIndicator indicator) {
+  private void doIndexing(@NotNull final File file, @Nullable final ProgressIndicator indicator) {
     final String filePath;
     try {
       filePath = file.getCanonicalPath();
@@ -267,7 +249,9 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
         }
       }
       try {
-        indicator.setText2(filePath);
+        if (indicator != null) {
+          indicator.setText2(filePath);
+        }
         final int id = myFileEnumerator.enumerate(filePath);
         for (final CompilerOutputBaseIndex index : myIndexes) {
           index.update(id, reader);

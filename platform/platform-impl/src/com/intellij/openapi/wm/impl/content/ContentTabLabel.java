@@ -71,18 +71,18 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected Color getActiveFg(boolean selected) {
-    if (contentManager().getContentCount() > 1 && selected) {
-      return Gray._255;
-    }
-    return super.getActiveFg(selected);
+    if (contentManager().getContentCount() > 1) {
+       return selected ? Color.white : UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black;
+     }
+     return super.getActiveFg(selected);
   }
 
   @Override
   protected Color getPassiveFg(boolean selected) {
-    if (contentManager().getContentCount() > 1 && selected && !UIUtil.isUnderDarcula()) {
-      return Gray._255;
-    }
-    return super.getPassiveFg(selected);
+    if (contentManager().getContentCount() > 1) {
+       return selected && !UIUtil.isUnderDarcula() ? Gray._255 : UIUtil.isUnderDarcula()? UIUtil.getLabelDisabledForeground() : Gray._75;
+     }
+     return super.getPassiveFg(selected);
   }
 
   protected void paintComponent(final Graphics g) {

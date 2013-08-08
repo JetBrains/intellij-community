@@ -84,7 +84,7 @@ public class JavaCodeBlockModificationListener implements PsiTreeChangePreproces
         myModificationTracker.incCounter();
       }
     }
-    catch (PsiInvalidElementAccessException e) {
+    catch (PsiInvalidElementAccessException ignored) {
       myModificationTracker.incCounter(); // Shall not happen actually, just a pre-release paranoia
     }
   }
