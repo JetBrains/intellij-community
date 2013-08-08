@@ -348,7 +348,8 @@ public class PsiUtilCore {
   }
 
   @Nullable
-  public static VirtualFile getVirtualFile(@Nullable PsiElement element) {
+  public static VirtualFile getVirtualFile(@Nullable Object object) {
+    PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
     if (element == null || !element.isValid()) {
       return null;
     }

@@ -44,6 +44,7 @@ public class FileReferenceUtil {
     final FileReference[] references = set.getAllReferences();
 
     return ContainerUtil.map2Array(references, PsiReference.class, new NotNullFunction<FileReference, PsiReference>() {
+      @Override
       @NotNull
       public PsiReference fun(FileReference fileReference) {
         return new MyFileReference(fileReference, cond, soft);
@@ -66,6 +67,7 @@ public class FileReferenceUtil {
       myType = type;
     }
 
+    @Override
     public boolean value(PsiFile file) {
       return file.getFileType() == myType;
     }
@@ -78,6 +80,7 @@ public class FileReferenceUtil {
       myPattern = pattern;
     }
 
+    @Override
     public boolean value(PsiFile o) {
       return myPattern.accepts(o);
     }
@@ -113,6 +116,7 @@ public class FileReferenceUtil {
     protected ResolveResult[] innerResolve() {
       final ResolveResult[] results = super.innerResolve();
       return ContainerUtil.findAll(results, new Condition<ResolveResult>() {
+        @Override
         public boolean value(ResolveResult resolveResult) {
           final PsiElement e = resolveResult.getElement();
           return match(e, myCond);
@@ -125,6 +129,7 @@ public class FileReferenceUtil {
     public Object[] getVariants() {
       final Object[] variants = super.getVariants();
       return ContainerUtil.findAll(variants, new Condition<Object>() {
+        @Override
         public boolean value(Object o) {
           /*if (o instanceof CandidateInfo) {
             o = ((CandidateInfo)o).getElement();
