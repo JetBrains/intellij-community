@@ -375,7 +375,7 @@ public class GithubApiUtil {
   public static Collection<String> getTokenScopes(@NotNull GithubAuthData auth) throws IOException {
     HttpMethod method = null;
     try {
-      method = doREST(auth, "", null, null, HttpVerb.HEAD);
+      method = doREST(auth, "/user", null, null, HttpVerb.HEAD);
 
       checkStatusCode(method);
 
