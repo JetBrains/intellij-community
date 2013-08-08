@@ -61,6 +61,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -71,6 +72,7 @@ import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
@@ -83,7 +85,7 @@ public abstract class TestObject implements JavaCommandLine {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestObject");
 
   private static final String MESSAGE = ExecutionBundle.message("configuration.not.speficied.message");
-  private static final String JUNIT_TEST_FRAMEWORK_NAME = "JUnit";
+  @NonNls private static final String JUNIT_TEST_FRAMEWORK_NAME = "JUnit";
 
   protected JavaParameters myJavaParameters;
   private final Project myProject;
@@ -230,7 +232,7 @@ public abstract class TestObject implements JavaCommandLine {
         myListenersFile = FileUtil.createTempFile("junit_listeners_", "");
         myListenersFile.deleteOnExit();
         myJavaParameters.getProgramParametersList().add("@@" + myListenersFile.getPath());
-        FileUtil.writeToFile(myListenersFile, buf.toString().getBytes());
+        FileUtil.writeToFile(myListenersFile, buf.toString().getBytes(CharsetToolkit.UTF8_CHARSET));
       }
       catch (IOException e) {
         LOG.error(e);
@@ -416,17 +418,17 @@ public abstract class TestObject implements JavaCommandLine {
 
   private boolean forkPerModule() {
     final String workingDirectory = myConfiguration.getWorkingDirectory();
-    return JUnitConfiguration.TEST_PACKAGE.equals(myConfiguration.getPersistentData().TEST_OBJECT) && 
-           myConfiguration.getPersistentData().getScope() != TestSearchScope.SINGLE_MODULE && 
+    return JUnitConfiguration.TEST_PACKAGE.equals(myConfiguration.getPersistentData().TEST_OBJECT) &&
+           myConfiguration.getPersistentData().getScope() != TestSearchScope.SINGLE_MODULE &&
            ("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory);
   }
-  
+
   private void appendForkInfo(Executor executor) throws ExecutionException {
     final String forkMode = myConfiguration.getForkMode();
     if (Comparing.strEqual(forkMode, "none")) {
       final String workingDirectory = myConfiguration.getWorkingDirectory();
-      if (!JUnitConfiguration.TEST_PACKAGE.equals(myConfiguration.getPersistentData().TEST_OBJECT) || 
-          myConfiguration.getPersistentData().getScope() == TestSearchScope.SINGLE_MODULE || 
+      if (!JUnitConfiguration.TEST_PACKAGE.equals(myConfiguration.getPersistentData().TEST_OBJECT) ||
+          myConfiguration.getPersistentData().getScope() == TestSearchScope.SINGLE_MODULE ||
           !("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory)) {
         return;
       }
@@ -445,7 +447,7 @@ public abstract class TestObject implements JavaCommandLine {
 
     try {
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
-      final PrintWriter writer = new PrintWriter(tempFile, "UTF-8");
+      final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
       try {
         writer.println(((JavaSdkType)jdk.getSdkType()).getVMExecutablePath(jdk));
         for (String vmParameter : javaParameters.getVMParametersList().getList()) {
@@ -457,7 +459,7 @@ public abstract class TestObject implements JavaCommandLine {
       finally {
         writer.close();
       }
-      
+
       myJavaParameters.getProgramParametersList().add("@@@" + forkMode + ',' + tempFile.getAbsolutePath());
     }
     catch (Exception e) {
@@ -476,7 +478,7 @@ public abstract class TestObject implements JavaCommandLine {
       }
 
       final Map<String, List<String>> perModule = forkPerModule() ? new TreeMap<String, List<String>>() : null;
-      final PrintWriter writer = new PrintWriter(myTempFile, "UTF-8");
+      final PrintWriter writer = new PrintWriter(myTempFile, CharsetToolkit.UTF8);
       try {
         writer.println(packageName);
         final List<String> testNames = new ArrayList<String>();
@@ -519,7 +521,7 @@ public abstract class TestObject implements JavaCommandLine {
       }
 
       if (perModule != null && perModule.size() > 1) {
-        final PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, "UTF-8");
+        final PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8);
         try {
           wWriter.println(packageName);
           for (String workingDir : perModule.keySet()) {
