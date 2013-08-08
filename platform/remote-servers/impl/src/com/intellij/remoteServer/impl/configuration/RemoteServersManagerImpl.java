@@ -3,8 +3,10 @@ package com.intellij.remoteServer.impl.configuration;
 import com.intellij.openapi.components.*;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +26,11 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
   public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private List<RemoteServer<?>> myServers = new ArrayList<RemoteServer<?>>();
   private List<RemoteServerState> myUnknownServers = new ArrayList<RemoteServerState>();
+  private final MessageBus myMessageBus;
+
+  public RemoteServersManagerImpl(MessageBus messageBus) {
+    myMessageBus = messageBus;
+  }
 
   @Override
   public List<RemoteServer<?>> getServers() {
@@ -60,11 +67,13 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
   @Override
   public void addServer(RemoteServer<?> server) {
     myServers.add(server);
+    myMessageBus.syncPublisher(RemoteServerListener.TOPIC).serverAdded(server);
   }
 
   @Override
   public void removeServer(RemoteServer<?> server) {
     myServers.remove(server);
+    myMessageBus.syncPublisher(RemoteServerListener.TOPIC).serverRemoved(server);
   }
 
   @Nullable

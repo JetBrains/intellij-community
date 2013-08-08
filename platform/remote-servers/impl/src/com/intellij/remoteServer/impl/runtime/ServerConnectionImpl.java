@@ -20,14 +20,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ServerConnectionImpl<D extends DeploymentConfiguration> implements ServerConnection<D> {
   private final RemoteServer<?> myServer;
   private final ServerConnector<D> myConnector;
+  private final ServerConnectionEventDispatcher myEventDispatcher;
   private volatile ConnectionStatus myStatus = ConnectionStatus.DISCONNECTED;
   private volatile String myStatusText;
   private volatile ServerRuntimeInstance<D> myRuntimeInstance;
   private final ConcurrentHashMap<DeploymentSource, DeploymentInformation> myDeploymentInfos = new ConcurrentHashMap<DeploymentSource, DeploymentInformation>();
 
-  public ServerConnectionImpl(RemoteServer<?> server, ServerConnector<D> connector) {
+  public ServerConnectionImpl(RemoteServer<?> server, ServerConnector<D> connector, ServerConnectionEventDispatcher eventDispatcher) {
     myServer = server;
     myConnector = connector;
+    myEventDispatcher = eventDispatcher;
   }
 
   @NotNull
@@ -68,7 +70,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     if (myStatus == ConnectionStatus.CONNECTED) {
       myRuntimeInstance = null;
       myConnector.disconnect();
-      myStatus = ConnectionStatus.DISCONNECTED;
+      setStatus(ConnectionStatus.DISCONNECTED);
     }
   }
 
@@ -110,23 +112,28 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       return;
     }
 
-    myStatus = ConnectionStatus.CONNECTING;
+    setStatus(ConnectionStatus.CONNECTING);
     myConnector.connect(new ServerConnector.ConnectionCallback<D>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
-        myStatus = ConnectionStatus.CONNECTED;
+        setStatus(ConnectionStatus.CONNECTED);
         myRuntimeInstance = instance;
         callback.connected(instance);
       }
 
       @Override
       public void errorOccurred(@NotNull String errorMessage) {
-        myStatus = ConnectionStatus.DISCONNECTED;
+        setStatus(ConnectionStatus.DISCONNECTED);
         myRuntimeInstance = null;
         myStatusText = errorMessage;
         callback.errorOccurred(errorMessage);
       }
     });
+  }
+
+  private void setStatus(final ConnectionStatus status) {
+    myStatus = status;
+    myEventDispatcher.queueConnectionStatusChanged(this);
   }
 
   private static abstract class ConnectionCallbackBase<D extends DeploymentConfiguration> implements ServerConnector.ConnectionCallback<D> {

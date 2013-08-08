@@ -6,6 +6,7 @@ import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -17,6 +18,7 @@ import java.util.Map;
  */
 public class ServerConnectionManagerImpl extends ServerConnectionManager {
   private Map<RemoteServer<?>, ServerConnection> myConnections = new HashMap<RemoteServer<?>, ServerConnection>();
+  private final ServerConnectionEventDispatcher myEventDispatcher = new ServerConnectionEventDispatcher();
 
   @NotNull
   @Override
@@ -25,10 +27,17 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
     ServerConnection connection = myConnections.get(server);
     if (connection == null) {
       ServerTaskExecutorImpl executor = new ServerTaskExecutorImpl();
-      connection = new ServerConnectionImpl(server, server.getType().createConnector(server.getConfiguration(), executor));
+      connection = new ServerConnectionImpl(server, server.getType().createConnector(server.getConfiguration(), executor), myEventDispatcher);
       myConnections.put(server, connection);
+      myEventDispatcher.fireConnectionCreated(connection);
     }
     return connection;
+  }
+
+  @Nullable
+  @Override
+  public <C extends ServerConfiguration> ServerConnection getConnection(@NotNull RemoteServer<C> server) {
+    return myConnections.get(server);
   }
 
   @NotNull
