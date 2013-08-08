@@ -42,6 +42,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myUsernameLabel.setVisible(false);
     myPasswordText.setVisible(false);
     myPasswordLabel.setVisible(false);
+    myUseHttpAuthenticationCheckBox.setVisible(false);
 
     myToken.setText(repository.getToken());
     myRepoAuthor.setText(repository.getRepoAuthor());
@@ -87,7 +88,6 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myRepository.setRepoName(myRepoName.getText().trim());
     myRepository.setRepoAuthor(myRepoAuthor.getText().trim());
     myRepository.setToken(myToken.getText().trim());
-    myUseHttpAuthenticationCheckBox.setSelected(!StringUtil.isEmpty(myUserNameText.getText()));
     super.apply();
   }
 
