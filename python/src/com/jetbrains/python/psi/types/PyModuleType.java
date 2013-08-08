@@ -257,6 +257,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
   }
 
+  @Override
   public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
     Set<String> namesAlready = context.get(CTX_NAMES);
     List<Object> result = new ArrayList<Object>();
@@ -369,6 +370,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return FileUtil.toSystemDependentName(path);
   }
 
+  @Override
   public String getName() {
     return myModule.getName();
   }

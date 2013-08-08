@@ -19,10 +19,12 @@ import java.util.List;
  * @author yole
  */
 public class PyImportOptimizer implements ImportOptimizer {
+  @Override
   public boolean supports(PsiFile file) {
     return true;
   }
 
+  @Override
   @NotNull
   public Runnable processFile(@NotNull final PsiFile file) {
     final LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
@@ -37,6 +39,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       }
     });
     return new Runnable() {
+      @Override
       public void run() {
         visitor.optimizeImports();
         if (file instanceof PyFile) {

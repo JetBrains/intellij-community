@@ -2,7 +2,7 @@ package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -249,7 +249,7 @@ public class AddImportHelper {
     if (projectRootManager.getFileIndex().isInContent(vFile)) {
       return ImportPriority.PROJECT;
     }
-    Module module = ModuleUtil.findModuleForPsiElement(importLocation);
+    Module module = ModuleUtilCore.findModuleForPsiElement(importLocation);
     Sdk pythonSdk = module != null ? PythonSdkType.findPythonSdk(module) : projectRootManager.getProjectSdk();
 
     return PythonSdkType.isStdLib(vFile, pythonSdk) ? ImportPriority.BUILTIN : ImportPriority.THIRD_PARTY;
