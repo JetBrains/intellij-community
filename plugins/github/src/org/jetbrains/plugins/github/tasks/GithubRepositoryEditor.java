@@ -20,6 +20,8 @@ import org.jetbrains.plugins.github.GithubUtil;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -48,6 +50,27 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myToken.setText(repository.getToken());
     myRepoAuthor.setText(repository.getRepoAuthor());
     myRepoName.setText(repository.getRepoName());
+
+    DocumentListener buttonUpdater = new DocumentListener() {
+      @Override
+      public void insertUpdate(DocumentEvent e) {
+        updateTokenButton();
+      }
+
+      @Override
+      public void removeUpdate(DocumentEvent e) {
+        updateTokenButton();
+      }
+
+      @Override
+      public void changedUpdate(DocumentEvent e) {
+        updateTokenButton();
+      }
+    };
+
+    myRepoAuthor.getDocument().addDocumentListener(buttonUpdater);
+    myRepoName.getDocument().addDocumentListener(buttonUpdater);
+    myURLText.getDocument().addDocumentListener(buttonUpdater);
 
     setAnchor(myRepoAuthorLabel);
   }
@@ -87,9 +110,9 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
 
   @Override
   public void apply() {
-    myRepository.setRepoName(myRepoName.getText().trim());
-    myRepository.setRepoAuthor(myRepoAuthor.getText().trim());
-    myRepository.setToken(myToken.getText().trim());
+    myRepository.setRepoName(getRepoName());
+    myRepository.setRepoAuthor(getRepoAuthor());
+    myRepository.setToken(getToken());
     super.apply();
   }
 
@@ -103,7 +126,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
             @NotNull
             @Override
             public String convert(GithubAuthData auth) throws IOException {
-              return GithubApiUtil.getReadOnlyToken(auth, myRepoAuthor.getText(), myRepoName.getText(), "Intellij tasks plugin");
+              return GithubApiUtil.getReadOnlyToken(auth, getRepoAuthor(), getRepoName(), "Intellij tasks plugin");
             }
           }));
         }
@@ -128,5 +151,36 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myRepoAuthorLabel.setAnchor(anchor);
     myRepoLabel.setAnchor(anchor);
     myTokenLabel.setAnchor(anchor);
+  }
+
+  private void updateTokenButton() {
+    if (StringUtil.isEmptyOrSpaces(getHost()) ||
+        StringUtil.isEmptyOrSpaces(getRepoAuthor()) ||
+        StringUtil.isEmptyOrSpaces(getRepoName())) {
+      myTokenButton.setEnabled(false);
+    }
+    else {
+      myTokenButton.setEnabled(true);
+    }
+  }
+
+  @NotNull
+  private String getHost() {
+    return myURLText.getText().trim();
+  }
+
+  @NotNull
+  private String getRepoAuthor() {
+    return myRepoAuthor.getText().trim();
+  }
+
+  @NotNull
+  private String getRepoName() {
+    return myRepoName.getText().trim();
+  }
+
+  @NotNull
+  private String getToken() {
+    return myToken.getText().trim();
   }
 }
