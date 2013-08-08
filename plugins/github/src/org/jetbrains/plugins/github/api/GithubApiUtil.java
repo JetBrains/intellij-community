@@ -410,6 +410,16 @@ public class GithubApiUtil {
   }
 
   @NotNull
+  public static String getReadOnlyToken(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, @Nullable String note)
+    throws IOException {
+    GithubRepo repository = getDetailedRepoInfo(auth, user, repo);
+
+    List<String> scopes = repository.isPrivate() ? Collections.singletonList("repo") : Collections.<String>emptyList();
+
+    return getScopedToken(auth, scopes, note);
+  }
+
+  @NotNull
   public static GithubUser getCurrentUser(@NotNull GithubAuthData auth) throws IOException {
     JsonElement result = getRequest(auth, "/user");
     return createDataFromRaw(fromJson(result, GithubUserRaw.class), GithubUser.class);

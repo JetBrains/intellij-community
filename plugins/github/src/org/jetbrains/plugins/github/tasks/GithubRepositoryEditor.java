@@ -13,16 +13,16 @@ import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.*;
 import org.jetbrains.plugins.github.GithubAuthData;
+import org.jetbrains.plugins.github.GithubAuthenticationCanceledException;
+import org.jetbrains.plugins.github.GithubNotifications;
+import org.jetbrains.plugins.github.GithubUtil;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * @author Dennis.Ushakov
@@ -34,7 +34,6 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   private JButton myTokenButton;
   private JBLabel myRepoAuthorLabel;
   private JBLabel myRepoLabel;
-  private JCheckBox myPrivateRepo;
 
   public GithubRepositoryEditor(final Project project, final GithubRepository repository, Consumer<GithubRepository> changeListener) {
     super(project, repository, changeListener);
@@ -47,7 +46,6 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myToken.setText(repository.getToken());
     myRepoAuthor.setText(repository.getRepoAuthor());
     myRepoName.setText(repository.getRepoName());
-    myPrivateRepo.setSelected(false);
 
     setAnchor(myRepoAuthorLabel);
   }
@@ -75,12 +73,8 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
       }
     });
 
-    myPrivateRepo = new JCheckBox("Private repository");
-    installListener(myPrivateRepo);
-
     return FormBuilder.createFormBuilder().setAlignLabelOnRight(true).addLabeledComponent(myTokenButton, myToken)
-      .addLabeledComponent(myRepoAuthorLabel, myRepoAuthor).addLabeledComponent(myRepoLabel, myRepoName)
-      .addComponentToRightColumn(myPrivateRepo).getPanel();
+      .addLabeledComponent(myRepoAuthorLabel, myRepoAuthor).addLabeledComponent(myRepoLabel, myRepoName).getPanel();
   }
 
   @Override
@@ -91,51 +85,17 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     super.apply();
   }
 
-  @Override
-  protected void afterTestConnection(final boolean connectionSuccessful) {
-    if (connectionSuccessful) {
-      final Ref<Collection<String>> scopesRef = new Ref<Collection<String>>();
-      final Ref<IOException> exceptionRef = new Ref<IOException>();
-      ProgressManager.getInstance().run(new Task.Modal(myProject, "Access to GitHub", true) {
-        public void run(@NotNull ProgressIndicator indicator) {
-          try {
-            scopesRef
-              .set(GithubApiUtil.getTokenScopes(GithubAuthData.createTokenAuth(myURLText.getText().trim(), myToken.getText().trim())));
-          }
-          catch (IOException e) {
-            exceptionRef.set(e);
-          }
-        }
-      });
-      if (!exceptionRef.isNull()) {
-        GithubNotifications.showErrorDialog(myProject, "Can't check token scopes", exceptionRef.get());
-        return;
-      }
-      Collection<String> scopes = scopesRef.get();
-      if (myPrivateRepo.isSelected()) {
-        scopes.remove("repo");
-      }
-      if (scopes.isEmpty()) {
-        return;
-      }
-      GithubNotifications
-        .showWarningDialog(myProject, "Unneeded token scopes detected", "Unneeded scopes: " + StringUtil.join(scopes, ", "));
-    }
-  }
-
   private void generateToken() {
     final Ref<String> tokenRef = new Ref<String>();
     final Ref<IOException> exceptionRef = new Ref<IOException>();
-    final Collection<String> scopes = myPrivateRepo.isSelected() ? Collections.singleton("repo") : Collections.<String>emptyList();
     ProgressManager.getInstance().run(new Task.Modal(myProject, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           tokenRef.set(GithubUtil.runWithValidBasicAuth(myProject, indicator, new ThrowableConvertor<GithubAuthData, String, IOException>() {
-            @Nullable
+            @NotNull
             @Override
             public String convert(GithubAuthData auth) throws IOException {
-              return GithubApiUtil.getScopedToken(auth, scopes, "Intellij tasks plugin");
-
+              return GithubApiUtil.getReadOnlyToken(auth, myRepoAuthor.getText(), myRepoName.getText(), "Intellij tasks plugin");
             }
           }));
         }
