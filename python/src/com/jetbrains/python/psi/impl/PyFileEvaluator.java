@@ -14,7 +14,9 @@ import java.util.*;
  */
 public class PyFileEvaluator {
   private final Map<String, Object> myNamespace = new HashMap<String, Object>();
+  private final Map<String, List<PyExpression>> myDeclarations = new HashMap<String, List<PyExpression>>();
   private final Set<PyFile> myVisitedFiles;
+  private final Set<String> myDeclarationsToTrack = new HashSet<String>();
   private String myCurrentFilePath;
 
   public PyFileEvaluator() {
@@ -23,6 +25,10 @@ public class PyFileEvaluator {
 
   public PyFileEvaluator(Set<PyFile> visitedFiles) {
     myVisitedFiles = visitedFiles;
+  }
+
+  public void trackDeclarations(String attrName) {
+    myDeclarationsToTrack.add(attrName);
   }
 
   public void evaluate(PyFile file) {
@@ -40,17 +46,29 @@ public class PyFileEvaluator {
           String name = expression.getName();
           PyExpression value = ((PyTargetExpression)expression).findAssignedValue();
           myNamespace.put(name, createEvaluator().evaluate(value));
+          if (myDeclarationsToTrack.contains(name)) {
+            List<PyExpression> declarations = new ArrayList<PyExpression>();
+            PyPsiUtils.sequenceToList(declarations, value);
+            myDeclarations.put(name, declarations);
+          }
         }
       }
 
       @Override
       public void visitPyAugAssignmentStatement(PyAugAssignmentStatement node) {
         PyExpression target = node.getTarget();
-        if (target instanceof PyReferenceExpression && ((PyReferenceExpression)target).getQualifier() == null && target.getName() != null) {
-          Object currentValue = myNamespace.get(target.getName());
+        String name = target.getName();
+        if (target instanceof PyReferenceExpression && ((PyReferenceExpression)target).getQualifier() == null && name != null) {
+          Object currentValue = myNamespace.get(name);
           if (currentValue != null) {
             Object rhs = createEvaluator().evaluate(node.getValue());
-            myNamespace.put(target.getName(), PyEvaluator.concatenate(currentValue, rhs));
+            myNamespace.put(name, PyEvaluator.concatenate(currentValue, rhs));
+          }
+          if (myDeclarationsToTrack.contains(name)) {
+            List<PyExpression> declarations = myDeclarations.get(name);
+            if (declarations != null) {
+              PyPsiUtils.sequenceToList(declarations, node.getValue());
+            }
           }
         }
       }
@@ -70,12 +88,7 @@ public class PyFileEvaluator {
             if (qualifier instanceof PyReferenceExpression) {
               PyReferenceExpression qualifierRef = (PyReferenceExpression)qualifier;
               if (qualifierRef.getQualifier() == null) {
-                String nameBeingExtended = qualifierRef.getReferencedName();
-                Object value = myNamespace.get(nameBeingExtended);
-                if (value instanceof List) {
-                  Object arg = createEvaluator().evaluate(node.getArguments()[0]);
-                  myNamespace.put(nameBeingExtended, PyEvaluator.concatenate(value, arg));
-                }
+                processExtendCall(node, qualifierRef.getReferencedName());
               }
             }
           }
@@ -106,6 +119,23 @@ public class PyFileEvaluator {
         }
       }
     });
+  }
+
+  private void processExtendCall(PyCallExpression node, String nameBeingExtended) {
+    PyExpression arg = node.getArguments()[0];
+
+    Object value = myNamespace.get(nameBeingExtended);
+    if (value instanceof List) {
+      Object argValue = createEvaluator().evaluate(arg);
+      myNamespace.put(nameBeingExtended, PyEvaluator.concatenate(value, argValue));
+    }
+
+    if (myDeclarationsToTrack.contains(nameBeingExtended)) {
+      List<PyExpression> declarations = myDeclarations.get(nameBeingExtended);
+      if (declarations != null) {
+        PyPsiUtils.sequenceToList(declarations, arg);
+      }
+    }
   }
 
   private PyEvaluator createEvaluator() {
@@ -148,5 +178,11 @@ public class PyFileEvaluator {
 
   public Set<PyFile> getVisitedFiles() {
     return myVisitedFiles;
+  }
+
+  @NotNull
+  public List<PyExpression> getDeclarations(String name) {
+    List<PyExpression> expressions = myDeclarations.get(name);
+    return expressions != null ? expressions : Collections.<PyExpression>emptyList();
   }
 }
