@@ -871,7 +871,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     if (mySubstitutions == null && myTag != null) {
       mySubstitutions = new MultiMap<String, XmlTag>();
 
-      if (myTag == null) return;
+      if (myTag == null) return false;
 
       XmlTag[] tags = myTag.getSubTags();
 
