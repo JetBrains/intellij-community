@@ -20,6 +20,7 @@ import org.jetbrains.plugins.github.GithubUtil;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -34,6 +35,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   private JButton myTokenButton;
   private JBLabel myRepoAuthorLabel;
   private JBLabel myRepoLabel;
+  private JBLabel myTokenLabel;
 
   public GithubRepositoryEditor(final Project project, final GithubRepository repository, Consumer<GithubRepository> changeListener) {
     super(project, repository, changeListener);
@@ -55,7 +57,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   protected JComponent createCustomPanel() {
     myUrlLabel.setText("Host:");
 
-    myRepoAuthorLabel = new JBLabel("Repository author:", SwingConstants.RIGHT);
+    myRepoAuthorLabel = new JBLabel("Repository Owner:", SwingConstants.RIGHT);
     myRepoAuthor = new JTextField();
     installListener(myRepoAuthor);
 
@@ -63,9 +65,10 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myRepoName = new JTextField();
     installListener(myRepoName);
 
+    myTokenLabel = new JBLabel("API Token:", SwingConstants.RIGHT);
     myToken = new JTextField();
     installListener(myToken);
-    myTokenButton = new JButton("API token");
+    myTokenButton = new JButton("Create API token");
     myTokenButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         generateToken();
@@ -73,8 +76,13 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
       }
     });
 
-    return FormBuilder.createFormBuilder().setAlignLabelOnRight(true).addLabeledComponent(myTokenButton, myToken)
-      .addLabeledComponent(myRepoAuthorLabel, myRepoAuthor).addLabeledComponent(myRepoLabel, myRepoName).getPanel();
+    JPanel myTokenPanel = new JPanel();
+    myTokenPanel.setLayout(new BorderLayout(5, 5));
+    myTokenPanel.add(myToken, BorderLayout.CENTER);
+    myTokenPanel.add(myTokenButton, BorderLayout.EAST);
+
+    return FormBuilder.createFormBuilder().setAlignLabelOnRight(true).addLabeledComponent(myRepoAuthorLabel, myRepoAuthor)
+      .addLabeledComponent(myRepoLabel, myRepoName).addLabeledComponent(myTokenLabel, myTokenPanel).getPanel();
   }
 
   @Override
@@ -119,5 +127,6 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     super.setAnchor(anchor);
     myRepoAuthorLabel.setAnchor(anchor);
     myRepoLabel.setAnchor(anchor);
+    myTokenLabel.setAnchor(anchor);
   }
 }
