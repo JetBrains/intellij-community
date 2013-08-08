@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.django.facet.DjangoFacet;
@@ -61,7 +62,7 @@ public class DjangoTemplateLineBreakpointType extends XLineBreakpointType<XBreak
   }
 
   @Override
-  public XDebuggerEditorsProvider getEditorsProvider() {
+  public XDebuggerEditorsProvider getEditorsProvider(@NotNull XLineBreakpoint<XBreakpointProperties> breakpoint, @NotNull Project project) {
     return myEditorsProvider;
   }
 

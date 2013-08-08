@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.Lists;
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -324,7 +322,7 @@ public class PyPsiUtils {
     return result;
   }
 
-  private static void sequenceToList(List<PyExpression> result, PyExpression value) {
+  public static void sequenceToList(List<PyExpression> result, PyExpression value) {
     value = flattenParens(value);
     if (value instanceof PySequenceExpression) {
       result.addAll(ContainerUtil.newArrayList(((PySequenceExpression)value).getElements()));
@@ -360,48 +358,6 @@ public class PyPsiUtils {
   public static boolean isBefore(@NotNull final PsiElement element, @NotNull final PsiElement element2) {
     // TODO: From RubyPsiUtil, should be moved to PsiTreeUtil
     return element.getTextOffset() <= element2.getTextOffset();
-  }
-
-  public static Collection<? extends PyExpression> getAugAssignments(final @NotNull PyFile file, final @NotNull String name) {
-    final List<PyExpression> result = Lists.newArrayList();
-    file.accept(new TopLevelVisitor() {
-      @Override
-      protected void checkAddElement(PsiElement node) {
-        if (node instanceof PyAugAssignmentStatement) {
-          PyAugAssignmentStatement augAss = (PyAugAssignmentStatement)node;
-          if (name.equals(augAss.getTarget().getName())) {
-            sequenceToList(result, augAss.getValue());
-          }
-        }
-      }
-    });
-    return result;
-  }
-
-  public static Collection<? extends PyExpression> getCallArguments(final @NotNull PyFile file,
-                                                                    final @NotNull String name,
-                                                                    final @NotNull String callName) {
-    final List<PyExpression> result = Lists.newArrayList();
-    file.accept(new TopLevelVisitor() {
-      @Override
-      protected void checkAddElement(PsiElement node) {
-        if (node instanceof PyCallExpression) {
-          PyCallExpression call = (PyCallExpression)node;
-          if (call.getCallee() instanceof PyReferenceExpression) {
-            PyReferenceExpression ref = (PyReferenceExpression)call.getCallee();
-            if (callName.equals(ref.getName())) {
-              PyExpression ex = ref.getQualifier();
-              if (name.equals(ex.getName())) {
-                for (PyExpression expr : call.getArguments()) {
-                  sequenceToList(result, expr);
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-    return result;
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
@@ -55,8 +56,7 @@ public class PyClassRefactoringUtil {
       }
       else {
         for (String s : superClassesAsStrings) {
-          final PyExpression expr = PyElementGenerator.getInstance(project).createExpressionFromText(s);
-          argList.addArgument(expr);
+          argList.addArgument(PyElementGenerator.getInstance(project).createExpressionFromText(s));
         }
       }
     } else {
@@ -361,12 +361,9 @@ public class PyClassRefactoringUtil {
   @Nullable
   public static String getOriginalName(@NotNull PsiNamedElement element) {
     if (element instanceof PyFile) {
-      final PsiElement e = PyUtil.turnInitIntoDir(element);
-      if (e instanceof PsiFileSystemItem) {
-        final VirtualFile virtualFile = ((PsiFileSystemItem)e).getVirtualFile();
-        if (virtualFile != null) {
-          return virtualFile.getNameWithoutExtension();
-        }
+      VirtualFile virtualFile = PsiUtilBase.asVirtualFile(PyUtil.turnInitIntoDir(element));
+      if (virtualFile != null) {
+        return virtualFile.getNameWithoutExtension();
       }
       return null;
     }

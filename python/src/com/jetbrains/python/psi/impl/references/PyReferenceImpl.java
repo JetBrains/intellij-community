@@ -54,12 +54,14 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     myContext = context;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     final ASTNode nameElement = myElement.getNameElement();
     final TextRange range = nameElement != null ? nameElement.getTextRange() : myElement.getNode().getTextRange();
     return range.shiftRight(-myElement.getNode().getStartOffset());
   }
 
+  @Override
   public PsiElement getElement() {
     return myElement;
   }
@@ -72,6 +74,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    *
    * @see #resolveInner().
    */
+  @Override
   @Nullable
   public PsiElement resolve() {
     final ResolveResult[] results = multiResolve(false);
@@ -92,6 +95,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    *
    * @see com.intellij.psi.PsiPolyVariantReference#multiResolve(boolean)
    */
+  @Override
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     if (USE_CACHE) {
@@ -384,11 +388,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return rate;
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return getRangeInElement().substring(getElement().getText());
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     ASTNode nameElement = myElement.getNameElement();
     if (newElementName.endsWith(PyNames.DOT_PY)) {
@@ -401,11 +407,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return myElement;
   }
 
+  @Override
   @Nullable
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return null;
   }
 
+   @Override
    public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiFileSystemItem) {
       // may be import via alias, so don't check if names match, do simple resolve check instead
@@ -555,6 +563,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final List<LookupElement> ret = Lists.newArrayList();
@@ -607,10 +616,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return ret.toArray();
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
+  @Override
   public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
     if (isBuiltInConstant()) return null;
     final PyExpression qualifier = myElement.getQualifier();
@@ -629,6 +640,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return PyNames.NONE.equals(name) || "True".equals(name) || "False".equals(name);
   }
 
+  @Override
   @Nullable
   public String getUnresolvedDescription() {
     return null;
@@ -648,6 +660,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     private static final int MAX_NESTING_LEVEL = 30;
 
+    @Override
     @NotNull
     public ResolveResult[] resolve(@NotNull final PyReferenceImpl ref, final boolean incompleteCode) {
       if (myNesting.get().getAndIncrement() >= MAX_NESTING_LEVEL) {
