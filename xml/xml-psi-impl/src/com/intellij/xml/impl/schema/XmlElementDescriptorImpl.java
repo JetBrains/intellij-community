@@ -20,7 +20,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiWritableMetaData;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -29,6 +31,10 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Mike
@@ -239,7 +245,29 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     if (type instanceof ComplexTypeDescriptor) {
       ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
 
-      return typeDescriptor.getElements(context);
+      XmlElementDescriptor[] elements = typeDescriptor.getElements(context);
+      if (context instanceof XmlTag && elements.length > 0) {
+        String[] namespaces = ((XmlTag)context).knownNamespaces();
+        if (namespaces.length > 1) {
+          List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>(Arrays.asList(elements));
+          for (String namespace : namespaces) {
+            if (namespace.equals(typeDescriptor.getNsDescriptor().getDefaultNamespace())) {
+              continue;
+            }
+            XmlNSDescriptor descriptor = ((XmlTag)context).getNSDescriptor(namespace, false);
+            if (descriptor instanceof XmlNSDescriptorImpl && ((XmlNSDescriptorImpl)descriptor).hasSubstitutions()) {
+              for (XmlElementDescriptor element : elements) {
+                String name = element.getName(context);
+                String s = ((XmlNSDescriptorImpl)element.getNSDescriptor()).getDefaultNamespace();
+                XmlElementDescriptor[] substitutes = ((XmlNSDescriptorImpl)descriptor).getSubstitutes(name, s);
+                result.addAll(Arrays.asList(substitutes));
+              }
+            }
+          }
+          return result.toArray(new XmlElementDescriptor[result.size()]);
+        }
+      }
+      return elements;
     }
 
     return EMPTY_ARRAY;
@@ -403,10 +431,13 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
           final XmlNSDescriptor descriptor = context instanceof XmlTag? ((XmlTag)context).getNSDescriptor(namespace, true) : null;
 
           // schema's targetNamespace could be different from file systemId used as NS
-          if (descriptor instanceof XmlNSDescriptorImpl &&
-              ((XmlNSDescriptorImpl)descriptor).getDefaultNamespace().equals(namespaceByContext)
-             ) {
-            return element;
+          if (descriptor instanceof XmlNSDescriptorImpl) {
+            if (((XmlNSDescriptorImpl)descriptor).getDefaultNamespace().equals(namespaceByContext)) {
+              return element;
+            }
+            else {
+              ((XmlNSDescriptorImpl)descriptor).getSubstitutes(localName, namespace);
+            }
           }
         }
       }
@@ -503,7 +534,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     if (type instanceof ComplexTypeDescriptor) {
       final ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
       return typeDescriptor.canContainTag("a", namespace, context) ||
-             typeDescriptor.getNsDescriptors().hasSubstitutions() ||
+             typeDescriptor.getNsDescriptor().hasSubstitutions() ||
              XmlUtil.nsFromTemplateFramework(namespace)
         ;
     }
