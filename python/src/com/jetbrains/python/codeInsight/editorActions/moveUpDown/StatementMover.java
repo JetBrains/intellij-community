@@ -59,14 +59,8 @@ public class StatementMover extends LineMover {
       info.toMove2 = info.toMove;
       return true;
     }
+    cleanUp();
 
-    //reset
-    myStatementListToAddPass = null;
-    myStatementListToAddPassAfter = null;
-    myStatementToDecreaseIndent = null;
-    myStatementToIncreaseIndent = null;
-    myStatementToAddLinebreak = null;
-    myStatementPartToRemovePass = null;
 
     //find statement
     myStatementToMove = findStatement(editor, file, info);
@@ -141,6 +135,16 @@ public class StatementMover extends LineMover {
       }
     }
     return true;
+  }
+
+  private void cleanUp() {
+    //reset
+    myStatementListToAddPass = null;
+    myStatementListToAddPassAfter = null;
+    myStatementToDecreaseIndent = null;
+    myStatementToIncreaseIndent = null;
+    myStatementToAddLinebreak = null;
+    myStatementPartToRemovePass = null;
   }
 
   private boolean isFirstOrLastStatement(boolean down) {
@@ -500,6 +504,7 @@ public class StatementMover extends LineMover {
           whitespace.delete();
       }
     }
+    cleanUp();
   }
 
 }
