@@ -27,6 +27,7 @@ import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubAuthenticationException;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
+import org.jetbrains.plugins.github.api.GithubUser;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -79,8 +80,13 @@ public class GithubSettingsPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         try {
-          GithubUtil.checkAuthData(getAuthData());
-          Messages.showInfoMessage(myPane, "Connection successful", "Success");
+          GithubUser user = GithubUtil.checkAuthData(getAuthData());
+          if (GithubAuthData.AuthType.TOKEN.equals(getAuthType())) {
+            Messages.showInfoMessage(myPane, "Connection successful for user " + user.getLogin(), "Success");
+          }
+          else {
+            Messages.showInfoMessage(myPane, "Connection successful", "Success");
+          }
         }
         catch (GithubAuthenticationException ex) {
           Messages.showErrorDialog(myPane, "Can't login using given credentials: " + ex.getMessage(), "Login Failure");
