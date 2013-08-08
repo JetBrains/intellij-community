@@ -43,6 +43,7 @@ public class GithubApiUtil {
   public static final String DEFAULT_GITHUB_HOST = "github.com";
 
   private static final int CONNECTION_TIMEOUT = 5000;
+  private static final String PER_PAGE = "per_page=100";
   private static final Logger LOG = GithubUtil.LOG;
 
   private static final Header ACCEPT_HTML_BODY_MARKUP = new Header("Accept", "application/vnd.github.v3.html+json");
@@ -442,7 +443,7 @@ public class GithubApiUtil {
 
   @NotNull
   private static List<GithubRepo> doGetAvailableRepos(@NotNull GithubAuthData auth, @Nullable String user) throws IOException {
-    String path = user == null ? "/user/repos" : "/users/" + user + "/repos?per_page=100";
+    String path = user == null ? "/user/repos" : "/users/" + user + "/repos?" + PER_PAGE;
 
 
     PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
@@ -518,10 +519,10 @@ public class GithubApiUtil {
                                                     @Nullable String assigned) throws IOException {
     String path;
     if (StringUtil.isEmptyOrSpaces(assigned)) {
-      path = "/repos/" + user + "/" + repo + "/issues?per_page=100";
+      path = "/repos/" + user + "/" + repo + "/issues?" + PER_PAGE;
     }
     else {
-      path = "/repos/" + user + "/" + repo + "/issues?assignee=" + assigned + "&per_page=100";
+      path = "/repos/" + user + "/" + repo + "/issues?assignee=" + assigned + "&" + PER_PAGE;
     }
 
     PagedRequest<GithubIssue> request = new PagedRequest<GithubIssue>(path, GithubIssue.class, GithubIssueRaw[].class);
@@ -558,7 +559,7 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubIssueComment> getIssueComments(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments?per_page=100";
+    String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments?" + PER_PAGE;
 
     PagedRequest<GithubIssueComment> request =
       new PagedRequest<GithubIssueComment>(path, GithubIssueComment.class, GithubIssueCommentRaw[].class, ACCEPT_HTML_BODY_MARKUP);
@@ -588,7 +589,7 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubPullRequest> getPullRequests(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/pulls?per_page=100";
+    String path = "/repos/" + user + "/" + repo + "/pulls?" + PER_PAGE;
 
     PagedRequest<GithubPullRequest> request =
       new PagedRequest<GithubPullRequest>(path, GithubPullRequest.class, GithubPullRequestRaw[].class, ACCEPT_HTML_BODY_MARKUP);
@@ -598,7 +599,7 @@ public class GithubApiUtil {
 
   @NotNull
   public static PagedRequest<GithubPullRequest> getPullRequests(@NotNull String user, @NotNull String repo) {
-    String path = "/repos/" + user + "/" + repo + "/pulls?per_page=100";
+    String path = "/repos/" + user + "/" + repo + "/pulls?" + PER_PAGE;
 
     return new PagedRequest<GithubPullRequest>(path, GithubPullRequest.class, GithubPullRequestRaw[].class, ACCEPT_HTML_BODY_MARKUP);
   }
@@ -606,7 +607,7 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubCommit> getPullRequestCommits(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/commits?per_page=100";
+    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/commits?" + PER_PAGE;
 
     PagedRequest<GithubCommit> request = new PagedRequest<GithubCommit>(path, GithubCommit.class, GithubCommitRaw[].class);
 
@@ -616,7 +617,7 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubFile> getPullRequestFiles(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/files?per_page=100";
+    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/files?" + PER_PAGE;
 
     PagedRequest<GithubFile> request = new PagedRequest<GithubFile>(path, GithubFile.class, GithubFileRaw[].class);
 
@@ -626,7 +627,7 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubBranch> getRepoBranches(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/branches?per_page=100";
+    String path = "/repos/" + user + "/" + repo + "/branches?" + PER_PAGE;
 
     PagedRequest<GithubBranch> request = new PagedRequest<GithubBranch>(path, GithubBranch.class, GithubBranchRaw[].class);
 
@@ -638,7 +639,7 @@ public class GithubApiUtil {
                                           @NotNull String user,
                                           @NotNull String repo,
                                           @NotNull String forkUser) throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/forks?per_page=100";
+    String path = "/repos/" + user + "/" + repo + "/forks?" + PER_PAGE;
 
     PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
 
