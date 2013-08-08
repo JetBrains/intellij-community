@@ -1,6 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -15,7 +15,7 @@ import java.util.*;
 public class PyFileEvaluator {
   private final Map<String, Object> myNamespace = new HashMap<String, Object>();
   private final Set<PyFile> myVisitedFiles;
-  private Map<String, Factory<PyEvaluator>> myEvaluatorFactories = new HashMap<String, Factory<PyEvaluator>>();
+  private String myCurrentFilePath;
 
   public PyFileEvaluator() {
     myVisitedFiles = new HashSet<PyFile>();
@@ -25,11 +25,9 @@ public class PyFileEvaluator {
     myVisitedFiles = visitedFiles;
   }
 
-  public void setEvaluatorFactory(String attrName, Factory<PyEvaluator> factory) {
-    myEvaluatorFactories.put(attrName, factory);
-  }
-
   public void evaluate(PyFile file) {
+    VirtualFile vFile = file.getVirtualFile();
+    myCurrentFilePath = vFile != null ? vFile.getPath() : null;
     if (myVisitedFiles.contains(file)) {
       return;
     }
@@ -41,7 +39,7 @@ public class PyFileEvaluator {
         if (expression instanceof PyTargetExpression) {
           String name = expression.getName();
           PyExpression value = ((PyTargetExpression)expression).findAssignedValue();
-          myNamespace.put(name, createEvaluator(name).evaluate(value));
+          myNamespace.put(name, createEvaluator().evaluate(value));
         }
       }
 
@@ -51,7 +49,7 @@ public class PyFileEvaluator {
         if (target instanceof PyReferenceExpression && ((PyReferenceExpression)target).getQualifier() == null && target.getName() != null) {
           Object currentValue = myNamespace.get(target.getName());
           if (currentValue != null) {
-            Object rhs = createEvaluator(target.getName()).evaluate(node.getValue());
+            Object rhs = createEvaluator().evaluate(node.getValue());
             myNamespace.put(target.getName(), PyEvaluator.concatenate(currentValue, rhs));
           }
         }
@@ -75,7 +73,7 @@ public class PyFileEvaluator {
                 String nameBeingExtended = qualifierRef.getReferencedName();
                 Object value = myNamespace.get(nameBeingExtended);
                 if (value instanceof List) {
-                  Object arg = createEvaluator(nameBeingExtended).evaluate(node.getArguments()[0]);
+                  Object arg = createEvaluator().evaluate(node.getArguments()[0]);
                   myNamespace.put(nameBeingExtended, PyEvaluator.concatenate(value, arg));
                 }
               }
@@ -110,11 +108,8 @@ public class PyFileEvaluator {
     });
   }
 
-  private PyEvaluator createEvaluator(String attrName) {
-    Factory<PyEvaluator> factory = myEvaluatorFactories.get(attrName);
-    PyEvaluator evaluator = factory != null ? factory.create() : new PyEvaluator();
-    evaluator.setNamespace(myNamespace);
-    return evaluator;
+  private PyEvaluator createEvaluator() {
+    return new PyPathEvaluator(myCurrentFilePath);
   }
 
   public Object getValue(String name) {
