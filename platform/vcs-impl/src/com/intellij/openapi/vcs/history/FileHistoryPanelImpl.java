@@ -177,6 +177,30 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
   };
+
+  private final DualViewColumnInfo BRANCH = new VcsColumnInfo<String>(VcsBundle.message("column.name.revisions.list.branch")) {
+    @Override
+    protected String getDataOf(VcsFileRevision object) {
+      return object.getBranchName();
+    }
+
+    @Nullable
+    @NonNls
+    @Override
+    public String getPreferredStringValue() {
+      return "wip-somebranch";
+    }
+
+    @Override
+    public int compare(VcsFileRevision o1, VcsFileRevision o2) {
+      int comparison = super.compare(o1, o2);
+      if ( 0 == comparison ) {
+        comparison = Comparing.compare(myRevisionsOrder.get(o1.getRevisionNumber()), myRevisionsOrder.get(o2.getRevisionNumber()));
+      }
+      return comparison;
+    }
+  };
+
   private boolean myColumnSizesSet;
 
   public void scheduleRefresh(final boolean canUseLastRevision) {
@@ -507,10 +531,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     ArrayList<DualViewColumnInfo> columns = new ArrayList<DualViewColumnInfo>();
     if (provider.isDateOmittable()) {
-      columns.addAll(Arrays.asList(REVISION, AUTHOR));
+      columns.addAll(Arrays.asList(REVISION, BRANCH, AUTHOR));
     }
     else {
-      columns.addAll(Arrays.asList(REVISION, DATE, AUTHOR));
+      columns.addAll(Arrays.asList(REVISION, BRANCH, DATE, AUTHOR));
     }
 
     columns.addAll(wrapAdditionalColumns(components.getColumns()));
