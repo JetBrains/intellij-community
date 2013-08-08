@@ -173,7 +173,7 @@ public abstract class GithubTest extends UsefulTestCase {
     myAuth = GithubAuthData.createBasicAuth(host, login1, password);
 
     myGitHubSettings = GithubSettings.getInstance();
-    myGitHubSettings.setCredentials(myHost, myLogin1, myAuth, false);
+    myGitHubSettings.setCredentials(myHost, myAuth, false);
 
     myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
     myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);

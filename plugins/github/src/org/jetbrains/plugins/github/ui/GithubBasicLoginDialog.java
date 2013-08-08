@@ -34,8 +34,7 @@ public class GithubBasicLoginDialog extends GithubLoginDialog {
   protected void saveCredentials(GithubAuthData auth) {
     final GithubSettings settings = GithubSettings.getInstance();
     if (settings.getAuthType() != GithubAuthData.AuthType.TOKEN) {
-      settings
-        .setCredentials(myGithubLoginPanel.getHost(), myGithubLoginPanel.getLogin(), auth, myGithubLoginPanel.isSavePasswordSelected());
+      settings.setCredentials(myGithubLoginPanel.getHost(), auth, myGithubLoginPanel.isSavePasswordSelected());
     }
   }
 }

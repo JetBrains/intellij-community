@@ -21,6 +21,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubUtil;
 
@@ -47,6 +48,7 @@ public class GithubLoginPanel {
   private JCheckBox mySavePasswordCheckBox;
   private JComboBox myAuthTypeComboBox;
   private JLabel myPasswordLabel;
+  private JLabel myLoginLabel;
 
   private final static String AUTH_PASSWORD = "Password";
   private final static String AUTH_TOKEN = "Token";
@@ -79,8 +81,21 @@ public class GithubLoginPanel {
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
           String item = e.getItem().toString();
-          myPasswordLabel.setText(item + ":");
-          mySavePasswordCheckBox.setText("Save " + item.toLowerCase());
+          if (AUTH_PASSWORD.equals(item)) {
+            myPasswordLabel.setText("Password:");
+            mySavePasswordCheckBox.setText("Save password");
+            myLoginLabel.setVisible(true);
+            myLoginTextField.setVisible(true);
+          }
+          if (AUTH_TOKEN.equals(item)) {
+            myPasswordLabel.setText("Token:");
+            mySavePasswordCheckBox.setText("Save token");
+            myLoginLabel.setVisible(false);
+            myLoginTextField.setVisible(false);
+          }
+          if (dialog.isShowing()) {
+            dialog.pack();
+          }
         }
       }
     });
@@ -103,7 +118,7 @@ public class GithubLoginPanel {
     myHostTextField.setText(host);
   }
 
-  public void setLogin(@NotNull String login) {
+  public void setLogin(@Nullable String login) {
     myLoginTextField.setText(login);
   }
 

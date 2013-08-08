@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
-import org.jetbrains.plugins.github.api.GithubUserDetailed;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -69,12 +68,7 @@ public class GithubLoginDialog extends DialogWrapper {
   protected void doOKAction() {
     final GithubAuthData auth = myGithubLoginPanel.getAuthData();
     try {
-      GithubUserDetailed user = GithubUtil.checkAuthData(auth);
-      if (!myGithubLoginPanel.getLogin().equalsIgnoreCase(user.getLogin())) {
-        myGithubLoginPanel.setLogin(user.getLogin());
-        setErrorText("Login doesn't match credentials. Fixed");
-        return;
-      }
+      GithubUtil.checkAuthData(auth);
 
       saveCredentials(auth);
       if (mySettings.isSavePasswordMakesSense()) {
@@ -90,7 +84,7 @@ public class GithubLoginDialog extends DialogWrapper {
 
   protected void saveCredentials(GithubAuthData auth) {
     final GithubSettings settings = GithubSettings.getInstance();
-    settings.setCredentials(myGithubLoginPanel.getHost(), myGithubLoginPanel.getLogin(), auth, myGithubLoginPanel.isSavePasswordSelected());
+    settings.setCredentials(myGithubLoginPanel.getHost(), auth, myGithubLoginPanel.isSavePasswordSelected());
   }
 
   public void clearErrors() {
