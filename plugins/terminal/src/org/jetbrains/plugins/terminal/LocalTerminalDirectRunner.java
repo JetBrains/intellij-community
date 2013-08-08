@@ -5,17 +5,22 @@ import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
+import com.pty4j.util.PtyUtil;
+import com.pty4j.windows.WinPty;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.security.CodeSource;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -28,10 +33,34 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private final Charset myDefaultCharset;
   private final String[] myCommand;
 
-  public LocalTerminalDirectRunner(Project project, String[] command) {
+  public LocalTerminalDirectRunner(Project project) {
     super(project);
     myDefaultCharset = Charset.forName("UTF-8");
-    myCommand = command;
+
+    if (SystemInfo.isUnix) {
+      File rcFile = findRCFile();
+
+      if (rcFile != null) {
+        myCommand = new String[]{"/bin/bash", "--rcfile", rcFile.getAbsolutePath(), "-i"};
+      }
+      else {
+        myCommand = new String[]{"/bin/bash", "--login"};
+      }
+    }
+    else {
+      myCommand = new String[]{"cmd.exe"};
+    }
+  }
+
+  private static File findRCFile() {
+    String folder = PtyUtil.getJarFolder();
+    if (folder != null) {
+      File rcFile = new File(folder, "jediterm.in");
+      if (rcFile.exists()) {
+        return rcFile;
+      }
+    }
+    return null;
   }
 
   @Override
