@@ -12,7 +12,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyFileEvaluator {
+public class PyBlockEvaluator {
   private final Map<String, Object> myNamespace = new HashMap<String, Object>();
   private final Map<String, List<PyExpression>> myDeclarations = new HashMap<String, List<PyExpression>>();
   private final Set<PyFile> myVisitedFiles;
@@ -20,11 +20,11 @@ public class PyFileEvaluator {
   private String myCurrentFilePath;
   private Object myReturnValue;
 
-  public PyFileEvaluator() {
+  public PyBlockEvaluator() {
     myVisitedFiles = new HashSet<PyFile>();
   }
 
-  public PyFileEvaluator(Set<PyFile> visitedFiles) {
+  public PyBlockEvaluator(Set<PyFile> visitedFiles) {
     myVisitedFiles = visitedFiles;
   }
 
@@ -121,7 +121,7 @@ public class PyFileEvaluator {
         if (node.isFromFuture()) return;
         PsiElement source = PyUtil.turnDirIntoInit(node.resolveImportSource());
         if (source instanceof PyFile) {
-          PyFileEvaluator importEvaluator = new PyFileEvaluator(myVisitedFiles);
+          PyBlockEvaluator importEvaluator = new PyBlockEvaluator(myVisitedFiles);
           importEvaluator.evaluate((PyFile)source);
           if (node.isStarImport()) {
             // TODO honor __all__ here
