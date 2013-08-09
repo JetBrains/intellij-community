@@ -100,7 +100,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                @Nullable final VirtualFile[] files) {
 
     // Ask for description and other params
-    final GithubCreateGistDialog dialog = new GithubCreateGistDialog(project, editor, file);
+    final GithubCreateGistDialog dialog = new GithubCreateGistDialog(project, editor, files, file);
     dialog.show();
     if (!dialog.isOK()) {
       return;
