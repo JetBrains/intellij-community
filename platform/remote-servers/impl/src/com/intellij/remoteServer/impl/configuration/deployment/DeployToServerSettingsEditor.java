@@ -158,7 +158,6 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     return FormBuilder.createFormBuilder()
       .addLabeledComponent("Server:", myServerComboBox)
       .addLabeledComponent("Deployment:", mySourceComboBox)
-      .addSeparator()
       .addComponent(myDeploymentSettingsComponent)
       .getPanel();
   }

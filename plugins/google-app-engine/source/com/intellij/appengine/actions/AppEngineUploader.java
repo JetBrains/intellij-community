@@ -69,6 +69,8 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
+import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
@@ -90,40 +92,39 @@ public class AppEngineUploader {
   private final AppEngineSdk mySdk;
   private final String myEmail;
   private final String myPassword;
+  private final ServerRuntimeInstance.DeploymentOperationCallback myCallback;
 
-  private AppEngineUploader(Project project,
-                            Artifact artifact,
-                            AppEngineFacet appEngineFacet,
-                            AppEngineSdk sdk,
-                            String email,
-                            String password) {
+  private AppEngineUploader(Project project, Artifact artifact, AppEngineFacet appEngineFacet, AppEngineSdk sdk, String email,
+                            String password, ServerRuntimeInstance.DeploymentOperationCallback callback) {
     myProject = project;
     myArtifact = artifact;
     myAppEngineFacet = appEngineFacet;
     mySdk = sdk;
     myEmail = email;
     myPassword = password;
+    myCallback = callback;
   }
 
   @Nullable
   public static AppEngineUploader createUploader(@NotNull Project project,
                                                  @NotNull Artifact artifact,
-                                                 @Nullable AppEngineServerConfiguration configuration) {
+                                                 @Nullable AppEngineServerConfiguration configuration,
+                                                 ServerRuntimeInstance.DeploymentOperationCallback callback) {
     final String explodedPath = artifact.getOutputPath();
     if (explodedPath == null) {
-      Messages.showErrorDialog(project, "Output path isn't specified for '" + artifact.getName() + "' artifact", CommonBundle.getErrorTitle());
+      callback.errorOccurred("Output path isn't specified for '" + artifact.getName() + "' artifact");
       return null;
     }
 
     final AppEngineFacet appEngineFacet = AppEngineUtil.findAppEngineFacet(project, artifact);
     if (appEngineFacet == null) {
-      Messages.showErrorDialog(project, "App Engine facet not found in '" + artifact.getName() + "' artifact", CommonBundle.getErrorTitle());
+      callback.errorOccurred("App Engine facet not found in '" + artifact.getName() + "' artifact");
       return null;
     }
 
     final AppEngineSdk sdk = appEngineFacet.getSdk();
     if (!sdk.getAppCfgFile().exists()) {
-      Messages.showErrorDialog(project, "Path to App Engine SDK isn't specified correctly in App Engine Facet settings", CommonBundle.getErrorTitle());
+      callback.errorOccurred("Path to App Engine SDK isn't specified correctly in App Engine Facet settings");
       return null;
     }
 
@@ -169,7 +170,7 @@ public class AppEngineUploader {
       password = dialog.getPassword();
     }
 
-    return new AppEngineUploader(project, artifact, appEngineFacet, sdk, email, password);
+    return new AppEngineUploader(project, artifact, appEngineFacet, sdk, email, password, callback);
   }
 
   public void startUploading() {
@@ -235,7 +236,7 @@ public class AppEngineUploader {
       process = commandLine.createProcess();
     }
     catch (ExecutionException e) {
-      Messages.showErrorDialog(myProject, "Cannot start uploading: " + e.getMessage(), CommonBundle.getErrorTitle());
+      myCallback.errorOccurred("Cannot start uploading: " + e.getMessage());
       return;
     }
 
@@ -279,6 +280,13 @@ public class AppEngineUploader {
           input.flush();
           myConsole.print(StringUtil.repeatSymbol('*', myPassword.length()) + "\n", ConsoleViewContentType.USER_INPUT);
         }
+      }
+    }
+
+    @Override
+    public void processTerminated(ProcessEvent event) {
+      if (event.getExitCode() == 0) {
+        myCallback.succeeded(new DeploymentRuntime());
       }
     }
   }

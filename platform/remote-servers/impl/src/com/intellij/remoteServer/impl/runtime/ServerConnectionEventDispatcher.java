@@ -47,4 +47,14 @@ public class ServerConnectionEventDispatcher {
       }
     });
   }
+
+  public void queueDeploymentsChanged(final ServerConnectionImpl<?> connection) {
+    myEventsQueue.activate();
+    myEventsQueue.queue(new Update(connection) {
+      @Override
+      public void run() {
+        myMessageBus.syncPublisher(ServerConnectionListener.TOPIC).onDeploymentsChanged(connection);
+      }
+    });
+  }
 }

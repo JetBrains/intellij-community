@@ -25,10 +25,12 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.deployment.*;
+import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
 import icons.GoogleAppEngineIcons;
 import org.jetbrains.annotations.NotNull;
@@ -181,15 +183,15 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
       Artifact artifact = ((ArtifactDeploymentSource)task.getSource()).getArtifact();
       if (artifact == null) return;
 
-      AppEngineUploader uploader = AppEngineUploader.createUploader(task.getProject(), artifact, myConfiguration);
+      AppEngineUploader uploader = AppEngineUploader.createUploader(task.getProject(), artifact, myConfiguration, callback);
       if (uploader != null) {
         uploader.startUploading();
       }
     }
 
     @Override
-    public void undeploy(@NotNull DeploymentTask<DummyDeploymentConfiguration> task,
-                         @NotNull DeploymentOperationCallback callback) {
+    public void computeDeployments(@NotNull ComputeDeploymentsCallback deployments) {
+      deployments.succeeded(ContainerUtil.<Deployment>emptyList());
     }
   }
 }
