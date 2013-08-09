@@ -23,7 +23,9 @@ public class JBTerminalStarter extends TerminalStarter {
         if (sequenceChars[0] == 7) { //ESC BEL
           handleCommandExecutedSequence();
         }
-        super.unsupported();
+        else {
+          super.unsupported();
+        }
       }
     };
   }
