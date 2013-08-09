@@ -4,7 +4,7 @@ public enum MyEnum
   VALUE_ONE(myField);
   private final int myField;
 
-    private MyEnum(int myField) {
+    MyEnum(int myField) {
         this.myField = myField;
     }
 }

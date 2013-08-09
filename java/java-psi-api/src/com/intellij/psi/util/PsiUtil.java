@@ -734,13 +734,10 @@ public final class PsiUtil extends PsiUtilCore {
     if (!allowPublicAbstract && aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
       modifier =  PsiModifier.PROTECTED;
     }
-    else if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+    else if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || aClass.isEnum()) {
       modifier = PsiModifier.PACKAGE_LOCAL;
     }
     else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-      modifier = PsiModifier.PRIVATE;
-    }
-    else if (aClass.isEnum()) {
       modifier = PsiModifier.PRIVATE;
     }
 
