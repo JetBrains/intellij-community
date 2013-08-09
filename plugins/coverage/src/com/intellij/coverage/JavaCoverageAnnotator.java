@@ -182,6 +182,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
                                                     @Nullable final Module module,
                                                     @NotNull final CoverageDataManager coverageDataManager, 
                                                     boolean flatten) {
+    if (psiPackage == null) return null;
     final boolean subCoverageActive = coverageDataManager.isSubCoverageActive();
     PackageAnnotator.PackageCoverageInfo info;
     if (module != null) {
@@ -200,12 +201,12 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     return getCoverageInformationString(info, subCoverageActive);
   }
 
-  public PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(PsiPackage psiPackage, boolean flattenPackages) {
+  public PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(@NotNull PsiPackage psiPackage, boolean flattenPackages) {
     final String qualifiedName = psiPackage.getQualifiedName();
     return flattenPackages ? myFlattenPackageCoverageInfos.get(qualifiedName) : myPackageCoverageInfos.get(qualifiedName);
   }
   
-  public String getPackageClassPercentage(final PsiPackage psiPackage, boolean flatten) {
+  public String getPackageClassPercentage(@NotNull final PsiPackage psiPackage, boolean flatten) {
     final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = getPackageCoverageInfo(psiPackage, flatten);
     if (packageCoverageInfo == null) return null;
     return getPercentage(packageCoverageInfo.coveredClassCount, packageCoverageInfo.totalClassCount);
