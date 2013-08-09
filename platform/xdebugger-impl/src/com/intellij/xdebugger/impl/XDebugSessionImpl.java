@@ -32,6 +32,7 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
@@ -43,6 +44,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
@@ -73,7 +75,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class XDebugSessionImpl implements XDebugSession {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl");
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Debugger messages", ToolWindowId.DEBUG, false);
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Debugger messages", ToolWindowId.DEBUG,
+                                                                                               false);
   private XDebugProcess myDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints =
     new HashMap<XBreakpoint<?>, CustomizedBreakpointPresentation>();
@@ -100,6 +103,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private boolean myStopped;
   private boolean myPauseActionSupported;
   private boolean myShowTabOnSuspend;
+  private final List<AnAction> myRestartActions = new SmartList<AnAction>();
   private ConsoleView myConsoleView;
   private final Icon myIcon;
 
@@ -154,6 +158,14 @@ public class XDebugSessionImpl implements XDebugSession {
   @Override
   public void setAutoInitBreakpoints(boolean value) {
     autoInitBreakpoints = value;
+  }
+  
+  public List<AnAction> getRestartActions() {
+    return myRestartActions;
+  }
+
+  public void addRestartActions(AnAction... restartActions) {
+    Collections.addAll(myRestartActions, restartActions);
   }
 
   @Override
