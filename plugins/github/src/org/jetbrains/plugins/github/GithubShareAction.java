@@ -421,6 +421,11 @@ public class GithubShareAction extends DumbAwareAction {
         sink.put(VcsDataKeys.COMMIT_MESSAGE_CONTROL, myCommitMessagePanel);
       }
     }
+
+    @Override
+    protected String getDimensionServiceKey() {
+      return "Github.UntrackedFilesDialog";
+    }
   }
 
   private static class GithubInfo {
