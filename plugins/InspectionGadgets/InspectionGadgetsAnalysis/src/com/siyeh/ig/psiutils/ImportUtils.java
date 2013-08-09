@@ -124,7 +124,7 @@ public class ImportUtils {
         return false;
       }
       field = containingClass.findFieldByName(shortName, true);
-      if (field != null && PsiUtil.isAccessible(field, containingClass, null)) {
+      if (field != null && PsiUtil.isAccessible(containingClass.getProject(), field, containingClass, null)) {
         return false;
       }
     }

@@ -24,6 +24,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -69,8 +70,9 @@ public class VisibilityUtil  {
 
   @PsiModifier.ModifierConstant
   public static String getPossibleVisibility(final PsiMember psiMethod, final PsiElement place) {
-    if (PsiUtil.isAccessible(psiMethod, place, null)) return getVisibilityModifier(psiMethod.getModifierList());
-    if (JavaPsiFacade.getInstance(psiMethod.getProject()).arePackagesTheSame(psiMethod, place)) {
+    Project project = psiMethod.getProject();
+    if (PsiUtil.isAccessible(project, psiMethod, place, null)) return getVisibilityModifier(psiMethod.getModifierList());
+    if (JavaPsiFacade.getInstance(project).arePackagesTheSame(psiMethod, place)) {
       return PsiModifier.PACKAGE_LOCAL;
     }
     if (InheritanceUtil.isInheritorOrSelf(PsiTreeUtil.getParentOfType(place, PsiClass.class),

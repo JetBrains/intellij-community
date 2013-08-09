@@ -1271,25 +1271,26 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   public static HighlightInfo checkSwitchSelectorType(@NotNull PsiSwitchStatement statement) {
     final PsiExpression expression = statement.getExpression();
-    HighlightInfo errorResult = null;
     PsiType type = expression == null ? null : expression.getType();
-    if (type != null) {
-      if (!isValidTypeForSwitchSelector(type, PsiUtil.isLanguageLevel7OrHigher(expression))) {
-        String message =
-          JavaErrorMessages.message("incompatible.types", JavaErrorMessages.message("valid.switch.selector.types"), JavaHighlightUtil
-            .formatType(type));
-        errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        QuickFixAction.registerQuickFixAction(errorResult, new ConvertSwitchToIfIntention(statement));
-        if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
-          QuickFixAction.registerQuickFixAction(errorResult, new AddTypeCastFix(PsiType.INT, expression));
-        }
+    if (type == null) {
+      return null;
+    }
+    HighlightInfo errorResult = null;
+    if (!isValidTypeForSwitchSelector(type, PsiUtil.isLanguageLevel7OrHigher(expression))) {
+      String message =
+        JavaErrorMessages.message("incompatible.types", JavaErrorMessages.message("valid.switch.selector.types"), JavaHighlightUtil.formatType(
+          type));
+      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+      QuickFixAction.registerQuickFixAction(errorResult, new ConvertSwitchToIfIntention(statement));
+      if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
+        QuickFixAction.registerQuickFixAction(errorResult, new AddTypeCastFix(PsiType.INT, expression));
       }
-      else {
-        final PsiClass member = PsiUtil.resolveClassInClassTypeOnly(type);
-        if (member != null && !PsiUtil.isAccessible(member, expression, null)) {
-          String message = PsiFormatUtil.formatClass(member, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME) + " is inaccessible here";
-          errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        }
+    }
+    else {
+      final PsiClass member = PsiUtil.resolveClassInClassTypeOnly(type);
+      if (member != null && !PsiUtil.isAccessible(member.getProject(), member, expression, null)) {
+        String message = PsiFormatUtil.formatClass(member, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME) + " is inaccessible here";
+        errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
       }
     }
     return errorResult;
