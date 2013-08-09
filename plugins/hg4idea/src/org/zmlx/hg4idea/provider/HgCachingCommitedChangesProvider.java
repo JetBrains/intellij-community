@@ -214,7 +214,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     hgLogCommand.setLogFile(false);
     List<String> args = null;
     if (changeBrowserSettings != null) {
-      HgLogArgsBuilder argsBuilder = new HgLogArgsBuilder(changeBrowserSettings);
+      HgLogArgsBuilder argsBuilder = new HgLogArgsBuilder(changeBrowserSettings, myVcs.getGlobalSettings().isRunViaBash());
       args = argsBuilder.getLogArgs();
       if (args.isEmpty()) {
         maxCount = maxCount == 0 ? VcsConfiguration.getInstance(project).MAXIMUM_HISTORY_ROWS  : maxCount;
@@ -385,41 +385,49 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
   private static class HgLogArgsBuilder {
 
     @NotNull private final ChangeBrowserSettings myBrowserSettings;
+    private final boolean isRunViaBash;
 
-    HgLogArgsBuilder(@NotNull ChangeBrowserSettings browserSettings) {
+    HgLogArgsBuilder(@NotNull ChangeBrowserSettings browserSettings, boolean runViaBash) {
       myBrowserSettings = browserSettings;
+      isRunViaBash = runViaBash;
     }
 
     @NotNull
     List<String> getLogArgs() {
 
       StringBuilder args = new StringBuilder();
-
       Date afterDate = myBrowserSettings.getDateAfter();
       Date beforeDate = myBrowserSettings.getDateBefore();
       Long afterFilter = myBrowserSettings.getChangeAfterFilter();
       Long beforeFilter = myBrowserSettings.getChangeBeforeFilter();
 
       final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+      //if command executed via bash all mercurial internal (like date, ancestor etc. ) commands should be quoted,
+      // but several commands should be quoted once not each.
+      //f.e. bash -cl 'hg log --rev "date('> 2013')"' OR  bash -cl 'hg log --rev "date('> 2013') and date('< 2014')" '
+      //this complex workaround is needed because java process wrap arguments in single or double quotes,
+      // so this may produce conflicts with hg commands.
+      //If command wrapped by quotes should not escape bash control symbols inside!
+      String separator = isRunViaBash ? "\"" : "";
 
-      if ((null != afterFilter) && (null != beforeFilter)) {
+      if ((afterFilter != null) && (beforeFilter != null)) {
         args.append(afterFilter).append(":").append(beforeFilter);
       }
-      else if (null != afterFilter) {
+      else if (afterFilter != null) {
         args.append("tip:").append(afterFilter);
       }
-      else if (null != beforeFilter) {
-        args.append("'reverse(:").append(beforeFilter).append(")'");
+      else if (beforeFilter != null) {
+        args.append("reverse(:").append(beforeFilter).append(")");
       }
 
-      if (null != afterDate) {
+      if (afterDate != null) {
         if (args.length() > 0) {
           args.append(" and ");
         }
         args.append("date('>").append(dateFormatter.format(afterDate)).append("')");
       }
 
-      if (null != beforeDate) {
+      if (beforeDate != null) {
         if (args.length() > 0) {
           args.append(" and ");
         }
@@ -430,7 +438,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
       if (args.length() > 0) {
         List<String> logArgs = new ArrayList<String>();
         logArgs.add("-r");
-        logArgs.add(args.toString());
+        logArgs.add(separator + args.toString() + separator);
         return logArgs;
       }
 
