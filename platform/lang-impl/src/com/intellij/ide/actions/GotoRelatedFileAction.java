@@ -123,6 +123,11 @@ public class GotoRelatedFileAction extends AnAction {
 
       @Override
       public String getContainerText(PsiElement element, String name) {
+        String customContainerName = itemsMap.get(element).getCustomContainerName();
+
+        if (customContainerName != null) {
+          return customContainerName;
+        }
         PsiFile file = element.getContainingFile();
         return file != null && !getElementText(element).equals(file.getName())
                ? "(" + file.getName() + ")"
