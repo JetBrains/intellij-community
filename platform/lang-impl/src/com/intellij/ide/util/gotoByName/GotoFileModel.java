@@ -140,4 +140,13 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
   public boolean willOpenEditor() {
     return true;
   }
+
+  @NotNull
+  @Override
+  public String removeModelSpecificMarkup(@NotNull String pattern) {
+    if ((pattern.endsWith("/") || pattern.endsWith("\\"))) {
+      return pattern.substring(0, pattern.length() - 1);
+    }
+    return pattern;
+  }
 }
