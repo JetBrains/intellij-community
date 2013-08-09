@@ -34,6 +34,7 @@ public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase
     GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
+    initGitChecks();
     checkRemoteConfigured();
     checkLastCommitPushed();
   }
@@ -49,6 +50,7 @@ public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase
     GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
+    initGitChecks();
     checkRemoteConfigured();
     checkLastCommitPushed();
   }
@@ -64,6 +66,7 @@ public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase
     GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
+    initGitChecks();
     checkRemoteConfigured();
     checkLastCommitPushed();
   }

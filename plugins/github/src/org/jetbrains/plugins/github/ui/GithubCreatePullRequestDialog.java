@@ -101,6 +101,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     return null;
   }
 
+  @TestOnly
   public void setRequestTitle(String title) {
     myGithubCreatePullRequestPanel.setTitle(title);
   }

@@ -27,12 +27,15 @@ import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import git4idea.DialogManager;
+import git4idea.GitUtil;
 import git4idea.Notificator;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.remote.GitHttpAuthTestService;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitTestUtil;
 import git4idea.test.TestDialogManager;
@@ -41,6 +44,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
+import org.jetbrains.plugins.github.GithubUtil;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubRepoDetailed;
+
+import java.io.IOException;
 
 import static org.junit.Assume.assumeNotNull;
 
@@ -63,6 +71,9 @@ public abstract class GithubTest extends UsefulTestCase {
 
   @NotNull protected Project myProject;
   @NotNull protected VirtualFile myProjectRoot;
+  @Nullable protected GitRepository myRepository;
+  @NotNull protected GitRepositoryManager myGitRepositoryManager;
+
   @NotNull protected GitVcsSettings myGitSettings;
   @NotNull protected GithubSettings myGitHubSettings;
   @NotNull private GitHttpAuthTestService myHttpAuthService;
@@ -143,6 +154,28 @@ public abstract class GithubTest extends UsefulTestCase {
     }
   }
 
+  protected void initGitChecks() {
+    myRepository = myGitRepositoryManager.getRepositoryForFile(myProjectRoot);
+  }
+
+  protected void checkGitExists() {
+    assertNotNull("Git repository does not exist", myRepository);
+  }
+
+  protected void checkRemoteConfigured() {
+    assertNotNull(myRepository);
+
+    assertNotNull("GitHub remote is not configured", GithubUtil.findGithubRemoteUrl(myRepository));
+  }
+
+  protected void checkLastCommitPushed() {
+    assertNotNull(myRepository);
+
+    String hash = GitExecutor.git(myRepository, "log -1 --pretty=%h");
+    String ans = GitExecutor.git(myRepository, "branch --contains " + hash + " -a");
+    assertTrue(ans.contains("remotes/origin"));
+  }
+
   @Override
   protected void setUp() throws Exception {
     final String host = System.getenv("idea.test.github.host");
@@ -178,6 +211,8 @@ public abstract class GithubTest extends UsefulTestCase {
     myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
     myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
+
+    myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
   }
 
   @Override
@@ -189,5 +224,6 @@ public abstract class GithubTest extends UsefulTestCase {
     myProjectFixture.tearDown();
     super.tearDown();
   }
+
 
 }
