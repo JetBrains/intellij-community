@@ -151,8 +151,8 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
           return;
         }
 
-        LOG.info("Performing create request");
-        indicator.setText("Performing create request...");
+        LOG.info("Creating pull request");
+        indicator.setText("Creating pull request...");
         GithubPullRequest request = createPullRequest(project, info, dialog, currentBranch.getName(), upstreamUserAndRepo);
         if (request == null) {
           return;
