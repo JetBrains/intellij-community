@@ -5,8 +5,11 @@ import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
 import com.jediterm.pty.PtyProcessTtyConnector;
@@ -68,11 +71,18 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     Map<String, String> envs = new HashMap<String, String>(System.getenv());
     envs.put("TERM", "xterm");
     try {
-      return PtyProcess.exec(myCommand, envs, null);
+      return PtyProcess.exec(myCommand, envs, currentProjectFolder());
     }
     catch (IOException e) {
       throw new ExecutionException(e);
     }
+  }
+
+  private String currentProjectFolder() {
+    for (VirtualFile vf : ProjectRootManager.getInstance(myProject).getContentRoots()) {
+      return vf.getCanonicalPath();
+    }
+    return null;
   }
 
   @Override
