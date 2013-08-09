@@ -87,10 +87,6 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     myGithubCreatePullRequestPanel.addBranches(branches);
   }
 
-  public void setBusy(boolean busy) {
-    myGithubCreatePullRequestPanel.setBusy(busy);
-  }
-
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
