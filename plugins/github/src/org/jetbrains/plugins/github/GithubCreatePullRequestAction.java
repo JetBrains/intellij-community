@@ -46,7 +46,6 @@ import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
@@ -138,8 +137,8 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       return;
     }
 
-    final GithubCreatePullRequestDialog dialog = new GithubCreatePullRequestDialog(project);
-    dialog.addBranches(info.getBranches());
+    String suggestedBranch = info.getRepo().getParent() == null ? null : info.getRepo().getParent().getUserName() + ":master";
+    final GithubCreatePullRequestDialog dialog = new GithubCreatePullRequestDialog(project, info.getBranches(), suggestedBranch);
     DialogManager.show(dialog);
     if (!dialog.isOK()) {
       return;
@@ -291,11 +290,11 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       final GithubRepo parent = repo.getParent();
       final GithubRepo source = repo.getSource();
 
-      result.addAll(getBranches(auth, repo.getUserName(), repo.getName()));
-
       if (parent != null) {
         result.addAll(getBranches(auth, parent.getUserName(), parent.getName()));
       }
+
+      result.addAll(getBranches(auth, repo.getUserName(), repo.getName()));
 
       if (source != null && !equals(source, parent)) {
         result.addAll(getBranches(auth, source.getUserName(), source.getName()));
@@ -340,9 +339,9 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
   private static class GithubInfo {
     @NotNull private final GithubRepoDetailed myRepo;
     @NotNull private final GithubAuthData myAuthData;
-    @NotNull private final Collection<String> myBranches;
+    @NotNull private final List<String> myBranches;
 
-    private GithubInfo(@NotNull GithubAuthData authData, @NotNull GithubRepoDetailed repo, @NotNull Collection<String> branches) {
+    private GithubInfo(@NotNull GithubAuthData authData, @NotNull GithubRepoDetailed repo, @NotNull List<String> branches) {
       myAuthData = authData;
       myRepo = repo;
       myBranches = branches;
@@ -359,7 +358,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     }
 
     @NotNull
-    public Collection<String> getBranches() {
+    public List<String> getBranches() {
       return myBranches;
     }
   }

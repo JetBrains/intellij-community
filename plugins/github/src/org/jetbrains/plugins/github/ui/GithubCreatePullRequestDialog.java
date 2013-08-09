@@ -26,6 +26,7 @@ import org.jetbrains.plugins.github.GithubSettings;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -35,11 +36,14 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   private final GithubCreatePullRequestPanel myGithubCreatePullRequestPanel;
   private static final Pattern GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+:[a-zA-Z0-9_.-]+");
 
-  public GithubCreatePullRequestDialog(@NotNull final Project project) {
+  public GithubCreatePullRequestDialog(@NotNull final Project project, @NotNull List<String> branches, @Nullable String suggestedBranch) {
     super(project, true);
     myGithubCreatePullRequestPanel = new GithubCreatePullRequestPanel();
 
-    myGithubCreatePullRequestPanel.setBranch(GithubSettings.getInstance().getCreatePullRequestDefaultBranch());
+    myGithubCreatePullRequestPanel.setBranches(branches);
+
+    String configBranch = GithubSettings.getInstance().getCreatePullRequestDefaultBranch();
+    myGithubCreatePullRequestPanel.setSelectedBranch(configBranch != null ? configBranch : suggestedBranch);
 
     setTitle("Create Pull Request");
     init();
@@ -83,10 +87,6 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     GithubSettings.getInstance().setCreatePullRequestDefaultBranch(getTargetBranch());
   }
 
-  public void addBranches(@NotNull Collection<String> branches) {
-    myGithubCreatePullRequestPanel.addBranches(branches);
-  }
-
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
@@ -107,6 +107,6 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
 
   @TestOnly
   public void setBranch(String branch) {
-    myGithubCreatePullRequestPanel.setBranch(branch);
+    myGithubCreatePullRequestPanel.setSelectedBranch(branch);
   }
 }
