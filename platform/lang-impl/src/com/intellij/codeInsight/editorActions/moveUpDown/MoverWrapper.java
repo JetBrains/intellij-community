@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -88,8 +87,8 @@ class MoverWrapper {
     // and the pointers behave as following during move up/down:
     //     method1() {}
     //     method2() {}
-    // Pointer for the fold region from method1 points to 'method2()' now and vice versa (check range markers processing on 
-    // document change for further information). I.e. information about fold regions statuses holds the data swapped for 
+    // Pointer for the fold region from method1 points to 'method2()' now and vice versa (check range markers processing on
+    // document change for further information). I.e. information about fold regions statuses holds the data swapped for
     // 'method1' and 'method2'. Hence, we want to apply correct 'collapsed' status.
     FoldRegion topRegion = null;
     FoldRegion bottomRegion = null;
@@ -150,7 +149,7 @@ class MoverWrapper {
 
   /**
    * Allows to check if text range defined by the given range marker completely contains text range of the given fold region.
-   * 
+   *
    * @param rangeMarker   range marker to check
    * @param foldRegion    fold region to check
    * @return              <code>true</code> if text range defined by the given range marker completely contains text range
@@ -162,7 +161,7 @@ class MoverWrapper {
 
   /**
    * Allows to check if given <code>'region2'</code> is nested to <code>'region1'</code>
-   * 
+   *
    * @param region1   'outer' region candidate
    * @param region2   'inner' region candidate
    * @return          <code>true</code> if 'region2' is nested to 'region1'; <code>false</code> otherwise
@@ -173,7 +172,7 @@ class MoverWrapper {
     }
     return region1.getStartOffset() <= region2.getStartOffset() && region1.getEndOffset() >= region2.getEndOffset();
   }
-  
+
   private static void indentLinesIn(final Editor editor, final PsiFile file, final Document document, final Project project, RangeMarker range) {
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     int line1 = editor.offsetToLogicalPosition(range.getStartOffset()).line;

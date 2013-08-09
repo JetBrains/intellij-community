@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.Variable;
-import com.intellij.openapi.editor.RangeMarker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +34,7 @@ public abstract class Template {
   }
 
   private final Map<Property, Boolean> myProperties = new EnumMap<Property, Boolean>(Property.class);
-  
+
   public abstract void addTextSegment(@NotNull String text);
   public abstract void addVariableSegment(@NonNls String name);
 

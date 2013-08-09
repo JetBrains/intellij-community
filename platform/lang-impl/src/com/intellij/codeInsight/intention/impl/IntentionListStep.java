@@ -30,8 +30,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -309,7 +307,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
     if (a instanceof HighPriorityAction) {
       return group + 3;
-    }                                                                                         
+    }
     if (a instanceof LowPriorityAction) {
       return group - 3;
     }
@@ -361,7 +359,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     if (action instanceof QuickFixWrapper) {
       iconable = ((QuickFixWrapper)action).getFix();
     } else if (action instanceof IntentionActionWrapper) {
-      iconable = ((IntentionActionWrapper)action).getDelegate(); 
+      iconable = ((IntentionActionWrapper)action).getDelegate();
     }
 
     if (iconable instanceof Iconable) {
