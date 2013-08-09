@@ -103,6 +103,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find git repository");
       return;
     }
+    repository.update();
 
     final Pair<GitRemote, String> remote = GithubUtil.findGithubRemote(repository);
     if (remote == null) {
