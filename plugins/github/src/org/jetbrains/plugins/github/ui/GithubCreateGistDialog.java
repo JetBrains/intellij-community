@@ -62,11 +62,6 @@ public class GithubCreateGistDialog extends DialogWrapper {
     init();
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
   @Override
   protected JComponent createCenterPanel() {
     return myGithubCreateGistPanel.getPanel();
