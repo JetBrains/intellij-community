@@ -355,6 +355,10 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
     doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
+  public void testVisibilityOfOverriddenMethod() throws Exception {
+    doTest(PsiModifier.PACKAGE_LOCAL, "foo", "void", new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+  }
+
   public void testRemoveExceptions() throws Exception {
     doTest(null, null, "void", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
