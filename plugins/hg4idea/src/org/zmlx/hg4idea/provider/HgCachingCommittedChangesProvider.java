@@ -50,13 +50,13 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class HgCachingCommitedChangesProvider implements CachingCommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
+public class HgCachingCommittedChangesProvider implements CachingCommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
 
   private final Project project;
   private final HgVcs myVcs;
   public final static int VERSION_WITH_REPOSITORY_BRANCHES = 2;
 
-  public HgCachingCommitedChangesProvider(Project project, HgVcs vcs) {
+  public HgCachingCommittedChangesProvider(Project project, HgVcs vcs) {
     this.project = project;
     myVcs = vcs;
   }
@@ -304,11 +304,11 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     settings.CHANGE_AFTER = number.asString();
     settings.CHANGE_BEFORE = number.asString();
     // todo implement in proper way
-    VirtualFile localVitrualFile = HgUtil.convertToLocalVirtualFile(file);
-    if (localVitrualFile == null) {
+    VirtualFile localVirtualFile = HgUtil.convertToLocalVirtualFile(file);
+    if (localVirtualFile == null) {
       return null;
     }
-    final FilePathImpl filePath = new FilePathImpl(localVitrualFile);
+    final FilePathImpl filePath = new FilePathImpl(localVirtualFile);
     final CommittedChangeList list = getCommittedChangesForRevision(getLocationFor(filePath), number.asString());
     if (list != null) {
       return new Pair<CommittedChangeList, FilePath>(list, filePath);

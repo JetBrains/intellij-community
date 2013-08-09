@@ -34,8 +34,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import org.zmlx.hg4idea.provider.HgCachingCommitedChangesProvider;
-
 public class HgLogCommand {
 
   private static final Logger LOG = Logger.getInstance(HgLogCommand.class.getName());
@@ -46,7 +44,7 @@ public class HgLogCommand {
       "{file_dels}", "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}"};
   /**
    * The reason of existing 2 different templates for bash and others explained in
-   * {@link HgCachingCommitedChangesProvider.HgLogArgsBuilder#getLogArgs()}
+   * {@link org.zmlx.hg4idea.provider.HgCachingCommittedChangesProvider.HgLogArgsBuilder#getLogArgs()}
    */
   private static final String[] LONG_TEMPLATE_FOR_BASH =
     {"{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}", "{file_adds}", "{file_mods}",
@@ -135,7 +133,7 @@ public class HgLogCommand {
       try {
         String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
         // At least in the case of the long template, it's OK that we don't have everything...for example, if there were no
-        //  deleted or copied files, then we won't get any attribtes for them...
+        //  deleted or copied files, then we won't get any attributes for them...
         int numAttributes = attributes.length;
         if (!includeFiles && (numAttributes != expectedItemCount)) {
           LOG.debug("Wrong format. Skipping line " + line);
