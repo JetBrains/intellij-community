@@ -44,6 +44,7 @@ import java.util.Set;
 @SuppressWarnings("unchecked")
 public class TaskRepositoriesConfigurable extends BaseConfigurable implements Configurable.NoScroll {
 
+  private static final String EMPTY_PANEL = "empty.panel";
   private JPanel myPanel;
   private JPanel myServersPanel;
   private final JBList myRepositoriesList;
@@ -52,6 +53,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   private JPanel myRepositoryEditor;
   private JBLabel myServersLabel;
   private Splitter mySplitter;
+  private JPanel myEmptyPanel;
 
   private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
   private final List<TaskRepositoryEditor> myEditors = new ArrayList<TaskRepositoryEditor>();
@@ -237,6 +239,8 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   public void reset() {
     myRepoNames.clear();
     myRepositoryEditor.removeAll();
+    myRepositoryEditor.add(myEmptyPanel, EMPTY_PANEL);
+//    ((CardLayout)myRepositoryEditor.getLayout()).show(myRepositoryEditor, );
     myRepositories.clear();
 
     CollectionListModel listModel = new CollectionListModel(new ArrayList());

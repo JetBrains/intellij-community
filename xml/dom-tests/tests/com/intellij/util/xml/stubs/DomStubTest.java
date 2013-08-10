@@ -18,6 +18,7 @@ package com.intellij.util.xml.stubs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
@@ -28,7 +29,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.impl.DomApplicationComponent;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.stubs.model.Foo;
 
@@ -93,10 +93,10 @@ public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
   }
 
   protected XmlFile prepareFile(String path) {
-    XmlFile file = (XmlFile)myFixture.configureByFile(path);
-    assertFalse(file.getNode().isParsed());
-    VirtualFile virtualFile = file.getVirtualFile();
+    VirtualFile virtualFile = myFixture.copyFileToProject(path);
     assertNotNull(virtualFile);
+    XmlFile file = (XmlFile)((PsiManagerEx)getPsiManager()).getFileManager().findFile(virtualFile);
+    assertFalse(file.getNode().isParsed());
     ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), virtualFile, file);
     assertNotNull(tree);
 

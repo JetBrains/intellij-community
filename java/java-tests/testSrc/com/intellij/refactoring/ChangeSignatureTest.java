@@ -135,6 +135,13 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
     }, false);
   }
 
+  public void testJavadocGenericsLink() throws Exception {
+    doTest(null, new ParameterInfoImpl[] {
+      new ParameterInfoImpl(-1, "y", JavaPsiFacade.getElementFactory(getProject()).createTypeFromText("java.util.List<java.lang.String>", null)),
+      new ParameterInfoImpl(0, "a", PsiType.BOOLEAN)
+    }, false);
+  }
+
   public void testParamNameSameAsFieldName() throws Exception {
     doTest(null, new ParameterInfoImpl[] {
       new ParameterInfoImpl(0, "fieldName", PsiType.INT)
@@ -353,6 +360,10 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
     getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getCurrentCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+  }
+
+  public void testVisibilityOfOverriddenMethod() throws Exception {
+    doTest(PsiModifier.PACKAGE_LOCAL, "foo", "void", new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }
 
   public void testRemoveExceptions() throws Exception {

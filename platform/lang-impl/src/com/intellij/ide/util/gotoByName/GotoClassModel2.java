@@ -135,6 +135,13 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
     return "procedures.navigating.goto.class";
   }
 
+  @NotNull
+  @Override
+  public String removeModelSpecificMarkup(@NotNull String pattern) {
+    if (pattern.startsWith("@")) return pattern.substring(1);
+    return pattern;
+  }
+
   @Override
   public boolean willOpenEditor() {
     return true;

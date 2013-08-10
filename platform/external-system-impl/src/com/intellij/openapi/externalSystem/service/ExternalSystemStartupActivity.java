@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.ProjectRenameAware;
@@ -36,6 +37,9 @@ public class ExternalSystemStartupActivity implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull final Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     Runnable task = new Runnable() {
       @SuppressWarnings("unchecked")
       @Override

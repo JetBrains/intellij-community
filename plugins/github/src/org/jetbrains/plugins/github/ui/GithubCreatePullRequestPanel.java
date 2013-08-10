@@ -15,13 +15,15 @@
  */
 package org.jetbrains.plugins.github.ui;
 
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.ui.SortedComboBoxModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Comparator;
 
 /**
  * @author Aleksey Pivovarov
@@ -29,12 +31,19 @@ import java.util.HashSet;
 public class GithubCreatePullRequestPanel {
   private JTextField myTitleTextField;
   private JTextArea myDescriptionTextArea;
-  private JComboBox myBranchComboBox;
+  private ComboBox myBranchComboBox;
+  private SortedComboBoxModel<String> myBranchModel;
   private JPanel myPanel;
-  private AsyncProcessIcon myAsyncProcessIcon;
 
   public GithubCreatePullRequestPanel() {
     myDescriptionTextArea.setBorder(BorderFactory.createEtchedBorder());
+    myBranchModel = new SortedComboBoxModel<String>(new Comparator<String>() {
+      @Override
+      public int compare(String o1, String o2) {
+        return StringUtil.naturalCompare(o1, o2);
+      }
+    });
+    myBranchComboBox.setModel(myBranchModel);
   }
 
   @NotNull
@@ -52,30 +61,18 @@ public class GithubCreatePullRequestPanel {
     return myBranchComboBox.getSelectedItem().toString();
   }
 
-  public void setBranch(@NotNull String branch) {
+  public void setSelectedBranch(@Nullable String branch) {
     if (StringUtil.isEmptyOrSpaces(branch)) {
+      myBranchComboBox.setSelectedItem("");
       return;
     }
-    for (int i = 0; i < myBranchComboBox.getItemCount(); i++) {
-      Object element = myBranchComboBox.getItemAt(i);
-      if (branch.equals(element)) {
-        myBranchComboBox.setSelectedItem(element);
-        return;
-      }
-    }
 
-    myBranchComboBox.addItem(branch);
     myBranchComboBox.setSelectedItem(branch);
   }
 
-  public void addBranches(@NotNull Collection<String> branches) {
-    HashSet<Object> set = new HashSet<Object>(branches);
-    for (int i = 0; i < myBranchComboBox.getItemCount(); i++) {
-      set.remove(myBranchComboBox.getItemAt(i));
-    }
-    for (Object element : set) {
-      myBranchComboBox.addItem(element);
-    }
+  public void setBranches(@NotNull Collection<String> branches) {
+    myBranchModel.clear();
+    myBranchModel.addAll(branches);
   }
 
   public JPanel getPanel() {
@@ -85,15 +82,6 @@ public class GithubCreatePullRequestPanel {
   @NotNull
   public JComponent getPreferredComponent() {
     return myTitleTextField;
-  }
-
-  public void setBusy(boolean busy) {
-    if (busy) {
-      myAsyncProcessIcon.resume();
-    }
-    else {
-      myAsyncProcessIcon.suspend();
-    }
   }
 
   public JComboBox getComboBox() {
@@ -106,9 +94,5 @@ public class GithubCreatePullRequestPanel {
 
   public void setTitle(String title) {
     myTitleTextField.setText(title);
-  }
-
-  private void createUIComponents() {
-    myAsyncProcessIcon = new AsyncProcessIcon("Loading available branches");
   }
 }

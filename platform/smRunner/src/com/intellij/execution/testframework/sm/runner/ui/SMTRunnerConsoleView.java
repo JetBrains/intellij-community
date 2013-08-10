@@ -38,16 +38,13 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   private final ExecutionEnvironment myEnvironment;
   private SMTestRunnerResultsForm myResultsViewer;
   @Nullable private final String mySplitterProperty;
-  private final List<AttachToProcessListener> myAttachToProcessListeners = ContainerUtil.createEmptyCOWList();
+  private final List<AttachToProcessListener> myAttachToProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final ExecutionEnvironment environment) {
     this(consoleProperties, environment, null);
   }
 
   /**
-   * @param consoleProperties
-   * @param runnerSettings
-   * @param configurationPerRunnerSettings
    * @param splitterProperty               Key to store(project level) latest value of testTree/consoleTab splitter. E.g. "RSpec.Splitter.Proportion"
    */
   public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInspection.internal;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -38,6 +39,7 @@ public class UndesirableClassUsageInspection extends InternalInspection {
     CLASSES.put(JTable.class.getName(), JBTable.class.getName());
     CLASSES.put(JTree.class.getName(), Tree.class.getName());
     CLASSES.put(JScrollPane.class.getName(), JBScrollPane.class.getName());
+    CLASSES.put(JComboBox.class.getName(), ComboBox.class.getName());
     CLASSES.put(QueryExecutor.class.getName(), QueryExecutorBase.class.getName());
     CLASSES.put(BufferedImage.class.getName(), "UIUtil.createImage()");
   }

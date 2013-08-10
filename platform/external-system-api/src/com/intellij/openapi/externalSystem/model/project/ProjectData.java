@@ -23,7 +23,7 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
                      @NotNull String linkedExternalProjectPath)
   {
     super(owner, "unnamed");
-    myLinkedExternalProjectPath = linkedExternalProjectPath;
+    myLinkedExternalProjectPath = ExternalSystemApiUtil.toCanonicalPath(linkedExternalProjectPath);
     myIdeProjectFileDirectoryPath = ExternalSystemApiUtil.toCanonicalPath(ideProjectFileDirectoryPath);
   }
 

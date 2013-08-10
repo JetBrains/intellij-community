@@ -24,6 +24,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
+import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -57,7 +60,17 @@ public class UploadApplicationAction extends AnAction {
           return;
         }
       }
-      final AppEngineUploader uploader = AppEngineUploader.createUploader(project, artifact, null);
+      final AppEngineUploader uploader = AppEngineUploader.createUploader(project, artifact, null, new ServerRuntimeInstance.DeploymentOperationCallback() {
+        @Override
+        public void succeeded(@NotNull DeploymentRuntime deployment) {
+
+        }
+
+        @Override
+        public void errorOccurred(@NotNull String errorMessage) {
+          Messages.showErrorDialog(project, errorMessage, CommonBundle.getErrorTitle());
+        }
+      });
       if (uploader != null) {
         uploader.startUploading();
       }

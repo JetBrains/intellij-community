@@ -148,7 +148,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     final String[] separators = base.getModel().getSeparators();
     int lastSeparatorOccurrence = 0;
     for (String separator : separators) {
-      lastSeparatorOccurrence = Math.max(lastSeparatorOccurrence, pattern.lastIndexOf(separator));
+      int idx = pattern.lastIndexOf(separator);
+      if (idx == pattern.length() - 1) {  // avoid empty name
+        idx = pattern.lastIndexOf(separator, idx - 1);
+      }
+      lastSeparatorOccurrence = Math.max(lastSeparatorOccurrence, idx);
     }
     return pattern.substring(0, lastSeparatorOccurrence);
   }
@@ -161,7 +165,10 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     final String[] separators = model.getSeparators();
     int lastSeparatorOccurrence = 0;
     for (String separator : separators) {
-      final int idx = pattern.lastIndexOf(separator);
+      int idx = pattern.lastIndexOf(separator);
+      if (idx == pattern.length() - 1) {  // avoid empty name
+        idx = pattern.lastIndexOf(separator, idx - 1);
+      }
       lastSeparatorOccurrence = Math.max(lastSeparatorOccurrence, idx == -1 ? idx : idx + separator.length());
     }
 
@@ -294,8 +301,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   @NotNull
   private static String removeModelSpecificMarkup(@NotNull ChooseByNameBase base, @NotNull String pattern) {
-    if (base.getModel() instanceof GotoClassModel2 && pattern.startsWith("@")) {
-      pattern = pattern.substring(1);
+    ChooseByNameModel model = base.getModel();
+    if (model instanceof ContributorsBasedGotoByModel) {
+      pattern = ((ContributorsBasedGotoByModel)model).removeModelSpecificMarkup(pattern);
     }
     return pattern;
   }

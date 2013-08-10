@@ -1275,22 +1275,22 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkCannotPassInner(PsiJavaCodeReferenceElement ref) {
     if (ref.getParent() instanceof PsiTypeElement) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
-      if (psiClass != null) {
-        if (PsiTreeUtil.isAncestor(psiClass.getExtendsList(), ref, false) ||
-            PsiTreeUtil.isAncestor(psiClass.getImplementsList(), ref, false)) {
-          final PsiElement qualifier = ref.getQualifier();
-          if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() == psiClass) {
-            final PsiElement resolve = ref.resolve();
-            if (resolve instanceof PsiClass) {
-              final PsiClass containingClass = ((PsiClass)resolve).getContainingClass();
-              if (containingClass != null) {
-                if (psiClass.isInheritor(containingClass, true) ||
-                    unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance(containingClass, ((PsiClass)resolve).getExtendsList()) ||
-                    unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance(containingClass, ((PsiClass)resolve).getImplementsList())) {
-                  return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(((PsiClass)resolve).getName() + " is not accessible in current context").range(ref).create();
-                }
-              }
-            }
+      if (psiClass == null) return null;
+      if (PsiTreeUtil.isAncestor(psiClass.getExtendsList(), ref, false) ||
+          PsiTreeUtil.isAncestor(psiClass.getImplementsList(), ref, false)) {
+        final PsiElement qualifier = ref.getQualifier();
+        if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() == psiClass) {
+          final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getParentOfType(ref, PsiJavaCodeReferenceElement.class);
+          if (referenceElement == null) return null;
+          final PsiElement typeClass = referenceElement.resolve();
+          if (!(typeClass instanceof PsiClass)) return null;
+          final PsiElement resolve = ref.resolve();
+          final PsiClass containingClass = resolve != null ? ((PsiClass)resolve).getContainingClass() : null;
+          if (containingClass == null) return null;
+          if (psiClass.isInheritor(containingClass, true) ||
+              unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance((PsiClass)typeClass, ((PsiClass)resolve).getExtendsList()) ||
+              unqualifiedNestedClassReferenceAccessedViaContainingClassInheritance((PsiClass)typeClass, ((PsiClass)resolve).getImplementsList())) {
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(((PsiClass)resolve).getName() + " is not accessible in current context").range(ref).create();
           }
         }
       }
@@ -1306,7 +1306,7 @@ public class GenericsHighlightUtil {
           final PsiElement superClass = referenceElement.resolve();
           if (superClass instanceof PsiClass) {
             final PsiClass superContainingClass = ((PsiClass)superClass).getContainingClass();
-            if (superContainingClass != null && containingClass.isInheritor(superContainingClass, true)) {
+            if (superContainingClass != null && InheritanceUtil.isInheritorOrSelf(containingClass, superContainingClass, true)) {
               return true;
             }
           }

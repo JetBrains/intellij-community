@@ -141,10 +141,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         LibraryTable moduleLibraryTable = moduleRootModel.getModuleLibraryTable();
         LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
         try {
-          if (!hasUnresolved) { // There is a possible case that a project has been successfully imported from external model and after
-                                // that network/repo goes down. We don't want to drop existing binary mappings then.
-            removeObsolete(moduleLibrariesToImport, projectLibrariesToImport, toImport, moduleRootModel);
-          }
+          filterUpToDateAndRemoveObsolete(moduleLibrariesToImport, projectLibrariesToImport, toImport, moduleRootModel, hasUnresolved);
 
           // Import missing library dependencies.
           if (!toImport.isEmpty()) {
@@ -166,9 +163,6 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
   {
     for (LibraryDependencyData dependencyData : toImport) {
       LibraryData libraryData = dependencyData.getTarget();
-      if (libraryData.isUnresolved()) {
-        continue;
-      }
       switch (dependencyData.getLevel()) {
         case MODULE:
           @SuppressWarnings("ConstantConditions") Library moduleLib = moduleLibraryTable.createLibrary(dependencyData.getName());
@@ -199,10 +193,11 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
     }
   }
 
-  private static void removeObsolete(@NotNull Map<Set<String>, LibraryDependencyData> moduleLibrariesToImport,
-                                     @NotNull Map<String, LibraryDependencyData> projectLibrariesToImport,
-                                     @NotNull Set<LibraryDependencyData> toImport,
-                                     @NotNull ModifiableRootModel moduleRootModel)
+  private static void filterUpToDateAndRemoveObsolete(@NotNull Map<Set<String>, LibraryDependencyData> moduleLibrariesToImport,
+                                                      @NotNull Map<String, LibraryDependencyData> projectLibrariesToImport,
+                                                      @NotNull Set<LibraryDependencyData> toImport,
+                                                      @NotNull ModifiableRootModel moduleRootModel,
+                                                      boolean hasUnresolvedLibraries)
   {
     Set<String> moduleLibraryKey = ContainerUtilRt.newHashSet();
     for (OrderEntry entry : moduleRootModel.getOrderEntries()) {
@@ -227,11 +222,13 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
       else if (entry instanceof LibraryOrderEntry) {
         String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
         LibraryDependencyData existing = projectLibrariesToImport.remove(libraryName);
-        if (existing == null) {
-          moduleRootModel.removeOrderEntry(entry);
-        }
-        else {
+        if (existing != null) {
           toImport.remove(existing);
+        }
+        else if (!hasUnresolvedLibraries) {
+          // There is a possible case that a project has been successfully imported from external model and after
+          // that network/repo goes down. We don't want to drop existing binary mappings then.
+          moduleRootModel.removeOrderEntry(entry);
         }
       }
     }

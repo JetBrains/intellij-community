@@ -178,4 +178,9 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
     }
     return descriptor;
   }
+
+  @Override
+  public String toString() {
+    return getDefaultNamespace();
+  }
 }
