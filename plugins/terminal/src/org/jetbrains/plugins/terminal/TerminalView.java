@@ -23,7 +23,7 @@ import java.awt.event.FocusListener;
  */
 public class TerminalView {
 
-  private TerminalWidget myTerminalWidget;
+  private JBTabbedTerminalWidget myTerminalWidget;
 
   public void createTerminal(Project project, ToolWindow toolWindow) {
 
@@ -37,7 +37,7 @@ public class TerminalView {
     toolWindow.getContentManager().addContent(content);
   }
 
-  private Content createToolWindowContentPanel(@Nullable LocalTerminalDirectRunner terminalRunner, TerminalWidget terminalWidget) {
+  private Content createToolWindowContentPanel(@Nullable LocalTerminalDirectRunner terminalRunner, JBTabbedTerminalWidget terminalWidget) {
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
       @Override
       public Object getData(@NonNls String dataId) {
@@ -55,7 +55,7 @@ public class TerminalView {
     toolbar.setTargetComponent(panel);
     panel.setToolbar(toolbar.getComponent());
 
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "Session 1", false);
 
     if (getComponentToFocus() != null) {
       content.setPreferredFocusableComponent(getComponentToFocus());
@@ -113,11 +113,12 @@ public class TerminalView {
   }
 
   private static ActionToolbar createToolbar(@Nullable final LocalTerminalDirectRunner terminalRunner,
-                                             final TerminalWidget terminal) {
+                                             final JBTabbedTerminalWidget terminal) {
     DefaultActionGroup group = new DefaultActionGroup();
 
     if (terminalRunner != null) {
       group.add(new NewSession(terminalRunner, terminal));
+      group.add(new CloseSession(terminal));
     }
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);
@@ -149,6 +150,20 @@ public class TerminalView {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myTerminalRunner.openSession(myTerminal);
+    }
+  }
+
+  private static class CloseSession extends AnAction {
+    private final JBTabbedTerminalWidget myTerminal;
+
+    public CloseSession(JBTabbedTerminalWidget terminal) {
+      super("Close Session", "Close Terminal Session", AllIcons.Actions.Delete);
+      myTerminal = terminal;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myTerminal.closeCurrentSession();
     }
   }
 }
