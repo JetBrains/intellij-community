@@ -241,6 +241,9 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
     foldingModel.runBatchFoldingOperation(new Runnable() {
       @Override
       public void run() {
+        for (FoldRegion region : foldingModel.getAllFoldRegions()) {
+          foldingModel.removeFoldRegion(region);
+        }
         FoldRegion region = foldingModel.addFoldRegion(0, editor.getDocument().getTextLength(), placeholder);
         if (region != null) {
           region.setExpanded(false);

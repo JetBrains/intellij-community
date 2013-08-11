@@ -399,6 +399,9 @@
     <applicationService serviceInterface="com.intellij.refactoring.JavaRefactoringSettings"
                         serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>
 
+    <applicationService serviceInterface="com.intellij.codeInsight.generation.OverrideImplementExploreUtil$MemberImplementorExplorersProvider"
+                        serviceImplementation="com.intellij.codeInsight.generation.MemberImplementorExplorersProviderImpl"/>
+
     <projectService serviceInterface="com.intellij.refactoring.RefactoringManager"
                     serviceImplementation="com.intellij.refactoring.RefactoringManager"/>
     <projectService serviceInterface="com.intellij.refactoring.listeners.JavaRefactoringListenerManager"
@@ -933,8 +936,6 @@
     <lang.psiStructureViewFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaStructureViewBuilderFactory"/>
 
     <lang.ast.factory language="JAVA" implementationClass="com.intellij.psi.impl.source.tree.JavaASTFactory"/>
-
-    <lang.literalEscaper language="JAVA" implementationClass="com.intellij.lang.java.JavaLiteralEscaper"/>
 
     <lang.smartEnterProcessor language="JAVA"
                               implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor"/>

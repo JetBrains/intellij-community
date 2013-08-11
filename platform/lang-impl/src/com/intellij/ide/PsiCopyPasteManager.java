@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -322,7 +322,7 @@ public class PsiCopyPasteManager {
 
     @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-      return ArrayUtil.find(getTransferDataFlavors(), flavor) != -1;
+      return ArrayUtilRt.find(getTransferDataFlavors(), flavor) != -1;
     }
 
     public PsiElement[] getElements() {

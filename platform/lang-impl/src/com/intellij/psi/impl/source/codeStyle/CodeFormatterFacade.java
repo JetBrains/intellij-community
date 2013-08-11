@@ -255,10 +255,7 @@ public class CodeFormatterFacade {
   private static TextRange preprocess(@NotNull final ASTNode node, @NotNull TextRange range) {
     TextRange result = range;
     PsiElement psi = node.getPsi();
-    if (!psi.isValid()) {
-      for(PreFormatProcessor processor: Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
-        result = processor.process(node, result);
-      }
+    if (!psi.isValid()) {      
       return result;
     }
 

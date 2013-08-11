@@ -352,6 +352,10 @@ public class HighlightInfo implements Segment {
 
   @NonNls
   public String toString() {
+    return getDescription() != null ? getDescription() : "";
+  }
+
+  public String paramString() {
     @NonNls String s = "HighlightInfo(" + startOffset + "," + endOffset+")";
     if (getActualStartOffset() != startOffset || getActualEndOffset() != endOffset) {
       s += "; actual: (" + getActualStartOffset() + "," + getActualEndOffset() + ")";

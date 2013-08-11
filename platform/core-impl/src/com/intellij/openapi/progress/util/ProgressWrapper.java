@@ -33,6 +33,7 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase {
     myOriginal = original;
   }
 
+  @Override
   public boolean isCanceled() {
     return myOriginal.isCanceled();
   }

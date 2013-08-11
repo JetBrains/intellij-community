@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -36,12 +37,18 @@ import java.util.*;
 public class HgLogCommand {
 
   private static final Logger LOG = Logger.getInstance(HgLogCommand.class.getName());
-
   private static final String[] SHORT_TEMPLATE_ITEMS =
     {"{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}"};
   private static final String[] LONG_TEMPLATE_ITEMS =
     {"{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}", "{file_adds}", "{file_mods}",
-      "{file_dels}", "{file_copies}"};
+      "{file_dels}", "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}"};
+  /**
+   * The reason of existing 2 different templates for bash and others explained in
+   * {@link org.zmlx.hg4idea.provider.HgCachingCommittedChangesProvider.HgLogArgsBuilder#getLogArgs()}
+   */
+  private static final String[] LONG_TEMPLATE_FOR_BASH =
+    {"{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}", "{file_adds}", "{file_mods}",
+      "{file_dels}", "{\"join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')\"}"};
 
   private static final int REVISION_INDEX = 0;
   private static final int CHANGESET_INDEX = 1;
@@ -96,7 +103,15 @@ public class HgLogCommand {
       return Collections.emptyList();
     }
 
-    String template = HgChangesetUtil.makeTemplate(includeFiles ? LONG_TEMPLATE_ITEMS : SHORT_TEMPLATE_ITEMS);
+    String template;
+    HgVcs vcs = HgVcs.getInstance(myProject);
+    if (vcs != null && vcs.getGlobalSettings().isRunViaBash() && includeFiles) {
+      template = HgChangesetUtil.makeTemplate(LONG_TEMPLATE_FOR_BASH);
+    }
+    else {
+      template = HgChangesetUtil.makeTemplate(includeFiles ? LONG_TEMPLATE_ITEMS : SHORT_TEMPLATE_ITEMS);
+    }
+
     int expectedItemCount = includeFiles ? LONG_TEMPLATE_ITEMS.length : SHORT_TEMPLATE_ITEMS.length;
 
     FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(myProject));
@@ -118,7 +133,7 @@ public class HgLogCommand {
       try {
         String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
         // At least in the case of the long template, it's OK that we don't have everything...for example, if there were no
-        //  deleted or copied files, then we won't get any attribtes for them...
+        //  deleted or copied files, then we won't get any attributes for them...
         int numAttributes = attributes.length;
         if (!includeFiles && (numAttributes != expectedItemCount)) {
           LOG.debug("Wrong format. Skipping line " + line);
@@ -244,58 +259,20 @@ public class HgLogCommand {
   }
 
   @NotNull
-  private static Map<String, String> parseCopiesFileList(@Nullable String fileListString) {
+  public static Map<String, String> parseCopiesFileList(@Nullable String fileListString) {
     if (StringUtil.isEmpty(fileListString)) {
       return Collections.emptyMap();
     }
-    else {
-      Map<String, String> copies = new HashMap<String, String>();
-      assert fileListString != null; // checked via StringUtil
-      //hg copied files output looks like: "target1 (source1)target2 (source2)target3 ....  (target_n)"
-      //so we should split i-1 source from i target.
-      // If some sources or targets contatins '(' we suppose that it has Regular Bracket sequence and perform appropriate string parsing.
-      //if it fails just return. (to avoid  ArrayIndexOutOfBoundsException)
-      String[] filesList = fileListString.split("\\s");
-      String target = filesList[0];
+    Map<String, String> copies = new HashMap<String, String>();
+    String[] filesList = fileListString.split(HgChangesetUtil.FILE_SEPARATOR);
 
-      for (int i = 1; i < filesList.length; ++i) {
-        String source = filesList[i];
-        int afterRightBraceIndex = findRightBracePosition(source);
-        if (afterRightBraceIndex == -1) {
-          break;
-        }
-        copies.put(source.substring(0, afterRightBraceIndex), target);
-        if (afterRightBraceIndex >= source.length()) {                  //the last 'word' in str
-          break;
-        }
-        target = source.substring(afterRightBraceIndex);
+    for (String pairOfFiles : filesList) {
+      String[] files = pairOfFiles.split("\\s+\\(");
+      if (files.length != 2) {
+        LOG.error("Couldn't parse copied files: " + fileListString);
       }
-      return copies;
+      copies.put(files[1].substring(0, files[1].length() - 1), files[0]);
     }
-  }
-
-  private static int findRightBracePosition(@NotNull String str) {
-    if (!str.startsWith("(")) {
-      LOG.info("Unexpected output during parse copied files in log command " + str);
-      return -1;
-    }
-    int len = str.length();
-    int depth = 0;
-    for (int i = 0; i < len; ++i) {
-      char c = str.charAt(i);
-      switch (c) {
-        case '(':
-          depth++;
-          break;
-        case ')':
-          depth--;
-          break;
-      }
-      if (depth == 0) {
-        return i + 1;
-      }
-    }
-    LOG.info("Unexpected output during parse copied files in log command " + str);
-    return -1;
+    return copies;
   }
 }

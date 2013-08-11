@@ -30,8 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 
-import javax.swing.SwingWorker;
-
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.DialogManager;
@@ -71,7 +69,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       return;
     }
 
-    if (StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin())) {
+    if (!GithubSettings.getInstance().isAuthConfigured()) {
       setVisibleEnabled(e, false, false);
       return;
     }
@@ -134,13 +132,13 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       return;
     }
 
-    final GithubInfo info = loadGithubInfoWithModal(project, userAndRepo);
+    final GithubInfo info = loadGithubInfoWithModal(project, userAndRepo, upstreamUserAndRepo);
     if (info == null) {
       return;
     }
 
-    final GithubCreatePullRequestDialog dialog = new GithubCreatePullRequestDialog(project);
-    initLoadAvailableBranches(project, info, upstreamUserAndRepo, dialog);
+    String suggestedBranch = info.getRepo().getParent() == null ? null : info.getRepo().getParent().getUserName() + ":master";
+    final GithubCreatePullRequestDialog dialog = new GithubCreatePullRequestDialog(project, info.getBranches(), suggestedBranch);
     DialogManager.show(dialog);
     if (!dialog.isOK()) {
       return;
@@ -171,7 +169,9 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static GithubInfo loadGithubInfoWithModal(@NotNull final Project project, @NotNull final GithubFullPath userAndRepo) {
+  private static GithubInfo loadGithubInfoWithModal(@NotNull final Project project,
+                                                    @NotNull final GithubFullPath userAndRepo,
+                                                    @Nullable final GithubFullPath upstreamUserAndRepo) {
     final Ref<GithubInfo> githubInfoRef = new Ref<GithubInfo>();
     final Ref<IOException> exceptionRef = new Ref<IOException>();
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
@@ -185,7 +185,8 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
                 reposRef.set(GithubApiUtil.getDetailedRepoInfo(authData, userAndRepo.getUser(), userAndRepo.getRepository()));
               }
             });
-          githubInfoRef.set(new GithubInfo(auth, reposRef.get()));
+          List<String> branches = loadAvailableBranches(project, auth, reposRef.get(), upstreamUserAndRepo);
+          githubInfoRef.set(new GithubInfo(auth, reposRef.get(), branches));
         }
         catch (IOException e) {
           exceptionRef.set(e);
@@ -280,85 +281,70 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     return StringUtil.equalsIgnoreCase(user, repo.getUserName());
   }
 
-  private static void initLoadAvailableBranches(@NotNull final Project project,
-                                                @NotNull final GithubInfo info,
-                                                @Nullable final GithubFullPath upstreamPath,
-                                                @NotNull final GithubCreatePullRequestDialog dialog) {
-    dialog.setBusy(true);
-    new SwingWorker<List<String>, Void>() {
+  private static List<String> loadAvailableBranches(@NotNull final Project project,
+                                                    @NotNull final GithubAuthData auth,
+                                                    @NotNull final GithubRepoDetailed repo,
+                                                    @Nullable final GithubFullPath upstreamPath) {
+    List<String> result = new ArrayList<String>();
+    try {
+      final GithubRepo parent = repo.getParent();
+      final GithubRepo source = repo.getSource();
+
+      if (parent != null) {
+        result.addAll(getBranches(auth, parent.getUserName(), parent.getName()));
+      }
+
+      result.addAll(getBranches(auth, repo.getUserName(), repo.getName()));
+
+      if (source != null && !equals(source, parent)) {
+        result.addAll(getBranches(auth, source.getUserName(), source.getName()));
+      }
+
+      if (upstreamPath != null && !equals(upstreamPath, repo) && !equals(upstreamPath, parent) && !equals(upstreamPath, source)) {
+        result.addAll(getBranches(auth, upstreamPath.getUser(), upstreamPath.getRepository()));
+      }
+    }
+    catch (IOException e) {
+      GithubNotifications.showError(project, "Can't load available branches", e);
+    }
+    return result;
+  }
+
+  @NotNull
+  private static List<String> getBranches(@NotNull GithubAuthData auth, @NotNull final String user, @NotNull String repo)
+    throws IOException {
+    List<GithubBranch> branches = GithubApiUtil.getRepoBranches(auth, user, repo);
+    return ContainerUtil.map(branches, new Function<GithubBranch, String>() {
       @Override
-      protected List<String> doInBackground() throws Exception {
-        List<String> result = new ArrayList<String>();
-        try {
-          final GithubAuthData auth = info.getAuthData();
-          final GithubRepoDetailed repo = info.getRepo();
-          final GithubRepo parent = repo.getParent();
-          final GithubRepo source = repo.getSource();
-
-          result.addAll(getBranches(auth, repo.getUserName(), repo.getName()));
-
-          if (parent != null) {
-            result.addAll(getBranches(auth, parent.getUserName(), parent.getName()));
-          }
-
-          if (source != null && !equals(source, parent)) {
-            result.addAll(getBranches(auth, source.getUserName(), source.getName()));
-          }
-
-          if (upstreamPath != null && !equals(upstreamPath, repo) && !equals(upstreamPath, parent) && !equals(upstreamPath, source)) {
-            result.addAll(getBranches(auth, upstreamPath.getUser(), upstreamPath.getRepository()));
-          }
-        }
-        catch (IOException e) {
-          GithubNotifications.showError(project, "Can't load available branches", e);
-        }
-        return result;
+      public String fun(GithubBranch branch) {
+        return user + ":" + branch.getName();
       }
+    });
+  }
 
-      @Override
-      protected void done() {
-        try {
-          dialog.addBranches(get());
-        }
-        catch (Exception ignore) {
-        }
-        dialog.setBusy(false);
-      }
+  private static boolean equals(@NotNull GithubRepo repo1, @Nullable GithubRepo repo2) {
+    if (repo2 == null) {
+      return false;
+    }
+    return StringUtil.equalsIgnoreCase(repo1.getUserName(), repo2.getUserName());
+  }
 
-      @NotNull
-      private List<String> getBranches(@NotNull GithubAuthData auth, @NotNull final String user, @NotNull String repo) throws IOException {
-        List<GithubBranch> branches = GithubApiUtil.getRepoBranches(auth, user, repo);
-        return ContainerUtil.map(branches, new Function<GithubBranch, String>() {
-          @Override
-          public String fun(GithubBranch branch) {
-            return user + ":" + branch.getName();
-          }
-        });
-      }
-
-      private boolean equals(@NotNull GithubRepo repo1, @Nullable GithubRepo repo2) {
-        if (repo2 == null) {
-          return false;
-        }
-        return StringUtil.equalsIgnoreCase(repo1.getUserName(), repo2.getUserName());
-      }
-
-      private boolean equals(@NotNull GithubFullPath repo1, @Nullable GithubRepo repo2) {
-        if (repo2 == null) {
-          return false;
-        }
-        return StringUtil.equalsIgnoreCase(repo1.getUser(), repo2.getUserName());
-      }
-    }.execute();
+  private static boolean equals(@NotNull GithubFullPath repo1, @Nullable GithubRepo repo2) {
+    if (repo2 == null) {
+      return false;
+    }
+    return StringUtil.equalsIgnoreCase(repo1.getUser(), repo2.getUserName());
   }
 
   private static class GithubInfo {
     @NotNull private final GithubRepoDetailed myRepo;
     @NotNull private final GithubAuthData myAuthData;
+    @NotNull private final List<String> myBranches;
 
-    private GithubInfo(@NotNull GithubAuthData authData, @NotNull GithubRepoDetailed repo) {
+    private GithubInfo(@NotNull GithubAuthData authData, @NotNull GithubRepoDetailed repo, @NotNull List<String> branches) {
       myAuthData = authData;
       myRepo = repo;
+      myBranches = branches;
     }
 
     @NotNull
@@ -369,6 +355,11 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     @NotNull
     public GithubAuthData getAuthData() {
       return myAuthData;
+    }
+
+    @NotNull
+    public List<String> getBranches() {
+      return myBranches;
     }
   }
 }

@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -87,7 +87,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
             systemItems.addAll(getRoots(forModule, true));
           }
         } else {
-          systemItems.addAll(getRoots(ModuleUtil.findModuleForPsiElement(getElement()), true));
+          systemItems.addAll(getRoots(ModuleUtilCore.findModuleForPsiElement(getElement()), true));
         }
         return systemItems;
       }
@@ -144,7 +144,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
     if (thisModule == null) return Collections.emptyList();
     Set<Module> modules = new com.intellij.util.containers.HashSet<Module>();
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(thisModule);
-    ModuleUtil.getDependencies(thisModule, modules);
+    ModuleUtilCore.getDependencies(thisModule, modules);
     List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
     final PsiManager psiManager = PsiManager.getInstance(thisModule.getProject());
     if (includingClasses) {

@@ -18,16 +18,24 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.XmlNamespaceHelper;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -36,26 +44,26 @@ import java.util.Collections;
 * @author peter
 */
 public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.XmlAttributeInsertHandler");
+
   public static final XmlAttributeInsertHandler INSTANCE = new XmlAttributeInsertHandler();
 
-  private final String myNamespacePrefixToInsert;
   private final String myNamespaceToInsert;
 
   public XmlAttributeInsertHandler() {
-    this(null, null);
+    this(null);
   }
 
-  public XmlAttributeInsertHandler(@Nullable String namespaceToInsert, @Nullable String namespacePrefixToInsert) {
+  public XmlAttributeInsertHandler(@Nullable String namespaceToInsert) {
     myNamespaceToInsert = namespaceToInsert;
-    myNamespacePrefixToInsert = namespacePrefixToInsert;
   }
 
-  public void handleInsert(InsertionContext context, LookupElement item) {
+  public void handleInsert(final InsertionContext context, final LookupElement item) {
     final Editor editor = context.getEditor();
 
     final Document document = editor.getDocument();
     final int caretOffset = editor.getCaretModel().getOffset();
-    PsiFile file = context.getFile();
+    final PsiFile file = context.getFile();
     if (file.getLanguage() == HTMLLanguage.INSTANCE &&
         HtmlUtil.isSingleHtmlAttribute((String)item.getObject())) {
       return;
@@ -88,13 +96,57 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
     AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor);
 
     if (myNamespaceToInsert != null && file instanceof XmlFile) {
-      final XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(context.getFile());
+      final PsiElement element = file.findElementAt(context.getStartOffset());
+      final XmlTag tag = element != null ? PsiTreeUtil.getParentOfType(element, XmlTag.class) : null;
 
-      if (helper != null) {
-        PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
-        helper.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(myNamespaceToInsert),
-                                          myNamespacePrefixToInsert, null);
+      if (tag != null) {
+        String prefix = ExtendedTagInsertHandler.suggestPrefix((XmlFile)file, myNamespaceToInsert);
+
+        if (prefix != null) {
+          prefix = makePrefixUnique(prefix, tag);
+          final XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(context.getFile());
+
+          if (helper != null) {
+            final Project project = context.getProject();
+            PsiDocumentManager.getInstance(project).commitDocument(document);
+            qualifyWithPrefix(prefix, element);
+            helper.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(
+              myNamespaceToInsert), prefix, null);
+          }
+        }
       }
     }
+  }
+
+  private static void qualifyWithPrefix(@NotNull String namespacePrefix, @NotNull PsiElement context) {
+    final PsiElement parent = context.getParent();
+
+    if (parent instanceof XmlAttribute) {
+      final XmlAttribute attribute = (XmlAttribute)parent;
+      final String prefix = attribute.getNamespacePrefix();
+
+      if (!prefix.equals(namespacePrefix) && StringUtil.isNotEmpty(namespacePrefix)) {
+        final String name = namespacePrefix + ":" + attribute.getLocalName();
+        try {
+          attribute.setName(name);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    }
+  }
+
+  @NotNull
+  private static String makePrefixUnique(@NotNull String basePrefix, @NotNull XmlTag context) {
+    if (context.getNamespaceByPrefix(basePrefix).isEmpty()) {
+      return basePrefix;
+    }
+    int i = 1;
+
+    while (!context.getNamespaceByPrefix(basePrefix + i).isEmpty()) {
+      i++;
+    }
+    return basePrefix + i;
   }
 }

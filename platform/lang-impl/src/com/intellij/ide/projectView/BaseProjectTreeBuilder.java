@@ -34,7 +34,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,26 +69,15 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     if (element instanceof AbstractTreeNode) {
       AbstractTreeNode node = (AbstractTreeNode)element;
       final Object value = node.getValue();
-      VirtualFile vFile = null;
-      if (value instanceof PsiFileSystemItem) {
-        vFile = ((PsiFileSystemItem)value).getVirtualFile();
-      }
-      else if (value instanceof PsiElement) {
-        PsiFile psiFile = ((PsiElement)value).getContainingFile();
-        if (psiFile != null) {
-          vFile = psiFile.getVirtualFile();
-        }
-      }
-      final ActionCallback cb = new ActionCallback();
-
-      final VirtualFile finalVFile = vFile;
+      final ActionCallback callback = new ActionCallback();
+      final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(ObjectUtils.tryCast(value, PsiElement.class));
       final FocusRequestor focusRequestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
       batch(new Progressive() {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           final Ref<Object> target = new Ref<Object>();
-          _select(value, finalVFile, false, Conditions.<AbstractTreeNode>alwaysTrue(), cb, indicator, target, focusRequestor, false);
-          cb.doWhenDone(new Runnable() {
+          _select(value, virtualFile, false, Conditions.<AbstractTreeNode>alwaysTrue(), callback, indicator, target, focusRequestor, false);
+          callback.doWhenDone(new Runnable() {
             @Override
             public void run() {
               result.setDone(target.get());

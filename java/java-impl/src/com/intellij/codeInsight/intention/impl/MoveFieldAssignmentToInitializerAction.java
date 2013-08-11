@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,10 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiAssignmentExpression assignment = getAssignmentUnderCaret(editor, file);
+    PsiAssignmentExpression assignment = getAssignmentUnderCaret(editor, file);
     if (assignment == null) return false;
+    PsiElement parent = assignment.getParent();
+    if (!(parent instanceof PsiExpressionStatement)) return false;
     PsiField field = getAssignedField(assignment);
     if (field == null || field.hasInitializer()) return false;
     PsiClass psiClass = field.getContainingClass();
@@ -74,11 +76,12 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     if (initializer == null) return false;
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
     initializer.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
         PsiElement resolved = expression.resolve();
         if (resolved == null) return;
         if (PsiTreeUtil.isAncestor(ctrOrInitializer, resolved, false) && !PsiTreeUtil.isAncestor(initializer, resolved, false)) {
-          // resolved somewhere inside construcor but outside initializer
+          // resolved somewhere inside constructor but outside initializer
           result.set(Boolean.FALSE);
         }
       }
@@ -97,16 +100,21 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     }
   }
 
-  private static boolean isInitializedWithSameExpression(final PsiField field, final PsiAssignmentExpression assignment, final Collection<PsiAssignmentExpression> initializingAssignments) {
+  private static boolean isInitializedWithSameExpression(final PsiField field,
+                                                         final PsiAssignmentExpression assignment,
+                                                         final Collection<PsiAssignmentExpression> initializingAssignments) {
     final PsiExpression expression = assignment.getRExpression();
+    if (expression == null) return false;
+    PsiClass containingClass = field.getContainingClass();
+    if (containingClass == null) return false;
+
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
     final List<PsiAssignmentExpression> totalUsages = new ArrayList<PsiAssignmentExpression>();
-    PsiClass containingClass = field.getContainingClass();
-    assert containingClass != null;
-    containingClass.accept(new JavaRecursiveElementVisitor(){
+    containingClass.accept(new JavaRecursiveElementVisitor() {
       private PsiCodeBlock currentInitializingBlock; //ctr or class initializer
 
-      @Override public void visitCodeBlock(PsiCodeBlock block) {
+      @Override
+      public void visitCodeBlock(PsiCodeBlock block) {
         PsiElement parent = block.getParent();
         if (parent instanceof PsiClassInitializer || parent instanceof PsiMethod && ((PsiMethod)parent).isConstructor()) {
           currentInitializingBlock = block;
@@ -118,7 +126,8 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
         }
       }
 
-      @Override public void visitReferenceExpression(PsiReferenceExpression reference) {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression reference) {
         if (!result.get().booleanValue()) return;
         super.visitReferenceExpression(reference);
         if (!PsiUtil.isOnAssignmentLeftHand(reference)) return;
@@ -126,7 +135,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
         if (resolved != field) return;
         PsiExpression rValue = ((PsiAssignmentExpression)reference.getParent()).getRExpression();
         if (currentInitializingBlock != null) {
-          // ignore usages other than intializing
+          // ignore usages other than initializing
           if (rValue == null || !PsiEquivalenceUtil.areElementsEquivalent(rValue, expression)) {
             result.set(Boolean.FALSE);
           }
@@ -160,13 +169,13 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiAssignmentExpression assignment = getAssignmentUnderCaret(editor, file);
+    PsiAssignmentExpression assignment = getAssignmentUnderCaret(editor, file);
     if (assignment == null) return;
     PsiField field = getAssignedField(assignment);
     if (field == null) return;
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-    ArrayList<PsiAssignmentExpression> assignments = new ArrayList<PsiAssignmentExpression>();
+    List<PsiAssignmentExpression> assignments = new ArrayList<PsiAssignmentExpression>();
     if (!isInitializedWithSameExpression(field, assignment, assignments)) return;
     PsiExpression initializer = assignment.getRExpression();
     field.setInitializer(initializer);
@@ -174,10 +183,10 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     for (PsiAssignmentExpression assignmentExpression : assignments) {
       PsiElement statement = assignmentExpression.getParent();
       PsiElement parent = statement.getParent();
-      if (parent instanceof PsiIfStatement
-          || parent instanceof PsiWhileStatement
-          || parent instanceof PsiForStatement
-          || parent instanceof PsiForeachStatement) {
+      if (parent instanceof PsiIfStatement ||
+          parent instanceof PsiWhileStatement ||
+          parent instanceof PsiForStatement ||
+          parent instanceof PsiForeachStatement) {
         PsiStatement emptyStatement =
           JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createStatementFromText(";", statement);
         statement.replace(emptyStatement);
@@ -187,8 +196,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
       }
     }
 
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[] {field.getInitializer()}, attributes, false,null);
+    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{field.getInitializer()}, attributes, false, null);
   }
 }

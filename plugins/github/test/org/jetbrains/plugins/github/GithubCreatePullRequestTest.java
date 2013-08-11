@@ -52,4 +52,19 @@ public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase
     checkRemoteConfigured();
     checkLastCommitPushed();
   }
+
+  public void testCommitRef1() throws Exception {
+    registerDefaultCreatePullRequestDialogHandler(myLogin1 + ":refs/heads/master");
+
+    cd(myProjectRoot.getPath());
+    cloneRepo();
+    createBranch();
+    createChanges();
+
+    GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
+
+    checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
+    checkRemoteConfigured();
+    checkLastCommitPushed();
+  }
 }

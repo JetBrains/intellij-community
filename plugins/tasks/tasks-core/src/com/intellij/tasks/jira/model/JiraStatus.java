@@ -32,7 +32,7 @@ public class JiraStatus {
 
   @Override
   public String toString() {
-    return String.format("JiraStatus(name=%s)", name);
+    return String.format("JiraStatus(name='%s')", name);
   }
 
   /**

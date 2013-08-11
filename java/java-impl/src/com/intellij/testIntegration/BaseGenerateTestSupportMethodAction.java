@@ -153,7 +153,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
             PsiMethod method = generateDummyMethod(editor, file);
             if (method == null) return;
 
-            TestIntegrationUtils.runTestMethodTemplate(myMethodKind, framework, editor, targetClass, method, "name", false);
+            TestIntegrationUtils.runTestMethodTemplate(myMethodKind, framework, editor, targetClass, method, "name", false, null);
           }
           catch (IncorrectOperationException e) {
             HintManager.getInstance().showErrorHint(editor, "Cannot generate method: " + e.getMessage());

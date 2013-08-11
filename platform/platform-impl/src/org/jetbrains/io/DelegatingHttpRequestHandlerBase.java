@@ -38,7 +38,7 @@ abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelUpstreamHan
     //}
 
     if (!process(context, request, new QueryStringDecoder(request.getUri()))) {
-      Responses.sendStatus(request, context, NOT_FOUND);
+      Responses.sendStatus(request, context.getChannel(), NOT_FOUND);
     }
   }
 

@@ -21,7 +21,10 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -276,10 +279,10 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     for (ProgramRunner runner : myConfigurationPerRunnerSettings.keySet()) {
       ConfigurationPerRunnerSettings settings = myConfigurationPerRunnerSettings.get(runner);
       Element runnerElement = new Element(CONFIGURATION_ELEMENT);
-      runnerElement.setAttribute(RUNNER_ID, runner.getRunnerId());
       if (settings != null) {
         settings.writeExternal(runnerElement);
       }
+      runnerElement.setAttribute(RUNNER_ID, runner.getRunnerId());
       configurationPerRunnerSettings.add(runnerElement);
     }
     if (myUnloadedConfigurationPerRunnerSettings != null) {

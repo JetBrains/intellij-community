@@ -85,4 +85,17 @@
     <description>Auto-unboxing &lt;code&gt;i&lt;/code&gt; #loc</description>
   </problem>
 
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>58</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;o&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>59</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;b&lt;/code&gt; #loc</description>
+  </problem>
 </problems>

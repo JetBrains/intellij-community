@@ -63,7 +63,7 @@ public class Extractor implements Disposable {
     myFulfilledWorkGate.setDispactchListener(listener);
   }
 
-  public void setPacketDispatcher(final PacketProcessor packetProcessor, final DeferredActionsQueue queue) {
+  public void setPacketDispatcher(@NotNull final PacketProcessor packetProcessor, final DeferredActionsQueue queue) {
     myFulfilledWorkGate = new DeferredActionsQueue() { //todo make it all later
       @Override
       public void addLast(final Runnable runnable) {
@@ -111,7 +111,7 @@ public class Extractor implements Disposable {
   public void addRequest(Runnable runnable, final DeferredActionsQueue queue) {
     myQueue.queue(new MyUpdate(runnable, queue, myOrder.incrementAndGet()));
   }
-  
+
   private static class MyUpdate extends Update {
     private final Runnable myRunnable;
     private final DeferredActionsQueue myQueue;

@@ -24,6 +24,7 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.components.JBCheckBox;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public class CloseTaskDialog extends DialogWrapper {
     super(project, false);
 
     setTitle("Close Task");
-    myTaskLabel.setText(task.getSummary());
+    myTaskLabel.setText(TaskUtil.getTrimmedSummary(task));
     myTaskLabel.setIcon(task.getIcon());
 
     TaskRepository repository = task.getRepository();

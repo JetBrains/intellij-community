@@ -51,8 +51,8 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
    */
   public void testVersionDiscovery1() throws Exception {
     myRepository.setUrl("http://trackers-tests.labs.intellij.net:8015");
-    myRepository.setUsername("deva");
-    myRepository.setPassword("deva");
+    myRepository.setUsername("buildtest");
+    myRepository.setPassword("buildtest");
     assertEquals("2.0", myRepository.discoverRestApiVersion().getVersionName());
   }
 
@@ -61,39 +61,32 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
    */
   public void testVersionDiscovery2() throws Exception {
     myRepository.setUrl("http://trackers-tests.labs.intellij.net:8014");
-    myRepository.setUsername("deva");
-    myRepository.setPassword("deva");
+    myRepository.setUsername("buildtest");
+    myRepository.setPassword("buildtest");
     assertEquals("2.0.alpha1", myRepository.discoverRestApiVersion().getVersionName());
   }
 
   public void testJqlQuery() throws Exception {
-    myRepository.setUsername("deva");
-    myRepository.setPassword("deva");
-    myRepository.setSearchQuery("assignee = currentUser() AND project = PRJONE");
-    assertEquals(5, myRepository.getIssues("", 50, 0).length);
+    myRepository.setUsername("buildtest");
+    myRepository.setPassword("buildtest");
+    myRepository.setSearchQuery("assignee = currentUser() AND (summary ~ 'foo' or resolution = Fixed)");
+    assertEquals(2, myRepository.getIssues("", 50, 0).length);
   }
 
   /**
    * Holds only for JIRA > 5.x.x
    */
   public void testExtractedErrorMessage() throws Exception {
-    myRepository.setUsername("deva");
-    myRepository.setPassword("deva");
+    myRepository.setUsername("buildtest");
+    myRepository.setPassword("buildtest");
     myRepository.setSearchQuery("foo < bar");
     try {
       myRepository.getIssues("", 50, 0);
       fail();
     }
     catch (Exception e) {
-      assertEquals("Request failed with error: \"Field 'foo' does not exist or you do not have permission to view it.\"", e.getMessage());
+      assertEquals("Search failed. Reason: \"Field 'foo' does not exist or you do not have permission to view it.\"", e.getMessage());
     }
-  }
-
-  public void testEmptyQuerySelectsAllIssues() throws Exception {
-    myRepository.setUsername("deva");
-    myRepository.setPassword("deva");
-    myRepository.setSearchQuery("");
-    assertEquals(13, myRepository.getIssues("", 50, 0).length);
   }
 
   @Override

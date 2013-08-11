@@ -121,6 +121,7 @@ public class IOUtil {
       return result;
     }
 
+    if (len == 0) return "";
     storage.readFully(buffer, 0, len);
     return new String(buffer, 0, len, US_ASCII);
   }

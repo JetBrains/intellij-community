@@ -17,12 +17,11 @@ package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.DoubleArrayList;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -330,16 +329,11 @@ public class ProgressIndicatorBase extends AbstractProgressIndicatorBase impleme
   }
 
   @Override
-  public synchronized void initStateFrom(@NotNull final ProgressIndicatorEx indicator) {
+  public synchronized void initStateFrom(@NotNull final ProgressIndicator indicator) {
     super.initStateFrom(indicator);
-    myModalityEntered = indicator.isModalityEntered();
-    myNonCancelableCount = indicator.getNonCancelableCount();
-
-    myTextStack = new Stack<String>(indicator.getTextStack());
-
-    myText2Stack = new Stack<String>(indicator.getText2Stack());
-
-    myFractionStack = new DoubleArrayList(indicator.getFractionStack());
+    if (indicator instanceof ProgressIndicatorEx) {
+      myModalityEntered = ((ProgressIndicatorEx)indicator).isModalityEntered();
+    }
   }
 
   @Override

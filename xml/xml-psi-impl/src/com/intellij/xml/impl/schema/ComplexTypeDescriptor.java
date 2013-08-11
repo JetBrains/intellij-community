@@ -242,7 +242,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     return result.toArray(new XmlAttributeDescriptor[result.size()]);
   }
 
-  public XmlNSDescriptorImpl getNsDescriptors() {
+  public XmlNSDescriptorImpl getNsDescriptor() {
     return myDocumentDescriptor;
   }
 

@@ -94,7 +94,8 @@ public class TrelloTask extends Task {
 
   @Override
   public boolean isClosed() {
-    return myCard.isClosed();
+    // IDEA-111470, IDEA-111475
+    return myCard.isClosed() || !myCard.isVisible();
   }
 
   @Override

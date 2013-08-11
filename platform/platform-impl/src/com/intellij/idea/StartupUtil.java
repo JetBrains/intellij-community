@@ -76,6 +76,10 @@ public class StartupUtil {
     void start(boolean newConfigFolder);
   }
 
+  public synchronized static int getAcquiredPort() {
+    return ourLock.getAcquiredPort();
+  }
+
   static void prepareAndStart(String[] args, AppStarter appStarter) {
     boolean newConfigFolder = false;
 

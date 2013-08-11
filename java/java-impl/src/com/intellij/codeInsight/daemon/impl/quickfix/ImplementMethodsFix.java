@@ -72,7 +72,9 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
     if (editor == null || !FileModificationService.getInstance().prepareFileForWrite(myPsiElement.getContainingFile())) return;
     if (myPsiElement instanceof PsiEnumConstant) {
-      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, ((PsiEnumConstant)myPsiElement).getContainingClass(), true);
+      final boolean hasClassInitializer = ((PsiEnumConstant)myPsiElement).getInitializingClass() != null;
+      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement,
+                                                                              ((PsiEnumConstant)myPsiElement).getContainingClass(), hasClassInitializer);
       if (chooser == null) return;
 
       final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();

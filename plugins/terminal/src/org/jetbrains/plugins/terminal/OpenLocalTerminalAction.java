@@ -58,6 +58,6 @@ public class OpenLocalTerminalAction extends AnAction implements DumbAware {
       terminalCommand = new String[]{"/bin/bash", "--login"};
     }
 
-    return new LocalTerminalDirectRunner(project, terminalCommand);
+    return new LocalTerminalDirectRunner(project);
   }
 }

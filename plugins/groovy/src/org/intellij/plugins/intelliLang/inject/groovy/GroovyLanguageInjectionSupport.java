@@ -62,8 +62,13 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
     return new Class[] {GroovyPatterns.class};
   }
 
-  public boolean useDefaultInjector(final PsiElement host) {
+  @Override
+  public boolean isApplicableTo(PsiLanguageInjectionHost host) {
     return host instanceof GroovyPsiElement;
+  }
+
+  public boolean useDefaultInjector(PsiLanguageInjectionHost host) {
+    return true;
   }
 
   @Override

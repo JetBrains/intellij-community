@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -31,10 +32,8 @@ import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CharTable;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -344,11 +343,12 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         if (hasSignature) {
           newText.append('(');
           PsiParameter[] parameters = method.getParameterList().getParameters();
-          for (int i = 0; i < parameters.length; i++) {
-            PsiParameter parameter = parameters[i];
-            if (i > 0) newText.append(",");
-            newText.append(parameter.getType().getCanonicalText());
-          }
+          newText.append(StringUtil.join(parameters, new Function<PsiParameter, String>() {
+            @Override
+            public String fun(PsiParameter parameter) {
+              return TypeConversionUtil.erasure(parameter.getType()).getCanonicalText();
+            }
+          }, ","));
           newText.append(')');
         }
         newText.append("*/");

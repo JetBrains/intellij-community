@@ -18,15 +18,11 @@ package com.intellij.tasks.jira;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.util.regex.Pattern;
-
 /**
  * @author Mikhail Golubev
  */
 public class JiraUtil {
   public static final Gson GSON = buildGson();
-  //public static final Pattern DEFAULT_ISSUE_KEY_REGEX = Pattern.compile("\\p{Upper}{2,}+-\\d+");
-  public static final Pattern ANY_ISSUE_KEY_REGEX = Pattern.compile("\\w+-\\d+");
 
   private static Gson buildGson() {
     GsonBuilder gson = new GsonBuilder();

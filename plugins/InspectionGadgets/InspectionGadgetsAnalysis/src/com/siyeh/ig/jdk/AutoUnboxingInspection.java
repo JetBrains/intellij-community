@@ -37,9 +37,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class AutoUnboxingInspection extends BaseInspection {
 
@@ -57,6 +55,19 @@ public class AutoUnboxingInspection extends BaseInspection {
     s_unboxingMethods.put("double", "doubleValue");
     s_unboxingMethods.put("boolean", "booleanValue");
     s_unboxingMethods.put("char", "charValue");
+  }
+
+  @NonNls static final Set<String> unboxableTypes = new HashSet(9);
+  static {
+    unboxableTypes.add(CommonClassNames.JAVA_LANG_BYTE);
+    unboxableTypes.add(CommonClassNames.JAVA_LANG_SHORT);
+    unboxableTypes.add(CommonClassNames.JAVA_LANG_INTEGER);
+    unboxableTypes.add(CommonClassNames.JAVA_LANG_LONG);
+    unboxableTypes.add(CommonClassNames.JAVA_LANG_FLOAT);
+    unboxableTypes.add(CommonClassNames.JAVA_LANG_DOUBLE);
+    unboxableTypes.add(CommonClassNames.JAVA_LANG_BOOLEAN);
+    unboxableTypes.add(CommonClassNames.JAVA_LANG_CHARACTER);
+    unboxableTypes.add(CommonClassNames.JAVA_LANG_OBJECT);
   }
 
   @Override
@@ -131,7 +142,7 @@ public class AutoUnboxingInspection extends BaseInspection {
       if (type == null) {
         return;
       }
-      final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(type);
+      final PsiPrimitiveType unboxedType = (PsiPrimitiveType)ExpectedTypeUtils.findExpectedType(expression, false, true);
       if (unboxedType == null) {
         return;
       }
@@ -140,7 +151,11 @@ public class AutoUnboxingInspection extends BaseInspection {
       final PsiElementFactory factory = psiFacade.getElementFactory();
       final PsiElement parent = expression.getParent();
       final String expressionText = expression.getText();
-      if (parent instanceof PsiPrefixExpression && !unboxedType.equalsToText("boolean")) {
+      if (parent instanceof PsiTypeCastExpression) {
+        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
+        replaceExpression(typeCastExpression, newExpressionText);
+      }
+      else if (parent instanceof PsiPrefixExpression && !unboxedType.equalsToText("boolean")) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
         final IElementType tokenType = prefixExpression.getOperationTokenType();
         if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
@@ -205,7 +220,7 @@ public class AutoUnboxingInspection extends BaseInspection {
       }
     }
 
-    private static String buildNewExpressionText(PsiExpression expression, PsiType unboxedType) {
+    private static String buildNewExpressionText(PsiExpression expression, PsiPrimitiveType unboxedType) {
       final String unboxedTypeText = unboxedType.getCanonicalText();
       final String expressionText = expression.getText();
       final String boxMethodName = s_unboxingMethods.get(unboxedTypeText);
@@ -224,6 +239,10 @@ public class AutoUnboxingInspection extends BaseInspection {
           final PsiExpression argument = arguments[0];
           return argument.getText();
         }
+      }
+      final PsiType type = expression.getType();
+      if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+        return "((" + unboxedType.getBoxedTypeName() + ')' + expressionText + ")." + boxMethodName + "()";
       }
       return expressionText + '.' + boxMethodName + "()";
     }
@@ -365,21 +384,23 @@ public class AutoUnboxingInspection extends BaseInspection {
       if (TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {
         return;
       }
-      final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(expressionType);
-      if (unboxedType == null) {
+      if (!isUnboxable(expressionType)) {
         return;
       }
-      final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
-      if (expectedType == null) {
-        return;
-      }
-      if (!TypeConversionUtil.isPrimitiveAndNotNull(expectedType)) {
-        return;
-      }
-      if (!expectedType.isAssignableFrom(unboxedType)) {
+      final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
+      if (expectedType == null || !TypeConversionUtil.isPrimitiveAndNotNull(expectedType)) {
         return;
       }
       registerError(expression, expression);
+    }
+
+    private static boolean isUnboxable(PsiType type) {
+      if (!(type instanceof PsiClassType)) {
+        return false;
+      }
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass aClass = classType.resolve();
+      return aClass != null && unboxableTypes.contains(aClass.getQualifiedName());
     }
   }
 }

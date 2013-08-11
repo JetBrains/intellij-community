@@ -53,4 +53,9 @@ public class AutoUnboxing {
         default:
       }
     }
+
+    void m(Object o, Boolean b) {
+        if ((boolean) o) {}
+        if ((boolean) b) {}
+    }
 }

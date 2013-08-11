@@ -79,7 +79,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     return false;
   }
 
-  public static void addAllClasses(CompletionParameters parameters,
+  public static void addAllClasses(@NotNull CompletionParameters parameters,
                                    final boolean filterByScope,
                                    @NotNull final PrefixMatcher matcher,
                                    @NotNull final Consumer<LookupElement> consumer) {

@@ -1434,6 +1434,10 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   public static <T, V> List<V> mapNotNull(@NotNull Collection<? extends T> iterable, @NotNull Function<T, V> mapping) {
+    if (iterable.isEmpty()) {
+      return emptyList();
+    }
+
     List<V> result = new ArrayList<V>(iterable.size());
     for (T t : iterable) {
       final V o = mapping.fun(t);

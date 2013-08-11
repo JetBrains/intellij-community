@@ -32,4 +32,10 @@ public class AssertIsNotNull {
   }
   
   Object call() {return new Object();}
+  
+  @Contract(<warning descr="A contract clause must be in form arg1, ..., argN -> return-value">"a"</warning>)
+  void malformedContract() {}
+
+  @Contract(<warning descr="Method takes 2 parameters, while contract clause 0 expects 1">"null -> _"</warning>)
+  void wrongParameterCount(Object a, boolean b) {}
 }

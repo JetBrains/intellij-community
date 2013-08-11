@@ -59,12 +59,14 @@ public class Main {
         throw new HeadlessException("Unable to detect graphics environment");
       }
 
-      try {
-        installPatch();
-      }
-      catch (Throwable t) {
-        showMessage("Update Failed", t);
-        System.exit(UPDATE_FAILED);
+      if (args.length == 0) {
+        try {
+          installPatch();
+        }
+        catch (Throwable t) {
+          showMessage("Update Failed", t);
+          System.exit(UPDATE_FAILED);
+        }
       }
     }
 

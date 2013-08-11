@@ -24,10 +24,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeInsight.hint.LineTooltipRenderer;
-import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.codeInsight.hint.TooltipGroup;
-import com.intellij.codeInsight.hint.TooltipRenderer;
+import com.intellij.codeInsight.hint.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -43,11 +40,10 @@ import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.PopupHandler;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -158,8 +154,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true), me,
                            width, highlighters);
 
-    if (highlighters.isEmpty()) return false;
-
     int minDelta = Integer.MAX_VALUE;
     int y = e.getY();
 
@@ -176,7 +170,30 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     me = new MouseEvent((Component)e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(), y + 1, e.getClickCount(),
                         e.isPopupTrigger());
 
-    TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
+    boolean bigEditorView = false;
+    TooltipRenderer bigRenderer = null;
+
+    if (ApplicationManager.getApplication().isInternal()){
+      int line = myEditor.offsetToLogicalLine(yPositionToOffset(y, true));
+      int startOffset = myEditor.logicalPositionToOffset(new LogicalPosition(Math.max(0, line - getMinHeight()), 0));
+      LogicalPosition endPosition = new LogicalPosition(Math.max(0, line + getMinHeight()), 0);
+      int endOffset = myEditor.logicalPositionToOffset(endPosition);
+      Rectangle rect = myEditor.getScrollingModel().getVisibleArea();
+      Point point = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset));
+      bigEditorView = !rect.contains(point);
+      if (bigEditorView) {
+        getNearestHighlighters(this, me, width, highlighters, false);
+        getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true), me,
+                               width, highlighters, false);
+        bigRenderer = new MyTooltipRenderer(new DocumentFragment(myEditor.getDocument(), startOffset, endOffset), highlighters);
+      }
+    }
+
+    if (!bigEditorView) {
+      if (highlighters.isEmpty()) return false;
+      bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
+    }
+
     if (bigRenderer != null) {
       showTooltip(me, bigRenderer, new HintHint(me).setAwtTooltip(true).setPreferredPosition(Balloon.Position.atLeft));
       return true;
@@ -207,17 +224,24 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                       MouseEvent e,
                                       final double width,
                                       final Collection<RangeHighlighter> nearest) {
+    getNearestHighlighters(markupModel, e, width, nearest, true);
+  }
+  private void getNearestHighlighters(MarkupModelEx markupModel,
+                                      MouseEvent e,
+                                      final double width,
+                                      final Collection<RangeHighlighter> nearest,
+                                      final boolean isTooltip) {
     if (0 > e.getX() || e.getX() >= width) return;
     final int y = e.getY();
-    int startOffset = yPositionToOffset(y - getMinHeight(), true);
-    int endOffset = yPositionToOffset(y + getMinHeight(), false);
+    int startOffset = yPositionToOffset(y - getMinHeight() * (isTooltip ? 1 : 20), true);
+    int endOffset = yPositionToOffset(y + getMinHeight() * (isTooltip ? 1 : 20), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx highlighter) {
         if (highlighter.getErrorStripeMarkColor() != null) {
           ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
-          if (y >= range.getStartOffset() - getMinHeight() * 2 &&
-              y <= range.getEndOffset() + getMinHeight() * 2) {
+          if (y >= range.getStartOffset() - getMinHeight() * (isTooltip ? 2 : 20) &&
+              y <= range.getEndOffset() + getMinHeight() * (isTooltip ? 2 : 20)) {
             nearest.add(highlighter);
           }
         }
@@ -948,6 +972,90 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       final int offset = document.getLineEndOffset(line);
       final FoldRegion startCollapsed = foldingModel.getCollapsedRegionAtOffset(offset);
       return startCollapsed != null ? Math.max(offset, startCollapsed.getEndOffset()) : offset;
+    }
+  }
+
+  private static class MyTooltipRenderer implements TooltipRenderer {
+    private final DocumentFragment myDocumentFragment;
+    private Set<RangeHighlighter> myHighlighters;
+
+    public MyTooltipRenderer(DocumentFragment documentFragment, Set<RangeHighlighter> highlighters) {
+      myDocumentFragment = documentFragment;
+      myHighlighters = highlighters;
+    }
+
+    @Override
+    public LightweightHint show(@NotNull final Editor editor,
+                                @NotNull Point p,
+                                boolean alignToRight,
+                                @NotNull TooltipGroup group,
+                                @NotNull HintHint intInfo) {
+      LightweightHint hint;
+
+      final JComponent editorComponent = editor.getComponent();
+
+      TextRange range = myDocumentFragment.getTextRange();
+      int startOffset = range.getStartOffset();
+      int endOffset = range.getEndOffset();
+
+      int verticalScrollOffset = editor.getScrollingModel().getVerticalScrollOffset();
+      if (verticalScrollOffset > endOffset) {
+        startOffset -= (verticalScrollOffset - endOffset);
+        endOffset -= (verticalScrollOffset - endOffset);
+        startOffset = Math.max(0, startOffset);
+        endOffset = Math.max(0, endOffset);
+      }
+
+      Document doc = myDocumentFragment.getDocument();
+      int endLine = doc.getLineNumber(endOffset);
+      int startLine = doc.getLineNumber(startOffset);
+
+      JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+
+      // There is a possible case that collapsed folding region is soft wrapped, hence, we need to anchor
+      // not logical but visual line start.
+      Rectangle rect = editor.getComponent().getVisibleRect();
+      Point point = intInfo.getOriginalPoint();
+      SwingUtilities.convertPointToScreen(point, intInfo.getOriginalComponent());
+      VisualPosition visual = editor.offsetToVisualPosition(startOffset);
+      p = editor.visualPositionToXY(visual);
+      p = SwingUtilities.convertPoint(
+        ((EditorEx)editor).getGutterComponentEx(),
+        p,
+        layeredPane
+      );
+
+      p.x -= 3;
+      p.y = point.y;
+
+      Point screenPoint = new Point(p);
+      SwingUtilities.convertPointToScreen(screenPoint, layeredPane);
+      int maxLineCount = (ScreenUtil.getScreenRectangle(screenPoint).height - screenPoint.y) / editor.getLineHeight();
+
+      if (endLine - startLine > maxLineCount) {
+        endOffset = doc.getLineEndOffset(Math.max(0, Math.min(startLine + maxLineCount, doc.getLineCount() - 1)));
+      }
+
+      FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
+      foldingModel.setFoldingEnabled(false);
+      TextRange textRange = new TextRange(startOffset, endOffset);
+      List<Pair<RangeHighlighter, int[]>> highlightInfo = new ArrayList<Pair<RangeHighlighter, int[]>>();
+      for (RangeHighlighter highlighter : myHighlighters) {
+        if (highlighter instanceof RangeHighlighterEx) {
+          RangeHighlighterEx rangeHighlighterEx = (RangeHighlighterEx)highlighter;
+          highlightInfo.add(Pair.create(highlighter, new int[]{rangeHighlighterEx.getAffectedAreaStartOffset(), rangeHighlighterEx.getAffectedAreaEndOffset()}));
+        }
+      }
+      hint = EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.x, p.y, true, false, true, highlightInfo.toArray(new Pair[]{}));
+      if (hint == null) return null;
+      JComponent component = hint.getComponent();
+      Dimension size = new Dimension(editorComponent.getWidth(), component.getPreferredSize().height);
+      size.width -= ((EditorEx)editor).getScrollPane().getVerticalScrollBar().getWidth();
+      component.setPreferredSize(size);
+      component.setMinimumSize(size);
+      component.setSize(size);
+      foldingModel.setFoldingEnabled(true);
+      return hint;
     }
   }
 }

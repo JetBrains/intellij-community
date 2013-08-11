@@ -61,18 +61,6 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase {
     super.start();
   }
 
-  public boolean waitFor(int millisTimeout) {
-    synchronized (this) {
-      try {
-        // we count on ProgressManagerImpl doing progress.notifyAll() on finish
-        wait(millisTimeout);
-      }
-      catch (InterruptedException ignored) {
-      }
-    }
-    return isCanceled();
-  }
-
   @TestOnly
   public static void setDebug(boolean debug) {
     DaemonProgressIndicator.debug = debug;

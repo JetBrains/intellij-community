@@ -91,20 +91,14 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
           insertHandler = replacementInsertHandler;
         }
         else if (descriptor instanceof NamespaceAwareXmlAttributeDescriptor) {
-          final String namespace = ((NamespaceAwareXmlAttributeDescriptor)descriptor).getNamespace();
+          final String namespace = ((NamespaceAwareXmlAttributeDescriptor)descriptor).getNamespace(tag);
 
           if (file instanceof XmlFile &&
               namespace != null &&
               namespace.length() > 0 &&
               !name.contains(":") &&
               tag.getPrefixByNamespace(namespace) == null) {
-            String suggestedPrefix = ExtendedTagInsertHandler.suggestPrefix((XmlFile)file, namespace);
-
-            if (suggestedPrefix != null) {
-              suggestedPrefix = makePrefixUnique(suggestedPrefix, tag);
-              name = suggestedPrefix + ":" + name;
-              insertHandler = new XmlAttributeInsertHandler(namespace, suggestedPrefix);
-            }
+            insertHandler = new XmlAttributeInsertHandler(namespace);
           }
         }
         if (prefix == null || name.startsWith(prefix)) {
@@ -127,19 +121,6 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
         }
       }
     }
-  }
-
-  @NotNull
-  private static String makePrefixUnique(@NotNull String basePrefix, @NotNull XmlTag context) {
-    if (context.getNamespaceByPrefix(basePrefix).isEmpty()) {
-      return basePrefix;
-    }
-    int i = 1;
-
-    while (!context.getNamespaceByPrefix(basePrefix + i).isEmpty()) {
-      i++;
-    }
-    return basePrefix + i;
   }
 
   private static boolean isValidVariant(XmlAttribute attribute,

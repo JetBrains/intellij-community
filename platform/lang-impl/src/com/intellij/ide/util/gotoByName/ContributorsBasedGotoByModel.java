@@ -217,4 +217,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   public boolean useMiddleMatching() {
     return true;
   }
+
+  public @NotNull String removeModelSpecificMarkup(@NotNull String pattern) {
+    return pattern;
+  }
 }

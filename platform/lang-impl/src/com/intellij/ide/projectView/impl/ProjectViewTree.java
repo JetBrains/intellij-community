@@ -31,12 +31,10 @@ import com.intellij.ui.JBTreeWithHintProvider;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.ColorUIResource;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import java.awt.*;
@@ -85,13 +83,13 @@ public abstract class ProjectViewTree extends JBTreeWithHintProvider {
     return super.getToggleClickCount();
   }
 
-  @Override
-  public Color getBackground() {
-    if (!UIUtil.isUnderDarcula()) {
-      return super.getBackground();
-    }
-    return new ColorUIResource(0x414750);
-  }
+  //@Override
+  //public Color getBackground() {
+  //  if (!UIUtil.isUnderDarcula()) {
+  //    return super.getBackground();
+  //  }
+  //  return new ColorUIResource(0x414750);
+  //}
 
   @Override
   public boolean isFileColorsEnabled() {

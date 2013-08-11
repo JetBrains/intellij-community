@@ -288,4 +288,15 @@ public class PsiUtilBase extends PsiUtilCore {
     final VirtualFile virtualFile = element.getVirtualFile();
     return virtualFile != null && virtualFile.is(VFileProperty.SYMLINK);
   }
+
+  @Nullable
+  public static VirtualFile asVirtualFile(@Nullable PsiElement element) {
+    if (element instanceof PsiFileSystemItem) {
+      PsiFileSystemItem psiFileSystemItem = (PsiFileSystemItem)element;
+      return psiFileSystemItem.isValid() ? psiFileSystemItem.getVirtualFile() : null;
+    }
+    else {
+      return null;
+    }
+  }
 }

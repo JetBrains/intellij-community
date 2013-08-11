@@ -40,11 +40,6 @@ public class JiraIssueApi2 extends JiraIssue {
   private String self;
   private Fields fields;
 
-  @Override
-  public String toString() {
-    return String.format("JiraIssue(id=%s, summary=%s)", id, fields.summary);
-  }
-
   @NotNull
   @Override
   public String getKey() {

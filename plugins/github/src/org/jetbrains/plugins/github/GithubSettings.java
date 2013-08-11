@@ -23,9 +23,11 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import static org.jetbrains.plugins.github.GithubAuthData.AuthType;
 
@@ -52,15 +54,15 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
   }
 
   public static class State {
-    public String LOGIN = "";
-    public String HOST = GithubApiUtil.DEFAULT_GITHUB_HOST;
-    public AuthType AUTH_TYPE = AuthType.ANONYMOUS;
+    @Nullable public String LOGIN = null;
+    @NotNull public String HOST = GithubApiUtil.DEFAULT_GITHUB_HOST;
+    @NotNull public AuthType AUTH_TYPE = AuthType.ANONYMOUS;
     public boolean ANONYMOUS_GIST = false;
     public boolean OPEN_IN_BROWSER_GIST = true;
     public boolean PRIVATE_GIST = true;
     public boolean SAVE_PASSWORD = true;
-    public Collection<String> TRUSTED_HOSTS = new ArrayList<String>();
-    public String CREATE_PULL_REQUEST_DEFAULT_BRANCH = "";
+    @NotNull public Collection<String> TRUSTED_HOSTS = new ArrayList<String>();
+    @Nullable public String CREATE_PULL_REQUEST_DEFAULT_BRANCH = null;
   }
 
   public static GithubSettings getInstance() {
@@ -72,8 +74,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return myState.HOST;
   }
 
-  // TODO return null if no login instead of empty string
-  @NotNull
+  @Nullable
   public String getLogin() {
     return StringUtil.notNullize(myState.LOGIN);
   }
@@ -83,11 +84,15 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return myState.AUTH_TYPE;
   }
 
+  public boolean isAuthConfigured() {
+    return !myState.AUTH_TYPE.equals(AuthType.ANONYMOUS);
+  }
+
   private void setHost(@NotNull String host) {
     myState.HOST = StringUtil.notNullize(host, GithubApiUtil.DEFAULT_GITHUB_HOST);
   }
 
-  private void setLogin(@NotNull String login) {
+  private void setLogin(@Nullable String login) {
     myState.LOGIN = login;
   }
 
@@ -116,7 +121,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return passwordSafe.getSettings().getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD;
   }
 
-  @NotNull
+  @Nullable
   public String getCreatePullRequestDefaultBranch() {
     return myState.CREATE_PULL_REQUEST_DEFAULT_BRANCH;
   }
@@ -203,13 +208,16 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     switch (auth.getAuthType()) {
       case BASIC:
         assert auth.getBasicAuth() != null;
+        setLogin(auth.getBasicAuth().getLogin());
         setPassword(auth.getBasicAuth().getPassword(), rememberPassword);
         break;
       case TOKEN:
         assert auth.getTokenAuth() != null;
+        setLogin(null);
         setPassword(auth.getTokenAuth().getToken(), rememberPassword);
         break;
       case ANONYMOUS:
+        setLogin(null);
         setPassword("", rememberPassword);
         break;
       default:
@@ -217,9 +225,8 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     }
   }
 
-  public void setCredentials(@NotNull String host, @NotNull String login, @NotNull GithubAuthData auth, boolean rememberPassword) {
+  public void setCredentials(@NotNull String host, @NotNull GithubAuthData auth, boolean rememberPassword) {
     setHost(host);
-    setLogin(login);
     setAuthData(auth, rememberPassword);
   }
 }

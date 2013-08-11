@@ -50,7 +50,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     SearchScope scope = queryParameters.getScope();
 
     if (scope instanceof GlobalSearchScope) {
-      return processAllClassesInGlobalScope((GlobalSearchScope)scope, consumer, queryParameters);
+      return processAllClassesInGlobalScope((GlobalSearchScope)scope, queryParameters, consumer);
     }
 
     PsiElement[] scopeRoots = ((LocalSearchScope)scope).getScope();
@@ -59,8 +59,9 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     }
     return true;
   }
-  
-  private static String[] getAllClassNames(final Project project) {
+
+  @NotNull
+  private static String[] getAllClassNames(@NotNull final Project project) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
       @Override
       public String[] compute() {
@@ -81,7 +82,9 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     });
   }
 
-  private static boolean processAllClassesInGlobalScope(final GlobalSearchScope scope, final Processor<PsiClass> processor, final AllClassesSearch.SearchParameters parameters) {
+  private static boolean processAllClassesInGlobalScope(@NotNull final GlobalSearchScope scope,
+                                                        @NotNull AllClassesSearch.SearchParameters parameters,
+                                                        @NotNull Processor<PsiClass> processor) {
     String[] names = getAllClassNames(parameters.getProject());
     final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (indicator != null) {
@@ -129,7 +132,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     return true;
   }
 
-  private static boolean processScopeRootForAllClasses(@NotNull PsiElement scopeRoot, final Processor<PsiClass> processor) {
+  private static boolean processScopeRootForAllClasses(@NotNull PsiElement scopeRoot, @NotNull final Processor<PsiClass> processor) {
     final boolean[] stopped = {false};
 
     JavaElementVisitor visitor = scopeRoot instanceof PsiCompiledElement ? new JavaRecursiveElementVisitor() {

@@ -515,18 +515,19 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitForeachStatement(final PsiForeachStatement statement) {
-    myHolder.add(HighlightUtil.checkForEachFeature(statement, myLanguageLevel,myFile));
+    myHolder.add(HighlightUtil.checkForEachFeature(statement, myLanguageLevel, myFile));
   }
 
   @Override
   public void visitImportStaticStatement(final PsiImportStaticStatement statement) {
-    myHolder.add(HighlightUtil.checkStaticImportFeature(statement, myLanguageLevel,myFile));
+    myHolder.add(HighlightUtil.checkStaticImportFeature(statement, myLanguageLevel, myFile));
   }
 
   @Override
   public void visitIdentifier(final PsiIdentifier identifier) {
+    TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
+
     PsiElement parent = identifier.getParent();
-    final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
     if (parent instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)parent;
       myHolder.add(HighlightUtil.checkVariableAlreadyDefined(variable));
@@ -535,6 +536,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         final PsiElement child = variable.getLastChild();
         if (child instanceof PsiErrorElement && child.getPrevSibling() == identifier) return;
       }
+
       boolean isMethodParameter = variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiMethod;
       if (!isMethodParameter) { // method params are highlighted in visitMethod since we should make sure the method body was visited before
         if (HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems)) {
@@ -547,6 +549,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       else {
         myReassignedParameters.put((PsiParameter)variable, 1); // mark param as present in current file
       }
+
+      myHolder.add(HighlightUtil.checkUnderscore(identifier, variable));
     }
     else if (parent instanceof PsiClass) {
       PsiClass aClass = (PsiClass)parent;
@@ -569,6 +573,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     else {
       visitParentReference(parent);
     }
+
     super.visitIdentifier(identifier);
   }
 

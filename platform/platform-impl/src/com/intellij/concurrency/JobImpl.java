@@ -39,21 +39,6 @@ public class JobImpl<T> implements Job<T> {
   private volatile boolean scheduled;
   private final boolean myFailFastOnAcquireReadAction;
 
-  public static final Job NULL_JOB = new JobImpl(0,false) {
-    @Override
-    public boolean isDone() {
-      return true;
-    }
-
-    @Override
-    public void waitForTermination() throws Throwable {
-    }
-
-    @Override
-    public void cancel() {
-    }
-  };
-
   JobImpl(int priority, boolean failFastOnAcquireReadAction) {
     myPriority = priority;
     myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
@@ -65,17 +50,17 @@ public class JobImpl<T> implements Job<T> {
   }
 
   @Override
-  public void addTask(Callable<T> task) {
+  public void addTask(@NotNull Callable<T> task) {
     addTask(task, null);
   }
 
   @Override
-  public void addTask(Runnable task, T result) {
+  public void addTask(@NotNull Runnable task, T result) {
     addTask(Executors.callable(task, result));
   }
 
   @Override
-  public void addTask(Runnable task) {
+  public void addTask(@NotNull Runnable task) {
     addTask(Executors.callable(task, (T)null));
   }
 
@@ -105,7 +90,11 @@ public class JobImpl<T> implements Job<T> {
     checkCanSchedule();
     final Application application = ApplicationManager.getApplication();
     boolean callerHasReadAccess = application != null && application.isReadAccessAllowed();
+    scheduleAndWaitForResults(callerHasReadAccess);
+    return null;
+  }
 
+  public void scheduleAndWaitForResults(boolean runInReadAction) throws Throwable {
     // Don't bother scheduling if we only have one processor or only one task
     boolean reallySchedule;
     PrioritizedFutureTask[] tasks = getTasks();
@@ -118,10 +107,10 @@ public class JobImpl<T> implements Job<T> {
       for (PrioritizedFutureTask future : tasks) {
         future.run();
       }
-      return null;
+      return;
     }
 
-    submitTasks(tasks, callerHasReadAccess, false);
+    submitTasks(tasks, runInReadAction, false);
 
     // in case of imbalanced tasks one huge task can stuck running and we would fall to waitForTermination instead of doing useful work
     //// http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html
@@ -137,7 +126,6 @@ public class JobImpl<T> implements Job<T> {
     }
 
     waitForTermination();
-    return null;
   }
 
   public void waitForTermination() throws Throwable {
@@ -208,6 +196,7 @@ public class JobImpl<T> implements Job<T> {
     submitTasks(tasks, false, true);
   }
 
+  @NotNull
   public PrioritizedFutureTask[] getTasks() {
     PrioritizedFutureTask[] tasks;
     synchronized (myFutures) {
@@ -244,9 +233,9 @@ public class JobImpl<T> implements Job<T> {
     }
   }
 
-  private static void submitTasks(PrioritizedFutureTask[] tasks, boolean callerHasReadAccess, boolean reportExceptions) {
+  private static void submitTasks(@NotNull PrioritizedFutureTask[] tasks, boolean runInReadAction, boolean reportExceptions) {
     for (final PrioritizedFutureTask future : tasks) {
-      JobSchedulerImpl.submitTask(future, callerHasReadAccess, reportExceptions);
+      JobSchedulerImpl.submitTask(future, runInReadAction, reportExceptions);
     }
   }
 

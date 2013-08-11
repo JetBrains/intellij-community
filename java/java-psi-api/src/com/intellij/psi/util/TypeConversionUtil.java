@@ -480,7 +480,7 @@ public class TypeConversionUtil {
       else {
         if (isPrimitiveAndNotNull(ltype)) {
           return rtype instanceof PsiClassType &&
-                 ((PsiClassType)rtype).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_7) &&
+                 ((PsiClassType)rtype).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5) &&
                  areTypesConvertible(ltype, rtype);
         }
         if (isPrimitiveAndNotNull(rtype)) {

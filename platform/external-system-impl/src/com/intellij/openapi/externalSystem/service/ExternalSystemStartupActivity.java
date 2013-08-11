@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.ProjectRenameAware;
@@ -26,6 +27,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
@@ -34,7 +36,10 @@ import com.intellij.openapi.startup.StartupManager;
 public class ExternalSystemStartupActivity implements StartupActivity {
 
   @Override
-  public void runActivity(final Project project) {
+  public void runActivity(@NotNull final Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     Runnable task = new Runnable() {
       @SuppressWarnings("unchecked")
       @Override
@@ -61,6 +66,6 @@ public class ExternalSystemStartupActivity implements StartupActivity {
     }
     else {
       StartupManager.getInstance(project).registerPostStartupActivity(task);
-    } 
+    }
   }
 }

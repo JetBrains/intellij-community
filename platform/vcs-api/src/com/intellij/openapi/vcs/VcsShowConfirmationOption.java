@@ -15,35 +15,30 @@
  */
 package com.intellij.openapi.vcs;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface VcsShowConfirmationOption {
+
   enum Value {
-    SHOW_CONFIRMATION(0),
-    DO_NOTHING_SILENTLY(1),
-    DO_ACTION_SILENTLY(2);
+    // NB: don't reorder enum values, otherwise you may break user settings based on the obsolete implementation
+    SHOW_CONFIRMATION,
+    DO_NOTHING_SILENTLY,
+    DO_ACTION_SILENTLY;
 
-    private final int myId;
-
-    Value(final int id) {
-      myId = id;
-    }
-
-    public int getId() {
-      return myId;
-    }
-    
     public String toString() {
-      return String.valueOf(myId);
+      // compatibility with the old implementation
+      return String.valueOf(ordinal());
     }
 
-    public static Value fromString(String s){
-      if (s == null) return SHOW_CONFIRMATION;
+    @Deprecated
+    public static Value fromString(@NotNull String s){
       if (s.equals("1")) return DO_NOTHING_SILENTLY;
       if (s.equals("2")) return DO_ACTION_SILENTLY;
       return SHOW_CONFIRMATION;
     }
   }
 
-  public static final VcsShowConfirmationOption STATIC_SHOW_CONFIRMATION = new VcsShowConfirmationOption() {
+  VcsShowConfirmationOption STATIC_SHOW_CONFIRMATION = new VcsShowConfirmationOption() {
     @Override
     public Value getValue() {
       return Value.SHOW_CONFIRMATION;

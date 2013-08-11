@@ -11,7 +11,7 @@ import java.util.List;
  */
 public abstract class JiraIssue {
   public String toString() {
-    return String.format("JiraIssue(key=%s, summary=%s)", getKey(), getSummary());
+    return String.format("JiraIssue(key=%s, summary='%s')", getKey(), getSummary());
   }
 
   @NotNull

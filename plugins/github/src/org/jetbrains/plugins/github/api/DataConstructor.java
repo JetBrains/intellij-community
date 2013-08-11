@@ -19,9 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Aleksey Pivovarov
- */
-
-/**
+ *
  * All fields of the raw type are nullable by the nature of GSon parser;
  * but some of them are required, so we want them to be @NotNull in the actual data class,
  * otherwise there is an error in JSon data received from the server

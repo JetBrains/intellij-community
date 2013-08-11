@@ -4,7 +4,9 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.deployment.Deployer;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
+import com.intellij.remoteServer.runtime.ServerConnector;
+import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,5 +39,8 @@ public abstract class ServerType<C extends ServerConfiguration> {
   public abstract UnnamedConfigurable createConfigurable(@NotNull C configuration);
 
   @NotNull
-  public abstract Deployer<C> createDeployer(Project project);
+  public abstract DeploymentConfigurator<?> createDeployer(Project project);
+
+  @NotNull
+  public abstract ServerConnector<?> createConnector(@NotNull C configuration, @NotNull ServerTaskExecutor asyncTasksExecutor);
 }

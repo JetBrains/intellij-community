@@ -24,12 +24,12 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ProgressIndicatorProvider {
   @Nullable
   public static ProgressIndicatorProvider ourInstance;
-  
+
   @Nullable
   public static ProgressIndicatorProvider getInstance() {
     return ourInstance;
   }
-  
+
   public abstract ProgressIndicator getProgressIndicator();
 
   protected abstract void doCheckCanceled() throws ProcessCanceledException;
@@ -43,12 +43,7 @@ public abstract class ProgressIndicatorProvider {
 
   @NotNull
   public static NonCancelableSection startNonCancelableSectionIfSupported() {
-    return ourInstance != null ? ourInstance.startNonCancelableSection() : new NonCancelableSection() {
-      @Override
-      public void done() {
-        // do nothing
-      }
-    };
+    return ourInstance != null ? ourInstance.startNonCancelableSection() : NonCancelableSection.EMPTY;
   }
 
   public static volatile boolean ourNeedToCheckCancel = false;

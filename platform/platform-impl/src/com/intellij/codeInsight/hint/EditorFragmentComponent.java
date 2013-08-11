@@ -25,11 +25,14 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
+import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,22 +40,24 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.*;
+import java.util.List;
 
 public class EditorFragmentComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.EditorFragmentComponent");
 
-  private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
+  private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter, Pair<RangeHighlighter, int[]>... highlighters) {
     editor.setPurePaintingMode(true);
     try {
-      doInit(editor, startLine, endLine, showFolding, showGutter);
+      doInit(editor, startLine, endLine, showFolding, showGutter, highlighters);
     }
     finally {
       editor.setPurePaintingMode(false);
     }
   }
 
-  private void doInit(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
-    Document doc = editor.getDocument();
+  private void doInit(final EditorEx editor, final int startLine, final int endLine, boolean showFolding, boolean showGutter, final Pair<RangeHighlighter, int[]>... highlighters) {
+    final Document doc = editor.getDocument();
     final int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
     final int textImageWidth = Math.min(editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset), ScreenUtil
       .getScreenRectangle(1, 1).width);
@@ -66,7 +71,7 @@ public class EditorFragmentComponent extends JPanel {
 
     Point p1 = editor.logicalPositionToXY(new LogicalPosition(startLine, 0));
     Point p2 = editor.logicalPositionToXY(new LogicalPosition(Math.max(endLine, startLine + 1), 0));
-    int y1 = p1.y;
+    final int y1 = p1.y;
     int y2 = p2.y;
     final int textImageHeight = y2 - y1 == 0 ? editor.getLineHeight() : y2 - y1;
     LOG.assertTrue(textImageHeight > 0, "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; p1:" + p1 + "; p2:" + p2);
@@ -122,14 +127,16 @@ public class EditorFragmentComponent extends JPanel {
       editor.getScrollingModel().scrollHorizontally(savedScrollOffset);
     }
 
-    JComponent component = new JComponent() {
+    final JComponent component = new JComponent() {
+      private static final int R = 6;
       @Override
       public Dimension getPreferredSize() {
         return new Dimension(textImageWidth + markersImageWidth, textImageHeight);
       }
 
       @Override
-      protected void paintComponent(Graphics graphics) {
+      protected void paintComponent(Graphics g) {
+        Graphics2D graphics = (Graphics2D)g;
         if (markersImage != null) {
           UIUtil.drawImage(graphics, markersImage, 0, 0, null);
           UIUtil.drawImage(graphics, textImage, rowHeader.getWidth(), 0, null);
@@ -137,10 +144,60 @@ public class EditorFragmentComponent extends JPanel {
         else {
           UIUtil.drawImage(graphics, textImage, 0, 0, null);
         }
+
+        if (highlighters.length == 0 || !ApplicationManager.getApplication().isInternal()) return;
+
+        List<Pair<RangeHighlighter, int[]>> list = Arrays.asList(highlighters);
+        Collections.sort(list, new Comparator<Pair<RangeHighlighter, int[]>>() {
+          public int compare(Pair<RangeHighlighter, int[]> p1, Pair<RangeHighlighter, int[]> p2) {
+            LogicalPosition startPos1 = editor.offsetToLogicalPosition(p1.getSecond()[0]);
+            LogicalPosition startPos2 = editor.offsetToLogicalPosition(p2.getSecond()[0]);
+            if (startPos1.line != startPos2.line) return 0;
+            return startPos1.column - startPos2.column;
+          }
+        });
+        Map<Integer, Integer> rightEdges = new HashMap<Integer, Integer>();
+        for (Pair<RangeHighlighter, int[]> highlightInfo : list) {
+          RangeHighlighter highlighter = highlightInfo.getFirst();
+          int hStartOffset = highlightInfo.getSecond()[0];
+          int hEndOffset = highlightInfo.getSecond()[1];
+          Object tooltip = highlighter.getErrorStripeTooltip();
+          if (tooltip == null) continue;
+          String s = String.valueOf(tooltip);
+          if (s.isEmpty()) continue;
+          final int endOffset2 = endLine - 1 < doc.getLineCount() ? doc.getLineEndOffset(endLine - 1) : doc.getTextLength();
+          if (hEndOffset < doc.getLineStartOffset(startLine)) continue;
+          if (hStartOffset > endOffset2 || doc.getLineNumber(hStartOffset) > endLine) continue;
+
+          LogicalPosition logicalPosition = editor.offsetToLogicalPosition(hStartOffset);
+          Point placeToShow = editor.logicalPositionToXY(logicalPosition);
+          placeToShow.y -= (y1 - editor.getLineHeight() * 3 / 2);
+          if (markersImage != null) {
+            placeToShow.x += rowHeader.getWidth();
+          }
+
+          int w = graphics.getFontMetrics().stringWidth(s);
+          int a = graphics.getFontMetrics().getAscent();
+          int h = editor.getLineHeight();
+
+          Integer rightEdge = rightEdges.get(logicalPosition.line);
+          if (rightEdge == null) rightEdge = 0;
+          placeToShow.x = Math.max(placeToShow.x, rightEdge);
+          rightEdge  = Math.max(rightEdge, placeToShow.x + w + 3 * R);
+          rightEdges.put(logicalPosition.line, rightEdge);
+
+          GraphicsUtil.setupAAPainting(graphics);
+          graphics.setColor(MessageType.WARNING.getPopupBackground());
+          graphics.fillRoundRect(placeToShow.x - R, placeToShow.y - a, w + 2 * R, h, R, R);
+          graphics.setColor(new JBColor(JBColor.GRAY, Gray._200));
+          graphics.drawRoundRect(placeToShow.x - R, placeToShow.y - a, w + 2 * R, h, R, R);
+          graphics.setColor(JBColor.foreground());
+          graphics.drawString(s, placeToShow.x, placeToShow.y + 2);
+        }
       }
     };
 
-    setLayout(new BorderLayout());
+    setLayout(new GridLayout(1, 1));
     add(component);
 
     final Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
@@ -162,7 +219,8 @@ public class EditorFragmentComponent extends JPanel {
                                                          int y,
                                                          boolean showUpward,
                                                          boolean showFolding,
-                                                         boolean hideByAnyKey) {
+                                                         boolean hideByAnyKey,
+                                                         Pair<RangeHighlighter, int[]>... highlighters) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     Document document = editor.getDocument();
 
@@ -191,7 +249,7 @@ public class EditorFragmentComponent extends JPanel {
     //if (editor.logicalPositionToXY(new LogicalPosition(startLine, 0)).y >= editor.logicalPositionToXY(new LogicalPosition(endLine, 0)).y) return null;
     if (startLine >= endLine) return null;
 
-    EditorFragmentComponent fragmentComponent = createEditorFragmentComponent(editor, startLine, endLine, showFolding, true);
+    EditorFragmentComponent fragmentComponent = createEditorFragmentComponent(editor, startLine, endLine, showFolding, true, highlighters);
 
 
     if (showUpward) {
@@ -213,13 +271,15 @@ public class EditorFragmentComponent extends JPanel {
   public static EditorFragmentComponent createEditorFragmentComponent(Editor editor,
                                                                       int startLine,
                                                                       int endLine,
-                                                                      boolean showFolding, boolean showGutter) {
+                                                                      boolean showFolding,
+                                                                      boolean showGutter,
+                                                                      Pair<RangeHighlighter, int[]>... highlighters) {
     final EditorEx editorEx = (EditorEx)editor;
     final Color old = editorEx.getBackgroundColor();
     Color backColor = getBackgroundColor(editor);
     editorEx.setBackgroundColor(backColor);
     EditorFragmentComponent fragmentComponent = new EditorFragmentComponent(editorEx, startLine, endLine,
-                                                                            showFolding, showGutter);
+                                                                            showFolding, showGutter, highlighters);
     fragmentComponent.setBackground(backColor);
 
     editorEx.setBackgroundColor(old);

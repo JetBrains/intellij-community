@@ -50,13 +50,7 @@ public class VisibilityUtil  {
 
   @PsiModifier.ModifierConstant
   public static String getHighestVisibility(@PsiModifier.ModifierConstant String v1, @PsiModifier.ModifierConstant String v2) {
-    if(v1.equals(v2)) return v1;
-
-    if(PsiModifier.PRIVATE.equals(v1)) return v2;
-    if(PsiModifier.PUBLIC.equals(v1)) return PsiModifier.PUBLIC;
-    if(PsiModifier.PRIVATE.equals(v2)) return v1;
-
-    return PsiModifier.PUBLIC;
+    return compare(v1, v2) < 0 ? v1 : v2;
   }
 
   public static void escalateVisibility(PsiMember modifierListOwner, PsiElement place) throws IncorrectOperationException {

@@ -33,7 +33,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   /**
    * Default JQL query
    */
-  private String mySearchQuery = "assignee = currentUser() order by duedate";
+  private String mySearchQuery = "assignee = currentUser() and resolution = Unresolved order by updated";
 
   private JiraRestApi myRestApiVersion;
 
@@ -69,17 +69,15 @@ public class JiraRepository extends BaseRepositoryImpl {
     return true;
   }
 
-  public Task[] getIssues(@Nullable String searchQuery, int max, long since) throws Exception {
+  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     if (myRestApiVersion == null) {
       myRestApiVersion = discoverRestApiVersion();
     }
     String jqlQuery = mySearchQuery;
-    if (!StringUtil.isEmpty(searchQuery)) {
-      if (JiraUtil.ANY_ISSUE_KEY_REGEX.matcher(searchQuery).matches()) {
-        jqlQuery += String.format(" and key = \"%s\"", searchQuery);
-      }
-      else {
-        jqlQuery += String.format(" and summary ~ \"%s\"", searchQuery);
+    if (!StringUtil.isEmpty(query)) {
+      jqlQuery = String.format("summary ~ '%s'", query);
+      if (!StringUtil.isEmpty(mySearchQuery)) {
+        jqlQuery += String.format(" and %s", mySearchQuery);
       }
     }
     List<JiraIssue> issues = myRestApiVersion.findIssues(jqlQuery, max);
@@ -99,7 +97,7 @@ public class JiraRepository extends BaseRepositoryImpl {
       myRestApiVersion = discoverRestApiVersion();
     }
     JiraIssue issue = myRestApiVersion.findIssue(id);
-    return issue == null? null : new JiraTask(issue, this);
+    return issue == null ? null : new JiraTask(issue, this);
   }
 
   @Nullable
@@ -159,22 +157,31 @@ public class JiraRepository extends BaseRepositoryImpl {
     finally {
       method.releaseConnection();
     }
+    if (statusCode == HttpStatus.SC_OK) {
+      return entityContent;
+    }
+    else if (method.getResponseHeader("Content-Type") != null) {
+      Header header = method.getResponseHeader("Content-Type");
+      if (header.getValue().startsWith("application/json")) {
+        JsonObject object = JiraUtil.GSON.fromJson(entityContent, JsonObject.class);
+        if (object.has("errorMessages")) {
+          String reason = StringUtil.join(object.getAsJsonArray("errorMessages"), " ");
+          // something meaningful to user, e.g. invalid field name in JQL query
+          LOG.warn(reason);
+          throw new Exception("Search failed. Reason: " + reason);
+        }
+      }
+    }
+    if (method.getResponseHeader("X-Authentication-Denied-Reason") != null) {
+      Header header = method.getResponseHeader("X-Authentication-Denied-Reason");
+      // only in JIRA >= 5.x.x
+      if (header.getValue().startsWith("CAPTCHA_CHALLENGE")) {
+        throw new Exception("Login failed. Enter captcha in web-interface.");
+      }
+    }
     if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
       throw new Exception(LOGIN_FAILED_CHECK_YOUR_PERMISSIONS);
     }
-    else if (statusCode != HttpStatus.SC_OK) {
-      String reason = method.getStatusText();
-      Header contentType = method.getResponseHeader("Content-Type");
-      if (contentType.getValue().startsWith("application/json")) {
-        JsonObject object = JiraUtil.GSON.fromJson(entityContent, JsonObject.class);
-        if (object.has("errorMessages")) {
-          reason = StringUtil.join(object.getAsJsonArray("errorMessages"), " ");
-          // something meaningful to user, e.g. invalid field name in JQL query
-          LOG.warn(reason);
-        }
-      }
-      throw new Exception("Request failed with error: " + reason);
-    }
-    return entityContent;
+    throw new Exception("Request failed with error: " + HttpStatus.getStatusText(method.getStatusCode()));
   }
 }

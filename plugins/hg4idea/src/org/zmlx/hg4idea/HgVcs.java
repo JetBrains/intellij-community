@@ -92,7 +92,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgCheckinEnvironment checkinEnvironment;
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
-  private final HgCachingCommitedChangesProvider commitedChangesProvider;
+  private final HgCachingCommittedChangesProvider committedChangesProvider;
   private MessageBusConnection messageBusConnection;
   @NotNull private final HgGlobalSettings globalSettings;
   @NotNull private final HgProjectSettings projectSettings;
@@ -127,7 +127,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     checkinEnvironment = new HgCheckinEnvironment(project);
     annotationProvider = new HgAnnotationProvider(project);
     updateEnvironment = new HgUpdateEnvironment(project);
-    commitedChangesProvider = new HgCachingCommitedChangesProvider(project, this);
+    committedChangesProvider = new HgCachingCommittedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
   }
@@ -205,7 +205,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public CommittedChangesProvider getCommittedChangesProvider() {
-    return commitedChangesProvider;
+    return committedChangesProvider;
   }
 
   @Override

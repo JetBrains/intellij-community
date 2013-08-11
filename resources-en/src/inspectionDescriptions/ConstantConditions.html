@@ -1,11 +1,16 @@
 <html>
 <body>
-<font face="verdana" size="-1">This inspection reports those conditions in the specified inspection scope that are
-always <b><font color="#000080">true</font></b> or <b><font color="#000080">false</font></b>,
-as well as points out where a <b><font color="#000080">RuntimeException</font></b> may be thrown,
-based on data flow analysis of the code.<br>
-This inspection also reports Nullable/NotNull contract violations.
-Annotations to support the contract can be configured (by default @Nullable/@NotNull annotations from annotations.jar will be used)
-</font>
+This inspection analyzes method control and data flow to report possible conditions that are always <b>true</b> or <b>false</b>,
+expressions whose value is statically proven to be constant, and situations that can lead to nullability contract violations.<p/>
+  
+Variables, method parameters and return values marked as <code>@Nullable</code> or <code>@NotNull</code> are treated as nullable (or not-null, respectively)
+and used during the analysis to check nullability contracts, e.g. report possible <code>NullPointerException</code> errors.<p/>
+
+More complex contracts can be defined using <code>@Contract</code> annotation, for example:<p/>
+<code>@Contract("_, null -> null")</code> &mdash; method returns null if its second argument is null<br/>
+<code>@Contract("_, null -> null; _, !null -> !null")</code> &mdash; method returns null if its second argument is null and not-null otherwise<br/>
+<code>@Contract("true -> fail")</code> &mdash; a typical <code>assertFalse</code> method which throws an exception if <code>true</code> is passed to it<br/>
+<p/>
+The inspection can be configured to use custom <code>@Nullable</code>/<code>@NotNull</code> annotations (by default the ones from annotations.jar will be used)
 </body>
 </html>

@@ -336,7 +336,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         return false;
       }
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    runWriteAction(new Runnable() {
       @Override
       public void run() {
         Disposer.dispose(ApplicationImpl.this);
@@ -532,12 +532,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
     myLoaded = true;
 
+    createLocatorFile();
+  }
+
+  private static void createLocatorFile() {
     File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
     try {
       byte[] data = PathManager.getHomePath().getBytes("UTF-8");
       FileUtil.writeToFile(locatorFile, data);
     }
-    catch (Exception e) {
+    catch (IOException e) {
       LOG.warn("can't store a location in '" + locatorFile + "'", e);
     }
   }
@@ -632,8 +636,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     assertIsDispatchThread();
 
     if (myExceptionalThreadWithReadAccessRunnable != null ||
-        ApplicationManager.getApplication().isUnitTestMode() ||
-        ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        isUnitTestMode() ||
+        isHeadlessEnvironment()
+      ) {
       try {
         ProgressManager.getInstance().runProcess(process, new EmptyProgressIndicator());
       }
@@ -649,7 +654,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     try {
       myExceptionalThreadWithReadAccessRunnable = process;
-      final boolean[] threadStarted = {false};
+      final AtomicBoolean threadStarted = new AtomicBoolean();
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
@@ -684,13 +689,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
               }
             }
           });
-          threadStarted[0] = true;
+          threadStarted.set(true);
         }
       });
 
       progress.startBlocking();
 
-      LOG.assertTrue(threadStarted[0]);
+      LOG.assertTrue(threadStarted.get());
       LOG.assertTrue(!progress.isRunning());
     }
     finally {
@@ -797,7 +802,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
    *  Note: there are possible scenarios when we get a quit notification at a moment when another
    *  quit message is shown. In that case, showing multiple messages sounds contra-intuitive as well
    */
-  private volatile static boolean exiting = false;
+  private static volatile boolean exiting = false;
 
   public void exit(final boolean force, final boolean allowListenersToCancel, final boolean restart) {
 
@@ -1105,7 +1110,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     assertIsDispatchThread("Access is allowed from event dispatch thread only.");
   }
 
-  private static void assertIsDispatchThread(String message) {
+  private static void assertIsDispatchThread(@NotNull String message) {
     final Thread currentThread = Thread.currentThread();
     if (ourDispatchThread == currentThread) return;
 
