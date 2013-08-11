@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
+import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.display.BackBuffer;
 import com.jediterm.terminal.display.StyleState;
@@ -52,20 +53,21 @@ public class JBTerminalPanel extends TerminalPanel {
                          @NotNull EditorColorsScheme scheme) {
     super(settingsProvider, backBuffer, styleState);
     myColorScheme = scheme;
-    
 
-    styleState.setDefaultStyle(new TextStyle(myColorScheme.getDefaultForeground(), myColorScheme.getDefaultBackground()));
 
-    setSelectionColor(new TextStyle(myColorScheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR),
-                                    myColorScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)));
-    
+    styleState.setDefaultStyle(new TextStyle(TerminalColor.awt(myColorScheme.getDefaultForeground()), TerminalColor.awt(
+      myColorScheme.getDefaultBackground())));
+
+    setSelectionColor(new TextStyle(TerminalColor.awt(myColorScheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR)),
+                                    TerminalColor.awt(myColorScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR))));
+
     setLineSpace(myColorScheme.getConsoleLineSpacing());
   }
 
   protected Font createFont() {
 
     Font normalFont = Font.decode(getFontName());
-    
+
     if (normalFont == null) {
       normalFont = super.createFont();
     }
