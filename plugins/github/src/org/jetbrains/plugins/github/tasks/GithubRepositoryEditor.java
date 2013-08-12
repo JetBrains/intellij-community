@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.config.BaseRepositoryEditor;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConvertor;
@@ -51,19 +52,9 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myRepoAuthor.setText(repository.getRepoAuthor());
     myRepoName.setText(repository.getRepoName());
 
-    DocumentListener buttonUpdater = new DocumentListener() {
+    DocumentListener buttonUpdater = new DocumentAdapter() {
       @Override
-      public void insertUpdate(DocumentEvent e) {
-        updateTokenButton();
-      }
-
-      @Override
-      public void removeUpdate(DocumentEvent e) {
-        updateTokenButton();
-      }
-
-      @Override
-      public void changedUpdate(DocumentEvent e) {
+      protected void textChanged(DocumentEvent e) {
         updateTokenButton();
       }
     };

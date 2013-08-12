@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.github.ui;
 
+import com.intellij.ui.DocumentAdapter;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -17,19 +19,9 @@ public class GithubSharePanel {
 
   public GithubSharePanel(final GithubShareDialog githubShareDialog) {
     myGithubShareDialog = githubShareDialog;
-    myRepositoryTextField.getDocument().addDocumentListener(new DocumentListener() {
+    myRepositoryTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void insertUpdate(final DocumentEvent e) {
-        myGithubShareDialog.updateOkButton();
-      }
-
-      @Override
-      public void removeUpdate(final DocumentEvent e) {
-        myGithubShareDialog.updateOkButton();
-      }
-
-      @Override
-      public void changedUpdate(final DocumentEvent e) {
+      protected void textChanged(DocumentEvent e) {
         myGithubShareDialog.updateOkButton();
       }
     });
