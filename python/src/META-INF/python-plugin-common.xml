@@ -842,7 +842,7 @@
                             implementationClass="com.jetbrains.web2py.completion.Web2PyBuiltinCompletionContributor"/>
     <lang.formatter language="Web2Py"
                     implementationClass="com.jetbrains.web2py.templates.formatter.Web2PyFormattingModelBuilder"/>
-    <lang.whiteSpaceFormattingStrategy language="Chameleon"
+    <lang.whiteSpaceFormattingStrategy language="Web2Py"
                                        implementationClass="com.jetbrains.web2py.templates.formatter.Web2PyWhiteSpaceFormattingStrategy"/>
 
     <!-- Pyramid && Chameleon -->
