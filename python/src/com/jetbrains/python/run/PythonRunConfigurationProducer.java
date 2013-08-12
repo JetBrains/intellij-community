@@ -15,6 +15,8 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -64,7 +66,7 @@ public class PythonRunConfigurationProducer extends RuntimeConfigurationProducer
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     PsiFile script = location.getPsiElement().getContainingFile();
     if (script == null) {
