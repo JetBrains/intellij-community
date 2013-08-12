@@ -21,7 +21,6 @@ import com.intellij.history.LocalHistory;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LangBundle;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -42,7 +41,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
@@ -95,7 +93,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexImpl");
   @NonNls
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
-  private static final int PROGRESS_DELAY_IN_MILLIS = 1000;
   private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices =
     new THashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
   private final Map<ID<?, ?>, Semaphore> myUnsavedDataIndexingSemaphores = new THashMap<ID<?, ?>, Semaphore>();
@@ -390,19 +387,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        storage = ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, V>, IOException>() {
-          @Override
-          public MapIndexStorage<K, V> compute() throws IOException {
-            configureIndexDataLoadingProgress(ProgressManager.getInstance().getProgressIndicator());
-            return new MapIndexStorage<K, V>(
-              IndexInfrastructure.getStorageFile(name),
-              extension.getKeyDescriptor(),
-              extension.getValueExternalizer(),
-              extension.getCacheSize(),
-              extension.isKeyHighlySelective()
-            );
-          }
-        }, LangBundle.message("compacting.indices.title"), false, null);
+        storage = new MapIndexStorage<K, V>(
+          IndexInfrastructure.getStorageFile(name),
+          extension.getKeyDescriptor(),
+          extension.getValueExternalizer(),
+          extension.getCacheSize(),
+          extension.isKeyHighlySelective()
+        );
 
         final MemoryIndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(name, extension, memStorage);
@@ -505,43 +496,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       @Override
       public PersistentHashMap<Integer, Collection<K>> create() {
         try {
-          final ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException> process =
-            new ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException>() {
-              @Override
-              public PersistentHashMap<Integer, Collection<K>> compute() throws IOException {
-                return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
-              }
-            };
-          if (!index.needsCompaction()) {
-            return process.compute();
-          }
-          // this factory method may be called either on index creation from dispatch thread, or on index rebuild
-          // from arbitrary thread and under some existing progress indicator
-          final ProgressManager progressManager = ProgressManager.getInstance();
-          final ProgressIndicator currentProgress = progressManager.getProgressIndicator();
-          if (currentProgress == null && ApplicationManager.getApplication().isDispatchThread()) {
-            return progressManager.runProcessWithProgressSynchronously(
-              new ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException>() {
-                @Override
-                public PersistentHashMap<Integer, Collection<K>> compute() throws IOException {
-                  configureIndexDataLoadingProgress(progressManager.getProgressIndicator());
-                  return process.compute();
-                }
-              }, LangBundle.message("compacting.indices.title"), false, null);
-          }
-          if (currentProgress != null)  {
-            // reuse existing progress indicator if available
-            currentProgress.pushState();
-            currentProgress.setText(LangBundle.message("compacting.indices.title"));
-          }
-          try {
-            return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
-          }
-          finally {
-            if (currentProgress != null) {
-              currentProgress.popState();
-            }
-          }
+          return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -550,13 +505,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     });
 
     return index;
-  }
-
-  public static void configureIndexDataLoadingProgress(ProgressIndicator indicator) {
-    if (indicator != null) {
-      indicator.setIndeterminate(true);
-      if (indicator instanceof ProgressWindow) ((ProgressWindow)indicator).setDelayInMillis(PROGRESS_DELAY_IN_MILLIS);
-    }
   }
 
   @NotNull
