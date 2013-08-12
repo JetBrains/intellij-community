@@ -509,7 +509,7 @@
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.DjangoTemplateReferenceLineMarkerProvider"/>
     <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>
     <configurationType implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationType"/>
-    <configurationProducer implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationProducer"/>
 
     <highlightErrorFilter implementation="com.jetbrains.django.lang.template.inspection.DjangoErrorFilter"/>
     <highlightErrorFilter implementation="com.jetbrains.django.lang.template.inspection.DjangoStructureXmlFilter"/>
