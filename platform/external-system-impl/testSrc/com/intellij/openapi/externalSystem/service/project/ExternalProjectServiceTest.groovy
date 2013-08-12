@@ -19,7 +19,6 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.test.AbstractExternalSystemTest
-import com.intellij.openapi.externalSystem.test.ExternalProjectBuilder
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderEntry;
@@ -31,11 +30,11 @@ import com.intellij.openapi.roots.OrderEntry;
 public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
   void 'test no duplicate library dependency is added on subsequent refresh when there is an unresolved library'() {
-    DataNode<ProjectData> projectNode = new ExternalProjectBuilder(projectDir: projectDir).
+    DataNode<ProjectData> projectNode = buildProject {
       project {
         module('module') {
           lib('lib1')
-          lib('lib2', unresolved: true) } }
+          lib('lib2', unresolved: true) } } }
 
     applyProjectState([projectNode, projectNode])
 
