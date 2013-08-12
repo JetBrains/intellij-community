@@ -296,6 +296,7 @@ public abstract class TestObject implements JavaCommandLine {
       }
     };
 
+    Disposer.register(consoleView, packetsReceiver);
     final DeferredActionsQueue queue = new DeferredActionsQueueImpl();
     handler.getOut().setPacketDispatcher(packetsReceiver, queue);
     handler.getErr().setPacketDispatcher(packetsReceiver, queue);

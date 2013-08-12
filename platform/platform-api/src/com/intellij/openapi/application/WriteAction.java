@@ -15,10 +15,15 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.GuiUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
+  @NotNull
+  @Override
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);
 
@@ -28,7 +33,11 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     }
 
     try {
+      if (!ApplicationManager.getApplication().isDispatchThread() && ApplicationManager.getApplication().isReadAccessAllowed()) {
+        LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
+      }
       GuiUtils.runOrInvokeAndWait(new Runnable() {
+        @Override
         public void run() {
           final AccessToken accessToken = start();
           try {
@@ -52,10 +61,12 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     return result;
   }
 
+  @NotNull
   public static AccessToken start() {
     return start(null);
   }
 
+  @NotNull
   public static AccessToken start(@Nullable Class clazz) {
     return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
   }

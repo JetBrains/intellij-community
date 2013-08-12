@@ -69,7 +69,12 @@ public class GithubCreateGistDialog extends DialogWrapper {
 
   @Override
   protected String getHelpId() {
-    return "create.gist.dialog";
+    return "github.create.gist.dialog";
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "Github.CreateGistDialog";
   }
 
   @Override

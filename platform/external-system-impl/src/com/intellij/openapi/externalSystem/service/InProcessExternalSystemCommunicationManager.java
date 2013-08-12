@@ -17,6 +17,8 @@ package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemFacadeWrapper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,13 +30,22 @@ import org.jetbrains.annotations.Nullable;
  */
 public class InProcessExternalSystemCommunicationManager implements ExternalSystemCommunicationManager {
 
+  @NotNull private final ExternalSystemProgressNotificationManagerImpl myProgressManager;
+
+  public InProcessExternalSystemCommunicationManager(@NotNull ExternalSystemProgressNotificationManager notificationManager) {
+    myProgressManager = (ExternalSystemProgressNotificationManagerImpl)notificationManager;
+  }
+
   @SuppressWarnings("unchecked")
   @Nullable
   @Override
   public RemoteExternalSystemFacade acquire(@NotNull String id, @NotNull ProjectSystemId externalSystemId) throws Exception {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
-    return new InProcessExternalSystemFacadeImpl(manager.getProjectResolverClass(), manager.getTaskManagerClass());
+    InProcessExternalSystemFacadeImpl result = new InProcessExternalSystemFacadeImpl(manager.getProjectResolverClass(),
+                                                                                     manager.getTaskManagerClass());
+    result.applyProgressManager(myProgressManager);
+    return result;
   }
 
   @Override
@@ -42,7 +53,6 @@ public class InProcessExternalSystemCommunicationManager implements ExternalSyst
     RemoteExternalSystemFacade toCheck = facade;
     if (facade instanceof ExternalSystemFacadeWrapper) {
       toCheck = ((ExternalSystemFacadeWrapper)facade).getDelegate();
-      
     }
     return toCheck instanceof InProcessExternalSystemFacadeImpl;
   }

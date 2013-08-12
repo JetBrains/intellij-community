@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.util.Function
 import org.jetbrains.annotations.NotNull
-
 /**
  * @author Denis Zhdanov
  * @since 8/8/13 5:20 PM

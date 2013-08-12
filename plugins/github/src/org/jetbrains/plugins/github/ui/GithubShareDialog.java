@@ -32,14 +32,14 @@ public class GithubShareDialog extends DialogWrapper {
     updateOkButton();
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
   @Override
   protected String getHelpId() {
     return "github.share";
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "Github.ShareDialog";
   }
 
   @Override

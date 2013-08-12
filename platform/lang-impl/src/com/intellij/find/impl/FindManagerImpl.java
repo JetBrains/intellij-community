@@ -423,7 +423,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
   }
 
-  private static final Key<CommentsLiteralsSearchData> ourCommentsLiteralsSearchDataKey = Key.create("comments.literals.search.data");
+  public static final Key<CommentsLiteralsSearchData> ourCommentsLiteralsSearchDataKey = Key.create("comments.literals.search.data");
 
   @NotNull
   private static FindResult findInCommentsAndLiterals(@NotNull CharSequence text,

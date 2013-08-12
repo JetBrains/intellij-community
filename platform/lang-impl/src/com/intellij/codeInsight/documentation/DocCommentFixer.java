@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.lang.LanguageExtension;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;

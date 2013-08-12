@@ -15,6 +15,7 @@
  */
 package com.intellij.usageView;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -38,9 +39,11 @@ public class UsageInfo {
   protected boolean myDynamicUsage = false;
 
   public UsageInfo(@NotNull PsiElement element, int startOffset, int endOffset, boolean isNonCodeUsage) {
-    LOG.assertTrue(element.isValid(), element);
     element = element.getNavigationElement();
-    Project project = element.getProject();
+    PsiFile file = element.getContainingFile();
+    PsiElement topElement = file == null ? element : file;
+    LOG.assertTrue(topElement.isValid(), element);
+    Project project = topElement.getProject();
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
 
     TextRange elementRange = element.getTextRange();
@@ -61,10 +64,15 @@ public class UsageInfo {
     }
 
     if (startOffset != element.getTextOffset() - elementRange.getStartOffset() || endOffset != elementRange.getLength()) {
-      PsiFile file = element.getContainingFile();
-      LOG.assertTrue(file != null, element);
       mySmartPointer = smartPointerManager.createSmartPsiElementPointer(element, file);
-      myPsiFileRange = smartPointerManager.createSmartPsiFileRangePointer(file, TextRange.create(startOffset, endOffset).shiftRight(elementRange.getStartOffset()));
+      TextRange rangeToStore;
+      if (file != null && InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
+        rangeToStore = elementRange;
+      }
+      else {
+        rangeToStore = TextRange.create(startOffset, endOffset).shiftRight(elementRange.getStartOffset());
+      }
+      myPsiFileRange = smartPointerManager.createSmartPsiFileRangePointer(file, rangeToStore);
     }
     else {
       mySmartPointer = smartPointerManager.createSmartPsiElementPointer(element);

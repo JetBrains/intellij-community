@@ -35,7 +35,7 @@ import java.lang.ref.SoftReference;
 * User: cdr
 */
 public class SelfElementInfo implements SmartPointerElementInfo {
-  private final VirtualFile myVirtualFile;
+  protected final VirtualFile myVirtualFile;
   private Reference<RangeMarker> myMarkerRef; // create marker only in case of live document
   private int mySyncStartOffset;
   private int mySyncEndOffset;
@@ -151,6 +151,10 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     PsiFile file = restoreFile();
     if (file == null || !file.isValid()) return null;
 
+    return restoreFromFile(file);
+  }
+
+  protected PsiElement restoreFromFile(@NotNull PsiFile file) {
     final int syncStartOffset = getSyncStartOffset();
     final int syncEndOffset = getSyncEndOffset();
 

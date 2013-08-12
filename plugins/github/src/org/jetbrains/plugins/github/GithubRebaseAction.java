@@ -72,11 +72,6 @@ public class GithubRebaseAction extends DumbAwareAction {
       return;
     }
 
-    if (!GithubSettings.getInstance().isAuthConfigured()) {
-      setVisibleEnabled(e, false, false);
-      return;
-    }
-
     final GitRepository gitRepository = GithubUtil.getGitRepository(project, file);
     if (gitRepository == null) {
       setVisibleEnabled(e, false, false);

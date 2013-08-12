@@ -115,18 +115,13 @@ public class GithubUtil {
                                                    @NotNull String host,
                                                    @NotNull ThrowableConvertor<GithubAuthData, T, IOException> task) throws IOException {
     GithubSettings settings = GithubSettings.getInstance();
-    GithubAuthData auth;
-    if (settings.getAuthType() == GithubAuthData.AuthType.BASIC &&
-        StringUtil.equalsIgnoreCase(GithubUrlUtil.getApiUrl(host), GithubUrlUtil.getApiUrl(settings.getHost()))) {
-      auth = settings.getAuthData();
-    }
-    else {
-      auth = GithubAuthData.createAnonymous();
-    }
+    GithubAuthData auth = null;
     try {
-      if (auth.getAuthType() != GithubAuthData.AuthType.BASIC) {
+      if (settings.getAuthType() != GithubAuthData.AuthType.BASIC ||
+          !StringUtil.equalsIgnoreCase(GithubUrlUtil.getApiUrl(host), GithubUrlUtil.getApiUrl(settings.getHost()))) {
         throw new GithubAuthenticationException("Bad authentication type");
       }
+      auth = settings.getAuthData();
       return task.convert(auth);
     }
     catch (GithubAuthenticationException e) {

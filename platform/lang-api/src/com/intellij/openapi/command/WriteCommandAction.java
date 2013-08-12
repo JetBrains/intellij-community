@@ -16,6 +16,7 @@
 package com.intellij.openapi.command;
 
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -33,6 +34,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.WriteCommandAction");
   private final String myName;
   private final String myGroupID;
   private final Project myProject;
@@ -65,8 +67,13 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return myGroupID;
   }
 
+  @NotNull
   @Override
   public RunResult<T> execute() {
+    if (!ApplicationManager.getApplication().isDispatchThread() && ApplicationManager.getApplication().isReadAccessAllowed()) {
+      LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
+    }
+
     final RunResult<T> result = new RunResult<T>(this);
 
     try {

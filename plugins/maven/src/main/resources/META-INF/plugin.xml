@@ -245,6 +245,9 @@
       <property name="timestamp"/>
     </pluginDescriptor>
 
+    <pluginDescriptor mavenId="org.codehaus.mojo:build-helper-maven-plugin" goal="reserve-network-port"
+                      propertyGenerator="org.jetbrains.idea.maven.plugins.buildHelper.MavenBuildHelperPropertyGenerator"/>
+
     <pluginDescriptor mavenId="org.codehaus.mojo:sql-maven-plugin">
       <param name="sqlCommand" language="SQL"/>
     </pluginDescriptor>

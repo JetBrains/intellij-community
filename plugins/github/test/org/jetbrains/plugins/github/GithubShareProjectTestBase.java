@@ -36,13 +36,11 @@ import java.util.Random;
  */
 public abstract class GithubShareProjectTestBase extends GithubTest {
   protected String PROJECT_NAME;
-  protected GitRepositoryManager myGitRepositoryManager;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
 
-    myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
     Random rnd = new Random();
     long time = Clock.getTime();
     PROJECT_NAME = "new_project_from_" + getTestName(false) + "_" + DateFormatUtil.formatDate(time).replace('/', '-') + "_" + rnd.nextLong();
@@ -85,32 +83,5 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
                                               return DialogWrapper.OK_EXIT_CODE;
                                             }
                                           });
-  }
-
-  protected void checkGithubExists() throws IOException {
-    GithubAuthData auth = myGitHubSettings.getAuthData();
-    GithubRepoDetailed githubInfo = GithubApiUtil.getDetailedRepoInfo(auth, myLogin1, PROJECT_NAME);
-    assertNotNull("GitHub repository does not exist", githubInfo);
-  }
-
-  protected void checkGitExists() {
-    final GitRepository gitRepository = myGitRepositoryManager.getRepositoryForFile(myProjectRoot);
-    assertNotNull("Git repository does not exist", gitRepository);
-  }
-
-  protected void checkRemoteConfigured() {
-    final GitRepository gitRepository = myGitRepositoryManager.getRepositoryForFile(myProjectRoot);
-    assertNotNull(gitRepository);
-
-    assertNotNull("GitHub remote is not configured", GithubUtil.findGithubRemoteUrl(gitRepository));
-  }
-
-  protected void checkLastCommitPushed() {
-    final GitRepository gitRepository = myGitRepositoryManager.getRepositoryForFile(myProjectRoot);
-    assertNotNull(gitRepository);
-
-    String hash = GitExecutor.git(gitRepository, "log -1 --pretty=%h");
-    String ans = GitExecutor.git(gitRepository, "branch --contains " + hash + " -a");
-    assertTrue(ans.contains("remotes/origin/master"));
   }
 }

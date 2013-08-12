@@ -61,9 +61,14 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     return myGithubCreatePullRequestPanel.getPreferredComponent();
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction()};
+  @Override
+  protected String getHelpId() {
+    return "github.create.pull.request.dialog";
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "Github.CreatePullRequestDialog";
   }
 
   @NotNull
@@ -101,6 +106,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     return null;
   }
 
+  @TestOnly
   public void setRequestTitle(String title) {
     myGithubCreatePullRequestPanel.setTitle(title);
   }

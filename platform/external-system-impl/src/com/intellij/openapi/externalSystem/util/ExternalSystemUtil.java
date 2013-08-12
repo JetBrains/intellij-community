@@ -46,7 +46,6 @@ import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemRecentT
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -536,11 +535,10 @@ public class ExternalSystemUtil {
    *                         <code>false</code> otherwise
    */
   public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull DataNode<ProjectData> externalProject) {
-    ExternalSystemSettingsManager settingsManager = ServiceManager.getService(ExternalSystemSettingsManager.class);
     String linkedExternalProjectPath = null;
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
       ProjectSystemId externalSystemId = manager.getSystemId();
-      AbstractExternalSystemSettings systemSettings = settingsManager.getSettings(ideProject, externalSystemId);
+      AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(ideProject, externalSystemId);
       Collection projectsSettings = systemSettings.getLinkedProjectsSettings();
       int linkedProjectsNumber = projectsSettings.size();
       if (linkedProjectsNumber > 1) {
@@ -564,13 +562,20 @@ public class ExternalSystemUtil {
       return false;
     }
 
+    Set<String> externalModulePaths = ContainerUtilRt.newHashSet();
+    for (DataNode<ModuleData> moduleNode : ExternalSystemApiUtil.findAll(externalProject, ProjectKeys.MODULE)) {
+      externalModulePaths.add(moduleNode.getData().getLinkedExternalProjectPath());
+    }
+    externalModulePaths.remove(linkedExternalProjectPath);
+    
     PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
     for (Module module : platformFacade.getModules(ideProject)) {
-      if (!projectData.getLinkedExternalProjectPath().equals(module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY))) {
+      String path = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+      if (!StringUtil.isEmpty(path) && !externalModulePaths.remove(path)) {
         return false;
       }
     }
-    return true;
+    return externalModulePaths.isEmpty();
   }
 
   /**
@@ -605,8 +610,7 @@ public class ExternalSystemUtil {
           }
           return;
         }
-        ExternalSystemSettingsManager settingsManager = ServiceManager.getService(ExternalSystemSettingsManager.class);
-        AbstractExternalSystemSettings systemSettings = settingsManager.getSettings(project, externalSystemId);
+        AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, externalSystemId);
         Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
         projects.add(projectSettings);
         systemSettings.setLinkedProjectsSettings(projects);

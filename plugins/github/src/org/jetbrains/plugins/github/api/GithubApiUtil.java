@@ -221,7 +221,8 @@ public class GithubApiUtil {
         return method.getStatusText() + " - " + error.getMessage();
       }
     }
-    catch (IOException ignore) {
+    catch (IOException e) {
+      LOG.info(e);
     }
     return method.getStatusText();
   }

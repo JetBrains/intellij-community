@@ -76,6 +76,11 @@ public class StatusBarProgress extends ProgressIndicatorBase {
   }
 
   @Override
+  protected boolean isReuseable() {
+    return true;
+  }
+
+  @Override
   public void setText(String text) {
     super.setText(text);
     update();
