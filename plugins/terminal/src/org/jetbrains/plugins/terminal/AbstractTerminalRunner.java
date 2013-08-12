@@ -45,9 +45,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   public void run() {
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to terminal", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Running the terminal", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        indicator.setText("Connecting to terminal...");
+        indicator.setText("Running the terminal...");
         try {
           doRun();
         }

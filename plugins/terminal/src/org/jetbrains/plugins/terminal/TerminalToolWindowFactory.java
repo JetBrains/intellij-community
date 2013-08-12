@@ -11,6 +11,6 @@ public class TerminalToolWindowFactory implements ToolWindowFactory {
   @Override
   public void createToolWindowContent(Project project, ToolWindow toolWindow) {
     TerminalView terminalView = TerminalView.getInstance();
-    terminalView.createTerminal(project, toolWindow);
+    terminalView.initTerminal(project, toolWindow);
   }
 }
