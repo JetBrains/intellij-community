@@ -199,7 +199,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
         final FileEditorProvider provider = providers [i];
         if (!editor.isValid()) {
           // this can happen for example if file extension was changed
-          // and this method was called during correponding myEditor close up
+          // and this method was called during corresponding myEditor close up
           continue;
         }
 
@@ -309,7 +309,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     // we have to delay xml processing because history entries require EditorStates to be created
     // which is done via corresponding EditorProviders, those are not accessible before their
     // is initComponent() called
-    myElement = (Element)element.clone();
+    myElement = element.clone();
   }
 
   public void writeExternal(final Element element){
