@@ -26,6 +26,9 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -33,6 +36,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -391,10 +395,10 @@ public class ExternalSystemApiUtil {
     return ProjectManager.getInstance().getOpenProjects().length == 0;
   }
 
-  @NotNull
-  public static String getLastUsedExternalProjectPath(@NotNull ProjectSystemId externalSystemId) {
-    return PropertiesComponent.getInstance().getValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), "");
-  }
+//  @NotNull
+//  public static String getLastUsedExternalProjectPath(@NotNull ProjectSystemId externalSystemId) {
+//    return PropertiesComponent.getInstance().getValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), "");
+//  }
 
   public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
     if (path != null) {
@@ -477,5 +481,51 @@ public class ExternalSystemApiUtil {
       unwrapped.printStackTrace(new PrintWriter(writer));
       return writer.toString();
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  public static AbstractExternalSystemSettings getSettings(@NotNull Project project, @NotNull ProjectSystemId externalSystemId)
+    throws IllegalArgumentException
+  {
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(externalSystemId);
+    if (manager == null) {
+      throw new IllegalArgumentException(String.format(
+        "Can't retrieve external system settings for id '%s'. Reason: no such external system is registered",
+        externalSystemId.getReadableName()
+      ));
+    }
+    return manager.getSettingsProvider().fun(project);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <S extends AbstractExternalSystemLocalSettings> S getLocalSettings(@NotNull Project project,
+                                                                                   @NotNull ProjectSystemId externalSystemId)
+    throws IllegalArgumentException
+  {
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(externalSystemId);
+    if (manager == null) {
+      throw new IllegalArgumentException(String.format(
+        "Can't retrieve local external system settings for id '%s'. Reason: no such external system is registered",
+        externalSystemId.getReadableName()
+      ));
+    }
+    return (S)manager.getLocalSettingsProvider().fun(project);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <S extends ExternalSystemExecutionSettings> S getExecutionSettings(@NotNull Project project,
+                                                                            @NotNull String linkedProjectPath,
+                                                                            @NotNull ProjectSystemId externalSystemId)
+    throws IllegalArgumentException
+  {
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(externalSystemId);
+    if (manager == null) {
+      throw new IllegalArgumentException(String.format(
+        "Can't retrieve external system execution settings for id '%s'. Reason: no such external system is registered",
+        externalSystemId.getReadableName()
+      ));
+    }
+    return (S)manager.getExecutionSettingsProvider().fun(Pair.create(project, linkedProjectPath));
   }
 }

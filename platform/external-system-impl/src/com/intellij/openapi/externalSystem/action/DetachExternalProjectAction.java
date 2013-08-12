@@ -30,7 +30,7 @@ import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTr
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -126,10 +126,9 @@ public class DetachExternalProjectAction extends AnAction implements DumbAware {
       return MyInfo.EMPTY;
     }
 
-    ExternalSystemSettingsManager settingsManager = ServiceManager.getService(ExternalSystemSettingsManager.class);
-    AbstractExternalSystemSettings<?, ?, ?> settings = settingsManager.getSettings(ideProject, externalSystemId);
+    AbstractExternalSystemSettings<?, ?, ?> settings = ExternalSystemApiUtil.getSettings(ideProject, externalSystemId);
     ExternalProjectSettings externalProjectSettings = settings.getLinkedProjectSettings(externalProject.getPath());
-    AbstractExternalSystemLocalSettings localSettings = settingsManager.getLocalSettings(ideProject, externalSystemId);
+    AbstractExternalSystemLocalSettings localSettings = ExternalSystemApiUtil.getLocalSettings(ideProject, externalSystemId);
     
     return new MyInfo(externalProjectSettings == null ? null : settings,
                       localSettings == null ? null : localSettings,
