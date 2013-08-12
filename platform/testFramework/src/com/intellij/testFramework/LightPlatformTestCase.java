@@ -254,9 +254,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
             VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
               @Override
               public boolean visitFile(@NotNull VirtualFile file) {
-                if (!file.isDirectory()) {
-                  iterator.processFile(file);
-                }
+                iterator.processFile(file);
+
                 return true;
               }
             });

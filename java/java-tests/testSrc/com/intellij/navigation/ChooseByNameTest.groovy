@@ -134,6 +134,16 @@ class Intf {
 
   }
 
+  public void "test goto file can go to dir"() {
+    def fooIndex = myFixture.addFileToProject("foo/index.html", "foo")
+
+    def popup = createPopup(new GotoFileModel(project), fooIndex)
+    assert getPopupElements(popup, "foo/") == [fooIndex.containingDirectory]
+    assert getPopupElements(popup, "foo\\") == [fooIndex.containingDirectory]
+    assert getPopupElements(popup, "foo") == []
+    popup.close(false)
+  }
+
   public void "test find method by qualified name"() {
     def method = myFixture.addClass("package foo.bar; class Goo { void zzzZzz() {} }").methods[0]
     assert getPopupElements(new GotoSymbolModel2(project), 'zzzZzz') == [method]
