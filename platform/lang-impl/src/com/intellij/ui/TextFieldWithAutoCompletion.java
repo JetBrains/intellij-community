@@ -95,8 +95,9 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
       return editor;
     }
 
-    final String completionShortcutText = getCompletionShortcutText();
-    if (completionShortcutText == null) {
+    final String completionShortcutText =
+      KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
+    if (StringUtil.isEmpty(completionShortcutText)) {
       return editor;
     }
 
