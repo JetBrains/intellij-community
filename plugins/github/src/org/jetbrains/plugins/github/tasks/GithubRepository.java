@@ -228,7 +228,7 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   @NotNull
   public String getRepoAuthor() {
-    return !StringUtil.isEmpty(myRepoAuthor) ? myRepoAuthor : getUsername();
+    return myRepoAuthor;
   }
 
   public void setRepoAuthor(@NotNull String repoAuthor) {
