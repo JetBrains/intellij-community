@@ -56,6 +56,6 @@ public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleT
   }
 
   public static boolean isWebModule(@NotNull Module module) {
-    return WEB_MODULE.equals(module.getOptionValue(Module.ELEMENT_TYPE));
+    return WEB_MODULE.equals(ModuleType.get(module).getId());
   }
 }
