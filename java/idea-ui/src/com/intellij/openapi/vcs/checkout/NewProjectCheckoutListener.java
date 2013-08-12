@@ -49,6 +49,7 @@ public class NewProjectCheckoutListener implements VcsAwareCheckoutListener {
       final Set<VirtualFile> files = projectsLocationSet(projects);
       VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(directory);
       AddModuleWizard wizard = ImportModuleAction.createImportWizard(null, null, file, ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions());
+      if (wizard == null) return false;
       if (wizard.showAndGet()) {
         ImportModuleAction.createFromWizard(null, wizard);
       }
