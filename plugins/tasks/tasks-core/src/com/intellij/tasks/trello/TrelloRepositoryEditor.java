@@ -80,7 +80,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
       @Override
       protected void textChanged(DocumentEvent e) {
         String password = String.valueOf(myPasswordText.getPassword());
-        if (password.isEmpty() && password.equals(myRepository.getPassword())) {
+        if (password.equals(myRepository.getPassword())) {
           return;
         }
         myRepository.setPassword(password);
@@ -159,8 +159,9 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
             return lists;
           }
           int i = lists.indexOf(myList);
-          myList = i >= 0? lists.get(i) : myRepository.fetchListById(myList.getId());
-          if (!myList.getIdBoard().equals(myRepository.getCurrentBoard().getId())) {
+          myList = i >= 0 ? lists.get(i) : myRepository.fetchListById(myList.getId());
+          TrelloBoard currentBoard = myRepository.getCurrentBoard();
+          if (currentBoard != null && !myList.getIdBoard().equals(currentBoard.getId())) {
             myList.setMoved(true);
           }
           myRepository.setCurrentList(myList);
@@ -222,9 +223,14 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
           }
         }, myModalityState);
       }
-      catch (Exception e) {
+      catch (final Exception e) {
         LOG.warn(e);
-        handleException(e);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            handleException(e);
+          }
+        }, myModalityState);
       }
     }
 
@@ -325,9 +331,11 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
       String text = trelloList.getName();
       if (trelloList.isClosed() && trelloList.isMoved()) {
         text += " (archived,moved)";
-      } else if (trelloList.isMoved()) {
+      }
+      else if (trelloList.isMoved()) {
         text += " (moved)";
-      } else if (trelloList.isClosed()) {
+      }
+      else if (trelloList.isClosed()) {
         text += " (archived)";
       }
       setText(text);
