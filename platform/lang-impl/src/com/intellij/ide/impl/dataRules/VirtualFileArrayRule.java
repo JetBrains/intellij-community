@@ -91,6 +91,10 @@ public class VirtualFileArrayRule implements GetDataRule {
       result = addFile(result, psiFile.getVirtualFile());
     }
 
+    if (result != null) {
+      return VfsUtilCore.toVirtualFileArray(result);
+    }
+
     PsiElement elem = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (elem != null) {
       result = addFilesFromPsiElement(result, elem);
