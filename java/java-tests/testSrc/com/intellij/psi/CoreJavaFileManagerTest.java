@@ -151,8 +151,7 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
     while(!queue.isEmpty()) {
       String head = queue.remove();
       PsiClass clazzInner = manager.findClass(head, scope);
-      assertNotNull(head, clazzInner);
-      System.out.println(head);
+      assertNotNull(head, clazzInner);      
       String lastSegment = head.substring(head.lastIndexOf('.'));
       String xs = lastSegment.substring(lastSegment.indexOf("X")).replace("$", "");
       if (xs.length() < 4) {
