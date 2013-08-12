@@ -67,7 +67,7 @@ public class NewProjectCheckoutListener implements VcsAwareCheckoutListener {
     return false;
   }
 
-  private Set<VirtualFile> projectsLocationSet(Project[] projects) {
+  private static Set<VirtualFile> projectsLocationSet(Project[] projects) {
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
     for (Project project1 : projects) {
       if (project1.getBaseDir() != null) {
