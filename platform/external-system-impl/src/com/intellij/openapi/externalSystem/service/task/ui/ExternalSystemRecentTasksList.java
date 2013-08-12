@@ -41,6 +41,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -139,7 +140,7 @@ public class ExternalSystemRecentTasksList extends JBList implements Producer<Ex
         ExternalTaskExecutionInfo taskInfo = (ExternalTaskExecutionInfo)value;
         String text = null;
         if (myConfigurationType != null) {
-          RunConfiguration[] configurations = RunManager.getInstance(myProject).getConfigurations(myConfigurationType);
+          List<RunConfiguration> configurations = RunManager.getInstance(myProject).getConfigurationsList(myConfigurationType);
           for (RunConfiguration configuration : configurations) {
             if (!(configuration instanceof ExternalSystemRunConfiguration)) {
               continue;

@@ -25,6 +25,8 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 
+import java.util.List;
+
 /**
  * @author spleaner
 */
@@ -34,7 +36,7 @@ public class RunConfigurationRefactoringElementListenerProvider implements Refac
   @Override
   public RefactoringElementListener getListener(final PsiElement element) {
     RefactoringElementListenerComposite composite = null;
-    final RunConfiguration[] configurations = RunManager.getInstance(element.getProject()).getAllConfigurations();
+    final List<RunConfiguration> configurations = RunManager.getInstance(element.getProject()).getAllConfigurationsList();
 
     for (RunConfiguration configuration : configurations) {
       if (configuration instanceof RefactoringListenerProvider) { // todo: perhaps better way to handle listeners?

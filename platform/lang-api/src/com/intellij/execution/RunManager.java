@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,7 +55,17 @@ public abstract class RunManager {
    * @return all configurations of the type, or an empty array if no configurations of the type are defined.
    */
   @NotNull
+  @Deprecated
   public abstract RunConfiguration[] getConfigurations(@NotNull ConfigurationType type);
+
+  /**
+   * Returns the list of all configurations of a specified type.
+   *
+   * @param type a run configuration type.
+   * @return all configurations of the type, or an empty array if no configurations of the type are defined.
+   */
+  @NotNull
+  public abstract List<RunConfiguration> getConfigurationsList(@NotNull ConfigurationType type);
 
   /**
    * Returns the list of {@link RunnerAndConfigurationSettings} for all configurations of a specified type.
@@ -63,7 +74,17 @@ public abstract class RunManager {
    * @return settings for all configurations of the type, or an empty array if no configurations of the type are defined.
    */
   @NotNull
+  @Deprecated
   public abstract RunnerAndConfigurationSettings[] getConfigurationSettings(@NotNull ConfigurationType type);
+
+  /**
+   * Returns the list of {@link RunnerAndConfigurationSettings} for all configurations of a specified type.
+   *
+   * @param type a run configuration type.
+   * @return settings for all configurations of the type, or an empty array if no configurations of the type are defined.
+   */
+  @NotNull
+  public abstract List<RunnerAndConfigurationSettings> getConfigurationSettingsList(@NotNull ConfigurationType type);
 
   /**
    * Returns the list of all run configurations.
@@ -71,7 +92,24 @@ public abstract class RunManager {
    * @return the list of all run configurations.
    */
   @NotNull
+  @Deprecated
   public abstract RunConfiguration[] getAllConfigurations();
+
+  /**
+   * Returns the list of all run configurations.
+   *
+   * @return the list of all run configurations.
+   */
+  @NotNull
+  public abstract List<RunConfiguration> getAllConfigurationsList();
+
+  /**
+   * Returns the list of all run configurations settings.
+   *
+   * @return the list of all run configurations settings.
+   */
+  @NotNull
+  public abstract List<RunnerAndConfigurationSettings> getAllSettings();
 
   /**
    * Returns the list of all temporary run configurations.
@@ -80,7 +118,17 @@ public abstract class RunManager {
    * @see com.intellij.execution.RunnerAndConfigurationSettings#isTemporary()
    */
   @NotNull
+  @Deprecated
   public abstract RunConfiguration[] getTempConfigurations();
+
+  /**
+   * Returns the list of all temporary run configurations settings.
+   *
+   * @return the list of all temporary run configurations settings.
+   * @see com.intellij.execution.RunnerAndConfigurationSettings#isTemporary()
+   */
+  @NotNull
+  public abstract List<RunnerAndConfigurationSettings> getTempConfigurationsList();
 
   /**
    * Checks if the specified run configuration is temporary and will be deleted when the temporary configurations limit is exceeded.
@@ -88,6 +136,7 @@ public abstract class RunManager {
    * @return true if the configuration is temporary, false otherwise.
    * @see com.intellij.execution.RunnerAndConfigurationSettings#isTemporary()
    */
+  @Deprecated
   public abstract boolean isTemporary(@NotNull RunConfiguration configuration);
 
   /**
@@ -95,7 +144,15 @@ public abstract class RunManager {
    *
    * @param configuration the temporary run configuration to save.
    */
+  @Deprecated
   public abstract void makeStable(@NotNull RunConfiguration configuration);
+
+  /**
+   * Saves the specified temporary run settings and makes it a permanent one.
+   *
+   * @param settings the temporary settings to save.
+   */
+  public abstract void makeStable(@NotNull RunnerAndConfigurationSettings settings);
 
   /**
    * Returns the selected item in the run/debug configurations combobox.

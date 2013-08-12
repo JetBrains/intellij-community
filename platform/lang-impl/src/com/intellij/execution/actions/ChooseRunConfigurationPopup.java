@@ -838,13 +838,13 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
         }
       });
 
-      if (RunManager.getInstance(project).isTemporary(settings.getConfiguration()) || dynamic) {
+      if (settings.isTemporary() || dynamic) {
         result.add(new ActionWrapper("Save configuration", AllIcons.Actions.Menu_saveall) {
           @Override
           public void perform() {
             final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
             if (dynamic) manager.setTemporaryConfiguration(settings);
-            manager.makeStable(settings.getConfiguration());
+            manager.makeStable(settings);
           }
         });
       }

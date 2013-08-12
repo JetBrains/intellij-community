@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @deprecated please use {@link com.intellij.execution.actions.RunConfigurationProducer} instead
@@ -66,7 +67,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
         // replace with existing configuration if any
         final RunManager runManager = RunManager.getInstance(context.getProject());
         final ConfigurationType type = result.myConfiguration.getType();
-        final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(type);
+        final List<RunnerAndConfigurationSettings> configurations = runManager.getConfigurationSettingsList(type);
         final RunnerAndConfigurationSettings configuration = result.findExistingByElement(_location, configurations, context);
         if (configuration != null) {
           result.myConfiguration = configuration;
@@ -87,7 +88,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   public RunnerAndConfigurationSettings findExistingConfiguration(@NotNull Location location, ConfigurationContext context) {
     assert isClone;
     final RunManager runManager = RunManager.getInstance(location.getProject());
-    final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(getConfigurationType());
+    final List<RunnerAndConfigurationSettings> configurations = runManager.getConfigurationSettingsList(getConfigurationType());
     return findExistingByElement(location, configurations, context);
   }
 
@@ -108,7 +109,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
 
   @Nullable
   protected RunnerAndConfigurationSettings findExistingByElement(final Location location,
-                                                                 @NotNull final RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 @NotNull final List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     assert isClone;
     return null;
