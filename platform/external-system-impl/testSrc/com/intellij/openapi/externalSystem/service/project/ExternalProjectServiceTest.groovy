@@ -30,7 +30,7 @@ import com.intellij.openapi.roots.OrderEntry;
 public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
   void 'test no duplicate library dependency is added on subsequent refresh when there is an unresolved library'() {
-    DataNode<ProjectData> projectNode = buildProject {
+    DataNode<ProjectData> projectNode = buildExternalProjectInfo {
       project {
         module('module') {
           lib('lib1')

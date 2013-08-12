@@ -562,13 +562,20 @@ public class ExternalSystemUtil {
       return false;
     }
 
+    Set<String> externalModulePaths = ContainerUtilRt.newHashSet();
+    for (DataNode<ModuleData> moduleNode : ExternalSystemApiUtil.findAll(externalProject, ProjectKeys.MODULE)) {
+      externalModulePaths.add(moduleNode.getData().getLinkedExternalProjectPath());
+    }
+    externalModulePaths.remove(linkedExternalProjectPath);
+    
     PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
     for (Module module : platformFacade.getModules(ideProject)) {
-      if (!projectData.getLinkedExternalProjectPath().equals(module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY))) {
+      String path = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+      if (!StringUtil.isEmpty(path) && !externalModulePaths.remove(path)) {
         return false;
       }
     }
-    return true;
+    return externalModulePaths.isEmpty();
   }
 
   /**

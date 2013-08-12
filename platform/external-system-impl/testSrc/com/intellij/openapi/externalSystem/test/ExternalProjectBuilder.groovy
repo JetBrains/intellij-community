@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.test
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.*
+import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.roots.DependencyScope
@@ -77,7 +78,10 @@ class ExternalProjectBuilder extends BuilderSupport {
                                                                getLevel(attributes))
         data.scope = getScope(attributes)
         return parentNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, data)
-        
+      case 'task':
+        DataNode<ExternalConfigPathAware> parentNode = current as DataNode
+        TaskData data = new TaskData(TEST_EXTERNAL_SYSTEM_ID, attributes.name, parentNode.data.linkedExternalProjectPath, null)
+        return parentNode.createChild(ProjectKeys.TASK, data)
       default: throw new IllegalArgumentException("Unexpected entry: $name");
     }
   }
