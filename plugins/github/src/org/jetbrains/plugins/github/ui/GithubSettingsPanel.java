@@ -139,7 +139,7 @@ public class GithubSettingsPanel {
             myLoginLabel.setVisible(true);
             myLoginTextField.setVisible(true);
           }
-          if (AUTH_TOKEN.equals(item)) {
+          else if (AUTH_TOKEN.equals(item)) {
             myLoginLabel.setVisible(false);
             myLoginTextField.setVisible(false);
           }
