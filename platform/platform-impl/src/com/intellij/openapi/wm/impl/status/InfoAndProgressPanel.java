@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -549,7 +546,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   private class MyInlineProgressIndicator extends InlineProgressIndicator {
-    private final ProgressIndicatorEx myOriginal;
+    private ProgressIndicatorEx myOriginal;
     private final Reference<TaskInfo> myTask;
 
     public MyInlineProgressIndicator(final boolean compact, @NotNull TaskInfo task, final ProgressIndicatorEx original) {
@@ -584,9 +581,16 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         @Override
         public void run() {
           removeProgress(MyInlineProgressIndicator.this);
-          dispose();
+          Disposer.dispose(MyInlineProgressIndicator.this);
         }
       });
+    }
+
+    @Override
+    public void dispose() {
+      super.dispose();
+      myOriginal = null;
+      myTask.clear();
     }
 
     @Override

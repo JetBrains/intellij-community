@@ -41,7 +41,8 @@ public class FileResponses {
 
   public static HttpResponse createResponse(String path) {
     HttpResponse response = create(FILE_MIMETYPE_MAP.getContentType(path));
-    response.setHeader(CACHE_CONTROL, "max-age=0");
+    response.setHeader(CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0");
+    response.setHeader(PRAGMA, "no-cache");
     return response;
   }
 
