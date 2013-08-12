@@ -58,6 +58,7 @@ class ExternalProjectBuilder extends BuilderSupport {
     switch (name) {
       case 'project':
         ProjectData projectData = new ProjectData(TEST_EXTERNAL_SYSTEM_ID, projectDir.path, projectDir.path)
+        projectData.name = attributes.name ?: 'project'
         projectNode = new DataNode<ProjectData>(ProjectKeys.PROJECT, projectData, null)
         return projectNode
       case 'module':

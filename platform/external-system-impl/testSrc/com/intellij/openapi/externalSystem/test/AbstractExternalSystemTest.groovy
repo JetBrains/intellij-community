@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.test
 
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -48,6 +49,9 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
   IdeaProjectTestFixture testFixture
   Project project
   File projectDir
+
+  TestExternalSystemManager externalSystemManager
+  ExtensionPoint externalSystemManagerEP
   
   @Override
   protected void setUp() throws Exception {
@@ -62,9 +66,9 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
     projectDir = new File(tmpDir, getTestName(false));
     projectDir.mkdirs();
     
-    def externalSystemManager = new TestExternalSystemManager(project)
+    externalSystemManager = new TestExternalSystemManager(project)
     def area = Extensions.getArea(null)
-    def externalSystemManagerEP = area.getExtensionPoint(ExternalSystemManager.EP_NAME)
+    externalSystemManagerEP = area.getExtensionPoint(ExternalSystemManager.EP_NAME)
     externalSystemManagerEP.registerExtension(externalSystemManager)
   }
 
@@ -83,6 +87,7 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
     project = null
     UIUtil.invokeAndWaitIfNeeded {
       try {
+        externalSystemManagerEP.unregisterExtension(externalSystemManager)
         testFixture.tearDown();
         testFixture = null;
       }
@@ -122,6 +127,16 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
     if (aClass != AbstractExternalSystemTest.class) {
       resetClassFields(aClass.getSuperclass());
     }
+  }
+
+  public <T> DataNode<T> buildProject(@NotNull Closure c) {
+    ExternalProjectBuilder builder = new ExternalProjectBuilder(projectDir: projectDir)
+    c.delegate = builder
+    c.call()
+  }
+
+  public void checkTasks(@NotNull Closure c) {
+    
   }
   
   protected void applyProjectState(@NotNull List<DataNode<ProjectData>> states) {
