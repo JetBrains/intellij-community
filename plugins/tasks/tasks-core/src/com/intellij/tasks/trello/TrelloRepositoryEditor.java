@@ -133,10 +133,15 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
 
     // Initial setup:
     if (myRepository.getCurrentUser() != null) {
-      new BoardsDownloader(myRepository.getCurrentBoard()).runOnPooledThread();
-    }
-    if (myRepository.getCurrentBoard() != null) {
-      new ListsDownloader(myRepository.getCurrentList()).runOnPooledThread();
+      new BoardsDownloader(myRepository.getCurrentBoard()){
+        @Override
+        protected void updateUI(List<TrelloBoard> boards) {
+          super.updateUI(boards);
+          if (myRepository.getCurrentBoard() != null) {
+            new ListsDownloader(myRepository.getCurrentList()).runOnPooledThread();
+          }
+        }
+      }.runOnPooledThread();
     }
   }
 
@@ -218,7 +223,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
     protected void updateUI(List<TrelloBoard> boards) {
       myBoardComboBox.setModel(new DefaultComboBoxModel(boards.toArray()));
       myBoardComboBox.insertItemAt(UNSPECIFIED_BOARD, 0);
-      myBoardComboBox.setSelectedItem(myBoard == null? UNSPECIFIED_BOARD : myBoard);
+      myBoardComboBox.setSelectedItem(myBoard == null || !boards.contains(myBoard)? UNSPECIFIED_BOARD : myBoard);
     }
 
     @Override
@@ -244,7 +249,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
     protected void updateUI(List<TrelloList> lists) {
       myListComboBox.setModel(new DefaultComboBoxModel(lists.toArray()));
       myListComboBox.insertItemAt(UNSPECIFIED_LIST, 0);
-      myListComboBox.setSelectedItem(myList == null? UNSPECIFIED_LIST : myList);
+      myListComboBox.setSelectedItem(myList == null || !lists.contains(myList)? UNSPECIFIED_LIST : myList);
     }
 
     @Override
