@@ -192,28 +192,28 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     }
   }
 
-  @Nullable
-  private TrelloBoard fetchBoardById(String id) {
-    String url = "/boards/" + id;
+  @NotNull
+  public TrelloBoard fetchBoardById(@NotNull String id) throws Exception {
+    String url = TrelloUtil.TRELLO_API_BASE_URL + "/boards/" + id;
     try {
       return makeRequestAndDeserializeJsonResponse(url, TrelloBoard.class);
     }
     catch (Exception e) {
-      LOG.warn("Error while fetching initial board info with id = " + id, e);
+      LOG.warn("Error while fetching initial board info", e);
+      throw e;
     }
-    return null;
   }
 
-  @Nullable
-  private TrelloList fetchListById(String id) {
-    String url = "/lists/" + id;
+  @NotNull
+  public TrelloList fetchListById(@NotNull String id) throws Exception {
+    String url = TrelloUtil.TRELLO_API_BASE_URL + "/lists/" + id;
     try {
       return makeRequestAndDeserializeJsonResponse(url, TrelloList.class);
     }
     catch (Exception e) {
-      LOG.warn("Error while fetching initial list info with id = " + id, e);
+      LOG.warn("Error while fetching initial list info" + id, e);
+      throw e;
     }
-    return null;
   }
 
   @NotNull
