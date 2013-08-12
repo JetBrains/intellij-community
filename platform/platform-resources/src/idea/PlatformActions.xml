@@ -626,6 +626,7 @@
     </group>
 
     <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction" text="Rerun"/>
+    <action id="RerunTests" class="com.intellij.execution.runners.RerunTestsAction" text="Rerun Tests"/>
 
     <action id="IncrementWindowWidth" class="com.intellij.ide.actions.WindowAction$IncrementWidth" use-shortcut-of="ResizeToolWindowRight"/>
     <action id="DecrementWindowWidth" class="com.intellij.ide.actions.WindowAction$DecrementWidth" use-shortcut-of="ResizeToolWindowLeft"/>
