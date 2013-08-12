@@ -193,6 +193,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
       @Override
       public void consume(Editor editor) {
         collapseIfPossible(editor, externalSystemId, project);
+        editor.getSettings().setShowIntentionBulb(false);
       }
     });
     result.setBorder(UIUtil.getTextFieldBorder());
