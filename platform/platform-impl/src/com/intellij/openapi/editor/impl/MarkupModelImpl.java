@@ -19,7 +19,7 @@
  * User: max
  * Date: Apr 19, 2002
  * Time: 2:26:19 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.openapi.editor.impl;
@@ -213,7 +213,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   @Override
-  public void setRangeHighlighterAttributes(@NotNull final RangeHighlighter highlighter, final TextAttributes textAttributes) {
+  public void setRangeHighlighterAttributes(@NotNull final RangeHighlighter highlighter, @NotNull final TextAttributes textAttributes) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ((RangeHighlighterImpl)highlighter).setTextAttributes(textAttributes);
   }
