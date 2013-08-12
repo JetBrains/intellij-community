@@ -128,8 +128,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   public static void openSession(TerminalWidget terminal, TtyConnector ttyConnector) {
-    TerminalSession session = terminal.createTerminalSession();
-    session.setTtyConnector(ttyConnector);
+    TerminalSession session = terminal.createTerminalSession(ttyConnector);
     session.start();
   }
 

@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.jediterm.terminal.ui.JediTermWidget;
 import com.jediterm.terminal.ui.SystemSettingsProvider;
 import com.jediterm.terminal.ui.TabbedTerminalWidget;

@@ -61,7 +61,7 @@ public class TerminalView {
     toolbar.setTargetComponent(panel);
     panel.setToolbar(toolbar.getComponent());
 
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "Session 1", false);
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
     content.setCloseable(true);
 
     if (getComponentToFocus() != null) {
@@ -131,15 +131,13 @@ public class TerminalView {
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);
   }
 
-  public void createNewSession(Project project, AbstractTerminalRunner terminalRunner) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Terminal");
-
-    openSession(toolWindow, terminalRunner);
+  public void createNewSession(Project project, final AbstractTerminalRunner terminalRunner) {
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Terminal");
 
     toolWindow.activate(new Runnable() {
       @Override
       public void run() {
-
+        openSession(toolWindow, terminalRunner);
       }
     }, true);
   }
