@@ -32,12 +32,12 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
@@ -100,7 +100,8 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull final GlobalInspectionContext globalContext,
                         @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    for (Pair<PsiFile, HighlightInfo> pair : runGeneralHighlighting(originalFile, highlightErrorElements, runAnnotators)) {
+    for (Pair<PsiFile, HighlightInfo> pair : runGeneralHighlighting(originalFile, highlightErrorElements, runAnnotators,
+                                                                    problemsHolder.isOnTheFly())) {
       PsiFile file = pair.first;
       HighlightInfo info = pair.second;
       TextRange range = new TextRange(info.startOffset, info.endOffset);
@@ -129,8 +130,8 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
   public static List<Pair<PsiFile,HighlightInfo>> runGeneralHighlighting(PsiFile file,
                                             final boolean highlightErrorElements,
-                                            final boolean runAnnotators) {
-    MyPsiElementVisitor visitor = new MyPsiElementVisitor(highlightErrorElements, runAnnotators);
+                                            final boolean runAnnotators, boolean isOnTheFly) {
+    MyPsiElementVisitor visitor = new MyPsiElementVisitor(highlightErrorElements, runAnnotators, isOnTheFly);
     file.accept(visitor);
     return new ArrayList<Pair<PsiFile, HighlightInfo>>(visitor.result);
   }
@@ -145,11 +146,13 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   private static class MyPsiElementVisitor extends PsiElementVisitor {
     private final boolean highlightErrorElements;
     private final boolean runAnnotators;
-    final List<Pair<PsiFile, HighlightInfo>> result = ContainerUtil.createLockFreeCopyOnWriteList();
+    private final boolean myOnTheFly;
+    private final List<Pair<PsiFile, HighlightInfo>> result = Collections.synchronizedList(new ArrayList<Pair<PsiFile, HighlightInfo>>());
 
-    public MyPsiElementVisitor(boolean highlightErrorElements, boolean runAnnotators) {
+    public MyPsiElementVisitor(boolean highlightErrorElements, boolean runAnnotators, boolean isOnTheFly) {
       this.highlightErrorElements = highlightErrorElements;
       this.runAnnotators = runAnnotators;
+      myOnTheFly = isOnTheFly;
     }
 
     @Override
@@ -196,7 +199,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
           @Override
           protected boolean isFailFastOnAcquireReadAction() {
-            return false;
+            return myOnTheFly;
           }
         };
       DaemonProgressIndicator progress = new DaemonProgressIndicator();

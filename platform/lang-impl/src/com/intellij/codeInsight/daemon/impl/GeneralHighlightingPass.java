@@ -334,7 +334,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
       }
     };
-    if (!JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiElement>(hosts), progress, false,
+    if (!JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiElement>(hosts), progress, true,
             new Processor<PsiElement>() {
               @Override
               public boolean process(PsiElement element) {
