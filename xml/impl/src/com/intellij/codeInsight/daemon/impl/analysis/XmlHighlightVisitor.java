@@ -414,6 +414,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   private void checkAttribute(XmlAttribute attribute) {
     XmlTag tag = attribute.getParent();
+    if (tag == null) return;
 
     final String name = attribute.getName();
 
