@@ -502,12 +502,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       int level2 = getLevel(applicabilityLevel, languageLevel, method2, typeParameters2, types1, types2, resolveHelper);
       if (level1 > level2) return Specifics.SECOND;
       if (level2 > level1) return Specifics.FIRST;
-      if (level1 == MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE) {
-        final boolean raw1 = PsiUtil.isRawSubstitutor(method1, classSubstitutor1);
-        final boolean raw2 = PsiUtil.isRawSubstitutor(method2, classSubstitutor2);
-        if (raw1 ^ raw2) {
-          return raw1 ? Specifics.SECOND : Specifics.FIRST;
-        }
+      final boolean raw1 = PsiUtil.isRawSubstitutor(method1, classSubstitutor1);
+      final boolean raw2 = PsiUtil.isRawSubstitutor(method2, classSubstitutor2);
+      if (raw1 ^ raw2) {
+        return raw1 ? Specifics.SECOND : Specifics.FIRST;
       }
     } 
     else if (applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
