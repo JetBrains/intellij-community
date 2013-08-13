@@ -791,7 +791,7 @@ public abstract class ChooseByNameBase {
       }
     }
 
-    if (index == 1 && myModel instanceof ContributorsBasedGotoByModel) {
+    if (index == 1 && myModel instanceof ContributorsBasedGotoByModel && myNames[0] != null) {
       // there is no way in indices to have different keys for project symbols vs libraries, we always have same ones
       myNames[1] = myNames[0];
       return;
