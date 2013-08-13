@@ -83,7 +83,7 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
 
   @NotNull
   @Override
-  public DeploymentConfigurator createDeployer(Project project) {
+  public DeploymentConfigurator createDeploymentConfigurator(Project project) {
     return new AppEngineDeploymentConfigurator(project);
   }
 
