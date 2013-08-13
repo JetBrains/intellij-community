@@ -159,7 +159,7 @@ public class ExternalSystemFacadeManager {
   @SuppressWarnings("ConstantConditions")
   @NotNull
   private RemoteExternalSystemFacade doGetFacade(@NotNull IntegrationKey key, @NotNull Project project) throws Exception {
-    boolean currentInProcess = Registry.is(ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY, false);
+    boolean currentInProcess = ExternalSystemApiUtil.isInProcessMode();
     if (myInProcessCommunication.getAndSet(currentInProcess) != currentInProcess) {
       myCommunicationManager.get().clear();
       myCommunicationManager.set(currentInProcess ? myInProcessCommunicationManager : myRemoteCommunicationManager);
