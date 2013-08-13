@@ -278,6 +278,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
     final Project project = getProject(wizardContext);
     final File finalProjectFile = projectFile;
+    final String externalProjectPath = FileUtil.toCanonicalPath(finalProjectFile.getAbsolutePath());
     final Ref<ConfigurationException> exRef = new Ref<ConfigurationException>();
     executeAndRestoreDefaultProjectSettings(project, new Runnable() {
       @Override
@@ -286,7 +287,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
           ExternalSystemUtil.refreshProject(
             project,
             myExternalSystemId,
-            finalProjectFile.getAbsolutePath(),
+            externalProjectPath,
             callback,
             false,
             true
