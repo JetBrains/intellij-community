@@ -183,7 +183,7 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
       Artifact artifact = ((ArtifactDeploymentSource)task.getSource()).getArtifact();
       if (artifact == null) return;
 
-      AppEngineUploader uploader = AppEngineUploader.createUploader(task.getProject(), artifact, myConfiguration, callback);
+      AppEngineUploader uploader = AppEngineUploader.createUploader(task.getProject(), artifact, myConfiguration, callback, task.getLoggingHandler());
       if (uploader != null) {
         uploader.startUploading();
       }
