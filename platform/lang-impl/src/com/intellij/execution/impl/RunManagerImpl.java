@@ -483,7 +483,12 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
             boolean temporary1 = o1.getSecond().isTemporary();
             boolean temporary2 = o2.getSecond().isTemporary();
             if (temporary1 == temporary2) {
-              return myOrder.indexOf(o1.first) - myOrder.indexOf(o2.first);
+              int index1 = myOrder.indexOf(o1.first);
+              int index2 = myOrder.indexOf(o2.first);
+              if (index1 ==-1 && index2 ==-1) {
+                return o1.second.getName().compareTo(o2.second.getName());
+              }
+              return index1 - index2;
             } else {
               return temporary1 ? 1 : -1;
             }
