@@ -20,6 +20,9 @@ import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -39,8 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.List;
 
 /**
@@ -67,7 +69,18 @@ public class ExternalSystemRecentTasksList extends JBList implements Producer<Ex
     }
     setCellRenderer(new MyRenderer(project, icon, ExternalSystemUtil.findConfigurationType(externalSystemId)));
     setVisibleRowCount(ExternalSystemConstants.RECENT_TASKS_NUMBER);
-    
+
+    registerKeyboardAction(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ExternalTaskExecutionInfo task = produce();
+        if (task == null) {
+          return;
+        }
+        ExternalSystemUtil.runTask(task.getSettings(), task.getExecutorId(), project, externalSystemId);
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
