@@ -62,4 +62,6 @@ public interface PyAssignmentStatement extends PyStatement, NameDefiner {
   @Nullable
   PyExpression getLeftHandSideExpression();
 
+  boolean isAssignmentTo(@NotNull String name);
+
 }
