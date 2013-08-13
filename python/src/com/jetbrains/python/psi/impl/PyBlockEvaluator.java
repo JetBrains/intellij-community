@@ -19,6 +19,7 @@ public class PyBlockEvaluator {
   private final Set<String> myDeclarationsToTrack = new HashSet<String>();
   private String myCurrentFilePath;
   private Object myReturnValue;
+  private boolean myEvaluateCollectionItems = true;
 
   public PyBlockEvaluator() {
     myVisitedFiles = new HashSet<PyFile>();
@@ -177,6 +178,7 @@ public class PyBlockEvaluator {
   private PyEvaluator prepareEvaluator() {
     PyEvaluator evaluator = createEvaluator();
     evaluator.setNamespace(myNamespace);
+    evaluator.setEvaluateCollectionItems(myEvaluateCollectionItems);
     return evaluator;
   }
 
@@ -230,5 +232,9 @@ public class PyBlockEvaluator {
 
   public Object getReturnValue() {
     return myReturnValue;
+  }
+
+  public void setEvaluateCollectionItems(boolean evaluateCollectionItems) {
+    myEvaluateCollectionItems = evaluateCollectionItems;
   }
 }
