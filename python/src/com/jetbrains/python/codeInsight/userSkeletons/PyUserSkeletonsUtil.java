@@ -121,8 +121,9 @@ public class PyUserSkeletonsUtil {
         final PyType type = TypeEvalContext.codeInsightFallback().getType((PyClass)originalOwner);
         if (type instanceof PyClassLikeType) {
           final PyClassLikeType classType = (PyClassLikeType)type;
-          final List<? extends RatedResolveResult> resolveResults = classType.resolveMember(name, null, AccessDirection.READ,
-                                                                                            PyResolveContext.noImplicits(), false);
+          final PyClassLikeType instanceType = classType.toInstance();
+          final List<? extends RatedResolveResult> resolveResults = instanceType.resolveMember(name, null, AccessDirection.READ,
+                                                                                               PyResolveContext.noImplicits(), false);
           if (resolveResults != null && !resolveResults.isEmpty()) {
             return resolveResults.get(0).getElement();
           }

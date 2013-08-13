@@ -52,4 +52,9 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   public void _testNamedTupleBaseStub() {
     doMultiFileTest("a.py");
   }
+
+  // PY-10208
+  public void testMetaclassMethods() {
+    doTest();
+  }
 }
