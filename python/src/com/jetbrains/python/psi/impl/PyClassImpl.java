@@ -975,7 +975,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Override
-  public boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PyExpression location) {
+  public boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location) {
     Map<String, PyTargetExpression> declarationsInMethod = new HashMap<String, PyTargetExpression>();
     PyFunction instanceMethod = PsiTreeUtil.getParentOfType(location, PyFunction.class);
     final PyClass containingClass = instanceMethod != null ? instanceMethod.getContainingClass() : null;

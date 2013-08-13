@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -42,7 +43,7 @@ public class PyUnionType implements PyType {
     return allNulls ? null : ret;
   }
 
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
     Set<Object> variants = new HashSet<Object>();
     for (PyType member : myMembers) {
       if (member != null) {

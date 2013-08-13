@@ -335,7 +335,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
   public static Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
-  public Object[] getCompletionVariants(String prefix, PyExpression location, ProcessingContext context) {
+  public Object[] getCompletionVariants(String prefix, PsiElement location, ProcessingContext context) {
     Set<PyClassType> visited = context.get(CTX_VISITED);
     if (visited == null) {
       visited = new HashSet<PyClassType>();
@@ -392,7 +392,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return ret.toArray();
   }
 
-  private void addOwnClassMembers(PyExpression expressionHook, Set<String> namesAlready, boolean suppressParentheses, List<Object> ret) {
+  private void addOwnClassMembers(PsiElement expressionHook, Set<String> namesAlready, boolean suppressParentheses, List<Object> ret) {
     PyClass containingClass = PsiTreeUtil.getParentOfType(expressionHook, PyClass.class);
     if (containingClass != null) {
       containingClass = CompletionUtil.getOriginalElement(containingClass);
@@ -429,7 +429,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
   }
 
-  private static boolean isInSuperCall(PyExpression hook) {
+  private static boolean isInSuperCall(PsiElement hook) {
     if (hook instanceof PyReferenceExpression) {
       final PyExpression qualifier = ((PyReferenceExpression)hook).getQualifier();
       return qualifier instanceof PyCallExpression && ((PyCallExpression)qualifier).isCalleeText(PyNames.SUPER);
@@ -438,7 +438,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   private void addInheritedMembers(String name,
-                                   PyExpression expressionHook,
+                                   PsiElement expressionHook,
                                    Set<String> namesAlready,
                                    ProcessingContext context,
                                    List<Object> ret,

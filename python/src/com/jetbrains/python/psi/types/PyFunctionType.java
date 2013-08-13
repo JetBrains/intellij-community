@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.types;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -53,7 +54,7 @@ public class PyFunctionType implements PyCallableType {
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
     return new Object[0];
   }
 

@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.types;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
@@ -28,7 +29,7 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
     return null;
   }
 
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 

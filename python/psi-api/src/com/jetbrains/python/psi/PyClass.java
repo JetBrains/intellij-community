@@ -165,5 +165,5 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   String getDocStringValue();
 
   boolean processClassLevelDeclarations(@NotNull PsiScopeProcessor processor);
-  boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PyExpression location);
+  boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location);
 }
