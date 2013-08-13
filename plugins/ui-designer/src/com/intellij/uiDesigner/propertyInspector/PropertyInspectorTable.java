@@ -15,7 +15,7 @@
  */
 package com.intellij.uiDesigner.propertyInspector;
 
-import com.intellij.codeInsight.daemon.impl.SeverityUtil;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
@@ -1131,7 +1131,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         Map<HighlightSeverity, SimpleTextAttributes> cache = modified ? myModifiedHighlightAttributes : myHighlightAttributes;
         result = cache.get(severity);
         if (result == null) {
-          final TextAttributesKey attrKey = SeverityUtil.getSeverityRegistrar(myProject).getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+          final TextAttributesKey attrKey = SeverityRegistrar.getSeverityRegistrar(myProject).getHighlightInfoTypeBySeverity(severity).getAttributesKey();
           TextAttributes textAttrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attrKey);
           if (modified) {
             textAttrs = textAttrs.clone();

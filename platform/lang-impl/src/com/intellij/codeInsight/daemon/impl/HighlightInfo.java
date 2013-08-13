@@ -187,7 +187,7 @@ public class HighlightInfo implements Segment {
   public static TextAttributes getAttributesByType(@Nullable final PsiElement element,
                                                    @NotNull HighlightInfoType type,
                                                    @NotNull TextAttributesScheme colorsScheme) {
-    final SeverityRegistrar severityRegistrar = SeverityUtil
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar
       .getSeverityRegistrar(element != null ? element.getProject() : null);
     final TextAttributes textAttributes = severityRegistrar.getTextAttributesBySeverity(type.getSeverity(element));
     if (textAttributes != null) {
