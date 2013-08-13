@@ -54,6 +54,11 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <K, V> Map<K, V> newHashMap(Pair<K, V> first, Pair<K, V>... entries) {
+    return ContainerUtilRt.newHashMap(first, entries);
+  }
+
+  @NotNull
   public static <K, V> Map<K, V> newHashMap(@NotNull List<K> keys, @NotNull List<V> values) {
     return ContainerUtilRt.newHashMap(keys, values);
   }
