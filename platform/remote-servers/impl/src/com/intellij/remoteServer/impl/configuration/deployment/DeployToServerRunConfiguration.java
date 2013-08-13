@@ -161,7 +161,10 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
         throw new WriteExternalException("Unknown source " + myDeploymentSource);
       }
       if (myDeploymentConfiguration != null) {
-        itemState.setSettings(XmlSerializer.serialize(myDeploymentConfiguration.getSerializer().getState(), SERIALIZATION_FILTERS));
+        Object configurationState = myDeploymentConfiguration.getSerializer().getState();
+        if (configurationState != null) {
+          itemState.setSettings(XmlSerializer.serialize(configurationState, SERIALIZATION_FILTERS));
+        }
       }
       state.myDeploymentItemState.add(itemState);
     }
