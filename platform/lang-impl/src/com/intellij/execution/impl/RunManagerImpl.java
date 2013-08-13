@@ -320,9 +320,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
                                List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
     final RunConfiguration configuration = settings.getConfiguration();
 
-    //Integer existingId = findConfigurationIdByUniqueName(getUniqueName(configuration));
     String existingId = findConfigurationIdByUniqueName(settings.getUniqueID());
-    //Integer newId = configuration.getUniqueID();
     String newId = settings.getUniqueID();
     RunnerAndConfigurationSettings existingSettings = null;
 
@@ -739,9 +737,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         if (selectedUniqueName.equals(each.getUniqueID())) {
           return each.getUniqueID();
         }
-        //if (selectedUniqueName.equals(getUniqueName(each.getConfiguration()))) {
-        //  return each.getConfiguration().getUniqueID();
-        //}
       }
       //migration code 11.08.2013
       for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
