@@ -27,6 +27,7 @@ import com.intellij.facet.pointers.FacetPointersManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -96,6 +97,11 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
       @Override
+      public void moduleAdded(Project project, Module module) {
+        refreshPointers(module);
+      }
+
+      @Override
       public void modulesRenamed(Project project, List<Module> modules, Function<Module, String> oldNameProvider) {
         for (Module module : modules) {
           refreshPointers(module);
@@ -121,6 +127,9 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
         refreshPointers(facet.getModule());
       }
     });
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      refreshPointers(module);
+    }
   }
 
   private void refreshPointers(@NotNull final Module module) {
