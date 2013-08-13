@@ -1,6 +1,6 @@
 package com.jetbrains.python.editor.selectWord;
 
-import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler;
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -18,7 +18,7 @@ import java.util.List;
  *
  * Handler to select commas around a selection before widening the selection to few words  
  */
-public class PyCommaSelectionHandler implements ExtendWordSelectionHandler {
+public class PyCommaSelectionHandler extends ExtendWordSelectionHandlerBase {
   public boolean canSelect(final PsiElement e) {
     return e instanceof PyReferenceExpression || e instanceof PyKeyValueExpression || e instanceof PyKeywordArgument 
       || e instanceof PyNumericLiteralExpression || e instanceof PyStringLiteralExpression || e instanceof PyNamedParameter
