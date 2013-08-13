@@ -38,11 +38,11 @@ public class XmlSerializer {
   private XmlSerializer() {
   }
 
-  public static Element serialize(Object object) throws XmlSerializationException {
+  public static Element serialize(@NotNull Object object) throws XmlSerializationException {
     return serialize(object, TRUE_FILTER);
   }
 
-  public static Element serialize(Object object, SerializationFilter filter) throws XmlSerializationException {
+  public static Element serialize(@NotNull Object object, SerializationFilter filter) throws XmlSerializationException {
     if (filter == null) filter = TRUE_FILTER;
     return new XmlSerializerImpl(filter).serialize(object);
   }
