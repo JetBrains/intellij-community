@@ -33,7 +33,7 @@ public abstract class RunManagerEx extends RunManager {
     return (RunManagerEx)project.getComponent(RunManager.class);
   }
 
-  public abstract boolean isTemporary(@NotNull RunnerAndConfigurationSettings configuration);
+  //public abstract boolean isTemporary(@NotNull RunnerAndConfigurationSettings configuration);
 
   @Deprecated // use setSelectedConfiguration instead
   public void setActiveConfiguration(@Nullable RunnerAndConfigurationSettings configuration) {

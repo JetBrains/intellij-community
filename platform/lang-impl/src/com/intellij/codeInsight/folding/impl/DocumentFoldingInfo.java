@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -232,60 +233,65 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   }
 
   @Override
-  public void readExternal(Element element) {
-    clear();
+  public void readExternal(final Element element) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        clear();
 
-    if (!myFile.isValid()) return;
+        if (!myFile.isValid()) return;
 
-    final Document document = FileDocumentManager.getInstance().getDocument(myFile);
-    if (document == null) return;
+        final Document document = FileDocumentManager.getInstance().getDocument(myFile);
+        if (document == null) return;
 
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
+        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
 
-    String date = null;
-    for (final Object o : element.getChildren()) {
-      Element e = (Element)o;
-      Boolean expanded = Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT));
-      if (ELEMENT_TAG.equals(e.getName())) {
-        String signature = e.getAttributeValue(SIGNATURE_ATT);
-        if (signature == null) {
-          continue;
-        }
-        PsiElement restoredElement = FoldingPolicy.restoreBySignature(psiFile, signature);
-        if (restoredElement != null) {
-          myPsiElements.add(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(restoredElement));
-          FoldingInfo fi = new FoldingInfo(DEFAULT_PLACEHOLDER, expanded);
-          restoredElement.putUserData(FOLDING_INFO_KEY, fi);
+        String date = null;
+        for (final Object o : element.getChildren()) {
+          Element e = (Element)o;
+          Boolean expanded = Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT));
+          if (ELEMENT_TAG.equals(e.getName())) {
+            String signature = e.getAttributeValue(SIGNATURE_ATT);
+            if (signature == null) {
+              continue;
+            }
+            PsiElement restoredElement = FoldingPolicy.restoreBySignature(psiFile, signature);
+            if (restoredElement != null) {
+              myPsiElements.add(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(restoredElement));
+              FoldingInfo fi = new FoldingInfo(DEFAULT_PLACEHOLDER, expanded);
+              restoredElement.putUserData(FOLDING_INFO_KEY, fi);
+            }
+          }
+          else if (MARKER_TAG.equals(e.getName())) {
+            if (date == null) {
+              date = getTimeStamp();
+            }
+            if (date.isEmpty()) continue;
+
+            if (!date.equals(e.getAttributeValue(DATE_ATT)) || FileDocumentManager.getInstance().isDocumentUnsaved(document)) continue;
+            StringTokenizer tokenizer = new StringTokenizer(e.getAttributeValue(SIGNATURE_ATT), ":");
+            try {
+              int start = Integer.valueOf(tokenizer.nextToken()).intValue();
+              int end = Integer.valueOf(tokenizer.nextToken()).intValue();
+              if (start < 0 || end >= document.getTextLength() || start > end) continue;
+              RangeMarker marker = document.createRangeMarker(start, end);
+              myRangeMarkers.add(marker);
+              String placeHolderText = e.getAttributeValue(PLACEHOLDER_ATT);
+              if (placeHolderText == null) placeHolderText = DEFAULT_PLACEHOLDER;
+              FoldingInfo fi = new FoldingInfo(placeHolderText, expanded);
+              marker.putUserData(FOLDING_INFO_KEY, fi);
+            }
+            catch (NoSuchElementException exc) {
+              LOG.error(exc);
+            }
+          }
+          else {
+            throw new IllegalStateException("unknown tag: " + e.getName());
+          }
         }
       }
-      else if (MARKER_TAG.equals(e.getName())) {
-        if (date == null) {
-          date = getTimeStamp();
-        }
-        if (date.isEmpty()) continue;
-
-        if (!date.equals(e.getAttributeValue(DATE_ATT)) || FileDocumentManager.getInstance().isDocumentUnsaved(document)) continue;
-        StringTokenizer tokenizer = new StringTokenizer(e.getAttributeValue(SIGNATURE_ATT), ":");
-        try {
-          int start = Integer.valueOf(tokenizer.nextToken()).intValue();
-          int end = Integer.valueOf(tokenizer.nextToken()).intValue();
-          if (start < 0 || end >= document.getTextLength() || start > end) continue;
-          RangeMarker marker = document.createRangeMarker(start, end);
-          myRangeMarkers.add(marker);
-          String placeHolderText = e.getAttributeValue(PLACEHOLDER_ATT);
-          if (placeHolderText == null) placeHolderText = DEFAULT_PLACEHOLDER;
-          FoldingInfo fi = new FoldingInfo(placeHolderText, expanded);
-          marker.putUserData(FOLDING_INFO_KEY, fi);
-        }
-        catch (NoSuchElementException exc) {
-          LOG.error(exc);
-        }
-      }
-      else {
-        throw new IllegalStateException("unknown tag: " + e.getName());
-      }
-    }
+    });
   }
 
   private String getTimeStamp() {

@@ -38,7 +38,7 @@ public interface MarkupModelEx extends MarkupModel {
 
   void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull MarkupModelListener listener);
 
-  void setRangeHighlighterAttributes(@NotNull RangeHighlighter highlighter, TextAttributes textAttributes);
+  void setRangeHighlighterAttributes(@NotNull RangeHighlighter highlighter, @NotNull TextAttributes textAttributes);
 
   boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
   boolean processRangeHighlightersOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);

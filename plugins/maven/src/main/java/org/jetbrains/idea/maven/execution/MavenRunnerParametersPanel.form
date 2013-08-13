@@ -66,6 +66,7 @@
         </constraints>
         <properties>
           <text value="Resolve &amp;Workspace artifacts"/>
+          <toolTipText value="In case of multi-project workspace, dependencies will be looked for in the workspace first, and only after that in local repository."/>
         </properties>
       </component>
       <grid id="41a03" layout-manager="BorderLayout" hgap="0" vgap="0">

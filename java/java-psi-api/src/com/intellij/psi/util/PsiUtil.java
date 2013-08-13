@@ -92,7 +92,11 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean isAccessible(@NotNull PsiMember member, @NotNull PsiElement place, @Nullable PsiClass accessObjectClass) {
-    return JavaPsiFacade.getInstance(place.getProject()).getResolveHelper().isAccessible(member, place, accessObjectClass);
+    return isAccessible(place.getProject(), member, place, accessObjectClass);
+  }
+  public static boolean isAccessible(@NotNull Project project, @NotNull PsiMember member,
+                                     @NotNull PsiElement place, @Nullable PsiClass accessObjectClass) {
+    return JavaPsiFacade.getInstance(project).getResolveHelper().isAccessible(member, place, accessObjectClass);
   }
 
   @NotNull

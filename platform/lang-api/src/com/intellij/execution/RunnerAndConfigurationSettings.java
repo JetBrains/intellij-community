@@ -92,6 +92,8 @@ public interface RunnerAndConfigurationSettings {
    */
   String getName();
 
+  String getUniqueID();
+
   /**
    * Returns the runner-managed settings for the specified runner.
    *

@@ -35,8 +35,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
@@ -735,7 +735,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     });
   }
 
-  public void evaluateEffectivePom(@NotNull final MavenProject mavenProject, @NotNull final Consumer<String> consumer) {
+  public void evaluateEffectivePom(@NotNull final MavenProject mavenProject, @NotNull final NullableConsumer<String> consumer) {
     runWhenFullyOpen(new Runnable() {
       @Override
       public void run() {
@@ -757,9 +757,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                                new MavenProjectsTree.EmbedderTask() {
                                                  @Override
                                                  public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
-                                                   String res =
-                                                     embedder.evaluateEffectivePom(mavenProject.getFile(), mavenProject.getActivatedProfilesIds());
-                                                   consumer.consume(res);
+                                                   try {
+                                                     String res =
+                                                       embedder.evaluateEffectivePom(mavenProject.getFile(), mavenProject.getActivatedProfilesIds());
+                                                     consumer.consume(res);
+                                                   }
+                                                   catch (UnsupportedOperationException e) {
+                                                     consumer.consume(null); // null means UnsupportedOperationException
+                                                   }
                                                  }
                                                });
           }

@@ -16,16 +16,15 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,13 +39,21 @@ class InjectedSelfElementInfo extends SelfElementInfo {
   private final Class<? extends PsiElement> anchorClass;
   private final Language anchorLanguage;
 
-  InjectedSelfElementInfo(@NotNull Project project, @NotNull PsiElement element, @NotNull PsiElement hostContext) {
+  InjectedSelfElementInfo(@NotNull Project project,
+                          @NotNull PsiElement injectedElement,
+                          @NotNull TextRange injectedRange,
+                          @NotNull PsiFile containingFile,
+                          @NotNull PsiElement hostContext) {
     super(project, hostContext);
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
-    TextRange range = InjectedLanguageManager.getInstance(project).injectedToHost(element, element.getTextRange());
-    myInjectedFileRangeInHostFile = smartPointerManager.createSmartPsiFileRangePointer(hostContext.getContainingFile(), range);
-    anchorClass = element.getClass();
-    anchorLanguage = element.getContainingFile().getLanguage();
+    ProperTextRange.assertProperRange(injectedRange);
+    TextRange hostRange = InjectedLanguageManager.getInstance(project).injectedToHost(injectedElement, injectedRange);
+    PsiFile hostFile = hostContext.getContainingFile();
+    assert !(hostFile.getViewProvider() instanceof FreeThreadedFileViewProvider) : "hostContext parameter must not be and injected element: "+hostContext;
+    myInjectedFileRangeInHostFile = smartPointerManager.createSmartPsiFileRangePointer(hostFile, hostRange);
+    anchorClass = containingFile.findElementAt(injectedRange.getStartOffset()).getClass();
+    anchorLanguage = containingFile.getLanguage();
+    assert containingFile.getViewProvider() instanceof FreeThreadedFileViewProvider : "element parameter must be an injected element: "+injectedElement+"; "+containingFile;
   }
 
   @Override
@@ -57,8 +64,17 @@ class InjectedSelfElementInfo extends SelfElementInfo {
   }
 
   @Override
+  public Segment getRange() {
+    return getInjectedRange();
+  }
+
+  @Override
   public PsiElement restoreElement() {
-    PsiElement hostContext = super.restoreElement();
+    if (!mySyncMarkerIsValid) return null;
+    PsiFile file = restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
+    if (file == null || !file.isValid()) return null;
+
+    PsiElement hostContext = restoreFromFile(file);
     if (hostContext == null) return null;
 
     Segment segment = myInjectedFileRangeInHostFile.getRange();
@@ -115,6 +131,28 @@ class InjectedSelfElementInfo extends SelfElementInfo {
     SmartPointerElementInfo myElementInfo = ((SmartPsiElementPointerImpl)myInjectedFileRangeInHostFile).getElementInfo();
     SmartPointerElementInfo oElementInfo = ((SmartPsiElementPointerImpl)((InjectedSelfElementInfo)other).myInjectedFileRangeInHostFile).getElementInfo();
     return myElementInfo.pointsToTheSameElementAs(oElementInfo);
+  }
+
+  @Override
+  public PsiFile restoreFile() {
+    PsiElement element = restoreElement();
+    return element == null ? null : element.getContainingFile();
+  }
+
+  public ProperTextRange getInjectedRange() {
+    Segment hostElementRange = myInjectedFileRangeInHostFile.getRange();
+    if (hostElementRange == null) return null;
+
+    PsiElement injectedElement = restoreElement();
+    if (injectedElement == null) return null;
+    PsiFile injectedFile = injectedElement.getContainingFile();
+    if (injectedFile == null) return null;
+    VirtualFile virtualFile = injectedFile.getVirtualFile();
+    DocumentWindow documentWindow = virtualFile instanceof VirtualFileWindow ?  ((VirtualFileWindow)virtualFile).getDocumentWindow() : null;
+    if (documentWindow==null) return null;
+    int start = documentWindow.hostToInjected(hostElementRange.getStartOffset());
+    int end = documentWindow.hostToInjected(hostElementRange.getEndOffset());
+    return ProperTextRange.create(start, end);
   }
 
   @Override

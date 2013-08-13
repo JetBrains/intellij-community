@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.util.Consumer;
+import com.intellij.util.NullableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -51,19 +51,24 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
                      }).notify(project);
   }
 
-  public static void actionPerformed(@NotNull final Project project, @NotNull VirtualFile file) {
+  public static void actionPerformed(@NotNull final Project project, @NotNull final VirtualFile file) {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
     final MavenProject mavenProject = manager.findProject(file);
     assert mavenProject != null;
 
-    manager.evaluateEffectivePom(mavenProject, new Consumer<String>() {
+    manager.evaluateEffectivePom(mavenProject, new NullableConsumer<String>() {
       @Override
       public void consume(final String s) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
             if (project.isDisposed()) return;
+
+            if (s == null) { // null means UnsupportedOperationException
+              showUnsupportedNotification(project, file);
+              return;
+            }
 
             String fileName = mavenProject.getMavenId().getArtifactId() + "-effective-pom.xml";
             PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, XMLLanguage.INSTANCE, s);

@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.test
 
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -48,6 +49,9 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
   IdeaProjectTestFixture testFixture
   Project project
   File projectDir
+
+  TestExternalSystemManager externalSystemManager
+  ExtensionPoint externalSystemManagerEP
   
   @Override
   protected void setUp() throws Exception {
@@ -62,9 +66,9 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
     projectDir = new File(tmpDir, getTestName(false));
     projectDir.mkdirs();
     
-    def externalSystemManager = new TestExternalSystemManager(project)
+    externalSystemManager = new TestExternalSystemManager(project)
     def area = Extensions.getArea(null)
-    def externalSystemManagerEP = area.getExtensionPoint(ExternalSystemManager.EP_NAME)
+    externalSystemManagerEP = area.getExtensionPoint(ExternalSystemManager.EP_NAME)
     externalSystemManagerEP.registerExtension(externalSystemManager)
   }
 
@@ -83,6 +87,7 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
     project = null
     UIUtil.invokeAndWaitIfNeeded {
       try {
+        externalSystemManagerEP.unregisterExtension(externalSystemManager)
         testFixture.tearDown();
         testFixture = null;
       }
@@ -123,10 +128,28 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
       resetClassFields(aClass.getSuperclass());
     }
   }
+
+  public void setupExternalProject(@NotNull Closure c) {
+    DataNode<ProjectData> node = buildExternalProjectInfo(c)
+    applyProjectState([node])
+  }
   
+  @NotNull
+  public <T> DataNode<T> buildExternalProjectInfo(@NotNull Closure c) {
+    ExternalProjectBuilder builder = new ExternalProjectBuilder(projectDir: projectDir)
+    c.delegate = builder
+    c.call()
+  }
+
   protected void applyProjectState(@NotNull List<DataNode<ProjectData>> states) {
     def dataManager = ServiceManager.getService(ProjectDataManager.class)
+    def settingsInitialized = false
     for (DataNode<ProjectData> node : states) {
+      if (!settingsInitialized) {
+        settingsInitialized = true
+        def settings = ExternalSystemApiUtil.getSettings(project, ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID)
+        settings.linkedProjectsSettings = [new TestExternalProjectSettings(externalProjectPath: node.data.linkedExternalProjectPath)]
+      }
       ExternalSystemApiUtil.executeProjectChangeAction(true, {
         ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
           dataManager.importData(node.key, [node], project, true)

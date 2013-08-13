@@ -106,7 +106,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
         return true;
       }
     };
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(liveContribs, indicator, false, processor);
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(liveContribs, indicator, true, processor)) {
+      throw new ProcessCanceledException();
+    }
     if (indicator != null) {
       indicator.checkCanceled();
     }
@@ -167,7 +169,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
         return true;
       }
     };
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(myContributors), canceled, false, processor);
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(myContributors), canceled, true, processor)) {
+      canceled.cancel();
+    }
     canceled.checkCanceled(); // if parallel job execution was canceled because of PCE, rethrow it from here
     return ArrayUtil.toObjectArray(items);
   }

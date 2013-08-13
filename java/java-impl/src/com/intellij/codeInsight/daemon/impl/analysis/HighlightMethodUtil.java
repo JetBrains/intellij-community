@@ -71,8 +71,9 @@ public class HighlightMethodUtil {
   }
 
   static HighlightInfo checkMethodWeakerPrivileges(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
-                                                          @NotNull List<HierarchicalMethodSignature> superMethodSignatures,
-                                                          boolean includeRealPositionInfo) {
+                                                   @NotNull List<HierarchicalMethodSignature> superMethodSignatures,
+                                                   boolean includeRealPositionInfo,
+                                                   @NotNull PsiFile containingFile) {
     PsiMethod method = methodSignature.getMethod();
     PsiModifierList modifierList = method.getModifierList();
     if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) return null;
@@ -80,7 +81,7 @@ public class HighlightMethodUtil {
     String accessModifier = PsiUtil.getAccessModifier(accessLevel);
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
-      if (!PsiUtil.isAccessible(superMethod, method, null)) continue;
+      if (!PsiUtil.isAccessible(containingFile.getProject(), superMethod, method, null)) continue;
       HighlightInfo info = isWeaker(method, modifierList, accessModifier, accessLevel, superMethod, includeRealPositionInfo);
       if (info != null) return info;
     }
@@ -1102,7 +1103,7 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  static HighlightInfo checkOverrideEquivalentInheritedMethods(PsiClass aClass) {
+  static HighlightInfo checkOverrideEquivalentInheritedMethods(PsiClass aClass, PsiFile containingFile) {
     String description = null;
     final Collection<HierarchicalMethodSignature> visibleSignatures = aClass.getVisibleSignatures();
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
@@ -1119,16 +1120,12 @@ public class HighlightMethodUtil {
       if (aClass.isInterface() && !containingClass.isInterface()) continue;
       HighlightInfo highlightInfo = null;
       if (allAbstracts) {
-        if (!containingClass.equals(aClass)) {
-          superSignatures = new ArrayList<HierarchicalMethodSignature>(superSignatures);
-          superSignatures.add(signature);
-        }
+        superSignatures = new ArrayList<HierarchicalMethodSignature>(superSignatures);
+        superSignatures.add(signature);
         highlightInfo = checkInterfaceInheritedMethodsReturnTypes(superSignatures);
       }
       else {
-        if (!aClass.equals(containingClass)) {
-          highlightInfo = checkMethodIncompatibleReturnType(signature, superSignatures, false);
-        }
+        highlightInfo = checkMethodIncompatibleReturnType(signature, superSignatures, false);
       }
       if (highlightInfo != null) description = highlightInfo.getDescription();
 
@@ -1153,7 +1150,7 @@ public class HighlightMethodUtil {
       }
 
       if (description == null) {
-        highlightInfo = checkMethodWeakerPrivileges(signature, superSignatures, false);
+        highlightInfo = checkMethodWeakerPrivileges(signature, superSignatures, false, containingFile);
         if (highlightInfo != null) description = highlightInfo.getDescription();
       }
 

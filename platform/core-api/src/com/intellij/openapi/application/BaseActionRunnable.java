@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.application;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class BaseActionRunnable<T> {
 
   private boolean mySilentExecution;
@@ -25,6 +27,7 @@ public abstract class BaseActionRunnable<T> {
 
   protected abstract void run(Result<T> result) throws Throwable;
 
+  @NotNull
   public abstract RunResult<T> execute();
 
   protected boolean canWriteNow() {
@@ -40,6 +43,7 @@ public abstract class BaseActionRunnable<T> {
   }
 
   /** Same as execute() but do not log error if exception occurred. */
+  @NotNull
   public final RunResult<T> executeSilently() {
     mySilentExecution = true;
     return execute();

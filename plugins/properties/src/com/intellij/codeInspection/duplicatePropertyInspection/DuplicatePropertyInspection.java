@@ -73,16 +73,6 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     checkFile(file, manager, (GlobalInspectionContextImpl)globalContext, globalContext.getRefManager(), problemDescriptionsProcessor);
   }
 
-  //public HTMLComposerImpl getComposer() {
-  //  return new DescriptorComposer(this) {
-  //    protected void composeDescription(final CommonProblemDescriptor description, int i, StringBuffer buf, final RefEntity refElement) {
-  //      @NonNls String descriptionTemplate = description.getDescriptionTemplate();
-  //      descriptionTemplate = descriptionTemplate.replaceAll("#end", " ");
-  //      buf.append(descriptionTemplate);
-  //    }
-  //  };
-  //}
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void surroundWithHref(StringBuffer anchor, PsiElement element, final boolean isValue) {
     if (element != null) {
@@ -143,7 +133,11 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     }
   }
 
-  private void checkFile(final PsiFile file, final InspectionManager manager, GlobalInspectionContextImpl context, final RefManager refManager, final ProblemDescriptionsProcessor processor) {
+  private void checkFile(final PsiFile file,
+                         final InspectionManager manager,
+                         GlobalInspectionContextImpl context,
+                         final RefManager refManager,
+                         final ProblemDescriptionsProcessor processor) {
     if (!(file instanceof PropertiesFile)) return;
     if (!context.isToCheckFile(file, this)) return;
     final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(file.getProject());

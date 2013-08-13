@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.test
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.*
+import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.roots.DependencyScope
@@ -58,6 +59,7 @@ class ExternalProjectBuilder extends BuilderSupport {
     switch (name) {
       case 'project':
         ProjectData projectData = new ProjectData(TEST_EXTERNAL_SYSTEM_ID, projectDir.path, projectDir.path)
+        projectData.name = attributes.name ?: 'project'
         projectNode = new DataNode<ProjectData>(ProjectKeys.PROJECT, projectData, null)
         return projectNode
       case 'module':
@@ -76,6 +78,19 @@ class ExternalProjectBuilder extends BuilderSupport {
                                                                getLevel(attributes))
         data.scope = getScope(attributes)
         return parentNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, data)
+      case 'task':
+        DataNode<ExternalConfigPathAware> parentNode = current as DataNode
+        TaskData data = new TaskData(TEST_EXTERNAL_SYSTEM_ID, attributes.name, parentNode.data.linkedExternalProjectPath, null)
+        return parentNode.createChild(ProjectKeys.TASK, data)
+      case 'contentRoot':
+        DataNode<ModuleData> parentNode = current as DataNode
+        ContentRootData data = new ContentRootData(TEST_EXTERNAL_SYSTEM_ID, attributes.name)
+        return parentNode.createChild(ProjectKeys.CONTENT_ROOT, data)
+      case 'folder':
+        DataNode<ContentRootData> parentNode = current as DataNode
+        ContentRootData data = parentNode.data;
+        data.storePath(attributes.type, attributes.path)
+        return null
         
       default: throw new IllegalArgumentException("Unexpected entry: $name");
     }

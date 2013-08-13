@@ -144,6 +144,9 @@ public class MavenExternalParameters {
       params.getClassPath().add(path);
     }
 
+    params.setEnv(Collections.unmodifiableMap(runnerSettings.getEnvironmentProperties()));
+    params.setPassParentEnvs(runnerSettings.isPassParentEnv());
+
     params.setMainClass(MAVEN_LAUNCHER_CLASS);
     EncodingManager encodingManager = project == null
                                       ? EncodingProjectManager.getInstance()

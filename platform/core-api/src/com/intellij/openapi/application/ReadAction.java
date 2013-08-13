@@ -16,8 +16,10 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class ReadAction<T> extends BaseActionRunnable<T> {
+  @NotNull
   @Override
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);

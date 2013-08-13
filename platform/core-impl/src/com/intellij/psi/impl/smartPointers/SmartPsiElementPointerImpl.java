@@ -123,7 +123,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   @NotNull
-  private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project, @NotNull E element, PsiFile containingFile) {
+  static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project, @NotNull E element, PsiFile containingFile) {
     if (element instanceof PsiCompiledElement || containingFile == null || !containingFile.isPhysical() || !element.isPhysical()) {
       if (element instanceof StubBasedPsiElement && element instanceof PsiCompiledElement) {
         if (element instanceof PsiFile) {
@@ -148,7 +148,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     FileViewProvider viewProvider = containingFile.getViewProvider();
     if (viewProvider instanceof FreeThreadedFileViewProvider) {
       PsiElement hostContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
-      if (hostContext != null) return new InjectedSelfElementInfo(project, element, hostContext);
+      if (hostContext != null) return new InjectedSelfElementInfo(project, element, element.getTextRange(), containingFile, hostContext);
     }
 
     if (element instanceof PsiFile) {
