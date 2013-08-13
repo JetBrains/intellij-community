@@ -22,6 +22,7 @@ package org.jetbrains.idea.svn.commandLine;
  * Time: 1:49 PM
  */
 public enum SvnCommandName {
+  empty("", false),
   version("--version", false),
   info("info", false),
   st("st", false),

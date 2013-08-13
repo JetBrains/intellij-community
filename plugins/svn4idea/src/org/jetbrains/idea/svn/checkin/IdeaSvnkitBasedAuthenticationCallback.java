@@ -78,9 +78,9 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   }
 
   @Override
-  public SVNAuthentication requestCredentials(@Nullable SVNURL url) {
+  public SVNAuthentication requestCredentials(@Nullable SVNURL url, String type) {
     return url != null ? myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getProvider().requestClientAuthentication(
-      ISVNAuthenticationManager.PASSWORD, url, url.toDecodedString(), null, null, true) : null;
+      type, url, url.toDecodedString(), null, null, true) : null;
   }
 
   @Override
@@ -360,7 +360,9 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
                                     }, new ThrowableRunnable<SVNException>() {
                                       @Override
                                       public void run() throws SVNException {
+                                        // NOTE: DO NOT replace this call - SSL authentication highly tied to SVNKit
                                         myVcs.createWCClient(active).doInfo(myUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+                                        //myVcs.getInfo(myUrl, SVNRevision.HEAD, active);
                                       }
                                     }
       );

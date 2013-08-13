@@ -149,9 +149,6 @@ public class SvnRecursiveStatusWalker {
         return myCommandLineClient;
       }
 
-      if (! SVNDepth.INFINITY.equals(myDepth)) {
-        return mySvnClient;
-      }
       // check format
       if (CheckJavaHL.isPresent() && SvnConfiguration.UseAcceleration.javaHL.equals(myConfiguration17.myUseAcceleration) &&
           Svn17Detector.is17(myProject, file)) {

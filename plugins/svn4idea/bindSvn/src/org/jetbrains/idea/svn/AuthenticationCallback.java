@@ -52,7 +52,7 @@ public interface AuthenticationCallback {
    */
   boolean authenticateFor(@Nullable String realm, File base, boolean previousFailed, boolean passwordRequest);
 
-  SVNAuthentication requestCredentials(@Nullable SVNURL url);
+  SVNAuthentication requestCredentials(@Nullable SVNURL url, String type);
 
   /**
    * @return config directory if TMP was created

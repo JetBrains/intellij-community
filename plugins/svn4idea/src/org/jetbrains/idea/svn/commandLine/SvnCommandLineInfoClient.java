@@ -102,6 +102,34 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     command.addParameters(parameters);
     SvnCommandLineStatusClient.changelistsToCommand(changeLists, command);
 
+    parseResult(handler, base, execute(command));
+  }
+
+  private String execute(SvnSimpleCommand command) throws SVNException {
+    try {
+      return command.run();
+    }
+    catch (VcsException e) {
+      final String text = e.getMessage();
+      final boolean notEmpty = !StringUtil.isEmptyOrSpaces(text);
+      if (notEmpty && text.contains("W155010")) {
+        // just null
+        return null;
+      }
+      // not a working copy exception
+      // "E155007: '' is not a working copy"
+      if (notEmpty && text.contains("is not a working copy")) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY), e);
+      }
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+    }
+  }
+
+  private void parseResult(final ISVNInfoHandler handler, File base, String result) throws SVNException {
+    if (StringUtil.isEmpty(result)) {
+      return;
+    }
+
     final SvnInfoHandler[] infoHandler = new SvnInfoHandler[1];
     infoHandler[0] = new SvnInfoHandler(base, new Consumer<SVNInfo>() {
       @Override
@@ -116,10 +144,9 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     });
 
     try {
-      final String result = command.run();
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-      parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), infoHandler[0]);
 
+      parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), infoHandler[0]);
     }
     catch (SvnExceptionWrapper e) {
       throw (SVNException) e.getCause();
@@ -130,20 +157,6 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }
     catch (SAXException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
-    }
-    catch (VcsException e) {
-      final String text = e.getMessage();
-      final boolean notEmpty = !StringUtil.isEmptyOrSpaces(text);
-      if (notEmpty && text.contains("W155010")) {
-        // just null
-        return;
-      }
-      // not a working copy exception
-      // "E155007: '' is not a working copy"
-      if (notEmpty && text.contains("is not a working copy")) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY), e);
-      }
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }
   }
@@ -180,10 +193,13 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     fillParameters(path, pegRevision, revision, depth, parameters);
     try {
       String exe = SvnApplicationSettings.getInstance().getCommandLinePath();
-      SvnLineCommand.runWithAuthenticationAttempt(exe,
-                                                  new File(exe), url, SvnCommandName.info, new SvnCommitRunner.CommandListener(null),
-                                                  new IdeaSvnkitBasedAuthenticationCallback(SvnVcs.getInstance(myProject)), false,
-                                                  ArrayUtil.toStringArray(parameters));
+      SvnLineCommand command = SvnLineCommand.runWithAuthenticationAttempt(exe,
+                                                                           new File(exe), url, SvnCommandName.info,
+                                                                           new SvnCommitRunner.CommandListener(null),
+                                                                           new IdeaSvnkitBasedAuthenticationCallback(
+                                                                             SvnVcs.getInstance(myProject)), false,
+                                                                           ArrayUtil.toStringArray(parameters));
+      parseResult(handler, new File(exe), command.getOutput());
     }
     catch (SvnBindException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);

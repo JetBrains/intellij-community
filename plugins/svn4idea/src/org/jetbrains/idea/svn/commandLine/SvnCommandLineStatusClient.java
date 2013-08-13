@@ -23,7 +23,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.idea.svn.SvnBindUtil;
+import org.jetbrains.idea.svn.SvnCommitRunner;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
+import org.jetbrains.idea.svn.config.SvnBindException;
 import org.jetbrains.idea.svn.portable.PortableStatus;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
@@ -107,18 +111,48 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
     final SvnSimpleCommand command = SvnCommandFactory.createSimpleCommand(myProject, base, SvnCommandName.st);
     putParameters(depth, remote, reportAll, includeIgnored, changeLists, command);
 
-    final SvnStatusHandler[] svnHandl = new SvnStatusHandler[1];
-    svnHandl[0] = createStatusHandler(revision, handler, base, infoBase, svnHandl);
+    parseResult(path, revision, handler, base, infoBase, command, execute(command, base));
+    return 0;
+  }
+
+  private String execute(SvnSimpleCommand command, File base) throws SVNException {
+    String result;
 
     try {
-      final String result = command.run();
+      // empty command name passed, as command name is already in command.getParameters()
+      SvnLineCommand lineCommand = SvnLineCommand
+        .runWithAuthenticationAttempt(command.getExePath(), base, SvnCommandName.empty, new SvnCommitRunner.CommandListener(null),
+                                      new IdeaSvnkitBasedAuthenticationCallback(SvnVcs.getInstance(myProject)), command.getParameters());
+      result = lineCommand.getOutput();
+
       if (StringUtil.isEmptyOrSpaces(result)) {
-        throw new VcsException("Status request returned nothing for command: " + command.myCommandLine.getCommandLineString());
+        throw new SvnBindException("Status request returned nothing for command: " + command.myCommandLine.getCommandLineString());
       }
+    }
+    catch (SvnBindException e) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+    }
+    return result;
+  }
+
+  private void parseResult(File path,
+                           SVNRevision revision,
+                           ISVNStatusHandler handler,
+                           File base,
+                           SVNInfo infoBase,
+                           SvnSimpleCommand command, String result) throws SVNException {
+
+    if (StringUtil.isEmpty(result)) {
+      return;
+    }
+
+    try {
+      final SvnStatusHandler[] svnHandl = new SvnStatusHandler[1];
+      svnHandl[0] = createStatusHandler(revision, handler, base, infoBase, svnHandl);
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), svnHandl[0]);
-      if (! svnHandl[0].isAnythingReported()) {
-        if (! SvnUtil.isSvnVersioned(myProject, path)) {
+      if (!svnHandl[0].isAnythingReported()) {
+        if (!SvnUtil.isSvnVersioned(myProject, path)) {
           throw new SVNException(
             SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Command - " + command.getCommandText() + ". Result - " + result));
         }
@@ -135,10 +169,6 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
     catch (SAXException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }
-    catch (VcsException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
-    }
-    return 0;
   }
 
   private void putParameters(SVNDepth depth,

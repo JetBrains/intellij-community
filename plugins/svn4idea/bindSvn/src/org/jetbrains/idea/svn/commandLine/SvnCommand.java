@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
@@ -38,6 +39,7 @@ import java.util.List;
  */
 public abstract class SvnCommand {
   static final Logger LOG = Logger.getInstance(SvnCommand.class.getName());
+  private final File myConfigDir;
 
   private boolean myIsDestroyed;
   private int myExitCode;
@@ -48,10 +50,7 @@ public abstract class SvnCommand {
   private final Object myLock;
 
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
-
-  // todo check version
-  /*c:\Program Files (x86)\CollabNet\Subversion Client17>svn --version --quiet
-  1.7.2*/
+  private final SvnCommandName myCommandName;
 
   public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath) {
     this(workingDirectory, commandName, exePath, null);
@@ -59,15 +58,25 @@ public abstract class SvnCommand {
 
   public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath,
                     @Nullable File configDir) {
+    myCommandName = commandName;
     myLock = new Object();
     myCommandLine = new GeneralCommandLine();
     myWorkingDirectory = workingDirectory;
     myCommandLine.setExePath(exePath);
     myCommandLine.setWorkDirectory(workingDirectory);
+    myConfigDir = configDir;
     if (configDir != null) {
       myCommandLine.addParameters("--config-dir", configDir.getPath());
     }
-    myCommandLine.addParameter(commandName.getName());
+    if (!SvnCommandName.empty.equals(commandName)) {
+      myCommandLine.addParameter(commandName.getName());
+    }
+  }
+
+  public String[] getParameters() {
+    synchronized (myLock) {
+      return myCommandLine.getParametersList().getArray();
+    }
   }
 
   public void start() {
@@ -187,7 +196,15 @@ public abstract class SvnCommand {
   }
 
   public String getCommandText() {
-    return myCommandLine.getCommandLineString();
+    synchronized (myLock) {
+      return myCommandLine.getCommandLineString();
+    }
+  }
+
+  public String getExePath() {
+    synchronized (myLock) {
+      return myCommandLine.getExePath();
+    }
   }
 
   /**
@@ -229,5 +246,9 @@ public abstract class SvnCommand {
 
   protected File getWorkingDirectory() {
     return myWorkingDirectory;
+  }
+
+  public SvnCommandName getCommandName() {
+    return myCommandName;
   }
 }

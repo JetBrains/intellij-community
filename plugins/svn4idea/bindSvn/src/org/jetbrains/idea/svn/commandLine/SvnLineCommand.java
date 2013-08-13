@@ -33,8 +33,10 @@ import org.jetbrains.idea.svn.SvnBindUtil;
 import org.jetbrains.idea.svn.config.SvnBindException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
+import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,7 +79,7 @@ public class SvnLineCommand extends SvnCommand {
   private final EventDispatcher<LineProcessEventListener> myLineListeners;
   private final AtomicReference<Integer> myExitCode;
   private final StringBuffer myErr;
-  private final StringBuffer myOut;
+  private final StringBuffer myStdOut;
 
   public SvnLineCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath) {
     this(workingDirectory, commandName, exePath, null);
@@ -88,7 +90,11 @@ public class SvnLineCommand extends SvnCommand {
     myLineListeners = EventDispatcher.create(LineProcessEventListener.class);
     myExitCode = new AtomicReference<Integer>();
     myErr = new StringBuffer();
-    myOut = new StringBuffer();
+    myStdOut = new StringBuffer();
+  }
+
+  public String getOutput() {
+    return myStdOut.toString();
   }
 
   @Override
@@ -102,18 +108,18 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  public static void runWithAuthenticationAttempt(final String exePath,
-                                                  final File firstFile,
+  public static SvnLineCommand runWithAuthenticationAttempt(final String exePath,
+                                                            final File firstFile,
                                                   SvnCommandName commandName,
                                                   final LineCommandListener listener,
                                                   @Nullable AuthenticationCallback authenticationCallback,
                                                   String... parameters) throws SvnBindException {
-    runWithAuthenticationAttempt(exePath, firstFile, null, commandName, listener, authenticationCallback, false, parameters);
+    return runWithAuthenticationAttempt(exePath, firstFile, null, commandName, listener, authenticationCallback, false, parameters);
   }
 
 
-  public static void runWithAuthenticationAttempt(final String exePath,
-                                                  final File firstFile,
+  public static SvnLineCommand runWithAuthenticationAttempt(final String exePath,
+                                                            final File firstFile,
                                                   final SVNURL url,
                                                   SvnCommandName commandName,
                                                   final LineCommandListener listener,
@@ -159,7 +165,7 @@ public class SvnLineCommand extends SvnCommand {
         if (exitCode != 0) {
           throw new SvnBindException("Svn process exited with error code: " + exitCode);
         }
-        return;
+        return command;
       }
     } finally {
       if (authenticationCallback != null) {
@@ -169,24 +175,10 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static String[] updateParameters(AuthCallbackCase callback, String[] parameters) {
-    String[] result = parameters;
+    List<String> p = new ArrayList<String>(Arrays.asList(parameters));
 
-    if (callback instanceof UsernamePasswordCallback &&
-        ((UsernamePasswordCallback)callback).getAuthentication() instanceof SVNPasswordAuthentication) {
-      SVNPasswordAuthentication auth = (SVNPasswordAuthentication)((UsernamePasswordCallback)callback).getAuthentication();
-      List<String> p = new ArrayList<String>(Arrays.asList(parameters));
-
-      p.add("--username");
-      p.add(auth.getUserName());
-      p.add("--password");
-      p.add(auth.getPassword());
-      if (!auth.isStorageAllowed()) {
-        p.add("--no-auth-cache");
-      }
-      result = ArrayUtil.toStringArray(p);
-    }
-
-    return result;
+    callback.updateParameters(p);
+    return ArrayUtil.toStringArray(p);
   }
 
   private static void writeIdeaConfig2SubversionConfig(@NotNull AuthenticationCallback authenticationCallback, @NotNull File base) throws SvnBindException {
@@ -220,15 +212,30 @@ public class SvnLineCommand extends SvnCommand {
     if (errText.startsWith(UNABLE_TO_CONNECT) && errText.contains(CANNOT_AUTHENTICATE_TO_PROXY)) {
       return new ProxyCallback(callback, base);
     }
+    // http/https protocol invalid credentials
     if (errText.contains(AUTHENTICATION_FAILED_MESSAGE)) {
       return new UsernamePasswordCallback(callback, base, url);
+    }
+    if (errText.contains("svn: E170001: Can't get password")) {
+      // svn protocol invalid credentials
+      return new UsernamePasswordCallback(callback, base, url);
+    }
+    // https one-way protocol untrusted server certificate
+    if (errText.contains("Server SSL certificate untrusted")) {
+      return new CertificateCallbackCase(callback, base);
+    }
+    // https two-way protocol invalid client certificate
+    if (errText.contains("Access to ") && errText.contains("forbidden")) {
+      return new TwoWaySslCallback(callback, base, url);
     }
     return null;
   }
 
+  // Special callback for svn 1.8 credentials request as --non-interactive does not return
+  // authentication realm (just url) - so we could not create temp cache
   private static class UsernamePasswordCallback extends AuthCallbackCase {
-    private SVNAuthentication myAuthentication;
-    private SVNURL myUrl;
+    protected SVNAuthentication myAuthentication;
+    protected SVNURL myUrl;
 
     protected UsernamePasswordCallback(AuthenticationCallback callback, File base, SVNURL url) {
       super(callback, base);
@@ -237,9 +244,29 @@ public class SvnLineCommand extends SvnCommand {
 
     @Override
     boolean getCredentials(String errText) throws SvnBindException {
-      myAuthentication = myAuthenticationCallback.requestCredentials(myUrl != null ? myUrl : parseUrlFromError(errText));
+      myAuthentication = myAuthenticationCallback.requestCredentials(myUrl != null ? myUrl : parseUrlFromError(errText),
+                                                                     getType());
 
-      return true;
+      return myAuthentication != null;
+    }
+
+    public String getType() {
+      return ISVNAuthenticationManager.PASSWORD;
+    }
+
+    @Override
+    public void updateParameters(List<String> parameters) {
+      if (myAuthentication instanceof SVNPasswordAuthentication) {
+        SVNPasswordAuthentication auth = (SVNPasswordAuthentication)myAuthentication;
+
+        parameters.add("--username");
+        parameters.add(auth.getUserName());
+        parameters.add("--password");
+        parameters.add(auth.getPassword());
+        if (!auth.isStorageAllowed()) {
+          parameters.add("--no-auth-cache");
+        }
+      }
     }
 
     private SVNURL parseUrlFromError(String errorText) {
@@ -261,10 +288,6 @@ public class SvnLineCommand extends SvnCommand {
       catch (SVNException e) {
         return null;
       }
-    }
-
-    public SVNAuthentication getAuthentication() {
-      return myAuthentication;
     }
   }
 
@@ -306,6 +329,8 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static class CertificateCallbackCase extends AuthCallbackCase {
+    private boolean accepted;
+
     private CertificateCallbackCase(AuthenticationCallback callback, File base) {
       super(callback, base);
     }
@@ -323,10 +348,47 @@ public class SvnLineCommand extends SvnCommand {
       }
       realm = realm.substring(idx1 + 1, idx2);
       if (! myTried && myAuthenticationCallback.acceptSSLServerCertificate(myBase, realm)) {
+        accepted = true;
         myTried = true;
         return true;
       }
       throw new SvnBindException("Server SSL certificate rejected");
+    }
+
+    @Override
+    public void updateParameters(List<String> parameters) {
+      if (accepted) {
+        parameters.add("--trust-server-cert");
+      }
+    }
+  }
+
+  private static class TwoWaySslCallback extends UsernamePasswordCallback {
+
+    protected TwoWaySslCallback(AuthenticationCallback callback, File base, SVNURL url) {
+      super(callback, base, url);
+    }
+
+    @Override
+    public String getType() {
+      return ISVNAuthenticationManager.SSL;
+    }
+
+    @Override
+    public void updateParameters(List<String> parameters) {
+      if (myAuthentication instanceof SVNSSLAuthentication) {
+        SVNSSLAuthentication auth = (SVNSSLAuthentication)myAuthentication;
+
+        // TODO: Seems that config option should be specified for concrete server and not for global group.
+        // as in that case it could be overriden by settings in config file
+        parameters.add("--config-option");
+        parameters.add("servers:global:ssl-client-cert-file=" + auth.getCertificatePath());
+        parameters.add("--config-option");
+        parameters.add("servers:global:ssl-client-cert-password=" + auth.getPassword());
+        if (!auth.isStorageAllowed()) {
+          parameters.add("--no-auth-cache");
+        }
+      }
     }
   }
 
@@ -341,6 +403,9 @@ public class SvnLineCommand extends SvnCommand {
     }
 
     abstract boolean getCredentials(final String errText) throws SvnBindException;
+
+    public void updateParameters(List<String> parameters) {
+    }
   }
 
   private static void cleanup(String exePath, SvnCommandName commandName, File base) throws SvnBindException {
@@ -414,7 +479,9 @@ public class SvnLineCommand extends SvnCommand {
     command.addLineListener(new LineProcessEventListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
-        command.myOut.append(line);
+        if (ProcessOutputTypes.STDOUT.equals(outputType)) {
+          command.myStdOut.append(line);
+        }
 
         if (SvnCommand.LOG.isDebugEnabled()) {
           SvnCommand.LOG.debug("==> " + line);
