@@ -25,6 +25,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -87,15 +88,25 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
       }
     });
     boolean fixesWereAvailable = false;
-    for (ProblemDescriptor descriptor : descriptions) {
+    for (final ProblemDescriptor descriptor : descriptions) {
       final QuickFix[] fixes = descriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
         fixesWereAvailable = true;
-        for (QuickFix<CommonProblemDescriptor> fix : fixes) {
+        for (final QuickFix<CommonProblemDescriptor> fix : fixes) {
           if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
             final PsiElement element = descriptor.getPsiElement();
             if (element != null && element.isValid()) {
-              fix.applyFix(project, descriptor);
+              if (fix instanceof IntentionAction && ((IntentionAction)fix).startInWriteAction()) {
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    fix.applyFix(project, descriptor);
+                  }
+                });
+              }
+              else {
+                fix.applyFix(project, descriptor);
+              }
               PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
             }
             break;
@@ -119,6 +130,6 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }
