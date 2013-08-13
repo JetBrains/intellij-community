@@ -38,6 +38,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.net.NetUtils;
 import com.sun.jdi.Value;
+import com.sun.jdi.connect.spi.TransportService;
 import org.jdom.Element;
 
 import java.io.IOException;
@@ -139,8 +140,9 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     }
 
     try {
-      String address = transportService.startListening();
-      transportService.stopListening(address);
+      TransportService.ListenKey listenKey = transportService.startListening();
+      final String address = listenKey.address();
+      transportService.stopListening(listenKey);
       return address;
     }
     catch (IOException e) {
