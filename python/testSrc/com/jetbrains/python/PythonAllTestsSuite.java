@@ -85,6 +85,7 @@ public class PythonAllTestsSuite {
     PyClassNameCompletionTest.class,
     PySuppressInspectionsTest.class,
     PyClassicPropertyTest.class,
+    PyClassicPropertyTest.StubBasedTest.class,
     PyDecoratedPropertyTest.class,
     PythonRunConfigurationTest.class,
     PyFoldingTest.class,
