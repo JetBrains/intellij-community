@@ -16,13 +16,11 @@
 
 package com.intellij.codeInspection.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +32,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +47,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   private final InspectionToolWrapper myToolWrapper;
   private final Class myQuickfixClass;
 
-  public CleanupInspectionIntention(@NotNull InspectionToolWrapper toolWrapper, Class quickFixClass) {
+  public CleanupInspectionIntention(@NotNull InspectionToolWrapper toolWrapper, @NotNull Class quickFixClass) {
     myToolWrapper = toolWrapper;
     myQuickfixClass = quickFixClass;
   }
@@ -74,7 +71,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
       ProgressManager.getInstance().runProcess(new Computable<List<ProblemDescriptor>>() {
         @Override
         public List<ProblemDescriptor> compute() {
-          InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(project);
+          InspectionManager inspectionManager = InspectionManager.getInstance(project);
           return InspectionEngine.runInspectionOnFile(file, myToolWrapper, inspectionManager.createNewGlobalContext(false));
         }
       }, new EmptyProgressIndicator());
@@ -87,45 +84,32 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
         return d2.getTextRange().getStartOffset() - d1.getTextRange().getStartOffset();
       }
     });
-    boolean fixesWereAvailable = false;
     for (final ProblemDescriptor descriptor : descriptions) {
       final QuickFix[] fixes = descriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
-        fixesWereAvailable = true;
         for (final QuickFix<CommonProblemDescriptor> fix : fixes) {
           if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
             final PsiElement element = descriptor.getPsiElement();
             if (element != null && element.isValid()) {
-              if (fix instanceof IntentionAction && ((IntentionAction)fix).startInWriteAction()) {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    fix.applyFix(project, descriptor);
-                  }
-                });
-              }
-              else {
-                fix.applyFix(project, descriptor);
-              }
-              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                  fix.applyFix(project, descriptor);
+                }
+              });
+              PsiDocumentManager.getInstance(project).commitAllDocuments();
             }
             break;
           }
         }
       }
     }
-    if (!fixesWereAvailable) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "No fixes are available in batch mode", CommonBundle.getWarningTitle(), null);
-    }
   }
-
-
-
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myQuickfixClass != null && myQuickfixClass != EmptyIntentionAction.class && !(myToolWrapper instanceof LocalInspectionToolWrapper &&
-                                                                                         ((LocalInspectionToolWrapper)myToolWrapper).isUnfair());
+    return myQuickfixClass != EmptyIntentionAction.class &&
+           !(myToolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)myToolWrapper).isUnfair());
   }
 
   @Override
