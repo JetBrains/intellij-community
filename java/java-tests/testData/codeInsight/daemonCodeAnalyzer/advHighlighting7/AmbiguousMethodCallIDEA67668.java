@@ -12,6 +12,6 @@ class B
 {
     public static void main(String[] args) {
         A a = null;
-        a.foo<error descr="Ambiguous method call: both 'A.foo(Collection<?>)' and 'A.foo(List<?>)' match">(null)</error>;
+        a.foo<error descr="Ambiguous method call: both 'A.foo(List<?>)' and 'A.foo(List<?>)' match">(null)</error>;
     }
 }

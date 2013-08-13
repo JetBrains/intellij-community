@@ -466,8 +466,19 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @MethodCandidateInfo.ApplicabilityLevelConstant
-  public static int getApplicabilityLevel(@NotNull final PsiMethod method, @NotNull final PsiSubstitutor substitutorForMethod, @NotNull final PsiType[] args,
-                                           @NotNull final LanguageLevel languageLevel) {
+  public static int getApplicabilityLevel(@NotNull final PsiMethod method,
+                                          @NotNull final PsiSubstitutor substitutorForMethod,
+                                          @NotNull final PsiType[] args,
+                                          @NotNull final LanguageLevel languageLevel) {
+    return getApplicabilityLevel(method, substitutorForMethod, args, languageLevel, true);
+  }
+
+  @MethodCandidateInfo.ApplicabilityLevelConstant
+  public static int getApplicabilityLevel(@NotNull final PsiMethod method,
+                                          @NotNull final PsiSubstitutor substitutorForMethod,
+                                          @NotNull final PsiType[] args,
+                                          @NotNull final LanguageLevel languageLevel,
+                                          boolean allowUncheckedConversion) {
     final PsiParameter[] parms = method.getParameterList().getParameters();
     if (args.length < parms.length - 1) return ApplicabilityLevel.NOT_APPLICABLE;
 
@@ -479,7 +490,7 @@ public final class PsiUtil extends PsiUtilCore {
       PsiType parmType = getParameterType(parms[parms.length - 1], languageLevel, substitutorForMethod);
       PsiType argType = args[args.length - 1];
       if (argType == null) return ApplicabilityLevel.NOT_APPLICABLE;
-      if (TypeConversionUtil.isAssignable(parmType, argType)) return ApplicabilityLevel.FIXED_ARITY;
+      if (TypeConversionUtil.isAssignable(parmType, argType, allowUncheckedConversion)) return ApplicabilityLevel.FIXED_ARITY;
 
       if (isRaw) {
         final PsiType erasedParamType = TypeConversionUtil.erasure(parmType);
