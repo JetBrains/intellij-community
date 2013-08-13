@@ -61,7 +61,7 @@ import java.util.List;
  * User: spLeaner
  */
 public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
-  private InfoAndProgressPanel myInfoAndProgressPanel;
+  private final InfoAndProgressPanel myInfoAndProgressPanel;
   private IdeFrame myFrame;
 
   private enum Position {LEFT, RIGHT, CENTER}
@@ -130,6 +130,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     void update(IdeStatusBarImpl child);
   }
 
+  @Override
   public StatusBar createChild() {
     final IdeStatusBarImpl bar = new IdeStatusBarImpl(this);
     myChildren.add(bar);
@@ -180,10 +181,12 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     this(null);
   }
 
+  @Override
   public void addWidget(@NotNull final StatusBarWidget widget) {
     addWidget(widget, Position.RIGHT, "__AUTODETECT__");
   }
 
+  @Override
   public void addWidget(@NotNull final StatusBarWidget widget, @NotNull String anchor) {
     addWidget(widget, Position.RIGHT, anchor);
   }
@@ -192,24 +195,29 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     addWidget(widget, pos, "__IGNORED__");
   }
 
+  @Override
   public void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Disposable parentDisposable) {
     addWidget(widget);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeWidget(widget.ID());
       }
     });
   }
 
+  @Override
   public void addWidget(@NotNull final StatusBarWidget widget, @NotNull String anchor, @NotNull final Disposable parentDisposable) {
     addWidget(widget, anchor);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeWidget(widget.ID());
       }
     });
   }
 
+  @Override
   public void removeCustomIndicationComponents() {
     for (final String id : myCustomComponentIds) {
       removeWidget(id);
@@ -218,25 +226,31 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     myCustomComponentIds.clear();
   }
 
+  @Override
   public void addCustomIndicationComponent(@NotNull final JComponent c) {
     final String customId = c.getClass().getName() + new Random().nextLong();
     addWidget(new CustomStatusBarWidget() {
+      @Override
       @NotNull
       public String ID() {
         return customId;
       }
 
+      @Override
       @Nullable
       public WidgetPresentation getPresentation(@NotNull PlatformType type) {
         return null;
       }
 
+      @Override
       public void install(@NotNull StatusBar statusBar) {
       }
 
+      @Override
       public void dispose() {
       }
 
+      @Override
       public JComponent getComponent() {
         return c;
       }
@@ -245,6 +259,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     myCustomComponentIds.add(customId);
   }
 
+  @Override
   public void removeCustomIndicationComponent(@NotNull final JComponent c) {
     final Set<String> keySet = myWidgetMap.keySet();
     final String[] keys = ArrayUtil.toStringArray(keySet);
@@ -257,6 +272,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     }
   }
 
+  @Override
   public void dispose() {
     myWidgetMap.clear();
     myChildren.clear();
@@ -386,6 +402,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     }
   }
 
+  @Override
   public void setInfo(@Nullable final String s) {
     setInfo(s, null);
   }
@@ -393,6 +410,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   @Override
   public void setInfo(@Nullable final String s, @Nullable final String requestor) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         if (myInfoAndProgressPanel != null) {
           Pair<String, String> pair = myInfoAndProgressPanel.setText(s, requestor);
@@ -403,6 +421,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     });
   }
 
+  @Override
   public String getInfo() {
     return myInfo;
   }
@@ -412,6 +431,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return myRequestor;
   }
 
+  @Override
   public void addProgress(ProgressIndicatorEx indicator, TaskInfo info) {
     myInfoAndProgressPanel.addProgress(indicator, info);
   }
@@ -421,14 +441,17 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return myInfoAndProgressPanel.getBackgroundProcesses();
   }
 
+  @Override
   public void setProcessWindowOpen(final boolean open) {
     myInfoAndProgressPanel.setProcessWindowOpen(open);
   }
 
+  @Override
   public boolean isProcessWindowOpen() {
     return myInfoAndProgressPanel.isProcessWindowOpen();
   }
 
+  @Override
   public void startRefreshIndication(final String tooltipText) {
     myInfoAndProgressPanel.setRefreshToolTipText(tooltipText);
     myInfoAndProgressPanel.setRefreshVisible(true);
@@ -441,6 +464,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     });
   }
 
+  @Override
   public void stopRefreshIndication() {
     myInfoAndProgressPanel.setRefreshVisible(false);
 
@@ -452,10 +476,12 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     });
   }
 
+  @Override
   public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody) {
     return notifyProgressByBalloon(type, htmlBody, null, null);
   }
 
+  @Override
   public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type,
                                                 @NotNull String htmlBody,
                                                 @Nullable Icon icon,
@@ -463,6 +489,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return myInfoAndProgressPanel.notifyByBalloon(type, htmlBody, icon, listener);
   }
 
+  @Override
   public void fireNotificationPopup(@NotNull JComponent content, Color backgroundColor) {
     new NotificationPopup(this, content, backgroundColor);
   }
@@ -501,6 +528,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return wrapper;
   }
 
+  @Override
   public String getUIClassID() {
     return uiClassID;
   }
@@ -537,6 +565,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return (StatusBarUI)ui;
   }
 
+  @Override
   public void removeWidget(@NotNull final String id) {
     final WidgetBean bean = myWidgetMap.get(id);
     if (bean != null) {
@@ -572,6 +601,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     myOrderedWidgets.remove(id);
   }
 
+  @Override
   public void updateWidgets() {
     for (final String s : myWidgetMap.keySet()) {
       updateWidget(s);
@@ -585,8 +615,10 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     });
   }
 
+  @Override
   public void updateWidget(@NotNull final String id) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         final WidgetBean bean = myWidgetMap.get(id);
         if (bean != null) {
@@ -642,6 +674,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       setOpaque(false);
     }
 
+    @Override
     public void beforeUpdate() {
       setText(myPresentation.getSelectedValue());
     }
@@ -716,6 +749,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       return myPresentation.getTooltipText();
     }
 
+    @Override
     public void beforeUpdate() {
       setText(myPresentation.getText());
     }
@@ -746,6 +780,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       setOpaque(false);
     }
 
+    @Override
     public void beforeUpdate() {
       myIcon = myPresentation.getIcon();
     }
