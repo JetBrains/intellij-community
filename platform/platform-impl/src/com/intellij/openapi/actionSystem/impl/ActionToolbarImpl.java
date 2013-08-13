@@ -212,6 +212,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   @Override
   public void removeNotify() {
     super.removeNotify();
+    this.removeAll();
     ourToolbars.remove(this);
     myActionManager.removeTimerListener(myWeakTimerListener);
     myActionManager.removeTransparentTimerListener(myWeakTimerListener);
