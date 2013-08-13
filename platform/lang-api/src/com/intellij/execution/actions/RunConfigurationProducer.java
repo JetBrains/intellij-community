@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Supports creating run configurations from context (by right-clicking a code element in the source editor or the project view). Typically,
@@ -143,7 +144,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
         // replace with existing configuration if any
         final RunManager runManager = RunManager.getInstance(context.getProject());
         final ConfigurationType type = fromContext.getConfigurationType();
-        final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(type);
+        final List<RunnerAndConfigurationSettings> configurations = runManager.getConfigurationSettingsList(type);
         final RunnerAndConfigurationSettings configuration = findExistingConfiguration(context);
         if (configuration != null) {
           fromContext.setConfigurationSettings(configuration);
@@ -169,7 +170,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @Nullable
   public RunnerAndConfigurationSettings findExistingConfiguration(ConfigurationContext context) {
     final RunManager runManager = RunManager.getInstance(context.getProject());
-    final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(myConfigurationFactory.getType());
+    final List<RunnerAndConfigurationSettings> configurations = runManager.getConfigurationSettingsList(myConfigurationFactory.getType());
     for (RunnerAndConfigurationSettings configurationSettings : configurations) {
       if (isConfigurationFromContext((T) configurationSettings.getConfiguration(), context)) {
         return configurationSettings;

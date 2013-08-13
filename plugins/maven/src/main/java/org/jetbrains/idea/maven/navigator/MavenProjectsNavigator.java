@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,9 +67,9 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
 
   private MavenProjectsNavigatorState myState = new MavenProjectsNavigatorState();
 
-  private final MavenProjectsManager myProjectsManager;
-  private final MavenTasksManager myTasksManager;
-  private final MavenShortcutsManager myShortcutsManager;
+  private MavenProjectsManager myProjectsManager;
+  private MavenTasksManager myTasksManager;
+  private MavenShortcutsManager myShortcutsManager;
 
   private SimpleTree myTree;
   private MavenProjectsStructure myStructure;
@@ -189,6 +189,8 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
 
   @Override
   public void disposeComponent() {
+    myToolWindow = null;
+    myProjectsManager = null;
   }
 
   private void listenForProjectsChanges() {

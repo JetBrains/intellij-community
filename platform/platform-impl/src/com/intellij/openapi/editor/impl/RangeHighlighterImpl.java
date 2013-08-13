@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
@@ -82,7 +81,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  public void setTextAttributes(TextAttributes textAttributes) {
+  public void setTextAttributes(@NotNull TextAttributes textAttributes) {
     getData().setTextAttributes(textAttributes);
   }
 

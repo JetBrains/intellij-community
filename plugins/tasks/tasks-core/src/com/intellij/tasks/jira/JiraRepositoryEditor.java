@@ -15,15 +15,11 @@
  */
 package com.intellij.tasks.jira;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.tasks.config.BaseRepositoryEditor;
-import com.intellij.tasks.jira.jql.JqlFileType;
 import com.intellij.tasks.jira.jql.JqlLanguage;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
@@ -51,12 +47,9 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
   @Nullable
   @Override
   protected JComponent createCustomPanel() {
+    mySearchQueryField = new LanguageTextField(JqlLanguage.INSTANCE, myProject, myRepository.getSearchQuery());
+    installListener(mySearchQueryField);
     mySearchLabel = new JBLabel("Search:", SwingConstants.RIGHT);
-    PsiFileFactory fileFactory = PsiFileFactory.getInstance(myProject);
-    PsiFile psiFile = fileFactory.createFileFromText("query.jql", JqlLanguage.INSTANCE, myRepository.getSearchQuery());
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
-    mySearchQueryField = new EditorTextField(document, myProject, JqlFileType.INSTANCE);
-    installListener(document);
     return FormBuilder.createFormBuilder().addLabeledComponent(mySearchLabel, mySearchQueryField).getPanel();
   }
 

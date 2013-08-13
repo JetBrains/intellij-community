@@ -1496,6 +1496,16 @@
         <option name="FOREGROUND" value="E1EFFF" />
       </value>
     </option>
+    <option name="RUBY_BRACES">
+      <value>
+        <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
+    <option name="RUBY_PARENTHESES">
+      <value>
+        <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
     <option name="RUBY_COLON">
       <value>
         <option name="FOREGROUND" value="E1EFFF" />

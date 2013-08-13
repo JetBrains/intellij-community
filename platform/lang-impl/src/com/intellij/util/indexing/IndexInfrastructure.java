@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -82,14 +83,28 @@ public class IndexInfrastructure {
       FileUtil.delete(file);
     }
     file.getParentFile().mkdirs();
-    final DataOutputStream os = new DataOutputStream(new FileOutputStream(file));
+    final DataOutputStream os = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, FileNotFoundException>() {
+      @Nullable
+      @Override
+      public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
+        try {
+          return new DataOutputStream(new FileOutputStream(file));
+        } catch (FileNotFoundException ex) {
+          if (lastAttempt) throw ex;
+          return null;
+        }
+      }
+    });
+
     try {
-      os.writeInt(version);
-      os.writeInt(VERSION);
+      if (os != null) {
+        os.writeInt(version);
+        os.writeInt(VERSION);
+      }
     }
     finally {
       ourIndexIdToCreationStamp.clear();
-      os.close();
+      if (os != null) os.close();
       long max = Math.max(System.currentTimeMillis(), Math.max(prevLastModifiedValue, ourLastStamp) + 2000);
       ourLastStamp = max;
       file.setLastModified(max);

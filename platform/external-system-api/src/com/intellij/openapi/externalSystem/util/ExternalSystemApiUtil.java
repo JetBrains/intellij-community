@@ -34,8 +34,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -69,19 +67,6 @@ public class ExternalSystemApiUtil {
   @NotNull public static final String PATH_SEPARATOR = "/";
 
   @NotNull private static final Pattern ARTIFACT_PATTERN = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
-
-  @NotNull private static final NotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>>> MANAGERS =
-    new AtomicNotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>>>() {
-      @NotNull
-      @Override
-      protected Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>> compute() {
-        Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>> result = ContainerUtilRt.newHashMap();
-        for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
-          result.put(manager.getSystemId(), manager);
-        }
-        return result;
-      }
-    };
 
   @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<Object>() {
 
@@ -210,11 +195,22 @@ public class ExternalSystemApiUtil {
 
   @Nullable
   public static ExternalSystemManager<?, ?, ?, ?, ?> getManager(@NotNull ProjectSystemId externalSystemId) {
-    return MANAGERS.getValue().get(externalSystemId);
+    for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
+      if (externalSystemId.equals(manager.getSystemId())) {
+        return manager;
+      }
+    }
+    return null;
   }
 
+  @SuppressWarnings("ManualArrayToCollectionCopy")
+  @NotNull
   public static Collection<ExternalSystemManager<?, ?, ?, ?, ?>> getAllManagers() {
-    return MANAGERS.getValue().values();
+    List<ExternalSystemManager<?, ?, ?, ?, ?>> result = ContainerUtilRt.newArrayList();
+    for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
+      result.add(manager);
+    }
+    return result;
   }
 
   @NotNull

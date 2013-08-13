@@ -33,16 +33,12 @@ import com.intellij.tasks.trello.model.TrelloUser;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.util.EncodingUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Set;
@@ -158,7 +154,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   @Override
   protected void configureHttpMethod(HttpMethod method) {
     if (StringUtil.isEmpty(myPassword)) {
-      throw new IllegalStateException("Authorization token not set");
+       return;
     }
     String params = EncodingUtil.formUrlEncode(new NameValuePair[]{
       new NameValuePair("token", myPassword),
@@ -192,28 +188,28 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     }
   }
 
-  @Nullable
-  private TrelloBoard fetchBoardById(String id) {
-    String url = "/boards/" + id;
+  @NotNull
+  public TrelloBoard fetchBoardById(@NotNull String id) throws Exception {
+    String url = TrelloUtil.TRELLO_API_BASE_URL + "/boards/" + id;
     try {
       return makeRequestAndDeserializeJsonResponse(url, TrelloBoard.class);
     }
     catch (Exception e) {
-      LOG.warn("Error while fetching initial board info with id = " + id, e);
+      LOG.warn("Error while fetching initial board info", e);
+      throw e;
     }
-    return null;
   }
 
-  @Nullable
-  private TrelloList fetchListById(String id) {
-    String url = "/lists/" + id;
+  @NotNull
+  public TrelloList fetchListById(@NotNull String id) throws Exception {
+    String url = TrelloUtil.TRELLO_API_BASE_URL + "/lists/" + id;
     try {
       return makeRequestAndDeserializeJsonResponse(url, TrelloList.class);
     }
     catch (Exception e) {
-      LOG.warn("Error while fetching initial list info with id = " + id, e);
+      LOG.warn("Error while fetching initial list info" + id, e);
+      throw e;
     }
-    return null;
   }
 
   @NotNull
@@ -264,10 +260,10 @@ public final class TrelloRepository extends BaseRepositoryImpl {
     LOG.debug("Total " + filtered.size() + " cards after filtering");
     if (!fromList) {
       // fix for IDEA-111470 and IDEA-111475
-      // Select IDs of visible cards, e.d. cards that either archived explicitly or belong to archived list
+      // Select IDs of visible cards, e.d. cards that either archived explicitly, belong to archived list or closed board.
       // This information can't be extracted from single card description, because its 'closed' field
       // reflects only the card state and doesn't show state of parental list and board.
-      // According to Trello REST API "filter=visible" parameter may be used only when fetching cards for
+      // NOTE: According to Trello REST API "filter=visible" parameter may be used only when fetching cards for
       // particular board or user.
       String visibleCardsUrl = baseUrl + "?filter=visible&fields=none";
       List<TrelloCard> visibleCards = makeRequestAndDeserializeJsonResponse(visibleCardsUrl, TrelloUtil.LIST_OF_CARDS_TYPE);
@@ -288,10 +284,14 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   /**
    * Make GET request to specified URL and return HTTP entity of result as Reader object
    */
-  private String makeRequest(String url) throws IOException {
-    HttpClient client = getHttpClient();
+  private String makeRequest(String url) throws Exception {
     HttpMethod method = new GetMethod(url);
     configureHttpMethod(method);
+    return executeMethod(method);
+  }
+
+  private String executeMethod(HttpMethod method) throws Exception {
+    HttpClient client = getHttpClient();
     String entityContent;
     try {
       client.executeMethod(method);
@@ -303,12 +303,19 @@ public final class TrelloRepository extends BaseRepositoryImpl {
       method.releaseConnection();
     }
     LOG.debug(entityContent);
+    if (method.getStatusCode() != HttpStatus.SC_OK) {
+      Header header = method.getResponseHeader("Content-Type");
+      if (header != null && header.getValue().startsWith("text/plain")) {
+        throw new Exception("Request failed. Reason: " + StringUtil.capitalize(entityContent));
+      }
+      throw new Exception("Request failed with HTTP error: " + method.getStatusText());
+    }
     //return new InputStreamReader(method.getResponseBodyAsStream(), "utf-8");
     return entityContent;
   }
 
   @NotNull
-  private <T> T makeRequestAndDeserializeJsonResponse(String url, Type type) throws IOException {
+  private <T> T makeRequestAndDeserializeJsonResponse(String url, Type type) throws Exception {
     String entityStream = makeRequest(url);
     // javac 1.6.0_23 bug workaround
     // TrelloRepository.java:286: type parameters of <T>T cannot be determined; no unique maximal instance exists for type variable T with upper bounds T,java.lang.Object
@@ -317,7 +324,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   }
 
   @NotNull
-  private <T> T makeRequestAndDeserializeJsonResponse(String url, Class<T> cls) throws IOException {
+  private <T> T makeRequestAndDeserializeJsonResponse(String url, Class<T> cls) throws Exception {
     String entityStream = makeRequest(url);
     return TrelloUtil.GSON.fromJson(entityStream, cls);
   }
@@ -337,18 +344,12 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
-    // try to fetch user info to check connection availability
-    GetMethod method = new GetMethod(TrelloUtil.TRELLO_API_BASE_URL + "/members/me");
+    GetMethod method = new GetMethod(TrelloUtil.TRELLO_API_BASE_URL + "/members/me/cards?limit=1");
     configureHttpMethod(method);
     return new HttpTestConnection<GetMethod>(method) {
       @Override
       protected void doTest(GetMethod method) throws Exception {
-        int statusCode = getHttpClient().executeMethod(method);
-        if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-          throw new Exception("Invalid token value");
-        } else if (statusCode != HttpStatus.SC_OK) {
-          throw new Exception("Error while connecting to server: " + HttpStatus.getStatusText(statusCode));
-        }
+        executeMethod(method);
       }
     };
   }

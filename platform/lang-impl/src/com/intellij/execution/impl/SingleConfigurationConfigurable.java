@@ -104,7 +104,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     RunnerAndConfigurationSettings settings = getSettings();
     RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-    runManager.shareConfiguration(runConfiguration, myStoreProjectConfiguration);
+    runManager.shareConfiguration(settings, myStoreProjectConfiguration);
     settings.setName(getNameText());
     settings.setSingleton(mySingleton);
     settings.setFolderName(myFolderName);

@@ -395,7 +395,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         return false;
       }
       final PsiExpression qualifier = initialMethodExpression.getQualifierExpression();
-      if (qualifier == null) {
+      if (qualifier == null || qualifier instanceof PsiSuperExpression) {
         return false;
       }
       final PsiType qualifierType = qualifier.getType();

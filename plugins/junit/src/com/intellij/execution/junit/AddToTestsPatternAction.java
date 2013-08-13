@@ -97,7 +97,8 @@ public class AddToTestsPatternAction extends AnAction {
   }
 
   private static List<JUnitConfiguration> collectPatternConfigurations(Set<PsiMember> foundClasses, Project project) {
-    final RunConfiguration[] configurations = RunManager.getInstance(project).getConfigurations(JUnitConfigurationType.getInstance());
+    final List<RunConfiguration> configurations = RunManager.getInstance(project).getConfigurationsList(
+      JUnitConfigurationType.getInstance());
     final List<JUnitConfiguration> foundConfigurations = new ArrayList<JUnitConfiguration>();
     for (RunConfiguration configuration : configurations) {
       final JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();

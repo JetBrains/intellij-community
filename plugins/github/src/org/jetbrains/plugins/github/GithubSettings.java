@@ -76,7 +76,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
 
   @Nullable
   public String getLogin() {
-    return StringUtil.notNullize(myState.LOGIN);
+    return myState.LOGIN;
   }
 
   @NotNull

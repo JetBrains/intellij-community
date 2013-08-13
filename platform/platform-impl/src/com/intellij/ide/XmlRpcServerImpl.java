@@ -117,7 +117,7 @@ public class XmlRpcServerImpl implements XmlRpcServer {
     return false;
   }
 
-  private static Object getHandler(String methodName, Map<String, Object> handlers) {
+  private static Object getHandler(@NotNull String methodName, @NotNull Map<String, Object> handlers) {
     Object handler = null;
     String handlerName = null;
     int dot = methodName.lastIndexOf('.');

@@ -129,19 +129,27 @@ abstract class AbstractExternalSystemTest extends UsefulTestCase {
     }
   }
 
-  public <T> DataNode<T> buildProject(@NotNull Closure c) {
+  public void setupExternalProject(@NotNull Closure c) {
+    DataNode<ProjectData> node = buildExternalProjectInfo(c)
+    applyProjectState([node])
+  }
+  
+  @NotNull
+  public <T> DataNode<T> buildExternalProjectInfo(@NotNull Closure c) {
     ExternalProjectBuilder builder = new ExternalProjectBuilder(projectDir: projectDir)
     c.delegate = builder
     c.call()
   }
 
-  public void checkTasks(@NotNull Closure c) {
-    
-  }
-  
   protected void applyProjectState(@NotNull List<DataNode<ProjectData>> states) {
     def dataManager = ServiceManager.getService(ProjectDataManager.class)
+    def settingsInitialized = false
     for (DataNode<ProjectData> node : states) {
+      if (!settingsInitialized) {
+        settingsInitialized = true
+        def settings = ExternalSystemApiUtil.getSettings(project, ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID)
+        settings.linkedProjectsSettings = [new TestExternalProjectSettings(externalProjectPath: node.data.linkedExternalProjectPath)]
+      }
       ExternalSystemApiUtil.executeProjectChangeAction(true, {
         ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
           dataManager.importData(node.key, [node], project, true)

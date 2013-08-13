@@ -19,7 +19,9 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +37,15 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
   @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
     final boolean includeDirs = pattern.endsWith("/") || pattern.endsWith("\\");
-    return FilenameIndex.getFilesByName(project, name,
-                                        includeNonProjectItems ? ProjectScope.getAllScope(project) : ProjectScope.getProjectScope(project),
-                                        includeDirs);
+    GlobalSearchScope scope = includeNonProjectItems
+                              ? ProjectScope.getAllScope(project)
+                              : ProjectScope.getProjectScope(project);
+    PsiFileSystemItem[] items = FilenameIndex.getFilesByName(project, name,
+                                                             scope,
+                                                             includeDirs);
+    if(items.length == 0 && includeNonProjectItems && !includeDirs) {
+      items = FilenameIndex.getFilesByName(project, name, scope, true);
+    }
+    return items;
   }
 }

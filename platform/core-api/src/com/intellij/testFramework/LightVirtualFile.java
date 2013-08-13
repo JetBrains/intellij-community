@@ -28,10 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 
 /**
@@ -246,7 +243,15 @@ public class LightVirtualFile extends VirtualFile {
       @Override
       public void close() {
         myModStamp = newModificationStamp;
-        setContent(toString());
+
+        try {
+          String content = toString(getCharset().name());
+          setContent(content);
+        }
+        catch (UnsupportedEncodingException e) {
+          throw new RuntimeException(e);
+        }
+
       }
     },this);
   }

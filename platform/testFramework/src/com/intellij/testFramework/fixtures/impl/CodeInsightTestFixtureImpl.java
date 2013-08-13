@@ -153,6 +153,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NonNls private static final String XXX = "XXX";
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
   private boolean myAllowDirt;
+  private boolean myCaresAboutInjection = true;
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirTestFixture) {
@@ -1363,7 +1364,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
           }
         }
-        setupEditorForInjectedLanguage();
+        if (myCaresAboutInjection) {
+          setupEditorForInjectedLanguage();
+        }
       }
     }.execute().throwException();
 
@@ -1926,6 +1929,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     finally {
       if (component != null) Disposer.dispose(component);
     }
+  }
+
+  @Override
+  public void setCaresAboutInjection(boolean caresAboutInjection) {
+    myCaresAboutInjection = caresAboutInjection;
   }
 
   @Override
