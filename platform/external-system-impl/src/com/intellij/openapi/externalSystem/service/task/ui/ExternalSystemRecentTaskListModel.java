@@ -53,9 +53,6 @@ public class ExternalSystemRecentTaskListModel extends DefaultListModel {
   @SuppressWarnings("unchecked")
   public void setFirst(@NotNull ExternalTaskExecutionInfo task) {
     insertElementAt(task, 0);
-    if (size() > 1) {
-      remove(size() - 1);
-    }
     for (int i = 1; i < size(); i++) {
       if (task.equals(getElementAt(i))) {
         remove(i);
@@ -80,8 +77,10 @@ public class ExternalSystemRecentTaskListModel extends DefaultListModel {
   @SuppressWarnings("unchecked")
   public void ensureSize(int elementsNumber) {
     int toAdd = elementsNumber - size();
-    if (toAdd <= 0) {
+    if (toAdd == 0) {
       return;
+    } if(toAdd < 0) {
+      removeRange(elementsNumber, size() - 1);
     }
     while (--toAdd >= 0) {
       addElement(new MyEmptyDescriptor());
