@@ -24,12 +24,18 @@ import com.intellij.util.Consumer;
  * @author Konstantin Bulenkov
  */
 public class DefaultPlatformTopHitProvider implements SearchTopHitProvider {
-  private static final String[][] ACTION_MATRIX = {
-    {"op", "open ", "OpenFile", "$LRU"},
-    {"reo", "reopen ", "$LRU"},
-  };
+
   @Override
   public void consumeTopHits(String pattern, Consumer<Object> collector) {
+    //todo[kb] move to constant. Now it's better for hotswap
+    String[][] ACTION_MATRIX = {
+       {"op", "open ", "OpenFile"},
+       {"reo", "reopen ", "$LRU"},
+       {"new", "new ", "NewGroup"},
+       {"new c", "new class ", "NewClass"},
+       {"new i", "new interface ", "NewClass"},
+       {"new e", "new enum ", "NewClass"},
+     };
     final ActionManager actionManager = ActionManager.getInstance();
     for (String[] strings : ACTION_MATRIX) {
       if (StringUtil.isBetween(pattern, strings[0], strings[1])) {
