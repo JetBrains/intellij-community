@@ -30,6 +30,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -59,7 +60,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   private long myLastTimeProgressWasAtZero;
   private boolean myLastTimeProgressWasZero;
 
-  public InlineProgressIndicator(boolean compact, TaskInfo processInfo) {
+  public InlineProgressIndicator(boolean compact, @NotNull TaskInfo processInfo) {
     myCompact = compact;
     myInfo = processInfo;
 
@@ -381,7 +382,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myComponent = null;
 
     if (myProgress != null) {
-      UIUtil.disposeProgress(myProgress);  
+      UIUtil.disposeProgress(myProgress);
     }
     myProgress = null;
     myInfo = null;

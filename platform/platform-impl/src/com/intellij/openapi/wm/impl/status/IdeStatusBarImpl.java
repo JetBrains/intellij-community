@@ -432,7 +432,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   @Override
-  public void addProgress(ProgressIndicatorEx indicator, TaskInfo info) {
+  public void addProgress(@NotNull ProgressIndicatorEx indicator, @NotNull TaskInfo info) {
     myInfoAndProgressPanel.addProgress(indicator, info);
   }
 
