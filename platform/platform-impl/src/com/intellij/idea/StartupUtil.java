@@ -23,6 +23,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
@@ -132,7 +133,7 @@ public class StartupUtil {
   }
 
   private synchronized static boolean checkSystemFolders() {
-    final String configPath = PathManager.getConfigPath();
+    String configPath = PathManager.getConfigPath();
     if (!new File(configPath).isDirectory()) {
       String message = "Config path '" + configPath + "' is invalid.\n" +
                        "If you have modified the 'idea.config.path' property please make sure it is correct,\n" +
@@ -141,9 +142,36 @@ public class StartupUtil {
       return false;
     }
 
-    final String systemPath = PathManager.getSystemPath();
+    String systemPath = PathManager.getSystemPath();
     if (systemPath == null || !new File(systemPath).isDirectory()) {
       String message = "System path '" + systemPath + "' is invalid.\n" +
+                       "If you have modified the 'idea.system.path' property please make sure it is correct,\n" +
+                       "otherwise please re-install the IDE.";
+      Main.showMessage("Invalid System Path", message, true);
+      return false;
+    }
+
+    boolean tempAccessible = false;
+    File ideTempDir = new File(PathManager.getTempPath());
+
+    if (ideTempDir.isDirectory() || ideTempDir.mkdirs()) {
+      File ideTempFile = new File(ideTempDir, "idea_tmp_check.sh");
+      try {
+        FileUtil.writeToFile(ideTempFile, "#!/bin/sh\nexit 0");
+
+        boolean tempExecutable = !SystemInfo.isUnix || SystemInfo.isMac;
+        if (!tempExecutable) {
+          tempExecutable = ideTempFile.setExecutable(true, true) && ideTempDir.canExecute() &&
+                           new ProcessBuilder(ideTempFile.getAbsolutePath()).start().waitFor() == 0;
+        }
+
+        tempAccessible = tempExecutable && FileUtil.delete(ideTempFile);
+      }
+      catch (Exception ignored) { }
+    }
+
+    if (!tempAccessible) {
+      String message = "Temp directory '" + ideTempDir + "' is inaccessible.\n" +
                        "If you have modified the 'idea.system.path' property please make sure it is correct,\n" +
                        "otherwise please re-install the IDE.";
       Main.showMessage("Invalid System Path", message, true);
@@ -185,14 +213,14 @@ public class StartupUtil {
 
   private static void loadSystemLibraries(final Logger log) {
     // load JNA and Snappy in own temp directory - to avoid collisions and work around no-exec /tmp
-    final File ideaTempDir = new File(PathManager.getSystemPath(), "tmp");
-    if (!(ideaTempDir.mkdirs() || ideaTempDir.exists())) {
-      throw new RuntimeException("Unable to create temp directory '" + ideaTempDir + "'");
+    File ideTempDir = new File(PathManager.getTempPath());
+    if (!(ideTempDir.mkdirs() || ideTempDir.exists())) {
+      throw new RuntimeException("Unable to create temp directory '" + ideTempDir + "'");
     }
 
-    final String javaTempDir = System.getProperty(JAVA_IO_TEMP_DIR);
+    String javaTempDir = System.getProperty(JAVA_IO_TEMP_DIR);
     try {
-      System.setProperty(JAVA_IO_TEMP_DIR, ideaTempDir.getPath());
+      System.setProperty(JAVA_IO_TEMP_DIR, ideTempDir.getPath());
       if (System.getProperty("jna.nosys") == null && System.getProperty("jna.nounpack") == null) {
         // force using bundled JNA dispatcher (if not explicitly stated)
         System.setProperty("jna.nosys", "true");
@@ -210,7 +238,7 @@ public class StartupUtil {
       System.setProperty(JAVA_IO_TEMP_DIR, javaTempDir);
     }
 
-    SnappyInitializer.initializeSnappy(log, ideaTempDir);
+    SnappyInitializer.initializeSnappy(log, ideTempDir);
 
     if (SystemInfo.isWin2kOrNewer) {
       IdeaWin32.isAvailable();  // logging is done there
@@ -234,6 +262,7 @@ public class StartupUtil {
 
   private static void startLogging(final Logger log) {
     Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook - logging") {
+      @Override
       public void run() {
         log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
       }
