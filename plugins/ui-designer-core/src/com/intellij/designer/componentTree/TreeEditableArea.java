@@ -31,6 +31,7 @@ import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
@@ -274,7 +275,8 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
 
   private TreePath getPath(RadComponent component) {
     // TODO: I don't know better way gets tree path for element
-    return new TreePath(myTreeBuilder.getNodeForElement(component).getPath());
+    DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(component);
+    return node == null ? null : new TreePath(node.getPath());
   }
 
   @Override
