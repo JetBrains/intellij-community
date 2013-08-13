@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.sun.tools.javac.code.Flags.ABSTRACT;
+
 /**
  * Created by IntelliJ IDEA.
  * User: ik
@@ -309,14 +311,17 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             if (MethodSignatureUtil.areSignaturesEqual(existingMethod.getSignature(eSubstitutor), method.getSignature(cSubstitutor))) {
               final PsiType returnType = eSubstitutor.substitute(existingMethod.getReturnType());
               final PsiType returnType1 = cSubstitutor.substitute(method.getReturnType());
-              if (returnType != null && returnType1 != null && !returnType1.equals(returnType) && TypeConversionUtil.isAssignable(returnType, returnType1, false)) {
-                if (class1.isInterface() && !existingClass.isInterface()) continue;
-                conflicts.remove(existing);
-              } else {
-                conflicts.remove(i);
+              if (returnType != null && returnType1 != null && !returnType1.equals(returnType)) {
+                if (TypeConversionUtil.isAssignable(returnType, returnType1, false)) {
+                  if (class1.isInterface() && !existingClass.isInterface()) continue;
+                  conflicts.remove(existing);
+                } else {
+                  if (!TypeConversionUtil.isAssignable(returnType1, returnType, false)) continue;
+                  conflicts.remove(i);
+                }
+                i--;
+                break;
               }
-              i--;
-              break;
             }
           }
         }
@@ -521,33 +526,30 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
     }
 
-    Specifics isMoreSpecific = null;
     if (class1 != class2) {
       if (class2.isInheritor(class1, true) || class1.isInterface() && !class2.isInterface()) {
         if (MethodSignatureUtil.isSubsignature(method1.getSignature(info1.getSubstitutor()), method2.getSignature(info2.getSubstitutor()))) {
-          isMoreSpecific = Specifics.SECOND;
+          return Specifics.SECOND;
         }
         else if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0) {
-          isMoreSpecific = Specifics.SECOND;
+          return Specifics.SECOND;
         }
       }
       else if (class1.isInheritor(class2, true) || class2.isInterface()) {
-        if (MethodSignatureUtil.isSubsignature(method2.getSignature(info2.getSubstitutor()), method1.getSignature(info1.getSubstitutor()))) {
-          isMoreSpecific = Specifics.FIRST;
+        if (MethodSignatureUtil.areErasedParametersEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY)) && 
+            MethodSignatureUtil.isSubsignature(method2.getSignature(info2.getSubstitutor()), method1.getSignature(info1.getSubstitutor()))) {
+          return Specifics.FIRST;
         }
         else if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0) {
-          isMoreSpecific = Specifics.FIRST;
+          return Specifics.FIRST;
         }
       }
     }
-    if (isMoreSpecific == null) {
-      return Specifics.NEITHER;
-    }
 
-    return isMoreSpecific;
+    return Specifics.NEITHER;
   }
 
-  private int getLevel(int applicabilityLevel,
+  private static int getLevel(int applicabilityLevel,
                               LanguageLevel languageLevel,
                               PsiMethod method2,
                               PsiTypeParameter[] typeParameters2,
