@@ -57,19 +57,6 @@ public class AutoUnboxingInspection extends BaseInspection {
     s_unboxingMethods.put("char", "charValue");
   }
 
-  @NonNls static final Set<String> unboxableTypes = new HashSet(9);
-  static {
-    unboxableTypes.add(CommonClassNames.JAVA_LANG_BYTE);
-    unboxableTypes.add(CommonClassNames.JAVA_LANG_SHORT);
-    unboxableTypes.add(CommonClassNames.JAVA_LANG_INTEGER);
-    unboxableTypes.add(CommonClassNames.JAVA_LANG_LONG);
-    unboxableTypes.add(CommonClassNames.JAVA_LANG_FLOAT);
-    unboxableTypes.add(CommonClassNames.JAVA_LANG_DOUBLE);
-    unboxableTypes.add(CommonClassNames.JAVA_LANG_BOOLEAN);
-    unboxableTypes.add(CommonClassNames.JAVA_LANG_CHARACTER);
-    unboxableTypes.add(CommonClassNames.JAVA_LANG_OBJECT);
-  }
-
   @Override
   @NotNull
   public String getDisplayName() {
@@ -384,7 +371,7 @@ public class AutoUnboxingInspection extends BaseInspection {
       if (TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {
         return;
       }
-      if (!isUnboxable(expressionType)) {
+      if (!TypeConversionUtil.isAssignableFromPrimitiveWrapper(expressionType)) {
         return;
       }
       final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
@@ -392,15 +379,6 @@ public class AutoUnboxingInspection extends BaseInspection {
         return;
       }
       registerError(expression, expression);
-    }
-
-    private static boolean isUnboxable(PsiType type) {
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
-      return aClass != null && unboxableTypes.contains(aClass.getQualifiedName());
     }
   }
 }
