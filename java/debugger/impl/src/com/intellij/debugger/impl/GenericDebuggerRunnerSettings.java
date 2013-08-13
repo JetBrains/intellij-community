@@ -31,18 +31,22 @@ public class GenericDebuggerRunnerSettings implements RunnerSettings, DebuggingR
   public GenericDebuggerRunnerSettings() {
   }
 
+  @Override
   public String getDebugPort() {
     return DEBUG_PORT;
   }
 
+  @Override
   public boolean isRemote() {
     return !LOCAL;
   }
 
+  @Override
   public void setLocal(boolean isLocal) {
     LOCAL = isLocal;
   }
 
+  @Override
   public void setDebugPort(String port) {
     DEBUG_PORT = port;
   }
@@ -51,10 +55,12 @@ public class GenericDebuggerRunnerSettings implements RunnerSettings, DebuggingR
     TRANSPORT = transport;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }

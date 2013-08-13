@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,23 +45,28 @@ import java.io.IOException;
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsImpl");
 
+  @Override
   public PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context)
     throws EvaluateException {
     return DebuggerTreeNodeExpression.substituteThis(expressionWithThis, howToEvaluateThis, howToEvaluateThisValue);
   }
 
+  @Override
   public EvaluatorBuilder getEvaluatorBuilder() {
     return EvaluatorBuilderImpl.getInstance();
   }
 
+  @Override
   public DebuggerTreeNode getSelectedNode(DataContext context) {
     return DebuggerAction.getSelectedNode(context);
   }
 
+  @Override
   public DebuggerContextImpl getDebuggerContext(DataContext context) {
     return DebuggerAction.getDebuggerContext(context);
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Element writeTextWithImports(TextWithImports text) {
     Element element = new Element("TextWithImports");
@@ -71,6 +76,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return element;
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public TextWithImports readTextWithImports(Element element) {
     LOG.assertTrue("TextWithImports".equals(element.getName()));
@@ -83,39 +89,45 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     }
   }
 
+  @Override
   public void writeTextWithImports(Element root, String name, TextWithImports value) {
     LOG.assertTrue(value.getKind() == CodeFragmentKind.EXPRESSION);
     JDOMExternalizerUtil.writeField(root, name, value.toExternalForm());
   }
 
+  @Override
   public TextWithImports readTextWithImports(Element root, String name) {
     String s = JDOMExternalizerUtil.readField(root, name);
     if(s == null) return null;
     return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, s);
   }
 
+  @Override
   public TextWithImports createExpressionWithImports(String expression) {
     return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression);
   }
 
+  @Override
   public PsiElement getContextElement(StackFrameContext context) {
     return PositionUtil.getContextElement(context);
   }
 
+  @Override
   public PsiClass chooseClassDialog(String title, Project project) {
     TreeClassChooser dialog = TreeClassChooserFactory.getInstance(project).createAllProjectScopeChooser(title);
     dialog.showDialog();
     return dialog.getSelected();
   }
 
+  @Override
   public CompletionEditor createEditor(Project project, PsiElement context, String recentsId) {
     return new DebuggerExpressionComboBox(project, context, recentsId, DefaultCodeFragmentFactory.getInstance());
   }
 
+  @Override
   public String findAvailableDebugAddress(final boolean useSockets) throws ExecutionException {
     final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
-
-    if(useSockets) {
+    if (useSockets) {
       final int freePort;
       try {
         freePort = NetUtils.findAvailableSocketPort();
@@ -127,7 +139,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     }
 
     try {
-      String address  = transportService.startListening();
+      String address = transportService.startListening();
       transportService.stopListening(address);
       return address;
     }

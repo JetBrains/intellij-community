@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.debugger.apiAdapters;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
 import com.sun.jdi.connect.Transport;
 
@@ -25,8 +24,8 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author max
@@ -36,14 +35,9 @@ public class TransportServiceWrapper {
 
   private final Object myDelegateObject;
   private final Class myDelegateClass;
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String SOCKET_TRANSPORT_CLASS = SystemInfo.JAVA_VERSION.startsWith("1.4")
-                                                       ? "com.sun.tools.jdi.SocketTransport"
-                                                       : "com.sun.tools.jdi.SocketTransportService";
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static final String SHMEM_TRANSPORT_CLASS = SystemInfo.JAVA_VERSION.startsWith("1.4")
-                                                      ? "com.sun.tools.jdi.SharedMemoryTransport"
-                                                      : "com.sun.tools.jdi.SharedMemoryTransportService";
+
+  private static final String SOCKET_TRANSPORT_CLASS = "com.sun.tools.jdi.SocketTransportService";
+  private static final String SHMEM_TRANSPORT_CLASS = "com.sun.tools.jdi.SharedMemoryTransportService";
   
   private final Map<String, Object> myListenAddresses = new HashMap<String, Object>();
 
@@ -172,7 +166,7 @@ public class TransportServiceWrapper {
           transport = new TransportServiceWrapper(Class.forName(SHMEM_TRANSPORT_CLASS));
         }
       }
-      catch (UnsatisfiedLinkError e) {
+      catch (UnsatisfiedLinkError ignored) {
         transport = new TransportServiceWrapper(Class.forName(SOCKET_TRANSPORT_CLASS));
       }
     }
