@@ -25,6 +25,7 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -209,6 +210,10 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
         doApply();
       }
     });
+  }
+
+  protected void installListener(EditorTextField editor) {
+    installListener(editor.getDocument());
   }
 
   protected void doApply() {

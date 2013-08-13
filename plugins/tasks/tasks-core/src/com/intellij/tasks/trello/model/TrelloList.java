@@ -29,6 +29,13 @@ public class TrelloList extends TrelloModel {
   private String idBoard;
   private String name;
   private double pos;
+  /**
+   * This field is not part of REST responses. It will be set explicitly to show in UI, that
+   * selected list doesn't belong to specified board anymore.
+   *
+   * @see com.intellij.tasks.trello.TrelloRepositoryEditor
+   */
+  private boolean moved;
 
   /**
    * Serialization constructor
@@ -39,7 +46,7 @@ public class TrelloList extends TrelloModel {
 
   @Override
   public String toString() {
-    return String.format("TrelloList(id='%s' name='%s')", getId(), name);
+    return String.format("TrelloList(id='%s' name='%s')", getId(), getName());
   }
 
   public boolean isClosed() {
@@ -59,11 +66,19 @@ public class TrelloList extends TrelloModel {
   }
 
   @Override
-  public void setName(String name) {
+  public void setName(@NotNull String name) {
     this.name = name;
   }
 
   public double getPos() {
     return pos;
+  }
+
+  public boolean isMoved() {
+    return moved;
+  }
+
+  public void setMoved(boolean moved) {
+    this.moved = moved;
   }
 }
