@@ -6,7 +6,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction;
 import org.intellij.plugins.intelliLang.references.FileReferenceInjector;
@@ -18,7 +18,7 @@ import org.jdom.Element;
  * @author Dmitry Avdeev
  *         Date: 02.08.13
  */
-public class ReferenceInjectionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testInjectReference() throws Exception {
 
@@ -87,6 +87,16 @@ public class ReferenceInjectionTest extends LightPlatformCodeInsightFixtureTestC
     assertNull(getInjectedReferences());
   }
 
+  public void testInjectByAnnotation() throws Exception {
+    myFixture.configureByText("Foo.java", "class Foo {\n" +
+                                          "    @org.intellij.lang.annotations.Language(\"file-reference\")\n" +
+                                          "    String bar() {\n" +
+                                          "       return \"<error descr=\"Cannot resolve file 'unknown.file'\">unknown.file</error>\";\n" +
+                                          "    }  \n" +
+                                          "}");
+    myFixture.testHighlighting();
+  }
+
   private PsiReference[] getInjectedReferences() {
     PsiElement element = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     element = PsiTreeUtil.getParentOfType(element, PsiLanguageInjectionHost.class);
@@ -104,10 +114,5 @@ public class ReferenceInjectionTest extends LightPlatformCodeInsightFixtureTestC
   protected void tearDown() throws Exception {
     myFixture.disableInspections(new InjectedReferencesInspection());
     super.tearDown();
-  }
-
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
   }
 }
