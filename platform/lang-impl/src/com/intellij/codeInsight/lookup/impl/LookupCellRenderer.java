@@ -65,8 +65,6 @@ public class LookupCellRenderer implements ListCellRenderer {
   static final Color PREFIX_FOREGROUND_COLOR = new JBColor(new Color(176, 0, 176), new Color(209, 122, 214));
   private static final Color SELECTED_PREFIX_FOREGROUND_COLOR = new JBColor(new Color(249, 236, 204), new Color(209, 122, 214));
 
-  private static final Color EMPTY_ITEM_FOREGROUND_COLOR = FOREGROUND_COLOR;
-
   private final LookupImpl myLookup;
 
   private final SimpleColoredComponent myNameComponent;
