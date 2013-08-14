@@ -1,5 +1,7 @@
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,4 +53,9 @@ public interface Property {
   @NotNull
   Maybe<Callable> getByDirection(@NotNull AccessDirection direction);
 
+  /**
+   * Get the return type of the property getter.
+   */
+  @Nullable
+  PyType getType(@NotNull TypeEvalContext context);
 }
