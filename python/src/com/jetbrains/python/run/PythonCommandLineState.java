@@ -6,7 +6,10 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -94,6 +97,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
   }
 
+  @NotNull
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
     return execute(executor, (CommandLinePatcher[])null);
@@ -111,12 +115,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
-    final TextConsoleBuilder consoleBuilder = createConsoleBuilder(project);
-    for (Filter filter : myFilters) {
-      consoleBuilder.addFilter(filter);
-    }
-
-    final ConsoleView consoleView = consoleBuilder.getConsole();
+    final ConsoleView consoleView = createConsoleBuilder(project).filters(myFilters).getConsole();
     consoleView.attachToProcess(processHandler);
     return consoleView;
   }
@@ -130,6 +129,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
+  @Override
   @NotNull
   protected ProcessHandler startProcess() throws ExecutionException {
     return startProcess(null);
