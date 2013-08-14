@@ -71,11 +71,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +83,6 @@ import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 
 /**
@@ -327,21 +324,6 @@ public class DaemonListeners implements Disposable {
     }, this);
 
     ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(new ErrorStripeHandler(myProject), this);
-
-    Set<NamedScopesHolder> holders = new THashSet<NamedScopesHolder>(Arrays.asList(NamedScopesHolder.getAllNamedScopeHolders(project)));
-    // to ensure initialization dependency
-    holders.add(namedScopeManager);
-    holders.add(dependencyValidationManager);
-
-    NamedScopesHolder.ScopeListener scopeListener = new NamedScopesHolder.ScopeListener() {
-      @Override
-      public void scopesChanged() {
-        myDaemonCodeAnalyzer.reloadScopes(dependencyValidationManager, namedScopeManager);
-      }
-    };
-    for (NamedScopesHolder holder : holders) {
-      holder.addScopeListener(scopeListener);
-    }
 
     ModalityStateListener modalityStateListener = new ModalityStateListener() {
       @Override

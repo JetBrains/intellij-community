@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.analysis.PackagesScopesProvider;
-import com.intellij.application.options.colors.ColorAndFontOptions;
+import com.intellij.application.options.colors.ScopeAttributesUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -188,11 +188,11 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
     manager.addColorsScheme(scheme);
     EditorColorsManager.getInstance().setGlobalScheme(scheme);
-    TextAttributesKey xKey = ColorAndFontOptions.getScopeTextAttributeKey(xScope.getName());
+    TextAttributesKey xKey = ScopeAttributesUtil.getScopeTextAttributeKey(xScope.getName());
     TextAttributes xAttributes = new TextAttributes(Color.cyan, Color.darkGray, Color.blue, EffectType.BOXED, Font.ITALIC);
     scheme.setAttributes(xKey, xAttributes);
 
-    TextAttributesKey utilKey = ColorAndFontOptions.getScopeTextAttributeKey(utilScope.getName());
+    TextAttributesKey utilKey = ScopeAttributesUtil.getScopeTextAttributeKey(utilScope.getName());
     TextAttributes utilAttributes = new TextAttributes(Color.gray, Color.magenta, Color.orange, EffectType.STRIKEOUT, Font.BOLD);
     scheme.setAttributes(utilKey, utilAttributes);
 
@@ -215,16 +215,16 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
     manager.addColorsScheme(scheme);
     EditorColorsManager.getInstance().setGlobalScheme(scheme);
-    TextAttributesKey xKey = ColorAndFontOptions.getScopeTextAttributeKey(xScope.getName());
+    TextAttributesKey xKey = ScopeAttributesUtil.getScopeTextAttributeKey(xScope.getName());
     TextAttributes xAttributes = new TextAttributes(Color.cyan, Color.darkGray, Color.blue, null, Font.ITALIC);
     scheme.setAttributes(xKey, xAttributes);
 
-    TextAttributesKey utilKey = ColorAndFontOptions.getScopeTextAttributeKey(utilScope.getName());
+    TextAttributesKey utilKey = ScopeAttributesUtil.getScopeTextAttributeKey(utilScope.getName());
     TextAttributes utilAttributes = new TextAttributes(Color.gray, Color.magenta, Color.orange, EffectType.STRIKEOUT, Font.BOLD);
     scheme.setAttributes(utilKey, utilAttributes);
 
     NamedScope projectScope = PackagesScopesProvider.getInstance(myProject).getProjectProductionScope();
-    TextAttributesKey projectKey = ColorAndFontOptions.getScopeTextAttributeKey(projectScope.getName());
+    TextAttributesKey projectKey = ScopeAttributesUtil.getScopeTextAttributeKey(projectScope.getName());
     TextAttributes projectAttributes = new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.ITALIC);
     scheme.setAttributes(projectKey, projectAttributes);
 
