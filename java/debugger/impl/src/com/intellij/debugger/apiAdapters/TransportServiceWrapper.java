@@ -62,7 +62,7 @@ public class TransportServiceWrapper {
     if (SHMEM_TRANSPORT_CLASS.equals(myDelegateClass.getName())) {
       return "dt_shmem";
     }
-    LOG.error("Unknown serivce");
+    LOG.error("Unknown service");
     return "<unknown>";
   }
 
