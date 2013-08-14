@@ -27,25 +27,25 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);
 
-    if (canWriteNow()) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isWriteAccessAllowed()) {
       result.run();
       return result;
     }
 
     try {
-      if (!ApplicationManager.getApplication().isDispatchThread() && ApplicationManager.getApplication().isReadAccessAllowed()) {
+      if (!application.isDispatchThread() && application.isReadAccessAllowed()) {
         LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
       }
       GuiUtils.runOrInvokeAndWait(new Runnable() {
         @Override
         public void run() {
-          final AccessToken accessToken = start();
-          try {
-            result.run();
-          }
-          finally {
-            accessToken.finish();
-          }
+          application.runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              result.run();
+            }
+          });
         }
       });
     }
