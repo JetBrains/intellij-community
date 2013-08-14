@@ -84,7 +84,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private boolean myEditBeforeRun;
   private boolean mySingleton;
   private String myFolderName;
-  private String myID = null;
+  //private String myID = null;
 
   public RunnerAndConfigurationSettingsImpl(RunManagerImpl manager) {
     myManager = manager;
