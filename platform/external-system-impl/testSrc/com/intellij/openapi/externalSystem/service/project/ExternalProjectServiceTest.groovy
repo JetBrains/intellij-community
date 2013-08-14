@@ -17,17 +17,15 @@ package com.intellij.openapi.externalSystem.service.project
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.test.AbstractExternalSystemTest
-import com.intellij.openapi.externalSystem.test.ExternalProjectBuilder
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
-import com.intellij.openapi.roots.OrderEntry;
-import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
+import com.intellij.openapi.roots.OrderEntry
 
+import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 /**
  * @author Denis Zhdanov
  * @since 8/8/13 5:17 PM
