@@ -65,7 +65,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public boolean ANIMATE_WINDOWS = true;
   public int ANIMATION_SPEED = 2000; // Pixels per second
   public boolean SHOW_TOOL_WINDOW_NUMBERS = true;
-  public boolean HIDE_TOOL_STRIPES = false;
+  public boolean HIDE_TOOL_STRIPES = true;
   public boolean WIDESCREEN_SUPPORT = false;
   public boolean SHOW_MEMORY_INDICATOR = false;
   public boolean ALLOW_MERGE_BUTTONS = true;
