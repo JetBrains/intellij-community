@@ -87,7 +87,7 @@ public class GithubCreatePullRequestPanel {
     return myTitleTextField;
   }
 
-  public JComboBox getComboBox() {
+  public JComponent getBranchEditor() {
     return myBranchComboBox;
   }
 

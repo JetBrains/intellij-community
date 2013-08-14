@@ -25,7 +25,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.github.GithubSettings;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -100,7 +99,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     }
 
     if (!GITHUB_REPO_PATTERN.matcher(getTargetBranch()).matches()) {
-      return new ValidationInfo("Branch must be specified like 'username:branch'", myGithubCreatePullRequestPanel.getComboBox());
+      return new ValidationInfo("Branch must be specified like 'username:branch'", myGithubCreatePullRequestPanel.getBranchEditor());
     }
 
     return null;
