@@ -122,7 +122,10 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
         final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
         Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
+        // add current importing project settings to linked projects settings or replace if similar already exist
+        projects.remove(projectSettings);
         projects.add(projectSettings);
+
         systemSettings.copyFrom(myControl.getSystemSettings());
         systemSettings.setLinkedProjectsSettings(projects);
 
