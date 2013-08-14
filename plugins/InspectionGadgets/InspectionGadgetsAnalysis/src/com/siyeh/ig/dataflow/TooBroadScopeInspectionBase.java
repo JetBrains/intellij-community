@@ -216,7 +216,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
           return;
         }
       }
-      if (insertionPoint != null && FileTypeUtils.isInJsp(insertionPoint)) {
+      if (insertionPoint != null && FileTypeUtils.isInServerPageFile(insertionPoint)) {
         PsiElement elementBefore = insertionPoint.getPrevSibling();
         elementBefore = PsiTreeUtil.skipSiblingsBackward(elementBefore, PsiWhiteSpace.class);
         if (elementBefore instanceof PsiDeclarationStatement) {

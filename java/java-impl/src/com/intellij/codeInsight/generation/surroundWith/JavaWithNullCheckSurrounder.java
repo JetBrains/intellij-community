@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 
 class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
@@ -36,7 +37,7 @@ class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
     PsiElement parent = PsiTreeUtil.getParentOfType(expr, PsiExpressionStatement.class);
     if (parent == null) return false;
     final PsiElement element = parent.getParent();
-    if (!(element instanceof PsiCodeBlock) && !(JspPsiUtil.isInJspFile(element)  && element instanceof PsiFile)) return false;
+    if (!(element instanceof PsiCodeBlock) && !(FileTypeUtils.isInServerPageFile(element)  && element instanceof PsiFile)) return false;
     return true;
   }
 

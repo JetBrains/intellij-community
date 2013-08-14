@@ -127,7 +127,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
     final Project project = statement.getProject();
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     final JavaCodeStyleManager javaStyleManager = JavaCodeStyleManager.getInstance(project);
-    if (FileTypeUtils.isInJsp(statement)) {
+    if (FileTypeUtils.isInServerPageFile(statement)) {
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       final PsiFile jspFile = PsiUtilCore.getTemplateLanguageFile(statement);
       if (jspFile == null) {

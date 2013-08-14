@@ -29,6 +29,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,7 +42,7 @@ public class MoveJavaFileHandler extends MoveFileHandler {
   @Override
   public boolean canProcessElement(PsiFile element) {
     return element instanceof PsiJavaFile &&
-           !JspPsiUtil.isInJspFile(element) &&
+           !FileTypeUtils.isInServerPageFile(element) &&
            !ProjectRootsUtil.isOutsideSourceRoot(element) &&
            !(element instanceof PsiCompiledElement);
   }

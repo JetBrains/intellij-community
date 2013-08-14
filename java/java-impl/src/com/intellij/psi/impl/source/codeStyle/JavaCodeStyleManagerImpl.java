@@ -38,6 +38,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -157,7 +158,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     Set<PsiImportStatementBase> allImports = new THashSet<PsiImportStatementBase>(Arrays.asList(imports));
     final Collection<PsiImportStatementBase> redundant;
-    if (JspPsiUtil.isInJspFile(file)) {
+    if (FileTypeUtils.isInServerPageFile(file)) {
       // remove only duplicate imports
       redundant = ContainerUtil.newIdentityTroveSet();
       ContainerUtil.addAll(redundant, imports);
