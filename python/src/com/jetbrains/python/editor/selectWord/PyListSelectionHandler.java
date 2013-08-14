@@ -1,6 +1,6 @@
 package com.jetbrains.python.editor.selectWord;
 
-import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler;
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -17,7 +17,7 @@ import java.util.List;
  *
  * Handler to select list contents without parentheses 
  */
-public class PyListSelectionHandler implements ExtendWordSelectionHandler {
+public class PyListSelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof PyListLiteralExpression || e instanceof PyParameterList || e instanceof PyArgumentList;

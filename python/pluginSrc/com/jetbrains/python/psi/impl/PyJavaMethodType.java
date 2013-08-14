@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -56,7 +57,7 @@ public class PyJavaMethodType implements PyCallableType {
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 

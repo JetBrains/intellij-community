@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -60,7 +61,7 @@ public class PyJavaPackageType implements PyType {
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
     List<Object> variants = new ArrayList<Object>();
     final GlobalSearchScope scope = getScope(location.getProject());
     final PsiClass[] classes = myPackage.getClasses(scope);

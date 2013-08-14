@@ -51,7 +51,7 @@ public class PyImportedModuleType implements PyType {
     return null;
   }
 
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
     List<LookupElement> result = new ArrayList<LookupElement>();
     ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(location);
     assert scopeOwner != null;

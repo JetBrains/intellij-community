@@ -14,9 +14,14 @@ import java.util.*;
 public class PyEvaluator {
   private Set<PyExpression> myVisited = new HashSet<PyExpression>();
   private Map<String, Object> myNamespace;
+  private boolean myEvaluateCollectionItems = true;
 
   public void setNamespace(Map<String, Object> namespace) {
     myNamespace = namespace;
+  }
+
+  public void setEvaluateCollectionItems(boolean evaluateCollectionItems) {
+    myEvaluateCollectionItems = evaluateCollectionItems;
   }
 
   public Object evaluate(PyExpression expr) {
@@ -34,7 +39,8 @@ public class PyEvaluator {
         for (PyKeyValueExpression keyValueExpression : ((PyDictLiteralExpression)expr).getElements()) {
           Object dictKey = evaluate(keyValueExpression.getKey());
           if (dictKey != null) {
-            result.put(dictKey, evaluate(keyValueExpression.getValue()));
+            PyExpression value = keyValueExpression.getValue();
+            result.put(dictKey, myEvaluateCollectionItems ? evaluate(value) : value);
           }
         }
         return result;
@@ -42,7 +48,7 @@ public class PyEvaluator {
       else {
         List<Object> result = new ArrayList<Object>();
         for (PyExpression element : elements) {
-          result.add(evaluate(element));
+          result.add(myEvaluateCollectionItems ? evaluate(element) : element);
         }
         return result;
       }

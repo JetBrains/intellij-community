@@ -258,16 +258,26 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
-    Set<String> namesAlready = context.get(CTX_NAMES);
-    List<Object> result = new ArrayList<Object>();
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+    List<LookupElement> result = getCompletionVariantsAsLookupElements(location, context, false, false);
+    return result.toArray();
+  }
 
+  public List<LookupElement> getCompletionVariantsAsLookupElements(PsiElement location,
+                                                                   ProcessingContext context,
+                                                                   boolean wantAllSubmodules, boolean suppressParentheses) {
+    List<LookupElement> result = new ArrayList<LookupElement>();
+
+    Set<String> namesAlready = context.get(CTX_NAMES);
     PointInImport point = ResolveImportUtil.getPointInImport(location);
     for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
       for (PyDynamicMember member : provider.getMembers(myModule, point)) {
         final String name = member.getName();
         if (namesAlready != null) {
           namesAlready.add(name);
+        }
+        if (PyUtil.isClassPrivateName(name)) {
+          continue;
         }
         result.add(LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(member.getShortType()));
       }
@@ -281,6 +291,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                  PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement;
         }
       }, new PyUtil.UnderscoreFilter(0));
+      if (suppressParentheses) {
+        processor.suppressParentheses();
+      }
       processor.setPlainNamesOnly(point  == PointInImport.AS_NAME); // no parens after imported function names
       myModule.processDeclarations(processor, ResolveState.initial(), null, location);
       if (namesAlready != null) {
@@ -297,17 +310,17 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
     }
     if (PyUtil.isPackage(myModule)) { // our module is a dir, not a single file
-      if (point == PointInImport.AS_MODULE || point == PointInImport.AS_NAME) { // when imported from somehow, add submodules
+      if (point == PointInImport.AS_MODULE || point == PointInImport.AS_NAME || wantAllSubmodules) { // when imported from somehow, add submodules
         result.addAll(getSubModuleVariants(myModule.getContainingDirectory(), location, namesAlready));
       }
       else {
         addImportedSubmodules(location, namesAlready, result);
       }
     }
-    return result.toArray();
+    return result;
   }
 
-  private void addImportedSubmodules(PyExpression location, Set<String> existingNames, List<Object> result) {
+  private void addImportedSubmodules(PsiElement location, Set<String> existingNames, List<LookupElement> result) {
     PsiFile file = location.getContainingFile();
     if (file instanceof PyFile) {
       PyFile pyFile = (PyFile)file;

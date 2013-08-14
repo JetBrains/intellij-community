@@ -16,6 +16,9 @@ import com.jetbrains.rest.RestFile;
 import com.jetbrains.rest.run.RestRunConfiguration;
 import com.jetbrains.rest.run.RestRunConfigurationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * User : catherine
@@ -68,9 +71,10 @@ public class SphinxConfigurationProducer extends RuntimeConfigurationProducer im
     return settings;
   }
 
+  @Nullable
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     PsiElement element = location.getPsiElement();
     if (!(element instanceof PsiDirectory)) return null;

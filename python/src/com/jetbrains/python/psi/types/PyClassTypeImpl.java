@@ -201,7 +201,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (isDefinition() && myClass.isNewStyleClass()) {
-      PyClassType typeType = getMetaclassType(context);
+      PyClassType typeType = getMetaclassType();
       if (typeType != null) {
         List<? extends RatedResolveResult> typeMembers = typeType.resolveMember(name, location, direction, resolveContext);
         if (typeMembers != null && !typeMembers.isEmpty()) {
@@ -237,13 +237,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private PyClassType getMetaclassType(@NotNull TypeEvalContext context) {
-    final PyTargetExpression metaClassAttribute = myClass.findClassAttribute(PyNames.DUNDER_METACLASS, true);
-    if (metaClassAttribute != null) {
-      final PyType type = context.getType(metaClassAttribute);
-      if (type instanceof PyClassType) {
-        return (PyClassType)type;
-      }
+  private PyClassType getMetaclassType() {
+    final PyClass metaClass = PyUtil.getMetaClass(myClass);
+    if (metaClass != null) {
+      return new PyClassTypeImpl(metaClass, false);
     }
     return PyBuiltinCache.getInstance(myClass).getObjectType("type");
   }
@@ -335,7 +332,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
   public static Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
-  public Object[] getCompletionVariants(String prefix, PyExpression location, ProcessingContext context) {
+  public Object[] getCompletionVariants(String prefix, PsiElement location, ProcessingContext context) {
     Set<PyClassType> visited = context.get(CTX_VISITED);
     if (visited == null) {
       visited = new HashSet<PyClassType>();
@@ -383,7 +380,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (isDefinition() && myClass.isNewStyleClass()) {
-      final PyClassType typeType = getMetaclassType(typeEvalContext);
+      final PyClassType typeType = getMetaclassType();
       if (typeType != null) {
         Collections.addAll(ret, typeType.getCompletionVariants(prefix, location, context));
       }
@@ -392,7 +389,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return ret.toArray();
   }
 
-  private void addOwnClassMembers(PyExpression expressionHook, Set<String> namesAlready, boolean suppressParentheses, List<Object> ret) {
+  private void addOwnClassMembers(PsiElement expressionHook, Set<String> namesAlready, boolean suppressParentheses, List<Object> ret) {
     PyClass containingClass = PsiTreeUtil.getParentOfType(expressionHook, PyClass.class);
     if (containingClass != null) {
       containingClass = CompletionUtil.getOriginalElement(containingClass);
@@ -429,7 +426,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
   }
 
-  private static boolean isInSuperCall(PyExpression hook) {
+  private static boolean isInSuperCall(PsiElement hook) {
     if (hook instanceof PyReferenceExpression) {
       final PyExpression qualifier = ((PyReferenceExpression)hook).getQualifier();
       return qualifier instanceof PyCallExpression && ((PyCallExpression)qualifier).isCalleeText(PyNames.SUPER);
@@ -438,7 +435,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   private void addInheritedMembers(String name,
-                                   PyExpression expressionHook,
+                                   PsiElement expressionHook,
                                    Set<String> namesAlready,
                                    ProcessingContext context,
                                    List<Object> ret,

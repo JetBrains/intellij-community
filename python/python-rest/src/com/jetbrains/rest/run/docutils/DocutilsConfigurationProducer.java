@@ -16,6 +16,9 @@ import com.jetbrains.rest.RestFileType;
 import com.jetbrains.rest.run.RestRunConfiguration;
 import com.jetbrains.rest.run.RestRunConfigurationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * User : catherine
@@ -71,9 +74,10 @@ public class DocutilsConfigurationProducer extends RuntimeConfigurationProducer 
     return settings;
   }
 
+  @Nullable
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     PsiFile script = location.getPsiElement().getContainingFile();
     if (script == null) {
