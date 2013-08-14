@@ -498,6 +498,10 @@ public abstract class ChooseByNameBase {
               }
               else {
                 Component oppositeComponent = e.getOppositeComponent();
+                if (oppositeComponent == myCheckBox) {
+                  myTextField.requestFocus();
+                  return;
+                }
                 if (oppositeComponent != null && !(oppositeComponent instanceof JFrame) &&
                     myList.isShowing() &&
                     (oppositeComponent == myList || SwingUtilities.isDescendingFrom(myList, oppositeComponent))) {
