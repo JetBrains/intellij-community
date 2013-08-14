@@ -20,11 +20,11 @@ import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiSyntheticClass;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
@@ -59,7 +59,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   /**
    * There is a possible case that 'implements' section is incomplete (e.g. ends with comma). We may want to align lbrace
    * to the comma then.
-   * 
+   *
    * @param alignment     block alignment
    * @param baseNode      base AST node
    * @return              alignment strategy to use for the given node
@@ -86,7 +86,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     }
     return AlignmentStrategy.wrap(alignment);
   }
-  
+
   private boolean isSwitchCodeBlock() {
     return myNode.getTreeParent().getElementType() == JavaElementType.SWITCH_STATEMENT;
   }
@@ -108,7 +108,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
     int state = BEFORE_FIRST;
 
-    if (myNode.getPsi() instanceof JspClass) {
+    if (myNode.getPsi() instanceof PsiSyntheticClass) {
       state = INSIDE_BODY;
     }
 
@@ -157,7 +157,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     }
     return StringUtil.countNewLines(whiteSpaceCandidate.getChars()) > 0 ? myAlignment : defaultAlignment;
   }
-  
+
   @Nullable
   private ASTNode processCaseAndStatementAfter(final ArrayList<Block> result,
                                                ASTNode child,

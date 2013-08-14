@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -81,12 +80,12 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       final PsiClass[] classes = ((PsiClassOwner)element).getClasses();
       if (classes.length == 0) return true;
       for (PsiClass aClass : classes) {
-        if (aClass instanceof JspClass) return true;
+        if (aClass instanceof PsiSyntheticClass) return true;
       }
       parentFile = (PsiFile)element;
     }
     else {
-      if (element instanceof JspClass) return true;
+      if (element instanceof PsiSyntheticClass) return true;
       if (!(element instanceof PsiClass)) return true;
       if (element instanceof PsiAnonymousClass) return true;
       if (((PsiClass)element).getContainingClass() != null) return true;

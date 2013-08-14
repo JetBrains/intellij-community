@@ -26,14 +26,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -252,7 +250,7 @@ public class HighlightNamesUtil {
   }
 
   public static TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
-    if (method instanceof JspHolderMethod) return TextRange.EMPTY_RANGE;
+    if (method instanceof SyntheticElement) return TextRange.EMPTY_RANGE;
     int start = stripAnnotationsFromModifierList(method.getModifierList());
     final TextRange throwsRange = method.getThrowsList().getTextRange();
     LOG.assertTrue(throwsRange != null, method);

@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -245,7 +244,7 @@ public class TestNGUtil
   private static boolean isBrokenPsiClass(PsiClass psiClass) {
     return (psiClass == null
         || psiClass instanceof PsiAnonymousClass
-        || psiClass instanceof JspClass);
+        || psiClass instanceof PsiSyntheticClass);
   }
 
   /**

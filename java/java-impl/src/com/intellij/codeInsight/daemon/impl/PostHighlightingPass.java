@@ -806,7 +806,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     // dont optimize out imports in JSP since it can be included in other JSP
-    if (file == null || !codeAnalyzer.isHighlightingAvailable(file) || !(file instanceof PsiJavaFile) || file instanceof JspFile) return false;
+    if (file == null || !codeAnalyzer.isHighlightingAvailable(file) || !(file instanceof PsiJavaFile) || file instanceof ServerPageFile) return false;
 
     if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
     boolean errors = containsErrorsPreventingOptimize(file);

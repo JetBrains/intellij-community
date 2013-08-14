@@ -22,8 +22,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
@@ -421,7 +419,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (psiClass instanceof PsiAnonymousClass) return null;
-    if (psiClass instanceof JspClass) return null;
+    if (psiClass instanceof PsiSyntheticClass) return null;
     if (psiClass instanceof PsiTypeParameter) return null;
     if (IGNORE_DEPRECATED && psiClass.isDeprecated()) {
       return null;
@@ -553,7 +551,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   @Override
   @Nullable
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod psiMethod, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (psiMethod instanceof JspHolderMethod) return null;
+    if (psiMethod instanceof SyntheticElement) return null;
     if (IGNORE_DEPRECATED && (psiMethod.isDeprecated() || psiMethod.getContainingClass().isDeprecated())) {
       return null;
     }
