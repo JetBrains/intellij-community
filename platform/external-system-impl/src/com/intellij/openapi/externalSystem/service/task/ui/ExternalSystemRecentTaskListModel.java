@@ -79,7 +79,8 @@ public class ExternalSystemRecentTaskListModel extends DefaultListModel {
     int toAdd = elementsNumber - size();
     if (toAdd == 0) {
       return;
-    } if(toAdd < 0) {
+    }
+    if(toAdd < 0) {
       removeRange(elementsNumber, size() - 1);
     }
     while (--toAdd >= 0) {
