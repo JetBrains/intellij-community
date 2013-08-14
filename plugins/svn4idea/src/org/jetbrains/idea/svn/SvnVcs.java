@@ -68,6 +68,9 @@ import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
+import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.CmdClientFactory;
+import org.jetbrains.idea.svn.api.SvnKitClientFactory;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient;
@@ -197,6 +200,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   };
   private SvnCheckoutProvider myCheckoutProvider;
 
+  private final ClientFactory cmdClientFactory;
+  private final ClientFactory svnKitClientFactory;
+
+
   public void checkCommandLineVersion() {
     myChecker.checkExecutableAndNotifyIfNeeded();
   }
@@ -286,6 +293,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     // remove used some time before old notification group ids
     correctNotificationIds();
     myChecker = new SvnExecutableChecker(myProject);
+    cmdClientFactory = new CmdClientFactory(this);
+    svnKitClientFactory = new SvnKitClientFactory(this);
   }
 
   private void correctNotificationIds() {
@@ -1336,5 +1345,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       myCheckoutProvider = new SvnCheckoutProvider();
     }
     return myCheckoutProvider;
+  }
+
+  public ClientFactory getFactory() {
+    return myConfiguration.myUseAcceleration.equals(SvnConfiguration.UseAcceleration.commandLine) ? cmdClientFactory : svnKitClientFactory;
+  }
+
+  public ClientFactory getFactory(@NotNull File file) {
+    WorkingCopyFormat format = getWorkingCopyFormat(file);
+    // TODO: Add here direct calculation of svn root if format == UNKNOWN
+
+    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ? cmdClientFactory : getFactory();
   }
 }

@@ -44,7 +44,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.ActionWithTempFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.commandLine.SvnAddClient;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.*;
@@ -791,17 +790,11 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
               new RepeatSvnActionThroughBusy() {
                 @Override
                 protected void executeImpl() throws SVNException {
-                  WorkingCopyFormat format = vcs.getWorkingCopyFormat(ioFile);
-
-                  if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)) {
-                    SvnAddClient client = new SvnAddClient(project);
-                    try {
-                      client.add(ioFile, null, false, false, true);
-                    } catch(VcsException e) {
-                      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);
-                    }
-                  } else {
-                    wcClient.doAdd(ioFile, true, false, false, true);
+                  try {
+                    vcs.getFactory(ioFile).createAddClient().add(ioFile, null, false, false, true);
+                  }
+                  catch (VcsException e) {
+                    throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);
                   }
                 }
               }.execute();

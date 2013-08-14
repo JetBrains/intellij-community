@@ -1,8 +1,11 @@
-package org.jetbrains.idea.svn.commandLine;
+package org.jetbrains.idea.svn.add;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.commandLine.SvnCommandFactory;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
+import org.jetbrains.idea.svn.commandLine.SvnSimpleCommand;
 import org.tmatesoft.svn.core.SVNDepth;
 
 import java.io.File;
@@ -10,15 +13,11 @@ import java.io.File;
 /**
  * @author Konstantin Kolosovsky.
  */
-public class SvnAddClient {
-  private Project myProject;
+public class CmdAddClient extends BaseSvnClient implements AddClient {
 
-  public SvnAddClient(@NotNull Project project) {
-    myProject = project;
-  }
-
+  @Override
   public void add(@NotNull File file, SVNDepth depth, boolean makeParents, boolean includeIgnored, boolean force) throws VcsException {
-    SvnSimpleCommand command = SvnCommandFactory.createSimpleCommand(myProject, null, SvnCommandName.add);
+    SvnSimpleCommand command = SvnCommandFactory.createSimpleCommand(myVcs.getProject(), null, SvnCommandName.add);
     command.addParameters(file.getAbsolutePath());
     if (depth != null) {
       command.addParameters("--depth", depth.getName());
