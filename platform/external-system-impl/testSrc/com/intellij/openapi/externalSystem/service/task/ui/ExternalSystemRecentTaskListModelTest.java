@@ -16,14 +16,15 @@
 package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.openapi.command.impl.DummyProject;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
+import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,44 +32,46 @@ import java.util.List;
  * @since 8/13/13
  */
 public class ExternalSystemRecentTaskListModelTest {
+  
+  private ExternalSystemRecentTaskListModel myModel;
+
+  @Before
+  public void setUp() {
+    myModel = new ExternalSystemRecentTaskListModel(ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID, DummyProject.getInstance());
+  }
+  
   @Test
   public void testSetFirst() throws Exception {
-    ExternalSystemRecentTaskListModel model =
-      new ExternalSystemRecentTaskListModel(new ProjectSystemId("test"), DummyProject.getInstance());
-
-    List<ExternalTaskExecutionInfo> tasks = new ArrayList<ExternalTaskExecutionInfo>();
+    List<ExternalTaskExecutionInfo> tasks = ContainerUtilRt.newArrayList();
     for (int i = 0; i <= ExternalSystemConstants.RECENT_TASKS_NUMBER; i++) {
       new ExternalTaskExecutionInfo(new ExternalSystemTaskExecutionSettings(), "task" + i);
     }
-    model.setTasks(tasks);
+    myModel.setTasks(tasks);
 
-    model.setFirst(new ExternalTaskExecutionInfo(new ExternalSystemTaskExecutionSettings(), "newTask"));
+    myModel.setFirst(new ExternalTaskExecutionInfo(new ExternalSystemTaskExecutionSettings(), "newTask"));
 
-    Assert.assertEquals(ExternalSystemConstants.RECENT_TASKS_NUMBER, model.getSize());
-    model.setFirst(new ExternalTaskExecutionInfo(new ExternalSystemTaskExecutionSettings(), "task1"));
-    Assert.assertEquals(ExternalSystemConstants.RECENT_TASKS_NUMBER, model.getSize());
+    Assert.assertEquals(ExternalSystemConstants.RECENT_TASKS_NUMBER, myModel.getSize());
+    myModel.setFirst(new ExternalTaskExecutionInfo(new ExternalSystemTaskExecutionSettings(), "task1"));
+    Assert.assertEquals(ExternalSystemConstants.RECENT_TASKS_NUMBER, myModel.getSize());
   }
 
   @Test
   public void testEnsureSize() throws Exception {
-    ExternalSystemRecentTaskListModel model =
-      new ExternalSystemRecentTaskListModel(new ProjectSystemId("test"), DummyProject.getInstance());
-
-    List<ExternalTaskExecutionInfo> tasks = new ArrayList<ExternalTaskExecutionInfo>();
+    List<ExternalTaskExecutionInfo> tasks = ContainerUtilRt.newArrayList();
 
     // test task list widening
-    model.setTasks(tasks);
-    model.ensureSize(ExternalSystemConstants.RECENT_TASKS_NUMBER);
-    Assert.assertEquals("task list widening failed", ExternalSystemConstants.RECENT_TASKS_NUMBER, model.getSize());
+    myModel.setTasks(tasks);
+    myModel.ensureSize(ExternalSystemConstants.RECENT_TASKS_NUMBER);
+    Assert.assertEquals("task list widening failed", ExternalSystemConstants.RECENT_TASKS_NUMBER, myModel.getSize());
 
     // test task list reduction
     for (int i = 0; i < ExternalSystemConstants.RECENT_TASKS_NUMBER + 1; i++) {
       tasks.add(new ExternalTaskExecutionInfo(new ExternalSystemTaskExecutionSettings(), "task" + i));
     }
-    model.setTasks(tasks);
-    Assert.assertEquals(ExternalSystemConstants.RECENT_TASKS_NUMBER + 1, model.getSize());
+    myModel.setTasks(tasks);
+    Assert.assertEquals(ExternalSystemConstants.RECENT_TASKS_NUMBER + 1, myModel.getSize());
 
-    model.ensureSize(ExternalSystemConstants.RECENT_TASKS_NUMBER);
-    Assert.assertEquals("task list reduction failed", ExternalSystemConstants.RECENT_TASKS_NUMBER, model.getSize());
+    myModel.ensureSize(ExternalSystemConstants.RECENT_TASKS_NUMBER);
+    Assert.assertEquals("task list reduction failed", ExternalSystemConstants.RECENT_TASKS_NUMBER, myModel.getSize());
   }
 }
