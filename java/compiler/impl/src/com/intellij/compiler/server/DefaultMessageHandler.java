@@ -34,11 +34,11 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.Channels;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 
 import java.util.*;
-import java.util.concurrent.Executor;
 
 /**
  * @author Eugene Zhuravlev
@@ -50,12 +50,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   private final Project myProject;
   private int myConstantSearchesCount = 0;
   private final CachingSearcher mySearcher;
-  private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new Executor() {
-    @Override
-    public void execute(Runnable command) {
-      ApplicationManager.getApplication().executeOnPooledThread(command);
-    }
-  });
+  private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new PooledThreadExecutor());
 
   protected DefaultMessageHandler(Project project) {
     myProject = project;
