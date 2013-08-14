@@ -18,6 +18,7 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -38,7 +39,7 @@ import javax.swing.*;
     file = StoragePathMacros.APP_CONFIG + "/plugin_ui.xml")
   }
 )
-public class PluginManagerUISettings implements PersistentStateComponent<Element> {
+public class PluginManagerUISettings implements PersistentStateComponent<Element>, PerformInBackgroundOption {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerUISettings");
 
   public int AVAILABLE_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();
@@ -46,6 +47,7 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
   public int AVAILABLE_SORT_MODE = 0;
   public boolean AVAILABLE_SORT_BY_STATUS = false;
   public boolean INSTALLED_SORT_BY_STATUS = false;
+  public boolean UPDATE_IN_BACKGROUND = false;
   public JDOMExternalizableStringList myOutdatedPlugins = new JDOMExternalizableStringList();
 
   private JDOMExternalizableStringList myInstalledPlugins = new JDOMExternalizableStringList();
@@ -99,5 +101,15 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
   
   public SplitterProportionsData getAvailableSplitterProportionsData() {
     return myAvailableSplitterProportionsData;
+  }
+
+  @Override
+  public boolean shouldStartInBackground() {
+    return UPDATE_IN_BACKGROUND;
+  }
+
+  @Override
+  public void processSentToBackground() {
+    UPDATE_IN_BACKGROUND = true;
   }
 }
