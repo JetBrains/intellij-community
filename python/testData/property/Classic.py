@@ -19,6 +19,6 @@ class A(object):
 
   v1 = property(getter, setter)
   v2 = property(fset=setter, fdel=deleter, fget=getter, doc="doc of v2")
-  v3 = property(lambda self: self._v, None, (deleter))
+  v3 = property(lambda self: 0, None, (deleter))
   v4 = otherworldly # NOTE: not supported yet
   v5 = property(v5getter, v5setter)

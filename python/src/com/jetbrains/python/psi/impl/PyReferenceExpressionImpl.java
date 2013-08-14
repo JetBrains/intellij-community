@@ -27,7 +27,6 @@ import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
-import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -269,10 +268,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (classType.isDefinition()) {
           return Ref.<PyType>create(PyBuiltinCache.getInstance(pyClass).getObjectType(PyNames.PROPERTY));
         }
-        final Maybe<Callable> accessor = property.getByDirection(AccessDirection.of(this));
-        final Callable callable = accessor.valueOrNull();
-        final PyType type = (callable != null) ? callable.getReturnType(context, this) : null;
-        return Ref.create(type);
+        if (AccessDirection.of(this) == AccessDirection.READ) {
+          final PyType type = property.getType(context);
+          if (type != null) {
+            return Ref.create(type);
+          }
+        }
+        return Ref.create();
       }
     }
     else if (qualifierType instanceof PyUnionType) {

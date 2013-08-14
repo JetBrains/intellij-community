@@ -2,6 +2,8 @@ package com.jetbrains.python;
 
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
 
 public class PyClassicPropertyTest extends PyTestCase {
@@ -77,6 +79,9 @@ public class PyClassicPropertyTest extends PyTestCase {
 
     accessor = p.getGetter();
     assertFalse(accessor.isDefined());
+
+    final PyType codeInsightType = p.getType(TypeEvalContext.codeInsightFallback());
+    assertNull(codeInsightType);
 
     accessor = p.getSetter();
     assertTrue(accessor.isDefined());
