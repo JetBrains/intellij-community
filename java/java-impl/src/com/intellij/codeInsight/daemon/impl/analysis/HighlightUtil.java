@@ -2603,11 +2603,13 @@ public class HighlightUtil extends HighlightUtilBase {
     return info;
   }
 
-  public static void registerChangeVariableTypeFixes(PsiVariable parameter, PsiType itemType, HighlightInfo highlightInfo) {
+  public static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter, PsiType itemType, HighlightInfo highlightInfo) {
     if (itemType instanceof PsiMethodReferenceType) return;
-    for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
-      for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, action);
+    if (itemType != null) {
+      for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
+        for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, action);
+        }
       }
     }
     ChangeParameterClassFix.registerQuickFixAction(parameter.getType(), itemType, highlightInfo);
