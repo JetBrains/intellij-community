@@ -246,11 +246,10 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         if (factory == null) {
           factory = JavaPsiFacade.getElementFactory(modifierListOwner.getProject());
         }
-        String anno = Language.findLanguageByID(languageId) != null ? AnnotationUtil.LANGUAGE : AnnotationUtil.REFERENCE;
-        final PsiAnnotation annotation = factory.createAnnotationFromText("@" + anno + "(\"" + languageId + "\")", modifierListOwner);
+        final PsiAnnotation annotation = factory.createAnnotationFromText("@" + AnnotationUtil.LANGUAGE + "(\"" + languageId + "\")", modifierListOwner);
         final PsiModifierList list = modifierListOwner.getModifierList();
         assert list != null;
-        final PsiAnnotation existingAnnotation = list.findAnnotation(anno);
+        final PsiAnnotation existingAnnotation = list.findAnnotation(AnnotationUtil.LANGUAGE);
         if (existingAnnotation != null) {
           existingAnnotation.replace(annotation);
         }
