@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   private static final long serialVersionUID = 1L;
 
-  @NotNull private final List<String> myResolverExtensions = ContainerUtilRt.newArrayList();
+  @NotNull private final List<Pair<String, Class<?>>> myResolverExtensions = ContainerUtilRt.newArrayList();
   @Nullable private final String myGradleHome;
   @Nullable private final String myServiceDirectory;
 
@@ -83,12 +84,20 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   }
 
   @NotNull
-  public List<String> getResolverExtensions() {
+  public List<Pair<String, Class<?>>> getResolverExtensions() {
     return myResolverExtensions;
   }
 
+  @SuppressWarnings("ConstantConditions")
   public void addResolverExtensionClass(@NotNull String className) {
-    myResolverExtensions.add(className);
+    Pair<String, Class<?>> p = Pair.create(className, null);
+    myResolverExtensions.add(p);
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  public void addResolverExtensionClass(@NotNull Class<?> clazz) {
+    Pair<String, Class<?>> p = new Pair<String, Class<?>>(null, clazz);
+    myResolverExtensions.add(p);
   }
 
   /**

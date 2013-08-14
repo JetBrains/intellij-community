@@ -30,7 +30,7 @@ public class ProblemDescriptorImpl extends ProblemDescriptorBase implements Prob
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
-                               String descriptionTemplate,
+                               @NotNull String descriptionTemplate,
                                LocalQuickFix[] fixes,
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
@@ -41,7 +41,7 @@ public class ProblemDescriptorImpl extends ProblemDescriptorBase implements Prob
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
-                               String descriptionTemplate,
+                               @NotNull String descriptionTemplate,
                                LocalQuickFix[] fixes,
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
@@ -53,7 +53,7 @@ public class ProblemDescriptorImpl extends ProblemDescriptorBase implements Prob
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
-                               String descriptionTemplate,
+                               @NotNull String descriptionTemplate,
                                LocalQuickFix[] fixes,
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
@@ -61,7 +61,6 @@ public class ProblemDescriptorImpl extends ProblemDescriptorBase implements Prob
                                final boolean tooltip,
                                @Nullable HintAction hintAction,
                                boolean onTheFly) {
-
     super(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, tooltip, onTheFly);
     myHintAction = hintAction;
   }

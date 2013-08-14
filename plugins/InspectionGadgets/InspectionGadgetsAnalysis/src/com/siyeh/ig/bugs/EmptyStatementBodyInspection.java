@@ -106,7 +106,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     }
 
     private void checkLoopStatement(PsiLoopStatement statement) {
-      if (FileTypeUtils.isInJsp(statement)) {
+      if (FileTypeUtils.isInServerPageFile(statement)) {
         return;
       }
       final PsiStatement body = statement.getBody();
@@ -119,7 +119,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
-      if (FileTypeUtils.isInJsp(statement)) {
+      if (FileTypeUtils.isInServerPageFile(statement)) {
         return;
       }
       final PsiStatement thenBranch = statement.getThenBranch();
@@ -140,7 +140,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     @Override
     public void visitSwitchStatement(PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
-      if (FileTypeUtils.isInJsp(statement)) {
+      if (FileTypeUtils.isInServerPageFile(statement)) {
         return;
       }
       final PsiCodeBlock body = statement.getBody();

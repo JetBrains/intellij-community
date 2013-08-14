@@ -324,7 +324,7 @@ public abstract class MvcFramework {
 
   protected static void ensureRunConfigurationExists(Module module, ConfigurationType configurationType, String name) {
     final RunManagerEx runManager = RunManagerEx.getInstanceEx(module.getProject());
-    for (final RunConfiguration runConfiguration : runManager.getConfigurations(configurationType)) {
+    for (final RunConfiguration runConfiguration : runManager.getConfigurationsList(configurationType)) {
       if (runConfiguration instanceof MvcRunConfiguration && ((MvcRunConfiguration)runConfiguration).getModule() == module) {
         return;
       }

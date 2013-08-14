@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 30-Nov-2005
  */
-public abstract class InspectionProjectProfileManager extends DefaultProjectProfileManager implements ProjectComponent, PersistentStateComponent<Element> {
+public abstract class InspectionProjectProfileManager extends DefaultProjectProfileManager implements ProjectComponent, SeverityProvider, PersistentStateComponent<Element> {
   public InspectionProjectProfileManager(@NotNull Project project,
                                          @NotNull InspectionProfileManager inspectionProfileManager,
                                          @NotNull DependencyValidationManager holder) {

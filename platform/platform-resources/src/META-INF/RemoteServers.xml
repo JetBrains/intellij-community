@@ -12,6 +12,8 @@
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.ServerConnectionManagerImpl"/>
     <applicationConfigurable instance="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable"/>
     <programRunner implementation="com.intellij.remoteServer.impl.runtime.DeployToServerRunner"/>
+    <projectService serviceInterface="com.intellij.remoteServer.runtime.ui.RemoteServersView"
+                    serviceImplementation="com.intellij.remoteServer.runtime.ui.RemoteServersView"/>
   </extensions>
   <application-components>
     <component>

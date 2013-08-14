@@ -80,7 +80,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     myDaemonCodeAnalyzer = project == null ? null : (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     myDocument = document;
     myFile = file;
-    mySeverityRegistrar = SeverityUtil.getSeverityRegistrar(myProject);
+    mySeverityRegistrar = SeverityRegistrar.getSeverityRegistrar(myProject);
     refresh();
 
     if (project != null) {

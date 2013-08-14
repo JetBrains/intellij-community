@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,15 +35,13 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "equals.called.on.enum.constant.display.name");
+    return InspectionGadgetsBundle.message("equals.called.on.enum.constant.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "equals.called.on.enum.constant.problem.descriptor");
+    return InspectionGadgetsBundle.message("equals.called.on.enum.constant.problem.descriptor");
   }
 
   @Override
@@ -56,19 +54,16 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
     return new EqualsCalledOnEnumValueFix();
   }
 
-  private static class EqualsCalledOnEnumValueFix
-    extends InspectionGadgetsFix {
+  private static class EqualsCalledOnEnumValueFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "equals.called.on.enum.constant.quickfix");
+      return InspectionGadgetsBundle.message("equals.called.on.enum.constant.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (parent == null) {
@@ -78,18 +73,14 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)grandParent;
-      final PsiExpressionList argumentList =
-        methodCallExpression.getArgumentList();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length > 1) {
         return;
       }
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         return;
       }
@@ -99,8 +90,7 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
       final PsiPrefixExpression prefixExpression;
       if (greatGrandParent instanceof PsiPrefixExpression) {
         prefixExpression = (PsiPrefixExpression)greatGrandParent;
-        final IElementType tokenType =
-          prefixExpression.getOperationTokenType();
+        final IElementType tokenType = prefixExpression.getOperationTokenType();
         not = JavaTokenType.EXCL == tokenType;
       }
       else {
@@ -121,8 +111,7 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
         replaceExpression(prefixExpression, newExpression.toString());
       }
       else {
-        replaceExpression(methodCallExpression,
-                          newExpression.toString());
+        replaceExpression(methodCallExpression, newExpression.toString());
       }
     }
   }
@@ -132,22 +121,25 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
     return new EqualsCalledOnEnumValueVisitor();
   }
 
-  private static class EqualsCalledOnEnumValueVisitor
-    extends BaseInspectionVisitor {
+  private static class EqualsCalledOnEnumValueVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!MethodCallUtils.isEqualsCall(expression)) {
         return;
       }
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                                                CommonClassNames.JAVA_LANG_ENUM)) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier == null || !TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_LANG_ENUM)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      final PsiType comparedTypeErasure = TypeConversionUtil.erasure(qualifier.getType());
+      final PsiType comparisonTypeErasure = TypeConversionUtil.erasure(arguments[0].getType());
+      if (comparedTypeErasure == null || comparisonTypeErasure == null ||
+          !TypeConversionUtil.areTypesConvertible(comparedTypeErasure, comparisonTypeErasure)) {
         return;
       }
       registerMethodCallError(expression, expression);

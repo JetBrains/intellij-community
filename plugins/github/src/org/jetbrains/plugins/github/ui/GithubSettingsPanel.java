@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,46 +99,21 @@ public class GithubSettingsPanel {
       }
     });
 
-    myPasswordField.getDocument().addDocumentListener(new DocumentListener() {
+    myPasswordField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void insertUpdate(DocumentEvent e) {
-        myCredentialsModified = true;
-      }
-
-      @Override
-      public void removeUpdate(DocumentEvent e) {
-        myCredentialsModified = true;
-      }
-
-      @Override
-      public void changedUpdate(DocumentEvent e) {
+      protected void textChanged(DocumentEvent e) {
         myCredentialsModified = true;
       }
     });
 
-    DocumentListener passwordEraser = new DocumentListener() {
+    DocumentListener passwordEraser = new DocumentAdapter() {
       @Override
-      public void insertUpdate(DocumentEvent e) {
-        if (!myCredentialsModified) {
-          erasePassword();
-        }
-      }
-
-      @Override
-      public void removeUpdate(DocumentEvent e) {
-        if (!myCredentialsModified) {
-          erasePassword();
-        }
-      }
-
-      @Override
-      public void changedUpdate(DocumentEvent e) {
+      protected void textChanged(DocumentEvent e) {
         if (!myCredentialsModified) {
           erasePassword();
         }
       }
     };
-
     myHostTextField.getDocument().addDocumentListener(passwordEraser);
     myLoginTextField.getDocument().addDocumentListener(passwordEraser);
 
@@ -163,7 +139,7 @@ public class GithubSettingsPanel {
             myLoginLabel.setVisible(true);
             myLoginTextField.setVisible(true);
           }
-          if (AUTH_TOKEN.equals(item)) {
+          else if (AUTH_TOKEN.equals(item)) {
             myLoginLabel.setVisible(false);
             myLoginTextField.setVisible(false);
           }

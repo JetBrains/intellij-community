@@ -67,6 +67,9 @@ public class GithubCreatePullRequestPanel {
       return;
     }
 
+    if (myBranchModel.indexOf(branch) == -1) {
+      myBranchModel.add(branch);
+    }
     myBranchComboBox.setSelectedItem(branch);
   }
 

@@ -159,13 +159,15 @@ public final class ModuleRunConfigurationManager extends ModuleAdapter implement
       }
 
       if (configuration != null) {
-        existing.add(RunManagerImpl.getUniqueName(configuration.getConfiguration()));
+        existing.add(configuration.getUniqueID());
       }
     }
 
-    for (final RunConfiguration configuration : myManager.getAllConfigurations()) {
+    for (final RunConfiguration configuration : myManager.getAllConfigurationsList()) {
       if (!usesMyModule(configuration)) {
-        existing.add(RunManagerImpl.getUniqueName(configuration));
+        RunnerAndConfigurationSettings settings = myManager.getSettings(configuration);
+        if (settings != null)
+          existing.add(settings.getUniqueID());
       }
     }
     myManager.removeNotExistingSharedConfigurations(existing);

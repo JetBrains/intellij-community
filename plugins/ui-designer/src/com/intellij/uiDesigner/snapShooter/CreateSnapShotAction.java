@@ -115,7 +115,7 @@ public class CreateSnapShotAction extends AnAction {
     boolean connected = false;
 
     ApplicationConfigurationType cfgType = ApplicationConfigurationType.getInstance();
-    RunnerAndConfigurationSettings[] racsi = RunManager.getInstance(project).getConfigurationSettings(cfgType);
+    List<RunnerAndConfigurationSettings> racsi = RunManager.getInstance(project).getConfigurationSettingsList(cfgType);
 
     for(RunnerAndConfigurationSettings config: racsi) {
       if (config.getConfiguration() instanceof ApplicationConfiguration) {

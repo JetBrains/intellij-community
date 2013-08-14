@@ -21,8 +21,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -48,6 +49,11 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     }
 
     return ranges;
+  }
+
+  @Override
+  public int getMinimalTextRangeLength(@NotNull PsiElement element) {
+    return 0;
   }
 
   public static List<TextRange> expandToWholeLine(CharSequence text, @Nullable TextRange range, boolean isSymmetric) {
@@ -113,7 +119,7 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
   }
 
   public static List<TextRange> expandToWholeLinesWithBlanks(CharSequence text, TextRange range) {
-    List<TextRange> result = CollectionFactory.arrayList();
+    List<TextRange> result = ContainerUtil.newArrayList();
     result.addAll(expandToWholeLine(text, range, true));
 
     TextRange last = result.isEmpty() ? range : result.get(result.size() - 1);

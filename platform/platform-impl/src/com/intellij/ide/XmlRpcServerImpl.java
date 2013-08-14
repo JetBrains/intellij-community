@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import gnu.trove.THashMap;
 import org.apache.xmlrpc.*;
@@ -92,6 +93,12 @@ public class XmlRpcServerImpl implements XmlRpcServer {
       ChannelBufferInputStream in = new ChannelBufferInputStream(request.getContent());
       try {
         XmlRpcServerRequest xmlRpcServerRequest = new XmlRpcRequestProcessor().decodeRequest(in);
+
+        if (StringUtil.isEmpty(xmlRpcServerRequest.getMethodName())) {
+          LOG.warn("method name empty");
+          return false;
+        }
+
         Object response = invokeHandler(getHandler(xmlRpcServerRequest.getMethodName(), handlers == null ? handlerMapping : handlers), xmlRpcServerRequest);
         result = ChannelBuffers.copiedBuffer(new XmlRpcResponseProcessor().encodeResponse(response, CharsetToolkit.UTF8));
       }
@@ -117,7 +124,7 @@ public class XmlRpcServerImpl implements XmlRpcServer {
     return false;
   }
 
-  private static Object getHandler(String methodName, Map<String, Object> handlers) {
+  private static Object getHandler(@NotNull String methodName, @NotNull Map<String, Object> handlers) {
     Object handler = null;
     String handlerName = null;
     int dot = methodName.lastIndexOf('.');

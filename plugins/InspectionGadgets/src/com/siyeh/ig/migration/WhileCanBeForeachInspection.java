@@ -104,11 +104,28 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       }
       final PsiReferenceExpression methodExpression = initializer.getMethodExpression();
       final PsiExpression collection = methodExpression.getQualifierExpression();
+      final PsiType collectionType;
       if (collection == null) {
+        final PsiClass aClass = PsiTreeUtil.getParentOfType(whileStatement, PsiClass.class);
+        if (aClass == null) {
+          return;
+        }
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(whileStatement.getProject());
+        collectionType = factory.createType(aClass);
+      }
+      else {
+        collectionType = collection.getType();
+      }
+      if (collectionType == null) {
         return;
       }
-      final PsiType contentType = getContentType(collection.getType(), collection);
+      final PsiType contentType = getContentType(collectionType, CommonClassNames.JAVA_LANG_ITERABLE, whileStatement);
       if (contentType == null) {
+        return;
+      }
+      final PsiType iteratorType = iterator.getType();
+      final PsiType iteratorContentType = getContentType(iteratorType, "java.util.Iterator", whileStatement);
+      if (iteratorContentType == null) {
         return;
       }
       final Project project = whileStatement.getProject();
@@ -130,28 +147,28 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         if (collection instanceof PsiReferenceExpression) {
           final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)collection;
           final String collectionName = referenceElement.getReferenceName();
-          contentVariableName = createNewVariableName(whileStatement, contentType, collectionName);
+          contentVariableName = createNewVariableName(whileStatement, iteratorContentType, collectionName);
         }
         else {
-          contentVariableName = createNewVariableName(whileStatement, contentType, null);
+          contentVariableName = createNewVariableName(whileStatement, iteratorContentType, null);
         }
         statementToSkip = null;
       }
-      final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
       @NonNls final StringBuilder out = new StringBuilder();
       out.append("for(");
-      if (codeStyleSettings.GENERATE_FINAL_PARAMETERS) {
+      if (CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_PARAMETERS) {
         out.append("final ");
-      }
-      final PsiType iteratorContentType = getContentType(iterator.getType(), iterator);
-      if (iteratorContentType == null) {
-        return;
       }
       out.append(iteratorContentType.getCanonicalText()).append(' ').append(contentVariableName).append(": ");
       if (!TypeConversionUtil.isAssignable(iteratorContentType, contentType)) {
         out.append("(java.lang.Iterable<").append(iteratorContentType.getCanonicalText()).append(">)");
       }
-      out.append(collection.getText()).append(')');
+      if (collection == null) {
+        out.append("this");
+      } else {
+        out.append(collection.getText());
+      }
+      out.append(')');
 
       replaceIteratorNext(body, contentVariableName, iterator, contentType, statementToSkip, out);
       final Query<PsiReference> query = ReferencesSearch.search(iterator, iterator.getUseScope());
@@ -187,24 +204,41 @@ public class WhileCanBeForeachInspection extends BaseInspection {
     }
 
     @Nullable
-    private static PsiType getContentType(PsiType type, PsiElement context) {
+    private static PsiType getContentType(PsiType type, String containerClassName, PsiElement context) {
       if (!(type instanceof PsiClassType)) {
         return null;
       }
       final PsiClassType classType = (PsiClassType)type;
-      final PsiType[] parameters = classType.getParameters();
-      if (parameters.length == 1) {
-        final PsiType parameterType = parameters[0];
-        if (parameterType instanceof PsiCapturedWildcardType) {
-          final PsiCapturedWildcardType wildcardType = (PsiCapturedWildcardType)parameterType;
-          final PsiType bound = wildcardType.getUpperBound();
-          if (bound != null) {
-            return bound;
+      final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+      final PsiClass aClass = resolveResult.getElement();
+      final Project project = context.getProject();
+
+      if (aClass == null) {
+        return null;
+      }
+      final PsiClass iterableClass = JavaPsiFacade.getInstance(project).findClass(containerClassName, aClass.getResolveScope());
+      if (iterableClass == null) {
+        return null;
+      }
+      final PsiSubstitutor substitutor1 = resolveResult.getSubstitutor();
+      final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(iterableClass, aClass, substitutor1);
+      if (substitutor == null) {
+        return null;
+      }
+      PsiType parameterType = substitutor.substitute(iterableClass.getTypeParameters()[0]);
+      if (parameterType instanceof PsiCapturedWildcardType) {
+        parameterType = ((PsiCapturedWildcardType)parameterType).getWildcard();
+      }
+      if (parameterType != null) {
+        if (parameterType instanceof PsiWildcardType) {
+          if (((PsiWildcardType)parameterType).isExtends()) {
+            return ((PsiWildcardType)parameterType).getBound();
+          }
+          else {
+            return null;
           }
         }
-        else if (parameterType != null) {
-          return parameterType;
-        }
+        return parameterType;
       }
       return TypeUtils.getObjectType(context);
     }
@@ -320,7 +354,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
           baseName = "value";
         }
       }
-      if (baseName == null || baseName.length() == 0) {
+      if (baseName == null || baseName.isEmpty()) {
         baseName = "value";
       }
       return codeStyleManager.suggestUniqueVariableName(baseName, scope, true);
@@ -395,19 +429,24 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         return false;
       }
       final PsiExpression qualifier = initialMethodExpression.getQualifierExpression();
-      if (qualifier == null) {
+      if (qualifier instanceof PsiSuperExpression) {
         return false;
       }
-      final PsiType qualifierType = qualifier.getType();
-      if (!(qualifierType instanceof PsiClassType)) {
-        return false;
+      final PsiClass qualifierClass;
+      if (qualifier != null) {
+        final PsiType qualifierType = qualifier.getType();
+        if (!(qualifierType instanceof PsiClassType)) {
+          return false;
+        }
+        qualifierClass = ((PsiClassType)qualifierType).resolve();
       }
-      final PsiClass qualifierClass = ((PsiClassType)qualifierType).resolve();
+      else {
+        qualifierClass = PsiTreeUtil.getParentOfType(whileStatement, PsiClass.class);
+      }
       if (qualifierClass == null) {
         return false;
       }
-      if (!InheritanceUtil.isInheritor(qualifierClass, CommonClassNames.JAVA_LANG_ITERABLE) &&
-          !InheritanceUtil.isInheritor(qualifierClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+      if (!InheritanceUtil.isInheritor(qualifierClass, CommonClassNames.JAVA_LANG_ITERABLE)) {
         return false;
       }
       final PsiExpression condition = whileStatement.getCondition();

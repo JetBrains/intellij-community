@@ -133,7 +133,8 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       return;
     }
 
-    String suggestedBranch = info.getRepo().getParent() == null ? null : info.getRepo().getParent().getUserName() + ":master";
+    GithubRepo parent = info.getRepo().getParent();
+    String suggestedBranch = parent == null ? null : parent.getUserName() + ":" + parent.getDefaultBranch();
     final GithubCreatePullRequestDialog dialog = new GithubCreatePullRequestDialog(project, info.getBranches(), suggestedBranch);
     DialogManager.show(dialog);
     if (!dialog.isOK()) {

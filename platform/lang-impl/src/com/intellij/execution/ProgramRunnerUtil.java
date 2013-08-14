@@ -113,20 +113,14 @@ public class ProgramRunnerUtil {
     executeConfiguration(project, configuration, executor, ExecutionTargetManager.getActiveTarget(project), null, true);
   }
 
-  public static Icon getConfigurationIcon(final Project project, final RunnerAndConfigurationSettings settings, final boolean invalid) {
-    final RunManager runManager = RunManager.getInstance(project);
-    return getConfigurationIcon(settings, invalid, runManager.isTemporary(settings.getConfiguration()));
-  }
-
   public static Icon getConfigurationIcon(final RunnerAndConfigurationSettings settings,
-                                          final boolean invalid,
-                                          boolean isTemporary) {
+                                          final boolean invalid) {
     RunConfiguration configuration = settings.getConfiguration();
     ConfigurationFactory factory = settings.getFactory();
     Icon icon =  factory != null ? factory.getIcon(configuration) : null;
     if (icon == null) icon = AllIcons.RunConfigurations.Unknown;
 
-    final Icon configurationIcon = isTemporary ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
+    final Icon configurationIcon = settings.isTemporary() ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
     if (invalid) {
       return LayeredIcon.create(configurationIcon, AllIcons.RunConfigurations.InvalidConfigurationLayer);
     }

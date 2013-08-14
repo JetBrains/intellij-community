@@ -40,6 +40,7 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 public class TestNGPatternConfigurationProducer extends TestNGConfigurationProducer{
@@ -135,7 +136,7 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(@NotNull Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     final LinkedHashSet<String> classes = new LinkedHashSet<String>();
     collectPatternElements(context, classes);

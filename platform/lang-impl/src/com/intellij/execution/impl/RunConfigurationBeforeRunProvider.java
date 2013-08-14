@@ -80,7 +80,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   public Icon getTaskIcon(RunConfigurableBeforeRunTask task) {
     if (task.getSettings() == null)
       return null;
-    return ProgramRunnerUtil.getConfigurationIcon(myProject, task.getSettings(), false);
+    return ProgramRunnerUtil.getConfigurationIcon(task.getSettings(), false);
   }
 
   @Override
@@ -366,7 +366,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
             RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
             setIcon(runManager.getConfigurationIcon(settings));
             RunConfiguration configuration = settings.getConfiguration();
-            append(configuration.getName(), runManager.isTemporary(configuration)
+            append(configuration.getName(), settings.isTemporary()
                                             ? SimpleTextAttributes.GRAY_ATTRIBUTES
                                             : SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }

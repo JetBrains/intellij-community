@@ -20,9 +20,12 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.test.AbstractExternalSystemTest
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.openapi.roots.OrderEntry
 
+import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 /**
  * @author Denis Zhdanov
  * @since 8/8/13 5:17 PM
@@ -52,5 +55,48 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
       }
     }
     ExternalSystemTestUtil.assertMapsEqual(['lib1': 1, 'lib2': 1], dependencies)
+  }
+
+  void 'test changes in a project layout (content roots) could be detected on Refresh'() {
+
+    String rootPath = ExternalSystemApiUtil.toCanonicalPath(project.basePath);
+
+    def contentRoots = [
+      (TEST): ['src/test/resources', '/src/test/java', 'src/test/groovy'],
+      (SOURCE): ['src/main/resources', 'src/main/java', 'src/main/groovy'],
+      (EXCLUDED): ['.gradle', 'build']
+    ]
+
+    def projectRootBuilder = {
+      buildExternalProjectInfo {
+        project {
+          module {
+            contentRoot(rootPath) {
+              contentRoots.each { key, values -> values.each { folder(type: key, path: "$rootPath/$it") } }
+            } } } } }
+
+    DataNode<ProjectData> projectNodeInitial = projectRootBuilder()
+
+    contentRoots[(SOURCE)].remove(0)
+    contentRoots[(TEST)].remove(0)
+    DataNode<ProjectData> projectNodeRefreshed = projectRootBuilder()
+
+    applyProjectState([projectNodeInitial, projectNodeRefreshed])
+
+    def helper = ServiceManager.getService(ProjectStructureHelper.class)
+    def module = helper.findIdeModule('module', project)
+    assertNotNull(module)
+
+    def facade = ServiceManager.getService(PlatformFacade.class)
+    def entries = facade.getOrderEntries(module)
+    def folders = [:].withDefault { 0 }
+    for (OrderEntry entry : entries) {
+      if (entry instanceof ModuleSourceOrderEntry) {
+        def contentEntry = (entry as ModuleSourceOrderEntry).getRootModel().getContentEntries().first()
+        folders['source']+=contentEntry.sourceFolders.length
+        folders['excluded']+=contentEntry.excludeFolders.length
+      }
+    }
+    ExternalSystemTestUtil.assertMapsEqual(['source': 4, 'excluded': 2], folders)
   }
 }

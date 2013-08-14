@@ -15,18 +15,18 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttlistDecl;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.Editor;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
-public class DtdSelectioner implements ExtendWordSelectionHandler {
+public class DtdSelectioner extends ExtendWordSelectionHandlerBase {
   public boolean canSelect(PsiElement e) {
     return e instanceof XmlAttlistDecl || e instanceof XmlElementDecl;
   }

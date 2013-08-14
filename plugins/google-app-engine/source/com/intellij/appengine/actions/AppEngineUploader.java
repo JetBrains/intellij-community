@@ -71,6 +71,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
+import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
@@ -93,9 +94,10 @@ public class AppEngineUploader {
   private final String myEmail;
   private final String myPassword;
   private final ServerRuntimeInstance.DeploymentOperationCallback myCallback;
+  private final LoggingHandler myLoggingHandler;
 
   private AppEngineUploader(Project project, Artifact artifact, AppEngineFacet appEngineFacet, AppEngineSdk sdk, String email,
-                            String password, ServerRuntimeInstance.DeploymentOperationCallback callback) {
+                            String password, ServerRuntimeInstance.DeploymentOperationCallback callback, @Nullable LoggingHandler loggingHandler) {
     myProject = project;
     myArtifact = artifact;
     myAppEngineFacet = appEngineFacet;
@@ -103,13 +105,14 @@ public class AppEngineUploader {
     myEmail = email;
     myPassword = password;
     myCallback = callback;
+    myLoggingHandler = loggingHandler;
   }
 
   @Nullable
   public static AppEngineUploader createUploader(@NotNull Project project,
                                                  @NotNull Artifact artifact,
                                                  @Nullable AppEngineServerConfiguration configuration,
-                                                 ServerRuntimeInstance.DeploymentOperationCallback callback) {
+                                                 @NotNull ServerRuntimeInstance.DeploymentOperationCallback callback, @Nullable LoggingHandler loggingHandler) {
     final String explodedPath = artifact.getOutputPath();
     if (explodedPath == null) {
       callback.errorOccurred("Output path isn't specified for '" + artifact.getName() + "' artifact");
@@ -170,7 +173,7 @@ public class AppEngineUploader {
       password = dialog.getPassword();
     }
 
-    return new AppEngineUploader(project, artifact, appEngineFacet, sdk, email, password, callback);
+    return new AppEngineUploader(project, artifact, appEngineFacet, sdk, email, password, callback, loggingHandler);
   }
 
   public void startUploading() {
@@ -240,32 +243,40 @@ public class AppEngineUploader {
       return;
     }
 
-    final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    final ConsoleView console = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
-    final RunnerLayoutUi ui = RunnerLayoutUi.Factory.getInstance(myProject).create("Upload", "Upload Application", "Upload Application", myProject);
-    final DefaultActionGroup group = new DefaultActionGroup();
-    ui.getOptions().setLeftToolbar(group, ActionPlaces.UNKNOWN);
-    ui.addContent(ui.createContent("upload", console.getComponent(), "Upload Application", null, console.getPreferredFocusableComponent()));
-
     final ProcessHandler processHandler = new OSProcessHandler(process, commandLine.getCommandLineString());
-    processHandler.addProcessListener(new MyProcessListener(processHandler, console));
-    console.attachToProcess(processHandler);
-    final RunContentDescriptor contentDescriptor = new RunContentDescriptor(console, processHandler, ui.getComponent(), "Upload Application");
-    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM));
-    group.add(new CloseAction(executor, contentDescriptor, myProject));
+    if (myLoggingHandler == null) {
+      final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+      final ConsoleView console = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
+      final RunnerLayoutUi ui = RunnerLayoutUi.Factory.getInstance(myProject).create("Upload", "Upload Application", "Upload Application", myProject);
+      final DefaultActionGroup group = new DefaultActionGroup();
+      ui.getOptions().setLeftToolbar(group, ActionPlaces.UNKNOWN);
+      ui.addContent(ui.createContent("upload", console.getComponent(), "Upload Application", null, console.getPreferredFocusableComponent()));
 
-    ExecutionManager.getInstance(myProject).getContentManager().showRunContent(executor, contentDescriptor);
+      processHandler.addProcessListener(new MyProcessListener(processHandler, console, null));
+      console.attachToProcess(processHandler);
+      final RunContentDescriptor contentDescriptor = new RunContentDescriptor(console, processHandler, ui.getComponent(), "Upload Application");
+      group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM));
+      group.add(new CloseAction(executor, contentDescriptor, myProject));
+
+      ExecutionManager.getInstance(myProject).getContentManager().showRunContent(executor, contentDescriptor);
+    }
+    else {
+      processHandler.addProcessListener(new MyProcessListener(processHandler, null, myLoggingHandler));
+      myLoggingHandler.attachToProcess(processHandler);
+    }
     processHandler.startNotify();
   }
 
   private class MyProcessListener extends ProcessAdapter {
     private boolean myPasswordEntered;
     private final ProcessHandler myProcessHandler;
-    private final ConsoleView myConsole;
+    @Nullable private final ConsoleView myConsole;
+    @Nullable private final LoggingHandler myLoggingHandler;
 
-    public MyProcessListener(ProcessHandler processHandler, ConsoleView console) {
+    public MyProcessListener(ProcessHandler processHandler, @Nullable ConsoleView console, @Nullable LoggingHandler loggingHandler) {
       myProcessHandler = processHandler;
       myConsole = console;
+      myLoggingHandler = loggingHandler;
     }
 
     @Override
@@ -278,15 +289,25 @@ public class AppEngineUploader {
           final PrintWriter input = new PrintWriter(processInput);
           input.println(myPassword);
           input.flush();
-          myConsole.print(StringUtil.repeatSymbol('*', myPassword.length()) + "\n", ConsoleViewContentType.USER_INPUT);
+          String message = StringUtil.repeatSymbol('*', myPassword.length()) + "\n";
+          if (myConsole != null) {
+            myConsole.print(message, ConsoleViewContentType.USER_INPUT);
+          }
+          else if (myLoggingHandler != null) {
+            myLoggingHandler.print(message);
+          }
         }
       }
     }
 
     @Override
     public void processTerminated(ProcessEvent event) {
-      if (event.getExitCode() == 0) {
+      int exitCode = event.getExitCode();
+      if (exitCode == 0) {
         myCallback.succeeded(new DeploymentRuntime());
+      }
+      else {
+        myCallback.errorOccurred("Process terminated with exit code " + exitCode);
       }
     }
   }

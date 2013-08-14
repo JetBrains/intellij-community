@@ -830,7 +830,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       return;
     }
     if (configName != null) {
-      for (RunConfiguration configuration : runManager.getConfigurations(type)) {
+      for (RunConfiguration configuration : runManager.getConfigurationsList(type)) {
         if (configName.equals(configuration.getName())) {
           final List<AntBeforeRunTask> tasks = runManager.getBeforeRunTasks(configuration, AntBeforeRunTaskProvider.ID);
           if (!tasks.isEmpty()) {

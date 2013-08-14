@@ -122,7 +122,10 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
         final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
         Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
+        // add current importing project settings to linked projects settings or replace if similar already exist
+        projects.remove(projectSettings);
         projects.add(projectSettings);
+
         systemSettings.copyFrom(myControl.getSystemSettings());
         systemSettings.setLinkedProjectsSettings(projects);
 
@@ -278,6 +281,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
     final Project project = getProject(wizardContext);
     final File finalProjectFile = projectFile;
+    final String externalProjectPath = FileUtil.toCanonicalPath(finalProjectFile.getAbsolutePath());
     final Ref<ConfigurationException> exRef = new Ref<ConfigurationException>();
     executeAndRestoreDefaultProjectSettings(project, new Runnable() {
       @Override
@@ -286,10 +290,11 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
           ExternalSystemUtil.refreshProject(
             project,
             myExternalSystemId,
-            finalProjectFile.getAbsolutePath(),
+            externalProjectPath,
             callback,
             false,
-            true
+            true,
+            false
           );
         }
         catch (IllegalArgumentException e) {

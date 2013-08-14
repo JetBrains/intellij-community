@@ -20,7 +20,7 @@ import com.intellij.psi.ServerPageFile;
 import com.intellij.psi.util.PsiUtilCore;
 
 public class FileTypeUtils {
-  public static boolean isInJsp(PsiElement file) {
+  public static boolean isInServerPageFile(PsiElement file) {
     return PsiUtilCore.getTemplateLanguageFile(file) instanceof ServerPageFile;
   }
 }

@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 public class TemplateLanguageErrorQuickFixProvider implements ErrorQuickFixProvider{
 
   @Override
-  public void registerErrorQuickFix(final PsiErrorElement errorElement, final HighlightInfo highlightInfo) {
+  public void registerErrorQuickFix(@NotNull final PsiErrorElement errorElement, @NotNull final HighlightInfo highlightInfo) {
     final PsiFile psiFile = errorElement.getContainingFile();
     final FileViewProvider provider = psiFile.getViewProvider();
     if (!(provider instanceof TemplateLanguageFileViewProvider)) return;

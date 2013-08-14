@@ -33,16 +33,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDebuggerRunnerSettings> {
+  @Override
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultDebugExecutor.EXECUTOR_ID) && profile instanceof ModuleRunProfile
            && !(profile instanceof RunConfigurationWithSuppressedDefaultDebugAction);
   }
 
+  @Override
   @NotNull
   public String getRunnerId() {
     return DebuggingRunnerData.DEBUGGER_RUNNER_ID;
   }
 
+  @Override
   protected RunContentDescriptor doExecute(final Project project,
                                            final RunProfileState state,
                                            final RunContentDescriptor contentToReuse,
@@ -95,10 +98,12 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     return remoteConnection;
   }
 
+  @Override
   public GenericDebuggerRunnerSettings createConfigurationData(ConfigurationInfoProvider settingsProvider) {
     return new GenericDebuggerRunnerSettings();
   }
 
+  @Override
   public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, final boolean beforeExecution) throws ExecutionException {
     doPatch(javaParameters, settings);
     runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultDebugExecutor.class), runProfile);
@@ -112,6 +117,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     return DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerSettings, false);
   }
 
+  @Override
   public SettingsEditor<GenericDebuggerRunnerSettings> getSettingsEditor(final Executor executor, RunConfiguration configuration) {
     if (configuration instanceof RunConfigurationWithRunnerSettings) {
       if (((RunConfigurationWithRunnerSettings)configuration).isSettingsNeeded()) {

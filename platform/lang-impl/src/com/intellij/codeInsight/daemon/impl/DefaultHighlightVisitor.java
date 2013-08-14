@@ -70,7 +70,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     myDumbService = DumbService.getInstance(project);
     myBatchMode = batchMode;
   }
-                                                     
+
   @Override
   public boolean suitableForFile(@NotNull final PsiFile file) {
     return true;
@@ -178,8 +178,10 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
         builder.descriptionAndTooltip(errorDescription);
       }
       final HighlightInfo info = builder.create();
-      for(ErrorQuickFixProvider provider: Extensions.getExtensions(ErrorQuickFixProvider.EP_NAME)) {
-        provider.registerErrorQuickFix(element, info);
+      if (info != null) {
+        for(ErrorQuickFixProvider provider: Extensions.getExtensions(ErrorQuickFixProvider.EP_NAME)) {
+          provider.registerErrorQuickFix(element, info);
+        }
       }
       return info;
     }

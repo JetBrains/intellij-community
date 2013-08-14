@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.externalSystem.service.task.ui;
 
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -25,11 +28,14 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.*;
 
 /**
@@ -57,7 +63,9 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
   private boolean mySuppressCollapseTracking;
 
   public ExternalSystemTasksTree(@NotNull ExternalSystemTasksTreeModel model,
-                                 @NotNull Map<String/*tree path*/, Boolean/*expanded*/> expandedStateHolder)
+                                 @NotNull Map<String/*tree path*/, Boolean/*expanded*/> expandedStateHolder,
+                                 @NotNull final Project project,
+                                 @NotNull final ProjectSystemId externalSystemId)
   {
     super(model);
     myExpandedStateHolder = expandedStateHolder;
@@ -91,6 +99,18 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
       }
     });
     new TreeSpeedSearch(this);
+
+    getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
+    getActionMap().put("Enter", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ExternalTaskExecutionInfo task = produce();
+        if (task == null) {
+          return;
+        }
+        ExternalSystemUtil.runTask(task.getSettings(), task.getExecutorId(), project, externalSystemId);
+      }
+    });
   }
 
   /**

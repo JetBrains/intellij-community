@@ -104,7 +104,7 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so it doesn't drill down
       if (aClass.isInterface() || aClass.isEnum() ||
-          aClass.isAnnotationType() || FileTypeUtils.isInJsp(aClass)) {
+          aClass.isAnnotationType() || FileTypeUtils.isInServerPageFile(aClass)) {
         return;
       }
       if (aClass instanceof PsiTypeParameter ||

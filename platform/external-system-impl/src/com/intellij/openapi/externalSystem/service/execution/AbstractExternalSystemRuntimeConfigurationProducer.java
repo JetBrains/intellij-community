@@ -70,7 +70,7 @@ public abstract class AbstractExternalSystemRuntimeConfigurationProducer extends
   @Nullable
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurationsSettings,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurationsSettings,
                                                                  ConfigurationContext context) {
     if (!(location instanceof ExternalSystemTaskLocation)) {
       return null;

@@ -1,9 +1,11 @@
 package com.intellij.remoteServer.impl.runtime;
 
+import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentImpl;
+import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
 import com.intellij.remoteServer.runtime.ConnectionStatus;
 import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnection;
@@ -12,7 +14,10 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
+import com.intellij.util.ParameterizedRunnable;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -28,6 +33,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   private volatile ServerRuntimeInstance<D> myRuntimeInstance;
   private final Map<String, Deployment> myRemoteDeployments = new HashMap<String, Deployment>();
   private final Map<DeploymentSource, Deployment> myLocalDeployments = Collections.synchronizedMap(new HashMap<DeploymentSource, Deployment>());
+  private final Map<String, LoggingHandlerImpl> myLoggingHandlers = new ConcurrentHashMap<String, LoggingHandlerImpl>();
 
   public ServerConnectionImpl(RemoteServer<?> server, ServerConnector<D> connector, ServerConnectionEventDispatcher eventDispatcher) {
     myServer = server;
@@ -78,16 +84,25 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   }
 
   @Override
-  public void deploy(@NotNull final DeploymentTask<D> task) {
+  public void deploy(@NotNull final DeploymentTask<D> task, @NotNull final ParameterizedRunnable<String> onDeploymentStarted) {
     connectIfNeeded(new ConnectionCallbackBase<D>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
         DeploymentSource source = task.getSource();
         String deploymentName = instance.getDeploymentName(source);
         myLocalDeployments.put(source, new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYING, null, null));
+        myLoggingHandlers.put(deploymentName, (LoggingHandlerImpl)task.getLoggingHandler());
+        onDeploymentStarted.run(deploymentName);
         instance.deploy(task, new DeploymentOperationCallbackImpl(task.getSource(), deploymentName));
       }
     });
+  }
+
+  @Override
+  @Nullable
+  public ComponentContainer getLogConsole(@NotNull Deployment deployment) {
+    LoggingHandlerImpl handler = myLoggingHandlers.get(deployment.getName());
+    return handler != null ? handler.getConsole() : null;
   }
 
   @Override

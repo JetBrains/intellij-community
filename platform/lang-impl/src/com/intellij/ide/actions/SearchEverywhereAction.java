@@ -266,7 +266,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
         @Override
         public void run() {
-          GotoActionAction.openOptionOrPerformAction(value, pattern, project, myContextComponent ,myActionEvent);
+          if (value instanceof BooleanOptionDescription) {
+            final BooleanOptionDescription option = (BooleanOptionDescription)value;
+            option.setOptionState(!option.isOptionEnabled());
+          } else {
+            GotoActionAction.openOptionOrPerformAction(value, pattern, project, myContextComponent ,myActionEvent);
+          }
         }
       });
       return;

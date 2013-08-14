@@ -61,6 +61,9 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
       try {
         myEditor.applyTo(settings);
       }
+      catch (ConfigurationException e) {
+        throw e;
+      }
       catch (Exception e) {
         LOG.error(e);
       }

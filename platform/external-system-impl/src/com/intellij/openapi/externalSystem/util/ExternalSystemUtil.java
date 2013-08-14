@@ -244,7 +244,7 @@ public class ExternalSystemUtil {
     if (!toRefresh.isEmpty()) {
       counter[0] = toRefresh.size();
       for (String path : toRefresh) {
-        refreshProject(project, externalSystemId, path, callback, true, false);
+        refreshProject(project, externalSystemId, path, callback, true, false, true);
       }
     }
   }
@@ -357,10 +357,11 @@ public class ExternalSystemUtil {
   /**
    * Queries slave gradle process to refresh target gradle project.
    *
-   * @param project             target intellij project to use
-   * @param externalProjectPath path of the target gradle project's file
-   * @param callback            callback to be notified on refresh result
-   * @param resolveLibraries    flag that identifies whether gradle libraries should be resolved during the refresh
+   * @param project               target intellij project to use
+   * @param externalProjectPath   path of the target gradle project's file
+   * @param callback              callback to be notified on refresh result
+   * @param resolveLibraries      flag that identifies whether gradle libraries should be resolved during the refresh
+   * @param refreshingAllProjects indicates 'refreshing all projects' action
    * @return the most up-to-date gradle project (if any)
    */
   public static void refreshProject(@NotNull final Project project,
@@ -368,7 +369,8 @@ public class ExternalSystemUtil {
                                     @NotNull final String externalProjectPath,
                                     @NotNull final ExternalProjectRefreshCallback callback,
                                     final boolean resolveLibraries,
-                                    final boolean modal)
+                                    final boolean modal,
+                                    final boolean refreshingAllProjects)
   {
     File projectFile = new File(externalProjectPath);
     final String projectName;
@@ -407,6 +409,15 @@ public class ExternalSystemUtil {
 
         callback.onFailure(message, extractDetails(error));
 
+        ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
+        if(manager == null) {
+          return;
+        }
+        AbstractExternalSystemSettings<?, ?, ?> settings = manager.getSettingsProvider().fun(project);
+        ExternalProjectSettings projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
+        if (projectSettings == null || (projectSettings.isUseAutoImport() && !refreshingAllProjects)) {
+          return;
+        }
         ExternalSystemIdeNotificationManager notificationManager = ServiceManager.getService(ExternalSystemIdeNotificationManager.class);
         if (notificationManager != null) {
           notificationManager.processExternalProjectRefreshError(error, project, projectName, externalSystemId);
@@ -639,7 +650,7 @@ public class ExternalSystemUtil {
         }
       }
     };
-    refreshProject(project, externalSystemId, projectSettings.getExternalProjectPath(), callback, resolveLibraries, modal);
+    refreshProject(project, externalSystemId, projectSettings.getExternalProjectPath(), callback, resolveLibraries, modal, false);
   }
   
   private interface TaskUnderProgress {

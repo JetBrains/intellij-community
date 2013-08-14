@@ -67,6 +67,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,7 +159,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                            final Project project,
                                            PsiType tempType) {
     if (myParentClass == null) {
-      if (JspPsiUtil.isInJspFile(file)) {
+      if (FileTypeUtils.isInServerPageFile(file)) {
         CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()),
                                             getRefactoringName(), getHelpID());
         return true;

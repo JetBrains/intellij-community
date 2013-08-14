@@ -9,13 +9,11 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemFacadeWrapper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.IntegrationKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -70,7 +68,7 @@ public class ExternalSystemFacadeManager {
     myProgressManager = (RemoteExternalSystemProgressNotificationManager)notificationManager;
     myRemoteCommunicationManager = remoteCommunicationManager;
     myInProcessCommunicationManager = inProcessCommunicationManager;
-    boolean inProcessCommunication = Registry.is(ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY, false);
+    boolean inProcessCommunication = ExternalSystemApiUtil.isInProcessMode();
     myInProcessCommunication.set(inProcessCommunication);
     myCommunicationManager.set(inProcessCommunication ? myInProcessCommunicationManager : myRemoteCommunicationManager);
   }
@@ -159,7 +157,7 @@ public class ExternalSystemFacadeManager {
   @SuppressWarnings("ConstantConditions")
   @NotNull
   private RemoteExternalSystemFacade doGetFacade(@NotNull IntegrationKey key, @NotNull Project project) throws Exception {
-    boolean currentInProcess = Registry.is(ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY, false);
+    boolean currentInProcess = ExternalSystemApiUtil.isInProcessMode();
     if (myInProcessCommunication.getAndSet(currentInProcess) != currentInProcess) {
       myCommunicationManager.get().clear();
       myCommunicationManager.set(currentInProcess ? myInProcessCommunicationManager : myRemoteCommunicationManager);

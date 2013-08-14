@@ -65,8 +65,6 @@ public class LookupCellRenderer implements ListCellRenderer {
   static final Color PREFIX_FOREGROUND_COLOR = new JBColor(new Color(176, 0, 176), new Color(209, 122, 214));
   private static final Color SELECTED_PREFIX_FOREGROUND_COLOR = new JBColor(new Color(249, 236, 204), new Color(209, 122, 214));
 
-  private static final Color EMPTY_ITEM_FOREGROUND_COLOR = FOREGROUND_COLOR;
-
   private final LookupImpl myLookup;
 
   private final SimpleColoredComponent myNameComponent;
@@ -144,7 +142,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myTypeLabel.clear();
     if (allowedWidth > 0) {
-      allowedWidth -= setTypeTextLabel(item, background, foreground, presentation, isSelected ? getMaxWidth() : allowedWidth, isSelected);
+      allowedWidth -= setTypeTextLabel(item, background, foreground, presentation, isSelected ? getMaxWidth() : allowedWidth, isSelected, nonFocusedSelection);
     }
 
     myTailComponent.clear();
@@ -237,6 +235,14 @@ public class LookupCellRenderer implements ListCellRenderer {
     return text.substring(0, i) + ELLIPSIS;
   }
 
+  private static Color getTypeTextColor(LookupElement item, Color foreground, LookupElementPresentation presentation, boolean selected, boolean nonFocusedSelection) {
+    if (nonFocusedSelection) {
+      return foreground;
+    }
+
+    return presentation.isTypeGrayed() ? getGrayedForeground(selected) : item instanceof EmptyLookupItem ? JBColor.foreground() : foreground;
+  }
+
   private static Color getTailTextColor(boolean isSelected, LookupElementPresentation.TextFragment fragment, Color defaultForeground, boolean nonFocusedSelection) {
     if (nonFocusedSelection) {
       return defaultForeground;
@@ -317,7 +323,7 @@ public class LookupCellRenderer implements ListCellRenderer {
                                Color foreground,
                                final LookupElementPresentation presentation,
                                int allowedWidth,
-                               boolean selected) {
+                               boolean selected, boolean nonFocusedSelection) {
     final String givenText = presentation.getTypeText();
     final String labelText = trimLabelText(StringUtil.isEmpty(givenText) ? "" : " " + givenText, allowedWidth, myNormalMetrics);
 
@@ -346,7 +352,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
 
     myTypeLabel.setBackground(sampleBackground);
-    myTypeLabel.setForeground(presentation.isTypeGrayed() ? getGrayedForeground(selected) : item instanceof EmptyLookupItem ? JBColor.foreground() : foreground);
+    myTypeLabel.setForeground(getTypeTextColor(item, foreground, presentation, selected, nonFocusedSelection));
     return used;
   }
 

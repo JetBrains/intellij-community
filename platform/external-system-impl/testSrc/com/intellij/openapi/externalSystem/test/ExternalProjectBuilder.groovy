@@ -67,7 +67,7 @@ class ExternalProjectBuilder extends BuilderSupport {
         String externalConfigPath = attributes.externalConfigPath ?: projectDir.path
         ModuleData moduleData = new ModuleData(TEST_EXTERNAL_SYSTEM_ID,
                                                ModuleTypeId.JAVA_MODULE,
-                                               attributes.name,
+                                               attributes.name ?: name as String,
                                                moduleFilePath,
                                                externalConfigPath)
         return (current as DataNode).createChild(ProjectKeys.MODULE, moduleData)
@@ -82,6 +82,16 @@ class ExternalProjectBuilder extends BuilderSupport {
         DataNode<ExternalConfigPathAware> parentNode = current as DataNode
         TaskData data = new TaskData(TEST_EXTERNAL_SYSTEM_ID, attributes.name, parentNode.data.linkedExternalProjectPath, null)
         return parentNode.createChild(ProjectKeys.TASK, data)
+      case 'contentRoot':
+        DataNode<ModuleData> parentNode = current as DataNode
+        ContentRootData data = new ContentRootData(TEST_EXTERNAL_SYSTEM_ID, attributes.name)
+        return parentNode.createChild(ProjectKeys.CONTENT_ROOT, data)
+      case 'folder':
+        DataNode<ContentRootData> parentNode = current as DataNode
+        ContentRootData data = parentNode.data;
+        data.storePath(attributes.type, attributes.path)
+        return null
+        
       default: throw new IllegalArgumentException("Unexpected entry: $name");
     }
   }

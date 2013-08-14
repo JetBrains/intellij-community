@@ -28,6 +28,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -374,8 +375,15 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }
 
     private void processInjectionWithContext(BaseInjection injection, boolean settingsAvailable) {
-      final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
-      if (language == null) return;
+      Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
+      if (language == null) {
+        ReferenceInjector injector = ReferenceInjector.findById(injection.getInjectedLanguageId());
+        if (injector != null) {
+          language = injector.toLanguage();
+        }
+        else return;
+      }
+
       final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
 
       final Ref<Boolean> unparsableRef = Ref.create(myUnparsable);

@@ -17,8 +17,6 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -26,7 +24,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -120,7 +117,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     if (myReleaseRequested) return;
 
     assert !toAdd.isExpired();
-    
+
     final AbstractTreeUi ui = myTreeBuilder.getUi();
 
     if (ui.isUpdatingChildrenNow(toAdd.getNode())) {
@@ -299,20 +296,6 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
   private boolean isReleased() {
     return myTreeBuilder.getUi() == null;
-  }
-
-  protected void invokeLater(Runnable runnable) {
-    if (myTreeBuilder.getUi().isPassthroughMode()) {
-      runnable.run();
-    } else {
-      final Application app = ApplicationManager.getApplication();
-      if (app != null) {
-        app.invokeLater(runnable);
-      }
-      else {
-        UIUtil.invokeAndWaitIfNeeded(runnable);
-      }
-    }
   }
 
   protected ActionCallback beforeUpdate(TreeUpdatePass pass) {

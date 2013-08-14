@@ -70,7 +70,7 @@ public class UploadApplicationAction extends AnAction {
         public void errorOccurred(@NotNull String errorMessage) {
           Messages.showErrorDialog(project, errorMessage, CommonBundle.getErrorTitle());
         }
-      });
+      }, null);
       if (uploader != null) {
         uploader.startUploading();
       }

@@ -20,10 +20,13 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -66,6 +69,13 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
 
   public static void registerStandard(@NotNull HighlightInfoType highlightInfoType, @NotNull HighlightSeverity highlightSeverity) {
     STANDARD_SEVERITIES.put(highlightSeverity.toString(), highlightInfoType);
+  }
+
+  @NotNull
+  public static SeverityRegistrar getSeverityRegistrar(@Nullable Project project) {
+    return project == null
+           ? InspectionProfileManager.getInstance().getSeverityRegistrar()
+           : InspectionProjectProfileManager.getInstance(project).getSeverityRegistrar();
   }
 
   public void registerSeverity(@NotNull SeverityBasedTextAttributes info, Color renderColor){

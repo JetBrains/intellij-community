@@ -156,7 +156,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
             params.getClassPath().add(PathUtil.getJarPathForClass(manager.getProjectResolverClass().getClass()));
             params.getProgramParametersList().add(manager.getProjectResolverClass().getName());
             params.getProgramParametersList().add(manager.getTaskManagerClass().getName());
-            manager.enhanceParameters(params);
+            manager.enhanceRemoteProcessing(params);
           }
         }
 

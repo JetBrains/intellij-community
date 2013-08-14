@@ -317,7 +317,7 @@ public class Tool implements SchemeElement {
   @Nullable
   public GeneralCommandLine createCommandLine(DataContext dataContext) {
     if (StringUtil.isEmpty(getWorkingDirectory())) {
-      setWorkingDirectory(null);
+      setWorkingDirectory("$ProjectFileDir$");
     }
 
     GeneralCommandLine commandLine = new GeneralCommandLine();

@@ -335,11 +335,20 @@ public class MavenProjectImporter {
   }
 
   private static String formatModules(final Collection<Module> modules) {
-    return StringUtil.join(modules, new Function<Module, String>() {
-        public String fun(final Module m) {
-          return "'" + m.getName() + "'";
-        }
-      }, "\n");
+    StringBuilder res = new StringBuilder();
+
+    int i = 0;
+    for (Module module : modules) {
+      res.append('\'').append(module.getName()).append("'\n");
+
+      if (++i > 20) break;
+    }
+
+    if (i > 20) {
+      res.append("\n ... and other ").append(modules.size() - 20).append(" modules");
+    }
+
+    return res.toString();
   }
 
   private static void doRefreshFiles(Set<File> files) {

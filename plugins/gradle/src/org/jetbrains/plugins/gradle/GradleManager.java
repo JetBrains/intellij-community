@@ -58,12 +58,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.remote.GradleJavaHelper;
-import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.*;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -73,6 +73,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -172,8 +173,14 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
                                                                      useWrapper,
                                                                      settings.getGradleVmOptions());
 
+        boolean inProcessMode = ExternalSystemApiUtil.isInProcessMode();
         for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
-          result.addResolverExtensionClass(extension.getClass().getName());
+          if (inProcessMode) {
+            result.addResolverExtensionClass(extension.getClass());
+          }
+          else {
+            result.addResolverExtensionClass(extension.getClass().getName());
+          }
         }
         String javaHome = myJavaHelper.getJdkHome(pair.first);
         if (!StringUtil.isEmpty(javaHome)) {
@@ -186,7 +193,7 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
   }
 
   @Override
-  public void enhanceParameters(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
+  public void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
     PathsList classPath = parameters.getClassPath();
 
     // Gradle i18n bundle.
@@ -225,8 +232,12 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
     }
 
     for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
-      extension.enhanceParameters(parameters);
+      extension.enhanceRemoteProcessing(parameters);
     }
+  }
+
+  @Override
+  public void enhanceLocalProcessing(@NotNull List<URL> urls) {
   }
 
   @NotNull
