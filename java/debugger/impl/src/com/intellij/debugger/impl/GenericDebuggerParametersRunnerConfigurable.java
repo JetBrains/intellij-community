@@ -25,6 +25,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.PortField;
 import com.intellij.xdebugger.impl.settings.DebuggerConfigurable;
 import org.jetbrains.annotations.NotNull;
@@ -153,9 +154,8 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   }
 
   private void checkPort() throws ConfigurationException {
-    final int port = myPortField.getNumber();
-    if (isSocket() && port > 0 && (port < 0 || port > 0xffff)) {
-      throw new ConfigurationException(DebuggerBundle.message("error.text.invalid.port.0", port));
+    if (isSocket() && !myPortField.isSpecified()) {
+      throw new ConfigurationException(DebuggerBundle.message("error.text.invalid.port"));
     }
   }
 
@@ -172,7 +172,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
 
   private void setPort(String port) {
     if (isSocket()) {
-      myPortField.setNumber(StringUtil.parseInt(port, 0));
+      myPortField.setNumber(StringUtilRt.parseInt(port, 0));
     }
     else {
       myAddressField.setText(port);

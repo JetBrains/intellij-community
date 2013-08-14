@@ -38,4 +38,8 @@ public class PortField extends JSpinner {
   public int getNumber() {
     return ((SpinnerNumberModel)getModel()).getNumber().intValue();
   }
+
+  public boolean isSpecified() {
+    return getNumber() != 0;
+  }
 }
