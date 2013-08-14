@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -35,7 +34,7 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
   private final Class myTemplateFileViewProviderClass;
 
   private final Set<Language> knownLanguageSet;
-  
+
   private final static Key<Class> TEMPLATE_VIEW_PROVIDER_CLASS_KEY = Key.create("TEMPLATE_VIEW_PROVIDER_CLASS");
 
   protected TemplateLanguageErrorFilter(
@@ -66,14 +65,14 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
   }
 
   @Override
-  public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {        
+  public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {
     if (isKnownSubLanguage(element.getParent().getLanguage())) {
       //
       // Immediately discard filters with non-matching template class if already known
       //
       Class templateClass = element.getUserData(TEMPLATE_VIEW_PROVIDER_CLASS_KEY);
       if (templateClass != null && (templateClass != myTemplateFileViewProviderClass)) return true;
-      
+
       PsiFile psiFile = element.getContainingFile();
       int offset = element.getTextOffset();
       InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
@@ -96,7 +95,7 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     }
     return true;
   }
-  
+
   private boolean shouldIgnoreErrorAt(@NotNull FileViewProvider viewProvider, int offset) {
     PsiElement element = viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
     if (element instanceof PsiWhiteSpace) element = element.getNextSibling();
@@ -105,7 +104,7 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     }
     return false;
   }
-  
+
   protected boolean isKnownSubLanguage(final @NotNull Language language) {
     for (Language knownLanguage : knownLanguageSet) {
       if (language.is(knownLanguage)) {

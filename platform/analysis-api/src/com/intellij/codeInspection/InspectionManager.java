@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public abstract class InspectionManager {
-  @NonNls public static final String INSPECTION_GROUP_ID = "Inspections";  // for use in notifications
   public static final ExtensionPointName<Condition<PsiElement>> CANT_BE_STATIC_EXTENSION = ExtensionPointName.create("com.intellij.cantBeStatic");
 
   public static InspectionManager getInstance(Project project) {
@@ -158,4 +156,7 @@ public abstract class InspectionManager {
                                                             final boolean showTooltip,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             final LocalQuickFix... fixes);
+
+  @NotNull
+  public abstract GlobalInspectionContext createNewGlobalContext(boolean reuse);
 }

@@ -42,6 +42,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -858,7 +859,7 @@ public class CreateFromUsageUtils {
 
     String name1 = PsiUtil.getMemberQualifiedName(m1);
     String name2 = PsiUtil.getMemberQualifiedName(m2);
-    return name1 == null || name2 == null ? 0 : name1.compareTo(name2);
+    return Comparing.compare(name1, name2);
   }
 
   public static boolean isAccessedForWriting(final PsiExpression[] expressionOccurences) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,10 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.SystemNotifications;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -163,29 +166,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     return myCurrentModalProgressCount.get() > 0;
   }
 
-  @Override
-  public void runProcess(@NotNull final Runnable process, final ProgressIndicator progress) {
-    executeProcessUnderProgress(new Runnable(){
-      @Override
-      public void run() {
-        try {
-          if (progress != null && !progress.isRunning()) {
-            progress.start();
-          }
-          process.run();
-          maybeSleep();
-        }
-        finally {
-          if (progress != null && progress.isRunning()) {
-            progress.stop();
-            if (progress instanceof ProgressIndicatorEx) {
-              ((ProgressIndicatorEx)progress).processFinish();
-            }
-          }
-        }
-      }
-    },progress);
-  }
 
   @Override
   public <T> T runProcess(@NotNull final Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException {
@@ -432,6 +412,36 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
       }
     }
   }
+
+  @Override
+   public void runProcess(@NotNull final Runnable process, final ProgressIndicator progress) {
+     executeProcessUnderProgress(new Runnable(){
+       @Override
+       public void run() {
+         synchronized (process) {
+           process.notifyAll();
+         }
+         try {
+           if (progress != null && !progress.isRunning()) {
+             progress.start();
+           }
+           process.run();
+           maybeSleep();
+         }
+         finally {
+           if (progress != null && progress.isRunning()) {
+             progress.stop();
+             if (progress instanceof ProgressIndicatorEx) {
+               ((ProgressIndicatorEx)progress).processFinish();
+             }
+             synchronized (process) {
+               process.notifyAll();
+             }
+           }
+         }
+       }
+     },progress);
+   }
 
   private abstract static class TaskContainer implements Runnable {
     private final Task myTask;

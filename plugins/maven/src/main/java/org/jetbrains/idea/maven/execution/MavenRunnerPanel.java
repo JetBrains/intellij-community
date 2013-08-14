@@ -17,6 +17,7 @@
 
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -41,6 +42,7 @@ public class MavenRunnerPanel {
 
   private JCheckBox myRunInBackgroundCheckbox;
   private RawCommandLineEditor myVMParametersEditor;
+  private EnvironmentVariablesComponent myEnvVariablesComponent;
   private JComboBox myJdkCombo;
   private final DefaultComboBoxModel myJdkComboModel = new DefaultComboBoxModel();
   private JCheckBox mySkipTestsCheckBox;
@@ -104,6 +106,16 @@ public class MavenRunnerPanel {
     c.insets.left = 0;
     c.fill = GridBagConstraints.HORIZONTAL;
 
+    myEnvVariablesComponent = new EnvironmentVariablesComponent();
+    myEnvVariablesComponent.setPassParentEnvs(true);
+    myEnvVariablesComponent.setLabelLocation(BorderLayout.WEST);
+    c.gridx = 0;
+    c.gridy++;
+    c.weightx = 1;
+    c.gridwidth = 2;
+    panel.add(myEnvVariablesComponent, c);
+    c.gridwidth = 1;
+
     JPanel propertiesPanel = new JPanel(new BorderLayout());
     propertiesPanel.setBorder(IdeBorderFactory.createTitledBorder("Properties", false));
 
@@ -154,6 +166,9 @@ public class MavenRunnerPanel {
     ComboBoxUtil.select(myJdkComboModel, data.getJreName());
 
     myPropertiesPanel.setDataFromMap(data.getMavenProperties());
+
+    myEnvVariablesComponent.setEnvs(data.getEnvironmentProperties());
+    myEnvVariablesComponent.setPassParentEnvs(data.isPassParentEnv());
   }
 
   private Map<String, String> collectJdkNamesAndDescriptions() {
@@ -189,6 +204,9 @@ public class MavenRunnerPanel {
     data.setJreName(ComboBoxUtil.getSelectedString(myJdkComboModel));
 
     data.setMavenProperties(myPropertiesPanel.getDataAsMap());
+
+    data.setEnvironmentProperties(myEnvVariablesComponent.getEnvs());
+    data.setPassParentEnv(myEnvVariablesComponent.isPassParentEnvs());
   }
 
   public Project getProject() {

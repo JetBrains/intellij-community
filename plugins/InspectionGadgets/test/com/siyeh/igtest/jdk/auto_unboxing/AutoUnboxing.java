@@ -54,8 +54,9 @@ public class AutoUnboxing {
       }
     }
 
-    void m(Object o, Boolean b) {
+    void m(Object o, Boolean b, Number n) {
         if ((boolean) o) {}
         if ((boolean) b) {}
+        if ((int)n) {}
     }
 }

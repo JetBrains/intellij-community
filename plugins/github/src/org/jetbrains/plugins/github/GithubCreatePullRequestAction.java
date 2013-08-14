@@ -69,11 +69,6 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       return;
     }
 
-    if (!GithubSettings.getInstance().isAuthConfigured()) {
-      setVisibleEnabled(e, false, false);
-      return;
-    }
-
     final GitRepository gitRepository = GithubUtil.getGitRepository(project, file);
     if (gitRepository == null) {
       setVisibleEnabled(e, false, false);
@@ -108,6 +103,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find git repository");
       return;
     }
+    repository.update();
 
     final Pair<GitRemote, String> remote = GithubUtil.findGithubRemote(repository);
     if (remote == null) {
@@ -137,7 +133,8 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       return;
     }
 
-    String suggestedBranch = info.getRepo().getParent() == null ? null : info.getRepo().getParent().getUserName() + ":master";
+    GithubRepo parent = info.getRepo().getParent();
+    String suggestedBranch = parent == null ? null : parent.getUserName() + ":" + parent.getDefaultBranch();
     final GithubCreatePullRequestDialog dialog = new GithubCreatePullRequestDialog(project, info.getBranches(), suggestedBranch);
     DialogManager.show(dialog);
     if (!dialog.isOK()) {
@@ -155,8 +152,8 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
           return;
         }
 
-        LOG.info("Performing create request");
-        indicator.setText("Performing create request...");
+        LOG.info("Creating pull request");
+        indicator.setText("Creating pull request...");
         GithubPullRequest request = createPullRequest(project, info, dialog, currentBranch.getName(), upstreamUserAndRepo);
         if (request == null) {
           return;

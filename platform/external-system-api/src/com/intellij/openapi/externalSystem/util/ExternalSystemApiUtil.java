@@ -26,14 +26,18 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,6 +46,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +54,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -65,19 +73,6 @@ public class ExternalSystemApiUtil {
   @NotNull public static final String PATH_SEPARATOR = "/";
 
   @NotNull private static final Pattern ARTIFACT_PATTERN = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
-
-  @NotNull private static final NotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>>> MANAGERS =
-    new AtomicNotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>>>() {
-      @NotNull
-      @Override
-      protected Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>> compute() {
-        Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>> result = ContainerUtilRt.newHashMap();
-        for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
-          result.put(manager.getSystemId(), manager);
-        }
-        return result;
-      }
-    };
 
   @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<Object>() {
 
@@ -97,7 +92,10 @@ public class ExternalSystemApiUtil {
         if (annotation != null) {
           return annotation.value();
         }
-        toCheck.add(clazz.getSuperclass());
+        Class<?> c = clazz.getSuperclass();
+        if (c != null) {
+          toCheck.add(c);
+        }
         Class<?>[] interfaces = clazz.getInterfaces();
         if (interfaces != null) {
           Collections.addAll(toCheck, interfaces);
@@ -206,11 +204,22 @@ public class ExternalSystemApiUtil {
 
   @Nullable
   public static ExternalSystemManager<?, ?, ?, ?, ?> getManager(@NotNull ProjectSystemId externalSystemId) {
-    return MANAGERS.getValue().get(externalSystemId);
+    for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
+      if (externalSystemId.equals(manager.getSystemId())) {
+        return manager;
+      }
+    }
+    return null;
   }
 
+  @SuppressWarnings("ManualArrayToCollectionCopy")
+  @NotNull
   public static Collection<ExternalSystemManager<?, ?, ?, ?, ?>> getAllManagers() {
-    return MANAGERS.getValue().values();
+    List<ExternalSystemManager<?, ?, ?, ?, ?>> result = ContainerUtilRt.newArrayList();
+    for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
+      result.add(manager);
+    }
+    return result;
   }
 
   @NotNull
@@ -391,10 +400,10 @@ public class ExternalSystemApiUtil {
     return ProjectManager.getInstance().getOpenProjects().length == 0;
   }
 
-  @NotNull
-  public static String getLastUsedExternalProjectPath(@NotNull ProjectSystemId externalSystemId) {
-    return PropertiesComponent.getInstance().getValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), "");
-  }
+//  @NotNull
+//  public static String getLastUsedExternalProjectPath(@NotNull ProjectSystemId externalSystemId) {
+//    return PropertiesComponent.getInstance().getValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), "");
+//  }
 
   public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
     if (path != null) {
@@ -477,5 +486,126 @@ public class ExternalSystemApiUtil {
       unwrapped.printStackTrace(new PrintWriter(writer));
       return writer.toString();
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  public static AbstractExternalSystemSettings getSettings(@NotNull Project project, @NotNull ProjectSystemId externalSystemId)
+    throws IllegalArgumentException
+  {
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(externalSystemId);
+    if (manager == null) {
+      throw new IllegalArgumentException(String.format(
+        "Can't retrieve external system settings for id '%s'. Reason: no such external system is registered",
+        externalSystemId.getReadableName()
+      ));
+    }
+    return manager.getSettingsProvider().fun(project);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <S extends AbstractExternalSystemLocalSettings> S getLocalSettings(@NotNull Project project,
+                                                                                   @NotNull ProjectSystemId externalSystemId)
+    throws IllegalArgumentException
+  {
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(externalSystemId);
+    if (manager == null) {
+      throw new IllegalArgumentException(String.format(
+        "Can't retrieve local external system settings for id '%s'. Reason: no such external system is registered",
+        externalSystemId.getReadableName()
+      ));
+    }
+    return (S)manager.getLocalSettingsProvider().fun(project);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <S extends ExternalSystemExecutionSettings> S getExecutionSettings(@NotNull Project project,
+                                                                            @NotNull String linkedProjectPath,
+                                                                            @NotNull ProjectSystemId externalSystemId)
+    throws IllegalArgumentException
+  {
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(externalSystemId);
+    if (manager == null) {
+      throw new IllegalArgumentException(String.format(
+        "Can't retrieve external system execution settings for id '%s'. Reason: no such external system is registered",
+        externalSystemId.getReadableName()
+      ));
+    }
+    return (S)manager.getExecutionSettingsProvider().fun(Pair.create(project, linkedProjectPath));
+  }
+
+  /**
+   * Historically we prefer to work with third-party api not from ide process but from dedicated slave process (there is a risk
+   * that third-party api has bugs which might make the whole ide process corrupted, e.g. a memory leak at the api might crash
+   * the whole ide process).
+   * <p/>
+   * However, we do allow to explicitly configure the ide to work with third-party external system api from the ide process.
+   * <p/>
+   * This method allows to check whether the ide is configured to use 'out of process' or 'in process' mode.
+   * 
+   * @return   <code>true</code> if the ide is configured to work with external system api from the ide process;
+   *           <code>false</code> otherwise 
+   */
+  public static boolean isInProcessMode() {
+    return Registry.is(ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY, false);
+  }
+
+  /**
+   * There is a possible case that methods of particular object should be executed with classpath different from the one implied
+   * by the current class' classloader. External system offers {@link ParametersEnhancer#enhanceLocalProcessing(List)} method
+   * for defining that custom classpath.
+   * <p/>
+   * It's also possible that particular implementation of {@link ParametersEnhancer} is compiled using dependency to classes
+   * which are provided by the {@link ParametersEnhancer#enhanceLocalProcessing(List) expanded classpath}. E.g. a class
+   * <code>'A'</code> might use method of class <code>'B'</code> and 'A' is located at the current (system/plugin) classpath but
+   * <code>'B'</code> is not. We need to reload <code>'A'</code> using its expanded classpath then, i.e. create new classloaded
+   * with that expanded classpath and load <code>'A'</code> by it.
+   * <p/>
+   * This method allows to do that.
+   * 
+   * @param clazz  custom classpath-aware class which instance should be created (is assumed to have a no-args constructor)
+   * @param <T>    target type
+   * @return       newly created instance of the given class loaded by custom classpath-aware loader
+   * @throws IllegalAccessException     as defined by reflection processing
+   * @throws InstantiationException     as defined by reflection processing
+   * @throws NoSuchMethodException      as defined by reflection processing
+   * @throws InvocationTargetException  as defined by reflection processing
+   * @throws ClassNotFoundException     as defined by reflection processing
+   */
+  @NotNull
+  public static <T extends ParametersEnhancer> T reloadIfNecessary(@NotNull final Class<T> clazz)
+    throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException, ClassNotFoundException
+  {
+    T instance = clazz.newInstance();
+    List<URL> urls = ContainerUtilRt.newArrayList();
+    instance.enhanceLocalProcessing(urls);
+    if (urls.isEmpty()) {
+      return instance;
+    }
+
+    final ClassLoader baseLoader = clazz.getClassLoader();
+    Method method = baseLoader.getClass().getMethod("getUrls");
+    if (method != null) {
+      //noinspection unchecked
+      urls.addAll((Collection<? extends URL>)method.invoke(baseLoader));
+    }
+    UrlClassLoader loader = new UrlClassLoader(urls, baseLoader.getParent()) {
+      @Override
+      protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        if (name.equals(clazz.getName())) {
+          return super.loadClass(name, resolve);
+        }
+        else {
+          try {
+            return baseLoader.loadClass(name);
+          }
+          catch (ClassNotFoundException e) {
+            return super.loadClass(name, resolve);
+          }
+        }
+      }
+    };
+    //noinspection unchecked
+    return (T)loader.loadClass(clazz.getName()).newInstance();
   }
 }

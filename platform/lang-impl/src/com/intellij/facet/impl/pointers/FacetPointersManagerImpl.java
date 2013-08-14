@@ -20,7 +20,6 @@ import com.intellij.ProjectTopics;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetManagerAdapter;
-import com.intellij.facet.FacetManagerListener;
 import com.intellij.facet.impl.FacetUtil;
 import com.intellij.facet.pointers.FacetPointer;
 import com.intellij.facet.pointers.FacetPointerListener;
@@ -95,7 +94,21 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
 
   @Override
   public void initComponent() {
-    final FacetManagerListener facetListener = new FacetManagerAdapter() {
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+      @Override
+      public void moduleAdded(Project project, Module module) {
+        refreshPointers(module);
+      }
+
+      @Override
+      public void modulesRenamed(Project project, List<Module> modules, Function<Module, String> oldNameProvider) {
+        for (Module module : modules) {
+          refreshPointers(module);
+        }
+      }
+    });
+    connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerAdapter() {
       @Override
       public void facetAdded(@NotNull Facet facet) {
         refreshPointers(facet.getModule());
@@ -113,11 +126,9 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
       public void facetRenamed(@NotNull final Facet facet, @NotNull final String oldName) {
         refreshPointers(facet.getModule());
       }
-    };
-    final MyModuleListener moduleListener = new MyModuleListener(facetListener);
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.MODULES, moduleListener);
+    });
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      moduleListener.moduleAdded(myProject, module);
+      refreshPointers(module);
     }
   }
 
@@ -198,37 +209,5 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
 
   public Project getProject() {
     return myProject;
-  }
-
-  private class MyModuleListener extends ModuleAdapter {
-    private final FacetManagerListener myFacetListener;
-    private final Map<Module, MessageBusConnection> myModule2Connection = new HashMap<Module, MessageBusConnection>();
-
-    public MyModuleListener(final FacetManagerListener facetListener) {
-      myFacetListener = facetListener;
-    }
-
-    @Override
-    public void moduleAdded(Project project, final Module module) {
-      final MessageBusConnection connection = module.getMessageBus().connect();
-      myModule2Connection.put(module, connection);
-      connection.subscribe(FacetManager.FACETS_TOPIC, myFacetListener);
-      refreshPointers(module);
-    }
-
-    @Override
-    public void moduleRemoved(Project project, final Module module) {
-      final MessageBusConnection connection = myModule2Connection.remove(module);
-      if (connection != null) {
-        connection.disconnect();
-      }
-    }
-
-    @Override
-    public void modulesRenamed(Project project, List<Module> modules, Function<Module, String> oldNameProvider) {
-      for (Module module : modules) {
-        refreshPointers(module);
-      }
-    }
   }
 }

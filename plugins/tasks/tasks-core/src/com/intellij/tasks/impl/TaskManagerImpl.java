@@ -775,6 +775,12 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         // OK
       }
       catch (Exception e) {
+        String reason = "";
+        // Fix to IDEA-111810
+        if (e.getClass() == Exception.class) {
+          // probably contains some message meaningful to end-user
+          reason = e.getMessage();
+        }
         //noinspection InstanceofCatchParameter
         if (e instanceof SocketTimeoutException) {
           LOG.warn("Socket timeout from " + repository);
@@ -784,17 +790,21 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
         myBadRepositories.add(repository);
         if (forceRequest) {
-          notifyAboutConnectionFailure(repository);
+          notifyAboutConnectionFailure(repository, reason);
         }
       }
     }
     return issues;
   }
 
-  private void notifyAboutConnectionFailure(final TaskRepository repository) {
+  private void notifyAboutConnectionFailure(final TaskRepository repository, String details) {
     Notifications.Bus.register(TASKS_NOTIFICATION_GROUP, NotificationDisplayType.BALLOON);
+    String content = "<p><a href=\"\">Configure server...</a></p>";
+    if (!StringUtil.isEmpty(details)) {
+      content =  "<p>" + details + "</p>" + content;
+    }
     Notifications.Bus.notify(new Notification(TASKS_NOTIFICATION_GROUP, "Cannot connect to " + repository.getUrl(),
-                                              "<p><a href=\"\">Configure server...</a></p>", NotificationType.WARNING,
+                                              content, NotificationType.WARNING,
                                               new NotificationListener() {
                                                 public void hyperlinkUpdate(@NotNull Notification notification,
                                                                             @NotNull HyperlinkEvent event) {

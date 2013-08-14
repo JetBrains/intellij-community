@@ -110,6 +110,7 @@ public interface RunConfiguration extends RunProfile, JDOMExternalizable, Clonea
    *
    * @return the unique ID of the configuration.
    */
+  @Deprecated
   int getUniqueID();
 
   /**

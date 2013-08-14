@@ -164,6 +164,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction, onTheFly);
   }
 
+  @NotNull
   public GlobalInspectionContextImpl createNewGlobalContext(boolean reuse) {
     final GlobalInspectionContextImpl inspectionContext;
     if (reuse) {

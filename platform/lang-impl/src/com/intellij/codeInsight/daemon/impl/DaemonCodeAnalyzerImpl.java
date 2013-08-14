@@ -528,7 +528,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                                           @NotNull final Processor<HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
 
-    final SeverityRegistrar severityRegistrar = SeverityUtil.getSeverityRegistrar(project);
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override
@@ -551,7 +551,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                                                      @NotNull final Processor<HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
 
-    final SeverityRegistrar severityRegistrar = SeverityUtil.getSeverityRegistrar(project);
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOutside(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override

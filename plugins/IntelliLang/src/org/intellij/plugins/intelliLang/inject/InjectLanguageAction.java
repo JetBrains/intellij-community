@@ -17,27 +17,31 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.psi.injection.Injectable;
+import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
@@ -48,9 +52,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
-import com.intellij.psi.injection.Injectable;
 import org.intellij.plugins.intelliLang.references.InjectedReferencesContributor;
-import com.intellij.psi.injection.ReferenceInjector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +66,7 @@ import java.util.List;
 public class InjectLanguageAction implements IntentionAction {
   @NonNls private static final String INJECT_LANGUAGE_FAMILY = "Inject Language/Reference";
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
+  public static final Key<Processor<PsiLanguageInjectionHost>> FIX_KEY = Key.create("inject fix key");
 
   public static List<Injectable> getAllInjectables() {
     Language[] languages = InjectedLanguage.getAvailableLanguages();
@@ -120,12 +123,13 @@ public class InjectLanguageAction implements IntentionAction {
     });
   }
 
-  public static void invokeImpl(Project project, Editor editor, PsiFile file, Injectable injectable) {
+  public static void invokeImpl(Project project, Editor editor, final PsiFile file, Injectable injectable) {
     final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return;
     if (defaultFunctionalityWorked(host, injectable.getId())) return;
 
     try {
+      host.putUserData(FIX_KEY, null);
       Language language = injectable.toLanguage();
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
         if (support.isApplicableTo(host) && support.addInjectionInPlace(language, host)) {
@@ -133,7 +137,26 @@ public class InjectLanguageAction implements IntentionAction {
         }
       }
       if (TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host)) {
-        HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXml(language.getDisplayName()) + " was temporarily injected");
+        final Processor<PsiLanguageInjectionHost> data = host.getUserData(FIX_KEY);
+        String text = StringUtil.escapeXml(language.getDisplayName()) + " was temporarily injected.";
+        if (data != null) {
+          if (!ApplicationManager.getApplication().isUnitTestMode()) {
+            final SmartPsiElementPointer<PsiLanguageInjectionHost> pointer =
+              SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host);
+            final TextRange range = host.getTextRange();
+            HintManager.getInstance().showQuestionHint(editor, text + "<br>Do you want to insert annotation? " + KeymapUtil
+              .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)),
+                                                       range.getStartOffset(), range.getEndOffset(), new QuestionAction() {
+              @Override
+              public boolean execute() {
+                return data.process(pointer.getElement());
+              }
+            });
+          }
+        }
+        else {
+          HintManager.getInstance().showInformationHint(editor, text);
+        }
       }
     }
     finally {

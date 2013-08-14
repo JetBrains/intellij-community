@@ -48,7 +48,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     if (configuration == null) return CREATE_AND_EDIT;
     final RunManager runManager = context.getRunManager();
     if (runManager.getSelectedConfiguration() != configuration) return SELECT;
-    if (runManager.isTemporary(configuration.getConfiguration())) return SAVE;
+    if (configuration.isTemporary()) return SAVE;
     return SELECTED_STABLE;
   }
 
@@ -163,7 +163,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     @Override
     public void perform(final ConfigurationContext context) {
       RunnerAndConfigurationSettings settings = context.findExisting();
-      if (settings != null) context.getRunManager().makeStable(settings.getConfiguration());
+      if (settings != null) context.getRunManager().makeStable(settings);
     }
 
     @Override

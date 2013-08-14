@@ -45,17 +45,6 @@ final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBas
       context.setAttachment(null);
     }
 
-    if (urlDecoder.getPath().equals("/favicon.ico")) {
-      Icon icon = IconLoader.findIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
-      if (icon != null) {
-        BufferedImage image = UIUtil.createImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-        icon.paintIcon(null, image.getGraphics(), 0, 0);
-        byte[] icoBytes = Sanselan.writeImageToBytes(image, ImageFormat.IMAGE_FORMAT_ICO, null);
-        Responses.send(icoBytes, FileResponses.createResponse(urlDecoder.getPath()), request, context);
-        return true;
-      }
-    }
-
     for (HttpRequestHandler handler : BuiltInServerManager.EP_NAME.getExtensions()) {
       try {
         if (handler.isSupported(request) && handler.process(urlDecoder, request, context)) {
@@ -69,6 +58,18 @@ final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBas
         BuiltInServer.LOG.error(e);
       }
     }
+
+    if (urlDecoder.getPath().equals("/favicon.ico")) {
+      Icon icon = IconLoader.findIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
+      if (icon != null) {
+        BufferedImage image = UIUtil.createImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+        icon.paintIcon(null, image.getGraphics(), 0, 0);
+        byte[] icoBytes = Sanselan.writeImageToBytes(image, ImageFormat.IMAGE_FORMAT_ICO, null);
+        Responses.send(icoBytes, FileResponses.createResponse(urlDecoder.getPath()), request, context);
+        return true;
+      }
+    }
+
     return false;
   }
 }

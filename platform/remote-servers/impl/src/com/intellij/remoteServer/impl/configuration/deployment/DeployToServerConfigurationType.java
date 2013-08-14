@@ -68,7 +68,7 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
 
     @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
-      DeploymentConfigurator<?> deploymentConfigurator = myServerType.createDeployer(project);
+      DeploymentConfigurator<?> deploymentConfigurator = myServerType.createDeploymentConfigurator(project);
       return new DeployToServerRunConfiguration(project, this, "", myServerType, deploymentConfigurator);
     }
   }

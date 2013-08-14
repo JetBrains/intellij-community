@@ -14,7 +14,6 @@
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.PlatformFacadeImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapperImpl"/>
-    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager"/>
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper"/>
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager"/>
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemIdeNotificationManager"/>

@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class InspectionManagerBase extends InspectionManager {
+public abstract class InspectionManagerBase extends InspectionManager {
   private final Project myProject;
   @NonNls protected String myCurrentProfileName;
 

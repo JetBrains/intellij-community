@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.filters.classes;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
@@ -41,10 +42,11 @@ public class AnyInnerFilter implements ElementFilter{
   @Override
   public boolean isAcceptable(Object classElement, PsiElement place){
     if(classElement instanceof PsiClass){
+      Project project = ((PsiClass)classElement).getProject();
       final PsiClass[] inners = ((PsiClass)classElement).getInnerClasses();
       for (final PsiClass inner : inners) {
         if (inner.hasModifierProperty(PsiModifier.STATIC)
-            && PsiUtil.isAccessible(inner, place, null)
+            && PsiUtil.isAccessible(project, inner, place, null)
             && myFilter.isAcceptable(inner, place)) {
           return true;
         }

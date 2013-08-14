@@ -69,7 +69,7 @@ public class NetUtils {
   }
 
   public static boolean isLocalhost(@NotNull String host) {
-    return host.equals("localhost") || host.equals("127.0.0.1");
+    return host.equalsIgnoreCase("localhost") || host.equals("127.0.0.1");
   }
 
   private static boolean canBindToLocalSocket(String host, int port) {

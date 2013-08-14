@@ -24,6 +24,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
@@ -171,7 +172,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   @Override
   @Nullable
   protected String applyExtraSettings(@NotNull GradleProjectSettings settings) {
-    String gradleHomePath = myGradleHomePathField.getText();
+    String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
     if (myGradleHomeModifiedByUser) {
       if (StringUtil.isEmpty(gradleHomePath)) {
         settings.setGradleHome(null);

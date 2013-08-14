@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -98,7 +99,7 @@ class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTe
   }
 
   @Override
-  public int compareTo(final IntentionActionWithTextCaching other) {
+  public int compareTo(@NotNull final IntentionActionWithTextCaching other) {
     if (myAction instanceof Comparable) {
       return ((Comparable)myAction).compareTo(other.getAction());
     }

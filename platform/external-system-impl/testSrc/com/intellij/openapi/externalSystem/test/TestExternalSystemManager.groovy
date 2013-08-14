@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.util.Function
 import org.jetbrains.annotations.NotNull
-
 /**
  * @author Denis Zhdanov
  * @since 8/8/13 5:20 PM
@@ -87,6 +86,10 @@ TestExternalSystemExecutionSettings>
   }
 
   @Override
-  void enhanceParameters(@NotNull @NotNull SimpleJavaParameters parameters) throws ExecutionException {
+  void enhanceRemoteProcessing(@NotNull @NotNull SimpleJavaParameters parameters) throws ExecutionException {
+  }
+
+  @Override
+  void enhanceLocalProcessing(@NotNull @NotNull List<URL> urls) {
   }
 }

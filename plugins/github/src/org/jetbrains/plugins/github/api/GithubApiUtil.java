@@ -89,7 +89,8 @@ public class GithubApiUtil {
                                       @NotNull HttpVerb verb) throws IOException {
     HttpMethod method = null;
     try {
-      method = doREST(auth, path, requestBody, headers, verb);
+      String uri = GithubUrlUtil.getApiUrl(auth.getHost()) + path;
+      method = doREST(auth, uri, requestBody, headers, verb);
 
       checkStatusCode(method);
 
@@ -127,12 +128,11 @@ public class GithubApiUtil {
 
   @NotNull
   private static HttpMethod doREST(@NotNull final GithubAuthData auth,
-                                   @NotNull String path,
+                                   @NotNull final String uri,
                                    @Nullable final String requestBody,
                                    @NotNull final Collection<Header> headers,
                                    @NotNull final HttpVerb verb) throws IOException {
     HttpClient client = getHttpClient(auth.getBasicAuth());
-    String uri = GithubUrlUtil.getApiUrl(auth.getHost()) + path;
     return GithubSslSupport.getInstance()
       .executeSelfSignedCertificateAwareRequest(client, uri, new ThrowableConvertor<String, HttpMethod, IOException>() {
         @Override
@@ -221,7 +221,8 @@ public class GithubApiUtil {
         return method.getStatusText() + " - " + error.getMessage();
       }
     }
-    catch (IOException ignore) {
+    catch (IOException e) {
+      LOG.info(e);
     }
     return method.getStatusText();
   }
@@ -373,7 +374,8 @@ public class GithubApiUtil {
   public static Collection<String> getTokenScopes(@NotNull GithubAuthData auth) throws IOException {
     HttpMethod method = null;
     try {
-      method = doREST(auth, "/user", null, Collections.<Header>emptyList(), HttpVerb.HEAD);
+      String uri = GithubUrlUtil.getApiUrl(auth.getHost()) + "/user";
+      method = doREST(auth, uri, null, Collections.<Header>emptyList(), HttpVerb.HEAD);
 
       checkStatusCode(method);
 

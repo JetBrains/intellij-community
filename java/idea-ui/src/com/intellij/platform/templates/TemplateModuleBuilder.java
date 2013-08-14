@@ -172,7 +172,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   private void fixModuleName(Module module) {
-    RunConfiguration[] configurations = RunManager.getInstance(module.getProject()).getAllConfigurations();
+    List<RunConfiguration> configurations = RunManager.getInstance(module.getProject()).getAllConfigurationsList();
     for (RunConfiguration configuration : configurations) {
       if (configuration instanceof ModuleBasedConfiguration) {
         ((ModuleBasedConfiguration)configuration).getConfigurationModule().setModule(module);

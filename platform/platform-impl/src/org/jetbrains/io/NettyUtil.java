@@ -17,16 +17,19 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.util.Consumer;
 import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelException;
+import org.jboss.netty.channel.ChannelFactory;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.SocketAddress;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public final class NettyUtil {
   public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 8;
+  public static final int MIN_START_TIME = 100;
 
   public static void log(Throwable throwable, Logger log) {
     if (isAsWarning(throwable)) {
@@ -37,27 +40,36 @@ public final class NettyUtil {
     }
   }
 
-  public static void connectClient(final ClientBootstrap bootstrap, final SocketAddress remoteAddress, final Consumer<Channel> consumer, final ActionCallback asyncResult) {
-    connect(bootstrap, remoteAddress, consumer, asyncResult, DEFAULT_CONNECT_ATTEMPT_COUNT);
+  public static Channel connectClient(ClientBootstrap bootstrap, SocketAddress remoteAddress, ActionCallback asyncResult) {
+    return connect(bootstrap, remoteAddress, asyncResult, DEFAULT_CONNECT_ATTEMPT_COUNT);
   }
 
-  public static void connect(final ClientBootstrap bootstrap, final SocketAddress remoteAddress, final Consumer<Channel> consumer, final ActionCallback asyncResult, final int attemptCount) {
-    final AtomicInteger attemptCounter = new AtomicInteger(1);
-    bootstrap.connect(remoteAddress).addListener(new ChannelFutureListener() {
-      @Override
-      public void operationComplete(ChannelFuture future) throws Exception {
+  @Nullable
+  public static Channel connect(ClientBootstrap bootstrap, SocketAddress remoteAddress, ActionCallback asyncResult, int maxAttemptCount) {
+    int attemptCount = 0;
+    while (true) {
+      try {
+        ChannelFuture future = bootstrap.connect(remoteAddress).await();
         if (future.isSuccess()) {
-          consumer.consume(future.getChannel());
+          return future.getChannel();
         }
-        else if (attemptCounter.incrementAndGet() > attemptCount) {
+        else if (asyncResult.isRejected()) {
+          return null;
+        }
+        else if (++attemptCount < maxAttemptCount) {
+          //noinspection BusyWait
+          Thread.sleep(attemptCount * 100);
+        }
+        else {
           asyncResult.reject("cannot connect");
-        }
-        else if (!asyncResult.isRejected()) {
-          Thread.sleep(300);
-          bootstrap.connect(remoteAddress).addListener(this);
+          return null;
         }
       }
-    });
+      catch (Throwable e) {
+        asyncResult.reject(e.getMessage());
+        return null;
+      }
+    }
   }
 
   private static boolean isAsWarning(Throwable throwable) {

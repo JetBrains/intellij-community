@@ -32,6 +32,8 @@ import com.intellij.psi.PsiElement;
 import com.theoryinpractice.testng.model.TestData;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public abstract class TestNGConfigurationProducer extends JavaRuntimeConfigurationProducerBase implements Cloneable {
 
   public TestNGConfigurationProducer() {
@@ -40,7 +42,7 @@ public abstract class TestNGConfigurationProducer extends JavaRuntimeConfigurati
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     final TestNGConfiguration testNGConfiguration =
       (TestNGConfiguration)context.getOriginalConfiguration(TestNGConfigurationType.getInstance());

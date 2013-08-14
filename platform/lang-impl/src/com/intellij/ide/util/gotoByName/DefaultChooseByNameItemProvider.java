@@ -17,6 +17,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -276,7 +277,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
         return true;
       }
     };
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(names), indicator, false, false, processor);
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(names), indicator, false, true, processor)) {
+      throw new ProcessCanceledException();
+    }
   }
 
   @NotNull

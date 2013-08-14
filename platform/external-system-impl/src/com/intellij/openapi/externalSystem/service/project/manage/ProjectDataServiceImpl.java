@@ -20,7 +20,6 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -38,12 +37,6 @@ import java.util.Collection;
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, Project> {
   
-  @NotNull private final ExternalSystemSettingsManager mySettingsManager;
-
-  public ProjectDataServiceImpl(@NotNull ExternalSystemSettingsManager settingsManager) {
-    mySettingsManager = settingsManager;
-  }
-
   @NotNull
   @Override
   public Key<ProjectData> getTargetDataKey() {
@@ -85,7 +78,7 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, P
       public void run() {
         String oldName = project.getName();
         ((ProjectEx)project).setProjectName(newName);
-        mySettingsManager.getSettings(project, externalSystemId).getPublisher().onProjectRenamed(oldName, newName);
+        ExternalSystemApiUtil.getSettings(project, externalSystemId).getPublisher().onProjectRenamed(oldName, newName);
       }
     });
   }

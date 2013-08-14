@@ -21,13 +21,18 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
+import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
+import com.intellij.remoteServer.runtime.log.LoggingHandler;
+import com.intellij.remoteServer.runtime.ui.RemoteServersView;
+import com.intellij.util.ParameterizedRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +57,17 @@ public class DeployToServerState<S extends ServerConfiguration, D extends Deploy
   @Nullable
   @Override
   public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-    ServerConnection connection = ServerConnectionManager.getInstance().getOrCreateConnection(myServer);
-    connection.deploy(new DeploymentTaskImpl(mySource, myConfiguration, myEnvironment.getProject()));
+    final ServerConnection connection = ServerConnectionManager.getInstance().getOrCreateConnection(myServer);
+    final Project project = myEnvironment.getProject();
+    RemoteServersView.getInstance(project).showServerConnection(connection);
+
+    LoggingHandler loggingHandler = new LoggingHandlerImpl(project);
+    connection.deploy(new DeploymentTaskImpl(mySource, myConfiguration, project, loggingHandler), new ParameterizedRunnable<String>() {
+      @Override
+      public void run(String s) {
+        RemoteServersView.getInstance(project).showDeployment(connection, s);
+      }
+    });
     return null;
   }
 }

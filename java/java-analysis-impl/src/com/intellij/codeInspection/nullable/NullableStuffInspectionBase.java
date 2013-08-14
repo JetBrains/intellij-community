@@ -417,6 +417,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     }
   }
 
+  @NotNull
   private static LocalQuickFix[] wrapFix(LocalQuickFix fix) {
     if (fix == null) return LocalQuickFix.EMPTY_ARRAY;
     return new LocalQuickFix[]{fix};

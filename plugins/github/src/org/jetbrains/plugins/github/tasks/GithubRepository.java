@@ -37,10 +37,10 @@ public class GithubRepository extends BaseRepositoryImpl {
   private static final Logger LOG = GithubUtil.LOG;
 
   private Pattern myPattern = Pattern.compile("($^)");
-  private String myRepoAuthor = "";
-  private String myRepoName = "";
-  private String myUser = "";
-  private String myToken = "";
+  @NotNull private String myRepoAuthor = "";
+  @NotNull private String myRepoName = "";
+  @NotNull private String myUser = "";
+  @NotNull private String myToken = "";
 
   {
     setUrl(GithubApiUtil.DEFAULT_GITHUB_HOST);
@@ -216,32 +216,36 @@ public class GithubRepository extends BaseRepositoryImpl {
     return new GithubRepository(this);
   }
 
+  @NotNull
   public String getRepoName() {
     return myRepoName;
   }
 
-  public void setRepoName(String repoName) {
+  public void setRepoName(@NotNull String repoName) {
     myRepoName = repoName;
     myPattern = Pattern.compile("(" + StringUtil.escapeToRegexp(repoName) + "\\-\\d+):\\s+");
   }
 
+  @NotNull
   public String getRepoAuthor() {
-    return !StringUtil.isEmpty(myRepoAuthor) ? myRepoAuthor : getUsername();
+    return myRepoAuthor;
   }
 
-  public void setRepoAuthor(String repoAuthor) {
+  public void setRepoAuthor(@NotNull String repoAuthor) {
     myRepoAuthor = repoAuthor;
   }
 
+  @NotNull
   public String getUser() {
     return myUser;
   }
 
-  public void setUser(String user) {
+  public void setUser(@NotNull String user) {
     myUser = user;
   }
 
   @Transient
+  @NotNull
   public String getToken() {
     return myToken;
   }

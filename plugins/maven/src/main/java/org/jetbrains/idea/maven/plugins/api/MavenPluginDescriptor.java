@@ -18,11 +18,17 @@ package org.jetbrains.idea.maven.plugins.api;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.SmartList;
 import com.intellij.util.xml.Required;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.idea.maven.utils.MavenUtil;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Sergey Evdokimov
@@ -30,6 +36,12 @@ import com.intellij.util.xmlb.annotations.Tag;
 public class MavenPluginDescriptor extends AbstractExtensionPointBean {
 
   public static final ExtensionPointName<MavenPluginDescriptor> EP_NAME = new ExtensionPointName<MavenPluginDescriptor>("org.jetbrains.idea.maven.pluginDescriptor");
+
+  // Map artifactId -> groupId -> goal -> List<MavenPluginDescriptor>
+  public static volatile Map<String, Map<String, Map<String, List<MavenPluginDescriptor>>>> ourDescriptorsMap;
+
+  @Attribute("goal")
+  public String goal;
 
   @Attribute("mavenId")
   @Required
@@ -42,6 +54,9 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)
   public ModelProperty[] properties;
+
+  @Attribute("propertyGenerator")
+  public String propertyGenerator;
 
   @Tag("property")
   public static class ModelProperty {
@@ -56,9 +71,6 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
     @Attribute("name")
     @Required
     public String name;
-
-    @Attribute("goal")
-    public String goal;
 
     /**
      * Class name of reference provider. The reference provider must implement MavenParamReferenceProvider or PsiReferenceProvider.
@@ -106,4 +118,30 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
     return new Pair<String, String>(mavenId.substring(0, idx), mavenId.substring(idx + 1));
   }
 
+  public static Map<String, Map<String, Map<String, List<MavenPluginDescriptor>>>> getDescriptorsMap() {
+    Map<String, Map<String, Map<String, List<MavenPluginDescriptor>>>> res = ourDescriptorsMap;
+    if (res == null) {
+      res = new HashMap<String, Map<String, Map<String, List<MavenPluginDescriptor>>>>();
+
+      for (MavenPluginDescriptor pluginDescriptor : MavenPluginDescriptor.EP_NAME.getExtensions()) {
+        Pair<String, String> pluginId = parsePluginId(pluginDescriptor.mavenId);
+
+        Map<String, Map<String, List<MavenPluginDescriptor>>> groupMap = MavenUtil.getOrCreate(res, pluginId.second);// pluginId.second is artifactId
+
+        Map<String, List<MavenPluginDescriptor>> goalsMap = MavenUtil.getOrCreate(groupMap, pluginId.first);// pluginId.first is groupId
+
+        List<MavenPluginDescriptor> descriptorList = goalsMap.get(pluginDescriptor.goal);
+        if (descriptorList == null) {
+          descriptorList = new SmartList<MavenPluginDescriptor>();
+          goalsMap.put(pluginDescriptor.goal, descriptorList);
+        }
+
+        descriptorList.add(pluginDescriptor);
+      }
+
+      ourDescriptorsMap = res;
+    }
+
+    return res;
+  }
 }

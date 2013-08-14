@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,14 +192,22 @@ public class SelectWordUtil {
                                      Editor editor) {
     boolean stop = false;
 
-    for (ExtendWordSelectionHandler selectioner : getExtendWordSelectionHandlers()) {
-      if (!selectioner.canSelect(element)) continue;
-
+    ExtendWordSelectionHandler[] extendWordSelectionHandlers = getExtendWordSelectionHandlers();
+    int minimalTextRangeLength = 0;
+    List<ExtendWordSelectionHandler> availableSelectioners = ContainerUtil.newLinkedList();
+    for (ExtendWordSelectionHandler selectioner : extendWordSelectionHandlers) {
+      if (selectioner.canSelect(element)) {
+        int selectionerMinimalTextRange = selectioner.getMinimalTextRangeLength(element);
+        minimalTextRangeLength = Math.max(minimalTextRangeLength, selectionerMinimalTextRange);
+        availableSelectioners.add(selectioner);
+      }
+    }
+    for (ExtendWordSelectionHandler selectioner : availableSelectioners) {
       List<TextRange> ranges = selectioner.select(element, text, cursorOffset, editor);
       if (ranges == null) continue;
 
       for (TextRange range : ranges) {
-        if (range == null) continue;
+        if (range == null || range.getLength() < minimalTextRangeLength) continue;
 
         stop |= processor.process(range);
       }

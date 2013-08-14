@@ -133,7 +133,7 @@ public class AnalyzeStacktraceUtil {
   public static StacktraceEditorPanel createEditorPanel(Project project, @NotNull Disposable parentDisposable) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument("");
-    Editor editor = editorFactory.createEditor(document);
+    Editor editor = editorFactory.createEditor(document, project);
     EditorSettings settings = editor.getSettings();
     settings.setFoldingOutlineShown(false);
     settings.setLineMarkerAreaShown(false);

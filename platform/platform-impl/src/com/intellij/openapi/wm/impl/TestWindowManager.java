@@ -133,7 +133,7 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     public void removeCustomIndicationComponent(@NotNull JComponent c) { }
 
     @Override
-    public void addProgress(ProgressIndicatorEx indicator, TaskInfo info) { }
+    public void addProgress(@NotNull ProgressIndicatorEx indicator, @NotNull TaskInfo info) { }
 
     @Override
     public List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {

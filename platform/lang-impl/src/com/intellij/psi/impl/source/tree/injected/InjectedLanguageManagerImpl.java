@@ -40,12 +40,16 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -160,7 +164,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
           @Override
           public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
             stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
-            PsiDocumentManagerImpl.checkConsistency(injectedPsi, stillInjectedDocument[0]);
+            PsiDocumentManagerBase.checkConsistency(injectedPsi, stillInjectedDocument[0]);
           }
         });
         synchronized (PsiLock.LOCK) {
@@ -180,8 +184,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       @Override
       public void run() {
         if (myProgress.isCanceled()) return;
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, !synchronously,
-                                                                  commitProcessor);
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, true, commitProcessor);
       }
     };
 
@@ -283,7 +286,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     while (iterator.hasNext()) {
       Map.Entry<Class,MultiHostInjector[]> entry = iterator.next();
       MultiHostInjector[] infos = entry.getValue();
-      int i = ArrayUtil.find(infos, injector);
+      int i = ArrayUtilRt.find(infos, injector);
       if (i != -1) {
         MultiHostInjector[] newInfos = ArrayUtil.remove(infos, i);
         if (newInfos.length == 0) {
@@ -370,7 +373,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
   @Override
-  public boolean isInjectedFragment(final PsiFile file) {
+  public boolean isInjectedFragment(@NotNull final PsiFile file) {
     return file.getViewProvider() instanceof InjectedFileViewProvider;
   }
 

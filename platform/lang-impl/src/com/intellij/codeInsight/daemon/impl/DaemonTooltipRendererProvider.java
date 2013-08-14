@@ -84,7 +84,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       ContainerUtil.quickSort(infos, new Comparator<HighlightInfo>() {
         @Override
         public int compare(final HighlightInfo o1, final HighlightInfo o2) {
-          int i = SeverityUtil.getSeverityRegistrar(myProject).compare(o2.getSeverity(), o1.getSeverity());
+          int i = SeverityRegistrar.getSeverityRegistrar(myProject).compare(o2.getSeverity(), o1.getSeverity());
           if (i != 0) return i;
           return o1.getToolTip().compareTo(o2.getToolTip());
         }

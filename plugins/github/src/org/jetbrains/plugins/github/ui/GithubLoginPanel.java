@@ -87,7 +87,7 @@ public class GithubLoginPanel {
             myLoginLabel.setVisible(true);
             myLoginTextField.setVisible(true);
           }
-          if (AUTH_TOKEN.equals(item)) {
+          else if (AUTH_TOKEN.equals(item)) {
             myPasswordLabel.setText("Token:");
             mySavePasswordCheckBox.setText("Save token");
             myLoginLabel.setVisible(false);

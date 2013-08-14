@@ -120,15 +120,15 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
       }
 
       if (configuration != null) {
-        existing.add(RunManagerImpl.getUniqueName(configuration.getConfiguration()));
+        existing.add(configuration.getUniqueID());
       }
     }
 
     myManager.removeNotExistingSharedConfigurations(existing);
     if (myManager.getSelectedConfiguration() == null) {
-      final RunConfiguration[] allConfigurations = myManager.getAllConfigurations();
+      final List<RunConfiguration> allConfigurations = myManager.getAllConfigurationsList();
       for (final RunConfiguration configuration : allConfigurations) {
-        final RunnerAndConfigurationSettings settings = myManager.getSettings(allConfigurations[0]);
+        final RunnerAndConfigurationSettings settings = myManager.getSettings(allConfigurations.get(0));
         if (!(configuration instanceof UnknownRunConfiguration)) {
           myManager.setSelectedConfiguration(settings);
           break;

@@ -493,4 +493,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param consumer the callback in which the actual testing of the structure view is performed.
    */
   void testStructureView(Consumer<StructureViewComponent> consumer);
+
+  /**
+   * By default, if the caret in the text passed to {@link #configureByFile(String)} or {@link #configureByText} has an injected fragment
+   * at the caret, the test fixture puts the caret into the injected editor. This method allows to turn off this behavior.
+   *
+   * @param caresAboutInjection true if the fixture should look for an injection at caret, false otherwise.
+   */
+  void setCaresAboutInjection(boolean caresAboutInjection);
 }

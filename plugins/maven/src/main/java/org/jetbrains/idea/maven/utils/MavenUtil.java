@@ -906,4 +906,16 @@ public class MavenUtil {
 
     return ModuleRootManager.getInstance(module).getSdk();
   }
+
+  @NotNull
+  public static <K, V extends Map> V getOrCreate(Map map, K key) {
+    Map res = (Map)map.get(key);
+    if (res == null) {
+      res = new HashMap();
+      map.put(key, res);
+    }
+
+    return (V)res;
+  }
+
 }

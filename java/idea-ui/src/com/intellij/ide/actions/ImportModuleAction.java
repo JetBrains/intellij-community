@@ -160,6 +160,7 @@ public class ImportModuleAction extends AnAction {
     return builder.toString();
   }
 
+  @Nullable
   public static AddModuleWizard createImportWizard(final Project project,
                                                    @Nullable Component dialogParent,
                                                    final VirtualFile file,

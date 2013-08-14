@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection;
+package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.codeInspection.ex.*;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.injection.ReferenceInjector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 3/2/12
+ *         Date: 13.08.13
  */
-public class InspectionRunningUtil {
-  public static List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file,
-                                                                  @NotNull LocalInspectionTool inspectionTool) {
-    InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(file.getProject());
-    GlobalInspectionContext context = inspectionManager.createNewGlobalContext(false);
-    return InspectionEngine.runInspectionOnFile(file, new LocalInspectionToolWrapper(inspectionTool), context);
-  }
+public abstract class InjectedReferenceVisitor implements PsiLanguageInjectionHost.InjectedPsiVisitor {
+  @Override
+  public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {}
+
+  public abstract void visitInjectedReference(@NotNull ReferenceInjector injector, @NotNull List<PsiLanguageInjectionHost.Shred> places);
 }

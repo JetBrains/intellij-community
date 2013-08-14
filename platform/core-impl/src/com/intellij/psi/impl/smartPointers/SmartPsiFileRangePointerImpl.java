@@ -15,10 +15,14 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.SmartPsiFileRange;
+import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,8 +35,15 @@ class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<PsiFile> i
 
   @NotNull
   private static SmartPointerElementInfo createElementInfo(@NotNull PsiFile containingFile, @NotNull ProperTextRange range) {
+    Project project = containingFile.getProject();
+    if (containingFile.getViewProvider() instanceof FreeThreadedFileViewProvider) {
+      PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(containingFile);
+      if (host != null) {
+        return new InjectedSelfElementInfo(project, containingFile, range, containingFile, host);
+      }
+    }
     if (range.equals(containingFile.getTextRange())) return new FileElementInfo(containingFile);
-    return new SelfElementInfo(containingFile.getProject(), range, PsiElement.class, containingFile, containingFile.getLanguage());
+    return new SelfElementInfo(project, range, PsiElement.class, containingFile, containingFile.getLanguage());
   }
 
   @Override

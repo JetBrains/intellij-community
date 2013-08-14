@@ -18,12 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -44,12 +39,5 @@ public class SeverityUtil {
       return new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes, (HighlightInfoType.HighlightInfoTypeImpl)type);
     }
     return new SeverityRegistrar.SeverityBasedTextAttributes(registrar.getTextAttributesBySeverity(type.getSeverity(null)), (HighlightInfoType.HighlightInfoTypeImpl)type);
-  }
-
-  @NotNull
-  public static SeverityRegistrar getSeverityRegistrar(@Nullable Project project) {
-    return project == null
-           ? ((InspectionProfileManagerImpl)InspectionProfileManager.getInstance()).getSeverityRegistrar()
-           : InspectionProjectProfileManagerImpl.getInstanceImpl(project).getSeverityRegistrar();
   }
 }

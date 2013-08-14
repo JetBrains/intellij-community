@@ -109,7 +109,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
   @Nullable
   private static PsiClass getResolvedClass(PsiElement element, PsiMember resolved) {
     PsiClass aClass = resolved.getContainingClass();
-    if (aClass != null && !PsiUtil.isAccessible(aClass, element, null)) {
+    if (aClass != null && !PsiUtil.isAccessible(aClass.getProject(), aClass, element, null)) {
       final PsiElement qualifier = ((PsiJavaCodeReferenceElement)element.getParent()).getQualifier();
       if (qualifier instanceof PsiReferenceExpression) {
         final PsiElement qResolved = ((PsiReferenceExpression)qualifier).resolve();

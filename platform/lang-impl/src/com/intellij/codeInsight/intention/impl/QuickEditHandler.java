@@ -102,7 +102,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
   private final RangeMarker myAltFullRange;
   private static final Key<String> REPLACEMENT_KEY = Key.create("REPLACEMENT_KEY");
 
-  QuickEditHandler(Project project, PsiFile injectedFile, final PsiFile origFile, Editor editor, QuickEditAction action) {
+  QuickEditHandler(Project project, @NotNull PsiFile injectedFile, final PsiFile origFile, Editor editor, QuickEditAction action) {
     myProject = project;
     myEditor = editor;
     myAction = action;

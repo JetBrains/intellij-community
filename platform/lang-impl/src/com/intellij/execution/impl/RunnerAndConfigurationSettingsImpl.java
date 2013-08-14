@@ -54,6 +54,8 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private static final String TEMPLATE_FLAG_ATTRIBUTE = "default";
   @NonNls
   public static final String NAME_ATTR = "name";
+  //@NonNls
+  //public static final String UNIQUE_ID = "id";
   @NonNls
   protected static final String DUMMY_ELEMENT_NANE = "dummy";
   @NonNls
@@ -82,6 +84,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private boolean myEditBeforeRun;
   private boolean mySingleton;
   private String myFolderName;
+  //private String myID = null;
 
   public RunnerAndConfigurationSettingsImpl(RunManagerImpl manager) {
     myManager = manager;
@@ -141,6 +144,16 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   }
 
   @Override
+  public String getUniqueID() {
+    return myConfiguration.getType().getDisplayName() + "." + myConfiguration.getName() +
+           (myConfiguration instanceof UnknownRunConfiguration ? myConfiguration.getUniqueID() : "");
+    //if (myID == null) {
+    //  myID = UUID.randomUUID().toString();
+    //}
+    //return myID;
+  }
+
+  @Override
   public void setEditBeforeRun(boolean b) {
     myEditBeforeRun = b;
   }
@@ -184,6 +197,8 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     myTemporary = Boolean.valueOf(element.getAttributeValue(TEMPORARY_ATTRIBUTE)).booleanValue() || TEMP_CONFIGURATION.equals(element.getName());
     myEditBeforeRun = Boolean.valueOf(element.getAttributeValue(EDIT_BEFORE_RUN)).booleanValue();
     myFolderName = element.getAttributeValue(FOLDER_NAME);
+    //assert myID == null: "myId must be null at readExternal() stage";
+    //myID = element.getAttributeValue(UNIQUE_ID, UUID.randomUUID().toString());
     // singleton is not configurable by user for template
     if (!myIsTemplate) {
       mySingleton = Boolean.valueOf(element.getAttributeValue(SINGLETON)).booleanValue();
@@ -256,6 +271,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       if (myFolderName != null) {
         element.setAttribute(FOLDER_NAME, myFolderName);
       }
+      //element.setAttribute(UNIQUE_ID, getUniqueID());
 
       if (isEditBeforeRun()) element.setAttribute(EDIT_BEFORE_RUN, String.valueOf(true));
       if (isSingleton()) element.setAttribute(SINGLETON, String.valueOf(true));
