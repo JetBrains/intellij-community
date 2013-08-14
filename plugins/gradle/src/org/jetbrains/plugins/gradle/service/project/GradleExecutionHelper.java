@@ -74,10 +74,10 @@ public class GradleExecutionHelper {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private static void prepare(@NotNull LongRunningOperation operation,
-                              @NotNull final ExternalSystemTaskId id,
-                              @Nullable GradleExecutionSettings settings,
-                              @NotNull final ExternalSystemTaskNotificationListener listener)
+  public static void prepare(@NotNull LongRunningOperation operation,
+                             @NotNull final ExternalSystemTaskId id,
+                             @Nullable GradleExecutionSettings settings,
+                             @NotNull final ExternalSystemTaskNotificationListener listener)
   {
     if (settings == null) {
       return;
@@ -107,6 +107,9 @@ public class GradleExecutionHelper {
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
       return f.fun(connection);
+    }
+    catch (ExternalSystemException e) {
+      throw e;
     }
     catch (Throwable e) {
       throw new ExternalSystemException(e);
