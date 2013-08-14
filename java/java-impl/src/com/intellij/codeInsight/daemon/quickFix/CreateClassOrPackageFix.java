@@ -86,7 +86,8 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
   @Nullable
   public static CreateClassOrPackageFix createFix(@NotNull final String qualifiedName,
                                                   @NotNull final PsiElement context,
-                                                  @Nullable ClassKind kind, final String superClass) {
+                                                  @Nullable ClassKind kind,
+                                                  String superClass) {
     return createFix(qualifiedName, context.getResolveScope(), context, null, kind, superClass, null);
   }
 
