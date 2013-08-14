@@ -18,10 +18,14 @@ package com.siyeh.ipp.enumswitch;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
+/**
+ * @see CreateEnumSwitchBranchesIntention
+ */
 public class EnumSwitchBranchesIntentionTest extends IPPTestCase {
 
   public void testWithoutBraces() { doTest(); }
   public void testBeforeDefault() { doTest(); }
+  public void testMultiple() { doTest(); }
   public void testNoActionAfterBraces() { assertIntentionNotAvailable(); }
 
   @Override
