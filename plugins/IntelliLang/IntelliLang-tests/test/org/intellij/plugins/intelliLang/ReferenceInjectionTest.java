@@ -91,7 +91,6 @@ public class ReferenceInjectionTest extends LightPlatformCodeInsightFixtureTestC
     PsiElement element = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     element = PsiTreeUtil.getParentOfType(element, PsiLanguageInjectionHost.class);
     assertNotNull(element);
-    element.getReferences();
     return InjectedReferencesContributor.getInjectedReferences(element);
   }
 
