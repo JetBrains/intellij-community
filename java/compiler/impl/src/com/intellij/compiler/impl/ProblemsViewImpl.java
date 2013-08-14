@@ -50,7 +50,7 @@ public class ProblemsViewImpl extends ProblemsView{
   private final ProblemsViewPanel myPanel;
   private final SequentialTaskExecutor myViewUpdater = new SequentialTaskExecutor(new Executor() {
     @Override
-    public void execute(Runnable command) {
+    public void execute(@NotNull Runnable command) {
       ApplicationManager.getApplication().executeOnPooledThread(command);
     }
   });
