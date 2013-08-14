@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
  * @author dcheryasov
  */
-public interface Callable extends PyTypedElement {
+public interface Callable extends PyTypedElement, PyQualifiedNameOwner {
 
   /**
    * @return a list of parameters passed to this callable, possibly empty.
@@ -29,12 +29,4 @@ public interface Callable extends PyTypedElement {
    */
   @Nullable
   PyFunction asMethod();
-
-  /**
-   * Returns the qualified name of the function.
-   *
-   * @return the qualified name of the function, or null for a lambda expression.
-   */
-  @Nullable
-  String getQualifiedName();
 }
