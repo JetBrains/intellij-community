@@ -72,6 +72,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Query;
 import com.intellij.util.containers.Stack;
@@ -771,8 +772,11 @@ public abstract class InplaceRefactoring {
         if (myTarget != null && !popupFactory.isBestPopupLocationVisible(topLevelEditor)) {
           return myTarget;
         }
+        if (myCaretRangeMarker != null && myCaretRangeMarker.isValid()) {
+          topLevelEditor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION,
+                                     topLevelEditor.offsetToVisualPosition(myCaretRangeMarker.getStartOffset()));
+        }
         final RelativePoint target = popupFactory.guessBestPopupLocation(topLevelEditor);
-        if (target == null) return myTarget;
         final Point screenPoint = target.getScreenPoint();
         int y = screenPoint.y;
         if (target.getPoint().getY() > topLevelEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
