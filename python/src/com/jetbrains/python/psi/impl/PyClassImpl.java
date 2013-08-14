@@ -164,6 +164,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     final PyExpression[] superExpressions = getSuperClassExpressions();
     List<PsiElement> superClasses = new ArrayList<PsiElement>();
     for (PyExpression expr : superExpressions) {
+      if (expr instanceof PyKeywordArgument) {
+        continue;
+      }
       superClasses.add(classElementFromExpression(expr));
     }
     return PsiUtilCore.toPsiElementArray(superClasses);
@@ -975,7 +978,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Override
-  public boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PyExpression location) {
+  public boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location) {
     Map<String, PyTargetExpression> declarationsInMethod = new HashMap<String, PyTargetExpression>();
     PyFunction instanceMethod = PsiTreeUtil.getParentOfType(location, PyFunction.class);
     final PyClass containingClass = instanceMethod != null ? instanceMethod.getContainingClass() : null;
@@ -1075,6 +1078,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
     else {
       for (PyExpression expression : getSuperClassExpressions()) {
+        if (expression instanceof PyKeywordArgument) {
+          continue;
+        }
         final PyType type = context.getType(expression);
         result.add(type instanceof PyClassLikeType ? (PyClassLikeType)type : null);
       }

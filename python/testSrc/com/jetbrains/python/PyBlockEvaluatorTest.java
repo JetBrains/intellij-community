@@ -4,6 +4,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.impl.PyBlockEvaluator;
 
 import java.util.ArrayList;
@@ -53,6 +54,13 @@ public class PyBlockEvaluatorTest extends PyTestCase {
     assertEquals("c", map.get("b"));
   }
 
+  public void testDictNoEvaluate() {
+    PyBlockEvaluator eval = doEvaluate("a={'b': 'c'}", true);
+    Map map = (Map) eval.getValue("a");
+    assertEquals(1, map.size());
+    assertTrue(map.get("b") instanceof PyStringLiteralExpression);
+  }
+
   public void testDictAssign() {
     PyBlockEvaluator eval = doEvaluate("a={}\na['b']='c'");
     Map map = (Map) eval.getValue("a");
@@ -76,7 +84,14 @@ public class PyBlockEvaluatorTest extends PyTestCase {
   }
 
   private PyBlockEvaluator doEvaluate(String text) {
+    return doEvaluate(text, false);
+  }
+
+  private PyBlockEvaluator doEvaluate(String text, boolean skipEvaluatingCollectionItems) {
     PyBlockEvaluator eval = new PyBlockEvaluator();
+    if (skipEvaluatingCollectionItems) {
+      eval.setEvaluateCollectionItems(false);
+    }
     PyFile file = (PyFile)PsiFileFactory.getInstance(myFixture.getProject()).createFileFromText("a.py", PythonFileType.INSTANCE, text);
     eval.evaluate(file);
     return eval;

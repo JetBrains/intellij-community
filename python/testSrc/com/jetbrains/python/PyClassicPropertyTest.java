@@ -10,6 +10,10 @@ public class PyClassicPropertyTest extends PyTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    prepareFile();
+  }
+
+  protected void prepareFile() {
     final PyFile file = (PyFile)myFixture.configureByFile("property/Classic.py");
     myClass = file.getTopLevelClasses().get(0);
   }
@@ -64,9 +68,8 @@ public class PyClassicPropertyTest extends PyTestCase {
   }
 
   public void testV3() throws Exception {
-    Property p;
     Maybe<Callable> accessor;
-    p = myClass.findProperty("v3");
+    Property p = myClass.findProperty("v3");
     assertNotNull(p);
     assertNull(p.getDoc());
     PyTargetExpression site = p.getDefinitionSite();
@@ -116,4 +119,11 @@ public class PyClassicPropertyTest extends PyTestCase {
     assertNotNull(setter.getProperty());
   }
 
+  public static class StubBasedTest extends PyClassicPropertyTest {
+    @Override
+    protected void prepareFile() {
+      myFixture.setCaresAboutInjection(false);
+      super.prepareFile();
+    }
+  }
 }

@@ -1,6 +1,6 @@
 package com.jetbrains.python.editor.selectWord;
 
-import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler;
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyLiteralSelectionHandler implements ExtendWordSelectionHandler {
+public class PyLiteralSelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(PsiElement e) {
     final ASTNode node = e.getNode();

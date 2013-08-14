@@ -238,10 +238,10 @@ public class PyTypeParser {
                 final ParseResult first = firstPair.getFirst();
                 final List<ParseResult> second = firstPair.getSecond();
                 result = first;
-                parameters.add(new PyCallableParameterImpl((String)null, first.getType()));
+                parameters.add(new PyCallableParameterImpl(null, first.getType()));
                 for (ParseResult r : second) {
                   result = result.merge(r);
-                  parameters.add(new PyCallableParameterImpl((String)null, r.getType()));
+                  parameters.add(new PyCallableParameterImpl(null, r.getType()));
                 }
                 result = result.merge(returnResult);
               }

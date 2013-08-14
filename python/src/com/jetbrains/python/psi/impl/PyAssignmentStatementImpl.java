@@ -139,6 +139,12 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     return (PyExpression)child;
   }
 
+  @Override
+  public boolean isAssignmentTo(@NotNull String name) {
+    PyExpression lhs = getLeftHandSideExpression();
+    return lhs instanceof PyTargetExpression && name.equals(lhs.getName());
+  }
+
   private static void mapToValues(PyExpression lhs, PyExpression rhs, List<Pair<PyExpression, PyExpression>> map) {
     // cast for convenience
     PySequenceExpression lhs_tuple = null;

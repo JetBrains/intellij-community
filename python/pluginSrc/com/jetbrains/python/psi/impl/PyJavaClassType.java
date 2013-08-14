@@ -1,9 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
@@ -61,7 +58,7 @@ public class PyJavaClassType implements PyClassLikeType {
     return null;
   }
 
-  public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location);
     myClass.processDeclarations(processor, ResolveState.initial(), null, location);
     return processor.getResult();
