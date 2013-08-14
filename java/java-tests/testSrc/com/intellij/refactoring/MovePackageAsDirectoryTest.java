@@ -22,10 +22,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
 import com.intellij.testFramework.PsiTestUtil;
 import junit.framework.Assert;
@@ -80,10 +78,10 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     doTest(createAction("pack1", "target"));
   }
 
+  private static final String EMPTY_TXT = "empty.txt";
   public void testXmlEmptyDirRefs() throws Exception {
     final String packageName = "pack1";
     doTest(new MyPerformAction(packageName, "target"){
-      private static final String EMPTY_TXT = "empty.txt";
       @Override
       protected void preprocessSrcDir(PsiDirectory srcDirectory) {
         final PsiFile empty = srcDirectory.findFile(EMPTY_TXT);
@@ -102,6 +100,36 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             subdirectory.createFile(EMPTY_TXT);
+          }
+        });
+      }
+    });
+  }
+
+  public void testEmptySubDirs() throws Exception {
+    final String packageName = "pack1";
+    doTest(new MyPerformAction(packageName, "target"){
+      private static final String FOO = "pack1.subPack.Foo";
+      @Override
+      protected void preprocessSrcDir(PsiDirectory srcDirectory) {
+        final PsiClass empty = JavaPsiFacade.getInstance(getProject()).findClass(FOO, GlobalSearchScope.projectScope(getProject()));
+        assert empty != null;
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            empty.delete();
+          }
+        });
+      }
+
+      @Override
+      protected void postProcessTargetDir(PsiDirectory targetDirectory) {
+       final PsiDirectory subdirectory = targetDirectory.findSubdirectory(packageName);
+        assert subdirectory != null;
+        final PsiDirectory emptyDir = subdirectory.findSubdirectory("subPack");
+        assert emptyDir != null;
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            emptyDir.createFile(EMPTY_TXT);
           }
         });
       }
