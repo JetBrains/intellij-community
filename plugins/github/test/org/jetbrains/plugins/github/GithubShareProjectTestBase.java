@@ -20,11 +20,8 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
-import git4idea.test.GitExecutor;
 import git4idea.test.TestDialogHandler;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
-import org.jetbrains.plugins.github.api.GithubRepoDetailed;
 import org.jetbrains.plugins.github.test.GithubTest;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
