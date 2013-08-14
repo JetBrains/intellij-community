@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -46,7 +47,7 @@ public class GithubLoginPanel {
   private JPasswordField myPasswordField;
   private JTextPane mySignupTextField;
   private JCheckBox mySavePasswordCheckBox;
-  private JComboBox myAuthTypeComboBox;
+  private ComboBox myAuthTypeComboBox;
   private JLabel myPasswordLabel;
   private JLabel myLoginLabel;
 
