@@ -21,11 +21,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,7 +42,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
 
   private final LanguageLevel myLevel;
 
-  public IncreaseLanguageLevelFix(LanguageLevel targetLevel) {
+  public IncreaseLanguageLevelFix(@NotNull LanguageLevel targetLevel) {
     myLevel = targetLevel;
   }
 
@@ -59,10 +58,10 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     return CodeInsightBundle.message("set.language.level");
   }
 
-  private static boolean isJdkSupportsLevel(@Nullable final Sdk jdk, final LanguageLevel level) {
+  private static boolean isJdkSupportsLevel(@Nullable final Sdk jdk, @NotNull LanguageLevel level) {
     if (jdk == null) return true;
-    final JavaSdk sdk = JavaSdk.getInstance();
-    final JavaSdkVersion version = sdk.getVersion(jdk);
+    String versionString = jdk.getVersionString();
+    JavaSdkVersion version = versionString == null ? null : JdkVersionUtil.getVersion(versionString);
     return version != null && version.getMaxLanguageLevel().isAtLeast(level);
   }
 
@@ -74,7 +73,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     return isLanguageLevelAcceptable(project, module, myLevel);
   }
 
-  public static boolean isLanguageLevelAcceptable(final Project project, Module module, final LanguageLevel level) {
+  private static boolean isLanguageLevelAcceptable(@NotNull Project project, Module module, @NotNull LanguageLevel level) {
     return isJdkSupportsLevel(getRelevantJdk(project, module), level);
   }
 
@@ -100,7 +99,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
   }
 
   @Nullable
-  private static Sdk getRelevantJdk(final Project project, @Nullable Module module) {
+  private static Sdk getRelevantJdk(@NotNull Project project, @Nullable Module module) {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     Sdk moduleJdk = module == null ? null : ModuleRootManager.getInstance(module).getSdk();
     return moduleJdk == null ? projectJdk : moduleJdk;
