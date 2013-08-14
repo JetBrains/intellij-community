@@ -744,14 +744,13 @@ public class SvnUtil {
     WorkingCopyFormat format = vcs.getWorkingCopyFormat(file);
 
     return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)
-           ? getFileContentsCommandLine(vcs, file)
+           ? getFileContentsCommandLine(vcs, path, revision, pegRevision)
            : getFileContentWithSvnKit(vcs, path, isUrl, revision, pegRevision);
   }
 
-  private static byte[] getFileContentsCommandLine(SvnVcs vcs, File file) throws VcsException {
-    // TODO: Enhance command to use all parameters - isUrl, revision, pegRevision
+  private static byte[] getFileContentsCommandLine(SvnVcs vcs, String path, SVNRevision revision, SVNRevision pegRevision) throws VcsException {
     SvnCatClient client = new SvnCatClient(vcs.getProject());
-    String content = client.getFileContents(file);
+    String content = client.getFileContents(path, pegRevision, revision);
 
     return CharsetToolkit.getUtf8Bytes(content);
   }

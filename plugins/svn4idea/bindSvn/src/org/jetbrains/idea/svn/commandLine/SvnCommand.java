@@ -47,6 +47,7 @@ public abstract class SvnCommand {
   private final File myWorkingDirectory;
   private Process myProcess;
   private OSProcessHandler myHandler;
+  private CapturingProcessAdapter outputAdapter;
   private final Object myLock;
 
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
@@ -121,8 +122,14 @@ public abstract class SvnCommand {
       }
     };
 
+    outputAdapter = new CapturingProcessAdapter();
+    myHandler.addProcessListener(outputAdapter);
     myHandler.addProcessListener(processListener);
     myHandler.startNotify();
+  }
+
+  public String getOutput() {
+    return outputAdapter.getOutput().getStdout();
   }
 
   /**

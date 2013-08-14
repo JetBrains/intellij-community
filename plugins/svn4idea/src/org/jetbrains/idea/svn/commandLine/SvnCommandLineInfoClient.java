@@ -191,19 +191,10 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     List<String> parameters = new ArrayList<String>();
 
     fillParameters(path, pegRevision, revision, depth, parameters);
-    try {
-      String exe = SvnApplicationSettings.getInstance().getCommandLinePath();
-      SvnLineCommand command = SvnLineCommand.runWithAuthenticationAttempt(exe,
-                                                                           new File(exe), url, SvnCommandName.info,
-                                                                           new SvnCommitRunner.CommandListener(null),
-                                                                           new IdeaSvnkitBasedAuthenticationCallback(
-                                                                             SvnVcs.getInstance(myProject)), false,
-                                                                           ArrayUtil.toStringArray(parameters));
-      parseResult(handler, new File(exe), command.getOutput());
-    }
-    catch (SvnBindException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);
-    }
+    File base = new File(myProject.getBasePath());
+    String result = CommandUtil.runSimple(SvnCommandName.info, SvnVcs.getInstance(myProject), url, parameters).getOutput();
+
+    parseResult(handler, base, result);
   }
 
   @Override

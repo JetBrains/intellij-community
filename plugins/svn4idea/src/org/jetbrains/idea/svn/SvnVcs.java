@@ -918,7 +918,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     try {
       result = SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration.myUseAcceleration)
-               ? getInfoCommandLine(file)
+               ? getInfoCommandLine(file, SVNRevision.UNDEFINED)
                : getInfoSvnKit(file);
     }
     catch (SVNException e) {
@@ -961,7 +961,22 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     SVNInfo result = null;
 
     try {
-      result = format == WorkingCopyFormat.ONE_DOT_EIGHT ? getInfoCommandLine(ioFile) : runInfoCommand(ioFile);
+      result = format == WorkingCopyFormat.ONE_DOT_EIGHT ? getInfoCommandLine(ioFile, SVNRevision.UNDEFINED) : runInfoCommand(ioFile);
+    }
+    catch (SVNException e) {
+      handleInfoException(e);
+    }
+
+    return result;
+  }
+
+  @Nullable
+  public SVNInfo getInfo(@NotNull File ioFile, @NotNull SVNRevision revision) {
+    WorkingCopyFormat format = getWorkingCopyFormat(ioFile);
+    SVNInfo result = null;
+
+    try {
+      result = format == WorkingCopyFormat.ONE_DOT_EIGHT ? getInfoCommandLine(ioFile, revision) : getInfoSvnKit(ioFile, revision);
     }
     catch (SVNException e) {
       handleInfoException(e);
@@ -982,17 +997,20 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   private SVNInfo getInfoSvnKit(@NotNull File ioFile) throws SVNException {
-    SVNWCClient wcClient = createWCClient();
-    SVNInfo info = wcClient.doInfo(ioFile, SVNRevision.UNDEFINED);
+    SVNInfo info = getInfoSvnKit(ioFile, SVNRevision.UNDEFINED);
     if (info == null || info.getRepositoryRootURL() == null) {
-      info = wcClient.doInfo(ioFile, SVNRevision.HEAD);
+      info = getInfoSvnKit(ioFile, SVNRevision.HEAD);
     }
     return info;
   }
 
-  private SVNInfo getInfoCommandLine(@NotNull File ioFile) throws SVNException {
+  private SVNInfo getInfoSvnKit(@NotNull File ioFile, SVNRevision revision) throws SVNException {
+    return createWCClient().doInfo(ioFile, revision);
+  }
+
+  private SVNInfo getInfoCommandLine(@NotNull File ioFile, SVNRevision revision) throws SVNException {
     SvnCommandLineInfoClient client = new SvnCommandLineInfoClient(myProject);
-    return client.doInfo(ioFile, SVNRevision.UNDEFINED);
+    return client.doInfo(ioFile, revision);
   }
 
   private SvnWcClientI createInfoClient() {

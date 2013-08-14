@@ -93,10 +93,6 @@ public class SvnLineCommand extends SvnCommand {
     myStdOut = new StringBuffer();
   }
 
-  public String getOutput() {
-    return myStdOut.toString();
-  }
-
   @Override
   protected void processTerminated(int exitCode) {
     // force newline

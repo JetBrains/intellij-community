@@ -116,22 +116,13 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
   }
 
   private String execute(SvnSimpleCommand command, File base) throws SVNException {
-    String result;
+    String result = CommandUtil.runSimple(command, SvnVcs.getInstance(myProject), null).getOutput();
 
-    try {
-      // empty command name passed, as command name is already in command.getParameters()
-      SvnLineCommand lineCommand = SvnLineCommand
-        .runWithAuthenticationAttempt(command.getExePath(), base, SvnCommandName.empty, new SvnCommitRunner.CommandListener(null),
-                                      new IdeaSvnkitBasedAuthenticationCallback(SvnVcs.getInstance(myProject)), command.getParameters());
-      result = lineCommand.getOutput();
+    if (StringUtil.isEmptyOrSpaces(result)) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Status request returned nothing for command: " +
+                                                                             command.myCommandLine.getCommandLineString()));
+    }
 
-      if (StringUtil.isEmptyOrSpaces(result)) {
-        throw new SvnBindException("Status request returned nothing for command: " + command.myCommandLine.getCommandLineString());
-      }
-    }
-    catch (SvnBindException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
-    }
     return result;
   }
 

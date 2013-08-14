@@ -38,15 +38,13 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -108,7 +106,7 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
     else {
       loader.run();
     }
-    final SVNException exception = loader.getException();
+    final Exception exception = loader.getException();
     if (exception != null) {
       throw new VcsException(exception);
     }
@@ -148,7 +146,7 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
     private final String myPath;
     private final long myRevision;
     private final OutputStream myDst;
-    private SVNException myException;
+    private Exception myException;
 
     public ContentLoader(String path, OutputStream dst, long revision) {
       myPath = path;
@@ -156,7 +154,7 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
       myRevision = revision;
     }
 
-    public SVNException getException() {
+    public Exception getException() {
       return myException;
     }
 
@@ -166,6 +164,29 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
         progress.setText(SvnBundle.message("progress.text.loading.contents", myPath));
         progress.setText2(SvnBundle.message("progress.text2.revision.information", myRevision));
       }
+      WorkingCopyFormat format = myVcs.getWorkingCopyFormat(new File(getFullPath()));
+      if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)) {
+        loadContentCommandLine();
+      }
+      else {
+        loadContentWithSvnKit();
+      }
+    }
+
+    private void loadContentCommandLine() {
+      try {
+        byte[] contents = SvnUtil.getFileContents(myVcs, getFullPath(), true, SVNRevision.create(myRevision), SVNRevision.UNDEFINED);
+        myDst.write(contents);
+      }
+      catch (VcsException e) {
+        myException = e;
+      }
+      catch (IOException e) {
+        myException = e;
+      }
+    }
+
+    private void loadContentWithSvnKit() {
       try {
         SVNRepository repository = myVcs.createRepository(getFullPath());
         try {
