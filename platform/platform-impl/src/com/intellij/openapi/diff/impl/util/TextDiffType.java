@@ -120,7 +120,7 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
   }
 
   @Nullable
-  public TextAttributes getTextAttributes(EditorColorsScheme scheme) {
+  public TextAttributes getTextAttributes(@NotNull EditorColorsScheme scheme) {
     return scheme.getAttributes(myAttributesKey);
   }
 

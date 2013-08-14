@@ -252,14 +252,14 @@ public class GenericsHighlightUtil {
                                                        referenceClass != null ? HighlightUtil.formatClass(referenceClass) : type.getPresentableText(),
                                                        JavaHighlightUtil.formatType(bound));
 
-        final HighlightInfo highlightInfo =
+        final HighlightInfo info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement2Highlight).descriptionAndTooltip(description).create();
-        if (bound instanceof PsiClassType && referenceClass != null) {
+        if (bound instanceof PsiClassType && referenceClass != null && info != null) {
           QuickFixAction
-            .registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createExtendsListFix(referenceClass, (PsiClassType)bound, true),
+            .registerQuickFixAction(info, QUICK_FIX_FACTORY.createExtendsListFix(referenceClass, (PsiClassType)bound, true),
                                     null);
         }
-        return highlightInfo;
+        return info;
       }
     }
     return null;
