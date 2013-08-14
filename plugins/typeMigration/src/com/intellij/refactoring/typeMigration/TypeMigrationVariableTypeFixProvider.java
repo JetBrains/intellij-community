@@ -25,7 +25,8 @@ import org.jetbrains.annotations.Nullable;
 public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQuickFixProvider {
   private static final Logger LOG1 = Logger.getInstance("#" + TypeMigrationVariableTypeFixProvider.class.getName());
 
-  public IntentionAction[] getFixes(PsiVariable variable, PsiType toReturn) {
+  @NotNull
+  public IntentionAction[] getFixes(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
     return new IntentionAction[]{new VariableTypeFix(variable, toReturn) {
       @NotNull
       @Override
