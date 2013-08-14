@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.PyTypedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,7 +157,7 @@ public class TypeEvalContext {
     }
   }
 
-  public boolean maySwitchToAST(@NotNull StubBasedPsiElement element) {
+  public boolean maySwitchToAST(@NotNull PsiElement element) {
     return myAllowStubToAST || myOrigin == element.getContainingFile();
   }
 
