@@ -159,7 +159,7 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
       }
       if (result != null && result.getResult() != null) {
         for (Pair<Place, PsiFile> p : result.getResult()) {
-          ((MultiHostRegistrarImpl)registrar).addToResults(p.first, p.second);
+          ((MultiHostRegistrarImpl)registrar).addToResults(p.first, p.second, result);
         }
 
         if (data == null) {

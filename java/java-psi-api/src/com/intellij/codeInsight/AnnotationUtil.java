@@ -62,6 +62,7 @@ public class AnnotationUtil {
   @NonNls public static final String TEST_ONLY_SIMPLE_NAME = "TestOnly";
 
   public static final String LANGUAGE = "org.intellij.lang.annotations.Language";
+  public static final String REFERENCE = "org.intellij.lang.annotations.Reference";
 
   public static final Set<String> ALL_ANNOTATIONS;
 

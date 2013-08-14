@@ -81,29 +81,29 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
     if (!isStringLiteral(psiElement)) return false;
 
 
-    return doInject(language.getID(), psiElement);
+    return doInject(language.getID(), psiElement, psiElement);
   }
 
-  private static boolean doInject(String languageId, PsiElement host) {
-    final PsiElement target = getTopLevelInjectionTarget(host);
+  private static boolean doInject(String languageId, PsiElement psiElement, PsiLanguageInjectionHost host) {
+    final PsiElement target = getTopLevelInjectionTarget(psiElement);
     final PsiElement parent = target.getParent();
-    final Project project = host.getProject();
+    final Project project = psiElement.getProject();
 
     if (parent instanceof GrReturnStatement) {
       final GrControlFlowOwner owner = ControlFlowUtils.findControlFlowOwner(parent);
       if (owner instanceof GrOpenBlock && owner.getParent() instanceof GrMethod) {
-        return JavaLanguageInjectionSupport.doInjectInJavaMethod(project, (PsiMethod)owner.getParent(), -1, languageId);
+        return JavaLanguageInjectionSupport.doInjectInJavaMethod(project, (PsiMethod)owner.getParent(), -1, host, languageId);
       }
     }
     else if (parent instanceof GrMethod) {
-      return JavaLanguageInjectionSupport.doInjectInJavaMethod(project, (GrMethod)parent, -1, languageId);
+      return JavaLanguageInjectionSupport.doInjectInJavaMethod(project, (GrMethod)parent, -1, host, languageId);
     }
     else if (parent instanceof GrAnnotationNameValuePair) {
       final PsiReference ref = parent.getReference();
       if (ref != null) {
         final PsiElement resolved = ref.resolve();
         if (resolved instanceof PsiMethod) {
-          return JavaLanguageInjectionSupport.doInjectInJavaMethod(project, (PsiMethod)resolved, -1, languageId);
+          return JavaLanguageInjectionSupport.doInjectInJavaMethod(project, (PsiMethod)resolved, -1, host, languageId);
         }
       }
     }
@@ -112,7 +112,7 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
       if (method != null) {
         final int index = findParameterIndex(target, ((GrMethodCall)parent.getParent()));
         if (index >= 0) {
-          return JavaLanguageInjectionSupport.doInjectInJavaMethod(project, method, index, languageId);
+          return JavaLanguageInjectionSupport.doInjectInJavaMethod(project, method, index, host, languageId);
         }
       }
     }
@@ -121,16 +121,16 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
       if (expr instanceof GrReferenceExpression) {
         final PsiElement element = ((GrReferenceExpression)expr).resolve();
         if (element != null) {
-          return doInject(languageId, element);
+          return doInject(languageId, element, host);
         }
       }
     }
     else {
       if (parent instanceof PsiVariable) {
-        if (JavaLanguageInjectionSupport.doAddLanguageAnnotation(project, (PsiModifierListOwner)parent, languageId)) return true;
+        if (JavaLanguageInjectionSupport.doAddLanguageAnnotation(project, (PsiModifierListOwner)parent, host, languageId)) return true;
       }
       else if (target instanceof PsiVariable && !(target instanceof LightElement)) {
-        if (JavaLanguageInjectionSupport.doAddLanguageAnnotation(project, (PsiModifierListOwner)target, languageId)) return true;
+        if (JavaLanguageInjectionSupport.doAddLanguageAnnotation(project, (PsiModifierListOwner)target, host, languageId)) return true;
       }
     }
     return false;
