@@ -17,6 +17,7 @@ package com.intellij.psi.scope.conflictResolvers;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
@@ -38,8 +39,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.sun.tools.javac.code.Flags.ABSTRACT;
 
 /**
  * Created by IntelliJ IDEA.
@@ -502,15 +501,21 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (boxingHappened[0] > 0 && boxingHappened[1] == 0) return Specifics.SECOND;
 
     if (sameBoxing) {
-      final PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(myArgumentsList.getProject());
-      int level1 = getLevel(applicabilityLevel, languageLevel, method1, typeParameters1, types2, types1, resolveHelper);
-      int level2 = getLevel(applicabilityLevel, languageLevel, method2, typeParameters2, types1, types2, resolveHelper);
+      final PsiSubstitutor siteSubstitutor1 = ((MethodCandidateInfo)info1).getSiteSubstitutor();
+      final PsiSubstitutor siteSubstitutor2 = ((MethodCandidateInfo)info2).getSiteSubstitutor();
+      final int level1 = getLevel(applicabilityLevel, languageLevel, method1, typeParameters1, types2, types1, siteSubstitutor2, siteSubstitutor1);
+      final int level2 = getLevel(applicabilityLevel, languageLevel, method2, typeParameters2, types1, types2, siteSubstitutor1, siteSubstitutor2);
       if (level1 > level2) return Specifics.SECOND;
       if (level2 > level1) return Specifics.FIRST;
-      final boolean raw1 = PsiUtil.isRawSubstitutor(method1, classSubstitutor1);
-      final boolean raw2 = PsiUtil.isRawSubstitutor(method2, classSubstitutor2);
-      if (raw1 ^ raw2) {
-        return raw1 ? Specifics.SECOND : Specifics.FIRST;
+      if (level1 > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE) {
+        final boolean abstract1 = method1.hasModifierProperty(PsiModifier.ABSTRACT);
+        final boolean abstract2 = method2.hasModifierProperty(PsiModifier.ABSTRACT);
+        if (abstract1 && !abstract2) {
+          return Specifics.SECOND;
+        }
+        if (abstract2 && !abstract1) {
+          return Specifics.FIRST;
+        }
       }
     } 
     else if (applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
@@ -546,6 +551,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
     }
 
+    final boolean raw1 = PsiUtil.isRawSubstitutor(method1, classSubstitutor1);
+    final boolean raw2 = PsiUtil.isRawSubstitutor(method2, classSubstitutor2);
+    if (raw1 ^ raw2) {
+      return raw1 ? Specifics.SECOND : Specifics.FIRST;
+    }
+
     return Specifics.NEITHER;
   }
 
@@ -553,9 +564,17 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                               LanguageLevel languageLevel,
                               PsiMethod method2,
                               PsiTypeParameter[] typeParameters2,
-                              PsiType[] types1, PsiType[] types2, PsiResolveHelper resolveHelper) {
-    final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, types2, types1, resolveHelper, languageLevel);
-    final int level = Math.min(applicabilityLevel, PsiUtil.getApplicabilityLevel(method2, methodSubstitutor2, types1, languageLevel, false));
+                              PsiType[] types1,
+                              PsiType[] types2,
+                              PsiSubstitutor siteSubstitutor1,
+                              PsiSubstitutor siteSubstitutor2) {
+    final int argsLength = types1.length;
+    final PsiType[] nTypes1 = new PsiType[argsLength];
+    for (int i = 0; i < argsLength; i++) {
+      nTypes1[i] = siteSubstitutor1.substitute(types1[i]);
+    }
+    final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, method2, siteSubstitutor2, types2, nTypes1, languageLevel);
+    final int level = Math.min(applicabilityLevel, PsiUtil.getApplicabilityLevel(method2, methodSubstitutor2, nTypes1, languageLevel, false));
     if (level > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE) {
       for (PsiTypeParameter typeParameter : typeParameters2) {
         final PsiType substituted = methodSubstitutor2.substitute(typeParameter);
@@ -566,7 +585,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
       }
       if (level == MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
-        if (!TypeConversionUtil.isAssignable(methodSubstitutor2.substitute(types2[types1.length - 1]), types1[types1.length - 1])) {
+        if (!TypeConversionUtil.isAssignable(methodSubstitutor2.substitute(types2[argsLength - 1]), nTypes1[argsLength - 1])) {
           return MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
         }
       }
@@ -575,16 +594,18 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   private static PsiSubstitutor calculateMethodSubstitutor(final PsiTypeParameter[] typeParameters,
+                                                           final PsiMethod method, 
+                                                           final PsiSubstitutor siteSubstitutor, 
                                                            final PsiType[] types1,
                                                            final PsiType[] types2,
-                                                           final PsiResolveHelper resolveHelper,
                                                            @NotNull LanguageLevel languageLevel) {
-    PsiSubstitutor substitutor = resolveHelper.inferTypeArguments(typeParameters, types1, types2, languageLevel);
-    for (PsiTypeParameter typeParameter : typeParameters) {
+    PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(method.getProject())
+      .inferTypeArguments(typeParameters, types1, types2, languageLevel);
+    for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(method)) {
       ProgressManager.checkCanceled();
       LOG.assertTrue(typeParameter != null);
       if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
-        substitutor = substitutor.put(typeParameter, TypeConversionUtil.typeParameterErasure(typeParameter));
+        substitutor = substitutor.put(typeParameter, TypeConversionUtil.erasure(siteSubstitutor.substitute(typeParameter)));
       }
     }
     return substitutor;

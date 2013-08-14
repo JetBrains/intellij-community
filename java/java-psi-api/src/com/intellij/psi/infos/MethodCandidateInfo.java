@@ -94,6 +94,10 @@ public class MethodCandidateInfo extends CandidateInfo{
     return myApplicabilityLevel;
   }
 
+  public PsiSubstitutor getSiteSubstitutor() {
+    return super.getSubstitutor();
+  }
+  
   @Override
   public PsiSubstitutor getSubstitutor() {
     if (myCalcedSubstitutor == null) {
