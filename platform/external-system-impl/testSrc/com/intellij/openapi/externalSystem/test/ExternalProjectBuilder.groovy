@@ -67,7 +67,7 @@ class ExternalProjectBuilder extends BuilderSupport {
         String externalConfigPath = attributes.externalConfigPath ?: projectDir.path
         ModuleData moduleData = new ModuleData(TEST_EXTERNAL_SYSTEM_ID,
                                                ModuleTypeId.JAVA_MODULE,
-                                               attributes.name,
+                                               attributes.name ?: name as String,
                                                moduleFilePath,
                                                externalConfigPath)
         return (current as DataNode).createChild(ProjectKeys.MODULE, moduleData)
