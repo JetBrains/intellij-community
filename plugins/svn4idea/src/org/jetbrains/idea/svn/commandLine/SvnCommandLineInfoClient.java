@@ -20,14 +20,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnBindUtil;
-import org.jetbrains.idea.svn.SvnCommitRunner;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
-import org.jetbrains.idea.svn.config.SvnBindException;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.portable.SvnkitSvnWcClient;
 import org.tmatesoft.svn.core.*;
@@ -191,8 +187,8 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     List<String> parameters = new ArrayList<String>();
 
     fillParameters(path, pegRevision, revision, depth, parameters);
-    File base = new File(myProject.getBasePath());
-    String result = CommandUtil.runSimple(SvnCommandName.info, SvnVcs.getInstance(myProject), url, parameters).getOutput();
+    File base = new File(SvnApplicationSettings.getInstance().getCommandLinePath());
+    String result = CommandUtil.runSimple(SvnCommandName.info, SvnVcs.getInstance(myProject), base, url, parameters).getOutput();
 
     parseResult(handler, base, result);
   }

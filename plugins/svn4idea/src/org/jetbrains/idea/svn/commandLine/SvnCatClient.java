@@ -26,7 +26,7 @@ public class SvnCatClient {
     fillParameters(path, pegRevision, revision, command);
 
     try {
-      return CommandUtil.runSimple(command, SvnVcs.getInstance(myProject), null).getOutput();
+      return CommandUtil.runSimple(command, SvnVcs.getInstance(myProject), null, null).getOutput();
     }
     catch (SVNException e) {
       throw new VcsException(e);

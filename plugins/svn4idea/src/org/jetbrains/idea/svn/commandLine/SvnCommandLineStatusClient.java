@@ -116,7 +116,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
   }
 
   private String execute(SvnSimpleCommand command, File base) throws SVNException {
-    String result = CommandUtil.runSimple(command, SvnVcs.getInstance(myProject), null).getOutput();
+    String result = CommandUtil.runSimple(command, SvnVcs.getInstance(myProject), base, null).getOutput();
 
     if (StringUtil.isEmptyOrSpaces(result)) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Status request returned nothing for command: " +

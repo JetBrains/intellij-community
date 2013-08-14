@@ -22,16 +22,18 @@ import java.util.List;
  * @author Konstantin Kolosovsky.
  */
 public class CommandUtil {
-  public static SvnLineCommand runSimple(SvnCommandName name,
-                                         SvnVcs vcs,
+  public static SvnLineCommand runSimple(@NotNull SvnCommandName name,
+                                         @NotNull SvnVcs vcs,
+                                         @Nullable File base,
                                          @Nullable SVNURL url,
                                          List<String> parameters)
     throws SVNException {
     String exe = SvnApplicationSettings.getInstance().getCommandLinePath();
+    base = base == null ? new File(exe) : base;
 
     try {
       return SvnLineCommand
-        .runWithAuthenticationAttempt(exe, new File(vcs.getProject().getBasePath()), url, name, new SvnCommitRunner.CommandListener(null),
+        .runWithAuthenticationAttempt(exe, base, url, name, new SvnCommitRunner.CommandListener(null),
                                       new IdeaSvnkitBasedAuthenticationCallback(vcs), false, ArrayUtil.toStringArray(parameters));
     }
     catch (SvnBindException e) {
@@ -39,8 +41,9 @@ public class CommandUtil {
     }
   }
 
-  public static SvnLineCommand runSimple(@NotNull SvnSimpleCommand command, SvnVcs vcs, @Nullable SVNURL url) throws SVNException {
+  public static SvnLineCommand runSimple(@NotNull SvnSimpleCommand command, @NotNull SvnVcs vcs, @Nullable File base, @Nullable SVNURL url)
+    throws SVNException {
     // empty command name passed, as command name is already in command.getParameters()
-    return runSimple(SvnCommandName.empty, vcs, url, new ArrayList<String>(Arrays.asList(command.getParameters())));
+    return runSimple(SvnCommandName.empty, vcs, base, url, new ArrayList<String>(Arrays.asList(command.getParameters())));
   }
 }
