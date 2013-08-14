@@ -19,7 +19,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ModuleRunProfile;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -129,8 +132,8 @@ public class ToolRunProfile implements ModuleRunProfile{
     };
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     final FilterInfo[] outputFilters = myTool.getOutputFilters();
-    for (int i = 0; i < outputFilters.length; i++) {
-      builder.addFilter(new RegexpFilter(project, outputFilters[i].getRegExp()));
+    for (FilterInfo outputFilter : outputFilters) {
+      builder.addFilter(new RegexpFilter(project, outputFilter.getRegExp()));
     }
 
     commandLineState.setConsoleBuilder(builder);

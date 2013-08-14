@@ -23,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author dyoma
@@ -59,6 +60,12 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   @Override
   public void addFilter(final Filter filter) {
     myFilters.add(filter);
+  }
+
+  @Override
+  public TextConsoleBuilder filters(List<Filter> filters) {
+    myFilters.addAll(filters);
+    return this;
   }
 
   @Override
