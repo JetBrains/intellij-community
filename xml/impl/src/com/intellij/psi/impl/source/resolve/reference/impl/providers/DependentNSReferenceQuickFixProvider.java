@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DependentNSReferenceQuickFixProvider extends UnresolvedReferenceQuickFixProvider<DependentNSReference> {
   @Override
-  public void registerFixes(DependentNSReference ref, QuickFixActionRegistrar registrar) {
+  public void registerFixes(@NotNull DependentNSReference ref, @NotNull QuickFixActionRegistrar registrar) {
     registrar.register(new FetchExtResourceAction(ref.isForceFetchResultValid()));
     registrar.register(new ManuallySetupExtResourceAction());
     registrar.register(new IgnoreExtResourceAction());

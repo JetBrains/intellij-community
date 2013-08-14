@@ -24,9 +24,7 @@ import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference> {
-
-  public static <T extends PsiReference> void registerReferenceFixes(T ref, QuickFixActionRegistrar registrar) {
-
+  public static <T extends PsiReference> void registerReferenceFixes(@NotNull T ref, @NotNull QuickFixActionRegistrar registrar) {
     final boolean dumb = DumbService.getInstance(ref.getElement().getProject()).isDumb();
     UnresolvedReferenceQuickFixProvider[] fixProviders = Extensions.getExtensions(EXTENSION_NAME);
     Class<? extends PsiReference> referenceClass = ref.getClass();
@@ -40,10 +38,9 @@ public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference
     }
   }
 
-  private static final ExtensionPointName<UnresolvedReferenceQuickFixProvider> EXTENSION_NAME =
-      ExtensionPointName.create("com.intellij.codeInsight.unresolvedReferenceQuickFixProvider");
+  private static final ExtensionPointName<UnresolvedReferenceQuickFixProvider> EXTENSION_NAME = ExtensionPointName.create("com.intellij.codeInsight.unresolvedReferenceQuickFixProvider");
 
-  public abstract void registerFixes(T ref, QuickFixActionRegistrar registrar);
+  public abstract void registerFixes(@NotNull T ref, @NotNull QuickFixActionRegistrar registrar);
 
   @NotNull
   public abstract Class<T> getReferenceClass();

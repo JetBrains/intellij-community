@@ -60,7 +60,7 @@ public class JavaFxTagNameReference extends TagNameReference{
 
   public static class JavaFxUnresolvedTagRefsProvider extends UnresolvedReferenceQuickFixProvider<JavaFxTagNameReference> {
     @Override
-    public void registerFixes(JavaFxTagNameReference ref, QuickFixActionRegistrar registrar) {
+    public void registerFixes(@NotNull JavaFxTagNameReference ref, @NotNull QuickFixActionRegistrar registrar) {
       XmlTag element = ref.getTagElement();
       if (element != null) {
         registrar.register(new JavaFxImportClassFix(ref, element) {

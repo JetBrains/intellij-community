@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FindJarQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
-  public void registerFixes(PsiJavaCodeReferenceElement ref, QuickFixActionRegistrar registrar) {
+  public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
     registrar.register(new JavaFindJarFix(ref));
   }
 

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class URLReferenceQuickFixProvider extends UnresolvedReferenceQuickFixProvider<URLReference> {
   @Override
-  public void registerFixes(URLReference ref, QuickFixActionRegistrar registrar) {
+  public void registerFixes(@NotNull URLReference ref, @NotNull QuickFixActionRegistrar registrar) {
     registrar.register(new FetchExtResourceAction());
     registrar.register(new ManuallySetupExtResourceAction());
     registrar.register(new IgnoreExtResourceAction());

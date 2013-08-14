@@ -28,12 +28,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 
 public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
-  public void registerFixes(PsiJavaCodeReferenceElement ref, QuickFixActionRegistrar registrar) {
+  public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
     registrar.register(new ImportClassFix(ref));
     registrar.register(SetupJDKFix.getInstance());
 
@@ -80,7 +80,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
                                               @NotNull PsiReferenceExpression refExpr) {
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
 
-    final Map<VariableKind, IntentionAction> map = new HashMap<VariableKind, IntentionAction>();
+    final Map<VariableKind, IntentionAction> map = new EnumMap<VariableKind, IntentionAction>(VariableKind.class);
     map.put(VariableKind.FIELD, new CreateFieldFromUsageFix(refExpr));
     map.put(VariableKind.STATIC_FINAL_FIELD, new CreateConstantFieldFromUsageFix(refExpr));
     if (!refExpr.isQualified()) {

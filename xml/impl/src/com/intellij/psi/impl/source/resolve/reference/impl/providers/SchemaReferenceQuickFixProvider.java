@@ -27,7 +27,7 @@ import org.jetbrains.annotations.PropertyKey;
  */
 public class SchemaReferenceQuickFixProvider extends UnresolvedReferenceQuickFixProvider<SchemaReferencesProvider.TypeOrElementOrAttributeReference> {
   @Override
-  public void registerFixes(SchemaReferencesProvider.TypeOrElementOrAttributeReference ref, QuickFixActionRegistrar registrar) {
+  public void registerFixes(@NotNull SchemaReferencesProvider.TypeOrElementOrAttributeReference ref, @NotNull QuickFixActionRegistrar registrar) {
     if (ref.getType() == SchemaReferencesProvider.TypeOrElementOrAttributeReference.ReferenceType.TypeReference) {
       registrar.register(
         new CreateXmlElementIntentionAction("xml.schema.create.complex.type.intention.name", SchemaReferencesProvider.COMPLEX_TYPE_TAG_NAME, ref)

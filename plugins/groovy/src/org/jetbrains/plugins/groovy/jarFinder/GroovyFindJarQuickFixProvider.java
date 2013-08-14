@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
  */
 public class GroovyFindJarQuickFixProvider extends UnresolvedReferenceQuickFixProvider<GrReferenceElement> {
   @Override
-  public void registerFixes(GrReferenceElement ref, QuickFixActionRegistrar registrar) {
+  public void registerFixes(@NotNull GrReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
     registrar.register(new GroovyFindJarFix(ref));
   }
 
