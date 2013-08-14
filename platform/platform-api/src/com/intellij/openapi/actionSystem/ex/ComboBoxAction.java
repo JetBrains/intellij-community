@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -267,7 +268,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     private void updateTooltipText(String description) {
-      String tooltip = AnAction.createTooltipText(description, ComboBoxAction.this);
+      String tooltip = KeymapUtil.createTooltipText(description, ComboBoxAction.this);
       setToolTipText(!tooltip.isEmpty() ? tooltip : null);
     }
 
