@@ -21,6 +21,7 @@ import com.intellij.find.editorHeaderActions.*;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.impl.livePreview.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -587,7 +588,6 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
         replaceCurrent();
       }
     });
-    myReplaceButton.setMnemonic('p');
 
     myReplaceAllButton = new JButton("Replace all");
     myReplaceAllButton.setFocusable(false);
@@ -597,7 +597,6 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
         myLivePreviewController.performReplaceAll();
       }
     });
-    myReplaceAllButton.setMnemonic('a');
 
     myExcludeButton = new JButton("");
     myExcludeButton.setFocusable(false);
@@ -608,7 +607,12 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
         moveCursor(SearchResults.Direction.DOWN);
       }
     });
-    myExcludeButton.setMnemonic('l');
+
+    if (!UISettings.getInstance().DISABLE_MNEMONICS_IN_CONTROLS) {
+      myReplaceButton.setMnemonic('p');
+      myReplaceAllButton.setMnemonic('a');
+      myExcludeButton.setMnemonic('l');
+    }
 
 
     ActionGroup actionsGroup = new DefaultActionGroup(new ShowHistoryAction(myReplaceFieldGetter, this));
