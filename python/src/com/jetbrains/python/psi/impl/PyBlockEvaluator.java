@@ -66,7 +66,8 @@ public class PyBlockEvaluator {
             if (currentValue instanceof Map) {
               Object mapKey = prepareEvaluator().evaluate(indexExpression);
               if (mapKey != null) {
-                ((Map)currentValue).put(mapKey, prepareEvaluator().evaluate(node.getAssignedValue()));
+                Object value = myEvaluateCollectionItems ? prepareEvaluator().evaluate(node.getAssignedValue()) : node.getAssignedValue();
+                ((Map)currentValue).put(mapKey, value);
               }
             }
           }
