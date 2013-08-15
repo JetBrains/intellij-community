@@ -926,9 +926,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (params.length == 0) {
       return;
     }
-    final PyFunctionStub methodStub = method.getStub();
     for (PyTargetExpression target : getTargetExpressions(method)) {
-      if (methodStub != null || PyUtil.isInstanceAttribute(target)) {
+      if (PyUtil.isInstanceAttribute(target)) {
         result.put(target.getName(), target);
       }
     }
