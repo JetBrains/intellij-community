@@ -566,21 +566,30 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     }
   }
 
-  @Override
-  protected void paintChildren(final Graphics g) {
-    if (getUI() instanceof MacStatusBarUI && !MacStatusBarUI.isActive(this)) {
-      final Graphics2D g2d = (Graphics2D)g.create();
-      //g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.4f));
-      super.paintChildren(g2d);
-      g2d.dispose();
-    }
-    else {
-      super.paintChildren(g);
-    }
-  }
+  //@Override
+  //protected void paintChildren(final Graphics g) {
+  //  if (getUI() instanceof MacStatusBarUI && !MacStatusBarUI.isActive(this)) {
+  //    final Graphics2D g2d = (Graphics2D)g.create();
+  //    //g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.4f));
+  //    super.paintChildren(g2d);
+  //    g2d.dispose();
+  //  }
+  //  else {
+  //    super.paintChildren(g);
+  //  }
+  //}
 
   public StatusBarUI getUI() {
     return (StatusBarUI)ui;
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
+
+    //IDEA-112093
+    g.setColor(UIUtil.getPanelBackground());
+    g.drawLine(0, getHeight(), getWidth(), getHeight());
   }
 
   @Override
