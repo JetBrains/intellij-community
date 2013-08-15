@@ -29,6 +29,7 @@ class GithubErrorMessageRaw {
 
   private static class Error {
     @Nullable public String resource;
+    @Nullable public String field;
     @Nullable public String code;
     @Nullable public String message;
   }
@@ -41,7 +42,8 @@ class GithubErrorMessageRaw {
     else {
       StringBuilder s = new StringBuilder(message);
       for (Error e : errors) {
-        s.append("<br/>").append("[").append(e.resource).append("]").append(e.code).append(": ").append(e.message);
+        s.append("<br/>").append("[").append(e.resource).append(";").append(e.field).append("]").append(e.code).append(": ")
+          .append(e.message);
       }
       return s.toString();
     }
