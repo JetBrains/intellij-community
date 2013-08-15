@@ -330,7 +330,7 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public String getUrl() {
+  public String getPresentableName() {
     String pseudoUrl = "trello.com";
     if (myCurrentBoard != null) {
       pseudoUrl += "/" + myCurrentBoard.getName();
