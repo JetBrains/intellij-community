@@ -83,7 +83,6 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     myUnboundOutput = unboundOutput;
     myObjectRegistry = new InputObjectRegistry();
     myConsoleProperties = (JUnitConsoleProperties)consoleView.getProperties();
-    Disposer.register(consoleView, this);
   }
 
   @Override
