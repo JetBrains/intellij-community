@@ -59,12 +59,20 @@ import java.util.regex.Pattern;
  * honestly stolen from GitLineHandler
  */
 public class SvnLineCommand extends SvnCommand {
+
   public static final String AUTHENTICATION_REALM = "Authentication realm:";
   public static final String CERTIFICATE_ERROR = "Error validating server certificate for";
   public static final String PASSPHRASE_FOR = "Passphrase for";
   public static final String UNABLE_TO_CONNECT = "svn: E170001:";
   public static final String CANNOT_AUTHENTICATE_TO_PROXY = "Could not authenticate to proxy server";
   public static final String AUTHENTICATION_FAILED_MESSAGE = "Authentication failed";
+
+  private static final String INVALID_CREDENTIALS_FOR_SVN_PROTOCOL = "svn: E170001: Can't get password";
+  private static final String UNTRUSTED_SERVER_CERTIFICATE = "Server SSL certificate untrusted";
+  private static final String ACCESS_TO_PREFIX = "Access to ";
+  private static final String FORBIDDEN_STATUS = "forbidden";
+
+  private static final Pattern UNABLE_TO_CONNECT_TO_URL_PATTERN = Pattern.compile("Unable to connect to a repository at URL '(.*)'");
 
   // kept for exact text
   //public static final String CLIENT_CERTIFICATE_FILENAME = "Client certificate filename:";
@@ -106,22 +114,21 @@ public class SvnLineCommand extends SvnCommand {
 
   public static SvnLineCommand runWithAuthenticationAttempt(final String exePath,
                                                             final File firstFile,
-                                                  SvnCommandName commandName,
-                                                  final LineCommandListener listener,
-                                                  @Nullable AuthenticationCallback authenticationCallback,
-                                                  String... parameters) throws SvnBindException {
-    return runWithAuthenticationAttempt(exePath, firstFile, null, commandName, listener, authenticationCallback, false, parameters);
+                                                            SvnCommandName commandName,
+                                                            final LineCommandListener listener,
+                                                            @Nullable AuthenticationCallback authenticationCallback,
+                                                            String... parameters) throws SvnBindException {
+    return runWithAuthenticationAttempt(exePath, firstFile, null, commandName, listener, authenticationCallback, parameters);
   }
 
 
   public static SvnLineCommand runWithAuthenticationAttempt(final String exePath,
                                                             final File firstFile,
-                                                  final SVNURL url,
-                                                  SvnCommandName commandName,
-                                                  final LineCommandListener listener,
-                                                  @Nullable AuthenticationCallback authenticationCallback,
-                                                  boolean needCleanup,
-                                                  String... parameters) throws SvnBindException {
+                                                            final SVNURL url,
+                                                            SvnCommandName commandName,
+                                                            final LineCommandListener listener,
+                                                            @Nullable AuthenticationCallback authenticationCallback,
+                                                            String... parameters) throws SvnBindException {
     File base = firstFile != null ? (firstFile.isDirectory() ? firstFile : firstFile.getParentFile()) : null;
     base = SvnBindUtil.correctUpToExistingParent(base);
 
@@ -143,9 +150,7 @@ public class SvnLineCommand extends SvnCommand {
           if (authenticationCallback != null) {
             final AuthCallbackCase callback = createCallback(errText, authenticationCallback, base, url);
             if (callback != null) {
-              if (needCleanup) {
-                cleanup(exePath, commandName, base);
-              }
+              cleanup(exePath, command, base);
               if (callback.getCredentials(errText)) {
                 if (authenticationCallback.getSpecialConfigDir() != null) {
                   configDir = authenticationCallback.getSpecialConfigDir();
@@ -212,16 +217,16 @@ public class SvnLineCommand extends SvnCommand {
     if (errText.contains(AUTHENTICATION_FAILED_MESSAGE)) {
       return new UsernamePasswordCallback(callback, base, url);
     }
-    if (errText.contains("svn: E170001: Can't get password")) {
+    if (errText.contains(INVALID_CREDENTIALS_FOR_SVN_PROTOCOL)) {
       // svn protocol invalid credentials
       return new UsernamePasswordCallback(callback, base, url);
     }
     // https one-way protocol untrusted server certificate
-    if (errText.contains("Server SSL certificate untrusted")) {
+    if (errText.contains(UNTRUSTED_SERVER_CERTIFICATE)) {
       return new CertificateCallbackCase(callback, base);
     }
     // https two-way protocol invalid client certificate
-    if (errText.contains("Access to ") && errText.contains("forbidden")) {
+    if (errText.contains(ACCESS_TO_PREFIX) && errText.contains(FORBIDDEN_STATUS)) {
       return new TwoWaySslCallback(callback, base, url);
     }
     return null;
@@ -266,8 +271,7 @@ public class SvnLineCommand extends SvnCommand {
     }
 
     private SVNURL parseUrlFromError(String errorText) {
-      Pattern pattern = Pattern.compile("Unable to connect to a repository at URL '(.*)'");
-      Matcher matcher = pattern.matcher(errorText);
+      Matcher matcher = UNABLE_TO_CONNECT_TO_URL_PATTERN.matcher(errorText);
       String urlValue = null;
 
       if (matcher.find()) {
@@ -279,7 +283,7 @@ public class SvnLineCommand extends SvnCommand {
 
     private SVNURL parseUrl(String urlValue) {
       try {
-        return SVNURL.parseURIDecoded(urlValue);
+        return SVNURL.parseURIEncoded(urlValue);
       }
       catch (SVNException e) {
         return null;
@@ -305,7 +309,8 @@ public class SvnLineCommand extends SvnCommand {
 
     @Override
     boolean getCredentials(String errText) throws SvnBindException {
-      final String realm = errText.startsWith(AUTHENTICATION_REALM) ? cutFirstLine(errText).substring(AUTHENTICATION_REALM.length()).trim() : null;
+      final String realm =
+        errText.startsWith(AUTHENTICATION_REALM) ? cutFirstLine(errText).substring(AUTHENTICATION_REALM.length()).trim() : null;
       final boolean isPassword = StringUtil.containsIgnoreCase(errText, "password");
       if (myTried) {
         myAuthenticationCallback.clearPassiveCredentials(realm, myBase, isPassword);
@@ -404,15 +409,16 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  private static void cleanup(String exePath, SvnCommandName commandName, File base) throws SvnBindException {
+  private static void cleanup(String exePath, SvnCommand command, File base) throws SvnBindException {
     File wcRoot = SvnBindUtil.getWcRoot(base);
     if (wcRoot == null) throw new SvnBindException("Can not find working copy root for: " + base.getPath());
 
-    //cleanup -> check command type
-    if (commandName.isWriteable()) {
-      final SvnSimpleCommand command = new SvnSimpleCommand(wcRoot, SvnCommandName.cleanup, exePath);
+    // TODO: could be issues with fake "empty" command as it is not writable - but only read commands currently use "empty" command
+    // TODO: and "empty" command will be removed shortly
+    if (command.isManuallyDestroyed() && command.getCommandName().isWriteable()) {
+      final SvnSimpleCommand cleanupCommand = new SvnSimpleCommand(wcRoot, SvnCommandName.cleanup, exePath);
       try {
-        command.run();
+        cleanupCommand.run();
       }
       catch (VcsException e) {
         throw new SvnBindException(e);

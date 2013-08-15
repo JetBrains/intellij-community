@@ -77,6 +77,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     return new CredentialsAuthenticator(myVcs).tryAuthenticate(realm, url, file, previousFailed, passwordRequest);
   }
 
+  @Nullable
   @Override
   public SVNAuthentication requestCredentials(@Nullable SVNURL url, String type) {
     return url != null ? myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getProvider().requestClientAuthentication(

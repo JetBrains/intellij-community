@@ -52,6 +52,15 @@ public interface AuthenticationCallback {
    */
   boolean authenticateFor(@Nullable String realm, File base, boolean previousFailed, boolean passwordRequest);
 
+  /**
+   * Provides authentication information to access given url by authentication protocol identified by type.
+   * For instance, username/password for http/svn protocols. SSL client certificate for two way SSL protocol.
+   *
+   * @param url  url to item in repository
+   * @param type authentication protocol type with svn specific values, like "svn.simple" for http.
+   * @return
+   */
+  @Nullable
   SVNAuthentication requestCredentials(@Nullable SVNURL url, String type);
 
   /**

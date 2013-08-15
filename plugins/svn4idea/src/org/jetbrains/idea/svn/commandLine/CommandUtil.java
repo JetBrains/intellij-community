@@ -36,7 +36,7 @@ public class CommandUtil {
     try {
       return SvnLineCommand
         .runWithAuthenticationAttempt(exe, base, url, name, new SvnCommitRunner.CommandListener(null),
-                                      new IdeaSvnkitBasedAuthenticationCallback(vcs), false, ArrayUtil.toStringArray(parameters));
+                                      new IdeaSvnkitBasedAuthenticationCallback(vcs), ArrayUtil.toStringArray(parameters));
     }
     catch (SvnBindException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
