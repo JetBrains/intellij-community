@@ -22,6 +22,8 @@ public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
     return source.getPresentableName();
   }
 
+  public abstract void disconnect();
+
   public interface DeploymentOperationCallback extends RemoteOperationCallback {
     void succeeded(@NotNull DeploymentRuntime deployment);
   }

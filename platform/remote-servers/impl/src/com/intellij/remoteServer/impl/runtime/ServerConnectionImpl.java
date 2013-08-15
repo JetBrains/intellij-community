@@ -85,8 +85,10 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
   private void doDisconnect() {
     if (myStatus == ConnectionStatus.CONNECTED) {
-      myRuntimeInstance = null;
-      myConnector.disconnect();
+      if (myRuntimeInstance != null) {
+        myRuntimeInstance.disconnect();
+        myRuntimeInstance = null;
+      }
       setStatus(ConnectionStatus.DISCONNECTED);
     }
   }
