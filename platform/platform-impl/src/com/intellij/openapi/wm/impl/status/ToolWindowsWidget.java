@@ -66,7 +66,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
       @Override
       public boolean dispatch(AWTEvent e) {
         if (e instanceof MouseEvent) {
-          if (e.getID() == MouseEvent.MOUSE_MOVED && isVisible()) {
+          if (e.getID() == MouseEvent.MOUSE_MOVED && isShowing()) {
             Point p = ((MouseEvent)e).getLocationOnScreen();
             Point screen = ToolWindowsWidget.this.getLocationOnScreen();
             if (new Rectangle(screen.x - 4, screen.y - 2, getWidth() + 4, getHeight() + 4).contains(p)) {
