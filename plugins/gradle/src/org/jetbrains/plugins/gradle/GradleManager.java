@@ -173,14 +173,8 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
                                                                      useWrapper,
                                                                      settings.getGradleVmOptions());
 
-        boolean inProcessMode = ExternalSystemApiUtil.isInProcessMode();
         for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
-          if (inProcessMode) {
-            result.addResolverExtensionClass(extension.getClass());
-          }
-          else {
-            result.addResolverExtensionClass(extension.getClass().getName());
-          }
+          result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
         }
         String javaHome = myJavaHelper.getJdkHome(pair.first);
         if (!StringUtil.isEmpty(javaHome)) {
