@@ -16,22 +16,18 @@
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ElementManipulator;
-import com.intellij.psi.ElementManipulators;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.CharFilter;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.CharFilter;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author davdeev
  */
-public class PathListReferenceProvider extends PsiReferenceProviderBase {
+public class PathListReferenceProvider extends PsiReferenceProvider {
 
   @Override
   @NotNull
