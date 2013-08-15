@@ -185,7 +185,4 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   public RawCommandLineEditor getProgramParameters() {
     return myProgramParameters.getComponent();
   }
-
-  public void disposeEditor() {
-  }
 }

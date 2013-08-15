@@ -161,9 +161,4 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
       .addComponent(myDeploymentSettingsComponent)
       .getPanel();
   }
-
-  @Override
-  protected void disposeEditor() {
-
-  }
 }

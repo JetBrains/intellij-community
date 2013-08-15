@@ -100,10 +100,6 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   }
 
   @Override
-  public void disposeEditor() {
-  }
-
-  @Override
   public void resetEditorFrom(GenericDebuggerRunnerSettings runnerSettings) {
     setIsLocal(runnerSettings.LOCAL);
     setTransport(runnerSettings.getTransport());
