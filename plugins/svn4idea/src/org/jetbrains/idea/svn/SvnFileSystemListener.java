@@ -791,7 +791,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
                 @Override
                 protected void executeImpl() throws SVNException {
                   try {
-                    vcs.getFactory(ioFile).createAddClient().add(ioFile, null, false, false, true);
+                    vcs.getFactory(ioFile).createAddClient().add(ioFile, null, false, false, true, null);
                   }
                   catch (VcsException e) {
                     throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);

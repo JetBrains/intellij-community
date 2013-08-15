@@ -34,8 +34,6 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.CmdHistoryClient");
 
-  private static final String LINES_SPLIT_WITH_EMPTY = " *(\r|\n|\r\n) *";
-
   @Override
   public void doLog(@NotNull File path,
                     @NotNull SVNRevision startRevision,
@@ -67,7 +65,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
   private static void parseOutput(@Nullable ISVNLogEntryHandler handler, @NotNull SvnLineCommand command)
     throws VcsException, SVNException {
     Parser parser = new Parser(handler);
-    for (String line : command.getOutput().split(LINES_SPLIT_WITH_EMPTY)) {
+    for (String line : StringUtil.splitByLines(command.getOutput(), false)) {
       parser.onLine(line);
     }
   }
@@ -83,19 +81,13 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     parameters.add("--revision");
     parameters.add(startRevision + ":" + endRevision);
 
-    put(parameters, stopOnCopy, "--stop-on-copy");
-    put(parameters, discoverChangedPaths, "--verbose");
-    put(parameters, includeMergedRevisions, "--use-merge-history");
+    CommandUtil.put(parameters, stopOnCopy, "--stop-on-copy");
+    CommandUtil.put(parameters, discoverChangedPaths, "--verbose");
+    CommandUtil.put(parameters, includeMergedRevisions, "--use-merge-history");
     parameters.add("--limit");
     parameters.add(String.valueOf(limit));
 
     return parameters;
-  }
-
-  private static void put(@NotNull List<String> parameters, boolean condition, @NotNull String value) {
-    if (condition) {
-      parameters.add(value);
-    }
   }
 
   private static class Parser {
@@ -158,7 +150,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
       }
 
       String path = matcher.group(2);
-      char type = getType(matcher.group(1));
+      char type = CommandUtil.getStatusChar(matcher.group(1));
       String copyPath = matcher.group(5);
       long copyRevision = !StringUtil.isEmpty(matcher.group(6)) ? Long.valueOf(matcher.group(6)) : 0;
 
@@ -209,10 +201,6 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
         LOG.debug(e);
       }
       return result;
-    }
-
-    private static char getType(@Nullable String type) {
-      return !StringUtil.isEmpty(type) ? type.charAt(0) : ' ';
     }
 
     private static class Entry {

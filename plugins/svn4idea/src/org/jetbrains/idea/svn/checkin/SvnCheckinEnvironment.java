@@ -450,30 +450,22 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
-    final List<VcsException> result = new ArrayList<VcsException>();
-    final SVNWCClient wcClient = mySvnVcs.createWCClient();
-
-    final List<SVNException> exceptionList = scheduleUnversionedFilesForAddition(wcClient, files);
-    for (SVNException svnException : exceptionList) {
-      result.add(new VcsException(svnException));
-    }
-    return result;
+    return scheduleUnversionedFilesForAddition(mySvnVcs, files);
   }
 
-  public static List<SVNException> scheduleUnversionedFilesForAddition(SVNWCClient wcClient, List<VirtualFile> files) {
-    return scheduleUnversionedFilesForAddition(wcClient, files, false);
+  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<VirtualFile> files) {
+    return scheduleUnversionedFilesForAddition(vcs, files, false);
   }
 
-  public static List<SVNException> scheduleUnversionedFilesForAddition(SVNWCClient wcClient, List<VirtualFile> files, final boolean recursive) {
-    List<SVNException> exceptions = new ArrayList<SVNException>();
-
+  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<VirtualFile> files, final boolean recursive) {
     Collections.sort(files, FilePathComparator.getInstance());
 
-    wcClient.setEventHandler(new ISVNEventHandler() {
+    ISVNEventHandler eventHandler = new ISVNEventHandler() {
       @Override
       public void handleEvent(SVNEvent event, double progress) throws SVNException {
         final ProgressManager pm = ProgressManager.getInstance();
         final ProgressIndicator pi = pm.getProgressIndicator();
+        // TODO: pi is null here when invoking "Add" action
         if (pi != null && event.getFile() != null) {
           File file = event.getFile();
           pi.setText(SvnBundle.message("progress.text2.adding", file.getName() + " (" + file.getParent() + ")"));
@@ -488,12 +480,18 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
           if (pi.isCanceled()) throw new SVNCancelException();
         }
       }
-    });
+    };
+
+    List<VcsException> exceptions = new ArrayList<VcsException>();
+
     for (VirtualFile file : files) {
       try {
-        wcClient.doAdd(new File(FileUtil.toSystemDependentName(file.getPath())), true, false, true, recursive);
+        File convertedFile = new File(FileUtil.toSystemDependentName(file.getPath()));
+        SVNDepth depth = recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY;
+
+        vcs.getFactory(convertedFile).createAddClient().add(convertedFile, depth, true, false, true, eventHandler);
       }
-      catch (SVNException e) {
+      catch (VcsException e) {
         exceptions.add(e);
       }
     }

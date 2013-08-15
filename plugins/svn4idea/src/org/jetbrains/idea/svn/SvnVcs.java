@@ -1350,7 +1350,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return myCheckoutProvider;
   }
 
-  public ClientFactory getFactory() {
+  /**
+   * Should be private for now - to avoid usages of this method as it will not automatically
+   * detect svn 1.8 working copy format to guarantee command line client.
+   *
+   * @return
+   */
+  private ClientFactory getFactory() {
     return myConfiguration.myUseAcceleration.equals(SvnConfiguration.UseAcceleration.commandLine) ? cmdClientFactory : svnKitClientFactory;
   }
 
