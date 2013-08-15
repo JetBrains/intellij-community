@@ -17,12 +17,6 @@ public class DocStringUtil {
   private DocStringUtil() {
   }
 
-  public static String trimDocString(String s) {
-    return s.trim()
-            .replaceFirst("^((:py)?:class:`[~!]?|[A-Z]\\{)", "")
-            .replaceFirst("(`|\\})?\\.?$", "");
-  }
-
   @Nullable
   public static String getDocStringValue(@NotNull PyDocStringOwner owner) {
     return PyPsiUtils.strValue(owner.getDocStringExpression());
