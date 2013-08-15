@@ -3,13 +3,10 @@ package com.jetbrains.python;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.impl.PyPresentableElementImpl;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
@@ -50,17 +47,8 @@ public class PyGotoSymbolContributor implements GotoClassContributor {
 
   @Override
   public String getQualifiedName(NavigationItem item) {
-    if (item instanceof PyClass) {
-      return ((PyClass) item).getQualifiedName();      
-    }
-    if (item instanceof PyFunction) {
-      PyFunction function = (PyFunction) item;
-      final PyClass containingClass = function.getContainingClass();
-      if (containingClass != null) {
-        return containingClass.getQualifiedName() + "." + function.getName();
-      }
-      PsiFile file = function.getContainingFile();
-      return PyPresentableElementImpl.getPackageForFile(file) + "." + function.getName();
+    if (item instanceof PyQualifiedNameOwner) {
+      return ((PyQualifiedNameOwner) item).getQualifiedName();
     }
     return null;
   }

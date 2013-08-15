@@ -95,9 +95,6 @@ public class RestConfigurationEditor extends SettingsEditor<RestRunConfiguration
     return myMainPanel;
   }
 
-  protected void disposeEditor() {
-  }
-
   public void setOpenInBrowserVisible(boolean visible) {
     myOpenInBrowser.setVisible(visible);
   }

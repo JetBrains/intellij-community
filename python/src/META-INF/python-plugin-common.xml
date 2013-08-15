@@ -680,6 +680,10 @@
 
     <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.DjangoStaticPrefixRenameProcessor"/>
 
+    <usageTargetProvider implementation="com.jetbrains.django.refactoring.DjangoUsageTargetProvider"/>
+    <findUsagesHandlerFactory implementation="com.jetbrains.django.refactoring.DjangoFindUsagesHandlerFactory"/>
+    <referencesSearch implementation="com.jetbrains.django.refactoring.DjangoParameterReferenceSearcher"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
     <framework.detector implementation="com.jetbrains.appengine.facet.AppEngineFrameworkDetector"/>

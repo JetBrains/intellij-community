@@ -42,6 +42,9 @@ public class PyClassNameCompletionTest extends PyTestCase {
     doTestWithoutFromImport();
   }
 
+  public void testStringLiteral() { // PY-10526
+    doTest();
+  }
   private void doTestWithoutFromImport() {
     final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
     boolean oldValue = settings.PREFER_FROM_IMPORT;

@@ -691,6 +691,24 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       mySite = site;
     }
 
+    @NotNull
+    @Override
+    public Maybe<Callable> getGetter() {
+      return filterNonStubExpression(myGetter);
+    }
+
+    @NotNull
+    @Override
+    public Maybe<Callable> getSetter() {
+      return filterNonStubExpression(mySetter);
+    }
+
+    @NotNull
+    @Override
+    public Maybe<Callable> getDeleter() {
+      return filterNonStubExpression(myDeleter);
+    }
+
     public String getName() {
       return myName;
     }
@@ -704,13 +722,27 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     public Maybe<Callable> getByDirection(@NotNull AccessDirection direction) {
       switch (direction) {
         case READ:
-          return myGetter;
+          return getGetter();
         case WRITE:
-          return mySetter;
+          return getSetter();
         case DELETE:
-          return myDeleter;
+          return getDeleter();
       }
       throw new IllegalArgumentException("Unknown direction " + PyUtil.nvl(direction));
+    }
+
+    @Nullable
+    @Override
+    public PyType getType(@NotNull TypeEvalContext context) {
+      final Callable callable = myGetter.valueOrNull();
+      if (callable != null) {
+        // Ignore return types of non stub-based elements if we are not allowed to use AST
+        if (!(callable instanceof StubBasedPsiElement) && !context.maySwitchToAST(callable)) {
+          return null;
+        }
+        return callable.getReturnType(context, null);
+      }
+      return null;
     }
 
     @NotNull
@@ -731,6 +763,17 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         }
       }
       return NONE;
+    }
+
+    @NotNull
+    private static Maybe<Callable> filterNonStubExpression(@NotNull Maybe<Callable> maybeCallable) {
+      final Callable callable = maybeCallable.valueOrNull();
+      if (callable != null) {
+        if (!(callable instanceof StubBasedPsiElement)) {
+          return UNKNOWN_CALL;
+        }
+      }
+      return maybeCallable;
     }
 
     public String toString() {
