@@ -250,18 +250,28 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
 
   @Nullable
   public static PyType getTypeFromDocString(PyTargetExpressionImpl targetExpression) {
+    String typeName = null;
     final String docString = PyPsiUtils.strValue(DocStringUtil.getAttributeDocString(targetExpression));
     if (docString != null) {
-      StructuredDocString structuredDocString = DocStringUtil.parse(docString);
-      if (structuredDocString != null) {
-        String typeName = structuredDocString.getParamType(null);
+      StructuredDocString targetDocString = DocStringUtil.parse(docString);
+      if (targetDocString != null) {
+        typeName = targetDocString.getParamType(null);
         if (typeName == null) {
-          typeName = structuredDocString.getParamType(targetExpression.getName());
-        }
-        if (typeName != null) {
-          return PyTypeParser.getTypeByName(targetExpression, typeName);
+          typeName = targetDocString.getParamType(targetExpression.getName());
         }
       }
+    }
+    if (typeName == null && PyUtil.isAttribute(targetExpression)) {
+      final PyClass cls = targetExpression.getContainingClass();
+      if (cls != null) {
+        final StructuredDocString classDocString = cls.getStructuredDocString();
+        if (classDocString != null) {
+          typeName = classDocString.getParamType(targetExpression.getName());
+        }
+      }
+    }
+    if (typeName != null) {
+      return PyTypeParser.getTypeByName(targetExpression, typeName);
     }
     return null;
   }

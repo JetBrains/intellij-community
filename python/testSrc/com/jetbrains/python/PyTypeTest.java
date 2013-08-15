@@ -646,6 +646,44 @@ public class PyTypeTest extends PyTestCase {
            "expr = func(foo)\n");
   }
 
+  // PY-6584
+  public void testClassAttributeTypeInClassDocStringViaClass() {
+    doTest("int",
+           "class C(object):\n" +
+           "    '''\n" +
+           "    :type foo: int\n" +
+           "    '''\n" +
+           "    foo = None\n" +
+           "\n" +
+           "expr = C.foo\n");
+  }
+
+  // PY-6584
+  public void testClassAttributeTypeInClassDocStringViaInstance() {
+    doTest("int",
+           "class C(object):\n" +
+           "    '''\n" +
+           "    :type foo: int\n" +
+           "    '''\n" +
+           "    foo = None\n" +
+           "\n" +
+           "expr = C().foo\n");
+  }
+
+  // PY-6584
+  public void testInstanceAttributeTypeInClassDocString() {
+    doTest("int",
+           "class C(object):\n" +
+           "    '''\n" +
+           "    :type foo: int\n" +
+           "    '''\n" +
+           "    def __init__(self, bar):\n" +
+           "        self.foo = bar\n" +
+           "\n" +
+           "def f(x):\n" +
+           "    expr = C(x).foo\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
