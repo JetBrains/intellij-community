@@ -1,7 +1,5 @@
 package com.jetbrains.python.documentation;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -115,31 +113,26 @@ public class DocStringUtil {
   }
 
   public static boolean isVariableDocString(@NotNull PyStringLiteralExpression expr) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(expr);
-    if (module == null) return false;
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(module);
-    if (settings.isEpydocFormat(expr.getContainingFile()) || settings.isReSTFormat(expr.getContainingFile())) {
-      final PsiElement parent = expr.getParent();
-      if (!(parent instanceof PyExpressionStatement)) {
-        return false;
-      }
-      PsiElement prevElement = parent.getPrevSibling();
-      while (prevElement instanceof PsiWhiteSpace || prevElement instanceof PsiComment) {
-        prevElement = prevElement.getPrevSibling();
-      }
-      if (prevElement instanceof PyAssignmentStatement) {
-        if (expr.getText().contains("type:")) return true;
+    final PsiElement parent = expr.getParent();
+    if (!(parent instanceof PyExpressionStatement)) {
+      return false;
+    }
+    PsiElement prevElement = parent.getPrevSibling();
+    while (prevElement instanceof PsiWhiteSpace || prevElement instanceof PsiComment) {
+      prevElement = prevElement.getPrevSibling();
+    }
+    if (prevElement instanceof PyAssignmentStatement) {
+      if (expr.getText().contains("type:")) return true;
 
-        final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)prevElement;
-        final ScopeOwner scope = PsiTreeUtil.getParentOfType(prevElement, ScopeOwner.class);
-        if (scope instanceof PyClass || scope instanceof PyFile) {
-          return true;
-        }
-        if (scope instanceof PyFunction) {
-          for (PyExpression target : assignmentStatement.getTargets()) {
-            if (PyUtil.isInstanceAttribute(target)) {
-              return true;
-            }
+      final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)prevElement;
+      final ScopeOwner scope = PsiTreeUtil.getParentOfType(prevElement, ScopeOwner.class);
+      if (scope instanceof PyClass || scope instanceof PyFile) {
+        return true;
+      }
+      if (scope instanceof PyFunction) {
+        for (PyExpression target : assignmentStatement.getTargets()) {
+          if (PyUtil.isInstanceAttribute(target)) {
+            return true;
           }
         }
       }
