@@ -435,6 +435,10 @@ public class PyUtil {
     if (!thing) throw new IncorrectOperationException();
   }
 
+  public static boolean isAttribute(PyTargetExpression ex) {
+    return isInstanceAttribute(ex) || isClassAttribute(ex);
+  }
+
   public static boolean isInstanceAttribute(PyExpression target) {
     if (!(target instanceof PyTargetExpression)) {
       return false;
