@@ -56,7 +56,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
               !ID_ATTR_NAME.equals(name) &&
               !REF_ATTR_NAME.equals(name)) {
             host.addMessage(
-              attr,
+              attr.getNameElement(),
               XmlErrorMessages.message("xml.schema.validation.attr.not.allowed.with.ref", name),
               ValidationHost.ERROR
             );
@@ -108,13 +108,13 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
 
       if (tag.getAttributeValue(DEFAULT_ATTR_NAME) != null && tag.getAttributeValue(FIXED_ATTR_NAME) != null) {
         host.addMessage(
-          tag.getAttribute(DEFAULT_ATTR_NAME, null),
+          tag.getAttribute(DEFAULT_ATTR_NAME, null).getNameElement(),
           XmlErrorMessages.message("xml.schema.validation.default.or.fixed.should.be.specified.but.not.both"),
           Validator.ValidationHost.ERROR
         );
 
         host.addMessage(
-          tag.getAttribute(FIXED_ATTR_NAME, null),
+          tag.getAttribute(FIXED_ATTR_NAME, null).getNameElement(),
           XmlErrorMessages.message("xml.schema.validation.default.or.fixed.should.be.specified.but.not.both"),
           Validator.ValidationHost.ERROR
         );

@@ -2,9 +2,9 @@
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             targetNamespace="http://www.foo.org/test"
             elementFormDefault="qualified" attributeFormDefault="unqualified">
-  <<error>xsd:element</error>>
+  <<error descr="Either 'name' or 'ref' attribute should present"><error descr="Element xsd:element doesn't have required attribute name">xsd:element</error></error>>
     <xsd:complexType>
-      <<error>xsd:attribute</error> <error>default="aaa"</error> <error>fixed="bbb"</error> />
+      <<error descr="Either 'name' or 'ref' attribute should present">xsd:attribute</error> <error descr="'default' and 'fixed' attributes should not be present in the same time">default</error>="aaa" <error descr="'default' and 'fixed' attributes should not be present in the same time">fixed</error>="bbb" />
     </xsd:complexType>
-  </<error>xsd:element</error>>
+  </<error descr="Either 'name' or 'ref' attribute should present"><error descr="Element xsd:element doesn't have required attribute name">xsd:element</error></error>>
 </xsd:schema>
