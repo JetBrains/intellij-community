@@ -45,7 +45,7 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
       element = PsiTreeUtil.getParentOfType(nameSuggestionContext, PsiNamedElement.class);
     }
     final RefactoringSupportProvider
-      supportProvider = element != null ? LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage()) : null;
+      supportProvider = element == null ? null : LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage());
     return editor.getSettings().isVariableInplaceRenameEnabled()
            && supportProvider != null
            && supportProvider.isMemberInplaceRenameAvailable(element, nameSuggestionContext);

@@ -44,7 +44,7 @@ public abstract class RefactoringSupportProvider {
    * @param element the element for which Safe Delete was invoked
    * @return true if Safe Delete is available, false otherwise.
    */
-  public boolean isSafeDeleteAvailable(PsiElement element) { return false; }
+  public boolean isSafeDeleteAvailable(@NotNull PsiElement element) { return false; }
 
   /**
    * @return handler for introducing local variables in this language
@@ -123,9 +123,9 @@ public abstract class RefactoringSupportProvider {
   @Nullable
   public ChangeSignatureHandler getChangeSignatureHandler() { return null; }
 
-  public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) { return false; }
+  public boolean isInplaceRenameAvailable(@NotNull PsiElement element, PsiElement context) { return false; }
 
-  public boolean isInplaceIntroduceAvailable(PsiElement element, PsiElement context) {
+  public boolean isInplaceIntroduceAvailable(@NotNull PsiElement element, PsiElement context) {
     return false;
   }
 
@@ -138,7 +138,7 @@ public abstract class RefactoringSupportProvider {
     return null;
   }
 
-  public boolean isMemberInplaceRenameAvailable(PsiElement element, PsiElement context) {
+  public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement element, PsiElement context) {
     return false;
   }
 }

@@ -211,7 +211,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }*/
     PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
     while (expression != null) {
-      if (!expressions.contains(expression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) && 
+      if (!expressions.contains(expression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) &&
           (acceptVoid || expression.getType() != PsiType.VOID)) {
         if (expression instanceof PsiMethodReferenceExpression) {
           expressions.add(expression);
@@ -570,7 +570,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     final PsiFile file = anchorStatement.getContainingFile();
     LOG.assertTrue(file != null, "expr.getContainingFile() == null");
-    final PsiElement nameSuggestionContext = editor != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
+    final PsiElement nameSuggestionContext = editor == null ? null : file.findElementAt(editor.getCaretModel().getOffset());
     final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(expr.getLanguage());
     final boolean isInplaceAvailableOnDataContext =
       supportProvider != null &&
