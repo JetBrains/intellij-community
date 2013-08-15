@@ -92,9 +92,6 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
     return myRootPanel;
   }
 
-  protected void disposeEditor() {
-  }
-
   @Override
   public JComponent getAnchor() {
     return anchor;
