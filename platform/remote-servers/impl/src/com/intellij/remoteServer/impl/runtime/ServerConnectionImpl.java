@@ -28,6 +28,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   private final RemoteServer<?> myServer;
   private final ServerConnector<D> myConnector;
   private final ServerConnectionEventDispatcher myEventDispatcher;
+  private final ServerConnectionManagerImpl myConnectionManager;
   private volatile ConnectionStatus myStatus = ConnectionStatus.DISCONNECTED;
   private volatile String myStatusText;
   private volatile ServerRuntimeInstance<D> myRuntimeInstance;
@@ -35,10 +36,11 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   private final Map<String, Deployment> myLocalDeployments = Collections.synchronizedMap(new HashMap<String, Deployment>());
   private final Map<String, LoggingHandlerImpl> myLoggingHandlers = new ConcurrentHashMap<String, LoggingHandlerImpl>();
 
-  public ServerConnectionImpl(RemoteServer<?> server, ServerConnector<D> connector, ServerConnectionEventDispatcher eventDispatcher) {
+  public ServerConnectionImpl(RemoteServer<?> server, ServerConnector connector, ServerConnectionManagerImpl connectionManager) {
     myServer = server;
     myConnector = connector;
-    myEventDispatcher = eventDispatcher;
+    myConnectionManager = connectionManager;
+    myEventDispatcher = myConnectionManager.getEventDispatcher();
   }
 
   @NotNull
@@ -61,7 +63,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
   @Override
   public void connect(@NotNull final Runnable onFinished) {
-    disconnect();
+    doDisconnect();
     connectIfNeeded(new ServerConnector.ConnectionCallback<D>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> serverRuntimeInstance) {
@@ -75,7 +77,13 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     });
   }
 
-  private void disconnect() {
+  @Override
+  public void disconnect() {
+    myConnectionManager.removeConnection(myServer);
+    doDisconnect();
+  }
+
+  private void doDisconnect() {
     if (myStatus == ConnectionStatus.CONNECTED) {
       myRuntimeInstance = null;
       myConnector.disconnect();
@@ -93,7 +101,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         myLocalDeployments.put(deploymentName, new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYING, null, null));
         myLoggingHandlers.put(deploymentName, (LoggingHandlerImpl)task.getLoggingHandler());
         onDeploymentStarted.run(deploymentName);
-        instance.deploy(task, new DeploymentOperationCallbackImpl(task.getSource(), deploymentName));
+        instance.deploy(task, new DeploymentOperationCallbackImpl(deploymentName));
       }
     });
   }
@@ -210,11 +218,9 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   }
 
   private class DeploymentOperationCallbackImpl implements ServerRuntimeInstance.DeploymentOperationCallback {
-    private final DeploymentSource mySource;
     private final String myDeploymentName;
 
-    public DeploymentOperationCallbackImpl(DeploymentSource source, String deploymentName) {
-      mySource = source;
+    public DeploymentOperationCallbackImpl(String deploymentName) {
       myDeploymentName = deploymentName;
     }
 

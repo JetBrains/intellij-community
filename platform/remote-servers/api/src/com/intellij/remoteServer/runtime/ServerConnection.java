@@ -28,6 +28,8 @@ public interface ServerConnection<D extends DeploymentConfiguration> {
   void connect(@NotNull Runnable onFinished);
 
 
+  void disconnect();
+
   void deploy(@NotNull DeploymentTask<D> task, @NotNull ParameterizedRunnable<String> onDeploymentStarted);
 
   void computeDeployments(@NotNull Runnable onFinished);

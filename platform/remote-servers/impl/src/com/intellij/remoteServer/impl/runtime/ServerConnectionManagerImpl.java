@@ -17,7 +17,7 @@ import java.util.Map;
  * @author nik
  */
 public class ServerConnectionManagerImpl extends ServerConnectionManager {
-  private Map<RemoteServer<?>, ServerConnection> myConnections = new HashMap<RemoteServer<?>, ServerConnection>();
+  private final Map<RemoteServer<?>, ServerConnection> myConnections = new HashMap<RemoteServer<?>, ServerConnection>();
   private final ServerConnectionEventDispatcher myEventDispatcher = new ServerConnectionEventDispatcher();
 
   @NotNull
@@ -27,7 +27,7 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
     ServerConnection connection = myConnections.get(server);
     if (connection == null) {
       ServerTaskExecutorImpl executor = new ServerTaskExecutorImpl();
-      connection = new ServerConnectionImpl(server, server.getType().createConnector(server.getConfiguration(), executor), myEventDispatcher);
+      connection = new ServerConnectionImpl(server, server.getType().createConnector(server.getConfiguration(), executor), this);
       myConnections.put(server, connection);
       myEventDispatcher.fireConnectionCreated(connection);
     }
@@ -38,6 +38,15 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
   @Override
   public <C extends ServerConfiguration> ServerConnection getConnection(@NotNull RemoteServer<C> server) {
     return myConnections.get(server);
+  }
+
+  public void removeConnection(RemoteServer<?> server) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myConnections.remove(server);
+  }
+
+  public ServerConnectionEventDispatcher getEventDispatcher() {
+    return myEventDispatcher;
   }
 
   @NotNull
