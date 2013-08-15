@@ -4,7 +4,6 @@ import com.intellij.codeInsight.codeFragment.CannotCreateCodeFragmentException;
 import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -15,7 +14,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyFile;
 
-import java.io.File;
 import java.util.TreeSet;
 
 /**
@@ -35,7 +33,7 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
     final String testName = getTestName(false).toLowerCase();
     final String fullPath = getTestDataPath() + testName + ".test";
 
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    final VirtualFile vFile = getVirtualFileByName(fullPath);
     String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
 
     final int beginMarker = fileText.indexOf(BEGIN_MARKER);

@@ -3,7 +3,6 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -14,7 +13,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 
-import java.io.File;
 import java.io.IOException;
 
 /**
@@ -234,7 +232,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     for (Instruction instruction : instructions) {
       buffer.append(instruction).append("\n");
     }
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    final VirtualFile vFile = getVirtualFileByName(fullPath);
     try {
       final String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
       assertEquals(fileText.trim(), buffer.toString().trim());

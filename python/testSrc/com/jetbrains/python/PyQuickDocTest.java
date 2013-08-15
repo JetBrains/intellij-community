@@ -1,7 +1,6 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -11,7 +10,6 @@ import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -35,7 +33,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   private void checkByHTML(String text, @TestDataFile String filePath) {
     final String fullPath = getTestDataPath() + filePath;
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    final VirtualFile vFile = getVirtualFileByName(fullPath);
     assertNotNull("file " + fullPath + " not found", vFile);
 
     String loadedText;
