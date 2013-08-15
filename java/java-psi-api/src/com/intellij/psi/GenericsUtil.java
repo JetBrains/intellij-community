@@ -239,7 +239,16 @@ public class GenericsUtil {
     supers.add(classToAdd);
   }
 
-  public static boolean isTypeArgumentsApplicable(PsiTypeParameter[] typeParams, PsiSubstitutor substitutor, final PsiElement context) {
+  public static boolean isTypeArgumentsApplicable(final PsiTypeParameter[] typeParams,
+                                                  final PsiSubstitutor substitutor,
+                                                  final PsiElement context) {
+    return isTypeArgumentsApplicable(typeParams, substitutor, context, true);
+  }
+
+  public static boolean isTypeArgumentsApplicable(final PsiTypeParameter[] typeParams,
+                                                  final PsiSubstitutor substitutor,
+                                                  final PsiElement context,
+                                                  final boolean allowUncheckedConversion) {
     nextTypeParam:
     for (PsiTypeParameter typeParameter : typeParams) {
       PsiType substituted = substitutor.substitute(typeParameter);
@@ -266,7 +275,7 @@ public class GenericsUtil {
             }
           }
         }
-        if (!TypeConversionUtil.isAssignable(extendsType, substituted)) {
+        if (!TypeConversionUtil.isAssignable(extendsType, substituted, allowUncheckedConversion)) {
           return false;
         }
       }

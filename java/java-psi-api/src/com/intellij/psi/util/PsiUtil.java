@@ -470,7 +470,7 @@ public final class PsiUtil extends PsiUtilCore {
                                           @NotNull final PsiSubstitutor substitutorForMethod,
                                           @NotNull final PsiType[] args,
                                           @NotNull final LanguageLevel languageLevel) {
-    return getApplicabilityLevel(method, substitutorForMethod, args, languageLevel, true);
+    return getApplicabilityLevel(method, substitutorForMethod, args, languageLevel, true, true);
   }
 
   @MethodCandidateInfo.ApplicabilityLevelConstant
@@ -478,7 +478,8 @@ public final class PsiUtil extends PsiUtilCore {
                                           @NotNull final PsiSubstitutor substitutorForMethod,
                                           @NotNull final PsiType[] args,
                                           @NotNull final LanguageLevel languageLevel,
-                                          boolean allowUncheckedConversion) {
+                                                   final boolean allowUncheckedConversion,
+                                                   final boolean checkVarargs) {
     final PsiParameter[] parms = method.getParameterList().getParameters();
     if (args.length < parms.length - 1) return ApplicabilityLevel.NOT_APPLICABLE;
 
@@ -502,7 +503,7 @@ public final class PsiUtil extends PsiUtilCore {
       }
     }
 
-    if (method.isVarArgs() && languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
+    if (checkVarargs && method.isVarArgs() && languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
       if (args.length < parms.length) return ApplicabilityLevel.VARARGS;
       PsiParameter lastParameter = parms[parms.length - 1];
       if (!lastParameter.isVarArgs()) return ApplicabilityLevel.NOT_APPLICABLE;
