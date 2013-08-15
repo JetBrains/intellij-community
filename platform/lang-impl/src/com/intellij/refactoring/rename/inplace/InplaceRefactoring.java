@@ -756,14 +756,15 @@ public abstract class InplaceRefactoring {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null).setSmallVariant(true);
     myBalloon = balloonBuilder.createBalloon();
+    final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
     Disposer.register(myProject, myBalloon);
     Disposer.register(myBalloon, new Disposable() {
       @Override
       public void dispose() {
         releaseIfNotRestart();
+        topLevelEditor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null);
       }
     });
-    final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
     topLevelEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     myBalloon.show(new PositionTracker<Balloon>(topLevelEditor.getContentComponent()) {
