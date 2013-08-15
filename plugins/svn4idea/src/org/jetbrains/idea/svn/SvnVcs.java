@@ -941,16 +941,19 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return runInfoCommand(new File(file.getPath()));
   }
 
-  public SVNInfo getInfo(@NotNull SVNURL url, SVNRevision revision, ISVNAuthenticationManager manager) throws SVNException {
+  public SVNInfo getInfo(@NotNull SVNURL url,
+                         SVNRevision pegRevision,
+                         SVNRevision revision,
+                         ISVNAuthenticationManager manager) throws SVNException {
     if (SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration.myUseAcceleration)) {
-      return createInfoClient().doInfo(url, SVNRevision.UNDEFINED, revision);
+      return createInfoClient().doInfo(url, pegRevision, revision);
     } else {
-      return (manager != null ? createWCClient(manager) : createWCClient()).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+      return (manager != null ? createWCClient(manager) : createWCClient()).doInfo(url, pegRevision, revision);
     }
   }
 
   public SVNInfo getInfo(@NotNull SVNURL url, SVNRevision revision) throws SVNException {
-    return getInfo(url, revision, null);
+    return getInfo(url, SVNRevision.UNDEFINED, revision, null);
   }
 
   @Nullable

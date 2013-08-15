@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.CmdAddClient;
+import org.jetbrains.idea.svn.history.CmdHistoryClient;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -16,5 +17,6 @@ public class CmdClientFactory extends ClientFactory {
   @Override
   protected void setup() {
     addClient = new CmdAddClient();
+    historyClient = new CmdHistoryClient();
   }
 }

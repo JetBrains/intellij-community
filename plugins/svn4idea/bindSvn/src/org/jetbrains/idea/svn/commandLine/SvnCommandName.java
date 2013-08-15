@@ -30,7 +30,8 @@ public enum SvnCommandName {
   ci("commit", true),
   cleanup("cleanup", true),
   cat("cat", false),
-  add("add", true);
+  add("add", true),
+  log("log", false);
   
   private final String myName;
   private final boolean myWriteable;
