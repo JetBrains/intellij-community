@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -38,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -52,6 +52,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
   private final Alarm myAlarm;
   private StatusBar myStatusBar;
   private JBPopup popup;
+  private boolean wasExited = false;
 
   ToolWindowsWidget(Disposable parent) {
     new BaseButtonBehavior(this, TimedDeadzone.NULL) {
@@ -61,95 +62,116 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
       }
     }.setActionTrigger(MouseEvent.MOUSE_PRESSED);
 
+    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
+      @Override
+      public boolean dispatch(AWTEvent e) {
+        if (e instanceof MouseEvent) {
+          if (e.getID() == MouseEvent.MOUSE_MOVED && isVisible()) {
+            Point p = ((MouseEvent)e).getLocationOnScreen();
+            Point screen = ToolWindowsWidget.this.getLocationOnScreen();
+            if (new Rectangle(screen.x - 4, screen.y - 2, getWidth() + 4, getHeight() + 4).contains(p)) {
+              mouseEntered();
+              wasExited = false;
+            } else {
+              if (!wasExited) {
+                wasExited = mouseExited(p);
+              }
+            }
+          }
+        }
+        return false;
+      }
+    }, parent);
+
     UISettings.getInstance().addUISettingsListener(this, this);
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", this);
     myAlarm = new Alarm(parent);
   }
 
-  public void mouseExited() {
+  public boolean mouseExited(Point currentLocationOnScreen) {
     myAlarm.cancelAllRequests();
+    if (popup != null && popup.isVisible()) {
+      final Point screen = popup.getLocationOnScreen();
+      final Rectangle popupScreenRect = new Rectangle(screen.x, screen.y, popup.getSize().width, popup.getSize().height);
+      if (! popupScreenRect.contains(currentLocationOnScreen)) {
+        myAlarm.cancelAllRequests();
+        myAlarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            if (popup != null && popup.isVisible()) {
+              popup.cancel();
+            }
+          }
+        }, 150);
+        return true;
+      }
+    }
+    return false;
   }
 
   public void mouseEntered() {
-    if (myAlarm.getActiveRequestCount() == 0)
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        DefaultListModel model = new DefaultListModel();
-        final IdeFrameImpl frame = UIUtil.getParentOfType(IdeFrameImpl.class, ToolWindowsWidget.this);
-        if (frame == null) return;
-        final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(frame.getProject());
-        for (String id : toolWindowManager.getToolWindowIds()) {
-          final ToolWindow tw = toolWindowManager.getToolWindow(id);
-          if (tw.isAvailable()) {
-            model.addElement(tw);
-          }
-        }
-
-        final JBList list = new JBList(model);
-        list.addMouseListener(new MouseAdapter() {
-          @Override
-          public void mouseEntered(MouseEvent e) {
-            myAlarm.cancelAllRequests();
+    if (myAlarm.getActiveRequestCount() == 0) {
+      myAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          DefaultListModel model = new DefaultListModel();
+          final IdeFrameImpl frame = UIUtil.getParentOfType(IdeFrameImpl.class, ToolWindowsWidget.this);
+          if (frame == null) return;
+          final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(frame.getProject());
+          for (String id : toolWindowManager.getToolWindowIds()) {
+            final ToolWindow tw = toolWindowManager.getToolWindow(id);
+            if (tw.isAvailable()) {
+              model.addElement(tw);
+            }
           }
 
-          @Override
-          public void mouseExited(MouseEvent e) {
-            myAlarm.addRequest(new Runnable() {
+          final JBList list = new JBList(model);
+          list.setCellRenderer(new ListCellRenderer() {
+            final JBLabel label = new JBLabel();
+
+            @Override
+            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+              final ToolWindow toolWindow = (ToolWindow)value;
+              label.setText(toolWindow instanceof ToolWindowImpl ? ((ToolWindowImpl)toolWindow).getId() : toolWindow.getTitle());
+              label.setIcon(toolWindow.getIcon());
+              label.setBorder(IdeBorderFactory.createEmptyBorder(4, 10, 4, 10));
+              label.setForeground(UIUtil.getListForeground(isSelected));
+              label.setBackground(UIUtil.getListBackground(isSelected));
+              final JPanel panel = new JPanel(new BorderLayout());
+              panel.add(label, BorderLayout.CENTER);
+              panel.setBackground(UIUtil.getListBackground(isSelected));
+              return panel;
+            }
+          });
+
+          final Dimension size = list.getPreferredSize();
+          final JComponent c = ToolWindowsWidget.this;
+          final RelativePoint point = new RelativePoint(c, new Point(-4, -4 - size.height));
+
+
+          if (popup != null && popup.isVisible()) {
+            return;
+          }
+
+          list.setSelectedIndex(list.getItemsCount() - 1);
+          popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+            .setAutoselectOnMouseMove(true)
+            .setItemChoosenCallback(new Runnable() {
               @Override
               public void run() {
-                if (popup != null && popup.isVisible()) {
-                  popup.cancel();
+                if (popup != null) popup.closeOk(null);
+                final Object value = list.getSelectedValue();
+                if (value instanceof ToolWindow) {
+                  ((ToolWindow)value).activate(null, true, true);
                 }
               }
-            }, 300);
-          }
-        });
-        list.setCellRenderer(new ListCellRenderer() {
-          final JBLabel label = new JBLabel();
+            })
+            .createPopup();
 
-          @Override
-          public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            final ToolWindow toolWindow = (ToolWindow)value;
-            label.setText(toolWindow instanceof ToolWindowImpl ? ((ToolWindowImpl)toolWindow).getId() : toolWindow.getTitle());
-            label.setIcon(toolWindow.getIcon());
-            label.setBorder(IdeBorderFactory.createEmptyBorder(4, 10, 4, 10));
-            label.setForeground(UIUtil.getListForeground(isSelected));
-            label.setBackground(UIUtil.getListBackground(isSelected));
-            final JPanel panel = new JPanel(new BorderLayout());
-            panel.add(label, BorderLayout.CENTER);
-            panel.setBackground(UIUtil.getListBackground(isSelected));
-            return panel;
-          }
-        });
-
-        final Dimension size = list.getPreferredSize();
-        final JComponent c = ToolWindowsWidget.this;
-        final RelativePoint point = new RelativePoint(c, new Point(-4, -10 - size.height));
-
-
-        if (popup != null && popup.isVisible()) {
-          return;
+          popup.show(point);
         }
-
-        list.setSelectedIndex(list.getItemsCount() - 1);
-        popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
-          .setAutoselectOnMouseMove(true)
-          .setItemChoosenCallback(new Runnable() {
-            @Override
-            public void run() {
-              if (popup != null) popup.closeOk(null);
-              final Object value = list.getSelectedValue();
-              if (value instanceof ToolWindow) {
-                ((ToolWindow)value).activate(null, true, true);
-              }
-            }
-          })
-          .createPopup();
-
-        popup.show(point);
-      }
-    }, 300);
+      }, 300);
+    }
   }
 
   @Override
