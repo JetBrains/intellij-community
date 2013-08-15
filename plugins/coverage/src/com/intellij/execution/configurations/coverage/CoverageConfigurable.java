@@ -37,7 +37,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
@@ -281,8 +280,6 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
       mySamplingRb.setSelected(true);
     }
   }
-
-  protected void disposeEditor() {}
 
   private static class CoverageRunnerItem {
     private CoverageRunner myRunner;
