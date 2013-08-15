@@ -86,7 +86,7 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
     Project project = null;
     for (PsiElement element : elements) {
       PsiFile file = element.getContainingFile();
-      if (file == null) continue;
+      if (file == null || !file.isPhysical()) continue;
       project = file.getProject();
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile == null) continue;
