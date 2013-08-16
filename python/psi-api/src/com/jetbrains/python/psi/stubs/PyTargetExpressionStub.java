@@ -45,4 +45,7 @@ public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression> {
 
   @Nullable
   <T extends CustomTargetExpressionStub> T getCustomStub(Class<T> stubClass);
+
+  @Nullable
+  String getDocString();
 }

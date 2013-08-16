@@ -16,6 +16,11 @@ import java.util.Collection;
 public class PyVariableNameIndex extends StringStubIndexExtension<PyTargetExpression> {
   public static final StubIndexKey<String, PyTargetExpression> KEY = StubIndexKey.createIndexKey("Py.variable.shortName");
 
+  @Override
+  public int getVersion() {
+    return super.getVersion() + 1;
+  }
+
   @NotNull
   public StubIndexKey<String, PyTargetExpression> getKey() {
     return KEY;

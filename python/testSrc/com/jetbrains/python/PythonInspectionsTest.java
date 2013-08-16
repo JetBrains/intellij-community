@@ -140,15 +140,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyStatementEffectInspection() {
-    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getModule());
-    final String oldFormat = documentationSettings.getFormat();
-    try {
-      documentationSettings.setFormat(DocStringFormat.EPYTEXT);
-      doHighlightingTest(PyStatementEffectInspection.class, LanguageLevel.PYTHON26);
-    }
-    finally {
-      documentationSettings.setFormat(oldFormat);
-    }
+    doHighlightingTest(PyStatementEffectInspection.class, LanguageLevel.PYTHON26);
   }
 
   public void testPySimplifyBooleanCheckInspection() {

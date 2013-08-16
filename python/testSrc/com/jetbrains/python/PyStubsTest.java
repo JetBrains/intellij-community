@@ -402,6 +402,14 @@ public class PyStubsTest extends PyTestCase {
     }
     classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
     assertEquals(classes.size(), 1);
+  }
 
+  public void testTargetExpressionDocString() {
+    final PyFile file = getTestFile();
+    final PyClass c = file.findTopLevelClass("C");
+    assertNotNull(c);
+    final PyTargetExpression foo = c.findClassAttribute("foo", false);
+    final String docString = foo.getDocStringValue();
+    assertEquals("Foo docstring.", docString);
   }
 }

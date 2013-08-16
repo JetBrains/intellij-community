@@ -14,7 +14,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.console.PyConsoleUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -229,9 +228,7 @@ class PyDocumentationBuilder {
   }
 
   private boolean isAttribute() {
-    return myElement instanceof PyTargetExpression &&
-           (PyUtil.isInstanceAttribute((PyTargetExpression)myElement) ||
-            PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class) instanceof PyClass);
+    return myElement instanceof PyTargetExpression && PyUtil.isAttribute((PyTargetExpression)myElement);
   }
 
   @Nullable
@@ -449,7 +446,7 @@ class PyDocumentationBuilder {
       .addItem(" of class ").addWith(PythonDocumentationProvider.LinkMyClass, $().addWith(TagCode, $(cls.getName()))).addItem(BR)
     ;
 
-    final String docString = PyPsiUtils.strValue(DocStringUtil.getAttributeDocString((PyTargetExpression)myElement));
+    final String docString = ((PyTargetExpression)myElement).getDocStringValue();
     if (docString != null) {
       addFormattedDocString(myElement, docString, myBody, myEpilog);
     }

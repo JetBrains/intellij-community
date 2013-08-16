@@ -1,7 +1,6 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
@@ -16,7 +15,6 @@ import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.refactoring.move.PyMoveClassOrFunctionProcessor;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -176,11 +174,6 @@ public class PyMoveTest extends PyTestCase {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  @Nullable
-  private static VirtualFile getVirtualFileByName(String fileName) {
-    return LocalFileSystem.getInstance().findFileByPath(fileName.replace(File.separatorChar, '/'));
   }
 
   @Nullable

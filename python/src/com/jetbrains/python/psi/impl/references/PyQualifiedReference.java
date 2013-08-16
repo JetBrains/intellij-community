@@ -429,8 +429,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if (resolveResult == element) {
       return true;
     }
-    if (resolveResult instanceof PyTargetExpression && isInstanceOrClassAttribute((PyTargetExpression)resolveResult) &&
-        element instanceof PyTargetExpression && isInstanceOrClassAttribute((PyTargetExpression)element) && Comparing.equal(
+    if (resolveResult instanceof PyTargetExpression && PyUtil.isAttribute((PyTargetExpression)resolveResult) &&
+        element instanceof PyTargetExpression && PyUtil.isAttribute((PyTargetExpression)element) && Comparing.equal(
       ((PyTargetExpression)resolveResult).getReferencedName(),
       ((PyTargetExpression)element).getReferencedName())) {
       PyClass aClass = PsiTreeUtil.getParentOfType(resolveResult, PyClass.class);
@@ -446,10 +446,6 @@ public class PyQualifiedReference extends PyReferenceImpl {
       return true;
     }
     return false;
-  }
-
-  private static boolean isInstanceOrClassAttribute(PyTargetExpression ex) {
-    return PyUtil.isInstanceAttribute(ex) || PyUtil.isClassAttribute(ex);
   }
 
   private static boolean isSubclass(@Nullable PyClass aClass, @Nullable PyClass bClass) {

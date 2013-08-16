@@ -1,7 +1,6 @@
 package com.jetbrains.python.fixtures;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -10,7 +9,6 @@ import com.intellij.testFramework.TestDataFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -49,7 +47,7 @@ public abstract class LightMarkedTestCase extends PyTestCase {
    */
   protected Map<String, PsiElement> configureByFile(@TestDataFile @NonNls String filePath, @NonNls String markerRegexp) {
     final String fullPath = getTestDataPath() + filePath;
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    final VirtualFile vFile = getVirtualFileByName(fullPath);
     assertNotNull("file " + fullPath + " not found", vFile);
 
     final String text;

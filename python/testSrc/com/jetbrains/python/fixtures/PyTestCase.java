@@ -31,6 +31,8 @@ import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+
 /**
  * @author yole
  */
@@ -45,6 +47,11 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected CodeInsightTestFixture myFixture;
   private static boolean ourPlatformPrefixInitialized;
+
+  @Nullable
+  protected static VirtualFile getVirtualFileByName(String fileName) {
+    return LocalFileSystem.getInstance().findFileByPath(fileName.replace(File.separatorChar, '/'));
+  }
 
   @Override
   protected void setUp() throws Exception {
