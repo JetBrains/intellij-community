@@ -16,9 +16,10 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
@@ -37,7 +38,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       if (!application.isDispatchThread() && application.isReadAccessAllowed()) {
         LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
       }
-      GuiUtils.runOrInvokeAndWait(new Runnable() {
+      Runnable runnable = new Runnable() {
         @Override
         public void run() {
           application.runWriteAction(new Runnable() {
@@ -47,7 +48,16 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
             }
           });
         }
-      });
+      };
+      if (application.isDispatchThread()) {
+        runnable.run();
+      }
+      else if (application.isReadAccessAllowed()) {
+        LOG.error("Calling write action from read-action leads to deadlock.");
+      }
+      else {
+        SwingUtilities.invokeAndWait(runnable);
+      }
     }
     catch (Exception e) {
       if (isSilentExecution()) {

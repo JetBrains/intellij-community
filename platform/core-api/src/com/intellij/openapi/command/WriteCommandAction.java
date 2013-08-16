@@ -15,23 +15,19 @@
  */
 package com.intellij.openapi.command;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.GuiUtils;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.WriteCommandAction");
@@ -84,11 +80,14 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
         }
       };
       Application application = ApplicationManager.getApplication();
-      if (application.isWriteAccessAllowed() || application.isDispatchThread()) {
+      if (application.isDispatchThread()) {
         runnable.run();
       }
+      else if (application.isReadAccessAllowed()) {
+        LOG.error("Calling write command from read-action leads to deadlock.");
+      }
       else {
-        GuiUtils.invokeAndWait(runnable);
+        SwingUtilities.invokeAndWait(runnable);
       }
     }
     catch (InvocationTargetException e) {
@@ -99,26 +98,11 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   public static boolean ensureFilesWritable(@NotNull final Project project, @NotNull final Collection<PsiFile> psiFiles) {
-    if (!psiFiles.isEmpty()) {
-      List<VirtualFile> list = new SmartList<VirtualFile>();
-      for (final PsiFile psiFile : psiFiles) {
-        if (psiFile == null) continue;
-        final VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile != null) {
-            list.add(virtualFile);
-          }
-      }
-      if (!list.isEmpty()) {
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(VfsUtilCore.toVirtualFileArray(list)).hasReadonlyFiles()) {
-          return false;
-        }
-      }
-    }
-    return true;
+    return FileModificationService.getInstance().preparePsiElementsForWrite(psiFiles);
   }
 
   private void performWriteCommandAction(final RunResult<T> result) {
-    if (myProject != null && !ensureFilesWritable(myProject, Arrays.asList(myPsiFiles))) return;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(Arrays.asList(myPsiFiles))) return;
 
     //this is needed to prevent memory leak, since command
     // is put into undo queue
