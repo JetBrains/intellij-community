@@ -34,6 +34,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubRepo;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.io.File;
 import java.io.IOException;

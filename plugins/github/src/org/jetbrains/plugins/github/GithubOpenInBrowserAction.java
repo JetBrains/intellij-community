@@ -33,8 +33,11 @@ import git4idea.repo.GitRepositoryManager;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
-import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
+import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
 /**
  * Created by IntelliJ IDEA.

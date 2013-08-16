@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfigurableProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubSettings;
+import org.jetbrains.plugins.github.util.GithubSettings;
 
 import javax.swing.*;
 

@@ -5,9 +5,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubAuthData;
-import org.jetbrains.plugins.github.GithubSettings;
-import org.jetbrains.plugins.github.GithubUtil;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubSettings;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 import javax.swing.*;
 import java.io.IOException;

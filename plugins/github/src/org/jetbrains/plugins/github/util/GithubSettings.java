@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github.util;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.github.api.GithubApiUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static org.jetbrains.plugins.github.GithubAuthData.AuthType;
+import static org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
 
 /**
  * @author oleg

@@ -60,6 +60,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.*;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -67,7 +71,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
+import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
 /**
  * @author Aleksey Pivovarov

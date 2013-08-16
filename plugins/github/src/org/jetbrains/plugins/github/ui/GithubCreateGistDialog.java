@@ -21,7 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubSettings;
+import org.jetbrains.plugins.github.util.GithubSettings;
 
 import javax.swing.*;
 

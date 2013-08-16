@@ -14,10 +14,10 @@ import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
-import org.jetbrains.plugins.github.GithubNotifications;
-import org.jetbrains.plugins.github.GithubUtil;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUtil;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 
 import javax.swing.*;

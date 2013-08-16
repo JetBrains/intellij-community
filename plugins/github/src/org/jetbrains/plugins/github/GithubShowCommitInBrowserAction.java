@@ -22,6 +22,9 @@ import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import icons.GithubIcons;
 import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 /**
  * @author Kirill Likhodedov

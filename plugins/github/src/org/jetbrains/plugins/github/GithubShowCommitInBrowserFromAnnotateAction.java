@@ -30,6 +30,7 @@ import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 /**
  * @author Kirill Likhodedov
