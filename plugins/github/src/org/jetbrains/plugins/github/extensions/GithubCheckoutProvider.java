@@ -85,6 +85,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
 
     final GitCloneDialog dialog = new GitCloneDialog(project);
     // Add predefined repositories to history
+    dialog.prependToHistory("-----------------------------------------------");
     for (int i = availableRepos.size() - 1; i>=0; i--){
       dialog.prependToHistory(availableRepos.get(i).getCloneUrl());
     }
