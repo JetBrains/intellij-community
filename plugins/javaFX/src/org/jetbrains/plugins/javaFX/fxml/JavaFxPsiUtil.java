@@ -187,7 +187,7 @@ public class JavaFxPsiUtil {
   public static PsiMethod findPropertySetter(String attributeName, PsiClass classWithStaticProperty) {
     final String setterName = PropertyUtil.suggestSetterName(StringUtil.getShortName(attributeName));
     final PsiMethod[] setters = classWithStaticProperty.findMethodsByName(setterName, true);
-    if (setters.length == 1) {
+    if (setters.length >= 1) {
       return setters[0];
     }
     return null;
