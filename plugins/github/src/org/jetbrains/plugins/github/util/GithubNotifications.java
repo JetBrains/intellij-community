@@ -25,6 +25,8 @@ import git4idea.Notificator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+
 /**
  * @author Aleksey Pivovarov
  */
@@ -102,9 +104,19 @@ public class GithubNotifications {
     Messages.showInfoMessage(project, message, title);
   }
 
+  public static void showInfoDialog(final @NotNull Component component, final @NotNull String title, final @NotNull String message) {
+    LOG.info(title + "; " + message);
+    Messages.showInfoMessage(component, message, title);
+  }
+
   public static void showWarningDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
     LOG.info(title + "; " + message);
     Messages.showWarningDialog(project, message, title);
+  }
+
+  public static void showWarningDialog(final @NotNull Component component, final @NotNull String title, final @NotNull String message) {
+    LOG.info(title + "; " + message);
+    Messages.showWarningDialog(component, message, title);
   }
 
   public static void showErrorDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
@@ -115,6 +127,16 @@ public class GithubNotifications {
   public static void showErrorDialog(final @Nullable Project project, final @NotNull String title, final @NotNull Exception e) {
     LOG.warn(title, e);
     Messages.showErrorDialog(project, e.getMessage(), title);
+  }
+
+  public static void showErrorDialog(final @NotNull Component component, final @NotNull String title, final @NotNull String message) {
+    LOG.info(title + "; " + message);
+    Messages.showErrorDialog(component, message, title);
+  }
+
+  public static void showErrorDialog(final @NotNull Component component, final @NotNull String title, final @NotNull Exception e) {
+    LOG.info(title, e);
+    Messages.showInfoMessage(component, e.getMessage(), title);
   }
 
   public static int showYesNoDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {
