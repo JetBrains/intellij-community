@@ -151,7 +151,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
 
           final Dimension size = list.getPreferredSize();
           final JComponent c = ToolWindowsWidget.this;
-          final RelativePoint point = new RelativePoint(c, new Point(-4, -4 - size.height));
+          final RelativePoint point = new RelativePoint(c, new Point(-4, -ToolWindowsWidget.this.getHeight() - size.height));
 
 
           if (popup != null && popup.isVisible()) {
