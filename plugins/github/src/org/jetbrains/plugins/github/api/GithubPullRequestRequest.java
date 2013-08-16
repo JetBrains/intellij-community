@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubPullRequestRequest {
+class GithubPullRequestRequest {
   @NotNull String title;
   @NotNull String body;
   @NotNull String head; // branch with changes
