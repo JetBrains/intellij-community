@@ -29,7 +29,7 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public class AsanaGenericIntegrationTest extends TaskManagerTestCase {
-  private static String RESPONSE = "" +
+  private static final String RESPONSE = "" +
    "{\n" +
    "  \"data\": [\n" +
    "    {\n" +
@@ -39,18 +39,6 @@ public class AsanaGenericIntegrationTest extends TaskManagerTestCase {
    "    {\n" +
    "      \"id\": 5202014833559,\n" +
    "      \"name\": \"Task #2\"\n" +
-   "    },\n" +
-   "    {\n" +
-   "      \"id\": 5479650606114,\n" +
-   "      \"name\": \"Task #3\"\n" +
-   "    },\n" +
-   "    {\n" +
-   "      \"id\": 5479650606121,\n" +
-   "      \"name\": \"Finish tasks plugin finally\"\n" +
-   "    },\n" +
-   "    {\n" +
-   "      \"id\": 5479650606122,\n" +
-   "      \"name\": \"Spam task:\"\n" +
    "    }\n" +
    "  ]\n" +
    "}";
