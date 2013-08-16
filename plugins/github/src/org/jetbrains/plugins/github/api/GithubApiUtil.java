@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github.api;
 
 import com.google.gson.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.net.HttpConfigurable;
@@ -34,10 +35,7 @@ import org.jetbrains.plugins.github.util.GithubSslSupport;
 import org.jetbrains.plugins.github.util.GithubUrlUtil;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -240,7 +238,7 @@ public class GithubApiUtil {
       return new JsonParser().parse(reader);
     }
     catch (JsonSyntaxException jse) {
-      throw new GithubJsonException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
+      throw new GithubJsonException("Couldn't parse GitHub response", jse);
     }
     finally {
       reader.close();
