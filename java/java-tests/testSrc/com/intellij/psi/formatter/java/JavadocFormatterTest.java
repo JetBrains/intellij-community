@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.intellij.psi.formatter.java;
 
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
@@ -95,6 +97,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().getRootSettings().WRAP_COMMENTS = true;
     getSettings().getRootSettings().RIGHT_MARGIN = 20;
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
 
     doTextTest("/**\n" + " * <p />\n" + " * Another paragraph of the description placed after blank line.\n" + " */\n" + "class A{}",
                "/**\n" +
@@ -107,11 +110,31 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
                "class A {\n" +
                "}");
   }
-  
+
+  public void testSCR2632_JDK8_LanguageLevel() throws Exception {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 20;
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+
+    doTextTest("/**\n" + " * <p />\n" + " * Another paragraph of the description placed after blank line.\n" + " */\n" + "class A{}",
+               "/**\n" +
+               " * <p>\n" +
+               " * Another paragraph\n" +
+               " * of the description\n" +
+               " * placed after\n" +
+               " * blank line.\n" +
+               " */\n" +
+               "class A {\n" +
+               "}");
+  }
+
+
   public void testParagraphTagGeneration() {
     // Inspired by IDEA-61811
     getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().getRootSettings().JD_P_AT_EMPTY_LINES = true;
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
     doTextTest(
       "/**\n" +
       " * line 1\n" +
@@ -618,4 +641,47 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
                     "}";
     doTextTest(before, before);
   }
+
+
+  public void testNotGenerateSelfClosingPTagIfLanguageLevelJava8() throws Exception {
+    getSettings().getRootSettings().JD_P_AT_EMPTY_LINES = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    String before = "/**\n" +
+                    " * Super method\n" +
+                    " *\n" +
+                    " * Super multiple times\n" +
+                    " */\n" +
+                    "public void voo() {\n" +
+                    "}\n";
+    String after = "/**\n" +
+                    " * Super method\n" +
+                    " * <p>\n" +
+                    " * Super multiple times\n" +
+                    " */\n" +
+                    "public void voo() {\n" +
+                    "}\n";
+    doClassTest(before, after);
+  }
+
+  public void testGenerateSelfClosingPTagIfLanguageLevelNotJava8() throws Exception {
+    getSettings().getRootSettings().JD_P_AT_EMPTY_LINES = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    String before = "/**\n" +
+                    " * Super method\n" +
+                    " *\n" +
+                    " * Super multiple times\n" +
+                    " */\n" +
+                    "public void voo() {\n" +
+                    "}\n";
+    String after = "/**\n" +
+                   " * Super method\n" +
+                   " * <p/>\n" +
+                   " * Super multiple times\n" +
+                   " */\n" +
+                   "public void voo() {\n" +
+                   "}\n";
+    doClassTest(before, after);
+  }
+
 }
