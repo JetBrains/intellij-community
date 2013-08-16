@@ -121,11 +121,18 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
         instance.computeDeployments(new ServerRuntimeInstance.ComputeDeploymentsCallback() {
+          private final List<Deployment> myDeployments = new ArrayList<Deployment>();
+
           @Override
-          public void succeeded(@NotNull List<Deployment> deployments) {
+          public void addDeployment(@NotNull String deploymentName) {
+            myDeployments.add(new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYED, null, null));
+          }
+
+          @Override
+          public void succeeded() {
             synchronized (myRemoteDeployments) {
               myRemoteDeployments.clear();
-              for (Deployment deployment : deployments) {
+              for (Deployment deployment : myDeployments) {
                 myRemoteDeployments.put(deployment.getName(), deployment);
               }
             }
@@ -155,7 +162,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     runtime.undeploy(new DeploymentRuntime.UndeploymentTaskCallback() {
       @Override
       public void succeeded() {
-        myLocalDeployments.put(deploymentName, new DeploymentImpl(deploymentName, DeploymentStatus.NOT_DEPLOYED, null, null));
+        myLocalDeployments.remove(deploymentName);
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
       }
 
