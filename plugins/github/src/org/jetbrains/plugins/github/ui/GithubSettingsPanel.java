@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,7 +58,7 @@ public class GithubSettingsPanel {
   private JPanel myPane;
   private JButton myTestButton;
   private JTextField myHostTextField;
-  private JComboBox myAuthTypeComboBox;
+  private ComboBox myAuthTypeComboBox;
   private JLabel myLoginLabel;
 
   private boolean myCredentialsModified;

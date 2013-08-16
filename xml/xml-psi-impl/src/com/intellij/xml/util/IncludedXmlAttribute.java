@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -51,6 +52,11 @@ public class IncludedXmlAttribute extends IncludedXmlElement<XmlAttribute> imple
   @NotNull
   public String getLocalName() {
     return getOriginal().getLocalName();
+  }
+
+  @Override
+  public XmlElement getNameElement() {
+    return getOriginal().getNameElement();
   }
 
   @NonNls

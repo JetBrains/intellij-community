@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -30,10 +31,21 @@ import java.util.Set;
  */
 public class RemoteServerListConfigurable extends MasterDetailsComponent implements OptionalConfigurable, SearchableConfigurable {
   private final RemoteServersManager myServersManager;
+  @Nullable private final ServerType<?> myServerType;
+  private RemoteServer<?> myLastSelectedServer;
 
-  public RemoteServerListConfigurable(RemoteServersManager manager) {
+  public RemoteServerListConfigurable(@NotNull RemoteServersManager manager) {
+    this(manager, null);
+  }
+
+  private RemoteServerListConfigurable(@NotNull RemoteServersManager manager, @Nullable ServerType<?> type) {
     myServersManager = manager;
+    myServerType = type;
     initTree();
+  }
+
+  public static RemoteServerListConfigurable createConfigurable(@NotNull ServerType<?> type) {
+    return new RemoteServerListConfigurable(RemoteServersManager.getInstance(), type);
   }
 
   @Nls
@@ -45,10 +57,21 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   public void reset() {
     myRoot.removeAllChildren();
-    for (RemoteServer<?> server : myServersManager.getServers()) {
+    List<RemoteServer<?>> servers = getServers();
+    for (RemoteServer<?> server : servers) {
       addServerNode(server, false);
     }
     super.reset();
+  }
+
+  private List<RemoteServer<?>> getServers() {
+    if (myServerType == null) {
+      return myServersManager.getServers();
+    }
+    else {
+      //code won't compile without this ugly cast (at least in jdk 1.6)
+      return (List<RemoteServer<?>>)((List)myServersManager.getServers(myServerType));
+    }
   }
 
   private MyNode addServerNode(RemoteServer<?> server, boolean isNew) {
@@ -77,7 +100,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     }
 
     List<RemoteServer<?>> toDelete = new ArrayList<RemoteServer<?>>();
-    for (RemoteServer<?> server : myServersManager.getServers()) {
+    for (RemoteServer<?> server : getServers()) {
       if (!servers.contains(server)) {
         toDelete.add(server);
       }
@@ -90,7 +113,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    Set<RemoteServer<?>> servers = new HashSet<RemoteServer<?>>(myServersManager.getServers());
+    Set<RemoteServer<?>> servers = new HashSet<RemoteServer<?>>(getServers());
     for (NamedConfigurable<RemoteServer<?>> configurable : getConfiguredServers()) {
       RemoteServer<?> server = configurable.getEditableObject();
       server.setName(configurable.getDisplayName());
@@ -104,7 +127,12 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> actions = new ArrayList<AnAction>();
-    actions.add(new AddRemoteServerGroup());
+    if (myServerType == null) {
+      actions.add(new AddRemoteServerGroup());
+    }
+    else {
+      actions.add(new AddRemoteServerAction(myServerType, IconUtil.getAddIcon()));
+    }
     actions.add(new MyDeleteAction());
     return actions;
   }
@@ -117,6 +145,18 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   protected boolean wasObjectStored(Object editableObject) {
     return true;
+  }
+
+  @Override
+  public void disposeUIResources() {
+    Object selectedObject = getSelectedObject();
+    myLastSelectedServer = selectedObject instanceof RemoteServer<?> ? (RemoteServer)selectedObject : null;
+    super.disposeUIResources();
+  }
+
+  @Nullable
+  public RemoteServer<?> getLastSelectedServer() {
+    return myLastSelectedServer;
   }
 
   private List<NamedConfigurable<RemoteServer<?>>> getConfiguredServers() {
@@ -140,7 +180,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
       ServerType[] serverTypes = ServerType.EP_NAME.getExtensions();
       AnAction[] actions = new AnAction[serverTypes.length];
       for (int i = 0; i < serverTypes.length; i++) {
-        actions[i] = new AddRemoteServerAction(serverTypes[i]);
+        actions[i] = new AddRemoteServerAction(serverTypes[i], serverTypes[i].getIcon());
       }
       return actions;
     }
@@ -159,8 +199,8 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   private class AddRemoteServerAction extends DumbAwareAction {
     private final ServerType<?> myServerType;
 
-    private AddRemoteServerAction(ServerType<?> serverType) {
-      super(serverType.getPresentableName(), null, serverType.getIcon());
+    private AddRemoteServerAction(ServerType<?> serverType, final Icon icon) {
+      super(serverType.getPresentableName(), null, icon);
       myServerType = serverType;
     }
 

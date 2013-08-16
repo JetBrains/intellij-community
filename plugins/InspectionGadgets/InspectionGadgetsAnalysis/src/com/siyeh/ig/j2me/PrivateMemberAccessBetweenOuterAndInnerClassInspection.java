@@ -170,7 +170,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
 
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
-      if (FileTypeUtils.isInJsp(expression)) {
+      if (FileTypeUtils.isInServerPageFile(expression)) {
         return;
       }
       super.visitNewExpression(expression);
@@ -214,7 +214,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
     @Override
     public void visitReferenceExpression(
       @NotNull PsiReferenceExpression expression) {
-      if (FileTypeUtils.isInJsp(expression)) {
+      if (FileTypeUtils.isInServerPageFile(expression)) {
         // disable for jsp files IDEADEV-12957
         return;
       }

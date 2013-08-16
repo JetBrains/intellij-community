@@ -15,16 +15,13 @@
  */
 package com.intellij.appengine.cloud;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.remoteServer.configuration.ServerConfigurationBase;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public class AppEngineServerConfiguration extends ServerConfiguration implements PersistentStateComponent<AppEngineServerConfiguration> {
+public class AppEngineServerConfiguration extends ServerConfigurationBase<AppEngineServerConfiguration> {
   private String myEmail;
 
   @Attribute("email")
@@ -34,21 +31,5 @@ public class AppEngineServerConfiguration extends ServerConfiguration implements
 
   public void setEmail(String email) {
     myEmail = email;
-  }
-
-  @Nullable
-  @Override
-  public AppEngineServerConfiguration getState() {
-    return this;
-  }
-
-  @Override
-  public void loadState(AppEngineServerConfiguration state) {
-    XmlSerializerUtil.copyBean(state, this);
-  }
-
-  @Override
-  public PersistentStateComponent<?> getSerializer() {
-    return this;
   }
 }

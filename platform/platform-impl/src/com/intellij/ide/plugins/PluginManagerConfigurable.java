@@ -63,6 +63,11 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
     myAvailable = available;
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myPluginManagerMain.getPluginTable();
+  }
+
   public String getDisplayName() {
     return DISPLAY_NAME;
   }

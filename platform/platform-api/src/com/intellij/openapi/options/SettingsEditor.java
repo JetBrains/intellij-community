@@ -43,7 +43,9 @@ public abstract class SettingsEditor<Settings> implements Disposable {
 
   @NotNull
   protected abstract JComponent createEditor();
-  protected abstract void disposeEditor();
+
+  protected void disposeEditor() {
+  }
 
   public SettingsEditor() {
     this(null);

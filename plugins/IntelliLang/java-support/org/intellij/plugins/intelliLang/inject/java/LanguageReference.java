@@ -55,7 +55,8 @@ final class LanguageReference extends StringLiteralReference {
     return ContainerUtil.map2Array(list, LookupElement.class, new Function<Injectable, LookupElement>() {
       @Override
       public LookupElement fun(Injectable injectable) {
-        return LookupElementBuilder.create(injectable.getDisplayName()).withIcon(injectable.getIcon()).withTypeText(injectable.getAdditionalDescription(), true);
+        return LookupElementBuilder.create(injectable.getId()).withIcon(injectable.getIcon()).withTailText(
+          "(" + injectable.getDisplayName() + ")", true);
       }
     });
   }

@@ -50,6 +50,6 @@ public class MavenConstants {
                   "post-integration-test",
                   "verify", "install", "site", "deploy");
   public static final List<String> BASIC_PHASES =
-    Arrays.asList("clean", "validate", "compile", "test", "package", "install", "deploy", "site");
+    Arrays.asList("clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site");
 
 }

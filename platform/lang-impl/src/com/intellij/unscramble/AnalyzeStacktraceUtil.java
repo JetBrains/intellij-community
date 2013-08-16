@@ -19,7 +19,9 @@ package com.intellij.unscramble;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.*;
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -91,9 +93,7 @@ public class AnalyzeStacktraceUtil {
                                                 String text,
                                                 @Nullable Icon icon) {
     final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-    for(Filter filter: Extensions.getExtensions(EP_NAME, project)) {
-      builder.addFilter(filter);
-    }
+    builder.filters(Extensions.getExtensions(EP_NAME, project));
     final ConsoleView consoleView = builder.getConsole();
 
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();

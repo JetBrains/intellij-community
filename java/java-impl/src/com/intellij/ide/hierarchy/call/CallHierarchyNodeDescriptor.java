@@ -34,12 +34,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LayeredIcon;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -146,8 +147,8 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
         myHighlightedText.getEnding().addText(buffer.toString(), mainTextAttributes);
       }
     }
-    else if (JspPsiUtil.isInJspFile(enclosingElement) && enclosingElement instanceof PsiFile) {
-      final JspFile file = JspPsiUtil.getJspFile(enclosingElement);
+    else if (FileTypeUtils.isInServerPageFile(enclosingElement) && enclosingElement instanceof PsiFile) {
+      final PsiFile file = PsiUtilCore.getTemplateLanguageFile(enclosingElement);
       myHighlightedText.getEnding().addText(file.getName(), mainTextAttributes);
     }
     else {
@@ -156,7 +157,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     if (myUsageCount > 1) {
       myHighlightedText.getEnding().addText(IdeBundle.message("node.call.hierarchy.N.usages", myUsageCount), HierarchyNodeDescriptor.getUsageCountPrefixAttributes());
     }
-    if (!(JspPsiUtil.isInJspFile(enclosingElement) && enclosingElement instanceof PsiFile)) {
+    if (!(FileTypeUtils.isInServerPageFile(enclosingElement) && enclosingElement instanceof PsiFile)) {
       final PsiClass containingClass = enclosingElement instanceof PsiMethod
                                        ? ((PsiMethod)enclosingElement).getContainingClass()
                                        : (PsiClass)enclosingElement;

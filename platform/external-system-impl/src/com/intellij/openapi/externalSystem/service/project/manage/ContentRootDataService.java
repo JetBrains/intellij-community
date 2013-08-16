@@ -82,7 +82,7 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         final ModifiableRootModel model = moduleRootManager.getModifiableModel();
         final ContentEntry[] contentEntries = model.getContentEntries();
-        final Map<String, ContentEntry> contentEntriesMap = new HashMap<String, ContentEntry>(contentEntries.length);
+        final Map<String, ContentEntry> contentEntriesMap = ContainerUtilRt.newHashMap();
         for(ContentEntry contentEntry : contentEntries) {
           contentEntriesMap.put(contentEntry.getUrl(), contentEntry);
         }
@@ -91,7 +91,7 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
             ContentRootData contentRoot = data.getData();
             ContentEntry contentEntry = findOrCreateContentRoot(model, contentRoot.getRootPath());
             LOG.info(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
-            final Set<String> retainedPaths = new HashSet<String>();
+            final Set<String> retainedPaths = ContainerUtilRt.newHashSet();
             for (String path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE)) {
               createSourceRootIfAbsent(contentEntry, path, module.getName());
               retainedPaths.add(ExternalSystemApiUtil.toCanonicalPath(path));
@@ -118,15 +118,15 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
     });
   }
 
-  private static void removeOutdatedContentFolders(final ContentEntry entry, final Set<String> retainedContentFolders) {
-    final List<SourceFolder> sourceFolders = new ArrayList<SourceFolder>(Arrays.asList(entry.getSourceFolders()));
+  private static void removeOutdatedContentFolders(@NotNull final ContentEntry entry, @NotNull final Set<String> retainedContentFolders) {
+    final List<SourceFolder> sourceFolders = ContainerUtilRt.newArrayList(entry.getSourceFolders());
     for(final SourceFolder sourceFolder : sourceFolders) {
       final String path = VirtualFileManager.extractPath(sourceFolder.getUrl());
       if(!retainedContentFolders.contains(path)) {
         entry.removeSourceFolder(sourceFolder);
       }
     }
-    final List<ExcludeFolder> excludeFolders = new ArrayList<ExcludeFolder>(Arrays.asList(entry.getExcludeFolders()));
+    final List<ExcludeFolder> excludeFolders =  ContainerUtilRt.newArrayList(entry.getExcludeFolders());
     for(final ExcludeFolder excludeFolder : excludeFolders) {
       final String path = VirtualFileManager.extractPath(excludeFolder.getUrl());
       if(!(excludeFolder instanceof ExcludedOutputFolder) && !retainedContentFolders.contains(path)) {

@@ -96,10 +96,6 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
   @Override
-  protected void disposeEditor() {
-  }
-
-  @Override
   public void resetEditorFrom(final RunnerAndConfigurationSettings settings) {
     myEditor.resetEditorFrom(settings);
     doReset(settings);

@@ -52,7 +52,11 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
   private final PropertyMemberType myMemberType;
   private final PsiAnnotation[] myAnnotations;
 
-  public CreateFieldOrPropertyFix(final PsiClass aClass, final String name, final PsiType type, final PropertyMemberType memberType, final PsiAnnotation[] annotations) {
+  public CreateFieldOrPropertyFix(final PsiClass aClass,
+                                  final String name,
+                                  final PsiType type,
+                                  @NotNull PropertyMemberType memberType,
+                                  final PsiAnnotation[] annotations) {
     myClass = aClass;
     myName = name;
     myType = type;

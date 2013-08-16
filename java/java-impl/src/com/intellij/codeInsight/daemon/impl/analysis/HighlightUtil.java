@@ -43,13 +43,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -64,6 +61,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -484,7 +482,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (method == null && lambda != null) {
       //todo check return statements type inside lambda
     }
-    else if (method == null && !(parent instanceof JspFile)) {
+    else if (method == null && !(parent instanceof ServerPageFile)) {
       description = JavaErrorMessages.message("return.outside.method");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
     }
@@ -697,11 +695,11 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   private static HighlightInfoType getUnhandledExceptionHighlightType(final PsiElement element) {
-    if (!JspPsiUtil.isInJspFile(element)) {
+    if (!FileTypeUtils.isInServerPageFile(element)) {
       return HighlightInfoType.UNHANDLED_EXCEPTION;
     }
     PsiMethod targetMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    if (!(targetMethod instanceof JspHolderMethod)) return HighlightInfoType.UNHANDLED_EXCEPTION;
+    if (!(targetMethod instanceof SyntheticElement)) return HighlightInfoType.UNHANDLED_EXCEPTION;
     // ignore JSP top level errors - it handled by UnhandledExceptionInJSP inspection
     return null;
   }
@@ -806,7 +804,7 @@ public class HighlightUtil extends HighlightUtilBase {
         if (PsiModifier.PUBLIC.equals(modifier)) {
           isAllowed = modifierOwnerParent instanceof PsiJavaFile ||
                       modifierOwnerParent instanceof PsiClass &&
-                      (modifierOwnerParent instanceof JspClass || ((PsiClass)modifierOwnerParent).getQualifiedName() != null);
+                      (modifierOwnerParent instanceof PsiSyntheticClass || ((PsiClass)modifierOwnerParent).getQualifiedName() != null);
         }
         else if (PsiModifier.STATIC.equals(modifier) || PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) ||
                  PsiModifier.PACKAGE_LOCAL.equals(modifier)) {

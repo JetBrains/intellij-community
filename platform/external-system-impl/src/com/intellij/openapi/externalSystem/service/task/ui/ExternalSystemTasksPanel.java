@@ -49,7 +49,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -97,7 +96,7 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
     };
 
     myAllTasksModel = new ExternalSystemTasksTreeModel(externalSystemId);
-    myAllTasksTree = new ExternalSystemTasksTree(myAllTasksModel, settings.getExpandStates()) {
+    myAllTasksTree = new ExternalSystemTasksTree(myAllTasksModel, settings.getExpandStates(), project, externalSystemId) {
       @Override
       protected void processMouseEvent(MouseEvent e) {
         if (e.getClickCount() > 0) {

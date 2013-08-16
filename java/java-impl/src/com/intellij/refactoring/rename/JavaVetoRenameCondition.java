@@ -20,12 +20,13 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.JspPsiUtil;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 
 public class JavaVetoRenameCondition implements Condition<PsiElement> {
+  @Override
   public boolean value(final PsiElement element) {
     return element instanceof PsiJavaFile &&
-           !JspPsiUtil.isInJspFile(element) &&
+           !FileTypeUtils.isInServerPageFile(element) &&
            !ProjectRootsUtil.isOutsideSourceRoot((PsiFile)element) &&
            ((PsiJavaFile) element).getClasses().length > 0;
   }

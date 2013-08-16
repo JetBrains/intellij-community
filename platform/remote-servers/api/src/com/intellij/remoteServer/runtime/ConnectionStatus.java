@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
  * @author nik
  */
 public enum ConnectionStatus {
-  DISCONNECTED, CONNECTED, CONNECTING, DISCONNECTING;
+  DISCONNECTED, CONNECTED, CONNECTING;
 
   public String getPresentableText() {
     return StringUtil.capitalize(name().toLowerCase());

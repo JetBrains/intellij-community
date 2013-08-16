@@ -239,7 +239,16 @@ public class GenericsUtil {
     supers.add(classToAdd);
   }
 
-  public static boolean isTypeArgumentsApplicable(PsiTypeParameter[] typeParams, PsiSubstitutor substitutor, final PsiElement context) {
+  public static boolean isTypeArgumentsApplicable(final PsiTypeParameter[] typeParams,
+                                                  final PsiSubstitutor substitutor,
+                                                  final PsiElement context) {
+    return isTypeArgumentsApplicable(typeParams, substitutor, context, true);
+  }
+
+  public static boolean isTypeArgumentsApplicable(final PsiTypeParameter[] typeParams,
+                                                  final PsiSubstitutor substitutor,
+                                                  final PsiElement context,
+                                                  final boolean allowUncheckedConversion) {
     nextTypeParam:
     for (PsiTypeParameter typeParameter : typeParams) {
       PsiType substituted = substitutor.substitute(typeParameter);
@@ -249,14 +258,47 @@ public class GenericsUtil {
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
       for (PsiClassType type : extendsTypes) {
         PsiType extendsType = substitutor.substitute(type);
-        if (extendsType.isAssignableFrom(substituted)) {
-          continue nextTypeParam;
+        if (substituted instanceof PsiWildcardType) {
+          if (((PsiWildcardType)substituted).isSuper()) {
+            continue;
+          }
+          final PsiType extendsBound = ((PsiWildcardType)substituted).getExtendsBound();
+          if (TypeConversionUtil.erasure(extendsType).equals(TypeConversionUtil.erasure(extendsBound))) {
+            if (extendsBound instanceof PsiClassType) {
+              if (acceptExtendsBound((PsiClassType)extendsBound, 0)) continue;
+            } else if (extendsBound instanceof PsiIntersectionType) {
+              for (PsiType psiType : ((PsiIntersectionType)extendsBound).getConjuncts()) {
+                if (psiType instanceof PsiClassType) {
+                  if (acceptExtendsBound((PsiClassType)psiType, 0)) continue nextTypeParam;
+                }
+              }
+            }
+          }
+        }
+        if (!TypeConversionUtil.isAssignable(extendsType, substituted, allowUncheckedConversion)) {
+          return false;
         }
       }
-      if (extendsTypes.length > 0) return false;
     }
-
     return true;
+  }
+
+  private static boolean acceptExtendsBound(PsiClassType extendsBound, int depth) {
+    PsiType[] parameters = extendsBound.getParameters();
+    if (parameters.length == 1) {
+      PsiType argType = parameters[0];
+      if (argType instanceof PsiCapturedWildcardType && depth == 0) {
+        argType = ((PsiCapturedWildcardType)argType).getWildcard();
+      }
+      if (argType instanceof PsiWildcardType) {
+        if (!((PsiWildcardType)argType).isBounded()) return true;
+        final PsiType bound = ((PsiWildcardType)argType).getExtendsBound();
+        if (bound instanceof PsiClassType && TypeConversionUtil.erasure(bound).equals(TypeConversionUtil.erasure(extendsBound))) {
+          return acceptExtendsBound((PsiClassType)bound, depth + 1);
+        }
+      }
+    }
+    return false;
   }
 
   public static boolean isFromExternalTypeLanguage(@NotNull PsiType type) {

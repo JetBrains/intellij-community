@@ -687,7 +687,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         addElementsForTag((XmlTag)context, message, infoType, null);
       }
       else {
-        addToResults(HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(context).descriptionAndTooltip(message).create());
+        addToResults(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message).create());
       }
     }
   }

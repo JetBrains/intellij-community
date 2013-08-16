@@ -18,10 +18,13 @@ package org.jetbrains.plugins.github.ui;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SortedComboBoxModel;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.Comparator;
 
@@ -34,8 +37,9 @@ public class GithubCreatePullRequestPanel {
   private ComboBox myBranchComboBox;
   private SortedComboBoxModel<String> myBranchModel;
   private JPanel myPanel;
+  private JButton myShowDiffButton;
 
-  public GithubCreatePullRequestPanel() {
+  public GithubCreatePullRequestPanel(@NotNull final Consumer<String> showDiff) {
     myDescriptionTextArea.setBorder(BorderFactory.createEtchedBorder());
     myBranchModel = new SortedComboBoxModel<String>(new Comparator<String>() {
       @Override
@@ -44,6 +48,12 @@ public class GithubCreatePullRequestPanel {
       }
     });
     myBranchComboBox.setModel(myBranchModel);
+    myShowDiffButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        showDiff.consume(getBranch());
+      }
+    });
   }
 
   @NotNull
@@ -87,7 +97,7 @@ public class GithubCreatePullRequestPanel {
     return myTitleTextField;
   }
 
-  public JComboBox getComboBox() {
+  public JComponent getBranchEditor() {
     return myBranchComboBox;
   }
 

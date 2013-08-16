@@ -25,7 +25,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -109,26 +108,28 @@ public class JavaExecutionUtil {
       myIcon = icon;
     }
 
+    @Override
     public Icon getIcon() {
       return myIcon;
     }
 
+    @Override
     public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
       final JavaCommandLineState state = new JavaCommandLineState(env) {
+        @Override
         protected JavaParameters createJavaParameters() {
           return myParameters;
         }
       };
       final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(myProject);
       if (myFilters != null) {
-        for (final Filter myFilter : myFilters) {
-          builder.addFilter(myFilter);
-        }
+        builder.filters(myFilters);
       }
       state.setConsoleBuilder(builder);
       return state;
     }
 
+    @Override
     public String getName() {
       return myContentName;
     }
@@ -154,7 +155,7 @@ public class JavaExecutionUtil {
   }
 
   public static Module findModule(@NotNull final PsiClass psiClass) {
-    return ModuleUtil.findModuleForPsiElement(psiClass);
+    return ModuleUtilCore.findModuleForPsiElement(psiClass);
   }
 
   @Nullable

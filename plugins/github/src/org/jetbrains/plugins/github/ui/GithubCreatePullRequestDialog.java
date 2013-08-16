@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -26,7 +27,6 @@ import org.jetbrains.plugins.github.GithubSettings;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -36,9 +36,12 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   private final GithubCreatePullRequestPanel myGithubCreatePullRequestPanel;
   private static final Pattern GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+:[a-zA-Z0-9_.-]+");
 
-  public GithubCreatePullRequestDialog(@NotNull final Project project, @NotNull List<String> branches, @Nullable String suggestedBranch) {
+  public GithubCreatePullRequestDialog(@NotNull final Project project,
+                                       @NotNull Collection<String> branches,
+                                       @Nullable String suggestedBranch,
+                                       @NotNull Consumer<String> showDiff) {
     super(project, true);
-    myGithubCreatePullRequestPanel = new GithubCreatePullRequestPanel();
+    myGithubCreatePullRequestPanel = new GithubCreatePullRequestPanel(showDiff);
 
     myGithubCreatePullRequestPanel.setBranches(branches);
 
@@ -100,7 +103,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     }
 
     if (!GITHUB_REPO_PATTERN.matcher(getTargetBranch()).matches()) {
-      return new ValidationInfo("Branch must be specified like 'username:branch'", myGithubCreatePullRequestPanel.getComboBox());
+      return new ValidationInfo("Branch must be specified like 'username:branch'", myGithubCreatePullRequestPanel.getBranchEditor());
     }
 
     return null;

@@ -79,7 +79,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   @NotNull
   @Override
   public SettingsEditor<DeployToServerRunConfiguration> getConfigurationEditor() {
-    return new DeployToServerSettingsEditor(myServerType, myDeploymentConfigurator, getProject());
+    return new DeployToServerSettingsEditor(myServerType, myDeploymentConfigurator);
   }
 
   @Nullable

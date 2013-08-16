@@ -481,7 +481,7 @@ public class Messages {
     showDialog(message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
 
-  public static void showWarningDialog(Project project, String message, String title) {
+  public static void showWarningDialog(@Nullable Project project, String message, String title) {
     if (canShowMacSheetPanel()) {
       MacMessages.getInstance().showErrorDialog(CommonBundle.getWarningTitle(), message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
       return;

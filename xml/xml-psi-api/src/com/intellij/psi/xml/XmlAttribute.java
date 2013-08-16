@@ -34,6 +34,8 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
 
   @NonNls @NotNull String getLocalName();
 
+  XmlElement getNameElement();
+
   @NonNls @NotNull String getNamespace();
 
   @NonNls @NotNull String getNamespacePrefix();

@@ -58,7 +58,7 @@ public class MethodSignatureUtil {
       }
     };
 
-  private static boolean areErasedParametersEqual(@NotNull MethodSignature method1, @NotNull MethodSignature method2) {
+  public static boolean areErasedParametersEqual(@NotNull MethodSignature method1, @NotNull MethodSignature method2) {
     PsiType[] erased1 = method1 instanceof MethodSignatureBase
                         ? ((MethodSignatureBase)method1).getErasedParameterTypes() : calcErasedParameterTypes(method1);
     PsiType[] erased2 = method2 instanceof MethodSignatureBase

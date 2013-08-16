@@ -21,7 +21,6 @@ import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.GroupingElement;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -36,9 +35,9 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.UUID;
-import java.util.concurrent.Executor;
 
 /**
  * @author Eugene Zhuravlev
@@ -48,12 +47,7 @@ public class ProblemsViewImpl extends ProblemsView{
   private static final String PROBLEMS_TOOLWINDOW_ID = "Problems";
   
   private final ProblemsViewPanel myPanel;
-  private final SequentialTaskExecutor myViewUpdater = new SequentialTaskExecutor(new Executor() {
-    @Override
-    public void execute(Runnable command) {
-      ApplicationManager.getApplication().executeOnPooledThread(command);
-    }
-  });
+  private final SequentialTaskExecutor myViewUpdater = new SequentialTaskExecutor(new PooledThreadExecutor());
 
   public ProblemsViewImpl(final Project project, final ToolWindowManager wm) {
     super(project);

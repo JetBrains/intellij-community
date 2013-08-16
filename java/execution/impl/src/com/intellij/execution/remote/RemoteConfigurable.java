@@ -180,9 +180,6 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     return myPanel;
   }
 
-  public void disposeEditor() {
-  }
-
   private void updateHelpText() {
     boolean useSockets = !myRbShmem.isSelected();
 

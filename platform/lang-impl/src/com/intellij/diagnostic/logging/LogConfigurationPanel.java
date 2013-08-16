@@ -285,10 +285,6 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     return myWholePanel;
   }
 
-  @Override
-  protected void disposeEditor() {
-  }
-
   private static boolean showEditorDialog(@NotNull LogFileOptions options) {
     EditLogPatternDialog dialog = new EditLogPatternDialog();
     dialog.init(options.getName(), options.getPathPattern(), options.isShowAll());

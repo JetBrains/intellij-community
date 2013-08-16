@@ -45,10 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubAuthData;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
-import org.jetbrains.plugins.github.api.GithubRepoDetailed;
-
-import java.io.IOException;
 
 import static org.junit.Assume.assumeNotNull;
 

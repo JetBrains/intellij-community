@@ -16,8 +16,11 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Condition;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +49,7 @@ public class GithubLoginPanel {
   private JPasswordField myPasswordField;
   private JTextPane mySignupTextField;
   private JCheckBox mySavePasswordCheckBox;
-  private JComboBox myAuthTypeComboBox;
+  private ComboBox myAuthTypeComboBox;
   private JLabel myPasswordLabel;
   private JLabel myLoginLabel;
 
@@ -102,8 +105,8 @@ public class GithubLoginPanel {
 
     List<Component> order = new ArrayList<Component>();
     order.add(myHostTextField);
-    order.add(myLoginTextField);
     order.add(myAuthTypeComboBox);
+    order.add(myLoginTextField);
     order.add(myPasswordField);
     order.add(mySavePasswordCheckBox);
     myPane.setFocusTraversalPolicyProvider(true);
@@ -174,7 +177,7 @@ public class GithubLoginPanel {
   }
 
   public JComponent getPreferrableFocusComponent() {
-    return myLoginTextField;
+    return myLoginTextField.isVisible() ? myLoginTextField : myPasswordField;
   }
 
   @NotNull
@@ -196,7 +199,12 @@ public class GithubLoginPanel {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      return myOrder;
+      return ContainerUtil.filter(myOrder, new Condition<Component>() {
+        @Override
+        public boolean value(Component component) {
+          return component.isVisible() && component.isEnabled();
+        }
+      });
     }
   }
 }
