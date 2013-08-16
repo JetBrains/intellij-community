@@ -15,6 +15,8 @@
  */
 package com.intellij.notification;
 
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.notification.impl.NotificationsConfigurable;
@@ -44,7 +46,8 @@ import javax.swing.event.AncestorEvent;
 public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
   public void createToolWindowContent(final Project project, ToolWindow toolWindow) {
-    final Editor editor = EventLog.getProjectComponent(project).getConsole().getConsoleEditor();
+    EventLogConsole console = EventLog.getProjectComponent(project).getConsole();
+    final Editor editor = console.getConsoleEditor();
 
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
       @Override
@@ -55,21 +58,22 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     panel.setContent(editor.getComponent());
     panel.addAncestorListener(new LogShownTracker(project));
 
-    ActionToolbar toolbar = createToolbar(project, editor);
-    toolbar.setTargetComponent(panel);
+    ActionToolbar toolbar = createToolbar(project, editor, console);
+    toolbar.setTargetComponent(editor.getContentComponent());
     panel.setToolbar(toolbar.getComponent());
 
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
     toolWindow.getContentManager().addContent(content);
   }
 
-  private static ActionToolbar createToolbar(Project project, Editor editor) {
+  private static ActionToolbar createToolbar(Project project, Editor editor, EventLogConsole console) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new EditNotificationSettings(project));
     group.add(new DisplayBalloons());
     group.add(new ToggleSoftWraps(editor));
     group.add(new ScrollToTheEndToolbarAction(editor));
     group.add(new MarkAllAsRead(project));
+    group.add(new EventLogConsole.ClearLogAction(console));
     group.add(new ContextHelpAction(EventLog.HELP_ID));
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);
