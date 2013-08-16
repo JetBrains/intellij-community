@@ -3,7 +3,7 @@
   <password/>
   <option name="loginAnonymously" value="false"/>
   <option name="loginMethodType" value="GET"/>
-  <option name="loginUrl" value="{serverUrl}"/>
+  <option name="loginUrl" value=""/>
   <option name="responseHandlers">
     <XPathResponseHandler>
       <selectors>
