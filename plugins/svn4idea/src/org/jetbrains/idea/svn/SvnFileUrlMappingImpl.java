@@ -538,7 +538,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       if (copyRoot == null || vcsRoot == null) continue;
 
       final SvnVcs vcs = SvnVcs.getInstance(myProject);
-      final SVNInfo svnInfo = vcs.runInfoCommand(copyRoot);
+      final SVNInfo svnInfo = vcs.getInfo(copyRoot);
       if ((svnInfo == null) || (svnInfo.getRepositoryRootURL() == null)) continue;
 
       final RootUrlInfo info =

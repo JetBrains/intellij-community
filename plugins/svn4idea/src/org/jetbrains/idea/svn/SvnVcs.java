@@ -922,7 +922,14 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return new File(file, pathToDirProps);
   }
 
-  public SVNInfo runInfoCommand(final File file) {
+  /**
+   * Provides info either with command line or SvnKit based on project settings.
+   * Call this method only if failed to detect working copy format by any other means.
+   *
+   * @param file
+   * @return
+   */
+  private SVNInfo runInfoCommand(@NotNull final File file) {
     SVNInfo result = null;
 
     try {
@@ -935,10 +942,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     return result;
-  }
-
-  public SVNInfo runInfoCommand(final VirtualFile file) {
-    return runInfoCommand(new File(file.getPath()));
   }
 
   public SVNInfo getInfo(@NotNull SVNURL url,
@@ -1031,8 +1034,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   public WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile) {
     RootUrlInfo rootInfo = getSvnFileUrlMapping().getWcRootForFilePath(ioFile);
+    WorkingCopyFormat format = rootInfo != null ? rootInfo.getFormat() : WorkingCopyFormat.UNKNOWN;
 
-    return rootInfo != null ? rootInfo.getFormat() : WorkingCopyFormat.UNKNOWN;
+    if (WorkingCopyFormat.UNKNOWN.equals(format)) {
+      format = SvnFormatSelector.findRootAndGetFormat(ioFile);
+    }
+
+    return format;
   }
 
   public void refreshSSLProperty() {
@@ -1362,7 +1370,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   public ClientFactory getFactory(@NotNull File file) {
     WorkingCopyFormat format = getWorkingCopyFormat(file);
-    // TODO: Add here direct calculation of svn root if format == UNKNOWN
 
     return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ? cmdClientFactory : getFactory();
   }

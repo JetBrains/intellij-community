@@ -56,7 +56,7 @@ public class ForNestedRootChecker {
 
     @Nullable
     public Real createReal(final VirtualFile file, final VirtualFile vcsRoot) {
-      final SVNInfo info = myVcs.runInfoCommand(file);
+      final SVNInfo info = myVcs.getInfo(file);
       if (info == null || info.getRepositoryRootURL() == null || info.getURL() == null) {
         return null;
       }
