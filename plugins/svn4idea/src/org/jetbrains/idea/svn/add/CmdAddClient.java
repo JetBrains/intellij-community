@@ -78,9 +78,10 @@ public class CmdAddClient extends BaseSvnClient implements AddClient {
   }
 
   private static class Parser {
-    private static final String STATUS = "\\s*(\\w)";
+    private static final String STATUS = "\\s*(\\w)\\s*";
+    private static final String OPTIONAL_FILE_TYPE = "(\\(.*\\))?";
     private static final String PATH = "\\s*(.*?)\\s*";
-    private static final Pattern CHANGED_PATH = Pattern.compile(STATUS + PATH);
+    private static final Pattern CHANGED_PATH = Pattern.compile(STATUS + OPTIONAL_FILE_TYPE + PATH);
 
     @Nullable
     ISVNEventHandler handler;
@@ -101,7 +102,7 @@ public class CmdAddClient extends BaseSvnClient implements AddClient {
 
     private void processChangedPath(@NotNull Matcher matcher) throws VcsException, SVNException {
       SVNStatusType contentStatus = CommandUtil.getStatusType(matcher.group(1));
-      String path = matcher.group(2);
+      String path = matcher.group(3);
 
       if (handler != null) {
         // TODO: No suitable ways to create SVNEvent. This will be changed when removing SvnKit objects from interfaces.
