@@ -71,6 +71,9 @@ public class GroovyMethodDescriptor {
     @Attribute("referenceProvider")
     public String referenceProvider;
 
+    @Attribute("values")
+    public String values;
+
     protected Iterable<String> getNames() {
       assert !StringUtil.isEmptyOrSpaces(name);
       return StringUtil.tokenize(name, ATTR_NAMES_DELIMITER);
@@ -98,23 +101,6 @@ public class GroovyMethodDescriptor {
     else {
       return null;
     }
-  }
-
-  public Map<String, String> getNamedArgumentsReferenceProviders() {
-    if (myArguments == null) return Collections.emptyMap();
-
-    Map<String, String> res = new HashMap<String, String>();
-
-    for (NamedArgument argument : myArguments) {
-      if (argument.referenceProvider != null) {
-        for (String name : argument.getNames()) {
-          Object oldValue = res.put(name, argument.referenceProvider);
-          assert oldValue == null;
-        }
-      }
-    }
-
-    return res;
   }
 
   @Nullable
