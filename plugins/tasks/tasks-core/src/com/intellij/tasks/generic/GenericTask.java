@@ -12,12 +12,17 @@ import java.util.Date;
 
 public class GenericTask extends Task {
   private final String myId;
-  private final String myDescription;
+  private final String mySummary;
+  private String myDescription;
+  private Date myUpdated;
+  private Date myCreated;
+  private String myIssueUrl;
   private TaskRepository myRepository;
+  private boolean myClosed;
 
-  public GenericTask(final String id, final String description, final TaskRepository repository) {
+  public GenericTask(final String id, final String summary, final TaskRepository repository) {
     myId = id;
-    myDescription = description;
+    mySummary = summary;
     myRepository = repository;
   }
 
@@ -30,25 +35,25 @@ public class GenericTask extends Task {
   @NotNull
   @Override
   public String getSummary() {
-    return myDescription;
+    return mySummary;
   }
 
   @Nullable
   @Override
   public String getDescription() {
-    return null;
+    return myDescription;
   }
 
   @NotNull
   @Override
   public Comment[] getComments() {
-    return new Comment[0];
+    return Comment.EMPTY_ARRAY;
   }
 
   @NotNull
   @Override
   public Icon getIcon() {
-    return myRepository.getRepositoryType().getIcon();
+    return myRepository.getIcon();
   }
 
   @NotNull
@@ -60,18 +65,18 @@ public class GenericTask extends Task {
   @Nullable
   @Override
   public Date getUpdated() {
-    return null;
+    return myUpdated;
   }
 
   @Nullable
   @Override
   public Date getCreated() {
-    return null;
+    return myCreated;
   }
 
   @Override
   public boolean isClosed() {
-    return false;
+    return myClosed;
   }
 
   @Override
@@ -82,12 +87,32 @@ public class GenericTask extends Task {
   @Nullable
   @Override
   public String getIssueUrl() {
-    return null;
+    return myIssueUrl;
   }
 
   @Nullable
   @Override
   public TaskRepository getRepository() {
     return myRepository;
+  }
+
+  public void setIssueUrl(@Nullable String issueUrl) {
+    myIssueUrl = issueUrl;
+  }
+
+  public void setCreated(@Nullable Date created) {
+    myCreated = created;
+  }
+
+  public void setUpdated(@Nullable Date updated) {
+    myUpdated = updated;
+  }
+
+  public void setDescription(@Nullable String description) {
+    myDescription = description;
+  }
+
+  public void setClosed(boolean closed) {
+    myClosed = closed;
   }
 }

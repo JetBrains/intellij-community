@@ -571,6 +571,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
           }
           catch (XmlSerializationException e) {
             // ignore
+            LOG.error(e.getMessage());
           }
         }
       }

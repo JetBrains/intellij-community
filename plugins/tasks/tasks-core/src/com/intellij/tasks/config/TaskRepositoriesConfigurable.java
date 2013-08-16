@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.tasks.TaskRepositorySubtype;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
@@ -83,18 +84,19 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
 
     TaskRepositoryType[] groups = TaskManager.ourRepositoryTypes;
 
-    final List<AnAction> createActions = ContainerUtil.map2List(groups, new Function<TaskRepositoryType, AnAction>() {
-      public AnAction fun(final TaskRepositoryType group) {
-        String description = "New " + group.getName() + " server";
-        return new IconWithTextAction(group.getName(), description, group.getIcon()) {
+    final List<AnAction> createActions = new ArrayList<AnAction>();
+    for (final TaskRepositoryType repositoryType : groups) {
+      for (final TaskRepositorySubtype subtype : (List<TaskRepositorySubtype>)repositoryType.getAvailableSubtypes()) {
+        String description = "New " + subtype.getName() + " server";
+        createActions.add(new IconWithTextAction(subtype.getName(), description, subtype.getIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {
-            TaskRepository repository = group.createRepository();
+            TaskRepository repository = repositoryType.createRepository(subtype);
             addRepository(repository);
           }
-        };
+        });
       }
-    });
+    }
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myRepositoriesList).disableUpDownActions();
 
@@ -110,7 +112,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
         if (!repositories.isEmpty()) {
           group.add(Separator.getInstance());
           for (final TaskRepository repository : repositories) {
-            group.add(new IconWithTextAction(repository.getUrl(), repository.getUrl(), repository.getRepositoryType().getIcon()) {
+            group.add(new IconWithTextAction(repository.getUrl(), repository.getUrl(), repository.getIcon()) {
               @Override
               public void actionPerformed(AnActionEvent e) {
                 addRepository(repository);
