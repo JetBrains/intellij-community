@@ -1,5 +1,6 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -70,6 +71,9 @@ public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
   public void testRegexInCommandArg5() {doTest();}
 
   public void testUndefinedVarInline() {doTest()}
+
+  public void testImplicitCast() { doTest() }
+  public void testImplicitCast2() { doTest() }
 
   protected void doFieldTest() {
     InlineMethodTest.doInlineTest(myFixture, testDataPath + getTestName(true) + ".test", new GroovyInlineHandler());
