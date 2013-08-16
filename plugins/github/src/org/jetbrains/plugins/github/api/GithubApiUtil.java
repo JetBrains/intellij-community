@@ -460,11 +460,16 @@ public class GithubApiUtil {
 
     String path = "/user/orgs?" + PER_PAGE;
     PagedRequest<GithubOrg> request = new PagedRequest<GithubOrg>(path, GithubOrg.class, GithubOrgRaw[].class);
+
     for (GithubOrg org : request.getAll(auth)) {
       String pathOrg = "/orgs/" + org.getLogin() + "/repos?type=member&" + PER_PAGE;
-      PagedRequest<GithubRepoOrg> requestOrg = new PagedRequest<GithubRepoOrg>(pathOrg, GithubRepoOrg.class, GithubRepoRaw[].class);
+      PagedRequest<GithubRepo> requestOrg = new PagedRequest<GithubRepo>(pathOrg, GithubRepo.class, GithubRepoRaw[].class);
       repos.addAll(requestOrg.getAll(auth));
     }
+
+    String pathWatched = "/user/subscriptions?" + PER_PAGE;
+    PagedRequest<GithubRepo> requestWatched = new PagedRequest<GithubRepo>(pathWatched, GithubRepo.class, GithubRepoRaw[].class);
+    repos.addAll(requestWatched.getAll(auth));
 
     return repos;
   }
