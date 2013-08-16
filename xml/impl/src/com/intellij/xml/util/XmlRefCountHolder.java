@@ -226,28 +226,28 @@ public class XmlRefCountHolder {
       if (descriptor == null) return;
 
       final XmlAttributeDescriptor attributeDescriptor = descriptor.getAttributeDescriptor(attribute);
-      if (attributeDescriptor == null) return;
-
-      if (attributeDescriptor.hasIdType()) {
-        updateMap(attribute, value, false);
-      }
-      else {
-        final PsiReference[] references = value.getReferences();
-        for (PsiReference r : references) {
-          if (r instanceof IdReferenceProvider.GlobalAttributeValueSelfReference /*&& !r.isSoft()*/) {
-            updateMap(attribute, value, r.isSoft());
-          }
-          else if (r instanceof SchemaPrefixReference) {
-            SchemaPrefix prefix = ((SchemaPrefixReference)r).resolve();
-            if (prefix != null) {
-              myHolder.addUsedPrefix(prefix.getName());
+      if (attributeDescriptor != null) {
+        if (attributeDescriptor.hasIdType()) {
+          updateMap(attribute, value, false);
+        }
+        else {
+          final PsiReference[] references = value.getReferences();
+          for (PsiReference r : references) {
+            if (r instanceof IdReferenceProvider.GlobalAttributeValueSelfReference /*&& !r.isSoft()*/) {
+              updateMap(attribute, value, r.isSoft());
+            }
+            else if (r instanceof SchemaPrefixReference) {
+              SchemaPrefix prefix = ((SchemaPrefixReference)r).resolve();
+              if (prefix != null) {
+                myHolder.addUsedPrefix(prefix.getName());
+              }
             }
           }
         }
-      }
 
-      if (attributeDescriptor.hasIdRefType() && PsiTreeUtil.getChildOfType(value, OuterLanguageElement.class) == null) {
-        myHolder.registerIdReference(value);
+        if (attributeDescriptor.hasIdRefType() && PsiTreeUtil.getChildOfType(value, OuterLanguageElement.class) == null) {
+          myHolder.registerIdReference(value);
+        }
       }
 
       String s = value.getValue();
