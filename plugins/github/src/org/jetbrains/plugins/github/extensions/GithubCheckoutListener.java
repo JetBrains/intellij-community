@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github.extensions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;

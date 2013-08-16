@@ -10,11 +10,11 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <checkoutProvider implementation="org.jetbrains.plugins.github.GithubCheckoutProvider"/>
+    <checkoutProvider implementation="org.jetbrains.plugins.github.extensions.GithubCheckoutProvider"/>
     <applicationService serviceInterface="org.jetbrains.plugins.github.util.GithubSettings"
                         serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
-    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.GithubAnnotationGutterActionProvider" />
-    <checkoutCompletedListener implementation="org.jetbrains.plugins.github.GithubCheckoutListener" order="after PlatformProjectCheckoutListener"/>
+    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider" />
+    <checkoutCompletedListener implementation="org.jetbrains.plugins.github.extensions.GithubCheckoutListener" order="after PlatformProjectCheckoutListener"/>
     <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
 
     <applicationService serviceInterface="org.jetbrains.plugins.github.util.GithubSslSupport"
@@ -22,7 +22,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
-    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.GithubHttpAuthDataProvider" />
+    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GithubHttpAuthDataProvider" />
   </extensions>
 
   <actions>
