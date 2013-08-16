@@ -112,7 +112,7 @@
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
     <programRunner implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugRunner"/>
     <programRunner implementation="com.jetbrains.python.coverage.PythonCoverageRunner"/>
-    <configurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.DjangoTemplateLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
@@ -123,7 +123,7 @@
     <runConfigurationProducer implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer"/>
     <testSrcLocator implementation="com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider"/>
 
-    <configurationProducer implementation="com.jetbrains.python.testing.pytest.PyTestConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.pytest.PyTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.attest.PythonAtTestConfigurationProducer"/>
@@ -509,7 +509,7 @@
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.DjangoTemplateReferenceLineMarkerProvider"/>
     <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>
     <configurationType implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationType"/>
-    <configurationProducer implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationProducer"/>
 
     <highlightErrorFilter implementation="com.jetbrains.django.lang.template.inspection.DjangoErrorFilter"/>
     <highlightErrorFilter implementation="com.jetbrains.django.lang.template.inspection.DjangoStructureXmlFilter"/>
@@ -680,6 +680,10 @@
 
     <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.DjangoStaticPrefixRenameProcessor"/>
 
+    <usageTargetProvider implementation="com.jetbrains.django.refactoring.DjangoUsageTargetProvider"/>
+    <findUsagesHandlerFactory implementation="com.jetbrains.django.refactoring.DjangoFindUsagesHandlerFactory"/>
+    <referencesSearch implementation="com.jetbrains.django.refactoring.DjangoParameterReferenceSearcher"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
     <framework.detector implementation="com.jetbrains.appengine.facet.AppEngineFrameworkDetector"/>
@@ -764,8 +768,6 @@
                             implementationClass="com.jetbrains.mako.editor.MakoCompletionContributor"/>
     <completion.contributor language="Mako"
                             implementationClass="com.jetbrains.mako.editor.MakoTagAttributesContributor"/>
-    <completion.contributor language="Python"
-                            implementationClass="com.jetbrains.mako.editor.MakoKeywordCompletionContributor"/>
     <completion.contributor language="HTML"
                             implementationClass="com.jetbrains.mako.editor.MakoControlCompletionContributor"/>
     <completion.contributor language="XML"
@@ -872,6 +874,7 @@
     <typedHandler implementation="com.jetbrains.pyramid.templates.completion.ChameleonSubstitutionHandler" id="ChameleonBracesHandler"/>
     <highlightRangeExtension implementation="com.jetbrains.pyramid.templates.highlighting.ChameleonAnnotatingVisitor"/>
     <annotator language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonAnnotatingVisitor"/>
+    <xml.xmlExtension implementation="com.jetbrains.pyramid.templates.highlighting.ChameleonXmlExtension" order="first"/>
   </extensions>
 
   <extensionPoints>

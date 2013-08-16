@@ -68,6 +68,13 @@ public class PyBlockEvaluatorTest extends PyTestCase {
     assertEquals("c", map.get("b"));
   }
 
+  public void testDictAssignNoEvaluate() {
+    PyBlockEvaluator eval = doEvaluate("a={}\na['b']='c'", true);
+    Map map = (Map) eval.getValue("a");
+    assertEquals(1, map.size());
+    assertTrue(map.get("b") instanceof PyStringLiteralExpression);
+  }
+
   public void testDictUpdate() {
     PyBlockEvaluator eval = doEvaluate("a={}\na.update({'b': 'c'})");
     Map map = (Map) eval.getValue("a");

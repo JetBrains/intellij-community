@@ -1,8 +1,10 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -24,6 +26,7 @@ import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -302,6 +305,29 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return new ItemPresentation() {
+      @Nullable
+      @Override
+      public String getPresentableText() {
+        return getStringValue();
+      }
+
+      @Nullable
+      @Override
+      public String getLocationString() {
+        return "(" + PyPresentableElementImpl.getPackageForFile(getContainingFile()) + ")";
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon(boolean unused) {
+        return AllIcons.Nodes.Variable;
+      }
+    };
   }
 
   public PsiLanguageInjectionHost updateText(@NotNull String text) {

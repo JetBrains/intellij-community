@@ -21,7 +21,7 @@ import java.util.List;
  * Represents a class declaration in source.
  */
 public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
-                                 ScopeOwner, PyDecoratable, PyTypedElement {
+                                 ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner {
   ArrayFactory<PyClass> ARRAY_FACTORY = new ArrayFactory<PyClass>() {
     @NotNull
     @Override
@@ -148,9 +148,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   boolean isSubclass(PyClass parent);
 
   boolean isSubclass(@NotNull String superClassQName);
-
-  @Nullable
-  String getQualifiedName();
 
   /**
    * Returns the list of names in the class' __slots__ attribute, or null if the class

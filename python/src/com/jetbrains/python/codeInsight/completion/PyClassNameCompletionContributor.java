@@ -42,20 +42,31 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
       if (parent instanceof PyReferenceExpression && ((PyReferenceExpression)parent).getQualifier() != null) {
         return;
       }
+      if (parent instanceof PyStringLiteralExpression) {
+        String prefix = parent.getText().substring(0, parameters.getOffset() - parent.getTextRange().getStartOffset());
+        if (prefix.contains(".")) {
+          return;
+        }
+      }
       final FileViewProvider provider = element.getContainingFile().getViewProvider();
       if (provider instanceof MultiplePsiFilesPerDocumentFileViewProvider) return;
       if (PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) != null) {
         return;
       }
       final PsiFile originalFile = parameters.getOriginalFile();
-      addVariantsFromIndex(result, originalFile, PyClassNameIndex.KEY, IMPORTING_INSERT_HANDLER, Conditions.<PyClass>alwaysTrue());
-      addVariantsFromIndex(result, originalFile, PyFunctionNameIndex.KEY, FUNCTION_INSERT_HANDLER, IS_TOPLEVEL);
-      addVariantsFromIndex(result, originalFile, PyVariableNameIndex.KEY, IMPORTING_INSERT_HANDLER, IS_TOPLEVEL);
-      addVariantsFromModules(result, originalFile);
+      addVariantsFromIndex(result, originalFile, PyClassNameIndex.KEY,
+                           parent instanceof PyStringLiteralExpression ? STRING_LITERAL_INSERT_HANDLER : IMPORTING_INSERT_HANDLER,
+                           Conditions.<PyClass>alwaysTrue());
+      addVariantsFromIndex(result, originalFile, PyFunctionNameIndex.KEY,
+                           parent instanceof PyStringLiteralExpression ? STRING_LITERAL_INSERT_HANDLER : FUNCTION_INSERT_HANDLER, IS_TOPLEVEL);
+      addVariantsFromIndex(result, originalFile, PyVariableNameIndex.KEY,
+                           parent instanceof PyStringLiteralExpression ? STRING_LITERAL_INSERT_HANDLER : IMPORTING_INSERT_HANDLER,
+                           IS_TOPLEVEL);
+      addVariantsFromModules(result, originalFile, parent instanceof PyStringLiteralExpression);
     }
   }
 
-  private static void addVariantsFromModules(CompletionResultSet result, PsiFile targetFile) {
+  private static void addVariantsFromModules(CompletionResultSet result, PsiFile targetFile, boolean inStringLiteral) {
     Collection<VirtualFile> files = FileTypeIndex.getFiles(PythonFileType.INSTANCE, PyProjectScopeBuilder.excludeSdkTestsScope(targetFile));
     for (VirtualFile file : files) {
       PsiFile pyFile = targetFile.getManager().findFile(file);
@@ -64,7 +75,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
       if (PythonReferenceImporter.isImportableModule(targetFile, importable)) {
         LookupElementBuilder element = PyModuleType.buildFileLookupElement(importable, null);
         if (element != null) {
-          result.addElement(element.withInsertHandler(IMPORTING_INSERT_HANDLER));
+          result.addElement(element.withInsertHandler(inStringLiteral ? STRING_LITERAL_INSERT_HANDLER : IMPORTING_INSERT_HANDLER));
         }
       }
     }
@@ -110,6 +121,21 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
       super.handleInsert(context, item);  // adds parentheses, modifies tail offset
       context.commitDocument();
       addImportForLookupElement(context, item, tailOffset);
+    }
+  };
+
+  private static final InsertHandler<LookupElement> STRING_LITERAL_INSERT_HANDLER = new InsertHandler<LookupElement>() {
+    @Override
+    public void handleInsert(InsertionContext context, LookupElement item) {
+      PsiElement element = item.getPsiElement();
+      if (element instanceof PyQualifiedNameOwner) {
+        String qName = ((PyQualifiedNameOwner) element).getQualifiedName();
+        String name = ((PyQualifiedNameOwner) element).getName();
+        if (qName != null && name != null) {
+          String qNamePrefix = qName.substring(0, qName.length()-name.length());
+          context.getDocument().insertString(context.getStartOffset(), qNamePrefix);
+        }
+      }
     }
   };
 

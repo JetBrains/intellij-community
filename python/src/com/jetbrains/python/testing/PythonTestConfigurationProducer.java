@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.PythonFacetSettings;
@@ -38,8 +39,9 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     final Location location = context.getLocation();
     if (location == null || !isAvailable(location)) return false;
     final PsiElement element = location.getPsiElement();
-    final PsiFile file = element.getContainingFile();
-    final VirtualFile virtualFile = element instanceof PsiDirectory ? ((PsiDirectory)element).getVirtualFile() : file.getVirtualFile();
+    final PsiFileSystemItem file = element.getContainingFile();
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return false;
     final PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
     final PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
 
@@ -54,8 +56,8 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     }
 
     final String scriptName = configuration.getScriptName();
-    final boolean isTestFileEquals = virtualFile != null && scriptName.equals(virtualFile.getPath()) ||
-                      scriptName.equals(new File(workingDirectory, scriptName).getAbsolutePath());
+    final String path = virtualFile.getPath();
+    final boolean isTestFileEquals = scriptName.equals(path) || path.equals(new File(workingDirectory, scriptName).getAbsolutePath());
 
     if (pyFunction != null) {
       final String methodName = configuration.getMethodName();

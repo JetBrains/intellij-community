@@ -66,6 +66,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
         // so, a stmt begins with us
         // isn't there an incorrect stmt before us on the same line?
         PsiElement container = p.getParent();
+        if (!(container instanceof PyElement)) return true;
         if (container instanceof PyStatementList || container instanceof PsiFile) {
           PsiElement prev = p.getPrevSibling();
           while (prev instanceof PsiWhiteSpace) prev = prev.getPrevSibling();
