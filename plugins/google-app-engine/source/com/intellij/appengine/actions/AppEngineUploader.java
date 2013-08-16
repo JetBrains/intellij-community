@@ -304,7 +304,16 @@ public class AppEngineUploader {
     public void processTerminated(ProcessEvent event) {
       int exitCode = event.getExitCode();
       if (exitCode == 0) {
-        myCallback.succeeded(new DeploymentRuntime());
+        myCallback.succeeded(new DeploymentRuntime() {
+          @Override
+          public boolean isUndeploySupported() {
+            return false;
+          }
+
+          @Override
+          public void undeploy(@NotNull UndeploymentTaskCallback callback) {
+          }
+        });
       }
       else {
         myCallback.errorOccurred("Process terminated with exit code " + exitCode);

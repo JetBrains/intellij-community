@@ -6,13 +6,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public class DeploymentRuntime {
+public abstract class DeploymentRuntime {
   public boolean isUndeploySupported() {
-    return false;
+    return true;
   }
 
-  public void undeploy(@NotNull UndeploymentTaskCallback callback) {
-  }
+  public abstract void undeploy(@NotNull UndeploymentTaskCallback callback);
 
   public interface UndeploymentTaskCallback extends RemoteOperationCallback {
     void succeeded();
