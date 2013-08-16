@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.api.GithubRepoDetailed;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
 
 import java.io.IOException;
 import java.util.Collections;

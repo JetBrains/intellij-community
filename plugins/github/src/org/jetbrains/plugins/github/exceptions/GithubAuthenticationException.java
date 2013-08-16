@@ -13,22 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github.api;
+package org.jetbrains.plugins.github.exceptions;
 
 import java.io.IOException;
 
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubStatusCodeException extends IOException {
-  private final int myStatusCode;
-
-  public GithubStatusCodeException(String message, int statusCode) {
-    super(message);
-    myStatusCode = statusCode;
+public class GithubAuthenticationException extends IOException {
+  public GithubAuthenticationException() {
+    super();
   }
 
-  public int getStatusCode() {
-    return myStatusCode;
+  public GithubAuthenticationException(String message) {
+    super(message);
+  }
+
+  public GithubAuthenticationException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public GithubAuthenticationException(Throwable cause) {
+    super(cause);
   }
 }

@@ -27,6 +27,9 @@ import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.*;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
+import org.jetbrains.plugins.github.exceptions.GithubJsonException;
+import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -234,7 +237,7 @@ public class GithubApiUtil {
       return new JsonParser().parse(reader);
     }
     catch (JsonSyntaxException jse) {
-      throw new JsonException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
+      throw new GithubJsonException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
     }
     finally {
       reader.close();
@@ -274,12 +277,12 @@ public class GithubApiUtil {
    */
 
   static <Raw extends DataConstructor, Result> Result createDataFromRaw(@NotNull Raw rawObject, @NotNull Class<Result> resultClass)
-    throws JsonException {
+    throws GithubJsonException {
     try {
       return rawObject.create(resultClass);
     }
     catch (Exception e) {
-      throw new JsonException("Json parse error", e);
+      throw new GithubJsonException("Json parse error", e);
     }
   }
 
@@ -316,7 +319,7 @@ public class GithubApiUtil {
       }
 
       if (!response.getJsonElement().isJsonArray()) {
-        throw new JsonException("Wrong json type: expected JsonArray");
+        throw new GithubJsonException("Wrong json type: expected JsonArray");
       }
 
       myNextPage = response.getNextPage();
@@ -345,7 +348,7 @@ public class GithubApiUtil {
   @NotNull
   private static <T> T fromJson(@Nullable JsonElement json, @NotNull Class<T> classT) throws IOException {
     if (json == null) {
-      throw new JsonException("Unexpected empty response");
+      throw new GithubJsonException("Unexpected empty response");
     }
 
     T res;
@@ -355,13 +358,13 @@ public class GithubApiUtil {
       res = (T)gson.fromJson(json, classT);
     }
     catch (ClassCastException e) {
-      throw new JsonException("Parse exception while converting JSON to object " + classT.toString(), e);
+      throw new GithubJsonException("Parse exception while converting JSON to object " + classT.toString(), e);
     }
     catch (JsonParseException e) {
-      throw new JsonException("Parse exception while converting JSON to object " + classT.toString(), e);
+      throw new GithubJsonException("Parse exception while converting JSON to object " + classT.toString(), e);
     }
     if (res == null) {
-      throw new JsonException("Empty Json response");
+      throw new GithubJsonException("Empty Json response");
     }
     return res;
   }

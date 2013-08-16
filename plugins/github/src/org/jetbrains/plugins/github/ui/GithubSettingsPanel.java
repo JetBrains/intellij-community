@@ -26,7 +26,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubAuthData;
-import org.jetbrains.plugins.github.GithubAuthenticationException;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
 import org.jetbrains.plugins.github.api.GithubUser;

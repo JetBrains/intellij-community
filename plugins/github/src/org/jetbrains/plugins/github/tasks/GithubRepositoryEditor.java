@@ -15,7 +15,7 @@ import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.GithubAuthData;
-import org.jetbrains.plugins.github.GithubAuthenticationCanceledException;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
 import org.jetbrains.plugins.github.GithubNotifications;
 import org.jetbrains.plugins.github.GithubUtil;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
