@@ -48,13 +48,18 @@ public class MigrationUtil {
 
       // rename all references
       for (UsageInfo usage : usages) {
-        PsiElement element = usage.getElement();
-        if (element == null || !element.isValid()) continue;
-        if (element instanceof PsiJavaCodeReferenceElement) {
-          ((PsiJavaCodeReferenceElement)element).bindToElement(aPackage);
-        }
-        else {
-          bindNonJavaReference(aPackage, element, usage);
+        if (usage instanceof MigrationProcessor.MigrationUsageInfo) {
+          final MigrationProcessor.MigrationUsageInfo usageInfo = (MigrationProcessor.MigrationUsageInfo)usage;
+          if (Comparing.equal(newQName, usageInfo.mapEntry.getNewName())) {
+            PsiElement element = usage.getElement();
+            if (element == null || !element.isValid()) continue;
+            if (element instanceof PsiJavaCodeReferenceElement) {
+              ((PsiJavaCodeReferenceElement)element).bindToElement(aPackage);
+            }
+            else {
+              bindNonJavaReference(aPackage, element, usage);
+            }
+          }
         }
       }
     }
