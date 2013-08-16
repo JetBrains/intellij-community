@@ -70,7 +70,9 @@
     <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.gradle.config.GradleGroovyConfigNotification"/>
     
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptContributor"/>
-    <methodDescriptor class="org.gradle.api.Project" name="apply" namedArgs="plugin"/>
+    <methodDescriptor class="org.gradle.api.Project" name="apply">
+      <namedArgument name="plugin" values="java,groovy,idea,eclipse,scala"/>
+    </methodDescriptor>
   </extensions>
   
 </idea-plugin>
