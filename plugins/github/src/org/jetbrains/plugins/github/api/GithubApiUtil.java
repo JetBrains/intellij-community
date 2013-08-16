@@ -322,7 +322,7 @@ public class GithubApiUtil {
       }
 
       if (!response.getJsonElement().isJsonArray()) {
-        throw new GithubJsonException("Wrong json type: expected JsonArray");
+        throw new GithubJsonException("Wrong json type: expected JsonArray", new Exception(response.getJsonElement().toString()));
       }
 
       myNextPage = response.getNextPage();
