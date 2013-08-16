@@ -17,7 +17,6 @@ package org.jetbrains.plugins.github.api;
 
 import com.google.gson.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.net.HttpConfigurable;
@@ -436,23 +435,38 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static List<GithubRepo> getAvailableRepos(@NotNull GithubAuthData auth) throws IOException {
-    return doGetAvailableRepos(auth, null);
-  }
-
-  @NotNull
-  public static List<GithubRepo> getAvailableRepos(@NotNull GithubAuthData auth, @NotNull String user) throws IOException {
-    return doGetAvailableRepos(auth, user);
-  }
-
-  @NotNull
-  private static List<GithubRepo> doGetAvailableRepos(@NotNull GithubAuthData auth, @Nullable String user) throws IOException {
-    String path = user == null ? "/user/repos" : "/users/" + user + "/repos?" + PER_PAGE;
-
+  public static List<GithubRepo> getUserRepos(@NotNull GithubAuthData auth) throws IOException {
+    String path = "/user/repos?" + PER_PAGE;
 
     PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
 
     return request.getAll(auth);
+  }
+
+  @NotNull
+  public static List<GithubRepo> getUserRepos(@NotNull GithubAuthData auth, @NotNull String user) throws IOException {
+    String path = "/users/" + user + "/repos?" + PER_PAGE;
+
+    PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
+
+    return request.getAll(auth);
+  }
+
+  @NotNull
+  public static List<GithubRepo> getAvailableRepos(@NotNull GithubAuthData auth) throws IOException {
+    List<GithubRepo> repos = new ArrayList<GithubRepo>();
+
+    repos.addAll(getUserRepos(auth));
+
+    String path = "/user/orgs?" + PER_PAGE;
+    PagedRequest<GithubOrg> request = new PagedRequest<GithubOrg>(path, GithubOrg.class, GithubOrgRaw[].class);
+    for (GithubOrg org : request.getAll(auth)) {
+      String pathOrg = "/orgs/" + org.getLogin() + "/repos?type=member&" + PER_PAGE;
+      PagedRequest<GithubRepoOrg> requestOrg = new PagedRequest<GithubRepoOrg>(pathOrg, GithubRepoOrg.class, GithubRepoRaw[].class);
+      repos.addAll(requestOrg.getAll(auth));
+    }
+
+    return repos;
   }
 
   @NotNull

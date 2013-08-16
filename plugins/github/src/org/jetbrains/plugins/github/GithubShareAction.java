@@ -208,7 +208,7 @@ public class GithubShareAction extends DumbAwareAction {
               GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
                 @Override
                 public void consume(GithubAuthData authData) throws IOException {
-                  availableReposRef.set(GithubApiUtil.getAvailableRepos(authData));
+                  availableReposRef.set(GithubApiUtil.getUserRepos(authData));
                 }
               });
             final HashSet<String> names = new HashSet<String>();

@@ -17,13 +17,10 @@ package org.jetbrains.plugins.github.extensions;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import git4idea.actions.BasicAction;
 import git4idea.checkout.GitCheckoutProvider;
