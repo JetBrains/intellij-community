@@ -4,10 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveResult;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -25,7 +22,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.DocStringUtil;
-import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyTargetReference;
@@ -120,10 +116,14 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       if (pyType != null) {
         return pyType;
       }
+      PyType type = getTypeFromDocString();
+      if (type != null) {
+        return type;
+      }
       if (!context.maySwitchToAST(this)) {
         final PsiElement value = getStub() != null ? findAssignedValueByStub(context) : findAssignedValue();
         if (value instanceof PyTypedElement) {
-          final PyType type = context.getType((PyTypedElement)value);
+          type = context.getType((PyTypedElement)value);
           if (type instanceof PyNoneType) {
             return null;
           }
@@ -134,10 +134,6 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
           return PyUnionType.createWeakType(type);
         }
         return null;
-      }
-      PyType type = getTypeFromDocString(this);
-      if (type != null) {
-        return type;
       }
       type = getTypeFromComment(this);
       if (type != null) {
@@ -249,29 +245,27 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   @Nullable
-  public static PyType getTypeFromDocString(PyTargetExpressionImpl targetExpression) {
+  private PyType getTypeFromDocString() {
     String typeName = null;
-    final String docString = PyPsiUtils.strValue(DocStringUtil.getAttributeDocString(targetExpression));
-    if (docString != null) {
-      StructuredDocString targetDocString = DocStringUtil.parse(docString);
-      if (targetDocString != null) {
-        typeName = targetDocString.getParamType(null);
-        if (typeName == null) {
-          typeName = targetDocString.getParamType(targetExpression.getName());
-        }
+    final String name = getName();
+    final StructuredDocString targetDocString = getStructuredDocString();
+    if (targetDocString != null) {
+      typeName = targetDocString.getParamType(null);
+      if (typeName == null) {
+        typeName = targetDocString.getParamType(name);
       }
     }
-    if (typeName == null && PyUtil.isAttribute(targetExpression)) {
-      final PyClass cls = targetExpression.getContainingClass();
+    if (typeName == null && PyUtil.isAttribute(this)) {
+      final PyClass cls = getContainingClass();
       if (cls != null) {
         final StructuredDocString classDocString = cls.getStructuredDocString();
         if (classDocString != null) {
-          typeName = classDocString.getParamType(targetExpression.getName());
+          typeName = classDocString.getParamType(name);
         }
       }
     }
     if (typeName != null) {
-      return PyTypeParser.getTypeByName(targetExpression, typeName);
+      return PyTypeParser.getTypeByName(this, typeName);
     }
     return null;
   }
@@ -612,5 +606,41 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
     }
     return super.getElementLocation();
+  }
+
+  @Nullable
+  @Override
+  public String getDocStringValue() {
+    final PyTargetExpressionStub stub = getStub();
+    if (stub != null) {
+      return stub.getDocString();
+    }
+    return DocStringUtil.getDocStringValue(this);
+  }
+
+  @Nullable
+  @Override
+  public StructuredDocString getStructuredDocString() {
+    return DocStringUtil.getStructuredDocString(this);
+  }
+
+  @Nullable
+  @Override
+  public PyStringLiteralExpression getDocStringExpression() {
+    final PsiElement parent = getParent();
+    if (parent instanceof PyAssignmentStatement) {
+      final PyAssignmentStatement assignment = (PyAssignmentStatement)parent;
+      PsiElement nextSibling = assignment.getNextSibling();
+      while (nextSibling != null && (nextSibling instanceof PsiWhiteSpace || nextSibling instanceof PsiComment)) {
+        nextSibling = nextSibling.getNextSibling();
+      }
+      if (nextSibling instanceof PyExpressionStatement) {
+        final PyExpression expression = ((PyExpressionStatement)nextSibling).getExpression();
+        if (expression instanceof PyStringLiteralExpression) {
+          return (PyStringLiteralExpression)expression;
+        }
+      }
+    }
+    return null;
   }
 }

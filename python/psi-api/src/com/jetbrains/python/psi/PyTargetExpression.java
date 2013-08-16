@@ -12,7 +12,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedElement, PsiNameIdentifierOwner, StubBasedPsiElement<PyTargetExpressionStub> {
+public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedElement, PsiNameIdentifierOwner, PyDocStringOwner,
+                                            StubBasedPsiElement<PyTargetExpressionStub> {
   PyTargetExpression[] EMPTY_ARRAY = new PyTargetExpression[0];
 
   /**

@@ -446,7 +446,7 @@ class PyDocumentationBuilder {
       .addItem(" of class ").addWith(PythonDocumentationProvider.LinkMyClass, $().addWith(TagCode, $(cls.getName()))).addItem(BR)
     ;
 
-    final String docString = PyPsiUtils.strValue(DocStringUtil.getAttributeDocString((PyTargetExpression)myElement));
+    final String docString = ((PyTargetExpression)myElement).getDocStringValue();
     if (docString != null) {
       addFormattedDocString(myElement, docString, myBody, myEpilog);
     }

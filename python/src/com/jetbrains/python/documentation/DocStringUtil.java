@@ -74,24 +74,6 @@ public class DocStringUtil {
   }
 
   @Nullable
-  public static PyStringLiteralExpression getAttributeDocString(@NotNull PyTargetExpression attr) {
-    if (attr.getParent() instanceof PyAssignmentStatement) {
-      final PyAssignmentStatement assignment = (PyAssignmentStatement)attr.getParent();
-      PsiElement nextSibling = assignment.getNextSibling();
-      while (nextSibling != null && (nextSibling instanceof PsiWhiteSpace || nextSibling instanceof PsiComment)) {
-        nextSibling = nextSibling.getNextSibling();
-      }
-      if (nextSibling instanceof PyExpressionStatement) {
-        final PyExpression expression = ((PyExpressionStatement)nextSibling).getExpression();
-        if (expression instanceof PyStringLiteralExpression) {
-          return (PyStringLiteralExpression)expression;
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
   public static String getAttributeDocComment(@NotNull PyTargetExpression attr) {
     if (attr.getParent() instanceof PyAssignmentStatement) {
       final PyAssignmentStatement assignment = (PyAssignmentStatement)attr.getParent();

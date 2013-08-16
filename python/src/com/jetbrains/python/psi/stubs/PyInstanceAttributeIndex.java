@@ -16,6 +16,11 @@ import java.util.Collection;
 public class PyInstanceAttributeIndex extends StringStubIndexExtension<PyTargetExpression> {
   public static final StubIndexKey<String, PyTargetExpression> KEY = StubIndexKey.createIndexKey("Py.instanceAttribute.name");
 
+  @Override
+  public int getVersion() {
+    return super.getVersion() + 1;
+  }
+
   @NotNull
   @Override
   public StubIndexKey<String, PyTargetExpression> getKey() {
