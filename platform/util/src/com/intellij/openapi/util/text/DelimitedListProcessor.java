@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml.converters;
+package com.intellij.openapi.util.text;
 
 import org.jetbrains.annotations.NotNull;
 
