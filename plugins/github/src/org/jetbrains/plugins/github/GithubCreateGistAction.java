@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -34,6 +33,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThrowableConvertor;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,22 +151,13 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @NotNull
   private static GithubAuthData getValidAuthData(@NotNull final Project project) throws IOException {
-    final Ref<GithubAuthData> authDataRef = new Ref<GithubAuthData>();
-    final Ref<IOException> exceptionRef = new Ref<IOException>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          authDataRef.set(GithubUtil.getValidAuthDataFromConfig(project, indicator));
-        }
-        catch (IOException e) {
-          exceptionRef.set(e);
-        }
-      }
-    });
-    if (!exceptionRef.isNull()) {
-      throw exceptionRef.get();
-    }
-    return authDataRef.get();
+    return GithubUtil.computeValueInModal(project, "Access to GitHub",
+                                          new ThrowableConvertor<ProgressIndicator, GithubAuthData, IOException>() {
+                                            @Override
+                                            public GithubAuthData convert(ProgressIndicator indicator) throws IOException {
+                                              return GithubUtil.getValidAuthDataFromConfig(project, indicator);
+                                            }
+                                          });
   }
 
   @NotNull

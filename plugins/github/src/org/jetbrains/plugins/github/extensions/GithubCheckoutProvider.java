@@ -17,7 +17,6 @@ package org.jetbrains.plugins.github.extensions;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -25,6 +24,7 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.ThrowableConvertor;
 import git4idea.actions.BasicAction;
 import git4idea.checkout.GitCheckoutProvider;
 import git4idea.checkout.GitCloneDialog;
@@ -56,27 +56,26 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     }
     BasicAction.saveAll();
 
-    final Ref<List<GithubRepo>> repositoryInfoRef = new Ref<List<GithubRepo>>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
-            @Override
-            public void consume(GithubAuthData authData) throws IOException {
-              repositoryInfoRef.set(GithubApiUtil.getAvailableRepos(authData));
-            }
+    List<GithubRepo> availableRepos;
+    try {
+      availableRepos = GithubUtil
+        .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, List<GithubRepo>, IOException>() {
+          @Override
+          public List<GithubRepo> convert(ProgressIndicator indicator) throws IOException {
+            return GithubUtil.runWithValidAuth(project, indicator, new ThrowableConvertor<GithubAuthData, List<GithubRepo>, IOException>() {
+              @Override
+              public List<GithubRepo> convert(GithubAuthData authData) throws IOException {
+                return GithubApiUtil.getAvailableRepos(authData);
+              }
             });
-        }
-        catch (GithubAuthenticationCanceledException e) {
-          // no error message
-        }
-        catch (IOException e) {
-          GithubNotifications.showError(project, "Couldn't get the list of GitHub repositories", e);
-        }
-      }
-    });
-    final List<GithubRepo> availableRepos = repositoryInfoRef.get();
-    if (availableRepos == null){
+          }
+        });
+    }
+    catch (GithubAuthenticationCanceledException e) {
+      return;
+    }
+    catch (IOException e) {
+      GithubNotifications.showError(project, "Couldn't get the list of GitHub repositories", e);
       return;
     }
     Collections.sort(availableRepos, new Comparator<GithubRepo>() {

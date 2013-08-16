@@ -19,6 +19,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -26,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
+import com.intellij.util.ThrowableRunnable;
 import git4idea.GitUtil;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
@@ -234,6 +237,34 @@ public class GithubUtil {
     return GithubApiUtil.getCurrentUserDetailed(auth);
   }
 
+  public static <T, E extends Throwable> T computeValueInModal(@NotNull Project project,
+                                                               @NotNull String caption,
+                                                               @NotNull final ThrowableConvertor<ProgressIndicator, T, E> task) throws E {
+    final Ref<T> dataRef = new Ref<T>();
+    final Ref<E> exceptionRef = new Ref<E>();
+    ProgressManager.getInstance().run(new Task.Modal(project, caption, true) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          dataRef.set(task.convert(indicator));
+        }
+        catch (Error e) {
+          throw e;
+        }
+        catch (RuntimeException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          //noinspection unchecked
+          exceptionRef.set((E)e);
+        }
+      }
+    });
+    if (!exceptionRef.isNull()) {
+      throw exceptionRef.get();
+    }
+    return dataRef.get();
+  }
+
   /*
   * Git utils
   */
@@ -335,5 +366,4 @@ public class GithubUtil {
     }
     return manager.getRepositoryForFile(project.getBaseDir());
   }
-
 }
