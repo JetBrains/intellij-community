@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubGist;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubNotifications;
@@ -109,17 +110,27 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
-    final GithubAuthData auth = dialog.isAnonymous() ? GithubAuthData.createAnonymous() : getValidAuthData(project);
-    if (auth == null) {
-      return;
+    GithubAuthData auth = GithubAuthData.createAnonymous();
+    if (!dialog.isAnonymous()) {
+      try {
+        auth = getValidAuthData(project);
+      }
+      catch (GithubAuthenticationCanceledException e) {
+        return;
+      }
+      catch (IOException e) {
+        GithubNotifications.showError(project, "Can't create gist", e);
+        return;
+      }
     }
 
     final Ref<String> url = new Ref<String>();
+    final GithubAuthData finalAuth = auth;
     new Task.Backgroundable(project, "Creating Gist...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<FileContent> contents = collectContents(project, editor, file, files);
-        String gistUrl = createGist(project, auth, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
+        String gistUrl = createGist(project, finalAuth, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
         url.set(gistUrl);
       }
 
@@ -138,14 +149,23 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }.queue();
   }
 
-  @Nullable
-  private static GithubAuthData getValidAuthData(@NotNull final Project project) {
+  @NotNull
+  private static GithubAuthData getValidAuthData(@NotNull final Project project) throws IOException {
     final Ref<GithubAuthData> authDataRef = new Ref<GithubAuthData>();
+    final Ref<IOException> exceptionRef = new Ref<IOException>();
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
-        authDataRef.set(GithubUtil.getValidAuthDataFromConfig(project, indicator));
+        try {
+          authDataRef.set(GithubUtil.getValidAuthDataFromConfig(project, indicator));
+        }
+        catch (IOException e) {
+          exceptionRef.set(e);
+        }
       }
     });
+    if (!exceptionRef.isNull()) {
+      throw exceptionRef.get();
+    }
     return authDataRef.get();
   }
 

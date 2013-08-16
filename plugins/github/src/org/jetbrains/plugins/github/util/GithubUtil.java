@@ -72,9 +72,6 @@ public class GithubUtil {
     }
     catch (GithubAuthenticationException e) {
       auth = getValidAuthData(project, indicator);
-      if (auth == null) {
-        throw new GithubAuthenticationCanceledException("Can't get valid credentials");
-      }
       task.consume(auth);
       return auth;
     }
@@ -99,9 +96,6 @@ public class GithubUtil {
     }
     catch (GithubAuthenticationException e) {
       auth = getValidAuthData(project, indicator);
-      if (auth == null) {
-        throw new GithubAuthenticationCanceledException("Can't get valid credentials");
-      }
       return task.convert(auth);
     }
     catch (IOException e) {
@@ -129,9 +123,6 @@ public class GithubUtil {
     }
     catch (GithubAuthenticationException e) {
       auth = getValidBasicAuthDataForHost(project, indicator, host);
-      if (auth == null) {
-        throw new GithubAuthenticationCanceledException("Can't get valid credentials");
-      }
       return task.convert(auth);
     }
     catch (IOException e) {
@@ -160,8 +151,9 @@ public class GithubUtil {
   /**
    * @return null if user canceled login dialog. Valid GithubAuthData otherwise.
    */
-  @Nullable
-  public static GithubAuthData getValidAuthData(@Nullable Project project, @NotNull ProgressIndicator indicator) {
+  @NotNull
+  public static GithubAuthData getValidAuthData(@Nullable Project project, @NotNull ProgressIndicator indicator)
+    throws GithubAuthenticationCanceledException {
     final GithubLoginDialog dialog = new GithubLoginDialog(project);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
@@ -170,7 +162,7 @@ public class GithubUtil {
       }
     }, indicator.getModalityState());
     if (!dialog.isOK()) {
-      return null;
+      throw new GithubAuthenticationCanceledException("Can't get valid credentials");
     }
     return dialog.getAuthData();
   }
@@ -178,10 +170,10 @@ public class GithubUtil {
   /**
    * @return null if user canceled login dialog. Valid GithubAuthData otherwise.
    */
-  @Nullable
+  @NotNull
   public static GithubAuthData getValidBasicAuthDataForHost(@Nullable Project project,
-                                                            @NotNull ProgressIndicator indicator,
-                                                            @NotNull String host) {
+                                                            @NotNull ProgressIndicator indicator, @NotNull String host)
+    throws GithubAuthenticationCanceledException {
     final GithubLoginDialog dialog = new GithubBasicLoginDialog(project);
     dialog.lockHost(host);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
@@ -191,13 +183,14 @@ public class GithubUtil {
       }
     }, indicator.getModalityState());
     if (!dialog.isOK()) {
-      return null;
+      throw new GithubAuthenticationCanceledException("Can't get valid credentials");
     }
     return dialog.getAuthData();
   }
 
-  @Nullable
-  public static GithubAuthData getValidAuthDataFromConfig(@Nullable Project project, @NotNull ProgressIndicator indicator) {
+  @NotNull
+  public static GithubAuthData getValidAuthDataFromConfig(@Nullable Project project, @NotNull ProgressIndicator indicator)
+    throws IOException {
     GithubAuthData auth = GithubSettings.getInstance().getAuthData();
     try {
       checkAuthData(auth);
@@ -205,10 +198,6 @@ public class GithubUtil {
     }
     catch (GithubAuthenticationException e) {
       return getValidAuthData(project, indicator);
-    }
-    catch (IOException e) {
-      LOG.info("Connection error", e);
-      return null;
     }
   }
 
