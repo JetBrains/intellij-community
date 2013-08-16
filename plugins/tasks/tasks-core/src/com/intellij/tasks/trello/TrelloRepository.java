@@ -353,4 +353,14 @@ public final class TrelloRepository extends BaseRepositoryImpl {
       }
     };
   }
+
+  @Override
+  public boolean isConfigured() {
+    return super.isConfigured() && StringUtil.isNotEmpty(myPassword);
+  }
+
+  @Override
+  public String getUrl() {
+    return "trello.com";
+  }
 }
