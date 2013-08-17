@@ -74,6 +74,12 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("make.method.ctr.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

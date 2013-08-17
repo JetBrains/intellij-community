@@ -151,6 +151,12 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       myMinimumBranches = minimumBranches;
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     @NotNull
     public String getName() {

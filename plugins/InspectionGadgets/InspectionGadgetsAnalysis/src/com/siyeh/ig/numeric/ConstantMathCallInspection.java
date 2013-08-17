@@ -83,6 +83,11 @@ public class ConstantMathCallInspection extends BaseInspection {
   }
 
   private static class MakeStrictFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

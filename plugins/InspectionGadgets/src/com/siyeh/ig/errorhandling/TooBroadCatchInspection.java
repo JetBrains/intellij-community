@@ -116,6 +116,12 @@ public class TooBroadCatchInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("too.broad.catch.quickfix", myText);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Add 'catch' clause";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement typeElement = descriptor.getPsiElement();

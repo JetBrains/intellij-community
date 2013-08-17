@@ -30,6 +30,12 @@ public class DeleteImportFix extends InspectionGadgetsFix {
     return InspectionGadgetsBundle.message("delete.import.quickfix");
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return getName();
+  }
+
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {

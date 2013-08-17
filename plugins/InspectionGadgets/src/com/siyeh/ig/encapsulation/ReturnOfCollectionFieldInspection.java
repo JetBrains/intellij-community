@@ -68,6 +68,12 @@ public class ReturnOfCollectionFieldInspection extends ReturnOfCollectionFieldIn
       myQualifiedClassName = qualifiedClassName;
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Make return collection 'unmodifiable'";
+    }
+
     @Override
     @NotNull
     public String getName() {

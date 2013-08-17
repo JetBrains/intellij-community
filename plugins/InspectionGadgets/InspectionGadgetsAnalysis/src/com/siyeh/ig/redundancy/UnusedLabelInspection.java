@@ -56,6 +56,11 @@ public class UnusedLabelInspection extends BaseInspection {
   }
 
   private static class UnusedLabelFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

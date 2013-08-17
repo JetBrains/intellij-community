@@ -106,6 +106,11 @@ public class StaticImportInspection extends BaseInspection {
     public String getName() {
       return InspectionGadgetsBundle.message("static.import.replace.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {

@@ -69,6 +69,11 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
   }
 
   private static class ReplaceWithParseMethodFix extends InspectionGadgetsFix {
+     @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull
@@ -112,6 +117,12 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
     public String getName() {
       return InspectionGadgetsBundle.message(
         "archaic.system.property.accessors.replace.standard.quickfix");
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
     }
 
     @Override

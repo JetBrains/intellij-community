@@ -87,6 +87,12 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
         Integer.valueOf(value), Integer.valueOf(newValue));
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Fix shift value";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

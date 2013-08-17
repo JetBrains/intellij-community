@@ -80,6 +80,11 @@ public class EmptyCatchBlockInspection extends BaseInspection {
   }
 
   private static class EmptyCatchBlockFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

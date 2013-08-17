@@ -58,6 +58,12 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
         "class.without.constructor.create.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

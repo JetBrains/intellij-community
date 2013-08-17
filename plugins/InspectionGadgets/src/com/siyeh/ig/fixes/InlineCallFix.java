@@ -28,6 +28,11 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class InlineCallFix extends InspectionGadgetsFix {
+      @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
   @Override
   @NotNull

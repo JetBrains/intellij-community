@@ -54,6 +54,12 @@ public class MakeFieldFinalFix extends InspectionGadgetsFix {
                                            fieldName);
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Make final";
+  }
+
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {

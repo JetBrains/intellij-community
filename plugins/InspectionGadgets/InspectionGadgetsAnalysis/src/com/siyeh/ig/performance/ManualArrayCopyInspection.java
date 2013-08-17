@@ -77,6 +77,11 @@ public class ManualArrayCopyInspection extends BaseInspection {
     public String getName() {
       return InspectionGadgetsBundle.message("manual.array.copy.replace.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {

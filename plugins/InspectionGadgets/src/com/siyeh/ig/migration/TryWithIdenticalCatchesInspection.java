@@ -171,6 +171,12 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("try.with.identical.catches.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiCatchSection section = (PsiCatchSection)descriptor.getPsiElement();

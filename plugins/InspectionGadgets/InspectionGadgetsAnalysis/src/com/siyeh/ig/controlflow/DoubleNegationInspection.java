@@ -60,6 +60,11 @@ public class DoubleNegationInspection extends BaseInspection {
     public String getName() {
       return InspectionGadgetsBundle.message("double.negation.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {

@@ -40,6 +40,12 @@ public class DeleteUnnecessaryStatementFix extends InspectionGadgetsFix {
       "smth.unnecessary.remove.quickfix", name);
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Remove redundant statement";
+  }
+
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {

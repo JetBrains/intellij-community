@@ -87,6 +87,12 @@ public class CachedNumberConstructorCallInspection
         "cached.number.constructor.call.quickfix", className);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with '.valueOf' call";
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

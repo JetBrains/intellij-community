@@ -58,6 +58,12 @@ public class MakeFieldStaticFinalFix extends InspectionGadgetsFix {
       "make.static.final.quickfix", fieldName);
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Make static final";
+  }
+
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {

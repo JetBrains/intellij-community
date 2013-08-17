@@ -76,6 +76,11 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
   }
 
   private static class InlineCallFix extends InspectionGadgetsFix {
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

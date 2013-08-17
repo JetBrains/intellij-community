@@ -63,6 +63,12 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("non.short.circuit.boolean.expression.replace.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiPolyadicExpression expression = (PsiPolyadicExpression)descriptor.getPsiElement();

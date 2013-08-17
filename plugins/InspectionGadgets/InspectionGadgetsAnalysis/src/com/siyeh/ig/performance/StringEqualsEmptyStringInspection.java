@@ -75,6 +75,12 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
       }
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify empty string check";
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();

@@ -68,6 +68,11 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
   }
 
   private static class MethodCanBeVariableArityMethodFix extends InspectionGadgetsFix {
+       @Override
+  @NotNull
+  public String getFamilyName() {
+    return getName();
+  }
 
     @NotNull
     @Override

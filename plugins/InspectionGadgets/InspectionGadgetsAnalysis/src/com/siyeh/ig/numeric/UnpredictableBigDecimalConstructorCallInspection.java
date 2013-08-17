@@ -97,6 +97,12 @@ public class UnpredictableBigDecimalConstructorCallInspection
         argumentText);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with 'new BigDecimal'";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

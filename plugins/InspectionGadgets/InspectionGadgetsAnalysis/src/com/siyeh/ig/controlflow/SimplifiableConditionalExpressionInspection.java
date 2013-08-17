@@ -70,6 +70,12 @@ public class SimplifiableConditionalExpressionInspection
         "constant.conditional.expression.simplify.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

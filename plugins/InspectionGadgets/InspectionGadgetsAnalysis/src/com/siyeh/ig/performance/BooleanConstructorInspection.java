@@ -76,6 +76,12 @@ public class BooleanConstructorInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("boolean.constructor.simplify.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement();

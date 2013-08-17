@@ -236,5 +236,11 @@ public class NonThreadSafeLazyInitializationInspection
     public String getName() {
       return "Introduce holder class";
     }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
   }
 }

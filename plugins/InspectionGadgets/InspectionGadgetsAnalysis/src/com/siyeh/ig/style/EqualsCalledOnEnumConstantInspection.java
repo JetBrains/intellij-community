@@ -55,6 +55,11 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
   }
 
   private static class EqualsCalledOnEnumValueFix extends InspectionGadgetsFix {
+     @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

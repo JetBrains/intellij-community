@@ -54,6 +54,12 @@ public class BooleanVariableAlwaysNegatedInspection extends BooleanVariableAlway
         "boolean.variable.always.inverted.quickfix", name);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Invert";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

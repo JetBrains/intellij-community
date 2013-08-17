@@ -72,6 +72,12 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
       this.modifier = modifier;
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Fix constructor modifier";
+    }
+
     @Override
     @NotNull
     public String getName() {
