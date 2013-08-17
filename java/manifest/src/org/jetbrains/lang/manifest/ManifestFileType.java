@@ -63,6 +63,6 @@ public class ManifestFileType extends LanguageFileType {
   @Nullable
   @Override
   public Icon getIcon() {
-    return AllIcons.FileTypes.Custom;  //todo OsmorcBundle.getSmallIcon();
+    return AllIcons.FileTypes.Manifest;
   }
 }

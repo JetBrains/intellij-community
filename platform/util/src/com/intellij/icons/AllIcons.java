@@ -331,6 +331,7 @@ public class AllIcons {
     public static final Icon JavaScript = IconLoader.getIcon("/fileTypes/javaScript.png"); // 16x16
     public static final Icon Jsp = IconLoader.getIcon("/fileTypes/jsp.png"); // 16x16
     public static final Icon Jspx = IconLoader.getIcon("/fileTypes/jspx.png"); // 16x16
+    public static final Icon Manifest = IconLoader.getIcon("/fileTypes/manifest.png"); // 16x16
     public static final Icon Properties = IconLoader.getIcon("/fileTypes/properties.png"); // 16x16
     public static final Icon Text = IconLoader.getIcon("/fileTypes/text.png"); // 16x16
     public static final Icon TypeScript = IconLoader.getIcon("/fileTypes/typeScript.png"); // 16x16
