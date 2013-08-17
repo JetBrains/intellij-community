@@ -68,6 +68,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -138,6 +139,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private volatile LookupArranger myArranger;
   private LookupArranger myPresentableArranger;
   private final Map<LookupElement, PrefixMatcher> myMatchers = new ConcurrentHashMap<LookupElement, PrefixMatcher>(
+    ContainerUtil.<LookupElement>identityStrategy());
+  private final Map<LookupElement, Font> myCustomFonts = new ConcurrentWeakHashMap<LookupElement, Font>(
     ContainerUtil.<LookupElement>identityStrategy());
   private LookupHint myElementHint = null;
   private final Alarm myHintAlarm = new Alarm();
@@ -337,9 +340,19 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public LookupElementPresentation updateLookupWidth(LookupElement item) {
     final LookupElementPresentation presentation = renderItemApproximately(item);
-    int maxWidth = myCellRenderer.updateMaximumWidth(presentation);
+    final Font customFont = myCellRenderer.getFontAbleToDisplay(presentation);
+    if (customFont != null) {
+      myCustomFonts.put(item, customFont);
+    }
+    int maxWidth = myCellRenderer.updateMaximumWidth(presentation, item);
     myLookupTextWidth = Math.max(maxWidth, myLookupTextWidth);
     return presentation;
+  }
+
+  @Nullable
+  public Font getCustomFont(LookupElement item, boolean bold) {
+    Font font = myCustomFonts.get(item);
+    return font == null ? null : bold ? font.deriveFont(Font.BOLD) : font;
   }
 
   public void requestResize() {
