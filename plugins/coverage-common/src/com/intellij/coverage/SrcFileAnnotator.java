@@ -19,10 +19,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -450,8 +447,10 @@ public class SrcFileAnnotator implements Disposable {
     if (attributes.getBackgroundColor() != null) {
       textAttributes = attributes;
     }
+    final int startOffset = myDocument.getLineStartOffset(lineNumberInCurrent);
+    final int endOffset = myDocument.getLineEndOffset(lineNumberInCurrent);
     final RangeHighlighter highlighter =
-      markupModel.addLineHighlighter(lineNumberInCurrent, HighlighterLayer.SELECTION - 1, textAttributes);
+      markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
     final Function<Integer, Integer> newToOldConverter = new Function<Integer, Integer>() {
       public Integer fun(final Integer newLine) {
         if (myEditor == null) return -1;
