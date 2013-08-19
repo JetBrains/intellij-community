@@ -94,6 +94,12 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
       return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.builder.replace.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();

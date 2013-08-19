@@ -24,12 +24,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.deployment.*;
-import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
 import icons.GoogleAppEngineIcons;
 import org.jetbrains.annotations.NotNull;
@@ -179,8 +177,8 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
     }
 
     @Override
-    public void computeDeployments(@NotNull ComputeDeploymentsCallback deployments) {
-      deployments.succeeded(ContainerUtil.<Deployment>emptyList());
+    public void computeDeployments(@NotNull ComputeDeploymentsCallback callback) {
+      callback.succeeded();
     }
 
     @Override

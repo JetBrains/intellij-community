@@ -17,8 +17,8 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubAuthData;
-import org.jetbrains.plugins.github.GithubSettings;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubSettings;
 
 /**
  * @author Aleksey Pivovarov

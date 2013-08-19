@@ -23,14 +23,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * The main extension point for issue tracking integration.
  *
  * @author Dmitry Avdeev
  */
-public abstract class TaskRepositoryType<T extends TaskRepository> {
+public abstract class TaskRepositoryType<T extends TaskRepository> implements TaskRepositorySubtype {
 
   public static final ExtensionPointName<TaskRepositoryType> EP_NAME = new ExtensionPointName<TaskRepositoryType>("com.intellij.tasks.repositoryType");
 
@@ -45,6 +47,15 @@ public abstract class TaskRepositoryType<T extends TaskRepository> {
 
   @NotNull
   public abstract TaskRepositoryEditor createEditor(T repository, Project project, Consumer<T> changeListener);
+
+  public List<TaskRepositorySubtype> getAvailableSubtypes() {
+    return Arrays.asList((TaskRepositorySubtype)this);
+  }
+
+  @NotNull
+  public TaskRepository createRepository(TaskRepositorySubtype subtype) {
+    return subtype.createRepository();
+  }
 
   @NotNull
   public abstract TaskRepository createRepository();

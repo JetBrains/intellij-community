@@ -36,7 +36,7 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
   protected PsiReference[] getReferencesByElement(@NotNull final PsiClass aClass,
                                                   final XmlAttributeValue xmlAttributeValue,
                                                   ProcessingContext context) {
-    final PsiField field = aClass.findFieldByName(xmlAttributeValue.getValue(), false);
+    final PsiField field = aClass.findFieldByName(xmlAttributeValue.getValue(), true);
     return new PsiReference[]{new JavaFxControllerFieldRef(xmlAttributeValue, field, aClass)};
   }
 

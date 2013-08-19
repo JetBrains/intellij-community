@@ -35,9 +35,13 @@ public class CoreLocalVirtualFile extends VirtualFile {
   private final boolean isDirectory;
 
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile) {
+    this(fileSystem, ioFile, ioFile.isDirectory());
+  }
+
+  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile, boolean isDirectory) {
     myFileSystem = fileSystem;
     myIoFile = ioFile;
-    isDirectory = ioFile.isDirectory();
+    this.isDirectory = isDirectory;
   }
 
   @NotNull

@@ -25,7 +25,9 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.branch.GitBranchesCollection;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
+import git4idea.test.GitExecutor;
 import git4idea.test.GitTestUtil;
 
 import java.io.File;
@@ -125,5 +127,6 @@ public class TaskBranchesTest extends PlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
+    GitVcsSettings.getInstance(myProject).getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
   }
 }

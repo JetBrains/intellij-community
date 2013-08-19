@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import git4idea.commands.Git;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubRepoDetailed;
+import org.jetbrains.plugins.github.util.GithubAuthData;
 
 import java.io.IOException;
 

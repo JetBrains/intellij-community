@@ -62,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
@@ -70,6 +71,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
 
 /**
  * @author Maxim.Medvedev
@@ -81,6 +84,38 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       return expr.getText();
     }
   };
+
+  public static GrExpression insertExplicitCastIfNeeded(GrVariable variable, GrExpression initializer) {
+    PsiType ltype = findLValueType(initializer);
+    PsiType rtype = initializer.getType();
+
+    GrExpression rawExpr = (GrExpression)skipParentheses(initializer, false);
+
+    if (ltype == null || TypesUtil.isAssignableWithoutConversions(ltype, rtype, initializer) || !TypesUtil.isAssignable(ltype, rtype, initializer)) {
+      return rawExpr;
+    }
+    else { // implicit coercion should be replaced with explicit cast
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(variable.getProject());
+      GrSafeCastExpression cast =
+        (GrSafeCastExpression)factory.createExpressionFromText("a as B");
+      cast.getOperand().replaceWithExpression(rawExpr, false);
+      cast.getCastTypeElement().replace(factory.createTypeElement(ltype));
+      return cast;
+    }
+  }
+
+  @Nullable
+  private static PsiType findLValueType(GrExpression initializer) {
+    if (initializer.getParent() instanceof GrAssignmentExpression && ((GrAssignmentExpression)initializer.getParent()).getRValue() == initializer) {
+      return ((GrAssignmentExpression)initializer.getParent()).getLValue().getNominalType();
+    }
+    else if (initializer.getParent() instanceof GrVariable) {
+      return ((GrVariable)initializer.getParent()).getDeclaredType();
+    }
+    else {
+      return null;
+    }
+  }
 
   @NotNull
   protected abstract String getRefactoringName();

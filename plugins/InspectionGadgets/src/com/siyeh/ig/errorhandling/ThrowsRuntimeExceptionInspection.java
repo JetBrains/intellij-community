@@ -75,6 +75,12 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("throws.runtime.exception.move.quickfix", myExceptionName);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Move to Javadoc '@throws'";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
@@ -164,6 +170,12 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
     @Override
     public String getName() {
       return InspectionGadgetsBundle.message("throws.runtime.exception.quickfix", myClassName);
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Remove from \"throws\" clause";
     }
 
     @Override

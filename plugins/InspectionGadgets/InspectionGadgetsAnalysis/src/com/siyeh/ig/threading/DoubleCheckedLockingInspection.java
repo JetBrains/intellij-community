@@ -87,6 +87,12 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
         "double.checked.locking.quickfix", field.getName());
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Make field volatile";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

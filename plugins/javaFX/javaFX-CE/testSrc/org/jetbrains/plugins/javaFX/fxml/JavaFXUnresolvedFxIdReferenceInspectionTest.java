@@ -43,6 +43,17 @@ public class JavaFXUnresolvedFxIdReferenceInspectionTest extends AbstractJavaFXQ
     assertEmpty(intentionActions);
   }
 
+  public void testFieldsFromControllerSuper() throws Exception {
+    myFixture.addClass("import javafx.scene.control.RadioButton;\n" +
+                       "public class SuperController {\n" +
+                       "    public RadioButton option1;\n" +
+                       "}\n");
+    myFixture.addClass("public class Controller extends SuperController {}");
+    final String testFxml = getTestName(true) + ".fxml";
+    myFixture.configureByFile(testFxml);
+    myFixture.testHighlighting(true, false, false, testFxml);
+  }
+
   private void doTest(final String controllerName) {
     myFixture.configureByFiles(getTestName(true) + ".fxml", controllerName + ".java");
     final IntentionAction singleIntention = myFixture.findSingleIntention(getHint("unknown"));

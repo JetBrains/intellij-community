@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -33,6 +32,7 @@ import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -51,13 +51,18 @@ import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.*;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 
-import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
+import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
 /**
  * @author oleg
@@ -192,42 +197,38 @@ public class GithubShareAction extends DumbAwareAction {
 
   @Nullable
   private static GithubInfo loadGithubInfoWithModal(@NotNull final Project project) {
-    final Ref<GithubInfo> githubInfoRef = new Ref<GithubInfo>();
-    final Ref<IOException> exceptionRef = new Ref<IOException>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          // get existing github repos (network) and validate auth data
-          final Ref<List<GithubRepo>> availableReposRef = new Ref<List<GithubRepo>>();
-          final GithubAuthData auth =
-            GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
-              @Override
-              public void consume(GithubAuthData authData) throws IOException {
-                availableReposRef.set(GithubApiUtil.getAvailableRepos(authData));
-              }
-            });
-          final HashSet<String> names = new HashSet<String>();
-          for (GithubRepo info : availableReposRef.get()) {
-            names.add(info.getName());
-          }
+    try {
+      return GithubUtil
+        .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubInfo, IOException>() {
+          @Override
+          public GithubInfo convert(ProgressIndicator indicator) throws IOException {
+            // get existing github repos (network) and validate auth data
+            final Ref<List<GithubRepo>> availableReposRef = new Ref<List<GithubRepo>>();
+            final GithubAuthData auth =
+              GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
+                @Override
+                public void consume(GithubAuthData authData) throws IOException {
+                  availableReposRef.set(GithubApiUtil.getUserRepos(authData));
+                }
+              });
+            final HashSet<String> names = new HashSet<String>();
+            for (GithubRepo info : availableReposRef.get()) {
+              names.add(info.getName());
+            }
 
-          // check access to private repos (network)
-          final GithubUserDetailed userInfo = GithubApiUtil.getCurrentUserDetailed(auth);
-          githubInfoRef.set(new GithubInfo(auth, userInfo, names));
-        }
-        catch (IOException e) {
-          exceptionRef.set(e);
-        }
-      }
-    });
-    if (!exceptionRef.isNull()) {
-      if (exceptionRef.get() instanceof GithubAuthenticationCanceledException) {
-        return null;
-      }
-      GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", exceptionRef.get());
+            // check access to private repos (network)
+            final GithubUserDetailed userInfo = GithubApiUtil.getCurrentUserDetailed(auth);
+            return new GithubInfo(auth, userInfo, names);
+          }
+        });
+    }
+    catch (GithubAuthenticationCanceledException e) {
       return null;
     }
-    return githubInfoRef.get();
+    catch (IOException e) {
+      GithubNotifications.showErrorDialog(project, "Failed to connect to GitHub", e);
+      return null;
+    }
   }
 
   @Nullable

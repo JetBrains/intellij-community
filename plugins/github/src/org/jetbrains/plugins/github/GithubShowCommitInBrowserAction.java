@@ -22,6 +22,9 @@ import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import icons.GithubIcons;
 import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 /**
  * @author Kirill Likhodedov
@@ -29,7 +32,7 @@ import org.jetbrains.plugins.github.api.GithubFullPath;
 abstract class GithubShowCommitInBrowserAction extends DumbAwareAction {
 
   public GithubShowCommitInBrowserAction() {
-    super("Open in Browser", "Open the selected commit in browser", GithubIcons.Github_icon);
+    super("Open op GitHub", "Open the selected commit in browser", GithubIcons.Github_icon);
   }
 
   protected static void openInBrowser(Project project, GitRepository repository, String revisionHash) {

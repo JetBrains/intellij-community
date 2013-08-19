@@ -106,6 +106,12 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
       return InspectionGadgetsBundle.message("utility.class.without.private.constructor.create.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
@@ -145,6 +151,11 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
   }
 
   private static class MakeConstructorPrivateFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

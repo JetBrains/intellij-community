@@ -97,6 +97,12 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
         newClassName);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace foreign class";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();

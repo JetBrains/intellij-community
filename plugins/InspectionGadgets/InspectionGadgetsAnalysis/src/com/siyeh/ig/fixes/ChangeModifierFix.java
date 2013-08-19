@@ -43,6 +43,12 @@ public class ChangeModifierFix extends InspectionGadgetsFix {
                                            modifierText);
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Change modifier";
+  }
+
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {

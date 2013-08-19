@@ -146,6 +146,11 @@ public class MultiplyOrDivideByPowerOfTwoInspection
       return InspectionGadgetsBundle.message(
         "multiply.or.divide.by.power.of.two.replace.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)

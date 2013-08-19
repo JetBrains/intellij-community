@@ -130,7 +130,7 @@ public interface StatusBarWidget extends Disposable {
     }
 
     public Insets getBorderInsets(Component c) {
-      return new Insets(2, 4, 2, 2);
+      return new Insets(0, 4, 0, 2);
     }
 
     public boolean isBorderOpaque() {

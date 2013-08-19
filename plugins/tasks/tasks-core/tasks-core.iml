@@ -27,8 +27,38 @@
     </orderEntry>
     <orderEntry type="library" exported="" name="http-client-3.1" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="markdownj">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/markdownj-core-0.4.2-SNAPSHOT.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="core-api" />
+    <orderEntry type="module" module-name="xpath" />
+    <orderEntry type="module" module-name="RegExpSupport" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/json-path-0.8.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/json-smart-1.1.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -41,7 +71,6 @@
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="library" exported="" name="markdownj" level="project" />
-    <orderEntry type="module" module-name="core-api" />
   </component>
 </module>
 

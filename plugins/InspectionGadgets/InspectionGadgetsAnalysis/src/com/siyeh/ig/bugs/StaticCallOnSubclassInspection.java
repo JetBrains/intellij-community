@@ -64,6 +64,11 @@ public class StaticCallOnSubclassInspection extends BaseInspection {
       return InspectionGadgetsBundle.message(
         "static.method.via.subclass.rationalize.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)

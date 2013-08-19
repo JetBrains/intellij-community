@@ -51,6 +51,12 @@ public class RenameFix extends InspectionGadgetsFix {
     m_searchInNonJavaFiles = searchInNonJavaFiles;
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return InspectionGadgetsBundle.message("rename.quickfix");
+  }
+
   @Override
   @NotNull
   public String getName() {

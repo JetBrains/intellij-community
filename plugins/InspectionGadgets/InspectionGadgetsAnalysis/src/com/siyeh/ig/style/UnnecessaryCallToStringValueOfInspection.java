@@ -80,6 +80,12 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("unnecessary.call.to.string.valueof.quickfix", replacementText);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)descriptor.getPsiElement();

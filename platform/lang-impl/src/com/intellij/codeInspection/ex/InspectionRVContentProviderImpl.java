@@ -118,9 +118,8 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     final RefEntity refElement = refElementDescriptor.getUserObject();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     if (context.getUIOptions().SHOW_ONLY_DIFF && presentation.getElementStatus(refElement) == FileStatus.NOT_CHANGED) return;
-    if (toolWrapper instanceof LocalInspectionToolWrapper) {
-      final CommonProblemDescriptor[] problems = refElementDescriptor.getProblemDescriptors();
-      if (problems != null) {
+    final CommonProblemDescriptor[] problems = refElementDescriptor.getProblemDescriptors();
+    if (problems != null) {
         final RefElementNode elemNode = addNodeToParent(container, presentation, pNode);
         for (CommonProblemDescriptor problem : problems) {
           assert problem != null;
@@ -132,7 +131,6 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
             elemNode.setProblem(problems[0]);
           }
         }
-      }
     }
     else {
       if (canPackageRepeat) {

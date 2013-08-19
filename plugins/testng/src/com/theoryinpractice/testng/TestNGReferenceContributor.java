@@ -36,7 +36,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -57,26 +56,26 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
   }
 
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(getElementPattern("dependsOnMethods"), new PsiReferenceProviderBase() {
+    registrar.registerReferenceProvider(getElementPattern("dependsOnMethods"), new PsiReferenceProvider() {
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new MethodReference[]{new MethodReference((PsiLiteralExpression)element)};
       }
     });
 
-    registrar.registerReferenceProvider(getElementPattern("dataProvider"), new PsiReferenceProviderBase() {
+    registrar.registerReferenceProvider(getElementPattern("dataProvider"), new PsiReferenceProvider() {
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new DataProviderReference[]{new DataProviderReference((PsiLiteralExpression)element)};
       }
     });
-    registrar.registerReferenceProvider(getElementPattern("groups"), new PsiReferenceProviderBase() {
+    registrar.registerReferenceProvider(getElementPattern("groups"), new PsiReferenceProvider() {
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteralExpression)element)};
       }
     });
-    registrar.registerReferenceProvider(getElementPattern("dependsOnGroups"), new PsiReferenceProviderBase() {
+    registrar.registerReferenceProvider(getElementPattern("dependsOnGroups"), new PsiReferenceProvider() {
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteralExpression)element)};

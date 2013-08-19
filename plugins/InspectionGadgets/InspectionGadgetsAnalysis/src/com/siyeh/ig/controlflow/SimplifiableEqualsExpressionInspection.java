@@ -65,6 +65,12 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("simplifiable.equals.expression.quickfix", myMethodName);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();

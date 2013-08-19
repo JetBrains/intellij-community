@@ -58,6 +58,11 @@ public class ObjectNotifyInspection extends BaseInspection {
   }
 
   private static class ObjectNotifyFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

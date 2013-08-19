@@ -99,6 +99,12 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
         "unnecessary.javadoc.link.quickfix", tagName);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Remove redundant tag";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

@@ -293,8 +293,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
             externalProjectPath,
             callback,
             false,
-            true,
-            false
+            true
           );
         }
         catch (IllegalArgumentException e) {

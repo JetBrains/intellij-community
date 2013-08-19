@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -59,49 +60,24 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkInferredTypeArguments(PsiMethod genericMethod,
                                                          PsiMethodCallExpression call,
                                                          PsiSubstitutor substitutor) {
-    PsiTypeParameter[] typeParameters = genericMethod.getTypeParameters();
-    for (PsiTypeParameter typeParameter : typeParameters) {
-      PsiType substituted = substitutor.substitute(typeParameter);
-      if (substituted == null) return null;
-      substituted = PsiUtil.captureToplevelWildcards(substituted, call);
-      PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
-      for (PsiClassType type : extendsTypes) {
-        PsiType extendsType = substitutor.substitute(type);
-        if (substituted instanceof PsiWildcardType) {
-          if (((PsiWildcardType)substituted).isSuper()) {
-            continue;
-          }
-          final PsiType extendsBound = ((PsiWildcardType)substituted).getExtendsBound();
-          if (TypeConversionUtil.erasure(extendsType).equals(TypeConversionUtil.erasure(extendsBound))) {
-            if (extendsBound instanceof PsiClassType) {
-              PsiType[] parameters = ((PsiClassType)extendsBound).getParameters();
-              if (parameters.length == 1) {
-                PsiType argType = parameters[0];
-                if (argType instanceof PsiCapturedWildcardType) {
-                  argType = ((PsiCapturedWildcardType)argType).getWildcard();
-                }
-                if (argType instanceof PsiWildcardType && !((PsiWildcardType)argType).isBounded()) continue;
-              }
-            }
-          }
-        }
-        if (!TypeConversionUtil.isAssignable(extendsType, substituted, false)) {
-          PsiClass boundClass = extendsType instanceof PsiClassType ? ((PsiClassType)extendsType).resolve() : null;
+    final Pair<PsiTypeParameter, PsiType> inferredTypeArgument =
+      GenericsUtil.findTypeParameterWithBoundError(genericMethod.getTypeParameters(), substitutor, call, false);
+    if (inferredTypeArgument != null) {
+      final PsiType extendsType = inferredTypeArgument.second;
+      final PsiTypeParameter typeParameter = inferredTypeArgument.first;
+      PsiClass boundClass = extendsType instanceof PsiClassType ? ((PsiClassType)extendsType).resolve() : null;
 
-          @NonNls String messageKey = boundClass == null || typeParameter.isInterface() == boundClass.isInterface()
-                                      ? "generics.inferred.type.for.type.parameter.is.not.within.its.bound.extend"
-                                      : "generics.inferred.type.for.type.parameter.is.not.within.its.bound.implement";
+      @NonNls String messageKey = boundClass == null || typeParameter.isInterface() == boundClass.isInterface()
+                                  ? "generics.inferred.type.for.type.parameter.is.not.within.its.bound.extend"
+                                  : "generics.inferred.type.for.type.parameter.is.not.within.its.bound.implement";
 
-          String description = JavaErrorMessages.message(
-            messageKey,
-            HighlightUtil.formatClass(typeParameter),
-            JavaHighlightUtil.formatType(extendsType),
-            JavaHighlightUtil.formatType(substituted)
-          );
-
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(call).descriptionAndTooltip(description).create();
-        }
-      }
+      String description = JavaErrorMessages.message(
+        messageKey,
+        HighlightUtil.formatClass(typeParameter),
+        JavaHighlightUtil.formatType(extendsType),
+        JavaHighlightUtil.formatType(substitutor.substitute(typeParameter))
+      );
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(call).descriptionAndTooltip(description).create();
     }
 
     return null;

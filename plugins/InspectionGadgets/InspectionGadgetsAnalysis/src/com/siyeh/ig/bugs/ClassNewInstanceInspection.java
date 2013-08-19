@@ -64,6 +64,12 @@ public class ClassNewInstanceInspection extends BaseInspection {
         "class.new.instance.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

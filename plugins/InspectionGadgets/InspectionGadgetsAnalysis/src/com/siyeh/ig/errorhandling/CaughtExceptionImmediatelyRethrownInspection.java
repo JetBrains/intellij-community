@@ -85,6 +85,12 @@ public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection
       }
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Delete catch statement";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();

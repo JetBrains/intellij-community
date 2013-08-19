@@ -82,6 +82,11 @@ public class NonSerializableWithSerialVersionUIDFieldInspection
   }
 
   private static class RemoveSerialVersionUIDFix extends InspectionGadgetsFix {
+       @Override
+  @NotNull
+  public String getFamilyName() {
+    return getName();
+  }
 
     @Override
     @NotNull

@@ -509,7 +509,12 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       myKeyStorage.force();
 
       DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new LimitedInputStream(new FileInputStream(keystreamFile()),
-                                                                                                      myKeyStoreFileLength)));
+                                                                                                      myKeyStoreFileLength) {
+        @Override
+        public int available() throws IOException {
+          return remainingLimit();
+        }
+      }, 32768));
       try {
         try {
           while (true) {

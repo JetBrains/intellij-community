@@ -64,6 +64,11 @@ public class ConstantIfStatementInspection extends BaseInspection {
   }
 
   private static class ConstantIfStatementFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

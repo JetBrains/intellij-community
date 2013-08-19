@@ -63,6 +63,11 @@ public class TeardownCallsSuperTeardownInspection extends BaseInspection {
       return InspectionGadgetsBundle.message(
         "teardown.calls.super.teardown.add.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)

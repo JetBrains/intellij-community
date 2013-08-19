@@ -70,6 +70,11 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
       return InspectionGadgetsBundle.message(
         "html.tag.can.be.javadoc.tag.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {

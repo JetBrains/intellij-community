@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstru
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -194,11 +195,14 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo[] usages) {
     CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
 
+    final GrExpression initializer = mySettings.getInitializer();
+
+    GrExpression initializerToUse = GrIntroduceHandlerBase.insertExplicitCastIfNeeded(myLocal, mySettings.getInitializer());
+
     for (UsageInfo usage : usages) {
-      GrVariableInliner.inlineReference(usage, myLocal, mySettings.getInitializer());
+      GrVariableInliner.inlineReference(usage, myLocal, initializerToUse);
     }
 
-    final GrExpression initializer = mySettings.getInitializer();
     final PsiElement initializerParent = initializer.getParent();
 
     if (initializerParent instanceof GrAssignmentExpression) {

@@ -53,6 +53,11 @@ public class SingleCharacterStartsWithInspection extends BaseInspection {
 
   private static class SingleCharacterStartsWithFix
     extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

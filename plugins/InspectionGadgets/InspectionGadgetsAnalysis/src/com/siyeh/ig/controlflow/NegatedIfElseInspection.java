@@ -76,6 +76,12 @@ public class NegatedIfElseInspection extends BaseInspection {
 
   private static class NegatedIfElseFix extends InspectionGadgetsFix {
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     @NotNull
     public String getName() {

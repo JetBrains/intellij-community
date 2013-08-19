@@ -70,6 +70,12 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
         "implicit.call.to.super.make.explicit.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

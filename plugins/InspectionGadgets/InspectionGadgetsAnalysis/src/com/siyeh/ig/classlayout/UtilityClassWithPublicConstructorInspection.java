@@ -73,6 +73,12 @@ public class UtilityClassWithPublicConstructorInspection
         Integer.valueOf(m_multipleConstructors ? 1 : 2));
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Make constructors private";
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

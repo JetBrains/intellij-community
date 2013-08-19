@@ -84,6 +84,12 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
       this.inSameFile = inSameFile;
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace fully qualified name";
+    }
+
     @Override
     @NotNull
     public String getName() {

@@ -31,6 +31,12 @@ public class RemoveModifierFix extends InspectionGadgetsFix {
     this.modifierText = modifierText;
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Remove modifier";
+  }
+
   @Override
   @NotNull
   public String getName() {

@@ -22,7 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +74,7 @@ public class LocalSearchScope extends SearchScope {
           localScope.add(file);
         }
       }
-      else if (element instanceof StubElement || element.getTextRange() != null){
+      else if (element instanceof StubBasedPsiElement || element.getTextRange() != null){
         localScope.add(element);
       }
     }

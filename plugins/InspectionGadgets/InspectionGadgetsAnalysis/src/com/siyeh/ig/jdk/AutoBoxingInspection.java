@@ -108,6 +108,12 @@ public class AutoBoxingInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("auto.boxing.make.boxing.explicit.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();

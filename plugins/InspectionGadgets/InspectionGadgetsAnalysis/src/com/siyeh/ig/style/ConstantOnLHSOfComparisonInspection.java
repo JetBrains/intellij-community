@@ -67,6 +67,12 @@ public class ConstantOnLHSOfComparisonInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("flip.comparison.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiBinaryExpression expression = (PsiBinaryExpression)descriptor.getPsiElement();

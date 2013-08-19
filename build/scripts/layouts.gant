@@ -77,10 +77,10 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "java-impl",
     "java-psi-impl",
     "jsp-spi",
+    "manifest",
     "platform-main",
     "testFramework",
-    "tests_bootstrap",
-          ].flatten()
+    "tests_bootstrap"].flatten()
 
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")
@@ -466,6 +466,11 @@ public def layoutCommunityPlugins(String home) {
       }
       fileset(dir: "$home/plugins/terminal/lib") {
         include(name: "*.jar")
+        include(name: "*.in")
+        include(name: "**/*.dll")
+        include(name: "**/*.exe")
+        include(name: "**/*.dylib")
+        include(name: "**/*.so")
       }
     }
   }

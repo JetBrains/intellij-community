@@ -51,6 +51,11 @@ public class SetupCallsSuperSetupInspection extends BaseInspection {
   }
 
   private static class AddSuperSetUpCall extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

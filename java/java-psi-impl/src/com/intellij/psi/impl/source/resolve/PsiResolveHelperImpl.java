@@ -572,10 +572,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                               final boolean captureWildcard) {
     if (arg instanceof PsiWildcardType && !captureWildcard) return FAILED_INFERENCE;
     if (arg != PsiType.NULL) {
-      if (arg instanceof PsiWildcardType) {
-        final PsiType bound = ((PsiWildcardType)arg).getBound();
-        if (bound instanceof PsiClassType && ((PsiClassType)bound).isRaw()) return Pair.create(null, constraintType);
-      }
       return new Pair<PsiType, ConstraintType>(arg, constraintType);
     }
     return null;

@@ -78,7 +78,13 @@ public class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService {
   @NotNull
   @Override
   public MavenProjectConfiguration getMavenProjectConfiguration(BuildDataPaths paths) {
-    final File configFile = new File(paths.getDataStorageRoot(), MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
+    final File dataStorageRoot = paths.getDataStorageRoot();
+    return getMavenProjectConfiguration(dataStorageRoot);
+  }
+
+  @NotNull
+  public MavenProjectConfiguration getMavenProjectConfiguration(@NotNull File dataStorageRoot) {
+    final File configFile = new File(dataStorageRoot, MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
     MavenProjectConfiguration config;
     synchronized (myLoadedConfigs) {
       config = myLoadedConfigs.get(configFile);

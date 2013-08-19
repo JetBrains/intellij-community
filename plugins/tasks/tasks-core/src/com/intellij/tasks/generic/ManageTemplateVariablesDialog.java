@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.List;
 
@@ -88,6 +89,24 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
           setModified();
         }
 
+        @Override
+        public TableCellRenderer getRenderer(TemplateVariable variable) {
+          if (variable.getIsHidden()) {
+            return new TableCellRenderer() {
+              @Override
+              public Component getTableCellRendererComponent(JTable table,
+                                                             Object value,
+                                                             boolean isSelected,
+                                                             boolean hasFocus,
+                                                             int row,
+                                                             int column) {
+                return new JPasswordField(value.toString());
+              }
+            };
+          }
+          return super.getRenderer(variable);
+        }
+
         @Nullable
         @Override
         protected String getDescription(TemplateVariable templateVariable) {
@@ -95,7 +114,68 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
         }
       };
 
-      return new ListTableModel((new ColumnInfo[]{name, value}));
+      final ColumnInfo isShownOnFirstTab = new ColumnInfo<TemplateVariable, Boolean>("Show on first tab") {
+        @Nullable
+        @Override
+        public Boolean valueOf(TemplateVariable o) {
+          return o.getIsShownOnFirstTab();
+        }
+
+        @Override
+        public void setValue(TemplateVariable variable, Boolean value) {
+          variable.setIsShownOnFirstTab(value);
+          setModified();
+        }
+
+        @Override
+        public Class getColumnClass() {
+          return Boolean.class;
+        }
+
+        @Override
+        public boolean isCellEditable(TemplateVariable variable) {
+          return !variable.getIsPredefined();
+        }
+
+        @Nullable
+        @Override
+        public String getTooltipText() {
+          return "Whether this template variable will be shown in 'General tab'";
+        }
+      };
+
+      final ColumnInfo isHidden = new ColumnInfo<TemplateVariable, Boolean>("Hide") {
+        @Nullable
+        @Override
+        public Boolean valueOf(TemplateVariable o) {
+          return o.getIsHidden();
+        }
+
+        @Override
+        public void setValue(TemplateVariable variable, Boolean value) {
+          variable.setIsHidden(value);
+          setModified();
+          // value column editor may be changed
+          TemplateVariablesTable.this.refreshValues();
+        }
+
+        @Override
+        public Class getColumnClass() {
+          return Boolean.class;
+        }
+
+        @Override
+        public boolean isCellEditable(TemplateVariable variable) {
+          return !variable.getIsPredefined();
+        }
+
+        @Nullable
+        @Override
+        public String getTooltipText() {
+          return "Whether this template variable will be hidden like password field";
+        }
+      };
+      return new ListTableModel((new ColumnInfo[]{name, value, isShownOnFirstTab, isHidden}));
     }
 
     @Override

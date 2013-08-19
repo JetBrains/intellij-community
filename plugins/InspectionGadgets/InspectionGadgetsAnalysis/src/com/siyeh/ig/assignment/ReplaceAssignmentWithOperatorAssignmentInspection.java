@@ -136,6 +136,12 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection extends BaseInspe
         signText);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify";
+    }
+
     @Override
     @NotNull
     public String getName() {

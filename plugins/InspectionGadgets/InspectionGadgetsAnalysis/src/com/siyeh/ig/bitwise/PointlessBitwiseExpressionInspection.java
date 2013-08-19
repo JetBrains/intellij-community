@@ -175,6 +175,11 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
       return InspectionGadgetsBundle.message(
         "pointless.bitwise.expression.simplify.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)

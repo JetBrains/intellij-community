@@ -244,7 +244,7 @@ public class ExternalSystemUtil {
     if (!toRefresh.isEmpty()) {
       counter[0] = toRefresh.size();
       for (String path : toRefresh) {
-        refreshProject(project, externalSystemId, path, callback, true, false, true);
+        refreshProject(project, externalSystemId, path, callback, true, false);
       }
     }
   }
@@ -361,7 +361,25 @@ public class ExternalSystemUtil {
    * @param externalProjectPath   path of the target gradle project's file
    * @param callback              callback to be notified on refresh result
    * @param resolveLibraries      flag that identifies whether gradle libraries should be resolved during the refresh
-   * @param refreshingAllProjects indicates 'refreshing all projects' action
+   * @return the most up-to-date gradle project (if any)
+   */
+  public static void refreshProject(@NotNull final Project project,
+                                    @NotNull final ProjectSystemId externalSystemId,
+                                    @NotNull final String externalProjectPath,
+                                    @NotNull final ExternalProjectRefreshCallback callback,
+                                    final boolean resolveLibraries,
+                                    final boolean modal) {
+    refreshProject(project, externalSystemId, externalProjectPath, callback, resolveLibraries, modal, true);
+  }
+
+  /**
+   * Queries slave gradle process to refresh target gradle project.
+   *
+   * @param project               target intellij project to use
+   * @param externalProjectPath   path of the target gradle project's file
+   * @param callback              callback to be notified on refresh result
+   * @param resolveLibraries      flag that identifies whether gradle libraries should be resolved during the refresh
+   * @param reportRefreshError    prevent to show annoying error notification, e.g. if auto-import mode used
    * @return the most up-to-date gradle project (if any)
    */
   public static void refreshProject(@NotNull final Project project,
@@ -370,7 +388,7 @@ public class ExternalSystemUtil {
                                     @NotNull final ExternalProjectRefreshCallback callback,
                                     final boolean resolveLibraries,
                                     final boolean modal,
-                                    final boolean refreshingAllProjects)
+                                    final boolean reportRefreshError)
   {
     File projectFile = new File(externalProjectPath);
     final String projectName;
@@ -415,7 +433,7 @@ public class ExternalSystemUtil {
         }
         AbstractExternalSystemSettings<?, ?, ?> settings = manager.getSettingsProvider().fun(project);
         ExternalProjectSettings projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
-        if (projectSettings == null || (projectSettings.isUseAutoImport() && !refreshingAllProjects)) {
+        if (projectSettings == null || !reportRefreshError) {
           return;
         }
         ExternalSystemIdeNotificationManager notificationManager = ServiceManager.getService(ExternalSystemIdeNotificationManager.class);
@@ -650,7 +668,7 @@ public class ExternalSystemUtil {
         }
       }
     };
-    refreshProject(project, externalSystemId, projectSettings.getExternalProjectPath(), callback, resolveLibraries, modal, false);
+    refreshProject(project, externalSystemId, projectSettings.getExternalProjectPath(), callback, resolveLibraries, modal);
   }
   
   private interface TaskUnderProgress {

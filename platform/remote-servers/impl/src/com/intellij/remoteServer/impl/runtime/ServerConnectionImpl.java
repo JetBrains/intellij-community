@@ -101,9 +101,11 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         DeploymentSource source = task.getSource();
         String deploymentName = instance.getDeploymentName(source);
         myLocalDeployments.put(deploymentName, new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYING, null, null));
-        myLoggingHandlers.put(deploymentName, (LoggingHandlerImpl)task.getLoggingHandler());
+        LoggingHandlerImpl handler = (LoggingHandlerImpl)task.getLoggingHandler();
+        handler.printSystemMessage("Deploying '" + deploymentName + "'...");
+        myLoggingHandlers.put(deploymentName, handler);
         onDeploymentStarted.run(deploymentName);
-        instance.deploy(task, new DeploymentOperationCallbackImpl(deploymentName));
+        instance.deploy(task, new DeploymentOperationCallbackImpl(deploymentName, handler));
       }
     });
   }
@@ -121,11 +123,18 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
         instance.computeDeployments(new ServerRuntimeInstance.ComputeDeploymentsCallback() {
+          private final List<Deployment> myDeployments = new ArrayList<Deployment>();
+
           @Override
-          public void succeeded(@NotNull List<Deployment> deployments) {
+          public void addDeployment(@NotNull String deploymentName) {
+            myDeployments.add(new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYED, null, null));
+          }
+
+          @Override
+          public void succeeded() {
             synchronized (myRemoteDeployments) {
               myRemoteDeployments.clear();
-              for (Deployment deployment : deployments) {
+              for (Deployment deployment : myDeployments) {
                 myRemoteDeployments.put(deployment.getName(), deployment);
               }
             }
@@ -152,15 +161,20 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     final String deploymentName = deployment.getName();
     myLocalDeployments.put(deploymentName, new DeploymentImpl(deploymentName, DeploymentStatus.UNDEPLOYING, null, null));
     myEventDispatcher.queueDeploymentsChanged(this);
+    final LoggingHandlerImpl loggingHandler = myLoggingHandlers.get(deploymentName);
+    loggingHandler.printSystemMessage("Undeploying '" + deploymentName + "'...");
     runtime.undeploy(new DeploymentRuntime.UndeploymentTaskCallback() {
       @Override
       public void succeeded() {
-        myLocalDeployments.put(deploymentName, new DeploymentImpl(deploymentName, DeploymentStatus.NOT_DEPLOYED, null, null));
+        loggingHandler.printSystemMessage("'" + deploymentName + "' has been undeployed successfully.");
+        myLocalDeployments.remove(deploymentName);
+        myLoggingHandlers.remove(deploymentName);
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
       }
 
       @Override
       public void errorOccurred(@NotNull String errorMessage) {
+        loggingHandler.printSystemMessage("Failed to undeploy '" + deploymentName + "': " + errorMessage);
         myLocalDeployments.put(deploymentName, new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYED, errorMessage, runtime));
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
       }
@@ -221,19 +235,23 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
   private class DeploymentOperationCallbackImpl implements ServerRuntimeInstance.DeploymentOperationCallback {
     private final String myDeploymentName;
+    private final LoggingHandlerImpl myLoggingHandler;
 
-    public DeploymentOperationCallbackImpl(String deploymentName) {
+    public DeploymentOperationCallbackImpl(String deploymentName, LoggingHandlerImpl handler) {
       myDeploymentName = deploymentName;
+      myLoggingHandler = handler;
     }
 
     @Override
     public void succeeded(@NotNull DeploymentRuntime deployment) {
+      myLoggingHandler.printSystemMessage("'" + myDeploymentName + "' has been deployed successfully.");
       myLocalDeployments.put(myDeploymentName, new DeploymentImpl(myDeploymentName, DeploymentStatus.DEPLOYED, null, deployment));
       myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
     }
 
     @Override
     public void errorOccurred(@NotNull String errorMessage) {
+      myLoggingHandler.printSystemMessage("Failed to deploy '" + myDeploymentName + "': " + errorMessage);
       myLocalDeployments.put(myDeploymentName, new DeploymentImpl(myDeploymentName, DeploymentStatus.NOT_DEPLOYED, errorMessage, null));
       myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
     }

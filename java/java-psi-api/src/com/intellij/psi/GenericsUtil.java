@@ -249,10 +249,17 @@ public class GenericsUtil {
                                                   final PsiSubstitutor substitutor,
                                                   final PsiElement context,
                                                   final boolean allowUncheckedConversion) {
+    return findTypeParameterWithBoundError(typeParams, substitutor, context, allowUncheckedConversion) == null;
+  }
+
+  public static Pair<PsiTypeParameter, PsiType> findTypeParameterWithBoundError(final PsiTypeParameter[] typeParams,
+                                                                                final PsiSubstitutor substitutor,
+                                                                                final PsiElement context,
+                                                                                final boolean allowUncheckedConversion) {
     nextTypeParam:
     for (PsiTypeParameter typeParameter : typeParams) {
       PsiType substituted = substitutor.substitute(typeParameter);
-      if (substituted == null) return true;
+      if (substituted == null) return null;
       substituted = PsiUtil.captureToplevelWildcards(substituted, context);
 
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
@@ -263,7 +270,7 @@ public class GenericsUtil {
             continue;
           }
           final PsiType extendsBound = ((PsiWildcardType)substituted).getExtendsBound();
-          if (TypeConversionUtil.erasure(extendsType).equals(TypeConversionUtil.erasure(extendsBound))) {
+          if (Comparing.equal(TypeConversionUtil.erasure(extendsType), TypeConversionUtil.erasure(extendsBound))) {
             if (extendsBound instanceof PsiClassType) {
               if (acceptExtendsBound((PsiClassType)extendsBound, 0)) continue;
             } else if (extendsBound instanceof PsiIntersectionType) {
@@ -275,12 +282,12 @@ public class GenericsUtil {
             }
           }
         }
-        if (!TypeConversionUtil.isAssignable(extendsType, substituted, allowUncheckedConversion)) {
-          return false;
+        if (extendsType != null && !TypeConversionUtil.isAssignable(extendsType, substituted, allowUncheckedConversion)) {
+          return Pair.create(typeParameter, extendsType);
         }
       }
     }
-    return true;
+    return null;
   }
 
   private static boolean acceptExtendsBound(PsiClassType extendsBound, int depth) {

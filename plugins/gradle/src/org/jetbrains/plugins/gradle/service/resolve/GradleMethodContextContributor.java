@@ -15,11 +15,14 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
+
+import java.util.List;
 
 /**
  * This interface narrows {@link NonCodeMembersContributor} to a closure executed inside particular method call at a gradle script.
@@ -42,14 +45,19 @@ import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
  */
 public interface GradleMethodContextContributor {
 
+  ExtensionPointName<GradleMethodContextContributor> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.resolve.contributor");
+  
   /**
    * Tries to resolve target element.
    * 
-   * @param processor  the processor receiving the declarations.
-   * @param state      current resolve state
-   * @param place      the original element from which the tree up walk was initiated.
+   * @param methodCallInfo   information about method call hierarchy which points to the target place. Every entry is a method name
+   *                         and the deepest one is assumed to be added the head
+   * @param processor        the processor receiving the declarations.
+   * @param state            current resolve state
+   * @param place            the original element from which the tree up walk was initiated.
    */
-  void process(@NotNull PsiScopeProcessor processor,
+  void process(@NotNull List<String> methodCallInfo,
+               @NotNull PsiScopeProcessor processor,
                @NotNull ResolveState state,
                @NotNull PsiElement place);
 }

@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
 
+  public static final String NAME = InspectionGadgetsBundle.message(
+    "move.anonymous.to.inner.quickfix");
   private final String name;
 
   public MoveAnonymousToInnerClassFix(String name) {
@@ -37,8 +39,13 @@ public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
   }
 
   public MoveAnonymousToInnerClassFix() {
-    name = InspectionGadgetsBundle.message(
-      "move.anonymous.to.inner.quickfix");
+    name = NAME;
+  }
+
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return NAME;
   }
 
   @Override

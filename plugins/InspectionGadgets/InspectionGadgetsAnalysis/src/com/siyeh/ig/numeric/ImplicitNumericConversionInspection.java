@@ -112,6 +112,12 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       }
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("implicit.numeric.conversion.make.explicit.quickfix");
+    }
+
     @Override
     @NotNull
     public String getName() {

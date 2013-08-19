@@ -73,6 +73,11 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
     public String getName() {
       return InspectionGadgetsBundle.message("unnecessary.parentheses.remove.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {

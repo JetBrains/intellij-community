@@ -18,8 +18,8 @@ import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
-import org.jetbrains.plugins.github.GithubAuthData;
-import org.jetbrains.plugins.github.GithubUtil;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubUtil;
 import org.jetbrains.plugins.github.api.GithubIssue;
 import org.jetbrains.plugins.github.api.GithubIssueComment;
 
@@ -269,7 +269,7 @@ public class GithubRepository extends BaseRepositoryImpl {
   }
 
   private GithubAuthData getAuthData() {
-      return GithubAuthData.createTokenAuth(getUrl(), getToken());
+      return GithubAuthData.createTokenAuth(getUrl(), getToken(), isUseProxy());
   }
 
   @Override

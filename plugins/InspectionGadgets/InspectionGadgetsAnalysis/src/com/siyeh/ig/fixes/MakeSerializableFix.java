@@ -34,6 +34,12 @@ public class MakeSerializableFix extends InspectionGadgetsFix {
       "make.class.serializable.quickfix");
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return getName();
+  }
+
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {

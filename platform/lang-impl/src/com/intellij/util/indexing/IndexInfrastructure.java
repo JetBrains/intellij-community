@@ -95,16 +95,14 @@ public class IndexInfrastructure {
         }
       }
     });
-
+    assert os != null;
     try {
-      if (os != null) {
-        os.writeInt(version);
-        os.writeInt(VERSION);
-      }
+      os.writeInt(version);
+      os.writeInt(VERSION);
     }
     finally {
       ourIndexIdToCreationStamp.clear();
-      if (os != null) os.close();
+      os.close();
       long max = Math.max(System.currentTimeMillis(), Math.max(prevLastModifiedValue, ourLastStamp) + 2000);
       ourLastStamp = max;
       file.setLastModified(max);

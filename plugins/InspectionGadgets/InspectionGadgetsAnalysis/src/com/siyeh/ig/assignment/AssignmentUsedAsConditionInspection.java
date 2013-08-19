@@ -51,6 +51,12 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("assignment.used.as.condition.replace.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiAssignmentExpression expression = (PsiAssignmentExpression)descriptor.getPsiElement();

@@ -100,6 +100,12 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", modifiersText);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Remove unnecessary modifiers";
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();

@@ -84,6 +84,12 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
         adapterClass.getName());
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with adapter";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

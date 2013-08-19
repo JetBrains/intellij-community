@@ -70,6 +70,12 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection {
       return m_name;
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Remove unnecessary modifiers";
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();

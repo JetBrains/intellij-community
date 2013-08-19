@@ -1,6 +1,6 @@
 package com.intellij.util.xml;
 
-import com.intellij.util.xml.converters.DelimitedListProcessor;
+import com.intellij.openapi.util.text.DelimitedListProcessor;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;

@@ -216,6 +216,10 @@ public class XmlNamespacesTest extends CodeInsightFixtureTestCase {
     myFixture.checkResultByFile("spring_after.xml");
   }
 
+  public void testXsiType() throws Exception {
+    myFixture.testHighlighting("import.xml", "import.xsd");
+  }
+
   private void doUnusedDeclarationTest(String text, String after, String name) throws Exception {
     doUnusedDeclarationTest(text, after, name, true);
   }

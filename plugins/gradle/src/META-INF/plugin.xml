@@ -25,8 +25,15 @@
 
   <extensionPoints>
     <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
+    <extensionPoint name="resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"/>
   </extensionPoints>
 
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleRepositoriesContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDependenciesContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleRootContributor"/>
+  </extensions>
+  
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
@@ -63,10 +70,9 @@
     <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.gradle.config.GradleGroovyConfigNotification"/>
     
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptContributor"/>
-    <methodDescriptor class="org.gradle.api.Project"
-                      name="apply"
-                      namedArgsProvider="org.jetbrains.plugins.gradle.service.resolve.GradleProjectApplyArgsProvider"/>
-    
+    <methodDescriptor class="org.gradle.api.Project" name="apply">
+      <namedArgument name="plugin" values="java,groovy,idea,eclipse,scala"/>
+    </methodDescriptor>
   </extensions>
   
 </idea-plugin>

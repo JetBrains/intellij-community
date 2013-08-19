@@ -62,6 +62,11 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
 
   private static class NewStringBufferWithCharArgumentFix
     extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull
