@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.VcsType;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.tasks.*;
+import com.intellij.tasks.actions.TaskSearchSupport;
 import com.intellij.tasks.config.TaskRepositoriesConfigurable;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -767,10 +768,15 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         continue;
       }
       try {
-        final Task[] tasks = repository.getIssues(request, max, since, cancelled);
+        Task[] tasks = repository.getIssues(request, max, since, cancelled);
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<Task>(tasks.length);
-        ContainerUtil.addAll(issues, tasks);
+        if (!repository.isSupported(TaskRepository.NATIVE_SEARCH)) {
+          List<Task> filteredTasks = TaskSearchSupport.filterTasks(request, ContainerUtil.list(tasks));
+          ContainerUtil.addAll(issues, filteredTasks);
+        } else {
+          ContainerUtil.addAll(issues, tasks);
+        }
       }
       catch (ProcessCanceledException ignored) {
         // OK

@@ -37,13 +37,25 @@ import java.util.concurrent.Callable;
  * @author Dmitry Avdeev
  */
 @Tag("server")
-public abstract class TaskRepository  {
+public abstract class TaskRepository {
 
   protected static final int NO_FEATURES = 0;
   public static final int BASIC_HTTP_AUTHORIZATION = 0x0001;
   public static final int LOGIN_ANONYMOUSLY = 0x0002;
   public static final int TIME_MANAGEMENT = 0x0004;
   public static final int STATE_UPDATING = 0x0008;
+  /**
+   * Supporting this feature means that server implements some kind of issues filtering.
+   * It may be special query language like the one used in Youtrack or mere plain
+   * text search.
+   * If server supports this feature it MUST return tasks already
+   * filtered according to {@code query} parameter from {@code getIssues} method.
+   * Otherwise they will be filtered using {@code TaskSearchSupport#filterTasks}
+   *
+   * @see com.intellij.tasks.impl.TaskManagerImpl
+   * @see com.intellij.tasks.actions.TaskSearchSupport
+   */
+  public static final int NATIVE_SEARCH = 0x0010;
 
   @Attribute("url")
   public String getUrl() {
@@ -79,7 +91,8 @@ public abstract class TaskRepository  {
    * @deprecated
    * @see #createCancellableConnection()
    */
-  public void testConnection() throws Exception {}
+  public void testConnection() throws Exception {
+  }
 
   /**
    * Returns an object that can test connection.
@@ -93,9 +106,10 @@ public abstract class TaskRepository  {
 
   /**
    * Get issues from the repository. If query is null, return issues should assigned to current user only.
+   * If server supports {@code NATIVE_SEARCH} feature, tasks returned MUST be filtered by specified query.
    *
    * @param query repository specific.
-   * @param max maximum issues number to return
+   * @param max   maximum issues number to return
    * @param since last updated timestamp. If 0, all issues should be returned.
    * @return found issues
    * @throws Exception
@@ -228,13 +242,28 @@ public abstract class TaskRepository  {
     public abstract void cancel();
   }
 
-  public boolean isSupported(@MagicConstant(
-    flags = {NO_FEATURES, BASIC_HTTP_AUTHORIZATION, LOGIN_ANONYMOUSLY, STATE_UPDATING, TIME_MANAGEMENT}) int feature) {
+  public boolean isSupported(
+    @MagicConstant(
+      flags = {
+        NO_FEATURES,
+        BASIC_HTTP_AUTHORIZATION,
+        LOGIN_ANONYMOUSLY,
+        STATE_UPDATING,
+        TIME_MANAGEMENT,
+        NATIVE_SEARCH}
+    ) int feature) {
     return (getFeatures() & feature) != 0;
   }
 
-  @MagicConstant(flags = { NO_FEATURES, BASIC_HTTP_AUTHORIZATION, LOGIN_ANONYMOUSLY, STATE_UPDATING, TIME_MANAGEMENT})
+  @MagicConstant(
+    flags = {
+      NO_FEATURES,
+      BASIC_HTTP_AUTHORIZATION,
+      LOGIN_ANONYMOUSLY,
+      STATE_UPDATING,
+      TIME_MANAGEMENT,
+      NATIVE_SEARCH})
   protected int getFeatures() {
-    return NO_FEATURES;
+    return NATIVE_SEARCH;
   }
 }

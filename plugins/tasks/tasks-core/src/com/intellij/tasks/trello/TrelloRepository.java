@@ -363,4 +363,9 @@ public final class TrelloRepository extends BaseRepositoryImpl {
   public String getUrl() {
     return "trello.com";
   }
+
+  @Override
+  protected int getFeatures() {
+    return super.getFeatures() & ~NATIVE_SEARCH;
+  }
 }

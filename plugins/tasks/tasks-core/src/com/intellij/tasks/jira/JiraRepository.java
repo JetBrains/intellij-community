@@ -118,7 +118,7 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return TIME_MANAGEMENT;
+    return super.getFeatures() | TIME_MANAGEMENT;
   }
 
   public String getSearchQuery() {

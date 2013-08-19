@@ -363,6 +363,6 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return BASIC_HTTP_AUTHORIZATION;
+    return super.getFeatures() | BASIC_HTTP_AUTHORIZATION;
   }
 }
