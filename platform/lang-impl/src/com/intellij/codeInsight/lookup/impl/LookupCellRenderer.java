@@ -402,7 +402,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     // and if it can display bold, then it also can display normal text
     Set<Font> fonts = ContainerUtil.newHashSet();
     for (int i = 0; i < sampleString.length(); i++) {
-      fonts.add(EditorUtil.fontForChar(sampleString.charAt(i), Font.BOLD, myLookup.getEditor()).getFont().deriveFont(Font.PLAIN));
+      fonts.add(EditorUtil.fontForChar(sampleString.charAt(i), Font.PLAIN, myLookup.getEditor()).getFont());
     }
 
     eachFont: for (Font font : fonts) {
