@@ -57,7 +57,7 @@ public abstract class TestUtils {
   public static final String GROOVY_JAR = "groovy-all.jar";
   public static final String GROOVY_JAR_17 = "groovy-all-1.7.jar";
   public static final String GROOVY_JAR_18 = "groovy-1.8.0-beta-2.jar";
-  public static final String GROOVY_JAR_21 = "groovy-all-2.1.0-beta-1.jar";
+  public static final String GROOVY_JAR_21 = "groovy-all-2.1.3.jar";
   public static final String GROOVY_JAR_22 = "groovy-all-2.2.0-beta-1.jar";
 
   public static String getMockJdkHome() {

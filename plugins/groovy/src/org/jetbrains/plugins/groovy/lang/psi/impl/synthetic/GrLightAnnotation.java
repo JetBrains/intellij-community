@@ -22,11 +22,13 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
@@ -139,8 +141,20 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
     return null;
   }
 
-  public void addAttribute(GrAnnotationNameValuePair attribute) {
-    myAnnotationArgList.addAttribute(attribute);
+  public void addAttribute(PsiNameValuePair attribute) {
+    if (attribute instanceof GrAnnotationNameValuePair) {
+      myAnnotationArgList.addAttribute((GrAnnotationNameValuePair)attribute);
+    }
+    else {
+      try {
+        GrAnnotation annotation =
+          GroovyPsiElementFactory.getInstance(getProject()).createAnnotationFromText("@Anno(" + attribute.getText() + ")");
+        myAnnotationArgList.addAttribute(annotation.getParameterList().getAttributes()[0]);
+      }
+      catch (IncorrectOperationException e) {
+        //do nothing
+      }
+    }
   }
 
 
