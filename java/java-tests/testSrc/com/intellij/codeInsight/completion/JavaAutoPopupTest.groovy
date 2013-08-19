@@ -1464,5 +1464,18 @@ class Foo {
     assert !lookup
   }
 
+  public void "test template prefix is better than middle matches"() {
+    myFixture.configureByText "a.java", """
+class Cls {
+  void foo() {
+    <caret>
+  }
+  void mySout() {}
+}
+""" 
+    type('sout')
+    myFixture.assertPreferredCompletionItems 0, 'sout', 'mySout'
+  }
+
 
 }
