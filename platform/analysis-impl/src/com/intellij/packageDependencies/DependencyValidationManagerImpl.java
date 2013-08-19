@@ -18,7 +18,6 @@ package com.intellij.packageDependencies;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -352,13 +352,18 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   private final List<Pair<NamedScope, NamedScopesHolder>> myScopes = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private void reloadScopes() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
-    addScopesToList(scopeList, this);
-    addScopesToList(scopeList, myNamedScopeManager);
-    myScopes.clear();
-    myScopes.addAll(scopeList);
-    reloadRules();
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (getProject().isDisposed()) return;
+        List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
+        addScopesToList(scopeList, DependencyValidationManagerImpl.this);
+        addScopesToList(scopeList, myNamedScopeManager);
+        myScopes.clear();
+        myScopes.addAll(scopeList);
+        reloadRules();
+      }
+    });
   }
 
   private static void addScopesToList(@NotNull final List<Pair<NamedScope, NamedScopesHolder>> scopeList,
