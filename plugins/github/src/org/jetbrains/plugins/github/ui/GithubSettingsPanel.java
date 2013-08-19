@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.util.GithubAuthData;
@@ -35,6 +36,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.Document;
+import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
@@ -54,12 +57,13 @@ public class GithubSettingsPanel {
 
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
+  private JPasswordField myTokenField;
   private JTextPane mySignupTextField;
   private JPanel myPane;
   private JButton myTestButton;
   private JTextField myHostTextField;
   private ComboBox myAuthTypeComboBox;
-  private JLabel myLoginLabel;
+  private JPanel myCardPanel;
 
   private boolean myCredentialsModified;
 
@@ -84,18 +88,18 @@ public class GithubSettingsPanel {
         try {
           GithubUser user = GithubUtil.checkAuthData(getAuthData());
           if (GithubAuthData.AuthType.TOKEN.equals(getAuthType())) {
-            GithubNotifications.showInfoDialog(myPane, "Connection successful for user " + user.getLogin(), "Success");
+            GithubNotifications.showInfoDialog(myPane, "Success", "Connection successful for user " + user.getLogin());
           }
           else {
-            GithubNotifications.showInfoDialog(myPane, "Connection successful", "Success");
+            GithubNotifications.showInfoDialog(myPane, "Success", "Connection successful");
           }
         }
         catch (GithubAuthenticationException ex) {
-          GithubNotifications.showErrorDialog(myPane, "Can't login using given credentials: " + ex.getMessage(), "Login Failure");
+          GithubNotifications.showErrorDialog(myPane, "Login Failure", "Can't login using given credentials: " + ex.getMessage());
         }
         catch (IOException ex) {
           LOG.info(ex);
-          GithubNotifications.showErrorDialog(myPane, "Can't login: " + GithubUtil.getErrorTextFromException(ex), "Login Failure");
+          GithubNotifications.showErrorDialog(myPane, "Login Failure", "Can't login: " + GithubUtil.getErrorTextFromException(ex));
         }
       }
     });
@@ -137,14 +141,11 @@ public class GithubSettingsPanel {
         if (e.getStateChange() == ItemEvent.SELECTED) {
           String item = e.getItem().toString();
           if (AUTH_PASSWORD.equals(item)) {
-            myLoginLabel.setVisible(true);
-            myLoginTextField.setVisible(true);
+            ((CardLayout)myCardPanel.getLayout()).show(myCardPanel, AUTH_PASSWORD);
           }
           else if (AUTH_TOKEN.equals(item)) {
-            myLoginLabel.setVisible(false);
-            myLoginTextField.setVisible(false);
+            ((CardLayout)myCardPanel.getLayout()).show(myCardPanel, AUTH_TOKEN);
           }
-          myPane.validate();
           erasePassword();
         }
       }
@@ -240,5 +241,10 @@ public class GithubSettingsPanel {
   public void resetCredentialsModification() {
     myCredentialsModified = false;
   }
-}
 
+  private void createUIComponents() {
+    Document doc = new PlainDocument();
+    myPasswordField = new JPasswordField(doc, null, 0);
+    myTokenField = new JPasswordField(doc, null, 0);
+  }
+}
