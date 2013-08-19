@@ -466,6 +466,11 @@ public def layoutCommunityPlugins(String home) {
       }
       fileset(dir: "$home/plugins/terminal/lib") {
         include(name: "*.jar")
+        include(name: "*.in")
+        include(name: "**/*.dll")
+        include(name: "**/*.exe")
+        include(name: "**/*.dylib")
+        include(name: "**/*.so")
       }
     }
   }
