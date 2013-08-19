@@ -34,7 +34,9 @@ public enum SvnCommandName {
   add("add", true),
   log("log", false),
   revert("revert", true),
-  delete("delete", true);
+  delete("delete", true),
+  copy("copy", true),
+  move("move", true);
 
   private final String myName;
   private final boolean myWriteable;

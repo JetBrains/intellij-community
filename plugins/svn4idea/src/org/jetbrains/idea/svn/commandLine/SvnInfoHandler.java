@@ -295,6 +295,18 @@ public class SvnInfoHandler extends DefaultHandler {
         return new WcInfo();
       }
     });
+    myElementsMap.put("moved-to", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new MovedPath();
+      }
+    });
+    myElementsMap.put("moved-from", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new MovedPath();
+      }
+    });
     myElementsMap.put("wcroot-abspath", new Getter<ElementHandlerBase>() {
       @Override
       public ElementHandlerBase get() {
@@ -523,6 +535,25 @@ public class SvnInfoHandler extends DefaultHandler {
     }
   }
 
+  /**
+   * "moved-from" and "moved-to" elements are represented by this class.
+   */
+  private static class MovedPath extends ElementHandlerBase {
+
+    private MovedPath() {
+      super(new String[]{}, new String[]{});
+    }
+
+    @Override
+    protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
+    }
+
+    @Override
+    public void characters(String s, SvnInfoStructure structure) throws SAXException {
+      // TODO: is there some field to initialize from this value?
+    }
+  }
+
   private static class TextUpdated extends ElementHandlerBase {
     private TextUpdated() {
       super(new String[]{}, new String[]{});
@@ -642,7 +673,7 @@ public class SvnInfoHandler extends DefaultHandler {
   private static class WcInfo extends ElementHandlerBase {
     private WcInfo() {
       super(new String[]{"wcroot-abspath", "schedule", "depth", "text-updated", "checksum", "changelist", "copy-from-url",
-      "copy-from-rev"}, new String[]{});
+      "copy-from-rev", "moved-to", "moved-from"}, new String[]{});
     }
 
     @Override
