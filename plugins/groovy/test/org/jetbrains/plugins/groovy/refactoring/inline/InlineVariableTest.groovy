@@ -25,7 +25,6 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.impl.source.tree.TreeElement
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import junit.framework.Assert
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
@@ -72,7 +71,7 @@ public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
 
   public void testUndefinedVarInline() {doTest()}
 
-  public void testImplicitCast() { doTest() }
+  public void testImplicitCast1() { doTest() }
   public void testImplicitCast2() { doTest() }
 
   protected void doFieldTest() {
@@ -102,13 +101,13 @@ public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
     if (selectedArea == null) {
       PsiElement identifier = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, PsiElement.class);
       if (identifier != null) {
-        Assert.assertTrue("Selected area doesn't point to var", identifier.parent instanceof GrVariable);
+        assertTrue("Selected area doesn't point to var", identifier.parent instanceof GrVariable);
         selectedArea = (GroovyPsiElement)identifier.parent;
       }
     }
-    Assert.assertNotNull("Selected area reference points to nothing", selectedArea);
+    assertNotNull("Selected area reference points to nothing", selectedArea);
     PsiElement element = selectedArea instanceof GrExpression ? selectedArea.reference.resolve() : selectedArea;
-    Assert.assertNotNull("Cannot resolve selected reference expression", element);
+    assertNotNull("Cannot resolve selected reference expression", element);
 
     try {
       if (!inlineDef) {
