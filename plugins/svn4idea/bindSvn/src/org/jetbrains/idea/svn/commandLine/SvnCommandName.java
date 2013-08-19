@@ -32,8 +32,9 @@ public enum SvnCommandName {
   cleanup("cleanup", true),
   cat("cat", false),
   add("add", true),
-  log("log", false);
-  
+  log("log", false),
+  revert("revert", true);
+
   private final String myName;
   private final boolean myWriteable;
 

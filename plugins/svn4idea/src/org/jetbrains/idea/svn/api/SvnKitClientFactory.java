@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.SvnKitAddClient;
 import org.jetbrains.idea.svn.history.SvnKitHistoryClient;
+import org.jetbrains.idea.svn.portable.SvnkitSvnStatusClient;
+import org.jetbrains.idea.svn.revert.SvnKitRevertClient;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -18,5 +20,7 @@ public class SvnKitClientFactory extends ClientFactory {
   protected void setup() {
     addClient = new SvnKitAddClient();
     historyClient = new SvnKitHistoryClient();
+    revertClient = new SvnKitRevertClient();
+    statusClient = new SvnkitSvnStatusClient(myVcs.createStatusClient());
   }
 }

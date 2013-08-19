@@ -49,9 +49,9 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
   private final VirtualFile myCommonAncestor;
   private boolean myIgnoreExternals;
 
-  public SvnCommandLineUpdateClient(final Project project, VirtualFile commonAncestor) {
-    super(SvnVcs.getInstance(project).createUpdateClient());
-    myProject = project;
+  public SvnCommandLineUpdateClient(final SvnVcs vcs, VirtualFile commonAncestor) {
+    super(vcs.createUpdateClient());
+    myProject = vcs.getProject();
     myCommonAncestor = commonAncestor;
   }
 

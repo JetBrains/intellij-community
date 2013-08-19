@@ -3,7 +3,9 @@ package org.jetbrains.idea.svn.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.CmdAddClient;
+import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.history.CmdHistoryClient;
+import org.jetbrains.idea.svn.revert.CmdRevertClient;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -18,5 +20,7 @@ public class CmdClientFactory extends ClientFactory {
   protected void setup() {
     addClient = new CmdAddClient();
     historyClient = new CmdHistoryClient();
+    revertClient = new CmdRevertClient();
+    statusClient = new SvnCommandLineStatusClient(myVcs.getProject());
   }
 }

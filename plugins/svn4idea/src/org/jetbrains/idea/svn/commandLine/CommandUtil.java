@@ -9,10 +9,7 @@ import org.jetbrains.idea.svn.SvnCommitRunner;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
 import org.jetbrains.idea.svn.config.SvnBindException;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
@@ -59,6 +56,23 @@ public class CommandUtil {
   public static void put(@NotNull List<String> parameters, boolean condition, @NotNull String value) {
     if (condition) {
       parameters.add(value);
+    }
+  }
+
+  public static void put(@NotNull List<String> parameters, @NotNull File path) {
+    parameters.add(path.getAbsolutePath());
+  }
+
+  public static void put(@NotNull List<String> parameters, @NotNull File... paths) {
+    for (File path : paths) {
+      put(parameters, path);
+    }
+  }
+
+  public static void put(@NotNull List<String> parameters, @Nullable SVNDepth depth) {
+    if (depth != null) {
+      parameters.add("--depth");
+      parameters.add(depth.getName());
     }
   }
 

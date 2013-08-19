@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.AddClient;
 import org.jetbrains.idea.svn.history.HistoryClient;
+import org.jetbrains.idea.svn.portable.SvnStatusClientI;
+import org.jetbrains.idea.svn.revert.RevertClient;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -15,6 +17,8 @@ public abstract class ClientFactory {
 
   protected AddClient addClient;
   protected HistoryClient historyClient;
+  protected RevertClient revertClient;
+  protected SvnStatusClientI statusClient;
 
   protected ClientFactory(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -23,15 +27,29 @@ public abstract class ClientFactory {
 
   protected abstract void setup();
 
+  @NotNull
   public AddClient createAddClient() {
     return prepare(addClient);
   }
 
+  @NotNull
   public HistoryClient createHistoryClient() {
     return prepare(historyClient);
   }
 
-  protected <T extends SvnClient> T prepare(T client) {
+  @NotNull
+  public RevertClient createRevertClient() {
+    return prepare(revertClient);
+  }
+
+  @NotNull
+  public SvnStatusClientI createStatusClient() {
+    // TODO: Update this in same like other clients - move to corresponding package, rename clients
+    return statusClient;
+  }
+
+  @NotNull
+  protected <T extends SvnClient> T prepare(@NotNull T client) {
     client.setVcs(myVcs);
 
     return client;

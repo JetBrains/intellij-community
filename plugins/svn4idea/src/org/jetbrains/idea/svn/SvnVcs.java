@@ -200,8 +200,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   };
   private SvnCheckoutProvider myCheckoutProvider;
 
-  private final ClientFactory cmdClientFactory;
-  private final ClientFactory svnKitClientFactory;
+  private ClientFactory cmdClientFactory;
+  private ClientFactory svnKitClientFactory;
 
 
   public void checkCommandLineVersion() {
@@ -293,8 +293,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     // remove used some time before old notification group ids
     correctNotificationIds();
     myChecker = new SvnExecutableChecker(myProject);
-    cmdClientFactory = new CmdClientFactory(this);
-    svnKitClientFactory = new SvnKitClientFactory(this);
   }
 
   private void correctNotificationIds() {
@@ -491,6 +489,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
              !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myChecker.checkExecutableAndNotifyIfNeeded();
     }
+
+    cmdClientFactory = new CmdClientFactory(this);
+    svnKitClientFactory = new SvnKitClientFactory(this);
 
     // do one time after project loaded
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
@@ -1359,13 +1360,20 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   /**
-   * Should be private for now - to avoid usages of this method as it will not automatically
+   * Try to avoid usages of this method (for now) as it could not correctly for all cases
    * detect svn 1.8 working copy format to guarantee command line client.
+   *
+   * For instance, when working copies of several formats are presented in project
+   * (though it seems to be rather unlikely case).
    *
    * @return
    */
-  private ClientFactory getFactory() {
-    return myConfiguration.myUseAcceleration.equals(SvnConfiguration.UseAcceleration.commandLine) ? cmdClientFactory : svnKitClientFactory;
+  public ClientFactory getFactory() {
+    // check working copy format of project directory
+    WorkingCopyFormat format = getWorkingCopyFormat(new File(getProject().getBaseDir().getPath()));
+
+    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ||
+           myConfiguration.myUseAcceleration.equals(SvnConfiguration.UseAcceleration.commandLine) ? cmdClientFactory : svnKitClientFactory;
   }
 
   public ClientFactory getFactory(@NotNull File file) {
