@@ -256,7 +256,14 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     });
     final IdeaSvnkitBasedAuthenticationCallback authenticationCallback = new IdeaSvnkitBasedAuthenticationCallback(mySvnVcs);
     try {
-      final SvnBindClient client = new SvnBindClient(SvnApplicationSettings.getInstance().getCommandLinePath());
+      final SvnBindClient client = new SvnBindClient(SvnApplicationSettings.getInstance().getCommandLinePath(), new Convertor<String[], SVNURL>() {
+        @Override
+        public SVNURL convert(String[] o) {
+          SVNInfo info = o.length > 0 ? mySvnVcs.getInfo(o[0]) : null;
+
+          return info != null ? info.getURL() : null;
+        }
+      });
       client.setAuthenticationCallback(authenticationCallback);
       client.setHandler(new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator()));
       final long revision = client.commit(ArrayUtil.toStringArray(paths), comment, false, false);

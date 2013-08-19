@@ -12,6 +12,7 @@ import org.jetbrains.idea.svn.api.FileStatusResultParser;
 import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
 import org.jetbrains.idea.svn.config.SvnBindException;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
@@ -31,6 +32,13 @@ public class CommandUtil {
     throws SVNException {
     String exe = SvnApplicationSettings.getInstance().getCommandLinePath();
     base = base == null ? new File(exe) : base;
+
+    if (url == null) {
+      // TODO: or take it from RootUrlInfo
+      SVNInfo info = vcs.getInfo(vcs.getProject().getBaseDir());
+
+      url = info != null ? info.getURL() : null;
+    }
 
     try {
       return SvnLineCommand

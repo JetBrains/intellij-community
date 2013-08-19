@@ -255,6 +255,18 @@ public class PortableStatus extends SVNStatus {
   }
 
   @Override
+  public File getFile() {
+    File file = super.getFile();
+
+    if (file == null) {
+      SVNInfo info = initInfo();
+      file = info != null ? info.getFile() : file;
+    }
+
+    return file;
+  }
+
+  @Override
   public SVNRevision getRevision() {
     final SVNRevision revision = super.getRevision();
     if (revision != null && revision.isValid()) return revision;

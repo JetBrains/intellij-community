@@ -114,16 +114,6 @@ public class SvnLineCommand extends SvnCommand {
 
   public static SvnLineCommand runWithAuthenticationAttempt(final String exePath,
                                                             final File firstFile,
-                                                            SvnCommandName commandName,
-                                                            final LineCommandListener listener,
-                                                            @Nullable AuthenticationCallback authenticationCallback,
-                                                            String... parameters) throws SvnBindException {
-    return runWithAuthenticationAttempt(exePath, firstFile, null, commandName, listener, authenticationCallback, parameters);
-  }
-
-
-  public static SvnLineCommand runWithAuthenticationAttempt(final String exePath,
-                                                            final File firstFile,
                                                             final SVNURL url,
                                                             SvnCommandName commandName,
                                                             final LineCommandListener listener,
@@ -338,7 +328,8 @@ public class SvnLineCommand extends SvnCommand {
 
     @Override
     public boolean getCredentials(final String errText) throws SvnBindException {
-      String realm = cutFirstLine(errText).substring(CERTIFICATE_ERROR.length());
+      // parse realm from error text
+      String realm = errText;
       final int idx1 = realm.indexOf('\'');
       if (idx1 == -1) {
         throw new SvnBindException("Can not detect authentication realm name: " + errText);

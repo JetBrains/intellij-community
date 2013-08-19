@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.Convertor;
 import org.apache.subversion.javahl.types.Revision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import org.jetbrains.idea.svn.commandLine.SvnLineCommand;
 import org.jetbrains.idea.svn.config.SvnBindException;
 import org.tigris.subversion.javahl.BindClientException;
 import org.tigris.subversion.javahl.ClientException;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.util.*;
@@ -57,7 +59,7 @@ public class SvnCommitRunner {
                      boolean noUnlock,
                      boolean keepChangelist,
                      String[] changelists,
-                     Map revpropTable) throws ClientException {
+                     Map revpropTable, Convertor<String[], SVNURL> urlProvider) throws ClientException {
     if (paths.length == 0) return Revision.SVN_INVALID_REVNUM;
 
     final List<String> parameters = new ArrayList<String>();
@@ -85,7 +87,7 @@ public class SvnCommitRunner {
     parameters.addAll(Arrays.asList(paths));
 
     try {
-      SvnLineCommand.runWithAuthenticationAttempt(myExePath, new File(paths[0]), SvnCommandName.ci,
+      SvnLineCommand.runWithAuthenticationAttempt(myExePath, new File(paths[0]), urlProvider.convert(paths), SvnCommandName.ci,
                                                   myCommandListener, myAuthenticationCallback, ArrayUtil.toStringArray(parameters));
     }
     catch (SvnBindException e) {

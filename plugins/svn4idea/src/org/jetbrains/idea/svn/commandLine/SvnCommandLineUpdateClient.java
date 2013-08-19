@@ -166,7 +166,7 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
         }
       };
       SvnLineCommand.runWithAuthenticationAttempt(SvnApplicationSettings.getInstance().getCommandLinePath(),
-                                                  base, SvnCommandName.up, listener,
+                                                  base, info.getURL(), SvnCommandName.up, listener,
                                                   new IdeaSvnkitBasedAuthenticationCallback(SvnVcs.getInstance(myProject)),
                                                   ArrayUtil.toStringArray(parameters));
     }

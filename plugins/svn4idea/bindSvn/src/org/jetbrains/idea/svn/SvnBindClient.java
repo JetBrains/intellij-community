@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.util.containers.Convertor;
 import org.tigris.subversion.javahl.*;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.OutputStream;
 import java.util.Map;
@@ -30,9 +32,11 @@ public class SvnBindClient implements SVNClientInterface {
   private final String myExecutablePath;
   private CommitEventHandler myHandler;
   private AuthenticationCallback myAuthenticationCallback;
+  private Convertor<String[], SVNURL> myUrlProvider;
 
-  public SvnBindClient(String path) {
+  public SvnBindClient(String path, Convertor<String[], SVNURL> urlProvider) {
     myExecutablePath = path;
+    myUrlProvider = urlProvider;
   }
 
   @Override
@@ -317,7 +321,7 @@ public class SvnBindClient implements SVNClientInterface {
                      String[] changelists,
                      Map revpropTable) throws ClientException {
     final long commit = new SvnCommitRunner(myExecutablePath, myHandler, myAuthenticationCallback).
-        commit(path, message, depth, noUnlock, keepChangelist, changelists, revpropTable);
+        commit(path, message, depth, noUnlock, keepChangelist, changelists, revpropTable, myUrlProvider);
     if (commit < 0) {
       throw new BindClientException("Wrong committed revision number: " + commit, null, -1);
     }
