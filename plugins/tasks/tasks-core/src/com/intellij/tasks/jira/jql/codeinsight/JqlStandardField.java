@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +65,7 @@ public enum JqlStandardField {
 
   private final String myName;
   private final JqlFieldType myType;
-  private JqlStandardField(String name, JqlFieldType type) {
+  JqlStandardField(String name, JqlFieldType type) {
     myName = name;
     myType = type;
   }
@@ -100,10 +101,10 @@ public enum JqlStandardField {
   }
 
   public static Collection<String> allOfType(JqlFieldType type) {
-    return type == JqlFieldType.UNKNOWN? ALL_FIELDS_NAMES : TYPE_LOOKUP.get(type);
+    return type == JqlFieldType.UNKNOWN? ALL_FIELD_NAMES : new ArrayList<String>(TYPE_LOOKUP.get(type));
   }
 
-  public static final List<String> ALL_FIELDS_NAMES = ContainerUtil.map2List(VALUES, new Function<JqlStandardField, String>() {
+  public static final List<String> ALL_FIELD_NAMES = ContainerUtil.map2List(VALUES, new Function<JqlStandardField, String>() {
     @Override
     public String fun(JqlStandardField field) {
       return field.myName;

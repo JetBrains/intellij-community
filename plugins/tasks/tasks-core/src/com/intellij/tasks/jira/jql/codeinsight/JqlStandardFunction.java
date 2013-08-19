@@ -5,10 +5,9 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Mikhail Golubev
@@ -71,7 +70,7 @@ public enum JqlStandardFunction {
     }
   });
 
-  public static JqlStandardFunction byName(String name) {
+  public static JqlStandardFunction byName(@NotNull String name) {
     return NAME_LOOKUP.get(name);
   }
 
@@ -82,8 +81,11 @@ public enum JqlStandardFunction {
     }
   }
 
-  public static Collection<String> allOfType(JqlFieldType type, boolean multipleResults) {
-    return type == JqlFieldType.UNKNOWN? ALL_FUNCTION_NAMES : TYPE_LOOKUP.get(Pair.create(type, multipleResults));
+  public static List<String> allOfType(@NotNull JqlFieldType type, boolean multipleResults) {
+    if (type == JqlFieldType.UNKNOWN) {
+      return ALL_FUNCTION_NAMES;
+    }
+    return new ArrayList<String>(TYPE_LOOKUP.get(Pair.create(type, multipleResults)));
   }
 
   public static final List<String> ALL_FUNCTION_NAMES = ContainerUtil.map2List(VALUES, new Function<JqlStandardFunction, String>() {

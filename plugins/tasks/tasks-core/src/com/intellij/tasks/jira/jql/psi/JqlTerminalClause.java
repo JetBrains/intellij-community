@@ -12,25 +12,32 @@ import java.util.IdentityHashMap;
  */
 public interface JqlTerminalClause extends JqlElement {
   enum Type {
-    EQ,
-    NE,
-    LT,
-    GT,
-    LE,
-    GE,
-    CONTAINS,
-    NOT_CONTAINS,
-    IS,
-    IS_NOT,
-    IN,
-    NOT_IN,
-    WAS,
-    WAS_IN,
-    WAS_NOT,
-    WAS_NOT_IN,
-    CHANGED;
+    EQ(false),
+    NE(false),
+    LT(false),
+    GT(false),
+    LE(false),
+    GE(false),
+    CONTAINS(false),
+    NOT_CONTAINS(false),
+    IS(false),
+    IS_NOT(false),
+    IN(true),
+    NOT_IN(true),
+    WAS(false),
+    WAS_IN(true),
+    WAS_NOT(false),
+    WAS_NOT_IN(true),
+    CHANGED(false);
+
+    private boolean myListOperator;
+
+    Type(boolean listOperator) {
+      myListOperator = listOperator;
+    }
 
     private final static IdentityHashMap<IElementType, Type> MAP = new IdentityHashMap<IElementType, Type>();
+
     static {
       MAP.put(JqlTokenTypes.EQ, EQ);
       MAP.put(JqlTokenTypes.NE, NE);
@@ -47,6 +54,9 @@ public interface JqlTerminalClause extends JqlElement {
       return MAP.get(type);
     }
 
+    public boolean isListOperator() {
+      return myListOperator;
+    }
   }
 
   @Nullable

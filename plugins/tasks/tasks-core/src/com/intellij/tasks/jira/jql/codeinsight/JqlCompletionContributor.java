@@ -1,6 +1,7 @@
 package com.intellij.tasks.jira.jql.codeinsight;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
@@ -261,8 +262,9 @@ public class JqlCompletionContributor extends CompletionContributor {
                                   @NotNull CompletionResultSet result) {
       JqlFieldType operandType;
       boolean listFunctionExpected;
-      PsiElement pos = parameters.getPosition();
-      JqlHistoryPredicate predicate = PsiTreeUtil.getParentOfType(pos, JqlHistoryPredicate.class);
+      PsiElement curElem = parameters.getPosition();
+      PsiElement origElem = parameters.getOriginalPosition();
+      JqlHistoryPredicate predicate = PsiTreeUtil.getParentOfType(curElem, JqlHistoryPredicate.class);
       if (predicate != null) {
         listFunctionExpected = false;
         JqlHistoryPredicate.Type predicateType = predicate.getType();
@@ -278,15 +280,16 @@ public class JqlCompletionContributor extends CompletionContributor {
             break;
           // from, to
           default:
-            operandType = findTypeOfField(pos);
+            operandType = findTypeOfField(curElem);
         }
       }
       else {
-        operandType = findTypeOfField(pos);
-        listFunctionExpected = insideClauseWithListOperator(pos);
+        operandType = findTypeOfField(curElem);
+        listFunctionExpected = insideClauseWithListOperator(curElem);
       }
       for (String functionName : JqlStandardFunction.allOfType(operandType, listFunctionExpected)) {
-        result.addElement(LookupElementBuilder.create(functionName + "()"));
+        result.addElement(LookupElementBuilder.create(functionName)
+          .withInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS));
       }
     }
 
@@ -303,15 +306,7 @@ public class JqlCompletionContributor extends CompletionContributor {
       if (clause == null || clause.getType() == null) {
         return false;
       }
-      switch (clause.getType()) {
-        case IN:
-        case NOT_IN:
-        case WAS_IN:
-        case WAS_NOT_IN:
-          return true;
-        default:
-          return false;
-      }
+      return clause.getType().isListOperator();
     }
   }
 
