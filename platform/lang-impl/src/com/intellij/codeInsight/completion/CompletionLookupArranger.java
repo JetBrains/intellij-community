@@ -356,8 +356,8 @@ public class CompletionLookupArranger extends LookupArranger {
           item.getLookupString().equals(selectedText)) {
         return i;
       }
-      if (isTemplate && i < items.size() - 1 && !CompletionServiceImpl.isStartMatch(items.get(i + 1), lookup)) {
-        return i;
+      if (i == 0 && isTemplate && items.size() > 1 && !CompletionServiceImpl.isStartMatch(items.get(1), lookup)) {
+        return 0;
       }
     }
 
