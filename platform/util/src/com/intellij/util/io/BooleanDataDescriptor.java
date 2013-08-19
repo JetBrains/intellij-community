@@ -31,4 +31,8 @@ public class BooleanDataDescriptor extends InlineKeyDescriptor<Boolean> {
   public int toInt(Boolean aBoolean) {
     return aBoolean == Boolean.TRUE ? 1 : 0;
   }
+
+  protected boolean isCompactFormat() {
+    return true;
+  }
 }
