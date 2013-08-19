@@ -1,0 +1,5 @@
+String s = 2
+
+print <selection>s</selection>
+-----
+print 2 as String

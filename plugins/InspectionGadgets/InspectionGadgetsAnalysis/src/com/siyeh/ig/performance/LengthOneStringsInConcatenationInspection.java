@@ -70,6 +70,12 @@ public class LengthOneStringsInConcatenationInspection
         "length.one.strings.in.concatenation.replace.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

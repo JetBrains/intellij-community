@@ -63,6 +63,12 @@ public class MultipleExceptionsDeclaredOnTestMethodInspection
         "multiple.exceptions.declared.on.test.method.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

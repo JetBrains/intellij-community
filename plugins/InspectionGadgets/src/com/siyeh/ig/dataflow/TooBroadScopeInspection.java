@@ -54,6 +54,12 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       return InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", variableName);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Narrow scope";
+    }
+
     @Override
     protected void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
       final PsiElement variableIdentifier = descriptor.getPsiElement();

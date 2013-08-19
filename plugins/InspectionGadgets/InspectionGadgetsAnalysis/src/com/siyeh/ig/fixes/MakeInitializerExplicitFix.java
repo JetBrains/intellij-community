@@ -32,6 +32,11 @@ public class MakeInitializerExplicitFix extends InspectionGadgetsFix {
     return InspectionGadgetsBundle.message(
       "make.initialization.explicit.quickfix");
   }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor)

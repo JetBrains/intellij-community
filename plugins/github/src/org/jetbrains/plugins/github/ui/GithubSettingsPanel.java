@@ -18,17 +18,17 @@ package org.jetbrains.plugins.github.ui;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubAuthData;
-import org.jetbrains.plugins.github.GithubAuthenticationException;
-import org.jetbrains.plugins.github.GithubSettings;
-import org.jetbrains.plugins.github.GithubUtil;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubSettings;
+import org.jetbrains.plugins.github.util.GithubUtil;
 import org.jetbrains.plugins.github.api.GithubUser;
 
 import javax.swing.*;
@@ -84,18 +84,18 @@ public class GithubSettingsPanel {
         try {
           GithubUser user = GithubUtil.checkAuthData(getAuthData());
           if (GithubAuthData.AuthType.TOKEN.equals(getAuthType())) {
-            Messages.showInfoMessage(myPane, "Connection successful for user " + user.getLogin(), "Success");
+            GithubNotifications.showInfoDialog(myPane, "Connection successful for user " + user.getLogin(), "Success");
           }
           else {
-            Messages.showInfoMessage(myPane, "Connection successful", "Success");
+            GithubNotifications.showInfoDialog(myPane, "Connection successful", "Success");
           }
         }
         catch (GithubAuthenticationException ex) {
-          Messages.showErrorDialog(myPane, "Can't login using given credentials: " + ex.getMessage(), "Login Failure");
+          GithubNotifications.showErrorDialog(myPane, "Can't login using given credentials: " + ex.getMessage(), "Login Failure");
         }
         catch (IOException ex) {
           LOG.info(ex);
-          Messages.showErrorDialog(myPane, "Can't login: " + GithubUtil.getErrorTextFromException(ex), "Login Failure");
+          GithubNotifications.showErrorDialog(myPane, "Can't login: " + GithubUtil.getErrorTextFromException(ex), "Login Failure");
         }
       }
     });

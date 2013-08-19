@@ -101,6 +101,12 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("absolute.alignment.in.user.interface.quickfix", shortClassName, myReplacement);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with constant";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();

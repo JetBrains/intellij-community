@@ -70,6 +70,12 @@ public class UnnecessaryThisInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("unnecessary.this.remove.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement thisToken = descriptor.getPsiElement();

@@ -95,7 +95,7 @@ class StatusPanel extends JPanel {
   StatusPanel() {
     super(new BorderLayout());
 
-    setOpaque(isOpaque() && !SystemInfo.isMac);
+    setOpaque(false);
 
     myTextPanel.setBorder(new EmptyBorder(0, 5, 0, 0));
     new ClickListener() {

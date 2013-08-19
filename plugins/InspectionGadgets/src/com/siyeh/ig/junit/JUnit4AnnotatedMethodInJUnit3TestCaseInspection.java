@@ -126,6 +126,12 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
       return InspectionGadgetsBundle.message("convert.junit3.test.class.quickfix", className);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Convert JUnit 3 class to JUnit 4";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
@@ -254,6 +260,11 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
   }
 
   private static class RemoveTestAnnotationFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

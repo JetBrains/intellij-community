@@ -31,6 +31,12 @@ public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
     return InspectionGadgetsBundle.message("add.serialversionuidfield.quickfix");
   }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-public class GithubBranchRaw implements DataConstructor {
+class GithubBranchRaw implements DataConstructor {
   @Nullable public String name;
 
   @SuppressWarnings("ConstantConditions")

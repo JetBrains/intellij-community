@@ -107,6 +107,12 @@ public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
         replacementString);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with long literal";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

@@ -19,7 +19,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
@@ -28,17 +30,20 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -146,7 +151,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
 
           final Dimension size = list.getPreferredSize();
           final JComponent c = ToolWindowsWidget.this;
-          final RelativePoint point = new RelativePoint(c, new Point(-4, -4 - size.height));
+          final RelativePoint point = new RelativePoint(c, new Point(-4, -ToolWindowsWidget.this.getHeight() - size.height));
 
 
           if (popup != null && popup.isVisible()) {
@@ -171,6 +176,37 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
           popup.show(point);
         }
       }, 300);
+    }
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    final String key = "toolwindow.stripes.buttons.info.shown";
+    if (UISettings.getInstance().HIDE_TOOL_STRIPES && !PropertiesComponent.getInstance().isTrueValue(key)) {
+      final Alarm alarm = new Alarm();
+      alarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          final ToolWindowWidgetInfoPanel panel = new ToolWindowWidgetInfoPanel();
+          panel.myButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(panel.myRoot)
+            .setFillColor(UIUtil.getListBackground())
+            .setHideOnClickOutside(false)
+            .setDisposable(ToolWindowsWidget.this)
+            .createBalloon();
+          panel.myButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+              balloon.hide();
+              PropertiesComponent.getInstance().setValue(key, String.valueOf(true));
+            }
+          });
+
+          balloon.show(new RelativePoint(ToolWindowsWidget.this, new Point(10, 0)), Balloon.Position.above);
+          Disposer.dispose(alarm);
+        }
+      }, 5000);
     }
   }
 
@@ -262,5 +298,28 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
     Disposer.dispose(this);
     KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", this);
     myStatusBar = null;
+  }
+
+  public static class ToolWindowWidgetInfoPanel {
+    JPanel myButton;
+    JPanel myRoot;
+
+    private void createUIComponents() {
+      myButton = new JPanel(new BorderLayout()) {
+        {
+          enableEvents(AWTEvent.MOUSE_EVENT_MASK);
+        }
+        @Override
+        protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          GraphicsUtil.setupAAPainting(g);
+          ((Graphics2D)g).setPaint(new GradientPaint(0, 0, new JBColor(new Color(77, 143, 253), new Color(52, 74, 100)), 0, getHeight(),
+                                                     new JBColor(new Color(71, 135, 237), new Color(38, 53, 73))));
+          g.fillRoundRect(0,0,getWidth(), getHeight(), 5,5);
+          g.setColor(new JBColor(new Color(48, 121, 237), new Color(87, 93, 101)));
+          g.drawRoundRect(0,0,getWidth(), getHeight(), 5,5);
+        }
+      };
+    }
   }
 }

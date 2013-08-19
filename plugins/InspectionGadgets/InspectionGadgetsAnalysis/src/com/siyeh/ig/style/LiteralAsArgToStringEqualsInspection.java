@@ -59,6 +59,11 @@ public class LiteralAsArgToStringEqualsInspection
   }
 
   private static class SwapEqualsFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

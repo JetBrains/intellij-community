@@ -36,6 +36,12 @@ public class ExtractMethodFix extends InspectionGadgetsFix {
     return InspectionGadgetsBundle.message("extract.method.quickfix");
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return getName();
+  }
+
   @Override
   public void doFix(final Project project, ProblemDescriptor descriptor) {
     final PsiExpression expression =

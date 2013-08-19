@@ -253,9 +253,19 @@ public class Alarm implements Disposable {
     private Future<?> myFuture; // guarded by LOCK
     private final long myDelay;
 
-    private Request(@NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
+    private Request(@NotNull final Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
       synchronized (LOCK) {
-        myTask = task;
+        myTask = new Runnable() {
+          @Override
+          public void run() {
+            try {
+              task.run();
+            }
+            catch (Exception e) {
+              LOG.error("Exception in task " + task, e);
+            }
+          }
+        };
         myModalityState = modalityState;
         myDelay = delayMillis;
       }
@@ -284,16 +294,12 @@ public class Alarm implements Disposable {
               myFuture = null;
             }
 
-            try {
-              if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
-                SwingUtilities.invokeAndWait(task);
-              }
-              else {
-                task.run();
-              }
+            if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
+              //noinspection SSBasedInspection
+              SwingUtilities.invokeLater(task);
             }
-            catch (Exception e) {
-              LOG.error("Exception in task " + task, e);
+            else {
+              task.run();
             }
           }
         };
@@ -307,6 +313,7 @@ public class Alarm implements Disposable {
         else {
           final Application app = ApplicationManager.getApplication();
           if (app == null) {
+            //noinspection SSBasedInspection
             SwingUtilities.invokeLater(scheduledTask);
           }
           else {

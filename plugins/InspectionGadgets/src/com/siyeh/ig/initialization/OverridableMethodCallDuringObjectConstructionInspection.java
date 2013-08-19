@@ -79,6 +79,12 @@ public class OverridableMethodCallDuringObjectConstructionInspection extends Bas
       return InspectionGadgetsBundle.message("make.method.final.fix.name", methodName);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Make method final";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement methodName = descriptor.getPsiElement();

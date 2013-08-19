@@ -57,6 +57,12 @@ public class ReuseOfLocalVariableInspection
         "reuse.of.local.variable.split.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

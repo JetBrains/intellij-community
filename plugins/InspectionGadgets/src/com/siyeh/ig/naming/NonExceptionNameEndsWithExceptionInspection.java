@@ -76,6 +76,12 @@ public class NonExceptionNameEndsWithExceptionInspection
         "non.exception.name.ends.with.exception.quickfix", name);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Make class extend 'Exception'";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

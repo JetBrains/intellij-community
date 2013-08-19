@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -34,12 +33,17 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThrowableConvertor;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubGist;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.io.IOException;
 import java.util.*;
@@ -106,17 +110,27 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
-    final GithubAuthData auth = dialog.isAnonymous() ? GithubAuthData.createAnonymous() : getValidAuthData(project);
-    if (auth == null) {
-      return;
+    GithubAuthData auth = GithubAuthData.createAnonymous();
+    if (!dialog.isAnonymous()) {
+      try {
+        auth = getValidAuthData(project);
+      }
+      catch (GithubAuthenticationCanceledException e) {
+        return;
+      }
+      catch (IOException e) {
+        GithubNotifications.showError(project, "Can't create gist", e);
+        return;
+      }
     }
 
     final Ref<String> url = new Ref<String>();
+    final GithubAuthData finalAuth = auth;
     new Task.Backgroundable(project, "Creating Gist...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<FileContent> contents = collectContents(project, editor, file, files);
-        String gistUrl = createGist(project, auth, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
+        String gistUrl = createGist(project, finalAuth, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
         url.set(gistUrl);
       }
 
@@ -135,15 +149,15 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }.queue();
   }
 
-  @Nullable
-  private static GithubAuthData getValidAuthData(@NotNull final Project project) {
-    final Ref<GithubAuthData> authDataRef = new Ref<GithubAuthData>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        authDataRef.set(GithubUtil.getValidAuthDataFromConfig(project, indicator));
-      }
-    });
-    return authDataRef.get();
+  @NotNull
+  private static GithubAuthData getValidAuthData(@NotNull final Project project) throws IOException {
+    return GithubUtil.computeValueInModal(project, "Access to GitHub",
+                                          new ThrowableConvertor<ProgressIndicator, GithubAuthData, IOException>() {
+                                            @Override
+                                            public GithubAuthData convert(ProgressIndicator indicator) throws IOException {
+                                              return GithubUtil.getValidAuthDataFromConfig(project, indicator);
+                                            }
+                                          });
   }
 
   @NotNull

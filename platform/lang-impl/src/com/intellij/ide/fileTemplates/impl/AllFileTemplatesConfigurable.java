@@ -28,6 +28,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
@@ -629,5 +631,22 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   @Nullable
   public Runnable enableSearch(String option) {
     return null;
+  }
+
+  public static void editCodeTemplate(@NotNull final String templateId, Project project) {
+    final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+    final AllFileTemplatesConfigurable configurable = new AllFileTemplatesConfigurable();
+    util.editConfigurable(project, configurable, new Runnable() {
+      @Override
+      public void run() {
+        configurable.myTabbedPane.setSelectedIndex(ArrayUtil.indexOf(configurable.myTabs, configurable.myCodeTemplatesList));
+        for (FileTemplate template : configurable.myCodeTemplatesList.getTemplates()) {
+          if (Comparing.equal(templateId, template.getName())) {
+            configurable.myCodeTemplatesList.selectTemplate(template);
+            break;
+          }
+        }
+      }
+    });
   }
 }

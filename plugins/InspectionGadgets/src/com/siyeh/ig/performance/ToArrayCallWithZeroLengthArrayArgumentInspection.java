@@ -65,6 +65,11 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
 
   private static class ToArrayCallWithZeroLengthArrayArgumentFix extends InspectionGadgetsFix {
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

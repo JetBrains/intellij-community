@@ -26,6 +26,7 @@ import git4idea.repo.GitRepository;
 import git4idea.test.TestDialogHandler;
 import org.jetbrains.plugins.github.test.GithubTest;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.util.Random;
 

@@ -65,6 +65,11 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
       return InspectionGadgetsBundle.message(
         "unnecessary.inherit.doc.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)

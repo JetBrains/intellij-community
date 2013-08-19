@@ -24,7 +24,7 @@ import java.util.List;
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-public class GithubIssuesSearchResultRaw implements DataConstructor {
+class GithubIssuesSearchResultRaw implements DataConstructor {
   List<GithubIssueRaw> items;
 
   @NotNull

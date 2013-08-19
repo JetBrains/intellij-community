@@ -64,6 +64,11 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
   }
 
   private static class OverlyStrongCastFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

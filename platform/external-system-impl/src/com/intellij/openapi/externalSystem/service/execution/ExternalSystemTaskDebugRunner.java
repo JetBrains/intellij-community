@@ -59,7 +59,7 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
     if (state instanceof ExternalSystemRunConfiguration.MyRunnableState) {
       int port = ((ExternalSystemRunConfiguration.MyRunnableState)state).getDebugPort();
       if (port > 0) {
-        RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(port), false);
+        RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(port), true);
         return attachVirtualMachine(project, state, contentToReuse, env, connection, true);
       }
       else {

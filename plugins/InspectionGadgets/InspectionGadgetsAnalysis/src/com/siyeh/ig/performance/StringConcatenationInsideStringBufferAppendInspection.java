@@ -62,6 +62,11 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
   }
 
   private static class ReplaceWithChainedAppendFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

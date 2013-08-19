@@ -59,6 +59,12 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("missing.deprecated.annotation.add.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement identifier = descriptor.getPsiElement();

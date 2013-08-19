@@ -48,7 +48,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureImpl;
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -257,35 +256,21 @@ public class TypesUtil {
       return true;
     }
 
-    if (rType == PsiType.NULL) {
-      return !(lType instanceof PsiPrimitiveType);
-    }
-
-    if (isNumericType(lType) && isNumericType(rType)) {
+    if (isAssignableWithoutConversions(lType, rType, context)) {
       return true;
     }
 
-    if (isClassType(lType, JAVA_LANG_STRING)) {
-      return true;
+    Boolean byConversionInMethodCall = isAssignableByConversion(lType, rType, context, true);
+    if (byConversionInMethodCall != null) {
+      return byConversionInMethodCall.booleanValue();
+    }
+
+    if (lType instanceof PsiPrimitiveType && rType == PsiType.NULL) { //check it because now we will wrap primitive type.
+      return false;
     }
 
     final PsiManager manager = context.getManager();
     final GlobalSearchScope scope = context.getResolveScope();
-
-    if (lType instanceof PsiArrayType) {
-      PsiType lComponentType = ((PsiArrayType)lType).getComponentType();
-      PsiType rComponentType = ClosureParameterEnhancer.findTypeForIteration(rType, context);
-      if (rComponentType != null && isAssignable(lComponentType, rComponentType, context)) {
-        return true;
-      }
-    }
-
-    if (unboxPrimitiveTypeWrapper(lType) == PsiType.CHAR &&
-        (isClassType(rType, JAVA_LANG_STRING) || isClassType(rType, GROOVY_LANG_GSTRING))) {
-      return true;
-    }
-
-    if (isAssignableByMethodCallConversion(lType, rType, context)) return true;
 
     lType = boxPrimitiveType(lType, manager, scope);
     rType = boxPrimitiveType(rType, manager, scope);
@@ -293,15 +278,9 @@ public class TypesUtil {
       return true;
     }
 
-    if (context instanceof GroovyPsiElement) {
-      for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
-        if (!converter.isAllowedInMethodCall()) {
-          Boolean result = converter.isConvertible(lType, rType, (GroovyPsiElement)context);
-          if (result != null) {
-            return result;
-          }
-        }
-      }
+    Boolean byConversion = isAssignableByConversion(lType, rType, context, false);
+    if (byConversion != null) {
+      return byConversion.booleanValue();
     }
 
     return false;
@@ -316,7 +295,7 @@ public class TypesUtil {
 
     if (rType instanceof PsiIntersectionType) {
       for (PsiType child : ((PsiIntersectionType)rType).getConjuncts()) {
-        if (isAssignable(lType, child, context)) {
+        if (isAssignableByMethodCallConversion(lType, child, context)) {
           return true;
         }
       }
@@ -324,24 +303,33 @@ public class TypesUtil {
     }
     if (lType instanceof PsiIntersectionType) {
       for (PsiType child : ((PsiIntersectionType)lType).getConjuncts()) {
-        if (!isAssignable(child, rType, context)) {
+        if (!isAssignableByMethodCallConversion(child, rType, context)) {
           return false;
         }
       }
       return true;
     }
 
-    if (rType == PsiType.NULL) {
-      return !(lType instanceof PsiPrimitiveType);
-    }
-
     if (isAssignableWithoutConversions(lType, rType, context)) {
       return true;
     }
 
+    Boolean byConversion = isAssignableByConversion(lType, rType, context, true);
+    if (byConversion != null) {
+      return byConversion.booleanValue();
+    }
+
+    return false;
+  }
+
+  @Nullable
+  private static Boolean isAssignableByConversion(@NotNull PsiType lType,
+                                                  @NotNull PsiType rType,
+                                                  @NotNull PsiElement context,
+                                                  boolean inMethodCall) {
     if (context instanceof GroovyPsiElement) {
       for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
-        if (converter.isAllowedInMethodCall()) {
+        if (inMethodCall == converter.isAllowedInMethodCall()) {
           final Boolean result = converter.isConvertible(lType, rType, (GroovyPsiElement)context);
           if (result != null) {
             return result;
@@ -349,8 +337,7 @@ public class TypesUtil {
         }
       }
     }
-
-    return false;
+    return null;
   }
 
   public static boolean isAssignableWithoutConversions(@Nullable PsiType lType,

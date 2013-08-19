@@ -65,6 +65,11 @@ public class MathRandomCastToIntInspection extends BaseInspection {
   private static class MathRandomCastToIntegerFix extends InspectionGadgetsFix {
     @Override
     @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
+    @Override
+    @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "math.random.cast.to.int.quickfix");

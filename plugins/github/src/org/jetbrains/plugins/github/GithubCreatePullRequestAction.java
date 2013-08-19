@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -39,6 +38,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -58,7 +58,12 @@ import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.*;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -66,7 +71,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
+import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
 /**
  * @author Aleksey Pivovarov
@@ -212,35 +217,31 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
   private static GithubInfo loadGithubInfoWithModal(@NotNull final Project project,
                                                     @NotNull final GithubFullPath userAndRepo,
                                                     @Nullable final GithubFullPath upstreamUserAndRepo) {
-    final Ref<GithubInfo> githubInfoRef = new Ref<GithubInfo>();
-    final Ref<IOException> exceptionRef = new Ref<IOException>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          final Ref<GithubRepoDetailed> reposRef = new Ref<GithubRepoDetailed>();
-          final GithubAuthData auth =
-            GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
-              @Override
-              public void consume(GithubAuthData authData) throws IOException {
-                reposRef.set(GithubApiUtil.getDetailedRepoInfo(authData, userAndRepo.getUser(), userAndRepo.getRepository()));
-              }
-            });
-          List<RemoteBranch> branches = loadAvailableBranchesFromGithub(project, auth, reposRef.get(), upstreamUserAndRepo);
-          githubInfoRef.set(new GithubInfo(auth, reposRef.get(), branches));
-        }
-        catch (IOException e) {
-          exceptionRef.set(e);
-        }
-      }
-    });
-    if (!exceptionRef.isNull()) {
-      if (exceptionRef.get() instanceof GithubAuthenticationCanceledException) {
-        return null;
-      }
-      GithubNotifications.showErrorDialog(project, CANNOT_CREATE_PULL_REQUEST, exceptionRef.get());
+    try {
+      return GithubUtil
+        .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubInfo, IOException>() {
+          @Override
+          public GithubInfo convert(ProgressIndicator indicator) throws IOException {
+            final Ref<GithubRepoDetailed> reposRef = new Ref<GithubRepoDetailed>();
+            final GithubAuthData auth =
+              GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
+                @Override
+                public void consume(GithubAuthData authData) throws IOException {
+                  reposRef.set(GithubApiUtil.getDetailedRepoInfo(authData, userAndRepo.getUser(), userAndRepo.getRepository()));
+                }
+              });
+            List<RemoteBranch> branches = loadAvailableBranchesFromGithub(project, auth, reposRef.get(), upstreamUserAndRepo);
+            return new GithubInfo(auth, reposRef.get(), branches);
+          }
+        });
+    }
+    catch (GithubAuthenticationCanceledException e) {
       return null;
     }
-    return githubInfoRef.get();
+    catch (IOException e) {
+      GithubNotifications.showErrorDialog(project, CANNOT_CREATE_PULL_REQUEST, e);
+      return null;
+    }
   }
 
   @Nullable
@@ -436,21 +437,21 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
                                       @NotNull final GitRepository repository,
                                       @NotNull final String currentBranch,
                                       @NotNull final String targetBranch) {
-    final Ref<DiffInfo> infoRef = new Ref<DiffInfo>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
+    try {
+      return GithubUtil.computeValueInModal(project, "Access to Git", new ThrowableConvertor<ProgressIndicator, DiffInfo, VcsException>() {
+        @Override
+        public DiffInfo convert(ProgressIndicator indicator) throws VcsException {
           List<GitCommit> commits = GitHistoryUtils.history(project, repository.getRoot(), targetBranch + "..");
           Collection<Change> diff =
             GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), targetBranch, currentBranch, null);
-          infoRef.set(new DiffInfo(targetBranch, currentBranch, commits, diff));
+          return new DiffInfo(targetBranch, currentBranch, commits, diff);
         }
-        catch (VcsException e) {
-          LOG.info(e);
-        }
-      }
-    });
-    return infoRef.get();
+      });
+    }
+    catch (VcsException e) {
+      LOG.info(e);
+      return null;
+    }
   }
 
   private static class GithubCreatePullRequestDiffDialog extends DialogWrapper {

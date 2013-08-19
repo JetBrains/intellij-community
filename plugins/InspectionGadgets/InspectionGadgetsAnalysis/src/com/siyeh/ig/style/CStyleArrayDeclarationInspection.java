@@ -58,6 +58,11 @@ public class CStyleArrayDeclarationInspection extends BaseInspection {
       return InspectionGadgetsBundle.message(
         "c.style.array.declaration.replace.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)

@@ -102,6 +102,12 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
 
   private class LogStatementGuardedByLogConditionFix extends InspectionGadgetsFix {
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     @NotNull
     public String getName() {

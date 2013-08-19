@@ -96,6 +96,12 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         elementName);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Make package-local";
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

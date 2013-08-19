@@ -35,6 +35,12 @@ class RemoveLeadingZeroFix extends InspectionGadgetsFix {
       "remove.leading.zero.to.make.decimal.quickfix");
   }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {

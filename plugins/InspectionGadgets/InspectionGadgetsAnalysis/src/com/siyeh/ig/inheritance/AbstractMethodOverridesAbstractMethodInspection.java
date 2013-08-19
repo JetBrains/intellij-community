@@ -77,6 +77,12 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
       return InspectionGadgetsBundle.message("abstract.method.overrides.abstract.method.remove.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();

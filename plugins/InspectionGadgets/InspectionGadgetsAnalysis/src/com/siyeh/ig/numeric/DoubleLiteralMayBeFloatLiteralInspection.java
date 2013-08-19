@@ -107,6 +107,12 @@ public class DoubleLiteralMayBeFloatLiteralInspection extends BaseInspection {
         replacementString);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with 'float'";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

@@ -26,12 +26,15 @@ import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.*;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
+import org.jetbrains.plugins.github.exceptions.GithubJsonException;
+import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubSslSupport;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -234,7 +237,7 @@ public class GithubApiUtil {
       return new JsonParser().parse(reader);
     }
     catch (JsonSyntaxException jse) {
-      throw new JsonException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
+      throw new GithubJsonException("Couldn't parse GitHub response", jse);
     }
     finally {
       reader.close();
@@ -274,12 +277,12 @@ public class GithubApiUtil {
    */
 
   static <Raw extends DataConstructor, Result> Result createDataFromRaw(@NotNull Raw rawObject, @NotNull Class<Result> resultClass)
-    throws JsonException {
+    throws GithubJsonException {
     try {
       return rawObject.create(resultClass);
     }
     catch (Exception e) {
-      throw new JsonException("Json parse error", e);
+      throw new GithubJsonException("Json parse error", e);
     }
   }
 
@@ -316,7 +319,7 @@ public class GithubApiUtil {
       }
 
       if (!response.getJsonElement().isJsonArray()) {
-        throw new JsonException("Wrong json type: expected JsonArray");
+        throw new GithubJsonException("Wrong json type: expected JsonArray", new Exception(response.getJsonElement().toString()));
       }
 
       myNextPage = response.getNextPage();
@@ -345,7 +348,7 @@ public class GithubApiUtil {
   @NotNull
   private static <T> T fromJson(@Nullable JsonElement json, @NotNull Class<T> classT) throws IOException {
     if (json == null) {
-      throw new JsonException("Unexpected empty response");
+      throw new GithubJsonException("Unexpected empty response");
     }
 
     T res;
@@ -355,13 +358,13 @@ public class GithubApiUtil {
       res = (T)gson.fromJson(json, classT);
     }
     catch (ClassCastException e) {
-      throw new JsonException("Parse exception while converting JSON to object " + classT.toString(), e);
+      throw new GithubJsonException("Parse exception while converting JSON to object " + classT.toString(), e);
     }
     catch (JsonParseException e) {
-      throw new JsonException("Parse exception while converting JSON to object " + classT.toString(), e);
+      throw new GithubJsonException("Parse exception while converting JSON to object " + classT.toString(), e);
     }
     if (res == null) {
-      throw new JsonException("Empty Json response");
+      throw new GithubJsonException("Empty Json response");
     }
     return res;
   }
@@ -432,23 +435,43 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static List<GithubRepo> getAvailableRepos(@NotNull GithubAuthData auth) throws IOException {
-    return doGetAvailableRepos(auth, null);
-  }
-
-  @NotNull
-  public static List<GithubRepo> getAvailableRepos(@NotNull GithubAuthData auth, @NotNull String user) throws IOException {
-    return doGetAvailableRepos(auth, user);
-  }
-
-  @NotNull
-  private static List<GithubRepo> doGetAvailableRepos(@NotNull GithubAuthData auth, @Nullable String user) throws IOException {
-    String path = user == null ? "/user/repos" : "/users/" + user + "/repos?" + PER_PAGE;
-
+  public static List<GithubRepo> getUserRepos(@NotNull GithubAuthData auth) throws IOException {
+    String path = "/user/repos?" + PER_PAGE;
 
     PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
 
     return request.getAll(auth);
+  }
+
+  @NotNull
+  public static List<GithubRepo> getUserRepos(@NotNull GithubAuthData auth, @NotNull String user) throws IOException {
+    String path = "/users/" + user + "/repos?" + PER_PAGE;
+
+    PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
+
+    return request.getAll(auth);
+  }
+
+  @NotNull
+  public static List<GithubRepo> getAvailableRepos(@NotNull GithubAuthData auth) throws IOException {
+    List<GithubRepo> repos = new ArrayList<GithubRepo>();
+
+    repos.addAll(getUserRepos(auth));
+
+    String path = "/user/orgs?" + PER_PAGE;
+    PagedRequest<GithubOrg> request = new PagedRequest<GithubOrg>(path, GithubOrg.class, GithubOrgRaw[].class);
+
+    for (GithubOrg org : request.getAll(auth)) {
+      String pathOrg = "/orgs/" + org.getLogin() + "/repos?type=member&" + PER_PAGE;
+      PagedRequest<GithubRepo> requestOrg = new PagedRequest<GithubRepo>(pathOrg, GithubRepo.class, GithubRepoRaw[].class);
+      repos.addAll(requestOrg.getAll(auth));
+    }
+
+    String pathWatched = "/user/subscriptions?" + PER_PAGE;
+    PagedRequest<GithubRepo> requestWatched = new PagedRequest<GithubRepo>(pathWatched, GithubRepo.class, GithubRepoRaw[].class);
+    repos.addAll(requestWatched.getAll(auth));
+
+    return repos;
   }
 
   @NotNull

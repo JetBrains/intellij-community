@@ -69,6 +69,12 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
       replacementText = getCollectionsMethodCallText(referenceName);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace Collections.EMPTY_* with call";
+    }
+
     @Override
     @NotNull
     public String getName() {

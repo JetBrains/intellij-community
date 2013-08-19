@@ -264,6 +264,11 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
   }
 
   private static class SimplifiableIfStatementFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

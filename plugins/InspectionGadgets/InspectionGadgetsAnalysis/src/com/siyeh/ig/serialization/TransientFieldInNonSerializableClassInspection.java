@@ -56,6 +56,11 @@ public class TransientFieldInNonSerializableClassInspection
 
   private static class TransientFieldInNonSerializableClassFix
     extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

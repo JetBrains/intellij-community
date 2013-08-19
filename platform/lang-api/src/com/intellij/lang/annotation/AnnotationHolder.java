@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  * @see Annotator#annotate(com.intellij.psi.PsiElement, AnnotationHolder)
  */
-
 public interface AnnotationHolder {
   /**
    * Creates an error annotation with the specified message over the specified PSI element.
@@ -84,35 +83,34 @@ public interface AnnotationHolder {
   Annotation createWarningAnnotation(@NotNull TextRange range, @Nullable String message);
 
   /**
-      * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
-      * message over the specified PSI element.
-      *
-      * @param elt     the element over which the annotation is created.
-      * @param message the info message.
-      * @return the annotation (which can be modified to set additional annotation parameters)
-      */
-    Annotation createWeakWarningAnnotation(@NotNull PsiElement elt, @Nullable String message);
+   * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
+   * message over the specified PSI element.
+   *
+   * @param elt     the element over which the annotation is created.
+   * @param message the info message.
+   * @return the annotation (which can be modified to set additional annotation parameters)
+   */
+  Annotation createWeakWarningAnnotation(@NotNull PsiElement elt, @Nullable String message);
 
-     /**
-      * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
-      * message over the specified AST node.
-      *
-      * @param node    the node over which the annotation is created.
-      * @param message the info message.
-      * @return the annotation (which can be modified to set additional annotation parameters)
-      */
-     Annotation createWeakWarningAnnotation(@NotNull ASTNode node, @Nullable String message);
+  /**
+   * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
+   * message over the specified AST node.
+   *
+   * @param node    the node over which the annotation is created.
+   * @param message the info message.
+   * @return the annotation (which can be modified to set additional annotation parameters)
+   */
+  Annotation createWeakWarningAnnotation(@NotNull ASTNode node, @Nullable String message);
 
-     /**
-      * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
-      * message over the specified text range.
-      *
-      * @param range   the text range over which the annotation is created.
-      * @param message the info message.
-      * @return the annotation (which can be modified to set additional annotation parameters)
-      */
-     Annotation createWeakWarningAnnotation(@NotNull TextRange range, @Nullable String message);
-
+  /**
+   * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
+   * message over the specified text range.
+   *
+   * @param range   the text range over which the annotation is created.
+   * @param message the info message.
+   * @return the annotation (which can be modified to set additional annotation parameters)
+   */
+  Annotation createWeakWarningAnnotation(@NotNull TextRange range, @Nullable String message);
 
   /**
    * Creates an information annotation (colored highlighting only, with no gutter mark and not participating in
@@ -143,7 +141,6 @@ public interface AnnotationHolder {
    * @return the annotation (which can be modified to set additional annotation parameters)
    */
   Annotation createInfoAnnotation(@NotNull TextRange range, @Nullable String message);
-
 
   @NotNull
   AnnotationSession getCurrentAnnotationSession();

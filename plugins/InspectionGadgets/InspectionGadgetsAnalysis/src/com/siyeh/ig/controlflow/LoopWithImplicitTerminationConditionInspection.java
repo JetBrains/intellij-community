@@ -58,6 +58,11 @@ public class LoopWithImplicitTerminationConditionInspection
 
   private static class LoopWithImplicitTerminationConditionFix
     extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

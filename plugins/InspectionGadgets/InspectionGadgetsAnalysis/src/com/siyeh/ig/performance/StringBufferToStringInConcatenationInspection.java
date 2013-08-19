@@ -55,6 +55,11 @@ public class StringBufferToStringInConcatenationInspection
   }
 
   private static class StringBufferToStringFix extends InspectionGadgetsFix {
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

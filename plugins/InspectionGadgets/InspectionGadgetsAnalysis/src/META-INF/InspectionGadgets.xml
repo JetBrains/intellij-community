@@ -3,6 +3,9 @@
   <extensions xmlns="com.intellij">
 
     <!--group.names.abstraction.issues-->
+    <localInspection language="JAVA" shortName="BooleanParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="boolean.parameter.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
+                     level="WARNING" implementationClass="com.siyeh.ig.abstraction.BooleanParameterInspection"/>
     <localInspection language="JAVA" shortName="CastToConcreteClass" bundle="com.siyeh.InspectionGadgetsBundle" key="cast.to.concrete.class.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.abstraction.CastToConcreteClassInspection"/>

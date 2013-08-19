@@ -523,7 +523,8 @@ public class RedundantCastUtil {
             }
           }
         }
-        if (parent instanceof PsiInstanceOfExpression || TypeConversionUtil.isAssignable(castTo, opType, false)) {
+        if (parent instanceof PsiInstanceOfExpression || (TypeConversionUtil.isAssignable(castTo, opType, false) && 
+                                                          (expectedTypeByParent == null || TypeConversionUtil.isAssignable(expectedTypeByParent, opType, false)))) {
           addToResults(typeCast);
         }
       }

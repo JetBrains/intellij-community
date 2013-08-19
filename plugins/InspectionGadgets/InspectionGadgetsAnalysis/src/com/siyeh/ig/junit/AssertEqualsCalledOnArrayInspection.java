@@ -56,6 +56,12 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("assertequals.called.on.arrays.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();

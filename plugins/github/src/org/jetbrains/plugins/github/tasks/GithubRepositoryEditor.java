@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.github.tasks;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -14,10 +13,10 @@ import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubAuthData;
-import org.jetbrains.plugins.github.GithubAuthenticationCanceledException;
-import org.jetbrains.plugins.github.GithubNotifications;
-import org.jetbrains.plugins.github.GithubUtil;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUtil;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 
 import javax.swing.*;
@@ -108,35 +107,27 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   }
 
   private void generateToken() {
-    final Ref<String> tokenRef = new Ref<String>();
-    final Ref<IOException> exceptionRef = new Ref<IOException>();
-    ProgressManager.getInstance().run(new Task.Modal(myProject, "Access to GitHub", true) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          tokenRef.set(GithubUtil.runWithValidBasicAuthForHost(myProject, indicator, getHost(),
-                                                               new ThrowableConvertor<GithubAuthData, String, IOException>() {
-                                                                 @NotNull
-                                                                 @Override
-                                                                 public String convert(GithubAuthData auth) throws IOException {
-                                                                   return GithubApiUtil
-                                                                     .getReadOnlyToken(auth, getRepoAuthor(), getRepoName(),
-                                                                                       "Intellij tasks plugin");
-                                                                 }
-                                                               }));
-        }
-        catch (IOException e) {
-          exceptionRef.set(e);
-        }
-      }
-    });
-    if (!exceptionRef.isNull()) {
-      if (exceptionRef.get() instanceof GithubAuthenticationCanceledException) {
-        return;
-      }
-      GithubNotifications.showErrorDialog(myProject, "Can't get access token", exceptionRef.get());
-      return;
+    try {
+      myToken.setText(
+        GithubUtil.computeValueInModal(myProject, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, String, IOException>() {
+          @Override
+          public String convert(ProgressIndicator indicator) throws IOException {
+            return GithubUtil
+              .runWithValidBasicAuthForHost(myProject, indicator, getHost(), new ThrowableConvertor<GithubAuthData, String, IOException>() {
+                @NotNull
+                @Override
+                public String convert(GithubAuthData auth) throws IOException {
+                  return GithubApiUtil.getReadOnlyToken(auth, getRepoAuthor(), getRepoName(), "Intellij tasks plugin");
+                }
+              });
+          }
+        }));
     }
-    myToken.setText(tokenRef.get());
+    catch (GithubAuthenticationCanceledException ignore) {
+    }
+    catch (IOException e) {
+      GithubNotifications.showErrorDialog(myProject, "Can't get access token", e);
+    }
   }
 
   @Override

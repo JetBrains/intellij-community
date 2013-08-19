@@ -66,6 +66,11 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   private static class TryFinallyCanBeTryWithResourcesFix extends InspectionGadgetsFix {
 
     public TryFinallyCanBeTryWithResourcesFix() {}
+     @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

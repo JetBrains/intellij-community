@@ -77,10 +77,10 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "java-impl",
     "java-psi-impl",
     "jsp-spi",
+    "manifest",
     "platform-main",
     "testFramework",
-    "tests_bootstrap",
-          ].flatten()
+    "tests_bootstrap"].flatten()
 
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")

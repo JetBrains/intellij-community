@@ -72,6 +72,11 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInsp
   }
 
   private static class DynamicRegexReplaceableByCompiledPatternFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull
