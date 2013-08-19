@@ -441,15 +441,14 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> filePaths) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
-    final SVNWCClient wcClient = mySvnVcs.createWCClient();
-
     List<File> files = ChangesUtil.filePathsToFiles(filePaths);
+
     for (File file : files) {
       try {
-        wcClient.doDelete(file, true, false);
+        mySvnVcs.getFactory(file).createDeleteClient().delete(file, true);
       }
-      catch (SVNException e) {
-        exceptions.add(new VcsException(e));
+      catch (VcsException e) {
+        exceptions.add(e);
       }
     }
 

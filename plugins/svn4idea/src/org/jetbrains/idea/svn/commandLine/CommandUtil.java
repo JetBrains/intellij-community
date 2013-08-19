@@ -97,12 +97,17 @@ public class CommandUtil {
    * @param parser
    * @throws VcsException
    */
-  public static void execute(@NotNull SvnVcs vcs, @NotNull SvnCommandName name, @NotNull List<String> parameters, @NotNull FileStatusResultParser parser)
-    throws VcsException {
+  public static void execute(@NotNull SvnVcs vcs,
+                             @NotNull SvnCommandName name,
+                             @NotNull List<String> parameters,
+                             @Nullable FileStatusResultParser parser)
+  throws VcsException {
     try {
       SvnLineCommand command = runSimple(name, vcs, null, null, parameters);
 
-      parser.parse(command.getOutput());
+      if (parser != null) {
+        parser.parse(command.getOutput());
+      }
     }
     catch (SVNException e) {
       throw new VcsException(e);

@@ -280,7 +280,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     ourStatusesForUndoMove.add(SVNStatusType.STATUS_ADDED);
   }
 
-  private boolean for17move(SvnVcs vcs, final File src, final File dst, boolean undo, SVNStatus srcStatus) throws SVNException {
+  private boolean for17move(final SvnVcs vcs, final File src, final File dst, boolean undo, SVNStatus srcStatus) throws SVNException {
     if (srcStatus != null && srcStatus.getCopyFromURL() == null) {
       undo = false;
     }
@@ -305,13 +305,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         catch (IOException e) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
         }
-        final SVNWCClient wcClient = vcs.createWCClient();
-        new RepeatSvnActionThroughBusy() {
-          @Override
-          protected void executeImpl() throws SVNException {
-            wcClient.doDelete(src, true, false);
-          }
-        }.execute();
+        createDeleteAction(vcs, src, true).execute();
         return false;
       }
       moveFileWithSvn(vcs, src, dst);
@@ -512,6 +506,21 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       protected void executeImpl() throws SVNException {
         try {
           vcs.getFactory(file).createRevertClient().revert(new File[]{file}, SVNDepth.fromRecurse(recursive), null);
+        }
+        catch (VcsException e) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);
+        }
+      }
+    };
+  }
+
+  @NotNull
+  private RepeatSvnActionThroughBusy createDeleteAction(@NotNull final SvnVcs vcs, @NotNull final File file, final boolean force) {
+    return new RepeatSvnActionThroughBusy() {
+      @Override
+      protected void executeImpl() throws SVNException {
+        try {
+          vcs.getFactory(file).createDeleteClient().delete(file, force);
         }
         catch (VcsException e) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);
@@ -905,17 +914,11 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
                                         final List<VcsException> exceptions) {
     return new Runnable() {
       public void run() {
-        final SVNWCClient wcClient = vcs.createWCClient();
         for(FilePath file: filesToProcess) {
           VirtualFile vFile = file.getVirtualFile();  // for deleted directories
           final File ioFile = new File(file.getPath());
           try {
-            new RepeatSvnActionThroughBusy() {
-              @Override
-              protected void executeImpl() throws SVNException {
-                wcClient.doDelete(ioFile, true, false);
-              }
-            }.execute();
+            createDeleteAction(vcs, ioFile, true).execute();
             if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
               vFile.refresh(true, true);
               VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(vFile);

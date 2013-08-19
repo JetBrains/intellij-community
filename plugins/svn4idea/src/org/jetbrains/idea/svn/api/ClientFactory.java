@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.AddClient;
+import org.jetbrains.idea.svn.delete.DeleteClient;
 import org.jetbrains.idea.svn.history.HistoryClient;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
 import org.jetbrains.idea.svn.revert.RevertClient;
@@ -18,6 +19,7 @@ public abstract class ClientFactory {
   protected AddClient addClient;
   protected HistoryClient historyClient;
   protected RevertClient revertClient;
+  protected DeleteClient deleteClient;
   protected SvnStatusClientI statusClient;
 
   protected ClientFactory(@NotNull SvnVcs vcs) {
@@ -46,6 +48,11 @@ public abstract class ClientFactory {
   public SvnStatusClientI createStatusClient() {
     // TODO: Update this in same like other clients - move to corresponding package, rename clients
     return statusClient;
+  }
+
+  @NotNull
+  public DeleteClient createDeleteClient() {
+    return prepare(deleteClient);
   }
 
   @NotNull
