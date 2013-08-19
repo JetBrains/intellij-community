@@ -45,10 +45,12 @@ public class FileDropHandler implements EditorDropHandler {
   }
 
 
+  @Override
   public boolean canHandleDrop(final DataFlavor[] transferFlavors) {
     return transferFlavors != null && FileCopyPasteUtil.isFileListFlavorSupported(transferFlavors);
   }
 
+  @Override
   public void handleDrop(@NotNull final Transferable t, @Nullable final Project project, EditorWindow editorWindow) {
     if (project == null || !FileCopyPasteUtil.isFileListFlavorSupported(t)) {
       return;

@@ -117,6 +117,7 @@ public abstract class EditorComposite implements Disposable {
       PrevNextActionsDescriptor descriptor = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_EDITOR_TAB, IdeActions.ACTION_PREVIOUS_EDITOR_TAB);
       final TabbedPaneWrapper.AsJBTabs wrapper = new TabbedPaneWrapper.AsJBTabs(fileEditorManager.getProject(), SwingConstants.BOTTOM, descriptor, this);
       wrapper.getTabs().getPresentation().setPaintBorder(0, 0, 0, 0).setTabSidePaintBorder(1).setGhostsAlwaysVisible(true).setUiDecorator(new UiDecorator() {
+        @Override
         @NotNull
         public UiDecoration getDecoration() {
           return new UiDecoration(null, new Insets(0, 8, 0, 8));
@@ -126,14 +127,17 @@ public abstract class EditorComposite implements Disposable {
 
       myTabbedPaneWrapper=wrapper;
       myComponent=new MyComponent(wrapper.getComponent()){
+        @Override
         public boolean requestFocusInWindow() {
           return wrapper.getComponent().requestFocusInWindow();
         }
 
+        @Override
         public void requestFocus() {
           wrapper.getComponent().requestFocus();
         }
 
+        @Override
         public boolean requestDefaultFocus() {
           return wrapper.getComponent().requestDefaultFocus();
         }
@@ -146,6 +150,7 @@ public abstract class EditorComposite implements Disposable {
     else if(editors.length==1){
       myTabbedPaneWrapper=null;
       myComponent = new MyComponent(createEditorComponent(editors[0])){
+        @Override
         public void requestFocus() {
           JComponent component = editors[0].getPreferredFocusedComponent();
           if (component != null) {
@@ -153,6 +158,7 @@ public abstract class EditorComposite implements Disposable {
           }
         }
 
+        @Override
         public boolean requestFocusInWindow() {
           JComponent component = editors[0].getPreferredFocusedComponent();
           if (component != null) {
@@ -162,6 +168,7 @@ public abstract class EditorComposite implements Disposable {
           return false;
         }
 
+        @Override
         public boolean requestDefaultFocus() {
           JComponent component = editors[0].getPreferredFocusedComponent();
           if (component != null) {
@@ -383,6 +390,7 @@ public abstract class EditorComposite implements Disposable {
    * Handles changes of selected myEditor
    */
   private final class MyChangeListener implements ChangeListener{
+    @Override
     public void stateChanged(ChangeEvent e) {
       FileEditor oldSelectedEditor = mySelectedEditor;
       LOG.assertTrue(oldSelectedEditor != null);
@@ -399,6 +407,7 @@ public abstract class EditorComposite implements Disposable {
       add(realComponent, BorderLayout.CENTER);
     }
 
+    @Override
     public final Object getData(String dataId){
       if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
         return getSelectedEditor();
@@ -421,6 +430,7 @@ public abstract class EditorComposite implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
     for (FileEditor editor : myEditors) {
       if (!Disposer.isDisposed(editor)) {

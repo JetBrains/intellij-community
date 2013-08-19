@@ -88,6 +88,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
           @Override
           public void run() {
             CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+              @Override
               public void run() {
                 if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end)) && doStrip) {
                   document.deleteString(start, end);
