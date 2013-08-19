@@ -18,7 +18,6 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -197,7 +197,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
           }
         }
 
-        //final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(type);
+        //final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettingsList(type);
         //ArrayList<RunnerAndConfigurationSettings> configurationSettingsList = new ArrayList<RunnerAndConfigurationSettings>();
         //int i = 0;
         //for (RunnerAndConfigurationSettings configuration : configurations) {
@@ -234,10 +234,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     public void actionPerformed(final AnActionEvent e) {
       final Project project = e.getData(PlatformDataKeys.PROJECT);
       if (project != null) {
-        RunConfiguration configuration = chooseTempConfiguration(project);
-        if (configuration != null) {
+        RunnerAndConfigurationSettings settings = chooseTempSettings(project);
+        if (settings != null) {
           final RunManager runManager = RunManager.getInstance(project);
-          runManager.makeStable(configuration);
+          runManager.makeStable(settings);
         }
       }
     }
@@ -250,12 +250,12 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         disable(presentation);
         return;
       }
-      RunConfiguration configuration = chooseTempConfiguration(project);
-      if (configuration == null) {
+      RunnerAndConfigurationSettings settings = chooseTempSettings(project);
+      if (settings == null) {
         disable(presentation);
       }
       else {
-        presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", configuration.getName()));
+        presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", settings.getName()));
         presentation.setDescription(presentation.getText());
         presentation.setVisible(true);
         presentation.setEnabled(true);
@@ -268,16 +268,13 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Nullable
-    private static RunConfiguration chooseTempConfiguration(@NotNull Project project) {
-      final RunConfiguration[] tempConfigurations = RunManager.getInstance(project).getTempConfigurations();
-      if (tempConfigurations.length > 0) {
-        RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
-        if (selectedConfiguration == null || !selectedConfiguration.isTemporary()) {
-          return tempConfigurations[0];
-        }
-        return selectedConfiguration.getConfiguration();
+    private static RunnerAndConfigurationSettings chooseTempSettings(@NotNull Project project) {
+      RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
+      if (selectedConfiguration != null && selectedConfiguration.isTemporary()) {
+        return selectedConfiguration;
       }
-      return null;
+      Iterator<RunnerAndConfigurationSettings> iterator = RunManager.getInstance(project).getTempConfigurationsList().iterator();
+      return iterator.hasNext() ? iterator.next() : null;
     }
   }
 

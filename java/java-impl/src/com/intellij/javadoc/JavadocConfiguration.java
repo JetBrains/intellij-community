@@ -93,7 +93,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return new MyJavaCommandLineState(myProject, myGenerationScope);
+    return new MyJavaCommandLineState(myProject, myGenerationScope, env);
   }
 
   public String getName() {
@@ -132,8 +132,8 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
     private final Project myProject;
     @NonNls private static final String INDEX_HTML = "index.html";
 
-    public MyJavaCommandLineState(Project project, AnalysisScope generationOptions) {
-      super(null);
+    public MyJavaCommandLineState(Project project, AnalysisScope generationOptions, ExecutionEnvironment env) {
+      super(env);
       myGenerationOptions = generationOptions;
       myProject = project;
       addConsoleFilters(new RegexpFilter(project, "$FILE_PATH$:$LINE$:[^\\^]+\\^"),

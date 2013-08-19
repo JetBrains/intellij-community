@@ -72,10 +72,31 @@ class GithubRepoRaw implements DataConstructor {
   @Nullable public Date createdAt;
   @Nullable public Date updatedAt;
 
+  @Nullable public Permissions permissions;
+
+  public static class Permissions {
+    @Nullable public Boolean admin;
+    @Nullable public Boolean pull;
+    @Nullable public Boolean push;
+
+    @SuppressWarnings("ConstantConditions")
+    @NotNull
+    public GithubRepoOrg.Permissions create() {
+      return new GithubRepoOrg.Permissions(admin, pull, push);
+    }
+  }
+
   @SuppressWarnings("ConstantConditions")
   @NotNull
   public GithubRepo createRepo() {
     return new GithubRepo(name, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.createUser());
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  @NotNull
+  public GithubRepoOrg createRepoOrg() {
+    return new GithubRepoOrg(name, description, isPrivate, isFork, htmlUrl, cloneUrl, defaultBranch, owner.createUser(),
+                             permissions.create());
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -93,6 +114,9 @@ class GithubRepoRaw implements DataConstructor {
   public <T> T create(@NotNull Class<T> resultClass) {
     if (resultClass.isAssignableFrom(GithubRepo.class)) {
       return (T)createRepo();
+    }
+    if (resultClass.isAssignableFrom(GithubRepoOrg.class)) {
+      return (T)createRepoOrg();
     }
     if (resultClass.isAssignableFrom(GithubRepoDetailed.class)) {
       return (T)createRepoDetailed();

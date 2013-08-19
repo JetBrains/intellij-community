@@ -140,9 +140,10 @@ public class AllClassesGetter {
     }
   };
 
-  public static void processJavaClasses(final CompletionParameters parameters,
-                                        final PrefixMatcher prefixMatcher, final boolean filterByScope,
-                                        final Consumer<PsiClass> consumer) {
+  public static void processJavaClasses(@NotNull final CompletionParameters parameters,
+                                        @NotNull final PrefixMatcher prefixMatcher,
+                                        final boolean filterByScope,
+                                        @NotNull final Consumer<PsiClass> consumer) {
     final PsiElement context = parameters.getPosition();
     final Project project = context.getProject();
     final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(project);
@@ -167,10 +168,10 @@ public class AllClassesGetter {
     processJavaClasses(prefixMatcher, project, scope, processor);
   }
 
-  public static void processJavaClasses(final PrefixMatcher prefixMatcher,
-                                        Project project,
-                                        GlobalSearchScope scope,
-                                        Processor<PsiClass> processor) {
+  public static void processJavaClasses(@NotNull final PrefixMatcher prefixMatcher,
+                                        @NotNull Project project,
+                                        @NotNull GlobalSearchScope scope,
+                                        @NotNull Processor<PsiClass> processor) {
     AllClassesSearch.search(scope, project, new Condition<String>() {
       @Override
       public boolean value(String s) {

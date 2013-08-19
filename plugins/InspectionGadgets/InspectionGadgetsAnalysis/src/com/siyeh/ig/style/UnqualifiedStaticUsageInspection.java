@@ -118,6 +118,12 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
       }
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Qualify static access";
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

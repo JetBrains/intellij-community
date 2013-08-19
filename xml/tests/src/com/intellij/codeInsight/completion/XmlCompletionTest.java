@@ -9,7 +9,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.javaee.ExternalResourceManagerImpl;
+import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiReference;
@@ -23,6 +23,7 @@ import java.util.List;
 /**
  * @by Maxim.Mossienko
  */
+@SuppressWarnings("ConstantConditions")
 public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
 
   private String myOldDoctype;
@@ -59,7 +60,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
       return;
     }
 
-    ExternalResourceManagerImpl.addTestResource(url, location, myTestRootDisposable);
+    ExternalResourceManagerExImpl.addTestResource(url, location, myTestRootDisposable);
   }
 
   @Override
@@ -663,6 +664,11 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
                                                             "xs:notation",
                                                             "xs:redefine",
                                                             "xs:simpleType");
+  }
+
+  public void testSubstitute() throws Exception {
+    myFixture.configureByFiles("Substitute/schema-a.xsd", "Substitute/schema-b.xsd");
+    myFixture.testCompletionVariants("Substitute/test.xml", "b:instance", "instance");
   }
 }
 

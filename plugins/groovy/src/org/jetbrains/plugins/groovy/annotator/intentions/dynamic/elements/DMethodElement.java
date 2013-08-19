@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class DMethodElement extends DItemElement {
     if (myImplicitMethod != null) return myImplicitMethod;
 
     Boolean aStatic = isStatic();
-    myImplicitMethod = new GrDynamicImplicitMethod(manager, getName(), containingClassName, aStatic != null && aStatic.booleanValue(), myPairs);
+    myImplicitMethod = new GrDynamicImplicitMethod(manager, getName(), containingClassName, aStatic != null && aStatic.booleanValue(), myPairs, getType());
     return myImplicitMethod;
   }
 }

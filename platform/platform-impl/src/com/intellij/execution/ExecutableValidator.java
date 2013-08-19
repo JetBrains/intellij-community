@@ -91,7 +91,8 @@ public abstract class ExecutableValidator {
       CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
       ProcessOutput result = handler.runProcess(60 * 1000);
       return !result.isTimeout() && (result.getExitCode() == 0) && result.getStderr().isEmpty();
-    } catch (Throwable e) {
+    }
+    catch (Throwable ignored) {
       return false;
     }
   }
@@ -199,14 +200,12 @@ public abstract class ExecutableValidator {
 
   private class ExecutableNotValidNotification extends Notification {
     private ExecutableNotValidNotification() {
-      super(myNotificationGroup.getDisplayId(), "", prepareDescription(), NotificationType.ERROR, new NotificationListener() {
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
-            showSettingsAndExpireIfFixed(notification);
-          }
+      super(myNotificationGroup.getDisplayId(), "", prepareDescription(), NotificationType.ERROR, new NotificationListener.Adapter() {
+        @Override
+        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          showSettingsAndExpireIfFixed(notification);
         }
       });
     }
   }
-
 }

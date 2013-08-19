@@ -140,6 +140,11 @@ public class PointlessArithmeticExpressionInspection
   }
 
   private class PointlessArithmeticFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

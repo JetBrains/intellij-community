@@ -21,7 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubSettings;
+import org.jetbrains.plugins.github.util.GithubSettings;
 
 import javax.swing.*;
 
@@ -32,7 +32,7 @@ import javax.swing.*;
 public class GithubCreateGistDialog extends DialogWrapper {
   private final GithubCreateGistPanel myGithubCreateGistPanel;
 
-  public GithubCreateGistDialog(@NotNull final Project project, @Nullable Editor editor, @Nullable VirtualFile file) {
+  public GithubCreateGistDialog(@NotNull final Project project, @Nullable Editor editor, @Nullable VirtualFile[] files, @Nullable VirtualFile file) {
     super(project, true);
     myGithubCreateGistPanel = new GithubCreateGistPanel();
     // Use saved settings for controls
@@ -41,19 +41,25 @@ public class GithubCreateGistDialog extends DialogWrapper {
     myGithubCreateGistPanel.setPrivate(settings.isPrivateGist());
     myGithubCreateGistPanel.setOpenInBrowser(settings.isOpenInBrowserGist());
 
-    if (file != null && !file.isDirectory()) {
+    if (editor != null) {
+      if (file != null) {
+        myGithubCreateGistPanel.showFileNameField(file.getName());
+      }
+      else {
+        myGithubCreateGistPanel.showFileNameField("");
+      }
+    }
+    else if (files != null) {
+      if (files.length == 1 && !files[0].isDirectory()) {
+        myGithubCreateGistPanel.showFileNameField(files[0].getName());
+      }
+    }
+    else if (file != null && !file.isDirectory()) {
       myGithubCreateGistPanel.showFileNameField(file.getName());
     }
-    else if (editor != null) {
-      myGithubCreateGistPanel.showFileNameField("");
-    }
+
     setTitle("Create Gist");
     init();
-  }
-
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   @Override
@@ -63,7 +69,12 @@ public class GithubCreateGistDialog extends DialogWrapper {
 
   @Override
   protected String getHelpId() {
-    return "create.gist.dialog";
+    return "github.create.gist.dialog";
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "Github.CreateGistDialog";
   }
 
   @Override

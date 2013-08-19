@@ -83,6 +83,11 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
     public String getName() {
       return InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {

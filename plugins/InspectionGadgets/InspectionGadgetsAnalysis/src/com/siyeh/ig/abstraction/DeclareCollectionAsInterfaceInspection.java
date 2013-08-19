@@ -108,6 +108,12 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         "declare.collection.as.interface.quickfix", typeString);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Weaken type";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

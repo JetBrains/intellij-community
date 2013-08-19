@@ -425,7 +425,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
       catch (IndexNotReadyException e) {
         showDumbModeNotification(myTargetElement.getProject());
-        return null;
+        return DocInfo.EMPTY;
       }
       finally {
         token.finish();

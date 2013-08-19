@@ -17,7 +17,6 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
@@ -27,7 +26,6 @@ import org.jetbrains.plugins.github.test.GithubTest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
 

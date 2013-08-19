@@ -57,6 +57,11 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection {
     extends InspectionGadgetsFix {
     @Override
     @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
+    @Override
+    @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.super.qualifier.quickfix");

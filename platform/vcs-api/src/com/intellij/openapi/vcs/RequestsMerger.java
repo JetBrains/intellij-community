@@ -31,16 +31,14 @@ import java.util.Map;
 
 /**
  * For exactly same refresh requests buffering:
- *
- * - refresh requests can be merged into one, but general principle is that each request should be reliably followed by refresh action 
+ * <p/>
+ * - refresh requests can be merged into one, but general principle is that each request should be reliably followed by refresh action
  * - at the moment only one refresh action is being done
  * - if request had been submitted while refresh action was in progress, new refresh action is initiated right after first refresh action finishes
- *
  */
 @SomeQueue
 public class RequestsMerger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.RequestsMerger");
-  private static final int ourDelay = 300;
 
   private final MyWorker myWorker;
 
@@ -48,18 +46,15 @@ public class RequestsMerger {
 
   private MyState myState;
   private final Consumer<Runnable> myAlarm;
-  
-  private final List<Runnable> myWaitingStartListeners;
-  private final List<Runnable> myWaitingFinishListeners;
+
+  private final List<Runnable> myWaitingStartListeners = new ArrayList<Runnable>();
+  private final List<Runnable> myWaitingFinishListeners = new ArrayList<Runnable>();
 
   public RequestsMerger(final Runnable runnable, final Consumer<Runnable> alarm) {
     myAlarm = alarm;
     myWorker = new MyWorker(runnable);
 
     myState = MyState.empty;
-
-    myWaitingStartListeners = new ArrayList<Runnable>();
-    myWaitingFinishListeners = new ArrayList<Runnable>();
   }
 
   public void request() {
@@ -75,35 +70,23 @@ public class RequestsMerger {
     request();
   }
 
-  public void ensureInitialization(final Runnable runnable) {
-    LOG.debug("ext: ensure init");
-    synchronized (myLock) {
-      if (myWorker.isInitialized()) {
-        runnable.run();
-        return;
-      }
-      myWaitingStartListeners.add(runnable);
-    }
-    request();
-  }
-
   private class MyWorker implements Runnable {
-    private boolean myInitialized;
+    private volatile boolean myInitialized;
     private final Runnable myRunnable;
 
     private MyWorker(Runnable runnable) {
       myRunnable = runnable;
     }
 
+    @Override
     public void run() {
       LOG.debug("worker: started refresh");
       try {
         doAction(MyAction.start);
         myRunnable.run();
-        synchronized (myLock) {
-          myInitialized = true;
-        }
-      } finally {
+        myInitialized = true;
+      }
+      finally {
         doAction(MyAction.finish);
       }
     }
@@ -125,8 +108,9 @@ public class RequestsMerger {
 
       LOG.debug("doAction: oldState: " + oldState.name() + ", newState: " + myState.name());
 
-      if (LOG.isDebugEnabled() && (exitActions != null)) {
+      if (LOG.isDebugEnabled() && exitActions != null) {
         final String debugExitActions = StringUtil.join(exitActions, new Function<MyExitAction, String>() {
+          @Override
           public String fun(MyExitAction exitAction) {
             return exitAction.name();
           }
@@ -138,7 +122,8 @@ public class RequestsMerger {
           if (MyExitAction.markStart.equals(exitAction)) {
             myWaitingFinishListeners.addAll(myWaitingStartListeners);
             myWaitingStartListeners.clear();
-          } else if (MyExitAction.markEnd.equals(exitAction)) {
+          }
+          else if (MyExitAction.markEnd.equals(exitAction)) {
             toBeCalled = new ArrayList<Runnable>(myWaitingFinishListeners);
             myWaitingFinishListeners.clear();
           }
@@ -164,6 +149,7 @@ public class RequestsMerger {
 
   private static enum MyState {
     empty() {
+      @Override
       @NotNull
       public MyState transition(MyAction action) {
         if (MyAction.request.equals(action)) {
@@ -171,19 +157,24 @@ public class RequestsMerger {
         }
         logWrongAction(this, action);
         return this;
-      }},
+      }
+    },
     inProgress() {
+      @Override
       @NotNull
       public MyState transition(MyAction action) {
         if (MyAction.finish.equals(action)) {
-          return MyState.empty;
-        } else if (MyAction.request.equals(action)) {
+          return empty;
+        }
+        else if (MyAction.request.equals(action)) {
           return MyState.inProgressRequestSubmitted;
         }
         logWrongAction(this, action);
         return this;
-      }},
+      }
+    },
     inProgressRequestSubmitted() {
+      @Override
       @NotNull
       public MyState transition(MyAction action) {
         if (MyAction.finish.equals(action)) {
@@ -193,19 +184,23 @@ public class RequestsMerger {
           logWrongAction(this, action);
         }
         return this;
-      }},
+      }
+    },
     requestSubmitted() {
+      @Override
       @NotNull
       public MyState transition(MyAction action) {
         if (MyAction.start.equals(action)) {
-          return MyState.inProgress;
-        } else if (MyAction.finish.equals(action)) {
+          return inProgress;
+        }
+        else if (MyAction.finish.equals(action)) {
           // to be able to be started by another request
           logWrongAction(this, action);
-          return MyState.empty;
+          return empty;
         }
         return this;
-      }};
+      }
+    };
 
     // under lock
     @NotNull
@@ -217,7 +212,7 @@ public class RequestsMerger {
   }
 
   private static class MyTransitionAction {
-    private final static Map<Pair<MyState, MyState>, MyExitAction[]> myMap = new HashMap<Pair<MyState, MyState>, MyExitAction[]>();
+    private static final Map<Pair<MyState, MyState>, MyExitAction[]> myMap = new HashMap<Pair<MyState, MyState>, MyExitAction[]>();
 
     static {
       add(MyState.empty, MyState.requestSubmitted, MyExitAction.submitRequestToExecutor);
@@ -230,7 +225,7 @@ public class RequestsMerger {
       add(MyState.inProgress, MyState.requestSubmitted, MyExitAction.markEnd);
     }
 
-    private static void add(final MyState from , final MyState to, final MyExitAction... action) {
+    private static void add(final MyState from, final MyState to, final MyExitAction... action) {
       myMap.put(new Pair<MyState, MyState>(from, to), action);
     }
 

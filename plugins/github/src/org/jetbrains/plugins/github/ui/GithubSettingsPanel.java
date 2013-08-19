@@ -17,13 +17,19 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.github.*;
-import org.jetbrains.plugins.github.api.GithubUserDetailed;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubSettings;
+import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.api.GithubUser;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -52,7 +58,8 @@ public class GithubSettingsPanel {
   private JPanel myPane;
   private JButton myTestButton;
   private JTextField myHostTextField;
-  private JComboBox myAuthTypeComboBox;
+  private ComboBox myAuthTypeComboBox;
+  private JLabel myLoginLabel;
 
   private boolean myCredentialsModified;
 
@@ -71,73 +78,43 @@ public class GithubSettingsPanel {
     myAuthTypeComboBox.addItem(AUTH_PASSWORD);
     myAuthTypeComboBox.addItem(AUTH_TOKEN);
 
-    reset();
-
     myTestButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         try {
-          GithubUserDetailed user = GithubUtil.checkAuthData(getAuthData());
-          if (!getLogin().equalsIgnoreCase(user.getLogin())) {
-            setLogin(user.getLogin());
-            Messages.showInfoMessage(myPane, "Login doesn't match credentials. Fixed", "Success");
-            return;
+          GithubUser user = GithubUtil.checkAuthData(getAuthData());
+          if (GithubAuthData.AuthType.TOKEN.equals(getAuthType())) {
+            GithubNotifications.showInfoDialog(myPane, "Connection successful for user " + user.getLogin(), "Success");
           }
-          Messages.showInfoMessage(myPane, "Connection successful", "Success");
+          else {
+            GithubNotifications.showInfoDialog(myPane, "Connection successful", "Success");
+          }
         }
         catch (GithubAuthenticationException ex) {
-          Messages.showErrorDialog(myPane, "Can't login using given credentials: " + ex.getMessage(), "Login Failure");
+          GithubNotifications.showErrorDialog(myPane, "Can't login using given credentials: " + ex.getMessage(), "Login Failure");
         }
         catch (IOException ex) {
           LOG.info(ex);
-          Messages.showErrorDialog(myPane, "Can't login: " + GithubUtil.getErrorTextFromException(ex), "Login Failure");
+          GithubNotifications.showErrorDialog(myPane, "Can't login: " + GithubUtil.getErrorTextFromException(ex), "Login Failure");
         }
       }
     });
 
-    myPasswordField.getDocument().addDocumentListener(new DocumentListener() {
+    myPasswordField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void insertUpdate(DocumentEvent e) {
-        myCredentialsModified = true;
-      }
-
-      @Override
-      public void removeUpdate(DocumentEvent e) {
-        myCredentialsModified = true;
-      }
-
-      @Override
-      public void changedUpdate(DocumentEvent e) {
+      protected void textChanged(DocumentEvent e) {
         myCredentialsModified = true;
       }
     });
 
-    DocumentListener passwordEraser = new DocumentListener() {
+    DocumentListener passwordEraser = new DocumentAdapter() {
       @Override
-      public void insertUpdate(DocumentEvent e) {
+      protected void textChanged(DocumentEvent e) {
         if (!myCredentialsModified) {
-          setPassword("");
-          myCredentialsModified = true;
-        }
-      }
-
-      @Override
-      public void removeUpdate(DocumentEvent e) {
-        if (!myCredentialsModified) {
-          setPassword("");
-          myCredentialsModified = true;
-        }
-      }
-
-      @Override
-      public void changedUpdate(DocumentEvent e) {
-        if (!myCredentialsModified) {
-          setPassword("");
-          myCredentialsModified = true;
+          erasePassword();
         }
       }
     };
-
     myHostTextField.getDocument().addDocumentListener(passwordEraser);
     myLoginTextField.getDocument().addDocumentListener(passwordEraser);
 
@@ -145,8 +122,7 @@ public class GithubSettingsPanel {
       @Override
       public void focusGained(FocusEvent e) {
         if (!myCredentialsModified && !getPassword().isEmpty()) {
-          setPassword("");
-          myCredentialsModified = true;
+          erasePassword();
         }
       }
 
@@ -158,10 +134,28 @@ public class GithubSettingsPanel {
     myAuthTypeComboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        setPassword("");
-        myCredentialsModified = true;
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          String item = e.getItem().toString();
+          if (AUTH_PASSWORD.equals(item)) {
+            myLoginLabel.setVisible(true);
+            myLoginTextField.setVisible(true);
+          }
+          else if (AUTH_TOKEN.equals(item)) {
+            myLoginLabel.setVisible(false);
+            myLoginTextField.setVisible(false);
+          }
+          myPane.validate();
+          erasePassword();
+        }
       }
     });
+
+    reset();
+  }
+
+  private void erasePassword() {
+    setPassword("");
+    myCredentialsModified = true;
   }
 
   public JComponent getPanel() {
@@ -182,7 +176,7 @@ public class GithubSettingsPanel {
     myHostTextField.setText(host);
   }
 
-  public void setLogin(@NotNull final String login) {
+  public void setLogin(@Nullable final String login) {
     myLoginTextField.setText(login);
   }
 
@@ -232,18 +226,15 @@ public class GithubSettingsPanel {
   }
 
   public void reset() {
-    String login = mySettings.getLogin();
     setHost(mySettings.getHost());
-    setLogin(login);
-    setPassword(login.isEmpty() ? "" : DEFAULT_PASSWORD_TEXT);
+    setLogin(mySettings.getLogin());
+    setPassword(mySettings.isAuthConfigured() ? DEFAULT_PASSWORD_TEXT : "");
     setAuthType(mySettings.getAuthType());
     resetCredentialsModification();
   }
 
   public boolean isModified() {
-    return !Comparing.equal(mySettings.getHost(), getHost()) ||
-           !Comparing.equal(mySettings.getLogin(), getLogin()) ||
-           myCredentialsModified;
+    return !Comparing.equal(mySettings.getHost(), getHost()) || myCredentialsModified;
   }
 
   public void resetCredentialsModification() {

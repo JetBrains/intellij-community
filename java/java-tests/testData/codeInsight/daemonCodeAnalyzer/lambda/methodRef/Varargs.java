@@ -22,7 +22,7 @@ class MyTest1 {
         I i2 = MyTest1 :: m2;
         i2.m(42,42);
 
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I'">I i3 = MyTest1 :: m3;</error>  
+        I i3 = MyTest1 :: m3;  
     }
 }
 

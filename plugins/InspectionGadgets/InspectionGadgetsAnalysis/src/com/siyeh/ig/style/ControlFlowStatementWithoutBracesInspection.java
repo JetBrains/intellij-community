@@ -56,6 +56,11 @@ public class ControlFlowStatementWithoutBracesInspection
       return InspectionGadgetsBundle.message(
         "control.flow.statement.without.braces.add.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)

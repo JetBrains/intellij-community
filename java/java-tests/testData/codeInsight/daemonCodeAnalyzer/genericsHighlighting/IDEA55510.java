@@ -12,3 +12,11 @@ class BugTestSub1 extends IdeaBugTest<BugTestSub1.SubMapping>
 {
         public abstract static class SubMapping extends IdeaBugTest.Mapping {} //fqn here
 }
+
+class AbstractSettings {
+    interface State {}
+}
+interface SomeInterface<T> {}
+class Settings extends AbstractSettings implements SomeInterface<Settings.MyState> {
+    static class MyState implements State {}
+}

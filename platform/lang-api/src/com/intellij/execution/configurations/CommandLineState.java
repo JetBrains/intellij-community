@@ -67,9 +67,7 @@ public abstract class CommandLineState implements RunProfileState {
   }
 
   public void addConsoleFilters(Filter... filters) {
-    for (Filter filter : filters) {
-      myConsoleBuilder.addFilter(filter);
-    }
+    myConsoleBuilder.filters(filters);
   }
 
   @Override

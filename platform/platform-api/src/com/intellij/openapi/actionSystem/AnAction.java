@@ -16,12 +16,11 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -157,7 +156,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   public final void registerCustomShortcutSet(int keyCode, @JdkConstants.InputEventMask int modifiers, @Nullable JComponent component) {
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, modifiers)), component);
-  } 
+  }
 
   public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @NotNull final JComponent component, @NotNull Disposable parentDisposable) {
     registerCustomShortcutSet(shortcutSet, component);
@@ -272,16 +271,11 @@ public abstract class AnAction implements PossiblyDumbAware {
     myShortcutSet = shortcutSet;
   }
 
+  /**
+   * @deprecated Use KeymapUtil.createTooltipText()
+   */
   public static String createTooltipText(String s, @NotNull AnAction action) {
-    String toolTipText = s == null ? "" : s;
-    while (StringUtil.endsWithChar(toolTipText, '.')) {
-      toolTipText = toolTipText.substring(0, toolTipText.length() - 1);
-    }
-    String shortcutsText = KeymapUtil.getFirstKeyboardShortcutText(action);
-    if (!shortcutsText.isEmpty()) {
-      toolTipText += " (" + shortcutsText + ")";
-    }
-    return toolTipText;
+    throw new IncorrectOperationException("Please use KeymapUtil.createTooltipText()");
   }
 
   /**

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.notification.NotificationType;
+import org.jetbrains.plugins.github.util.GithubAuthData;
 
 import java.util.Collections;
 import java.util.List;

@@ -56,6 +56,11 @@ public class EmptyInitializerInspection extends BaseInspection {
   }
 
   private static class EmptyInitializerFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

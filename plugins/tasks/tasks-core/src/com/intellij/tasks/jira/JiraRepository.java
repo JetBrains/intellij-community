@@ -33,7 +33,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   /**
    * Default JQL query
    */
-  private String mySearchQuery = "assignee = currentUser() order by duedate";
+  private String mySearchQuery = "assignee = currentUser() and resolution = Unresolved order by updated";
 
   private JiraRestApi myRestApiVersion;
 
@@ -69,17 +69,15 @@ public class JiraRepository extends BaseRepositoryImpl {
     return true;
   }
 
-  public Task[] getIssues(@Nullable String searchQuery, int max, long since) throws Exception {
+  public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     if (myRestApiVersion == null) {
       myRestApiVersion = discoverRestApiVersion();
     }
     String jqlQuery = mySearchQuery;
-    if (!StringUtil.isEmpty(searchQuery)) {
-      if (JiraUtil.ANY_ISSUE_KEY_REGEX.matcher(searchQuery).matches()) {
-        jqlQuery += String.format(" and key = \"%s\"", searchQuery);
-      }
-      else {
-        jqlQuery += String.format(" and summary ~ \"%s\"", searchQuery);
+    if (!StringUtil.isEmpty(query)) {
+      jqlQuery = String.format("summary ~ '%s'", query);
+      if (!StringUtil.isEmpty(mySearchQuery)) {
+        jqlQuery += String.format(" and %s", mySearchQuery);
       }
     }
     List<JiraIssue> issues = myRestApiVersion.findIssues(jqlQuery, max);

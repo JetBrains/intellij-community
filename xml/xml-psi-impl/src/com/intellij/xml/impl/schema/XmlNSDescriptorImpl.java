@@ -34,7 +34,9 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -846,15 +848,15 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return findSpecialTag(name,"attributeGroup",myTag,this, null);
   }
 
-  private Map<String,List<XmlTag>> mySubstitutions;
+  private MultiMap<String,XmlTag> mySubstitutions;
 
   public XmlElementDescriptor[] getSubstitutes(String localName, String namespace) {
-    List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
-
-    initSubstitutes();
-
-    List<XmlTag> substitutions = mySubstitutions.get(localName);
-    if (substitutions==null) return XmlElementDescriptor.EMPTY_ARRAY;
+    if (!initSubstitutes()) {
+      return XmlElementDescriptor.EMPTY_ARRAY;
+    }
+    Collection<XmlTag> substitutions = mySubstitutions.get(localName);
+    if (substitutions.isEmpty()) return XmlElementDescriptor.EMPTY_ARRAY;
+    List<XmlElementDescriptor> result = new SmartList<XmlElementDescriptor>();
     for (XmlTag tag : substitutions) {
       final String substAttr = tag.getAttributeValue("substitutionGroup");
       if (substAttr != null && checkElementNameEquivalence(localName, namespace, substAttr, tag)) {
@@ -865,9 +867,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return result.toArray(new XmlElementDescriptor[result.size()]);
   }
 
-  private void initSubstitutes() {
-    if (mySubstitutions ==null) {
-      mySubstitutions = new HashMap<String, List<XmlTag>>();
+  private boolean initSubstitutes() {
+    if (mySubstitutions == null && myTag != null) {
+      mySubstitutions = new MultiMap<String, XmlTag>();
+
+      if (myTag == null) return false;
 
       XmlTag[] tags = myTag.getSubTags();
 
@@ -876,16 +880,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
           final String substAttr = tag.getAttributeValue("substitutionGroup");
           if (substAttr != null) {
             String substLocalName = XmlUtil.findLocalNameByQualifiedName(substAttr);
-            List<XmlTag> list = mySubstitutions.get(substLocalName);
-            if (list == null) {
-              list = new LinkedList<XmlTag>();
-              mySubstitutions.put(substLocalName, list);
-            }
-            list.add(tag);
+            mySubstitutions.putValue(substLocalName, tag);
           }
         }
       }
     }
+    return mySubstitutions != null;
   }
 
   public PsiElement getDeclaration(){

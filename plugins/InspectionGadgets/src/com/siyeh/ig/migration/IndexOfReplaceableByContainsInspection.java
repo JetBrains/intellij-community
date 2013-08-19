@@ -118,6 +118,13 @@ public class IndexOfReplaceableByContainsInspection
       return InspectionGadgetsBundle.message(
         "replace.indexof.with.contains.quickfix");
     }
+
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
+
   }
 
   static String createContainsExpressionText(

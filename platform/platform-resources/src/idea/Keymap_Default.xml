@@ -848,6 +848,9 @@
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="control F5"/>
   </action>
+  <action id="RerunTests">
+    <keyboard-shortcut first-keystroke="shift alt R"/>
+  </action>
   <action id="CollapseSelection">
     <keyboard-shortcut first-keystroke="control PERIOD"/>
   </action>

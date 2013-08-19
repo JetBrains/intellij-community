@@ -3,6 +3,7 @@ package com.intellij.util.xml.stubs;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -54,7 +55,9 @@ public class DomStubBuilderTest extends DomStubTest {
   }
 
   public void testNullTag() throws Exception {
-    PsiFile psiFile = myFixture.configureByFile("nullTag.xml");
+    VirtualFile virtualFile = myFixture.copyFileToProject("nullTag.xml");
+    assertNotNull(virtualFile);
+    PsiFile psiFile = ((PsiManagerEx)getPsiManager()).getFileManager().findFile(virtualFile);
 
     StubTreeLoader loader = StubTreeLoader.getInstance();
     VirtualFile file = psiFile.getVirtualFile();

@@ -54,6 +54,11 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <K, V> Map<K, V> newHashMap(Pair<K, V> first, Pair<K, V>... entries) {
+    return ContainerUtilRt.newHashMap(first, entries);
+  }
+
+  @NotNull
   public static <K, V> Map<K, V> newHashMap(@NotNull List<K> keys, @NotNull List<V> values) {
     return ContainerUtilRt.newHashMap(keys, values);
   }
@@ -1029,6 +1034,15 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
+   * @param appendTail specify whether additional values should be appended in front or after the list
+   * @return read-only list consisting of the elements from specified list with some additional values
+   */
+  @NotNull
+  public static <T> List<T> concat(boolean appendTail, @NotNull List<? extends T> list, T... values) {
+    return appendTail ? concat(list, list(values)) : concat(list(values), list);
+  }
+
+  /**
    * @return read-only list consisting of the two lists added together
    */
   @NotNull
@@ -1434,6 +1448,10 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   public static <T, V> List<V> mapNotNull(@NotNull Collection<? extends T> iterable, @NotNull Function<T, V> mapping) {
+    if (iterable.isEmpty()) {
+      return emptyList();
+    }
+
     List<V> result = new ArrayList<V>(iterable.size());
     for (T t : iterable) {
       final V o = mapping.fun(t);

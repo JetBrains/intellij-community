@@ -47,7 +47,12 @@ import org.jetbrains.annotations.NonNls;
 public class XmlGtTypedHandler extends TypedHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
 
-  public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile, final FileType fileType) {
+  public Result beforeCharTyped(final char c, final Project project, Editor editor, PsiFile editedFile, final FileType fileType) {
+    final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, editedFile);
+    if (editor != injectedEditor) {
+      editor = injectedEditor;
+      editedFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
+    }
     final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
     if (c == '>' && webEditorOptions != null && webEditorOptions.isAutomaticallyInsertClosingTag() && fileContainsXmlLanguage(editedFile)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -65,13 +70,6 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
           // seems like a template language
           // <xml_code><caret><outer_element>
           elementAtCaret = element = provider.findElementAt(offset - 1, XMLLanguage.class);
-        }
-        if (element == null && offset > 0) {
-          // seems like an injection in a template file
-          final PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
-          if (injectedElement != null && injectedElement.getContainingFile() instanceof XmlFile) {
-            elementAtCaret = element = injectedElement;
-          }
         }
         if (!(element instanceof PsiWhiteSpace)) {
           boolean nonAcceptableDelimiter = true;

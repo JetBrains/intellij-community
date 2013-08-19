@@ -92,7 +92,11 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean isAccessible(@NotNull PsiMember member, @NotNull PsiElement place, @Nullable PsiClass accessObjectClass) {
-    return JavaPsiFacade.getInstance(place.getProject()).getResolveHelper().isAccessible(member, place, accessObjectClass);
+    return isAccessible(place.getProject(), member, place, accessObjectClass);
+  }
+  public static boolean isAccessible(@NotNull Project project, @NotNull PsiMember member,
+                                     @NotNull PsiElement place, @Nullable PsiClass accessObjectClass) {
+    return JavaPsiFacade.getInstance(project).getResolveHelper().isAccessible(member, place, accessObjectClass);
   }
 
   @NotNull
@@ -462,8 +466,20 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @MethodCandidateInfo.ApplicabilityLevelConstant
-  public static int getApplicabilityLevel(@NotNull final PsiMethod method, @NotNull final PsiSubstitutor substitutorForMethod, @NotNull final PsiType[] args,
-                                           @NotNull final LanguageLevel languageLevel) {
+  public static int getApplicabilityLevel(@NotNull final PsiMethod method,
+                                          @NotNull final PsiSubstitutor substitutorForMethod,
+                                          @NotNull final PsiType[] args,
+                                          @NotNull final LanguageLevel languageLevel) {
+    return getApplicabilityLevel(method, substitutorForMethod, args, languageLevel, true, true);
+  }
+
+  @MethodCandidateInfo.ApplicabilityLevelConstant
+  public static int getApplicabilityLevel(@NotNull final PsiMethod method,
+                                          @NotNull final PsiSubstitutor substitutorForMethod,
+                                          @NotNull final PsiType[] args,
+                                          @NotNull final LanguageLevel languageLevel,
+                                                   final boolean allowUncheckedConversion,
+                                                   final boolean checkVarargs) {
     final PsiParameter[] parms = method.getParameterList().getParameters();
     if (args.length < parms.length - 1) return ApplicabilityLevel.NOT_APPLICABLE;
 
@@ -475,7 +491,7 @@ public final class PsiUtil extends PsiUtilCore {
       PsiType parmType = getParameterType(parms[parms.length - 1], languageLevel, substitutorForMethod);
       PsiType argType = args[args.length - 1];
       if (argType == null) return ApplicabilityLevel.NOT_APPLICABLE;
-      if (TypeConversionUtil.isAssignable(parmType, argType)) return ApplicabilityLevel.FIXED_ARITY;
+      if (TypeConversionUtil.isAssignable(parmType, argType, allowUncheckedConversion)) return ApplicabilityLevel.FIXED_ARITY;
 
       if (isRaw) {
         final PsiType erasedParamType = TypeConversionUtil.erasure(parmType);
@@ -487,7 +503,7 @@ public final class PsiUtil extends PsiUtilCore {
       }
     }
 
-    if (method.isVarArgs() && languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
+    if (checkVarargs && method.isVarArgs() && languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
       if (args.length < parms.length) return ApplicabilityLevel.VARARGS;
       PsiParameter lastParameter = parms[parms.length - 1];
       if (!lastParameter.isVarArgs()) return ApplicabilityLevel.NOT_APPLICABLE;
@@ -734,13 +750,10 @@ public final class PsiUtil extends PsiUtilCore {
     if (!allowPublicAbstract && aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
       modifier =  PsiModifier.PROTECTED;
     }
-    else if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+    else if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || aClass.isEnum()) {
       modifier = PsiModifier.PACKAGE_LOCAL;
     }
     else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-      modifier = PsiModifier.PRIVATE;
-    }
-    else if (aClass.isEnum()) {
       modifier = PsiModifier.PRIVATE;
     }
 

@@ -18,9 +18,13 @@ package com.intellij.remoteServer.configuration.deployment;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.project.Project;
+import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -32,6 +36,10 @@ public abstract class DeploymentSourceUtil {
 
   @NotNull
   public abstract ArtifactDeploymentSource createArtifactDeploymentSource(@NotNull ArtifactPointer artifactPointer);
+
+  @NotNull
+  public abstract List<DeploymentSource> createArtifactDeploymentSources(@NotNull Project project,
+                                                                         @NotNull Collection<? extends Artifact> artifacts);
 
   @NotNull
   public abstract ModuleDeploymentSource createModuleDeploymentSource(@NotNull ModulePointer modulePointer);

@@ -148,7 +148,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       }
       String vmOptions;
       if (myDebugPort > 0) {
-        String debuggerSetup = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + myDebugPort;
+        String debuggerSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
         String regular = mySettings.getVmOptions();
         vmOptions = regular == null ? debuggerSetup : regular + " " + debuggerSetup;
       }

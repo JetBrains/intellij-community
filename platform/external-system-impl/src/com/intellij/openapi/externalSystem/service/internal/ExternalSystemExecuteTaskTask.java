@@ -24,7 +24,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -88,10 +88,9 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   @Override
   protected void doExecute() throws Exception {
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
-    ExternalSystemSettingsManager settingsManager = ServiceManager.getService(ExternalSystemSettingsManager.class);
-    ExternalSystemExecutionSettings settings = settingsManager.getExecutionSettings(getIdeProject(),
-                                                                                    getExternalProjectPath(),
-                                                                                    getExternalSystemId());
+    ExternalSystemExecutionSettings settings = ExternalSystemApiUtil.getExecutionSettings(getIdeProject(),
+                                                                                          getExternalProjectPath(),
+                                                                                          getExternalSystemId());
     RemoteExternalSystemFacade facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
     RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
     List<String> taskNames = ContainerUtilRt.map2List(myTasksToExecute, MAPPER);

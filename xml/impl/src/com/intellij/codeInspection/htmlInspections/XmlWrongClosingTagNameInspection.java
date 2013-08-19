@@ -45,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 public class XmlWrongClosingTagNameInspection implements Annotator {
 
   @Override
-  public void annotate(final PsiElement psiElement, final AnnotationHolder holder) {
+  public void annotate(@NotNull final PsiElement psiElement, @NotNull final AnnotationHolder holder) {
     if (psiElement instanceof XmlToken) {
       final PsiElement parent = psiElement.getParent();
       if (parent instanceof XmlTag) {

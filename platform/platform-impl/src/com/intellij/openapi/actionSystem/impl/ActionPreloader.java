@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -27,7 +28,7 @@ import com.intellij.openapi.startup.StartupActivity;
 public class ActionPreloader implements StartupActivity, DumbAware {
 
   @Override
-  public void runActivity(Project project) {
+  public void runActivity(@NotNull Project project) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       ((ActionManagerImpl)ActionManager.getInstance()).preloadActions();
     }

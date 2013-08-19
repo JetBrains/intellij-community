@@ -71,6 +71,11 @@ public class MissortedModifiersInspection extends BaseInspection {
   }
 
   private static class SortModifiersFix extends InspectionGadgetsFix {
+     @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

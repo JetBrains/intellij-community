@@ -62,6 +62,12 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
     return InspectionGadgetsBundle.message("static.inheritance.replace.quickfix", scope);
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Replace inheritance with qualified reference";
+  }
+
   @Override
   public void doFix(final Project project, final ProblemDescriptor descriptor) throws IncorrectOperationException {
     ApplicationManager.getApplication().invokeLater(new Runnable() {

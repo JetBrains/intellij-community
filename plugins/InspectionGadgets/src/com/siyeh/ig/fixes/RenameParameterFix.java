@@ -39,6 +39,12 @@ public class RenameParameterFix extends InspectionGadgetsFix {
     return InspectionGadgetsBundle.message("renameto.quickfix", m_targetName);
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Rename";
+  }
+
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement nameIdentifier = descriptor.getPsiElement();

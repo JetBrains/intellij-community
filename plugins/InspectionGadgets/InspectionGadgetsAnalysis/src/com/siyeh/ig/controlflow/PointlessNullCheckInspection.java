@@ -80,6 +80,12 @@ public class PointlessNullCheckInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix", myExpressionText);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify";
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();

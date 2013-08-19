@@ -248,7 +248,6 @@ public class StringUtil extends StringUtilRt {
     return html.replaceAll("<(.|\n)*?>", "");
   }
 
-  @Nullable
   public static String toLowerCase(@Nullable final String str) {
     //noinspection ConstantConditions
     return str == null ? null : str.toLowerCase();

@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class ServerConnector<D extends DeploymentConfiguration> {
   public abstract void connect(@NotNull ConnectionCallback<D> callback);
 
-  public abstract void disconnect();
-
   public interface ConnectionCallback<D extends DeploymentConfiguration> extends RemoteOperationCallback {
     void connected(@NotNull ServerRuntimeInstance<D> serverRuntimeInstance);
   }

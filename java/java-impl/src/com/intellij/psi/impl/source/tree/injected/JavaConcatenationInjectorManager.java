@@ -159,7 +159,7 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
       }
       if (result != null && result.getResult() != null) {
         for (Pair<Place, PsiFile> p : result.getResult()) {
-          ((MultiHostRegistrarImpl)registrar).addToResults(p.first, p.second);
+          ((MultiHostRegistrarImpl)registrar).addToResults(p.first, p.second, result);
         }
 
         if (data == null) {
@@ -215,7 +215,7 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
     private static final List<Class<PsiLiteralExpression>> LITERALS = Arrays.asList(PsiLiteralExpression.class);
   }
 
-  private final List<ConcatenationAwareInjector> myConcatenationInjectors = ContainerUtil.createEmptyCOWList();
+  private final List<ConcatenationAwareInjector> myConcatenationInjectors = ContainerUtil.createLockFreeCopyOnWriteList();
   public void registerConcatenationInjector(@NotNull ConcatenationAwareInjector injector) {
     myConcatenationInjectors.add(injector);
     concatenationInjectorsChanged();

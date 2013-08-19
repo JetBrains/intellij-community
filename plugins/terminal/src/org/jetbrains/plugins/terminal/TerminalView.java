@@ -23,21 +23,27 @@ import java.awt.event.FocusListener;
  */
 public class TerminalView {
 
-  private TerminalWidget myTerminalWidget;
+  private JBTabbedTerminalWidget myTerminalWidget;
+  private Project myProject;
 
-  public void createTerminal(Project project, ToolWindow toolWindow) {
-
+  public void initTerminal(Project project, ToolWindow toolWindow) {
+    myProject = project;
     LocalTerminalDirectRunner terminalRunner = OpenLocalTerminalAction.createTerminalRunner(project);
-
+    
+    toolWindow.setToHideOnEmptyContent(true);
+    
     if (terminalRunner != null) {
       myTerminalWidget = terminalRunner.createTerminalWidget();
     }
 
-    final Content content = createToolWindowContentPanel(terminalRunner, myTerminalWidget);
+    Content content = createToolWindowContentPanel(terminalRunner, myTerminalWidget, toolWindow);
+    
     toolWindow.getContentManager().addContent(content);
   }
 
-  private Content createToolWindowContentPanel(@Nullable LocalTerminalDirectRunner terminalRunner, TerminalWidget terminalWidget) {
+  private Content createToolWindowContentPanel(@Nullable LocalTerminalDirectRunner terminalRunner,
+                                               JBTabbedTerminalWidget terminalWidget,
+                                               ToolWindow toolWindow) {
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
       @Override
       public Object getData(@NonNls String dataId) {
@@ -50,12 +56,13 @@ public class TerminalView {
       panel.addFocusListener(createFocusListener());
     }
 
-    ActionToolbar toolbar = createToolbar(terminalRunner, terminalWidget);
+    ActionToolbar toolbar = createToolbar(terminalRunner, terminalWidget, toolWindow);
     toolbar.getComponent().addFocusListener(createFocusListener());
     toolbar.setTargetComponent(panel);
     panel.setToolbar(toolbar.getComponent());
 
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
+    content.setCloseable(true);
 
     if (getComponentToFocus() != null) {
       content.setPreferredFocusableComponent(getComponentToFocus());
@@ -89,18 +96,18 @@ public class TerminalView {
     openSession(terminal, terminalRunner);
   }
 
-  private void openSession(ToolWindow terminal, AbstractTerminalRunner terminalRunner) {
+  private void openSession(ToolWindow toolWindow, AbstractTerminalRunner terminalRunner) {
     if (myTerminalWidget == null) {
       myTerminalWidget = terminalRunner.createTerminalWidget();
-      terminal.getContentManager().removeAllContents(true);
-      final Content content = createToolWindowContentPanel(null, myTerminalWidget);
-      terminal.getContentManager().addContent(content);
+      toolWindow.getContentManager().removeAllContents(true);
+      final Content content = createToolWindowContentPanel(null, myTerminalWidget, toolWindow);
+      toolWindow.getContentManager().addContent(content);
     }
     else {
       terminalRunner.openSession(myTerminalWidget);
     }
 
-    terminal.activate(new Runnable() {
+    toolWindow.activate(new Runnable() {
       @Override
       public void run() {
 
@@ -112,26 +119,25 @@ public class TerminalView {
     return ServiceManager.getService(TerminalView.class);
   }
 
-  private static ActionToolbar createToolbar(@Nullable final LocalTerminalDirectRunner terminalRunner,
-                                             final TerminalWidget terminal) {
+  private ActionToolbar createToolbar(@Nullable final LocalTerminalDirectRunner terminalRunner,
+                                             final JBTabbedTerminalWidget terminal, ToolWindow toolWindow) {
     DefaultActionGroup group = new DefaultActionGroup();
 
     if (terminalRunner != null) {
       group.add(new NewSession(terminalRunner, terminal));
+      group.add(new CloseSession(terminal, toolWindow));
     }
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);
   }
 
-  public void createNewSession(Project project, AbstractTerminalRunner terminalRunner) {
-    ToolWindow terminal = ToolWindowManager.getInstance(project).getToolWindow("Terminal");
+  public void createNewSession(Project project, final AbstractTerminalRunner terminalRunner) {
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Terminal");
 
-    openSession(terminal, terminalRunner);
-
-    terminal.activate(new Runnable() {
+    toolWindow.activate(new Runnable() {
       @Override
       public void run() {
-
+        openSession(toolWindow, terminalRunner);
       }
     }, true);
   }
@@ -149,6 +155,35 @@ public class TerminalView {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myTerminalRunner.openSession(myTerminal);
+    }
+  }
+
+  private class CloseSession extends AnAction {
+    private final JBTabbedTerminalWidget myTerminal;
+    private ToolWindow myToolWindow;
+
+    public CloseSession(JBTabbedTerminalWidget terminal, ToolWindow toolWindow) {
+      super("Close Session", "Close Terminal Session", AllIcons.Actions.Delete);
+      myTerminal = terminal;
+      myToolWindow = toolWindow;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      boolean singleSession = myTerminal.isSingleSession();
+      
+      myTerminal.closeCurrentSession();
+      
+      if (singleSession) {
+        myToolWindow.getContentManager().removeAllContents(true);
+        
+        myToolWindow.getActivation().doWhenDone(new Runnable() {
+          @Override
+          public void run() {
+            initTerminal(myProject, myToolWindow);
+          }
+        });
+      }
     }
   }
 }

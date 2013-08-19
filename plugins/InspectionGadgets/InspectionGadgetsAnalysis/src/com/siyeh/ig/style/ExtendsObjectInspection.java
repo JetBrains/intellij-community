@@ -57,6 +57,11 @@ public class ExtendsObjectInspection extends BaseInspection {
   }
 
   private static class ExtendsObjectFix extends InspectionGadgetsFix {
+     @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

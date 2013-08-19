@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -369,7 +369,7 @@ public class EnterHandler extends BaseEnterHandler {
           if (element instanceof PsiComment && commentContext.commenter.getBlockCommentTokenType() == ((PsiComment)element).getTokenType()) {
             final PsiComment comment = (PsiComment)element;
             int commentEnd = comment.getTextRange().getEndOffset();
-            if (myOffset >= commentEnd) {
+            if (myOffset >= commentEnd && myOffset < myFile.getTextRange().getEndOffset()) {
               commentContext.docStart = false;
             }
             else {

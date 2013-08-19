@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
-public class GithubFileRaw implements DataConstructor {
+class GithubFileRaw implements DataConstructor {
   @Nullable public String filename;
 
   @Nullable public Integer additions;

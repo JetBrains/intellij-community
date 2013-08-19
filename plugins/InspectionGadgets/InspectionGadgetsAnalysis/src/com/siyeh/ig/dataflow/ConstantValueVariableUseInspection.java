@@ -71,6 +71,12 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
         myText);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

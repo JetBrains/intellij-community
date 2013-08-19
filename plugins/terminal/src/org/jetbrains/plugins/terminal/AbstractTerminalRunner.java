@@ -14,11 +14,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TtyConnector;
+import com.jediterm.terminal.emulator.ColorPalette;
 import com.jediterm.terminal.ui.AbstractSystemSettingsProvider;
 import com.jediterm.terminal.ui.TerminalSession;
 import com.jediterm.terminal.ui.TerminalWidget;
@@ -43,9 +45,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   public void run() {
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to terminal", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Running the terminal", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        indicator.setText("Connecting to terminal...");
+        indicator.setText("Running the terminal...");
         try {
           doRun();
         }
@@ -85,7 +87,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   protected abstract ProcessHandler createProcessHandler(T process);
 
-  public TerminalWidget createTerminalWidget() {
+  public JBTabbedTerminalWidget createTerminalWidget() {
     JBTerminalSystemSettingsProvider provider = new JBTerminalSystemSettingsProvider();
     JBTabbedTerminalWidget terminalWidget = new JBTabbedTerminalWidget(provider);
     provider.setTerminalWidget(terminalWidget);
@@ -126,8 +128,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   public static void openSession(TerminalWidget terminal, TtyConnector ttyConnector) {
-    TerminalSession session = terminal.createTerminalSession();
-    session.setTtyConnector(ttyConnector);
+    TerminalSession session = terminal.createTerminalSession(ttyConnector);
     session.start();
   }
 
@@ -182,6 +183,11 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     @Override
     public KeyStroke[] getPasteKeyStrokes() {
       return getKeyStrokesByActionId("$Paste");
+    }
+
+    @Override
+    public ColorPalette getPalette() {
+      return SystemInfo.isWindows ? ColorPalette.WINDOWS_PALETTE : ColorPalette.XTERM_PALETTE;
     }
 
     private KeyStroke[] getKeyStrokesByActionId(String actionId) {

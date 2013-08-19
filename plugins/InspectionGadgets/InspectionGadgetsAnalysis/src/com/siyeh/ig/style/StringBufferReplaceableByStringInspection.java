@@ -78,6 +78,12 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       }
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with 'String'";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();

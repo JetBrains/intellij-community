@@ -187,7 +187,7 @@ public class HighlightInfo implements Segment {
   public static TextAttributes getAttributesByType(@Nullable final PsiElement element,
                                                    @NotNull HighlightInfoType type,
                                                    @NotNull TextAttributesScheme colorsScheme) {
-    final SeverityRegistrar severityRegistrar = SeverityUtil
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar
       .getSeverityRegistrar(element != null ? element.getProject() : null);
     final TextAttributes textAttributes = severityRegistrar.getTextAttributesBySeverity(type.getSeverity(element));
     if (textAttributes != null) {
@@ -352,6 +352,10 @@ public class HighlightInfo implements Segment {
 
   @NonNls
   public String toString() {
+    return getDescription() != null ? getDescription() : "";
+  }
+
+  public String paramString() {
     @NonNls String s = "HighlightInfo(" + startOffset + "," + endOffset+")";
     if (getActualStartOffset() != startOffset || getActualEndOffset() != endOffset) {
       s += "; actual: (" + getActualStartOffset() + "," + getActualEndOffset() + ")";
@@ -648,8 +652,7 @@ public class HighlightInfo implements Segment {
     return info;
   }
 
-  private static void appendFixes(@Nullable TextRange fixedRange, HighlightInfo info, List<Annotation.QuickFixInfo> fixes) {
-    if (info == null) return;
+  private static void appendFixes(@Nullable TextRange fixedRange, @NotNull HighlightInfo info, List<Annotation.QuickFixInfo> fixes) {
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
         TextRange range = fixedRange != null ? fixedRange : quickFixInfo.textRange;
@@ -661,7 +664,7 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  public static HighlightInfoType convertType(Annotation annotation) {
+  public static HighlightInfoType convertType(@NotNull Annotation annotation) {
     ProblemHighlightType type = annotation.getHighlightType();
     if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
     if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
@@ -669,7 +672,8 @@ public class HighlightInfo implements Segment {
     return convertSeverity(annotation.getSeverity());
   }
 
-  public static HighlightInfoType convertSeverity(final HighlightSeverity severity) {
+  @NotNull
+  public static HighlightInfoType convertSeverity(@NotNull HighlightSeverity severity) {
     return severity == HighlightSeverity.ERROR? HighlightInfoType.ERROR :
            severity == HighlightSeverity.WARNING ? HighlightInfoType.WARNING :
            severity == HighlightSeverity.INFO ? HighlightInfoType.INFO :

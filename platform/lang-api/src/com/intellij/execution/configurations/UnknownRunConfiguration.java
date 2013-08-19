@@ -182,9 +182,5 @@ public class UnknownRunConfiguration implements RunConfiguration {
     protected JComponent createEditor() {
       return myPanel;
     }
-
-    @Override
-    protected void disposeEditor() {
-    }
   }
 }

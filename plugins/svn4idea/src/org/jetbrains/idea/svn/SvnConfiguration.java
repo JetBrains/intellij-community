@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -360,6 +361,12 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
         myAuthManager = new SvnAuthenticationManager(svnVcs.getProject(), new File(getConfigurationDirectory()));
+      Disposer.register(svnVcs.getProject(), new Disposable() {
+        @Override
+        public void dispose() {
+          myAuthManager = null;
+        }
+      });
       getInteractiveManager(svnVcs);
       // to init
       myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, myInteractiveProvider, RUNTIME_AUTH_CACHE));

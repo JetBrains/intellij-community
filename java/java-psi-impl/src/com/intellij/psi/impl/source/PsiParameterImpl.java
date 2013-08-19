@@ -101,7 +101,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   @NotNull
   private PsiElement getParameterIdentifier() {
     PsiJavaToken identifier = PsiTreeUtil.getChildOfAnyType(this, PsiIdentifier.class, PsiKeyword.class);
-    assert identifier != null : this;
+    assert identifier != null : getClass() + ":" + getText();
     return identifier;
   }
 

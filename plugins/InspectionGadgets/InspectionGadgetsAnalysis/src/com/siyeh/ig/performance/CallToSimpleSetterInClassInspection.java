@@ -84,6 +84,12 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.inline.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

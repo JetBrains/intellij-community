@@ -25,6 +25,7 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -60,7 +61,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   private JButton myProxySettingsButton;
   protected JCheckBox myUseHttpAuthenticationCheckBox;
 
-  private JPanel myCustomPanel;
+  protected JPanel myCustomPanel;
   private JBCheckBox myAddCommitMessage;
   private JBLabel myComment;
   private JPanel myEditorPanel;
@@ -149,6 +150,16 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     loginAnonymouslyChanged(!myLoginAnonymouslyJBCheckBox.isSelected());
   }
 
+
+  protected final void updateCustomPanel() {
+    myCustomPanel.removeAll();
+    JComponent customPanel = createCustomPanel();
+    if (customPanel != null) {
+      myCustomPanel.add(customPanel, BorderLayout.CENTER);
+    }
+    myCustomPanel.repaint();
+  }
+
   private void loginAnonymouslyChanged(boolean enabled) {
     myUsernameLabel.setEnabled(enabled);
     myUserNameText.setEnabled(enabled);
@@ -209,6 +220,10 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
         doApply();
       }
     });
+  }
+
+  protected void installListener(EditorTextField editor) {
+    installListener(editor.getDocument());
   }
 
   protected void doApply() {

@@ -61,7 +61,7 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
       @Override
       public void actionPerformed(ActionEvent e) {
         try {
-          apply();
+          myConfigurable.apply();
         }
         catch (ConfigurationException exc) {
           Messages.showErrorDialog(myMainPanel, "Cannot test connection: " + exc.getMessage(), exc.getTitle());
@@ -100,7 +100,9 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
           }
         });
         while (!indicator.isCanceled()) {
-          semaphore.waitFor(500);
+          if (semaphore.waitFor(500)) {
+            break;
+          }
         }
         Runnable showResult = showResultRef.get();
         if (showResult != null) {

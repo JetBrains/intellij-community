@@ -61,7 +61,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
                                final StateSplitter splitter,
                                Disposable parentDisposable,
                                final PicoContainer picoContainer) {
-    assert dir.indexOf("$") < 0;
+    assert !dir.contains("$") : dir;
     myPathMacroSubstitutor = pathMacroSubstitutor;
     myDir = FILE_SYSTEM.createFile(dir);
     mySplitter = splitter;

@@ -26,7 +26,7 @@ public class JiraUser {
 
   @Override
   public String toString() {
-    return String.format("JiraUser(name=%s)", name);
+    return String.format("JiraUser(name='%s')", name);
   }
 
   @NotNull

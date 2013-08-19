@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +57,15 @@ public class ContainerUtilRt {
     Map<K, V> map = newHashMap();
     for (int i = 0; i < keys.size(); ++i) {
       map.put(keys.get(i), values.get(i));
+    }
+    return map;
+  }
+
+  public static <K, V> Map<K,V> newHashMap(Pair<K, V> first, Pair<K, V>[] entries) {
+    Map<K, V> map = newHashMap();
+    map.put(first.getFirst(), first.getSecond());
+    for (Pair<K, V> entry : entries) {
+      map.put(entry.getFirst(), entry.getSecond());
     }
     return map;
   }

@@ -41,11 +41,12 @@ public class FileResponses {
 
   public static HttpResponse createResponse(String path) {
     HttpResponse response = create(FILE_MIMETYPE_MAP.getContentType(path));
-    response.setHeader(CACHE_CONTROL, "max-age=0");
+    response.setHeader(CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0");
+    response.setHeader(PRAGMA, "no-cache");
     return response;
   }
 
-  private static boolean checkCache(HttpRequest request, ChannelHandlerContext context, long lastModified) {
+  private static boolean checkCache(HttpRequest request, Channel channel, long lastModified) {
     String ifModifiedSince = request.getHeader(IF_MODIFIED_SINCE);
     if (ifModifiedSince != null && !ifModifiedSince.isEmpty()) {
       try {
@@ -54,7 +55,7 @@ public class FileResponses {
           addAllowAnyOrigin(response);
           addDate(response);
           addServer(response);
-          send(response, request, context);
+          send(response, channel, request);
           return true;
         }
       }
@@ -66,8 +67,8 @@ public class FileResponses {
     return false;
   }
 
-  public static void sendFile(HttpRequest request, ChannelHandlerContext context, File file) throws IOException {
-    if (checkCache(request, context, file.lastModified())) {
+  public static void sendFile(HttpRequest request, Channel channel, File file) throws IOException {
+    if (checkCache(request, channel, file.lastModified())) {
       return;
     }
 
@@ -83,7 +84,6 @@ public class FileResponses {
         setContentLength(response, fileLength);
       }
 
-      Channel channel = context.getChannel();
       ChannelFuture future = channel.write(response);
 
       if (request.getMethod() != HttpMethod.HEAD) {

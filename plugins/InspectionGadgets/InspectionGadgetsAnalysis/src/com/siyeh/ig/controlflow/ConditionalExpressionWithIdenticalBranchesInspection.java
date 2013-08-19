@@ -57,6 +57,11 @@ public class ConditionalExpressionWithIdenticalBranchesInspection
       return InspectionGadgetsBundle.message(
         "conditional.expression.with.identical.branches.collapse.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)

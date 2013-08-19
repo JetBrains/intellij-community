@@ -41,4 +41,10 @@ class MakePublicStaticFix extends InspectionGadgetsFix {
   public String getName() {
     return myName;
   }
+
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Make public/static";
+  }
 }

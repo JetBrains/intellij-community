@@ -55,6 +55,12 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("simplify.junit.assertion.simplify.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();

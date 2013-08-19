@@ -19,7 +19,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;

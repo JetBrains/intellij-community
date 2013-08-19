@@ -151,7 +151,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
       root.add(typeNode);
       final Set<String> addedNames = StringSetSpinAllocator.alloc();
       try {
-        RunConfiguration[] configurations = runManager.getConfigurations(type);
+        List<RunConfiguration> configurations = runManager.getConfigurationsList(type);
         for (final RunConfiguration configuration : configurations) {
           final String configurationName = configuration.getName();
           if (addedNames.contains(configurationName)) {

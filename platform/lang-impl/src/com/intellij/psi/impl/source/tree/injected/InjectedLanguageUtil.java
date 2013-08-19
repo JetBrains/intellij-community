@@ -123,8 +123,14 @@ public class InjectedLanguageUtil {
     }
     List<Pair<Place, PsiFile>> places = registrar.getResult();
     for (Pair<Place, PsiFile> pair : places) {
-      PsiFile injectedPsi = pair.second;
-      visitor.visit(injectedPsi, pair.first);
+      if (visitor instanceof InjectedReferenceVisitor) {
+        if (registrar.getReferenceInjector() != null) {
+          ((InjectedReferenceVisitor)visitor).visitInjectedReference(registrar.getReferenceInjector(), pair.first);
+        }
+      }
+      else if (pair.second != null) {
+        visitor.visit(pair.second, pair.first);
+      }
     }
   }
 

@@ -19,10 +19,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.plugins.github.GithubSettings;
+import org.jetbrains.plugins.github.util.GithubSettings;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -35,11 +36,17 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   private final GithubCreatePullRequestPanel myGithubCreatePullRequestPanel;
   private static final Pattern GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+:[a-zA-Z0-9_.-]+");
 
-  public GithubCreatePullRequestDialog(@NotNull final Project project) {
+  public GithubCreatePullRequestDialog(@NotNull final Project project,
+                                       @NotNull Collection<String> branches,
+                                       @Nullable String suggestedBranch,
+                                       @NotNull Consumer<String> showDiff) {
     super(project, true);
-    myGithubCreatePullRequestPanel = new GithubCreatePullRequestPanel();
+    myGithubCreatePullRequestPanel = new GithubCreatePullRequestPanel(showDiff);
 
-    myGithubCreatePullRequestPanel.setBranch(GithubSettings.getInstance().getCreatePullRequestDefaultBranch());
+    myGithubCreatePullRequestPanel.setBranches(branches);
+
+    String configBranch = GithubSettings.getInstance().getCreatePullRequestDefaultBranch();
+    myGithubCreatePullRequestPanel.setSelectedBranch(configBranch != null ? configBranch : suggestedBranch);
 
     setTitle("Create Pull Request");
     init();
@@ -57,9 +64,14 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     return myGithubCreatePullRequestPanel.getPreferredComponent();
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction()};
+  @Override
+  protected String getHelpId() {
+    return "github.create.pull.request.dialog";
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "Github.CreatePullRequestDialog";
   }
 
   @NotNull
@@ -83,14 +95,6 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     GithubSettings.getInstance().setCreatePullRequestDefaultBranch(getTargetBranch());
   }
 
-  public void addBranches(@NotNull Collection<String> branches) {
-    myGithubCreatePullRequestPanel.addBranches(branches);
-  }
-
-  public void setBusy(boolean busy) {
-    myGithubCreatePullRequestPanel.setBusy(busy);
-  }
-
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
@@ -99,18 +103,19 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     }
 
     if (!GITHUB_REPO_PATTERN.matcher(getTargetBranch()).matches()) {
-      return new ValidationInfo("Branch must be specified like 'username:branch'", myGithubCreatePullRequestPanel.getComboBox());
+      return new ValidationInfo("Branch must be specified like 'username:branch'", myGithubCreatePullRequestPanel.getBranchEditor());
     }
 
     return null;
   }
 
+  @TestOnly
   public void setRequestTitle(String title) {
     myGithubCreatePullRequestPanel.setTitle(title);
   }
 
   @TestOnly
   public void setBranch(String branch) {
-    myGithubCreatePullRequestPanel.setBranch(branch);
+    myGithubCreatePullRequestPanel.setSelectedBranch(branch);
   }
 }

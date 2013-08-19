@@ -526,6 +526,44 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         substitutor = substitutor.put(typeParameter, substitution);
       }
     }
+    for (int i = 0; i < typeParameters.length; i++) {
+      PsiTypeParameter typeParameter = typeParameters[i];
+      if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
+        PsiType substitutionFromBounds = PsiType.NULL;
+        OtherParameters:
+        for (int j = 0; j < typeParameters.length; j++) {
+          if (i != j) {
+            PsiTypeParameter other = typeParameters[j];
+            final PsiType otherSubstitution = substitutor.substitute(other);
+            if (otherSubstitution == null) continue;
+            final PsiClassType[] bounds = other.getExtendsListTypes();
+            for (PsiClassType bound : bounds) {
+              final PsiType substitutedBound = substitutor.substitute(bound);
+              final Pair<PsiType, ConstraintType> currentConstraint =
+                getSubstitutionForTypeParameterConstraint(typeParameter, substitutedBound, otherSubstitution, true, languageLevel);
+              if (currentConstraint == null) continue;
+              final PsiType currentSubstitution = currentConstraint.getFirst();
+              final ConstraintType currentConstraintType = currentConstraint.getSecond();
+              if (currentConstraintType == ConstraintType.EQUALS) {
+                substitutionFromBounds = currentSubstitution;
+                break OtherParameters;
+              }
+              else if (currentConstraintType == ConstraintType.SUPERTYPE) {
+                if (PsiType.NULL.equals(substitutionFromBounds)) {
+                  substitutionFromBounds = currentSubstitution;
+                }
+                else {
+                  substitutionFromBounds = GenericsUtil.getLeastUpperBound(substitutionFromBounds, currentSubstitution, myManager);
+                }
+              }
+            }
+          }
+        }
+        if (substitutionFromBounds != PsiType.NULL) {
+          substitutor = substitutor.put(typeParameter, substitutionFromBounds);
+        }
+      }
+    }
     return substitutor;
   }
 
@@ -534,10 +572,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                               final boolean captureWildcard) {
     if (arg instanceof PsiWildcardType && !captureWildcard) return FAILED_INFERENCE;
     if (arg != PsiType.NULL) {
-      if (arg instanceof PsiWildcardType) {
-        final PsiType bound = ((PsiWildcardType)arg).getBound();
-        if (bound instanceof PsiClassType && ((PsiClassType)bound).isRaw()) return Pair.create(null, constraintType);
-      }
       return new Pair<PsiType, ConstraintType>(arg, constraintType);
     }
     return null;
@@ -863,7 +897,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                                                     PsiType patternType,
                                                                                     final ConstraintType constraintType,
                                                                                     final int depth) {
-    if (arg instanceof PsiCapturedWildcardType) arg = ((PsiCapturedWildcardType)arg).getWildcard(); //reopen
+    if (arg instanceof PsiCapturedWildcardType && (depth < 2 || constraintType != ConstraintType.EQUALS)) arg = ((PsiCapturedWildcardType)arg).getWildcard(); //reopen
 
     if (patternType.equals(param)) {
       return processArgType(arg, constraintType, depth < 2);
@@ -1163,15 +1197,18 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           }
         }
 
-        PsiClassType[] superTypes = typeParameter.getSuperTypes();
+        PsiType[] superTypes = typeParameter.getSuperTypes();
         if (superTypes.length == 0) return null;
-        PsiType superType = substitutor.substitute(superTypes[0]);
-        if (superType instanceof PsiClassType && ((PsiClassType)superType).isRaw()) {
-          superType = TypeConversionUtil.erasure(superType);
+        for (int i = 0; i < superTypes.length; i++) {
+          PsiType superType = substitutor.substitute(superTypes[i]);
+          if (superType instanceof PsiClassType && ((PsiClassType)superType).isRaw()) {
+            superType = TypeConversionUtil.erasure(superType);
+          }
+          if (superType == null) superType = PsiType.getJavaLangObject(myManager, scope);
+          if (superType == null) return null;
+          superTypes[i] = superType;
         }
-        if (superType == null) superType = PsiType.getJavaLangObject(myManager, scope);
-        if (superType == null) return null;
-        return policy.getInferredTypeWithNoConstraint(myManager, superType);
+        return policy.getInferredTypeWithNoConstraint(myManager, PsiIntersectionType.createIntersection(superTypes));
       }
       return null;
     }

@@ -74,19 +74,20 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
         i.remove();
       }
     }
-    return directories.isEmpty() ? null : new CreateClassOrPackageFix(directories,
-                                                                      context,
-                                                                      fixPath ? qualifiedName : redPart,
-                                                                      redPart,
-                                                                      kind,
-                                                                      superClass,
-                                                                      templateName);
+    return new CreateClassOrPackageFix(directories,
+                                       context,
+                                       fixPath ? qualifiedName : redPart,
+                                       redPart,
+                                       kind,
+                                       superClass,
+                                       templateName);
   }
 
   @Nullable
   public static CreateClassOrPackageFix createFix(@NotNull final String qualifiedName,
                                                   @NotNull final PsiElement context,
-                                                  @Nullable ClassKind kind, final String superClass) {
+                                                  @Nullable ClassKind kind,
+                                                  String superClass) {
     return createFix(qualifiedName, context.getResolveScope(), context, null, kind, superClass, null);
   }
 

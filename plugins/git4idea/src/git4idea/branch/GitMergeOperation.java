@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -159,8 +160,13 @@ class GitMergeOperation extends GitBranchOperation {
     switch (myDeleteOnMerge) {
       case DELETE:
         super.notifySuccess(message);
-        GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-        brancher.deleteBranch(myBranchToMerge, new ArrayList<GitRepository>(getRepositories()));
+        UIUtil.invokeLaterIfNeeded(new Runnable() { // bg process needs to be started from the EDT
+          @Override
+          public void run() {
+            GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+            brancher.deleteBranch(myBranchToMerge, new ArrayList<GitRepository>(getRepositories()));
+          }
+        });
         break;
       case PROPOSE:
         String description = message + "<br/><a href='delete'>Delete " + myBranchToMerge + "</a>";

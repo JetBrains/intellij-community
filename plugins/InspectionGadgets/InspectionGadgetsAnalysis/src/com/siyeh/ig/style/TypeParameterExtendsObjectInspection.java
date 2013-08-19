@@ -75,6 +75,12 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
         "extends.object.remove.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(@NotNull Project project,
                       ProblemDescriptor descriptor)

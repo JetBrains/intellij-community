@@ -19,7 +19,6 @@ import com.intellij.Patches;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.apiAdapters.ConnectionServiceWrapper;
-import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -544,23 +543,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
         myDebugProcessDispatcher.getMulticaster().connectorIsReady();
         try {
-          if (SOCKET_ATTACHING_CONNECTOR_NAME.equals(connector.name()) && Patches.SUN_JDI_CONNECTOR_HANGUP_BUG) {
-            String portString = myConnection.getAddress();
-            String hostString = myConnection.getHostName();
-
-            if (hostString == null || hostString.isEmpty()) {
-              //noinspection HardCodedStringLiteral
-              hostString = "localhost";
-            }
-            hostString += ":";
-
-            final TransportServiceWrapper transportServiceWrapper = TransportServiceWrapper.getTransportService(connector.transport());
-            myConnectionService = transportServiceWrapper.attach(hostString + portString);
-            return myConnectionService.createVirtualMachine();
-          }
-          else {
-            return connector.attach(myArguments);
-          }
+          return connector.attach(myArguments);
         }
         catch (IllegalArgumentException e) {
           throw new CantRunException(e.getLocalizedMessage());

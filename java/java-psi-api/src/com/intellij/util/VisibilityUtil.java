@@ -24,6 +24,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -50,13 +51,7 @@ public class VisibilityUtil  {
 
   @PsiModifier.ModifierConstant
   public static String getHighestVisibility(@PsiModifier.ModifierConstant String v1, @PsiModifier.ModifierConstant String v2) {
-    if(v1.equals(v2)) return v1;
-
-    if(PsiModifier.PRIVATE.equals(v1)) return v2;
-    if(PsiModifier.PUBLIC.equals(v1)) return PsiModifier.PUBLIC;
-    if(PsiModifier.PRIVATE.equals(v2)) return v1;
-
-    return PsiModifier.PUBLIC;
+    return compare(v1, v2) < 0 ? v1 : v2;
   }
 
   public static void escalateVisibility(PsiMember modifierListOwner, PsiElement place) throws IncorrectOperationException {
@@ -75,8 +70,9 @@ public class VisibilityUtil  {
 
   @PsiModifier.ModifierConstant
   public static String getPossibleVisibility(final PsiMember psiMethod, final PsiElement place) {
-    if (PsiUtil.isAccessible(psiMethod, place, null)) return getVisibilityModifier(psiMethod.getModifierList());
-    if (JavaPsiFacade.getInstance(psiMethod.getProject()).arePackagesTheSame(psiMethod, place)) {
+    Project project = psiMethod.getProject();
+    if (PsiUtil.isAccessible(project, psiMethod, place, null)) return getVisibilityModifier(psiMethod.getModifierList());
+    if (JavaPsiFacade.getInstance(project).arePackagesTheSame(psiMethod, place)) {
       return PsiModifier.PACKAGE_LOCAL;
     }
     if (InheritanceUtil.isInheritorOrSelf(PsiTreeUtil.getParentOfType(place, PsiClass.class),

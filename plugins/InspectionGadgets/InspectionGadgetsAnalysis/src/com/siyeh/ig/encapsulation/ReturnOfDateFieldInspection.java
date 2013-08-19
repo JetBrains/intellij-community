@@ -75,6 +75,12 @@ public class ReturnOfDateFieldInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("return.date.calendar.field.quickfix", myType);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Return clone";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();

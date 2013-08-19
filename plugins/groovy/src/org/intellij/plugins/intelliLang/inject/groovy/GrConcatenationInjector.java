@@ -15,16 +15,14 @@
  */
 package org.intellij.plugins.intelliLang.inject.groovy;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
+import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
@@ -94,23 +92,14 @@ public class GrConcatenationInjector implements MultiHostInjector {
 
     final PsiAnnotation[] annotations = getAnnotationFrom(annotationOwner, pair, true, true);
     if (annotations.length > 0) {
-      final String id = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
-      final String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");
-      final String suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix");
-      final BaseInjection injection = new BaseInjection(GroovyLanguageInjectionSupport.GROOVY_SUPPORT_ID);
-      if (prefix != null) injection.setPrefix(prefix);
-      if (suffix != null) injection.setSuffix(suffix);
-      if (id != null) injection.setInjectedLanguageId(id);
+      BaseInjection injection = new BaseInjection(GroovyLanguageInjectionSupport.GROOVY_SUPPORT_ID);
 
-      //todo suffixes & prefixes are not supported
-      final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
+      injection.setPrefix(StringUtil.notNullize(AnnotationUtilEx.calcAnnotationValue(annotations, "prefix")));
+      injection.setSuffix(StringUtil.notNullize(AnnotationUtilEx.calcAnnotationValue(annotations, "suffix")));
+      injection.setInjectedLanguageId(StringUtil.notNullize(AnnotationUtilEx.calcAnnotationValue(annotations, "value")));
 
-      Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> info = Trinity.create(
-        host,
-        InjectedLanguage.create(injection.getInjectedLanguageId(), prefix, suffix, true),
-        ElementManipulators.getManipulator(host).getRangeInElement(host)
-      );
-      InjectorUtils.registerInjection(language, Collections.singletonList(info), host.getContainingFile(), registrar);
+      LanguageInjectionSupport support = InjectorUtils.findInjectionSupport(GroovyLanguageInjectionSupport.GROOVY_SUPPORT_ID);
+      InjectorUtils.registerInjectionSimple(host, injection, support, registrar);
     }
   }
 

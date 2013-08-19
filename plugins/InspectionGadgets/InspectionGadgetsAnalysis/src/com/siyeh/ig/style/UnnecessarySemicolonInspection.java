@@ -60,6 +60,11 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
   }
 
   private static class UnnecessarySemicolonFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

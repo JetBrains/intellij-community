@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.jira.model;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
@@ -58,5 +59,10 @@ public class JiraComment {
   @NotNull
   public String getBody() {
     return body;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("JiraComment(text='%s')", StringUtil.first(body, 30, true));
   }
 }

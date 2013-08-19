@@ -44,6 +44,7 @@ import java.util.Collection;
 public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements
                                                                                               RunConfigurationWithSuppressedDefaultRunAction {
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
     final Module module = getConfigurationModule().getModule();
@@ -53,6 +54,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  @Override
   public void readExternal(final Element element) throws InvalidDataException {
     super.readExternal(element);
     readModule(element);
@@ -73,6 +75,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return new RemoteConnection(USE_SOCKET_TRANSPORT, HOST, USE_SOCKET_TRANSPORT ? PORT : SHMEM_ADDRESS, SERVER_MODE);
   }
 
+  @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     GenericDebuggerRunnerSettings debuggerSettings = (GenericDebuggerRunnerSettings)env.getRunnerSettings();
     debuggerSettings.LOCAL = false;
@@ -81,6 +84,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return new RemoteStateState(getProject(), createRemoteConnection());
   }
 
+  @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<RemoteConfiguration> group = new SettingsEditorGroup<RemoteConfiguration>();
@@ -89,6 +93,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return group;
   }
 
+  @Override
   public Collection<Module> getValidModules() {
     return getAllModules();
   }

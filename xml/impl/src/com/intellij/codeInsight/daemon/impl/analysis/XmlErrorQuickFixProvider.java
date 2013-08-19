@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
   @NonNls private static final String AMP_ENTITY = "&amp;";
 
-  public void registerErrorQuickFix(final PsiErrorElement element, final HighlightInfo highlightInfo) {
+  public void registerErrorQuickFix(@NotNull final PsiErrorElement element, @NotNull final HighlightInfo highlightInfo) {
     if (PsiTreeUtil.getParentOfType(element, XmlTag.class) != null) {
       registerXmlErrorQuickFix(element,highlightInfo);
     }

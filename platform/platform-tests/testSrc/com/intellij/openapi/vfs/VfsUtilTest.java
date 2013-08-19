@@ -167,8 +167,8 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
   public void testAsyncRefresh() throws Throwable {
     final Throwable[] ex = {null};
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      Arrays.asList(new Object[8]), ProgressManager.getInstance().getProgressIndicator(), false, new Processor<Object>() {
+    boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+      Arrays.asList(new Object[8]), ProgressManager.getInstance().getProgressIndicator(), true, new Processor<Object>() {
       @Override
       public boolean process(Object o) {
         try {
@@ -181,6 +181,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
       }
     });
     if (ex[0] != null) throw ex[0];
+    if (!success) System.out.println("!success");
   }
 
   private void doAsyncRefreshTest() throws Exception {

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -531,11 +532,12 @@ public class WeakestTypeFinder {
   }
 
   @Nullable
-  private static PsiClass getVisibleInheritor(PsiClass superClass, PsiElement context) {
+  private static PsiClass getVisibleInheritor(@NotNull PsiClass superClass, PsiElement context) {
     final Query<PsiClass> search = DirectClassInheritorsSearch.search(superClass, context.getResolveScope());
+    Project project = superClass.getProject();
     for (PsiClass aClass : search) {
       if (superClass.isInheritor(aClass, true)) {
-        if (PsiUtil.isAccessible(aClass, context, null)) {
+        if (PsiUtil.isAccessible(project, aClass, context, null)) {
           return aClass;
         }
         else {

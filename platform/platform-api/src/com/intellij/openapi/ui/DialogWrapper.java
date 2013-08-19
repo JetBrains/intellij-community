@@ -86,7 +86,7 @@ public abstract class DialogWrapper {
    */
   public static final int CLOSE_EXIT_CODE = CANCEL_EXIT_CODE;
   /**
-   * If you use your custom exit codes you have have to start them with
+   * If you use your own custom exit codes you have to start them with
    * this constant.
    */
   public static final int NEXT_USER_EXIT_CODE = 2;
@@ -1504,12 +1504,14 @@ public abstract class DialogWrapper {
       Disposer.register(uiParent, myDisposable); // ensure everything is disposed on app quit
     }
 
-    myPeer.show().doWhenProcessed(new Runnable() {
+    Disposer.register(myDisposable, new Disposable() {
       @Override
-      public void run() {
+      public void dispose() {
         result.setDone(isOK());
       }
     });
+
+    myPeer.show();
 
     return result;
   }

@@ -86,6 +86,12 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
       this.removeToString = removeToString;
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Make Array.toString() implicit";
+    }
+
     @Override
     @NotNull
     public String getName() {

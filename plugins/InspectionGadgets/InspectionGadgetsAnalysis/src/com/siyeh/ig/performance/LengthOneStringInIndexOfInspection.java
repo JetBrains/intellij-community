@@ -67,6 +67,11 @@ public class LengthOneStringInIndexOfInspection
 
   private static class ReplaceStringsWithCharsFix
     extends InspectionGadgetsFix {
+     @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

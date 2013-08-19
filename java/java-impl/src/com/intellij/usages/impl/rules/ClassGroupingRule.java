@@ -33,6 +33,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -79,7 +80,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
     else {
       // skip JspClass synthetic classes.
-      if (containingClass.getParent() instanceof PsiFile && JspPsiUtil.isInJspFile(containingClass)) {
+      if (containingClass.getParent() instanceof PsiFile && FileTypeUtils.isInServerPageFile(containingClass)) {
         containingClass = null;
       }
     }

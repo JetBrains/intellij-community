@@ -70,7 +70,7 @@ public class ClassInTopLevelPackageInspection extends BaseInspection {
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so that it doesn't drill down to inner classes
-      if (FileTypeUtils.isInJsp(aClass)) {
+      if (FileTypeUtils.isInServerPageFile(aClass)) {
         return;
       }
       if (ClassUtils.isInnerClass(aClass)) {

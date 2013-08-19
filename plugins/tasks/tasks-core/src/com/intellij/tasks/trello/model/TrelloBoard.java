@@ -42,7 +42,7 @@ public class TrelloBoard extends TrelloModel {
 
   @Override
   public String toString() {
-    return String.format("TrelloBoard(id='%s', name='%s')", getId(), name);
+    return String.format("TrelloBoard(id='%s', name='%s')", getId(), getName());
   }
 
   public boolean isClosed() {
@@ -66,7 +66,7 @@ public class TrelloBoard extends TrelloModel {
   }
 
   @Override
-  public void setName(String name) {
+  public void setName(@NotNull String name) {
     this.name = name;
   }
 

@@ -167,6 +167,17 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     fail("Conflicts were not found");
   }
 
+  public void testRenameMethodCollisionSameSignature() throws Exception {
+    try {
+      doTest("foo1");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      Assert.assertEquals("Method with same erasure is already defined in the class <b><code>RenameTest</code></b>.", e.getMessage());
+      return;
+    }
+    fail("Conflicts were not found");
+  }
+
   public void testRenameMethodNoCollisionWithOtherSignature() throws Exception {
     doTest("foo2");
   }

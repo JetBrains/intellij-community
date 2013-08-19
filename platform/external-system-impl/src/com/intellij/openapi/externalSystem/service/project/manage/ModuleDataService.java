@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -110,10 +109,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
         final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
         moduleRootModel.inheritSdk();
         created.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, data.getOwner().toString());
-        ProjectData projectData = module.getData(ProjectKeys.PROJECT);
-        if (projectData != null) {
-          created.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, projectData.getLinkedExternalProjectPath());
-        }
+        created.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, data.getLinkedExternalProjectPath());
 
         RootPolicy<Object> visitor = new RootPolicy<Object>() {
           @Override

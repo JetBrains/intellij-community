@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfigurableProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.GithubSettings;
+import org.jetbrains.plugins.github.util.GithubSettings;
 
 import javax.swing.*;
 
@@ -46,7 +46,7 @@ public class GithubSettingsConfigurable implements SearchableConfigurable, VcsCo
 
   public void apply() throws ConfigurationException {
     if (mySettingsPane != null) {
-      mySettings.setCredentials(mySettingsPane.getHost(), mySettingsPane.getLogin(), mySettingsPane.getAuthData(), true);
+      mySettings.setCredentials(mySettingsPane.getHost(), mySettingsPane.getAuthData(), true);
       mySettingsPane.resetCredentialsModification();
     }
   }

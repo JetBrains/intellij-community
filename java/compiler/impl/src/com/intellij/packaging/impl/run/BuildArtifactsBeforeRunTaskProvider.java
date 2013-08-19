@@ -65,7 +65,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
       @Override
       public void artifactRemoved(@NotNull Artifact artifact) {
         final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
-        for (RunConfiguration configuration : runManager.getAllConfigurations()) {
+        for (RunConfiguration configuration : runManager.getAllConfigurationsList()) {
           final List<BuildArtifactsBeforeRunTask> tasks = runManager.getBeforeRunTasks(configuration, ID);
           for (BuildArtifactsBeforeRunTask task : tasks) {
             final String artifactName = artifact.getName();

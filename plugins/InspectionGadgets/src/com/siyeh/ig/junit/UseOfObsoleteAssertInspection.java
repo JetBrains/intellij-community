@@ -225,5 +225,12 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
     public String getName() {
       return InspectionGadgetsBundle.message("use.of.obsolete.assert.quickfix");
     }
+
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
+
   }
 }

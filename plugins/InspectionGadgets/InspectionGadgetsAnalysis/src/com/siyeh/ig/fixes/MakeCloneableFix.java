@@ -46,6 +46,12 @@ public class MakeCloneableFix extends InspectionGadgetsFix {
     }
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Make 'Cloneable'";
+  }
+
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {

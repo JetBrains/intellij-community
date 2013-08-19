@@ -58,6 +58,12 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
         "class.without.constructor.create.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
@@ -104,7 +110,7 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so it doesn't drill down
       if (aClass.isInterface() || aClass.isEnum() ||
-          aClass.isAnnotationType() || FileTypeUtils.isInJsp(aClass)) {
+          aClass.isAnnotationType() || FileTypeUtils.isInServerPageFile(aClass)) {
         return;
       }
       if (aClass instanceof PsiTypeParameter ||

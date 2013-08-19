@@ -17,7 +17,6 @@ package com.intellij.designer.componentTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.actions.StartInplaceEditing;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
@@ -159,7 +158,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   @Nullable
   private static HighlightDisplayLevel getHighlightDisplayLevel(Project project, RadComponent component) {
     HighlightDisplayLevel displayLevel = null;
-    SeverityRegistrar severityRegistrar = SeverityUtil.getSeverityRegistrar(project);
+    SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     for (ErrorInfo errorInfo : RadComponent.getError(component)) {
       if (displayLevel == null || severityRegistrar.compare(errorInfo.getLevel().getSeverity(), displayLevel.getSeverity()) > 0) {
         displayLevel = errorInfo.getLevel();
@@ -174,7 +173,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     if (level != null) {
       TextAttributesKey attributesKey =
-        SeverityUtil.getSeverityRegistrar(myDesigner.getProject()).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
+        SeverityRegistrar.getSeverityRegistrar(myDesigner.getProject()).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
       final TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
 
       wrapper = new AttributeWrapper() {

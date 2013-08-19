@@ -15,16 +15,23 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.TextTransferrable;
+import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import java.awt.datatransfer.Transferable;
 import java.util.List;
 
 /**
@@ -54,6 +61,32 @@ public class PluginTable extends JBTable {
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowGrid(false);
     setStriped(true);
+    setTransferHandler(new TransferHandler() {
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        final IdeaPluginDescriptor[] selectedValues = getSelectedObjects();
+        if (selectedValues == null) return null;
+        final String text = StringUtil.join(selectedValues, new Function<IdeaPluginDescriptor, String>() {
+          @Override
+          public String fun(IdeaPluginDescriptor descriptor) {
+            return descriptor.getName();
+          }
+        }, ", ");
+        final String htmlText = "<body>\n<ul>\n" + StringUtil.join(selectedValues, new Function<IdeaPluginDescriptor, String>() {
+          @Override
+          public String fun(IdeaPluginDescriptor descriptor) {
+            return descriptor.getName();
+          }
+        }, "</li>\n<li>") + "</ul>\n</body>\n";
+        return new TextTransferrable(XmlStringUtil.wrapInHtml(htmlText), text);
+      }
+
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
   }
 
   public void setColumnWidth(final int columnIndex, final int width) {

@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConvertor;
@@ -42,12 +41,16 @@ import git4idea.util.GitPreservingProcess;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.*;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.GithubRepoDetailed;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
+import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
 import java.util.Collections;
 
-import static org.jetbrains.plugins.github.GithubUtil.setVisibleEnabled;
+import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
 /**
  * Created by IntelliJ IDEA.
@@ -67,11 +70,6 @@ public class GithubRebaseAction extends DumbAwareAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     if (project == null || project.isDefault()) {
-      setVisibleEnabled(e, false, false);
-      return;
-    }
-
-    if (StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin())) {
       setVisibleEnabled(e, false, false);
       return;
     }
@@ -115,6 +113,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     new Task.Backgroundable(project, "Rebasing GitHub fork...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        gitRepository.update();
         String upstreamRemoteUrl = GithubUtil.findUpstreamRemote(gitRepository);
 
         if (upstreamRemoteUrl == null) {

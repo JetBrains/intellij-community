@@ -55,6 +55,11 @@ public class UnnecessaryLabelOnContinueStatementInspection
 
   private static class UnnecessaryLabelOnContinueStatementFix
     extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

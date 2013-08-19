@@ -46,6 +46,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -287,7 +288,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
     if (classes.length == 1
         && (canImportHere = canImportHere(allowCaretNearRef, editor, psiFile, classes[0].getName()))
-        && (JspPsiUtil.isInJspFile(psiFile) ?
+        && (FileTypeUtils.isInServerPageFile(psiFile) ?
             CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
             CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
         && (ApplicationManager.getApplication().isUnitTestMode() || codeAnalyzer.canChangeFileSilently(psiFile))

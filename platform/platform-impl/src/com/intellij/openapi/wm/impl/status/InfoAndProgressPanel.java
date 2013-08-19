@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -54,8 +51,6 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
@@ -82,7 +77,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   private final AnimatedIcon myRefreshIcon;
 
   private String myCurrentRequestor;
-  
+
   public InfoAndProgressPanel() {
 
     setOpaque(false);
@@ -171,6 +166,13 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   @Override
   public void dispose() {
     setRefreshVisible(false);
+    InlineProgressIndicator[] indicators = getCurrentInlineIndicators().toArray(new InlineProgressIndicator[0]);
+    for (InlineProgressIndicator indicator : indicators) {
+      System.out.println("Disposing "+indicator);
+      Disposer.dispose(indicator);
+    }
+    myInline2Original.clear();
+    myOriginal2Inlines.clear();
   }
 
   @Override
@@ -178,6 +180,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     return this;
   }
 
+  @NotNull
   public List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
     synchronized (myOriginals) {
       if (myOriginals.isEmpty()) return Collections.emptyList();
@@ -191,7 +194,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     }
   }
 
-  public void addProgress(final ProgressIndicatorEx original, TaskInfo info) {
+  public void addProgress(@NotNull ProgressIndicatorEx original, @NotNull TaskInfo info) {
     synchronized (myOriginals) {
       final boolean veryFirst = !hasProgressIndicators();
 
@@ -224,10 +227,10 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     }
   }
 
-  private void removeProgress(InlineProgressIndicator progress) {
+  private void removeProgress(@NotNull InlineProgressIndicator progress) {
     synchronized (myOriginals) {
       if (!myInline2Original.containsKey(progress)) return;
-      
+
       final boolean last = myOriginals.size() == 1;
       final boolean beforeLast = myOriginals.size() == 2;
 
@@ -258,7 +261,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     }
   }
 
-  private ProgressIndicatorEx removeFromMaps(final InlineProgressIndicator progress) {
+  private ProgressIndicatorEx removeFromMaps(@NotNull InlineProgressIndicator progress) {
     final ProgressIndicatorEx original = myInline2Original.get(progress);
 
     myInline2Original.remove(progress);
@@ -340,7 +343,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     repaint();
   }
 
-  private void buildInInlineIndicator(final InlineProgressIndicator inline) {
+  private void buildInInlineIndicator(@NotNull InlineProgressIndicator inline) {
     removeAll();
     setLayout(new InlineLayout());
     add(myRefreshAndInfoPanel);
@@ -480,7 +483,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     }
   }
 
-  private InlineProgressIndicator createInlineDelegate(final TaskInfo info, final ProgressIndicatorEx original, final boolean compact) {
+  @NotNull
+  private InlineProgressIndicator createInlineDelegate(@NotNull TaskInfo info, @NotNull ProgressIndicatorEx original, final boolean compact) {
     final Collection<InlineProgressIndicator> inlines = myOriginal2Inlines.get(original);
     if (inlines != null) {
       for (InlineProgressIndicator eachInline : inlines) {
@@ -549,13 +553,11 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   private class MyInlineProgressIndicator extends InlineProgressIndicator {
-    private final ProgressIndicatorEx myOriginal;
-    private final Reference<TaskInfo> myTask;
+    private ProgressIndicatorEx myOriginal;
 
-    public MyInlineProgressIndicator(final boolean compact, @NotNull TaskInfo task, final ProgressIndicatorEx original) {
+    public MyInlineProgressIndicator(final boolean compact, @NotNull TaskInfo task, @NotNull ProgressIndicatorEx original) {
       super(compact, task);
       myOriginal = original;
-      myTask = new WeakReference<TaskInfo>(task);
       original.addStateDelegate(this);
     }
 
@@ -573,7 +575,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     @Override
     protected boolean isFinished() {
-      TaskInfo info = myTask.get();
+      TaskInfo info = getInfo();
       return info == null || isFinished(info);
     }
 
@@ -584,9 +586,15 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         @Override
         public void run() {
           removeProgress(MyInlineProgressIndicator.this);
-          dispose();
+          Disposer.dispose(MyInlineProgressIndicator.this);
         }
       });
+    }
+
+    @Override
+    public void dispose() {
+      super.dispose();
+      myOriginal = null;
     }
 
     @Override
@@ -633,6 +641,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     }, 2000);
   }
 
+  @NotNull
   private Set<InlineProgressIndicator> getCurrentInlineIndicators() {
     synchronized (myOriginals) {
       return myInline2Original.keySet();

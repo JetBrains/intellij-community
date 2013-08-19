@@ -48,18 +48,15 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ParameterInfoController {
+public class ParameterInfoController implements Disposable {
   private final Project myProject;
   @NotNull private final Editor myEditor;
 
-  private final String myParameterCloseChars;
   private final RangeMarker myLbraceMarker;
   private final LightweightHint myHint;
   private final ParameterInfoComponent myComponent;
 
   private final CaretListener myEditorCaretListener;
-  private final DocumentListener myEditorDocumentListener;
-  private final PropertyChangeListener myLookupListener;
   @NotNull private final ParameterInfoHandler<Object, Object> myHandler;
   private final ShowParameterInfoHandler.BestLocationPointProvider myProvider;
 
@@ -71,16 +68,16 @@ public class ParameterInfoController {
   /**
    * Keeps Vector of ParameterInfoController's in Editor
    */
-  private static final Key<ArrayList<ParameterInfoController>> ALL_CONTROLLERS_KEY = Key.create("ParameterInfoController.ALL_CONTROLLERS_KEY");
+  private static final Key<List<ParameterInfoController>> ALL_CONTROLLERS_KEY = Key.create("ParameterInfoController.ALL_CONTROLLERS_KEY");
 
   public static ParameterInfoController findControllerAtOffset(Editor editor, int offset) {
-    ArrayList<ParameterInfoController> allControllers = getAllControllers(editor);
+    List<ParameterInfoController> allControllers = getAllControllers(editor);
     for (int i = 0; i < allControllers.size(); ++i) {
       ParameterInfoController controller = allControllers.get(i);
 
       if (controller.myLbraceMarker.getStartOffset() == offset) {
         if (controller.myHint.isVisible()) return controller;
-        controller.dispose();
+        Disposer.dispose(controller);
         --i;
       }
     }
@@ -147,8 +144,8 @@ public class ParameterInfoController {
     }
   }
 
-  private static ArrayList<ParameterInfoController> getAllControllers(@NotNull Editor editor) {
-    ArrayList<ParameterInfoController> array = editor.getUserData(ALL_CONTROLLERS_KEY);
+  private static List<ParameterInfoController> getAllControllers(@NotNull Editor editor) {
+    List<ParameterInfoController> array = editor.getUserData(ALL_CONTROLLERS_KEY);
     if (array == null){
       array = new ArrayList<ParameterInfoController>();
       editor.putUserData(ALL_CONTROLLERS_KEY, array);
@@ -170,12 +167,11 @@ public class ParameterInfoController {
     myEditor = editor;
     myHandler = handler;
     myProvider = provider;
-    myParameterCloseChars = handler.getParameterCloseChars();
     myLbraceMarker = editor.getDocument().createRangeMarker(lbraceOffset, lbraceOffset);
     myHint = hint;
     myComponent = (ParameterInfoComponent)myHint.getComponent();
 
-    ArrayList<ParameterInfoController> allControllers = getAllControllers(myEditor);
+    List<ParameterInfoController> allControllers = getAllControllers(myEditor);
     allControllers.add(this);
 
     myEditorCaretListener = new CaretListener(){
@@ -187,53 +183,46 @@ public class ParameterInfoController {
     };
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
 
-    myEditorDocumentListener = new DocumentAdapter(){
+    myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
         myAlarm.cancelAllRequests();
         addAlarmRequest();
       }
-    };
-    myEditor.getDocument().addDocumentListener(myEditorDocumentListener);
+    }, this);
 
-    myLookupListener = new PropertyChangeListener() {
+    PropertyChangeListener lookupListener = new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
-        if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())){
+        if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())) {
           final LookupImpl lookup = (LookupImpl)evt.getNewValue();
-          if (lookup != null && lookup.isShown()){
+          if (lookup != null && lookup.isShown()) {
             adjustPositionForLookup(lookup);
           }
         }
       }
     };
-    LookupManager.getInstance(project).addPropertyChangeListener(myLookupListener);
+    LookupManager.getInstance(project).addPropertyChangeListener(lookupListener, this);
 
     updateComponent();
     if (myEditor instanceof EditorImpl) {
-      Disposer.register(((EditorImpl)myEditor).getDisposable(), new Disposable() {
-        @Override
-        public void dispose() {
-          ParameterInfoController.this.dispose();
-        }
-      });
+      Disposer.register(((EditorImpl)myEditor).getDisposable(), this);
     }
   }
 
-  private void dispose(){
+  @Override
+  public void dispose(){
     if (myDisposed) return;
     myDisposed = true;
 
-    ArrayList<ParameterInfoController> allControllers = getAllControllers(myEditor);
+    List<ParameterInfoController> allControllers = getAllControllers(myEditor);
     allControllers.remove(this);
     myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
-    myEditor.getDocument().removeDocumentListener(myEditorDocumentListener);
-    LookupManager.getInstance(myProject).removePropertyChangeListener(myLookupListener);
   }
 
   private void adjustPositionForLookup(@NotNull Lookup lookup) {
     if (!myHint.isVisible() || myEditor.isDisposed()) {
-      dispose();
+      Disposer.dispose(this);
       return;
     }
 
@@ -259,7 +248,7 @@ public class ParameterInfoController {
 
   private void updateComponent(){
     if (!myHint.isVisible()){
-      dispose();
+      Disposer.dispose(this);
       return;
     }
 
@@ -382,7 +371,7 @@ public class ParameterInfoController {
     @Override
     public void removeHint() {
       myHint.hide();
-      dispose();
+      Disposer.dispose(ParameterInfoController.this);
     }
 
     @Override

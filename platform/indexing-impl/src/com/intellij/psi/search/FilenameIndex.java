@@ -19,7 +19,6 @@ package com.intellij.psi.search;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -95,13 +94,14 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope);
     if (files.isEmpty()) return PsiFile.EMPTY_ARRAY;
     List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
+    PsiManager psiManager = PsiManager.getInstance(project);
+
     for(VirtualFile file: files) {
       if (!file.isValid()) continue;
-      PsiManager psiManager = PsiManager.getInstance(project);
-      PsiFile psiFile = psiManager.findFile(file);
-      if (psiFile != null) {
-        result.add(psiFile);
-      } else if (includeDirs) {
+      if (!includeDirs && !file.isDirectory()) {
+        PsiFile psiFile = psiManager.findFile(file);
+        if (psiFile != null) result.add(psiFile);
+      } else if (includeDirs && file.isDirectory()) {
         PsiDirectory dir = psiManager.findDirectory(file);
         if (dir != null) result.add(dir);
       }

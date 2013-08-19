@@ -17,7 +17,6 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -171,7 +170,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
         int sum = 0;
         for (DomElement element : myDomElements) {
           final DomElementsProblemsHolder holder = myAnnotationsManager.getCachedProblemHolder(element);
-          sum += (SeverityUtil.getSeverityRegistrar(getProject()).compare(minSeverity, HighlightSeverity.WARNING) >= 0 ? holder
+          sum += (SeverityRegistrar.getSeverityRegistrar(getProject()).compare(minSeverity, HighlightSeverity.WARNING) >= 0 ? holder
             .getProblems(element, true, true) : holder.getProblems(element, true, minSeverity)).size();
         }
         status.errorCount[i] = sum;

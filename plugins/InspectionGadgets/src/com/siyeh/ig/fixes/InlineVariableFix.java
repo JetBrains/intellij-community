@@ -29,6 +29,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class InlineVariableFix extends InspectionGadgetsFix {
+       @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
   @Override
   @NotNull

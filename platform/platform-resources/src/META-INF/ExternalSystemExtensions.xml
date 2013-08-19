@@ -5,6 +5,8 @@
     
     <!--Generic services-->
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.RemoteExternalSystemCommunicationManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.InProcessExternalSystemCommunicationManager"/>
     <applicationService
         serviceInterface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager"
         serviceImplementation="com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl"/>
@@ -12,7 +14,6 @@
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.PlatformFacadeImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapperImpl"/>
-    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager"/>
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper"/>
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager"/>
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemIdeNotificationManager"/>

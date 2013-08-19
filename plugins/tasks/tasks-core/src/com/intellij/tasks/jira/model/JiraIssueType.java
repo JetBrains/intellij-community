@@ -29,7 +29,7 @@ public class JiraIssueType {
 
   @Override
   public String toString() {
-    return String.format("JiraIssueType(name=%s)", name);
+    return String.format("JiraIssueType(name='%s')", name);
   }
 
   public String getIssueTypeUrl() {

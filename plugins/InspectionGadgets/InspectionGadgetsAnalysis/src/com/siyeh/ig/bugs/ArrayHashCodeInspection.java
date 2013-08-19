@@ -79,6 +79,12 @@ public class ArrayHashCodeInspection extends BaseInspection {
       }
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with implicit 'hashCode'";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

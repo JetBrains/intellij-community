@@ -150,7 +150,7 @@ public class EditorsSplitters extends JBPanel {
 
 
   private boolean showEmptyText() {
-    return (myCurrentWindow == null || myCurrentWindow.getFiles().length == 0);
+    return myCurrentWindow == null || myCurrentWindow.getFiles().length == 0;
   }
 
   private boolean isProjectViewVisible() {
@@ -329,7 +329,7 @@ public class EditorsSplitters extends JBPanel {
       return null;
     }
 
-    EditorWindow window = (panel == null) ? new EditorWindow(this) : findWindowWith(panel);
+    final EditorWindow window = panel == null ? new EditorWindow(this) : findWindowWith(panel);
     LOG.assertTrue(window != null);
 
     @SuppressWarnings("unchecked") final List<Element> children = ContainerUtil.newArrayList(leaf.getChildren("file"));
@@ -347,17 +347,19 @@ public class EditorsSplitters extends JBPanel {
 
     VirtualFile currentFile = null;
     for (int i = 0; i < children.size(); i++) {
-      Element file = children.get(i);
+      final Element file = children.get(i);
       try {
-        final HistoryEntry entry = new HistoryEntry(getManager().getProject(), file.getChild(HistoryEntry.TAG), true);
-        boolean isCurrent = Boolean.valueOf(file.getAttributeValue("current")).booleanValue();
-        getManager().openFileImpl4(window, entry.myFile, false, entry, isCurrent, i);
-        if (getManager().isFileOpen(entry.myFile)) {
+        final FileEditorManagerImpl fileEditorManager = getManager();
+        final HistoryEntry entry = new HistoryEntry(fileEditorManager.getProject(), file.getChild(HistoryEntry.TAG), true);
+        final boolean isCurrent = Boolean.valueOf(file.getAttributeValue("current")).booleanValue();
+        fileEditorManager.openFileImpl4(window, entry.myFile, false, entry, isCurrent, i);
+        if (fileEditorManager.isFileOpen(entry.myFile)) {
           window.setFilePinned(entry.myFile, Boolean.valueOf(file.getAttributeValue(PINNED)).booleanValue());
           if (Boolean.valueOf(file.getAttributeValue("current-in-tab")).booleanValue()) {
             currentFile = entry.myFile;
           }
         }
+
       }
       catch (InvalidDataException e) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {

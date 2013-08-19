@@ -39,8 +39,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -66,7 +66,18 @@ public class ExternalSystemRecentTasksList extends JBList implements Producer<Ex
     }
     setCellRenderer(new MyRenderer(project, icon, ExternalSystemUtil.findConfigurationType(externalSystemId)));
     setVisibleRowCount(ExternalSystemConstants.RECENT_TASKS_NUMBER);
-    
+
+    registerKeyboardAction(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ExternalTaskExecutionInfo task = produce();
+        if (task == null) {
+          return;
+        }
+        ExternalSystemUtil.runTask(task.getSettings(), task.getExecutorId(), project, externalSystemId);
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
@@ -139,7 +150,7 @@ public class ExternalSystemRecentTasksList extends JBList implements Producer<Ex
         ExternalTaskExecutionInfo taskInfo = (ExternalTaskExecutionInfo)value;
         String text = null;
         if (myConfigurationType != null) {
-          RunConfiguration[] configurations = RunManager.getInstance(myProject).getConfigurations(myConfigurationType);
+          List<RunConfiguration> configurations = RunManager.getInstance(myProject).getConfigurationsList(myConfigurationType);
           for (RunConfiguration configuration : configurations) {
             if (!(configuration instanceof ExternalSystemRunConfiguration)) {
               continue;

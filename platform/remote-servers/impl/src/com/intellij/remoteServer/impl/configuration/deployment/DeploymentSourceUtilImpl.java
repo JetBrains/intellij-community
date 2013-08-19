@@ -18,6 +18,7 @@ package com.intellij.remoteServer.impl.configuration.deployment;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.remoteServer.configuration.deployment.ArtifactDeploymentSource;
@@ -27,6 +28,10 @@ import com.intellij.remoteServer.configuration.deployment.ModuleDeploymentSource
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -35,6 +40,18 @@ public class DeploymentSourceUtilImpl extends DeploymentSourceUtil {
   @Override
   public ArtifactDeploymentSource createArtifactDeploymentSource(@NotNull ArtifactPointer artifactPointer) {
     return new ArtifactDeploymentSourceImpl(artifactPointer);
+  }
+
+  @NotNull
+  @Override
+  public List<DeploymentSource> createArtifactDeploymentSources(@NotNull Project project,
+                                                                @NotNull Collection<? extends Artifact> artifacts) {
+    List<DeploymentSource> sources = new ArrayList<DeploymentSource>();
+    ArtifactPointerManager pointerManager = ArtifactPointerManager.getInstance(project);
+    for (Artifact artifact : artifacts) {
+      sources.add(createArtifactDeploymentSource(pointerManager.createPointer(artifact)));
+    }
+    return sources;
   }
 
   @Override

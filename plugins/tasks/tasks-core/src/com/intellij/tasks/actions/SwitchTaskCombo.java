@@ -112,7 +112,6 @@ public class SwitchTaskCombo extends ComboBoxAction implements DumbAware {
 
   private static String getText(LocalTask activeTask) {
     String text = activeTask.getPresentableName();
-    return StringUtil.first(text, 80, true);
+    return StringUtil.first(text, 50, true);
   }
-
 }

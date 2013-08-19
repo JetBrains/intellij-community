@@ -72,6 +72,11 @@ public class RedundantImplementsInspection extends BaseInspection {
   }
 
   private static class RedundantImplementsFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

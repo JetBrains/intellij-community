@@ -26,10 +26,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -300,7 +297,7 @@ public abstract class PluginManagerMain implements Disposable {
                                         final Runnable cleanup) throws IOException {
     final boolean[] result = new boolean[1];
     try {
-      ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {

@@ -21,8 +21,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
@@ -154,8 +154,5 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
     myModulesBox.setRenderer(new ModuleCellRenderer(myModulesBox.getRenderer()));
 
     return myMainPanel;
-  }
-
-  protected void disposeEditor() {
   }
 }

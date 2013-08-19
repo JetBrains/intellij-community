@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ui.ShowUIDefaultsAction;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
@@ -56,6 +58,7 @@ public class DarculaTest {
   private JButton myProgressButton;
   private JProgressBar myProgressBar2;
   private JButton myStartButton;
+  private JBTable myTable;
 
   public DarculaTest() {
     myProgressButton.addActionListener(new ActionListener() {
@@ -98,6 +101,8 @@ public class DarculaTest {
         }.start();
       }
     });
+
+    myTable.setModel(new DefaultTableModel(new Object[][]{{"Test", "Darcula"}, {"Test1", "Darcula1"}}, new Object[]{"Name", "Value"}));
   }
 
   public static void main(String[] args) {

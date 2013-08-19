@@ -40,7 +40,7 @@ import java.util.Map;
  */
 public class ApproveRemovedMappingsActivity implements StartupActivity {
   @Override
-  public void runActivity(final Project project) {
+  public void runActivity(@NotNull final Project project) {
     final Map<FileNameMatcher,Pair<FileType,Boolean>> map = ((FileTypeManagerImpl)FileTypeManager.getInstance()).getRemovedMappings();
     if (!map.isEmpty()) {
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.keymap.KeymapUtil;
+
 import javax.swing.*;
 
 public class KeyboardModifierGestureShortcut extends Shortcut {
@@ -95,5 +97,12 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
     public Hold(final KeyStroke stroke) {
       super(stroke, KeyboardGestureAction.ModifierType.hold);
     }
+  }
+
+  @Override
+  public String toString() {
+    String s = getType() == KeyboardGestureAction.ModifierType.dblClick ? "Press, release and hold " : "Hold ";
+    s += KeymapUtil.getKeystrokeText(this.getStroke());
+    return s;
   }
 }

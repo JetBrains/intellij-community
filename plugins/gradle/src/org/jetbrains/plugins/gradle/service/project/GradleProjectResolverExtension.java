@@ -30,7 +30,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
  * 
  * @author Denis Zhdanov
  * @since 4/17/13 11:24 AM
- * @see GradleManager#enhanceParameters(SimpleJavaParameters)   sample enhanceParameters() implementation
+ * @see GradleManager#enhanceRemoteProcessing(SimpleJavaParameters)   sample enhanceParameters() implementation
  */
 public interface GradleProjectResolverExtension extends ParametersEnhancer, ExternalSystemProjectResolver<GradleExecutionSettings> {
   

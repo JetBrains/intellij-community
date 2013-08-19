@@ -83,6 +83,12 @@ public class BoxingBoxedValueInspection extends BaseInspection {
         "boxing.boxed.value.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

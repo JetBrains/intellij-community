@@ -89,6 +89,11 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
       return InspectionGadgetsBundle.message(
         "missing.override.annotation.add.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)

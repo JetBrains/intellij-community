@@ -79,11 +79,12 @@ public class QuickFixAction extends AnAction {
       return;
     }
 
+    e.getPresentation().setVisible(false);
+    e.getPresentation().setEnabled(false);
+
     final InspectionTree tree = view.getTree();
     final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper();
     if (!view.isSingleToolInSelection() || toolWrapper != myToolWrapper) {
-      e.getPresentation().setVisible(false);
-      e.getPresentation().setEnabled(false);
       return;
     }
 

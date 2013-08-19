@@ -55,6 +55,11 @@ public class UnnecessaryLabelOnBreakStatementInspection
 
   private static class UnnecessaryLabelOnBreakStatementFix
     extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

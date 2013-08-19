@@ -62,6 +62,12 @@ public class ThreadRunInspection extends BaseInspection {
         "thread.run.replace.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

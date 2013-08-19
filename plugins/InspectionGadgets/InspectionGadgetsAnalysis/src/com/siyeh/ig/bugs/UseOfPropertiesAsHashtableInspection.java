@@ -90,6 +90,12 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
       }
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Fix property access";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

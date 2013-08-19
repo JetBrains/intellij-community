@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.charset.Charset;
 
 /**
  * @author Elena Shaverdova
@@ -114,6 +115,15 @@ public final class ScriptRunnerUtil {
                                          @Nullable String workingDirectory,
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters) throws ExecutionException {
+    return execute(exePath, workingDirectory, scriptFile, parameters, null);
+  }
+
+  @NotNull
+  public static OSProcessHandler execute(@NotNull String exePath,
+                                         @Nullable String workingDirectory,
+                                         @Nullable VirtualFile scriptFile,
+                                         String[] parameters,
+                                         @Nullable Charset charset) throws ExecutionException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(exePath);
     commandLine.setPassParentEnvironment(true);
@@ -130,7 +140,9 @@ public final class ScriptRunnerUtil {
     LOG.debug("Command line env: " + commandLine.getEnvironment());
 
     final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(),
-                                                                      EncodingManager.getInstance().getDefaultCharset());
+                                                                      charset == null
+                                                                      ? EncodingManager.getInstance().getDefaultCharset()
+                                                                      : charset);
     if (LOG.isDebugEnabled()) {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override

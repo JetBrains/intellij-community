@@ -20,14 +20,11 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.ExceptionFilters;
-import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -65,10 +62,7 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
     if (myState instanceof CommandLineState) {
       final TextConsoleBuilder consoleBuilder = ((CommandLineState)myState).getConsoleBuilder();
       if (consoleBuilder != null) {
-        List<Filter> filters = ExceptionFilters.getFilters(mySearchScope);
-        for (Filter filter : filters) {
-          consoleBuilder.addFilter(filter);
-        }
+        consoleBuilder.filters(ExceptionFilters.getFilters(mySearchScope));
       }
     }
     return myState.execute(myExecutor, myRunner);

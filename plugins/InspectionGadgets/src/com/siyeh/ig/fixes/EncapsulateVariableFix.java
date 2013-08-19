@@ -42,6 +42,12 @@ public class EncapsulateVariableFix extends InspectionGadgetsFix {
                                            fieldName);
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Encapsulate field";
+  }
+
   @Override
   public void doFix(final Project project, ProblemDescriptor descriptor) {
     final PsiElement nameElement = descriptor.getPsiElement();

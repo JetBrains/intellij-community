@@ -49,6 +49,7 @@ public class NewProjectCheckoutListener implements VcsAwareCheckoutListener {
       final Set<VirtualFile> files = projectsLocationSet(projects);
       VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(directory);
       AddModuleWizard wizard = ImportModuleAction.createImportWizard(null, null, file, ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions());
+      if (wizard == null) return false;
       if (wizard.showAndGet()) {
         ImportModuleAction.createFromWizard(null, wizard);
       }
@@ -66,7 +67,7 @@ public class NewProjectCheckoutListener implements VcsAwareCheckoutListener {
     return false;
   }
 
-  private Set<VirtualFile> projectsLocationSet(Project[] projects) {
+  private static Set<VirtualFile> projectsLocationSet(Project[] projects) {
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
     for (Project project1 : projects) {
       if (project1.getBaseDir() != null) {

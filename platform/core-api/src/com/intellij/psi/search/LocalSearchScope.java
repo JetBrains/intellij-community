@@ -16,12 +16,13 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +74,7 @@ public class LocalSearchScope extends SearchScope {
           localScope.add(file);
         }
       }
-      else if (element instanceof StubElement || element.getTextRange() != null){
+      else if (element instanceof StubBasedPsiElement || element.getTextRange() != null){
         localScope.add(element);
       }
     }
@@ -148,7 +149,23 @@ public class LocalSearchScope extends SearchScope {
     if (scope2 instanceof LocalSearchScope) {
       return intersectWith((LocalSearchScope)scope2);
     }
+    LocalSearchScope nonPhysicalScope = tryIntersectNonPhysicalWith((GlobalSearchScope)scope2);
+    if (nonPhysicalScope != null) return nonPhysicalScope;
     return ((GlobalSearchScope)scope2).intersectWith(this);
+  }
+
+  @Nullable
+  private LocalSearchScope tryIntersectNonPhysicalWith(@NotNull GlobalSearchScope scope) {
+    Project project = scope.getProject();
+    for (PsiElement element : myScope) {
+      PsiFile containingFile = element.getContainingFile();
+      if (containingFile == null) continue;
+      if (containingFile.getViewProvider().isPhysical()) return null;
+      if (project != null && project != containingFile.getProject()) {
+        return EMPTY;
+      }
+    }
+    return this;
   }
 
   @Nullable

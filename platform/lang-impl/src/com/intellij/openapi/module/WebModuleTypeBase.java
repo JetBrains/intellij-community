@@ -54,4 +54,8 @@ public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleT
   public Icon getNodeIcon(final boolean isOpened) {
     return AllIcons.Nodes.Module;
   }
+
+  public static boolean isWebModule(@NotNull Module module) {
+    return WEB_MODULE.equals(ModuleType.get(module).getId());
+  }
 }

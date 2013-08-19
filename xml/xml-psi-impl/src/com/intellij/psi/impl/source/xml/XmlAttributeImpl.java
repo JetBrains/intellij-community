@@ -107,6 +107,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     });
   }
 
+  @Override
   public XmlElement getNameElement() {
     return (XmlElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
   }

@@ -165,7 +165,7 @@ public class InspectionTree extends Tree {
 
   public CommonProblemDescriptor[] getSelectedDescriptors() {
     final InspectionToolWrapper toolWrapper = getSelectedToolWrapper();
-    if (getSelectionCount() == 0 || !(toolWrapper instanceof LocalInspectionToolWrapper)) return EMPTY_DESCRIPTORS;
+    if (getSelectionCount() == 0) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = getSelectionPaths();
     final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
     for (TreePath path : paths) {

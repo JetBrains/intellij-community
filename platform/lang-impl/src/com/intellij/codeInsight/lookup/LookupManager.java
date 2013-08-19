@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -45,18 +46,20 @@ public abstract class LookupManager {
   }
 
   @Nullable
-  public LookupEx showLookup(Editor editor, @NotNull LookupElement... items) {
+  public LookupEx showLookup(@NotNull Editor editor, @NotNull LookupElement... items) {
     return showLookup(editor, items, "", new LookupArranger.DefaultArranger());
   }
 
   @Nullable
-  public LookupEx showLookup(Editor editor, @NotNull LookupElement[] items, @NotNull String prefix) {
+  public LookupEx showLookup(@NotNull Editor editor, @NotNull LookupElement[] items, @NotNull String prefix) {
     return showLookup(editor, items, prefix, new LookupArranger.DefaultArranger());
   }
 
   @Nullable
-  public abstract LookupEx showLookup(Editor editor, @NotNull LookupElement[] items,
-                                      @NotNull String prefix, @NotNull LookupArranger arranger);
+  public abstract LookupEx showLookup(@NotNull Editor editor,
+                                      @NotNull LookupElement[] items,
+                                      @NotNull String prefix,
+                                      @NotNull LookupArranger arranger);
 
   public abstract void hideActiveLookup();
 
@@ -65,11 +68,11 @@ public abstract class LookupManager {
 
   @NonNls public static final String PROP_ACTIVE_LOOKUP = "activeLookup";
 
-  public abstract void addPropertyChangeListener(PropertyChangeListener listener);
-  public abstract void removePropertyChangeListener(PropertyChangeListener listener);
+  public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
+  public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable disposable);
+  public abstract void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
-  //public abstract boolean isDisposed();
-
-  public abstract Lookup createLookup(Editor editor, @NotNull LookupElement[] items, @NotNull final String prefix, LookupArranger arranger);
+  @NotNull
+  public abstract Lookup createLookup(@NotNull Editor editor, @NotNull LookupElement[] items, @NotNull final String prefix, @NotNull LookupArranger arranger);
 
 }

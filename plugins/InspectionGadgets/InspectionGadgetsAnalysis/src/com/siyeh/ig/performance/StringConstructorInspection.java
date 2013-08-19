@@ -103,6 +103,12 @@ public class StringConstructorInspection extends BaseInspection {
       return m_name;
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify";
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

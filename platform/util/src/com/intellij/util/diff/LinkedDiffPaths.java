@@ -19,7 +19,6 @@ package com.intellij.util.diff;
  * @author dyoma
  */
 final class LinkedDiffPaths {
-  private static final int MAX_LEN = 10000000;
 
   private int[] mySteps = new int[10];
   private int[] myPrevSteps = new int[10];
@@ -77,8 +76,8 @@ final class LinkedDiffPaths {
   }
 
   private int[] copy(int length, int[] prevArray) throws FilesTooBigForDiffException {
-    if (length * 2 >= MAX_LEN) {
-      throw new FilesTooBigForDiffException(MAX_LEN);
+    if (length * 2 >= FilesTooBigForDiffException.MAX_BUFFER_LEN) {
+      throw new FilesTooBigForDiffException(FilesTooBigForDiffException.MAX_BUFFER_LEN);
     }
     int[] array = new int[length * 2];
     System.arraycopy(prevArray, 0, array, 0, length);

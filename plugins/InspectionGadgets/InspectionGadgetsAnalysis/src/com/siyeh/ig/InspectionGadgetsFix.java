@@ -41,15 +41,6 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
 
   private boolean myOnTheFly = false;
 
-  /**
-   * To appear in "Apply Fix" statement when multiple Quick Fixes exist
-   */
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return "";
-  }
-
   @Override
   public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement problemElement = descriptor.getPsiElement();
@@ -127,7 +118,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
     final Project project = statement.getProject();
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     final JavaCodeStyleManager javaStyleManager = JavaCodeStyleManager.getInstance(project);
-    if (FileTypeUtils.isInJsp(statement)) {
+    if (FileTypeUtils.isInServerPageFile(statement)) {
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       final PsiFile jspFile = PsiUtilCore.getTemplateLanguageFile(statement);
       if (jspFile == null) {

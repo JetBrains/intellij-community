@@ -80,6 +80,11 @@ public class EmptyCatchBlockInspection extends BaseInspection {
   }
 
   private static class EmptyCatchBlockFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull
@@ -119,7 +124,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
     @Override
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
-      if (FileTypeUtils.isInJsp(statement.getContainingFile())) {
+      if (FileTypeUtils.isInServerPageFile(statement.getContainingFile())) {
         return;
       }
       if (m_ignoreTestCases && TestUtils.isInTestCode(statement)) {

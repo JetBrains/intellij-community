@@ -17,15 +17,36 @@ package org.jetbrains.plugins.github.api;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Aleksey Pivovarov
  */
 @SuppressWarnings("UnusedDeclaration")
 class GithubErrorMessageRaw {
-  @Nullable private String message;
+  @Nullable public String message;
+  @Nullable public List<Error> errors;
+
+  private static class Error {
+    @Nullable public String resource;
+    @Nullable public String field;
+    @Nullable public String code;
+    @Nullable public String message;
+  }
 
   @Nullable
   public String getMessage() {
-    return message;
+    if (errors == null) {
+      return message;
+    }
+    else {
+      StringBuilder s = new StringBuilder(message);
+      for (Error e : errors) {
+        s.append("<br/>").append("[").append(e.resource).append(";").append(e.field).append("]").append(e.code).append(": ")
+          .append(e.message);
+      }
+      return s.toString();
+    }
   }
 }
+

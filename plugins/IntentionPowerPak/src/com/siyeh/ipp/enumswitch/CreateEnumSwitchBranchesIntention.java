@@ -22,7 +22,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CreateEnumSwitchBranchesIntention extends Intention {
 
@@ -34,6 +36,7 @@ public class CreateEnumSwitchBranchesIntention extends Intention {
   public void processIntention(@NotNull PsiElement element) {
     if (element instanceof PsiWhiteSpace) {
       element = element.getPrevSibling();
+      assert element != null;
     }
     final PsiSwitchStatement switchStatement = (PsiSwitchStatement)element;
     final PsiCodeBlock body = switchStatement.getBody();
@@ -50,62 +53,105 @@ public class CreateEnumSwitchBranchesIntention extends Intention {
       return;
     }
     final PsiField[] fields = enumClass.getFields();
-    final List<String> missingEnumElements = new ArrayList<String>(fields.length);
+    final List<PsiEnumConstant> missingEnumElements = new ArrayList<PsiEnumConstant>(fields.length);
     for (final PsiField field : fields) {
-      if (field instanceof PsiEnumConstant) {
-        missingEnumElements.add(field.getName());
+      if (!(field instanceof PsiEnumConstant)) {
+        continue;
+      }
+      final PsiEnumConstant enumConstant = (PsiEnumConstant)field;
+      missingEnumElements.add(enumConstant);
+    }
+    if (body == null) {
+      // replace entire switch statement if no code block is present
+      @NonNls final StringBuilder newStatementText = new StringBuilder();
+      newStatementText.append("switch(").append(switchExpression.getText()).append("){");
+      for (PsiEnumConstant missingEnumElement : missingEnumElements) {
+        newStatementText.append("case ").append(missingEnumElement.getName()).append(": break;");
+      }
+      newStatementText.append('}');
+      replaceStatement(newStatementText.toString(), switchStatement);
+      return;
+    }
+    final Map<PsiEnumConstant, PsiEnumConstant> nextEnumConstants = new HashMap<PsiEnumConstant, PsiEnumConstant>(fields.length);
+    PsiEnumConstant previous = null;
+    for (PsiEnumConstant enumConstant : missingEnumElements) {
+      if (previous != null) {
+        nextEnumConstants.put(previous, enumConstant);
+      }
+      previous = enumConstant;
+    }
+    final PsiStatement[] statements = body.getStatements();
+    for (final PsiStatement statement : statements) {
+      missingEnumElements.remove(findEnumConstant(statement));
+    }
+    PsiEnumConstant nextEnumConstant = getNextEnumConstant(nextEnumConstants, missingEnumElements);
+    PsiElement bodyElement = body.getFirstBodyElement();
+    while (bodyElement != null) {
+      while (nextEnumConstant != null && findEnumConstant(bodyElement) == nextEnumConstant) {
+        addSwitchLabelStatementBefore(missingEnumElements.get(0), bodyElement);
+        missingEnumElements.remove(0);
+        if (missingEnumElements.isEmpty()) {
+          break;
+        }
+        nextEnumConstant = getNextEnumConstant(nextEnumConstants, missingEnumElements);
+      }
+      if (isDefaultSwitchLabelStatement(bodyElement)) {
+        for (PsiEnumConstant missingEnumElement : missingEnumElements) {
+          addSwitchLabelStatementBefore(missingEnumElement, bodyElement);
+        }
+        missingEnumElements.clear();
+        break;
+      }
+      bodyElement = bodyElement.getNextSibling();
+    }
+    if (!missingEnumElements.isEmpty()) {
+      final PsiElement lastChild = body.getLastChild();
+      for (PsiEnumConstant missingEnumElement : missingEnumElements) {
+        addSwitchLabelStatementBefore(missingEnumElement, lastChild);
       }
     }
-    if (body != null) {
-      final PsiStatement[] statements = body.getStatements();
-      for (final PsiStatement statement : statements) {
-        if (!(statement instanceof PsiSwitchLabelStatement)) {
-          continue;
-        }
-        final PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)statement;
-        final PsiExpression value = labelStatement.getCaseValue();
-        if (!(value instanceof PsiReferenceExpression)) {
-          continue;
-        }
-        final PsiReferenceExpression reference = (PsiReferenceExpression)value;
-        final PsiElement resolved = reference.resolve();
-        if (!(resolved instanceof PsiEnumConstant)) {
-          continue;
-        }
-        final PsiEnumConstant enumConstant = (PsiEnumConstant)resolved;
-        missingEnumElements.remove(enumConstant.getName());
-      }
-    }
-    @NonNls final StringBuilder newStatementText = new StringBuilder();
-    newStatementText.append("switch(").append(switchExpression.getText()).append("){");
-    if (body != null) {
-      int position = 0;
-      final PsiElement[] children = body.getChildren();
-      for (position = 1; position < children.length - 1; position++) {
-        final PsiElement child = children[position];
-        if (child instanceof PsiSwitchLabelStatement) {
-          final PsiSwitchLabelStatement switchLabelStatement = (PsiSwitchLabelStatement)child;
-          if (switchLabelStatement.isDefaultCase()) {
-            break;
-          }
-        }
-        newStatementText.append(child.getText());
-      }
-      appendMissingEnumCases(missingEnumElements, newStatementText);
-      for (; position< children.length - 1; position++) {
-        newStatementText.append(children[position].getText());
-      }
-    }
-    else {
-      appendMissingEnumCases(missingEnumElements, newStatementText);
-    }
-    newStatementText.append('}');
-    replaceStatement(newStatementText.toString(), switchStatement);
   }
 
-  private static void appendMissingEnumCases(List<String> missingEnumElements, @NonNls StringBuilder newStatementText) {
-    for (String missingEnumElement : missingEnumElements) {
-      newStatementText.append("case ").append(missingEnumElement).append(": break;");
+  private static void addSwitchLabelStatementBefore(PsiEnumConstant missingEnumElement, PsiElement anchor) {
+    final PsiElement parent = anchor.getParent();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
+    final PsiStatement caseStatement = factory.createStatementFromText("case " + missingEnumElement.getName() + ":", anchor);
+    parent.addBefore(caseStatement, anchor);
+    final PsiStatement breakStatement = factory.createStatementFromText("break;", anchor);
+    parent.addBefore(breakStatement, anchor);
+  }
+
+  private static PsiEnumConstant findEnumConstant(PsiElement element) {
+    if (!(element instanceof PsiSwitchLabelStatement)) {
+      return null;
     }
+    final PsiSwitchLabelStatement switchLabelStatement = (PsiSwitchLabelStatement)element;
+    final PsiExpression value = switchLabelStatement.getCaseValue();
+    if (!(value instanceof PsiReferenceExpression)) {
+      return null;
+    }
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)value;
+    final PsiElement target = referenceExpression.resolve();
+    if (!(target instanceof PsiEnumConstant)) {
+      return null;
+    }
+    return (PsiEnumConstant)target;
+  }
+
+  private static PsiEnumConstant getNextEnumConstant(Map<PsiEnumConstant, PsiEnumConstant> nextEnumConstants,
+                                                     List<PsiEnumConstant> missingEnumElements) {
+    PsiEnumConstant nextEnumConstant = nextEnumConstants.get(missingEnumElements.get(0));
+    while (missingEnumElements.contains(nextEnumConstant)) {
+      nextEnumConstant = nextEnumConstants.get(nextEnumConstant);
+    }
+    return nextEnumConstant;
+  }
+
+  private static boolean isDefaultSwitchLabelStatement(PsiElement element) {
+    if (!(element instanceof PsiSwitchLabelStatement)) {
+      return false;
+    }
+    final PsiSwitchLabelStatement switchLabelStatement = (PsiSwitchLabelStatement)element;
+    return switchLabelStatement.isDefaultCase();
   }
 }

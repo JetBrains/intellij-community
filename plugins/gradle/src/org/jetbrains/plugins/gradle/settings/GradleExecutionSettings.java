@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   private static final long serialVersionUID = 1L;
 
-  @NotNull private final List<String> myResolverExtensions = ContainerUtilRt.newArrayList();
+  @NotNull private final List<ClassHolder<? extends GradleProjectResolverExtension>> myResolverExtensions = ContainerUtilRt.newArrayList();
   @Nullable private final String myGradleHome;
   @Nullable private final String myServiceDirectory;
 
@@ -83,12 +84,12 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   }
 
   @NotNull
-  public List<String> getResolverExtensions() {
+  public List<ClassHolder<? extends GradleProjectResolverExtension>> getResolverExtensions() {
     return myResolverExtensions;
   }
 
-  public void addResolverExtensionClass(@NotNull String className) {
-    myResolverExtensions.add(className);
+  public void addResolverExtensionClass(@NotNull ClassHolder<? extends GradleProjectResolverExtension> holder) {
+    myResolverExtensions.add(holder);
   }
 
   /**

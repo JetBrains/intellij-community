@@ -26,42 +26,44 @@ import com.intellij.tasks.generic.assembla.AssemblaRepositoryType;
  */
 public class AssemblaIntegrationTest extends TaskManagerTestCase {
 
+  public static final String RESPONSE =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+    "<tickets type=\"array\">\n" +
+    "<ticket>\n" +
+    "  <assigned-to-id>dsNkyYr0Gr4iEBeJe5cbCb</assigned-to-id>\n" +
+    "  <completed-date type=\"datetime\"></completed-date>\n" +
+    "  <component-id type=\"integer\"></component-id>\n" +
+    "  <created-on type=\"datetime\">2013-04-01T10:45:06+03:00</created-on>\n" +
+    "  <description></description>\n" +
+    "  <from-support type=\"integer\">0</from-support>\n" +
+    "  <id type=\"integer\">50351983</id>\n" +
+    "  <importance type=\"integer\">-1</importance>\n" +
+    "  <importance-float type=\"float\">-1.0</importance-float>\n" +
+    "  <is-story type=\"boolean\">false</is-story>\n" +
+    "  <milestone-id type=\"integer\"></milestone-id>\n" +
+    "  <notification-list>dsNkyYr0Gr4iEBeJe5cbCb</notification-list>\n" +
+    "  <number type=\"integer\">1</number>\n" +
+    "  <priority type=\"integer\">3</priority>\n" +
+    "  <reporter-id>dsNkyYr0Gr4iEBeJe5cbCb</reporter-id>\n" +
+    "  <space-id>ab1WOCMQar4QGgacwqjQWU</space-id>\n" +
+    "  <status type='integer'>0</status>\n" +
+    "  <status-name>New</status-name>\n" +
+    "  <story-importance type=\"integer\">0</story-importance>\n" +
+    "  <summary>&#1055;&#1088;&#1080;&#1074;&#1077;&#1090;</summary>\n" +
+    "  <updated-at type=\"datetime\">2013-04-01T10:48:19+03:00</updated-at>\n" +
+    "  <working-hours type=\"float\">0.0</working-hours>\n" +
+    "  <working-hour type=\"float\" warning=\"deprecated\">0.0</working-hour>\n" +
+    "  <estimate type=\"string\">Small</estimate>\n" +
+    "  <total-estimate type=\"float\">1.0</total-estimate>\n" +
+    "  <invested-hours type=\"float\">0.0</invested-hours>\n" +
+    "  <assigned-to><id>dsNkyYr0Gr4iEBeJe5cbCb</id><login>avdeev.dmitry</login><login_name warning=\"deprecated\">avdeev.dmitry</login_name><name>avdeev.dmitry</name></assigned-to>\n" +
+    "  <reporter><id>dsNkyYr0Gr4iEBeJe5cbCb</id><login>avdeev.dmitry</login><login_name warning=\"deprecated\">avdeev.dmitry</login_name><name>avdeev.dmitry</name></reporter>\n" +
+    "</ticket>\n" +
+    "</tickets>";
+
   public void testParseCyrillic() throws Exception {
-
-    Task[] tasks = new AssemblaRepository(new AssemblaRepositoryType()).parseResponse("", 100, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                                                                                               "<tickets type=\"array\">\n" +
-                                                                                               "<ticket>\n" +
-                                                                                               "  <assigned-to-id>dsNkyYr0Gr4iEBeJe5cbCb</assigned-to-id>\n" +
-                                                                                               "  <completed-date type=\"datetime\"></completed-date>\n" +
-                                                                                               "  <component-id type=\"integer\"></component-id>\n" +
-                                                                                               "  <created-on type=\"datetime\">2013-04-01T10:45:06+03:00</created-on>\n" +
-                                                                                               "  <description></description>\n" +
-                                                                                               "  <from-support type=\"integer\">0</from-support>\n" +
-                                                                                               "  <id type=\"integer\">50351983</id>\n" +
-                                                                                               "  <importance type=\"integer\">-1</importance>\n" +
-                                                                                               "  <importance-float type=\"float\">-1.0</importance-float>\n" +
-                                                                                               "  <is-story type=\"boolean\">false</is-story>\n" +
-                                                                                               "  <milestone-id type=\"integer\"></milestone-id>\n" +
-                                                                                               "  <notification-list>dsNkyYr0Gr4iEBeJe5cbCb</notification-list>\n" +
-                                                                                               "  <number type=\"integer\">1</number>\n" +
-                                                                                               "  <priority type=\"integer\">3</priority>\n" +
-                                                                                               "  <reporter-id>dsNkyYr0Gr4iEBeJe5cbCb</reporter-id>\n" +
-                                                                                               "  <space-id>ab1WOCMQar4QGgacwqjQWU</space-id>\n" +
-                                                                                               "  <status type='integer'>0</status>\n" +
-                                                                                               "  <status-name>New</status-name>\n" +
-                                                                                               "  <story-importance type=\"integer\">0</story-importance>\n" +
-                                                                                               "  <summary>&#1055;&#1088;&#1080;&#1074;&#1077;&#1090;</summary>\n" +
-                                                                                               "  <updated-at type=\"datetime\">2013-04-01T10:48:19+03:00</updated-at>\n" +
-                                                                                               "  <working-hours type=\"float\">0.0</working-hours>\n" +
-                                                                                               "  <working-hour type=\"float\" warning=\"deprecated\">0.0</working-hour>\n" +
-                                                                                               "  <estimate type=\"string\">Small</estimate>\n" +
-                                                                                               "  <total-estimate type=\"float\">1.0</total-estimate>\n" +
-                                                                                               "  <invested-hours type=\"float\">0.0</invested-hours>\n" +
-                                                                                               "  <assigned-to><id>dsNkyYr0Gr4iEBeJe5cbCb</id><login>avdeev.dmitry</login><login_name warning=\"deprecated\">avdeev.dmitry</login_name><name>avdeev.dmitry</name></assigned-to>\n" +
-                                                                                               "  <reporter><id>dsNkyYr0Gr4iEBeJe5cbCb</id><login>avdeev.dmitry</login><login_name warning=\"deprecated\">avdeev.dmitry</login_name><name>avdeev.dmitry</name></reporter>\n" +
-                                                                                               "</ticket>\n" +
-                                                                                               "</tickets>");
-
+    AssemblaRepository repository = new AssemblaRepository(new AssemblaRepositoryType());
+    Task[] tasks = repository.getActiveResponseHandler().parseIssues(RESPONSE);
     assertEquals(1, tasks.length);
     assertEquals("\u041F\u0440\u0438\u0432\u0435\u0442", tasks[0].getSummary());
   }

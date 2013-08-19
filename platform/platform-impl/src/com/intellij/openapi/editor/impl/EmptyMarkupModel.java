@@ -108,7 +108,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   }
 
   @Override
-  public void setRangeHighlighterAttributes(@NotNull final RangeHighlighter highlighter, final TextAttributes textAttributes) {
+  public void setRangeHighlighterAttributes(@NotNull final RangeHighlighter highlighter, @NotNull final TextAttributes textAttributes) {
 
   }
 

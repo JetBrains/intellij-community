@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -29,6 +30,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -73,14 +75,19 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   }
 
   @NotNull
-  public synchronized FileEditorProvider[] getProviders(@NotNull Project project, @NotNull VirtualFile file){
+  public synchronized FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file){
     // Collect all possible editors
     mySharedProviderList.clear();
     boolean doNotShowTextEditor = false;
     final boolean dumb = DumbService.getInstance(project).isDumb();
     for(int i = myProviders.size() -1 ; i >= 0; i--){
-      FileEditorProvider provider=myProviders.get(i);
-      if((!dumb || DumbService.isDumbAware(provider)) && provider.accept(project, file)){
+      final FileEditorProvider provider=myProviders.get(i);
+      if((!dumb || DumbService.isDumbAware(provider)) && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+              @Override
+              public Boolean compute() {
+                return provider.accept(project, file);
+              }
+            })){
         mySharedProviderList.add(provider);
         doNotShowTextEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
       }

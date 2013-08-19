@@ -25,7 +25,7 @@ import org.jetbrains.plugins.github.api.GithubFullPath;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.plugins.github.GithubUrlUtil.*;
+import static org.jetbrains.plugins.github.util.GithubUrlUtil.*;
 
 /**
  * @author Aleksey Pivovarov

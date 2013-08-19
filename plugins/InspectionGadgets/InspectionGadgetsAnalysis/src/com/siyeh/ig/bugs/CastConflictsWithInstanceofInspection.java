@@ -214,6 +214,12 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("cast.conflicts.with.instanceof.quickfix1", myCastType, myInstanceofType);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace cast type";
+    }
+
     @Override
     protected PsiElement replace(PsiTypeElement castTypeElement, PsiTypeElement instanceofTypeElement) {
       return castTypeElement.replace(instanceofTypeElement);
@@ -228,6 +234,12 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
     public ReplaceInstanceofFix(String instanceofType, String castType) {
       myInstanceofType = instanceofType;
       myCastType = castType;
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace instanceOf type";
     }
 
     @Override

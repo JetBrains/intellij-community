@@ -521,7 +521,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return myNodePopup != null && myNodePopup.isVisible();
   }
 
-  void navigateInsideBar(final Object object) {
+  protected void navigateInsideBar(final Object object) {
     final Object obj = optimizeTarget(object);
     myContextObject = null;
 

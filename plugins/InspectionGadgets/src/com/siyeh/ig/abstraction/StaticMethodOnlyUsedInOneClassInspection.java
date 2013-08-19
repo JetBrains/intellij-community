@@ -54,6 +54,11 @@ public class StaticMethodOnlyUsedInOneClassInspection extends StaticMethodOnlyUs
     public String getName() {
       return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     protected void doFix(@NotNull final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {

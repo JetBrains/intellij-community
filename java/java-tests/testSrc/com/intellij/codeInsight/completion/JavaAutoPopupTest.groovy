@@ -63,14 +63,19 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       }
     """)
     type('i')
-    assertContains("iterable", "if", "int")
+    def les = myFixture.lookupElementStrings
+    assert 'iterable' in les
+    assert 'if' in les
+    assert 'int' in les
 
     type('t')
     assertContains "iterable"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     type('er')
-    assertContains "iterable", "iter"
+    les = myFixture.lookupElementStrings
+    assert 'iterable' in les
+    assert 'iter' in les
     assertEquals 'iterable', lookup.currentItem.lookupString
     assert lookup.focused
 

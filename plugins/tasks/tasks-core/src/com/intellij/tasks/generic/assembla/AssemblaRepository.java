@@ -2,20 +2,19 @@ package com.intellij.tasks.generic.assembla;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.TaskRepositoryType;
-import com.intellij.tasks.generic.GenericRepository;
-import com.intellij.tasks.generic.GenericRepositoryEditor;
-import com.intellij.tasks.generic.ResponseType;
-import com.intellij.tasks.generic.TemplateVariable;
+import com.intellij.tasks.generic.*;
 import com.intellij.util.xmlb.annotations.Tag;
-
-import java.util.List;
 
 /**
  * User: evgeny.zakrevsky
  * Date: 10/26/12
  */
+// TODO: move to new Generic Repository API
 @Tag("Assembla")
 public class AssemblaRepository extends GenericRepository {
+
+  private static final String TASK_REGEX =
+    "<ticket>.*?<number type=\"integer\">({id}.*?)</number>.*?<summary>({summary}.*?)</summary>.*?</ticket>";
 
   @SuppressWarnings({"UnusedDeclaration"})
   public AssemblaRepository() {
@@ -23,10 +22,11 @@ public class AssemblaRepository extends GenericRepository {
 
   public AssemblaRepository(final TaskRepositoryType type) {
     super(type);
-    myUseHttpAuthentication = true;
+    setUseHttpAuthentication(true);
+    setUrl("http://www.assembla.com/");
   }
 
-  public AssemblaRepository(final GenericRepository other) {
+  public AssemblaRepository(final AssemblaRepository other) {
     super(other);
   }
 
@@ -36,38 +36,10 @@ public class AssemblaRepository extends GenericRepository {
   }
 
   @Override
-  protected List<TemplateVariable> getTemplateVariablesDefault() {
-    return super.getTemplateVariablesDefault();
-  }
-
-  @Override
-  protected ResponseType getResponseTypeDefault() {
-    return ResponseType.XML;
-  }
-
-  @Override
-  protected String getTasksListMethodTypeDefault() {
-    return GenericRepositoryEditor.GET;
-  }
-
-  @Override
-  protected String getLoginMethodTypeDefault() {
-    return GenericRepositoryEditor.POST;
-  }
-
-  @Override
-  protected String getLoginURLDefault() {
-    return "";
-  }
-
-  @Override
-  protected String getTaskPatternDefault() {
-    return "<ticket>.*?<number type=\"integer\">({id}.*?)</number>.*?<summary>({summary}.*?)</summary>.*?</ticket>";
-  }
-
-  @Override
-  protected String getTasksListURLDefault() {
-    return "http://www.assembla.com/tickets.xml";
+  public void resetToDefaults() {
+    super.resetToDefaults();
+    setTasksListUrl("http://www.assembla.com/tickets.xml");
+    setResponseType(ResponseType.TEXT);
   }
 
   @Override
@@ -83,5 +55,12 @@ public class AssemblaRepository extends GenericRepository {
   @Override
   protected int getFeatures() {
     return BASIC_HTTP_AUTHORIZATION;
+  }
+
+  @Override
+  public ResponseHandler getTextResponseHandlerDefault() {
+    RegExResponseHandler regexHandler = new RegExResponseHandler(this);
+    regexHandler.setTaskRegex(TASK_REGEX);
+    return regexHandler;
   }
 }

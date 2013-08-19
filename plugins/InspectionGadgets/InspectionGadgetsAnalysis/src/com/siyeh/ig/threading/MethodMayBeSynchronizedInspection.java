@@ -64,6 +64,12 @@ public class MethodMayBeSynchronizedInspection extends BaseInspection {
         "method.may.be.synchronized.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

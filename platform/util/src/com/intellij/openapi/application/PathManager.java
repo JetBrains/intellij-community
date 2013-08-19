@@ -155,6 +155,10 @@ public class PathManager {
     return ourSystemPath;
   }
 
+  public static String getTempPath() {
+    return getSystemPath() + File.separator + "tmp";
+  }
+
   public static boolean ensureConfigFolderExists(final boolean createIfNotExists) {
     getConfigPathWithoutDialog();
 

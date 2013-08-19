@@ -24,7 +24,11 @@ public class PortField extends JSpinner {
 
   public PortField(int number) {
     setModel(new SpinnerNumberModel(number, 0, 65535, 1));
-    setEditor(new JSpinner.NumberEditor(this, "#"));
+    setEditor(new NumberEditor(this, "#"));
+  }
+
+  public void setEditable(boolean value) {
+    ((NumberEditor)getEditor()).getTextField().setEditable(value);
   }
 
   public void setNumber(int number) {
@@ -33,5 +37,9 @@ public class PortField extends JSpinner {
 
   public int getNumber() {
     return ((SpinnerNumberModel)getModel()).getNumber().intValue();
+  }
+
+  public boolean isSpecified() {
+    return getNumber() != 0;
   }
 }

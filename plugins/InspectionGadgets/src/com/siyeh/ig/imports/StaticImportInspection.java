@@ -106,6 +106,11 @@ public class StaticImportInspection extends BaseInspection {
     public String getName() {
       return InspectionGadgetsBundle.message("static.import.replace.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
@@ -277,7 +282,7 @@ public class StaticImportInspection extends BaseInspection {
         return;
       }
       final PsiJavaFile file = (PsiJavaFile)parent;
-      if (FileTypeUtils.isInJsp(file)) {
+      if (FileTypeUtils.isInServerPageFile(file)) {
         return;
       }
       if (!file.getClasses()[0].equals(aClass)) {
