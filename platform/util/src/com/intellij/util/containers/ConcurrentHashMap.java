@@ -445,7 +445,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     /**
      * Remove; match on key only if value null, else match both.
      */
-    V remove(K key, int hash, Object value) {
+    V remove(K key, int hash, V value) {
       lock();
       try {
         int c = count - 1;
@@ -467,8 +467,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
             ++modCount;
             HashEntry<K,V> newFirst = e.next;
             for (HashEntry<K,V> p = first; p != e; p = p.next)
-              newFirst = new HashEntry<K,V>(p.key, p.hash,
-                                            newFirst, p.value);
+              newFirst = new HashEntry<K,V>(p.key, p.hash, newFirst, p.value);
             tab[index] = newFirst;
             count = c; // write-volatile
           }
@@ -872,10 +871,10 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   @Override
   public boolean remove(@NotNull Object key, Object value) {
     int hash = myHashingStrategy.computeHashCode((K)key);
-    return remove((K)key, hash, value);
+    return remove((K)key, hash, (V)value);
   }
 
-  public boolean remove(@NotNull K key, int hash, Object value) {
+  public boolean remove(@NotNull K key, int hash, V value) {
     return segmentFor(hash).remove(key, hash, value) != null;
   }
 
