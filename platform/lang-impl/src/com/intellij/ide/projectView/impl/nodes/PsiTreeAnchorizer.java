@@ -19,8 +19,9 @@ import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PsiTreeAnchorizer extends TreeAnchorizer {
 
-  private static final Key<PsiAnchor> PSI_ANCHORIZER_ANCHOR = Key.create("PSI_ANCHORIZER_ANCHOR");
+  private static final Key<SmartPsiElementPointer> PSI_ANCHORIZER_POINTER = Key.create("PSI_ANCHORIZER_ANCHOR");
 
   @Override
   public Object createAnchor(Object element) {
@@ -38,15 +39,16 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
       return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
         @Override
         public Object compute() {
-          PsiAnchor anchor = psiElement.getUserData(PSI_ANCHORIZER_ANCHOR);
+          SmartPsiElementPointer pointer = psiElement.getUserData(PSI_ANCHORIZER_POINTER);
           if (!psiElement.isValid()) {
-            return anchor != null ? anchor : psiElement;
+            return pointer != null ? pointer : psiElement;
           }
 
-          if (anchor == null || anchor.retrieve() != psiElement) {
-            psiElement.putUserData(PSI_ANCHORIZER_ANCHOR, anchor = PsiAnchor.create(psiElement));
+          if (pointer == null || pointer.getElement() != psiElement) {
+            pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
+            psiElement.putUserData(PSI_ANCHORIZER_POINTER, pointer);
           }
-          return anchor;
+          return pointer;
         }
       });
     }
@@ -55,12 +57,8 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
   @Override
   @Nullable
   public Object retrieveElement(Object pointer) {
-    if (pointer instanceof PsiAnchor) {
-      PsiElement retrieve = ((PsiAnchor)pointer).retrieve();
-      if (retrieve == null) {
-        //System.out.println("Null anchor: " + pointer);
-      }
-      return retrieve;
+    if (pointer instanceof SmartPsiElementPointer) {
+      return ((SmartPsiElementPointer)pointer).getElement();
     }
 
     return super.retrieveElement(pointer);
