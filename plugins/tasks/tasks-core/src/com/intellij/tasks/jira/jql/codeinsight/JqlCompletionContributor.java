@@ -78,16 +78,16 @@ public class JqlCompletionContributor extends CompletionContributor {
 
   // Patterns:
 
-  public static final PsiElementPattern.Capture<PsiElement> AFTER_CLAUSE_WITH_HISTORY_PREDICATE =
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_CLAUSE_WITH_HISTORY_PREDICATE =
     psiElement().and(rightAfterElement(JqlClauseWithHistoryPredicates.class));
 
   private static final PsiElementPattern.Capture<PsiElement> AFTER_ANY_CLAUSE =
     psiElement().and(rightAfterElement(JqlTerminalClause.class));
 
-  public static final PsiElementPattern.Capture<PsiElement> AFTER_ORDER_KEYWORD =
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_ORDER_KEYWORD =
     psiElement().afterLeaf(psiElement(JqlTokenTypes.ORDER_KEYWORD));
 
-  public static final PsiElementPattern.Capture<PsiElement> AFTER_FIELD_IN_CLAUSE =
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_FIELD_IN_CLAUSE =
     psiElement().and(rightAfterElement(
       psiElement(JqlIdentifier.class).
         andNot(psiElement().inside(JqlFunctionCall.class)).
@@ -103,6 +103,8 @@ public class JqlCompletionContributor extends CompletionContributor {
       psiElement().withElementType(JqlTokenTypes.AND_OPERATORS),
       psiElement().withElementType(JqlTokenTypes.OR_OPERATORS),
       psiElement().withElementType(JqlTokenTypes.NOT_OPERATORS).
+        andNot(psiElement().inside(JqlTerminalClause.class)),
+      psiElement().withElementType(JqlTokenTypes.LPAR).
         andNot(psiElement().inside(JqlTerminalClause.class))
     )));
 

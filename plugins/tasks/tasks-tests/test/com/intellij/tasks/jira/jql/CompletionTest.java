@@ -117,9 +117,15 @@ public class CompletionTest extends CodeInsightFixtureTestCase {
     checkCompletionVariants(parenthesize(JqlStandardFunction.allOfType(JqlFieldType.DATE, false)));
   }
 
-  /**
-   * "not |" -> "not not |", "not field |"
-   */
+  public void testAfterParenthesisInSubClause() throws Exception {
+    checkCompletionVariants(JqlStandardField.ALL_FIELDS_NAMES, "not");
+  }
+
+  public void testFunctionArguments() throws Exception {
+    // only literals accepted so we can't assume anything
+    checkCompletionVariants(ContainerUtil.<String>emptyList());
+  }
+
   public void testAfterNotKeywordInNotClause() throws Exception {
     checkCompletionVariants(JqlStandardField.ALL_FIELDS_NAMES, "not");
   }
@@ -128,9 +134,6 @@ public class CompletionTest extends CodeInsightFixtureTestCase {
     checkCompletionVariants("by");
   }
 
-  /**
-   * "foo was |" -> "foo was func()", "foo was not |", "foo was in |"
-   */
   public void testAfterWasKeyword() throws Exception {
     checkCompletionVariants(PARENTHESIZED_FUNCTION_NAMES, "not", "in");
   }
