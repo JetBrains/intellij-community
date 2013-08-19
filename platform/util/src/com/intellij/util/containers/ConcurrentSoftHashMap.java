@@ -29,7 +29,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.Map;
 
-public final class ConcurrentSoftHashMap<K,V> extends ConcurrentRefHashMap<K,V> {
+public final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   private static class SoftKey<K, V> extends SoftReference<K> implements ConcurrentRefHashMap.Key<K, V> {
     private final int myHash; // Hashcode of key, stored here since the key may be tossed by the GC
     private final V value;

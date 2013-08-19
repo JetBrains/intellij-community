@@ -25,8 +25,8 @@ import java.util.*;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentMap;
 
-abstract class ConcurrentRefValueHashMap<K,V> implements ConcurrentMap<K,V> {
-  private final ConcurrentHashMap<K,MyValueReference<K, V>> myMap;
+abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
+  private final ConcurrentHashMap<K, MyValueReference<K, V>> myMap;
   protected final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
   public ConcurrentRefValueHashMap(@NotNull Map<K, V> map) {
@@ -37,21 +37,27 @@ abstract class ConcurrentRefValueHashMap<K,V> implements ConcurrentMap<K,V> {
   public ConcurrentRefValueHashMap() {
     myMap = new ConcurrentHashMap<K, MyValueReference<K, V>>();
   }
+
   public ConcurrentRefValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
     myMap = new ConcurrentHashMap<K, MyValueReference<K, V>>(initialCapacity, loadFactor, concurrencyLevel);
   }
-  public ConcurrentRefValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+
+  public ConcurrentRefValueHashMap(int initialCapacity,
+                                   float loadFactor,
+                                   int concurrencyLevel,
+                                   @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     myMap = new ConcurrentHashMap<K, MyValueReference<K, V>>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   protected interface MyValueReference<K, V> {
     @NotNull
     K getKey();
+
     V get();
   }
 
   private void processQueue() {
-    while(true){
+    while (true) {
       MyValueReference<K, V> ref = (MyValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
       myMap.remove(ref.getKey(), ref);
@@ -210,7 +216,7 @@ abstract class ConcurrentRefValueHashMap<K,V> implements ConcurrentMap<K,V> {
     @NonNls String s = "map size:" + size() + " [";
     for (K k : myMap.keySet()) {
       Object v = get(k);
-      s += "'"+k + "': '" +v+"', ";
+      s += "'" + k + "': '" + v + "', ";
     }
     s += "] ";
     return s;
