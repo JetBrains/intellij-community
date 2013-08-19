@@ -18,13 +18,17 @@ package com.intellij.remoteServer.impl.configuration.deployment;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
+import com.intellij.remoteServer.configuration.deployment.ArtifactDeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
@@ -46,6 +50,7 @@ import java.util.Comparator;
 public class DeployToServerSettingsEditor<S extends ServerConfiguration, D extends DeploymentConfiguration> extends SettingsEditor<DeployToServerRunConfiguration<S, D>> {
   private final ServerType<S> myServerType;
   private final DeploymentConfigurator<D> myDeploymentConfigurator;
+  private final Project myProject;
   private final ComboboxWithBrowseButton myServerComboBox;
   private final ComboBox mySourceComboBox;
   private final SortedComboBoxModel<String> myServerListModel;
@@ -54,9 +59,10 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   private SettingsEditor<D> myDeploymentSettingsEditor;
   private DeploymentSource myLastSelection;
 
-  public DeployToServerSettingsEditor(final ServerType<S> type, DeploymentConfigurator<D> deploymentConfigurator) {
+  public DeployToServerSettingsEditor(final ServerType<S> type, DeploymentConfigurator<D> deploymentConfigurator, Project project) {
     myServerType = type;
     myDeploymentConfigurator = deploymentConfigurator;
+    myProject = project;
 
     myServerListModel = new SortedComboBoxModel<String>(String.CASE_INSENSITIVE_ORDER);
     myServerComboBox = new ComboboxWithBrowseButton(new ComboBox(myServerListModel));
@@ -102,7 +108,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     mySourceComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        updateDeploymentSettings(null);
+        onDeploymentSourceChanged(null);
       }
     });
   }
@@ -116,7 +122,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     myServerComboBox.getComboBox().setSelectedItem(newSelection != null ? newSelection.getName() : oldSelection);
   }
 
-  private void updateDeploymentSettings(@Nullable D configuration) {
+  private void onDeploymentSourceChanged(@Nullable D configuration) {
     DeploymentSource selected = mySourceListModel.getSelectedItem();
     if (Comparing.equal(selected, myLastSelection)) {
       if (configuration != null && myDeploymentSettingsEditor != null) {
@@ -125,6 +131,8 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
       return;
     }
 
+    updateBeforeRunOptions(myLastSelection, false);
+    updateBeforeRunOptions(selected, true);
     myDeploymentSettingsComponent.removeAll();
     myDeploymentSettingsEditor = myDeploymentConfigurator.createEditor(selected);
     if (myDeploymentSettingsEditor != null) {
@@ -137,6 +145,15 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     myLastSelection = selected;
   }
 
+  private void updateBeforeRunOptions(@Nullable DeploymentSource source, boolean selected) {
+    if (source instanceof ArtifactDeploymentSource) {
+      Artifact artifact = ((ArtifactDeploymentSource)source).getArtifact();
+      if (artifact != null) {
+        BuildArtifactsBeforeRunTaskProvider.setBuildArtifactBeforeRunOption(myServerComboBox, myProject, artifact, selected);
+      }
+    }
+  }
+
   @Override
   protected void resetEditorFrom(DeployToServerRunConfiguration<S,D> configuration) {
     String serverName = configuration.getServerName();
@@ -145,7 +162,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     }
     myServerComboBox.getComboBox().setSelectedItem(serverName);
     mySourceComboBox.setSelectedItem(configuration.getDeploymentSource());
-    updateDeploymentSettings(configuration.getDeploymentConfiguration());
+    onDeploymentSourceChanged(configuration.getDeploymentConfiguration());
   }
 
   @Override
