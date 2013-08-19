@@ -184,7 +184,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
   public void addNotify() {
     super.addNotify();
     final String key = "toolwindow.stripes.buttons.info.shown";
-    if (true || UISettings.getInstance().HIDE_TOOL_STRIPES && !PropertiesComponent.getInstance().isTrueValue(key)) {
+    if (UISettings.getInstance().HIDE_TOOL_STRIPES && !PropertiesComponent.getInstance().isTrueValue(key)) {
       final Alarm alarm = new Alarm();
       alarm.addRequest(new Runnable() {
         @Override
