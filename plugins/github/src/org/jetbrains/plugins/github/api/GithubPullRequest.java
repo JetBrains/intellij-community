@@ -26,33 +26,33 @@ import java.util.Date;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubPullRequest {
-  private long myNumber;
-  @NotNull private String myState;
-  @NotNull private String myTitle;
-  @NotNull private String myBodyHtml;
+  private final long myNumber;
+  @NotNull private final String myState;
+  @NotNull private final String myTitle;
+  @NotNull private final String myBodyHtml;
 
-  @NotNull private String myHtmlUrl;
-  @NotNull private String myDiffUrl;
-  @NotNull private String myPatchUrl;
-  @NotNull private String myIssueUrl;
+  @NotNull private final String myHtmlUrl;
+  @NotNull private final String myDiffUrl;
+  @NotNull private final String myPatchUrl;
+  @NotNull private final String myIssueUrl;
 
-  @NotNull private Date myCreatedAt;
-  @NotNull private Date myUpdatedAt;
-  @Nullable private Date myClosedAt;
-  @Nullable private Date myMergedAt;
+  @NotNull private final Date myCreatedAt;
+  @NotNull private final Date myUpdatedAt;
+  @Nullable private final Date myClosedAt;
+  @Nullable private final Date myMergedAt;
 
-  @NotNull private GithubUser myUser;
+  @NotNull private final GithubUser myUser;
 
-  @NotNull private Link myHead;
-  @NotNull private Link myBase;
+  @NotNull private final Link myHead;
+  @NotNull private final Link myBase;
 
   public static class Link {
-    @NotNull private String myLabel;
-    @NotNull private String myRef;
-    @NotNull private String mySha;
+    @NotNull private final String myLabel;
+    @NotNull private final String myRef;
+    @NotNull private final String mySha;
 
-    @NotNull private GithubRepo myRepo;
-    @NotNull private GithubUser myUser;
+    @NotNull private final GithubRepo myRepo;
+    @NotNull private final GithubUser myUser;
 
     public Link(@NotNull String label, @NotNull String ref, @NotNull String sha, @NotNull GithubRepo repo, @NotNull GithubUser user) {
       myLabel = label;

@@ -21,8 +21,8 @@ import org.jetbrains.annotations.NotNull;
 * @author Aleksey Pivovarov
 */
 public class GithubFullPath {
-  @NotNull final private String myUserName;
-  @NotNull final private String myRepositoryName;
+  @NotNull private final String myUserName;
+  @NotNull private final String myRepositoryName;
 
   public GithubFullPath(@NotNull String userName, @NotNull String repositoryName) {
     myUserName = userName;

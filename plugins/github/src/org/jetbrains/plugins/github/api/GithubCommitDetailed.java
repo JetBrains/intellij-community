@@ -25,13 +25,13 @@ import java.util.List;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubCommitDetailed extends GithubCommit {
-  @NotNull private CommitStats myStats;
-  @NotNull private List<GithubFile> myFiles;
+  @NotNull private final CommitStats myStats;
+  @NotNull private final List<GithubFile> myFiles;
 
   public static class CommitStats {
-    private int myAdditions;
-    private int myDeletions;
-    private int myTotal;
+    private final int myAdditions;
+    private final int myDeletions;
+    private final int myTotal;
 
     public CommitStats(int additions, int deletions, int total) {
       myAdditions = additions;

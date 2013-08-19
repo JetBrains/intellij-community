@@ -22,8 +22,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Aleksey Pivovarov
  */
 public class GithubRepoDetailed extends GithubRepo {
-  @Nullable private GithubRepo myParent;
-  @Nullable private GithubRepo mySource;
+  @Nullable private final GithubRepo myParent;
+  @Nullable private final GithubRepo mySource;
 
   public GithubRepoDetailed(@NotNull String name,
                             @Nullable String description,

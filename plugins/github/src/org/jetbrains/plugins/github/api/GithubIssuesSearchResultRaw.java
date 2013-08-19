@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github.api;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,9 +24,9 @@ import java.util.List;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings("UnusedDeclaration")
+@SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
 class GithubIssuesSearchResultRaw implements DataConstructor {
-  List<GithubIssueRaw> items;
+  @Nullable public List<GithubIssueRaw> items;
 
   @NotNull
   GithubIssuesSearchResult createIssueSearchResult() {

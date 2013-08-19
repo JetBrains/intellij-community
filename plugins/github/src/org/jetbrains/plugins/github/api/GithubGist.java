@@ -26,22 +26,22 @@ import java.util.List;
  * @author Aleksey Pivovarov
  */
 public class GithubGist {
-  @NotNull private String myId;
-  @NotNull private String myDescription;
+  @NotNull private final String myId;
+  @NotNull private final String myDescription;
 
-  private boolean myIsPublic;
+  private final boolean myIsPublic;
 
-  @NotNull private String myHtmlUrl;
+  @NotNull private final String myHtmlUrl;
 
-  @NotNull private List<GistFile> myFiles;
+  @NotNull private final List<GistFile> myFiles;
 
-  @Nullable private GithubUser myUser;
+  @Nullable private final GithubUser myUser;
 
   public static class GistFile {
-    @NotNull private String myFilename;
-    @NotNull private String myContent;
+    @NotNull private final String myFilename;
+    @NotNull private final String myContent;
 
-    @NotNull private String myRawUrl;
+    @NotNull private final String myRawUrl;
 
     public GistFile(@NotNull String filename, @NotNull String content, @NotNull String rawUrl) {
       myFilename = filename;
@@ -118,8 +118,8 @@ public class GithubGist {
   }
 
   public static class FileContent {
-    @NotNull private String myFileName;
-    @NotNull private String myContent;
+    @NotNull private final String myFileName;
+    @NotNull private final String myContent;
 
     public FileContent(@NotNull String fileName, @NotNull String content) {
       myFileName = fileName;

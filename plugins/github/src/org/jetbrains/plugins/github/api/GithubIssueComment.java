@@ -23,15 +23,15 @@ import java.util.Date;
  * @author Aleksey Pivovarov
  */
 public class GithubIssueComment {
-  private long myId;
+  private final long myId;
 
-  @NotNull private String myHtmlUrl;
-  @NotNull private String myBodyHtml;
+  @NotNull private final String myHtmlUrl;
+  @NotNull private final String myBodyHtml;
 
-  @NotNull private Date myCreatedAt;
-  @NotNull private Date myUpdatedAt;
+  @NotNull private final Date myCreatedAt;
+  @NotNull private final Date myUpdatedAt;
 
-  @NotNull private GithubUser myUser;
+  @NotNull private final GithubUser myUser;
 
   public GithubIssueComment(long id,
                             @NotNull String htmlUrl,

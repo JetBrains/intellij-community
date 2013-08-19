@@ -25,18 +25,18 @@ import java.util.Date;
  * @author Aleksey Pivovarov
  */
 public class GithubIssue {
-  @NotNull private String myHtmlUrl;
-  private long myNumber;
-  @NotNull private String myState;
-  @NotNull private String myTitle;
-  @NotNull private String myBody;
+  @NotNull private final String myHtmlUrl;
+  private final long myNumber;
+  @NotNull private final String myState;
+  @NotNull private final String myTitle;
+  @NotNull private final String myBody;
 
-  @NotNull private GithubUser myUser;
-  @Nullable private GithubUser myAssignee;
+  @NotNull private final GithubUser myUser;
+  @Nullable private final GithubUser myAssignee;
 
-  @Nullable Date myClosedAt;
-  @NotNull Date myCreatedAt;
-  @NotNull Date myUpdatedAt;
+  @Nullable private final Date myClosedAt;
+  @NotNull private final Date myCreatedAt;
+  @NotNull private final Date myUpdatedAt;
 
   public GithubIssue(@NotNull String htmlUrl,
                      long number,

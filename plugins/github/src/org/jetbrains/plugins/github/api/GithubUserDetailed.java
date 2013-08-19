@@ -22,17 +22,17 @@ import org.jetbrains.annotations.Nullable;
  * @author Aleksey Pivovarov
  */
 public class GithubUserDetailed extends GithubUser {
-  @Nullable private String myName;
-  @Nullable private String myEmail;
+  @Nullable private final String myName;
+  @Nullable private final String myEmail;
 
-  private int myOwnedPrivateRepos;
+  private final int myOwnedPrivateRepos;
 
-  @NotNull private String myType;
-  @NotNull private UserPlan myPlan;
+  @NotNull private final String myType;
+  @NotNull private final UserPlan myPlan;
 
   public static class UserPlan {
-    @NotNull private String myName;
-    private long myPrivateRepos;
+    @NotNull private final String myName;
+    private final long myPrivateRepos;
 
     public UserPlan(@NotNull String name, long privateRepos) {
       myName = name;

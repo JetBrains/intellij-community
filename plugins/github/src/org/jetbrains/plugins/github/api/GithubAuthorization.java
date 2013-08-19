@@ -23,8 +23,8 @@ import java.util.List;
  * @author Aleksey Pivovarov
  */
 public class GithubAuthorization {
-  @NotNull private String myToken;
-  @NotNull private List<String> myScopes;
+  @NotNull private final String myToken;
+  @NotNull private final List<String> myScopes;
 
   public GithubAuthorization(@NotNull String token, @NotNull List<String> scopes) {
     myToken = token;

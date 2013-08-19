@@ -22,8 +22,8 @@ import org.jetbrains.annotations.NotNull;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubCommitSha {
-  @NotNull private String myUrl;
-  @NotNull private String mySha;
+  @NotNull private final String myUrl;
+  @NotNull private final String mySha;
 
   public GithubCommitSha(@NotNull String url, @NotNull String sha) {
     myUrl = url;

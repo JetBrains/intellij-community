@@ -25,16 +25,16 @@ import java.util.Map;
 /**
  * @author Aleksey Pivovarov
  */
-@SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
+@SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration", "MismatchedQueryAndUpdateOfCollection"})
 class GithubGistRequest {
-  @NotNull private String description;
-  @NotNull private Map<String, GistFile> files;
+  @NotNull private final String description;
+  @NotNull private final Map<String, GistFile> files;
 
   @SerializedName("public")
-  private boolean isPublic;
+  private final boolean isPublic;
 
   public static class GistFile {
-    @NotNull private String content;
+    @NotNull private final String content;
 
     public GistFile(@NotNull String content) {
       this.content = content;
