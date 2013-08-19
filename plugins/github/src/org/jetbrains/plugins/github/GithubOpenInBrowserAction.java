@@ -92,9 +92,19 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (virtualFile == null || project == null || project.isDisposed()) {
       return;
     }
+
+    String urlToOpen = getGithubUrl(project, virtualFile, editor);
+    if (urlToOpen != null) {
+      BrowserUtil.launchBrowser(urlToOpen);
+    }
+  }
+
+  @Nullable
+  public static String getGithubUrl(@NotNull Project project, @NotNull VirtualFile virtualFile, @Nullable Editor editor) {
 
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     final GitRepository repository = manager.getRepositoryForFile(virtualFile);
@@ -104,13 +114,13 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
         details.append(repo.getPresentableUrl()).append("; ");
       }
       GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't find git repository", details.toString());
-      return;
+      return null;
     }
 
     final String githubRemoteUrl = GithubUtil.findGithubRemoteUrl(repository);
     if (githubRemoteUrl == null) {
       GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't find github remote");
-      return;
+      return null;
     }
 
     final String rootPath = repository.getRoot().getPath();
@@ -118,25 +128,28 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     if (!path.startsWith(rootPath)) {
       GithubNotifications
         .showError(project, CANNOT_OPEN_IN_BROWSER, "File is not under repository root", "Root: " + rootPath + ", file: " + path);
-      return;
+      return null;
     }
 
     String branch = getBranchNameOnRemote(project, repository);
     if (branch == null) {
-      return;
+      return null;
     }
 
     String relativePath = path.substring(rootPath.length());
-    String urlToOpen = makeUrlToOpen(e, relativePath, branch, githubRemoteUrl);
+    String urlToOpen = makeUrlToOpen(editor, relativePath, branch, githubRemoteUrl);
     if (urlToOpen == null) {
       GithubNotifications.showError(project, CANNOT_OPEN_IN_BROWSER, "Can't create properly url", githubRemoteUrl);
-      return;
+      return null;
     }
-    BrowserUtil.launchBrowser(urlToOpen);
+
+    return urlToOpen;
   }
 
   @Nullable
-  private static String makeUrlToOpen(@NotNull AnActionEvent e, @NotNull String relativePath, @NotNull String branch,
+  private static String makeUrlToOpen(@Nullable Editor editor,
+                                      @NotNull String relativePath,
+                                      @NotNull String branch,
                                       @NotNull String githubRemoteUrl) {
     final StringBuilder builder = new StringBuilder();
     final String githubRepoUrl = GithubUrlUtil.makeGithubRepoUrlFromRemoteUrl(githubRemoteUrl);
@@ -145,7 +158,6 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     }
     builder.append(githubRepoUrl).append("/blob/").append(branch).append(relativePath);
 
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (editor != null && editor.getDocument().getLineCount() >= 1) {
       // lines are counted internally from 0, but from 1 on github
       SelectionModel selectionModel = editor.getSelectionModel();
