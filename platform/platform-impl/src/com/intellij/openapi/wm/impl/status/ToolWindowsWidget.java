@@ -24,6 +24,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
@@ -151,15 +152,15 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
 
           final Dimension size = list.getPreferredSize();
           final JComponent c = ToolWindowsWidget.this;
-          final RelativePoint point = new RelativePoint(c, new Point(-4, -ToolWindowsWidget.this.getHeight() - size.height));
-
+          final RelativePoint point = new RelativePoint(c, new Point(-4, -4 - size.height));
 
           if (popup != null && popup.isVisible()) {
             return;
           }
 
           list.setSelectedIndex(list.getItemsCount() - 1);
-          popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+          PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
+          popup = builder
             .setAutoselectOnMouseMove(true)
             .setItemChoosenCallback(new Runnable() {
               @Override
