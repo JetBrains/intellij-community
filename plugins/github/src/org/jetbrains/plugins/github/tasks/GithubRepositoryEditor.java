@@ -74,6 +74,10 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myHostLabel = new JBLabel("Host:", SwingConstants.RIGHT);
     myHost = new MyTextField("Github host");
 
+    JPanel myHostPanel = new JPanel(new BorderLayout(5, 0));
+    myHostPanel.add(myHost, BorderLayout.CENTER);
+    myHostPanel.add(myShareUrlCheckBox, BorderLayout.EAST);
+
     myRepositoryLabel = new JBLabel("Repository:", SwingConstants.RIGHT);
     myRepoAuthor = new MyTextField("Repository Owner");
     myRepoName = new MyTextField("Repository Name");
@@ -106,7 +110,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     installListener(myRepoName);
     installListener(myToken);
 
-    return FormBuilder.createFormBuilder().setAlignLabelOnRight(true).addLabeledComponent(myHostLabel, myHost)
+    return FormBuilder.createFormBuilder().setAlignLabelOnRight(true).addLabeledComponent(myHostLabel, myHostPanel)
       .addLabeledComponent(myRepositoryLabel, myRepoPanel).addLabeledComponent(myTokenLabel, myTokenPanel).getPanel();
   }
 
