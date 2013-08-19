@@ -18,7 +18,10 @@ package com.intellij.util.containers;
 import gnu.trove.TObjectHashingStrategy;
 import junit.framework.TestCase;
 
-public class ConcurrentWeakHashMapTest extends TestCase {
+import java.util.Map;
+import java.util.Set;
+
+public class ConcurrentMapsTest extends TestCase {
   public void testKeysRemovedWhenIdentityStrategyIsUsed() {
     ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
     map.put(new Object(), new Object());
@@ -29,5 +32,16 @@ public class ConcurrentWeakHashMapTest extends TestCase {
     while (!map.processQueue());
     map.put(this, this);
     assertEquals(1, map.underlyingMapSize());
+  }
+
+  public void testRemoveFromEntrySet() {
+    ConcurrentSoftHashMap<Object, Object> map = new ConcurrentSoftHashMap<Object, Object>();
+    map.put(this, this);
+    Set<Map.Entry<Object,Object>> entries = map.entrySet();
+    assertEquals(1, entries.size());
+    Map.Entry<Object, Object> entry = entries.iterator().next();
+    entries.remove(entry);
+
+    assertTrue(map.isEmpty());
   }
 }

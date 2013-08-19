@@ -331,7 +331,7 @@ abstract class ConcurrentRefHashMap<K,V> extends AbstractMap<K,V> implements Con
       Map.Entry e = (Map.Entry)o;
       Object ev = e.getValue();
 
-      HardKey key = createHardKey(o);
+      HardKey key = createHardKey(e.getKey());
 
       V hv = myMap.get(key);
       boolean toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
