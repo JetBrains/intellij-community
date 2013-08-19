@@ -173,7 +173,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             }
             rebuildList(pattern);
           }
-        }, 400);
+        }, Registry.intValue("ide.goto.rebuild.delay"));
       }
     });
     editor.addFocusListener(new FocusAdapter() {
