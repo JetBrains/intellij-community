@@ -1,12 +1,14 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnCommitRunner;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.FileStatusResultParser;
 import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
 import org.jetbrains.idea.svn.config.SvnBindException;
 import org.tmatesoft.svn.core.*;
@@ -75,6 +77,30 @@ public class CommandUtil {
       parameters.add(depth.getName());
     }
   }
+
+
+  /**
+   * Utility method for running commands changing certain file status information.
+   * // TODO: Should be replaced with non-static analogue.
+   *
+   * @param vcs
+   * @param name
+   * @param parameters
+   * @param parser
+   * @throws VcsException
+   */
+  public static void execute(@NotNull SvnVcs vcs, @NotNull SvnCommandName name, @NotNull List<String> parameters, @NotNull FileStatusResultParser parser)
+    throws VcsException {
+    try {
+      SvnLineCommand command = runSimple(name, vcs, null, null, parameters);
+
+      parser.parse(command.getOutput());
+    }
+    catch (SVNException e) {
+      throw new VcsException(e);
+    }
+  }
+
 
   /**
    * Gets svn status represented by single character.
