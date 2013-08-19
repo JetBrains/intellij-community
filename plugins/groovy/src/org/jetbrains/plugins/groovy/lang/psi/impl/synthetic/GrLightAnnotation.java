@@ -22,7 +22,6 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +31,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.refactoring.convertJavaToGroovy.AnnotationArgConverter;
 
 import java.util.List;
 
@@ -91,11 +92,7 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
 
   @Override
   public String getText() {
-    StringBuilder buffer = new StringBuilder();
-    buffer.append('@').append(myQualifiedName);
-    buffer.append(myAnnotationArgList.getText());
-
-    return buffer.toString();
+    return "@" + myQualifiedName + myAnnotationArgList.getText();
   }
 
   @Override
@@ -141,19 +138,21 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
     return null;
   }
 
-  public void addAttribute(PsiNameValuePair attribute) {
-    if (attribute instanceof GrAnnotationNameValuePair) {
-      myAnnotationArgList.addAttribute((GrAnnotationNameValuePair)attribute);
+  public void addAttribute(PsiNameValuePair pair) {
+    if (pair instanceof GrAnnotationNameValuePair) {
+      myAnnotationArgList.addAttribute((GrAnnotationNameValuePair)pair);
     }
     else {
-      try {
-        GrAnnotation annotation =
-          GroovyPsiElementFactory.getInstance(getProject()).createAnnotationFromText("@Anno(" + attribute.getText() + ")");
-        myAnnotationArgList.addAttribute(annotation.getParameterList().getAttributes()[0]);
-      }
-      catch (IncorrectOperationException e) {
-        //do nothing
-      }
+      GrAnnotationMemberValue newValue = new AnnotationArgConverter().convert(pair.getValue());
+      if (newValue == null) return;
+
+      String name = pair.getName();
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(pair.getProject());
+      String annotationText;
+      annotationText = name != null ? "@A(" + name + "=" + newValue.getText() + ")"
+                                    : "@A(" + newValue.getText() + ")";
+      GrAnnotation annotation = factory.createAnnotationFromText(annotationText);
+      myAnnotationArgList.addAttribute(annotation.getParameterList().getAttributes()[0]);
     }
   }
 
