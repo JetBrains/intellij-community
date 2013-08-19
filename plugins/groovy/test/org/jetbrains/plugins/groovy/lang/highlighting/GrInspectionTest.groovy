@@ -207,6 +207,22 @@ print foo+<warning descr="Access to 'bar' exceeds its access rights">bar</warnin
 ''', GroovyAccessibilityInspection)
   }
 
+  public void testStaticImportCapsProperty() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+class Foo {
+  static def FOO = 2
+  private static def BAR = 2
+}
+''')
+    testHighlighting('''\
+import static Foo.FOO
+import static Foo.<warning descr="Access to 'BAR' exceeds its access rights">BAR</warning>
+
+print FOO + <warning descr="Access to 'BAR' exceeds its access rights">BAR</warning>
+''', GroovyAccessibilityInspection)
+  }
+
+
   public void testUntypedAccess() { doTest(new GroovyUntypedAccessInspection()) }
 
   public void testMethodMayBeStaticForCategoryClasses() {

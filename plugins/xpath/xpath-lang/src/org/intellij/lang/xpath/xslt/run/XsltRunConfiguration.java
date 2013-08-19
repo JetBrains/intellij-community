@@ -68,7 +68,6 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     private static final String RELAXED_FILE_PATH_EXPR = "((?:file\\://?)?(?:/?\\p{Alpha}\\:)?(?:/\\p{Alpha}\\:)?[^:]+)";
 
     private static final String LOG_TAG = "(?:\\[[\\w ]+\\]\\:? +)?";
-    private static final VirtualFilePointerManager FILE_POINTER_MANAGER = VirtualFilePointerManager.getInstance();
 
     public enum OutputType {
         CONSOLE, STDOUT, @Deprecated FILE
@@ -173,8 +172,8 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     public final RunConfiguration clone() {
         final XsltRunConfiguration configuration = (XsltRunConfiguration)super.clone();
         configuration.myParameters = new ArrayList<Pair<String, String>>(myParameters);
-        if (myXsltFile != null) configuration.myXsltFile = FILE_POINTER_MANAGER.duplicate(myXsltFile, getProject(), null);
-        if (myXmlInputFile != null) configuration.myXmlInputFile = FILE_POINTER_MANAGER.duplicate(myXmlInputFile, getProject(), null);
+        if (myXsltFile != null) configuration.myXsltFile = VirtualFilePointerManager.getInstance().duplicate(myXsltFile, getProject(), null);
+        if (myXmlInputFile != null) configuration.myXmlInputFile = VirtualFilePointerManager.getInstance().duplicate(myXmlInputFile, getProject(), null);
         return configuration;
     }
 
@@ -229,14 +228,14 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         if (e != null) {
             final String url = e.getAttributeValue("url");
             if (url != null) {
-                myXsltFile = FILE_POINTER_MANAGER.create(url, getProject(), null);
+                myXsltFile = VirtualFilePointerManager.getInstance().create(url, getProject(), null);
             }
         }
         e = element.getChild("XmlFile");
         if (e != null) {
             final String url = e.getAttributeValue("url");
             if (url != null) {
-                myXmlInputFile = FILE_POINTER_MANAGER.create(url, getProject(), null);
+                myXmlInputFile = VirtualFilePointerManager.getInstance().create(url, getProject(), null);
             }
         }
 
@@ -349,12 +348,12 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         if (isEmpty(xsltFile)) {
             myXsltFile = null;
         } else {
-            myXsltFile = FILE_POINTER_MANAGER.create(VfsUtilCore.pathToUrl(xsltFile).replace(File.separatorChar, '/'), getProject(), null);
+            myXsltFile = VirtualFilePointerManager.getInstance().create(VfsUtilCore.pathToUrl(xsltFile).replace(File.separatorChar, '/'), getProject(), null);
         }
     }
 
     private void setXsltFile(VirtualFile virtualFile) {
-        myXsltFile = FILE_POINTER_MANAGER.create(virtualFile, getProject(), null);
+        myXsltFile = VirtualFilePointerManager.getInstance().create(virtualFile, getProject(), null);
     }
 
     @Nullable
@@ -400,12 +399,12 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         if (isEmpty(xmlInputFile)) {
             myXmlInputFile = null;
         } else {
-            myXmlInputFile = FILE_POINTER_MANAGER.create(VfsUtilCore.pathToUrl(xmlInputFile).replace(File.separatorChar, '/'), getProject(), null);
+            myXmlInputFile = VirtualFilePointerManager.getInstance().create(VfsUtilCore.pathToUrl(xmlInputFile).replace(File.separatorChar, '/'), getProject(), null);
         }
     }
 
     public void setXmlInputFile(VirtualFile xmlInputFile) {
-      myXmlInputFile = FILE_POINTER_MANAGER.create(xmlInputFile, getProject(), null);
+      myXmlInputFile = VirtualFilePointerManager.getInstance().create(xmlInputFile, getProject(), null);
     }
 
     public void setModule(Module module) {

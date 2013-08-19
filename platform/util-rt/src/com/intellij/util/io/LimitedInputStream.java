@@ -72,6 +72,10 @@ public class LimitedInputStream extends FilterInputStream {
     return Math.min(super.available(), myReadLimit - myBytesRead);
   }
 
+  protected int remainingLimit() {
+    return myReadLimit - myBytesRead;
+  }
+
   public synchronized void mark(final int readLimit) {
     throw new UnsupportedOperationException();
   }

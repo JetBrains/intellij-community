@@ -166,6 +166,29 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     return myCurrentModalProgressCount.get() > 0;
   }
 
+  @Override
+  public void runProcess(@NotNull final Runnable process, final ProgressIndicator progress) {
+    executeProcessUnderProgress(new Runnable(){
+      @Override
+      public void run() {
+        try {
+          if (progress != null && !progress.isRunning()) {
+            progress.start();
+          }
+          process.run();
+          maybeSleep();
+        }
+        finally {
+          if (progress != null && progress.isRunning()) {
+            progress.stop();
+            if (progress instanceof ProgressIndicatorEx) {
+              ((ProgressIndicatorEx)progress).processFinish();
+            }
+          }
+        }
+      }
+    },progress);
+  }
 
   @Override
   public <T> T runProcess(@NotNull final Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException {
@@ -412,36 +435,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
       }
     }
   }
-
-  @Override
-   public void runProcess(@NotNull final Runnable process, final ProgressIndicator progress) {
-     executeProcessUnderProgress(new Runnable(){
-       @Override
-       public void run() {
-         synchronized (process) {
-           process.notifyAll();
-         }
-         try {
-           if (progress != null && !progress.isRunning()) {
-             progress.start();
-           }
-           process.run();
-           maybeSleep();
-         }
-         finally {
-           if (progress != null && progress.isRunning()) {
-             progress.stop();
-             if (progress instanceof ProgressIndicatorEx) {
-               ((ProgressIndicatorEx)progress).processFinish();
-             }
-             synchronized (process) {
-               process.notifyAll();
-             }
-           }
-         }
-       }
-     },progress);
-   }
 
   private abstract static class TaskContainer implements Runnable {
     private final Task myTask;

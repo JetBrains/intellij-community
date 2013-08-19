@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassRe
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
@@ -142,7 +143,10 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
     final Object valueObject = element.getValue();
     if (!(valueObject instanceof PsiClass)) return Collections.emptyList();
 
-    final PsiReference[] references = ourProvider.getReferencesByElement(DomUtil.getValueElement(element), new ProcessingContext());
+    final XmlElement valueElement = DomUtil.getValueElement(element);
+    if (valueElement == null) return Collections.emptyList();
+
+    final PsiReference[] references = ourProvider.getReferencesByElement(valueElement, new ProcessingContext());
     for (PsiReference reference : references) {
       if (reference instanceof JavaClassReference) {
         final PsiReferenceProvider psiReferenceProvider = ((JavaClassReference)reference).getProvider();

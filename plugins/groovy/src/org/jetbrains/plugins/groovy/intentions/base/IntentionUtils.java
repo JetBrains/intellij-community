@@ -19,6 +19,8 @@ import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix;
 import com.intellij.codeInsight.template.*;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -30,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -140,7 +143,9 @@ public class IntentionUtils {
                   ((GrMethod)method).setReturnType(PsiType.VOID);
                 }
                 if (method.getBody() != null) {
-                  CreateFromUsageUtils.setupMethodBody(method);
+                  FileTemplateManager templateManager = FileTemplateManager.getInstance();
+                  FileTemplate fileTemplate = templateManager.getCodeTemplate(GroovyTemplates.GROOVY_FROM_USAGE_METHOD_BODY);
+                  CreateFromUsageUtils.setupMethodBody(method, method.getContainingClass(), fileTemplate);
                 }
                 if (hasNoReturnType) {
                   ((GrMethod)method).setReturnType(null);
