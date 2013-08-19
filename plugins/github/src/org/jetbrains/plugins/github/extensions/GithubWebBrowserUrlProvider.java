@@ -32,7 +32,10 @@ public class GithubWebBrowserUrlProvider extends WebBrowserUrlProvider {
   @Nullable
   @Override
   public Url getUrl(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException {
-    String url = GithubOpenInBrowserAction.getGithubUrl(element.getProject(), virtualFile, null);
+    String url = GithubOpenInBrowserAction.getGithubUrl(element.getProject(), virtualFile, null, true);
+    if (url == null) {
+      return null;
+    }
     return new UrlImpl(url, "https", null, null, null);
   }
 
