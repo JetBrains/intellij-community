@@ -15,13 +15,15 @@
  */
 package org.jetbrains.plugins.gradle.service.task;
 
-import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.SystemProperties;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -36,7 +40,7 @@ import java.util.List;
  * @since 3/14/13 5:09 PM
  */
 public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
-  
+
   private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
 
   @Override
@@ -45,21 +49,33 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                            @NotNull String projectPath,
                            @Nullable final GradleExecutionSettings settings,
                            @Nullable final String vmOptions,
-                           @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException
-  {
+                           @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
     Function<ProjectConnection, Void> f = new Function<ProjectConnection, Void>() {
       @Override
       public Void fun(ProjectConnection connection) {
         BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener);
         if (!StringUtil.isEmpty(vmOptions)) {
-          assert vmOptions != null;
-          launcher.setJvmArguments(vmOptions.trim());
+          try {
+            final File tempFile = FileUtil.createTempFile("init", ".gradle");
+            tempFile.deleteOnExit();
+            final String[] lines = {
+              "gradle.taskGraph.beforeTask { Task task ->",
+              "    if (task instanceof JavaForkOptions) {",
+              "        task.jvmArgs '" + vmOptions.trim() + '\'',
+              "}}",
+            };
+            FileUtil.writeToFile(tempFile, StringUtil.join(lines, SystemProperties.getLineSeparator()));
+            launcher.withArguments("--init-script", tempFile.getAbsolutePath());
+          }
+          catch (IOException e) {
+            throw new ExternalSystemException(e);
+          }
         }
         launcher.forTasks(ArrayUtil.toStringArray(taskNames));
         launcher.run();
         return null;
       }
     };
-    myHelper.execute(projectPath, settings, f); 
+    myHelper.execute(projectPath, settings, f);
   }
 }
