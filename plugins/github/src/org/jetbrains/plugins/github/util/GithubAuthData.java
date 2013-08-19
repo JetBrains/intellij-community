@@ -36,15 +36,19 @@ public class GithubAuthData {
   @NotNull private final String myHost;
   @Nullable private final BasicAuth myBasicAuth;
   @Nullable private final TokenAuth myTokenAuth;
+  private final boolean myUseProxy;
+
 
   private GithubAuthData(@NotNull AuthType authType,
                          @NotNull String host,
                          @Nullable BasicAuth basicAuth,
-                         @Nullable TokenAuth tokenAuth) {
+                         @Nullable TokenAuth tokenAuth,
+                         boolean useProxy) {
     myAuthType = authType;
     myHost = host;
     myBasicAuth = basicAuth;
     myTokenAuth = tokenAuth;
+    myUseProxy = useProxy;
   }
 
   public static GithubAuthData createAnonymous() {
@@ -52,15 +56,19 @@ public class GithubAuthData {
   }
 
   public static GithubAuthData createAnonymous(@NotNull String host) {
-    return new GithubAuthData(AuthType.ANONYMOUS, host, null, null);
+    return new GithubAuthData(AuthType.ANONYMOUS, host, null, null, true);
   }
 
   public static GithubAuthData createBasicAuth(@NotNull String host, @NotNull String login, @NotNull String password) {
-    return new GithubAuthData(AuthType.BASIC, host, new BasicAuth(login, password), null);
+    return new GithubAuthData(AuthType.BASIC, host, new BasicAuth(login, password), null, true);
   }
 
   public static GithubAuthData createTokenAuth(@NotNull String host, @NotNull String token) {
-    return new GithubAuthData(AuthType.TOKEN, host, null, new TokenAuth(token));
+    return new GithubAuthData(AuthType.TOKEN, host, null, new TokenAuth(token), true);
+  }
+
+  public static GithubAuthData createTokenAuth(@NotNull String host, @NotNull String token, boolean useProxy) {
+    return new GithubAuthData(AuthType.TOKEN, host, null, new TokenAuth(token), useProxy);
   }
 
   @NotNull
@@ -81,6 +89,10 @@ public class GithubAuthData {
   @Nullable
   public TokenAuth getTokenAuth() {
     return myTokenAuth;
+  }
+
+  public boolean isUseProxy() {
+    return myUseProxy;
   }
 
   public static class BasicAuth {
