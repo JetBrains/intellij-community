@@ -26,15 +26,9 @@ public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase
   public void testSimple() throws Exception {
     registerDefaultCreatePullRequestDialogHandler(myLogin1 + ":master");
 
-    cd(myProjectRoot.getPath());
-    cloneRepo();
-    createBranch();
-    createChanges();
-
     GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
-    initGitChecks();
     checkRemoteConfigured();
     checkLastCommitPushed();
   }
@@ -42,15 +36,9 @@ public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase
   public void testParent() throws Exception {
     registerDefaultCreatePullRequestDialogHandler(myLogin2 + ":file2");
 
-    cd(myProjectRoot.getPath());
-    cloneRepo();
-    createBranch();
-    createChanges();
-
     GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
-    initGitChecks();
     checkRemoteConfigured();
     checkLastCommitPushed();
   }
@@ -58,15 +46,9 @@ public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase
   public void testCommitRef1() throws Exception {
     registerDefaultCreatePullRequestDialogHandler(myLogin1 + ":refs/heads/master");
 
-    cd(myProjectRoot.getPath());
-    cloneRepo();
-    createBranch();
-    createChanges();
-
     GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
-    initGitChecks();
     checkRemoteConfigured();
     checkLastCommitPushed();
   }
