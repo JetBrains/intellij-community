@@ -47,6 +47,8 @@ public abstract class SvnCommand {
   private final File myWorkingDirectory;
   private Process myProcess;
   private OSProcessHandler myHandler;
+  // TODO: Try to implement commands in a way that they manually indicate if they need full output - to prevent situations
+  // TODO: when large amount of data needs to be stored instead of just sequential processing.
   private CapturingProcessAdapter outputAdapter;
   private final Object myLock;
 

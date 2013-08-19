@@ -145,14 +145,18 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), infoHandler[0]);
     }
     catch (SvnExceptionWrapper e) {
+      LOG.info("info output " + result);
       throw (SVNException) e.getCause();
     } catch (IOException e) {
+      LOG.info("info output " + result);
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }
     catch (ParserConfigurationException e) {
+      LOG.info("info output " + result);
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }
     catch (SAXException e) {
+      LOG.info("info output " + result);
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }
   }
