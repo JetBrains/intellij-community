@@ -183,8 +183,7 @@ public class TemplateState implements Disposable {
   @Nullable
   public TextResult getVariableValue(@NotNull String variableName) {
     if (variableName.equals(TemplateImpl.SELECTION)) {
-      final String selection = (String)getProperties().get(ExpressionContext.SELECTION);
-      return new TextResult(selection == null ? "" : selection);
+      return new TextResult(StringUtil.notNullize(getSelectionBeforeTemplate()));
     }
     if (variableName.equals(TemplateImpl.END)) {
       return new TextResult("");
@@ -204,6 +203,11 @@ public class TemplateState implements Disposable {
       return null;
     }
     return new TextResult(text.subSequence(start, end).toString());
+  }
+
+  @Nullable
+  private String getSelectionBeforeTemplate() {
+    return (String)getProperties().get(ExpressionContext.SELECTION);
   }
 
   @Nullable
@@ -838,7 +842,8 @@ public class TemplateState implements Disposable {
   }
 
   private void setFinalEditorState() {
-    int endSegmentNumber = myTemplate.getEndSegmentNumber();
+    int selectionSegment = myTemplate.getVariableSegmentNumber(TemplateImpl.SELECTION);
+    int endSegmentNumber = selectionSegment >= 0 && getSelectionBeforeTemplate() == null ? selectionSegment : myTemplate.getEndSegmentNumber();
     int offset = -1;
     if (endSegmentNumber >= 0) {
       offset = mySegments.getSegmentStart(endSegmentNumber);
@@ -846,11 +851,6 @@ public class TemplateState implements Disposable {
     else {
       if (!myTemplate.isSelectionTemplate() && !myTemplate.isInline()) { //do not move caret to the end of range for selection templates
         offset = myTemplateRange.getEndOffset();
-      } else {
-        int selectionSegment = myTemplate.getVariableSegmentNumber(TemplateImpl.SELECTION);
-        if (selectionSegment >= 0 && mySegments.getSegmentStart(selectionSegment) == mySegments.getSegmentEnd(selectionSegment)) {
-          offset = mySegments.getSegmentStart(selectionSegment);
-        }
       }
     }
 

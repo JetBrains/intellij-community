@@ -99,12 +99,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
       final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
       if (virtualFile != null && virtualFile.isValid()) {
         Collection<Project> projects = ProjectLocator.getInstance().getProjectsForFile(virtualFile);
-        LOG.assertTrue(projects.isEmpty() || projects.contains(myProject), "Trying to get PSI for an alien project. VirtualFile=" +
-                                                                           virtualFile +
-                                                                           ";\n myProject=" +
-                                                                           myProject +
-                                                                           ";\n projects returned: " +
-                                                                           projects);
+        if (!projects.isEmpty() && !projects.contains(myProject)) {
+          LOG.error("Trying to get PSI for an alien project. VirtualFile=" + virtualFile +
+                    ";\n myProject=" + myProject +
+                    ";\n projects returned: " + projects);
+        }
       }
     }
     return psiFile;

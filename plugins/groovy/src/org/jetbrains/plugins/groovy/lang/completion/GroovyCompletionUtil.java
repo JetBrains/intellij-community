@@ -591,7 +591,7 @@ public class GroovyCompletionUtil {
       PsiElement resolved = ref.resolve();
 
       if (resolved instanceof PsiClass) {
-        final GrAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved);
+        final PsiAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved);
 
         if (annotationCollector != null) {
           final ArrayList<GrAnnotation> annotations = ContainerUtil.newArrayList();

@@ -63,6 +63,7 @@ public final class GroovyCommonClassNames {
   @NonNls public static final String GROOVY_LANG_NEWIFY = "groovy.lang.Newify";
   @NonNls public static final String GROOVY_LANG_DELEGATES_TO = "groovy.lang.DelegatesTo";
   @NonNls public static final String GROOVY_LANG_DELEGATES_TO_TARGET = "groovy.lang.DelegatesTo.Target";
+  @NonNls public static final String GROOVY_TRANSFORM_COMPILE_DYNAMIC = "groovy.transform.CompileDynamic";
 
 
   private GroovyCommonClassNames() {

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -172,17 +173,20 @@ public class LookupCellRenderer implements ListCellRenderer {
                      myTailComponent.getPreferredSize().getWidth() +
                      myTypeLabel.getPreferredSize().getWidth();
 
-    myPanel.removeAll();
-    if (isSelected && w > list.getWidth()) {
-      myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.X_AXIS));
-      myPanel.add(myNameComponent);
-      myPanel.add(myTailComponent);
-      myPanel.add(myTypeLabel);
-    } else {
-      myPanel.setLayout(new BorderLayout());
-      myPanel.add(myNameComponent, BorderLayout.WEST);
-      myPanel.add(myTailComponent, BorderLayout.CENTER);
-      myPanel.add(myTypeLabel, BorderLayout.EAST);
+    boolean useBoxLayout = isSelected && w > list.getWidth() && ((JBList)list).getExpandableItemsHandler().isEnabled();
+    if (useBoxLayout != myPanel.getLayout() instanceof BoxLayout) {
+      myPanel.removeAll();
+      if (useBoxLayout) {
+        myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.X_AXIS));
+        myPanel.add(myNameComponent);
+        myPanel.add(myTailComponent);
+        myPanel.add(myTypeLabel);
+      } else {
+        myPanel.setLayout(new BorderLayout());
+        myPanel.add(myNameComponent, BorderLayout.WEST);
+        myPanel.add(myTailComponent, BorderLayout.CENTER);
+        myPanel.add(myTypeLabel, BorderLayout.EAST);
+      }
     }
 
     return myPanel;

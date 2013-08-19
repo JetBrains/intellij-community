@@ -1120,7 +1120,7 @@ print(<error descr="Collection literal contains named and expression arguments a
 ''')
   }
 
-  void testDelegatesToApplicability() {
+  void _testDelegatesToApplicability() {
     testHighlighting('''
       def with(@DelegatesTo.Target Object target, @DelegatesTo Closure arg) {
         arg.delegate = target

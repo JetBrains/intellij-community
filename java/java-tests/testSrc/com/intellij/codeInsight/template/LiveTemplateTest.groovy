@@ -640,4 +640,18 @@ class Foo {
 """
   }
 
+  public void "test stop at SELECTION when invoked surround template by tab"() {
+    myFixture.configureByText "a.txt", "<caret>"
+    
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("xxx", "user", 'foo $ARG$ bar $END$ goo $SELECTION$ after');
+    template.addVariable("ARG", "", "", true);
+    
+    manager.startTemplate(editor, template);
+    myFixture.type('arg')
+    state.nextTab()
+    assert !state
+    checkResultByText 'foo arg bar  goo <caret> after';
+  }
+
 }
