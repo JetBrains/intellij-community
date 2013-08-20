@@ -24,9 +24,9 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHandler<FullHttpRequest> {
   @Override
   protected void channelRead0(ChannelHandlerContext context, FullHttpRequest message) throws Exception {
-    //if (BuiltInServer.LOG.isDebugEnabled()) {
-    //BuiltInServer.LOG.debug(request.toString());
-    //}
+    if (BuiltInServer.LOG.isDebugEnabled()) {
+      BuiltInServer.LOG.debug("IN HTTP:\n" + message);
+    }
 
     if (!process(context, message, new QueryStringDecoder(message.getUri()))) {
       Responses.sendStatus(HttpResponseStatus.NOT_FOUND, context.channel(), message);

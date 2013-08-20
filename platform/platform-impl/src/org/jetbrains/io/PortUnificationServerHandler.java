@@ -17,12 +17,11 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.*;
 import io.netty.handler.codec.compression.JZlibEncoder;
 import io.netty.handler.codec.compression.JdkZlibDecoder;
 import io.netty.handler.codec.compression.ZlibWrapper;
+import io.netty.handler.codec.http.HttpMessage;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import org.jetbrains.annotations.NotNull;
@@ -105,6 +104,17 @@ final class PortUnificationServerHandler extends Decoder<ByteBuf> {
       else {
         NettyUtil.initHttpHandlers(pipeline);
         pipeline.addLast(delegatingHttpRequestHandler);
+        if (BuiltInServer.LOG.isDebugEnabled()) {
+          pipeline.addLast(new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) throws Exception {
+              if (message instanceof HttpMessage) {
+                BuiltInServer.LOG.debug("OUT HTTP:\n" + message);
+              }
+              super.write(context, message, promise);
+            }
+          });
+        }
       }
     }
     // must be after new channels handlers addition (netty bug?)

@@ -32,6 +32,7 @@ import java.io.RandomAccessFile;
 import java.text.ParseException;
 import java.util.Date;
 
+import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static org.jetbrains.io.Responses.*;
 
 public class FileResponses {
@@ -46,7 +47,7 @@ public class FileResponses {
     if (!StringUtil.isEmpty(ifModifiedSince)) {
       try {
         if (Responses.DATE_FORMAT.get().parse(ifModifiedSince).getTime() >= lastModified) {
-          sendStatus(HttpResponseStatus.NOT_MODIFIED, channel, request);
+          send(response(HttpResponseStatus.NOT_MODIFIED), channel, request);
           return true;
         }
       }
@@ -67,7 +68,8 @@ public class FileResponses {
     RandomAccessFile raf = new RandomAccessFile(file, "r");
     try {
       long fileLength = raf.length();
-      HttpResponse response = create(getContentType(file.getPath()));
+      HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+      response.headers().add(CONTENT_TYPE, getContentType(file.getPath()));
       addCommonHeaders(response);
       response.headers().set(HttpHeaders.Names.CACHE_CONTROL, "private, must-revalidate");
       response.headers().set(HttpHeaders.Names.LAST_MODIFIED, Responses.DATE_FORMAT.get().format(new Date(file.lastModified())));
@@ -76,22 +78,22 @@ public class FileResponses {
         HttpHeaders.setContentLength(response, fileLength);
       }
 
-      ChannelFuture future = channel.write(response);
+      channel.write(response);
       if (request.getMethod() != HttpMethod.HEAD) {
         if (channel.pipeline().get(SslHandler.class) == null) {
           // No encryption - use zero-copy
-          future = channel.write(new DefaultFileRegion(raf.getChannel(), 0, fileLength));
+          channel.write(new DefaultFileRegion(raf.getChannel(), 0, fileLength));
         }
         else {
           // Cannot use zero-copy with HTTPS
-          future = channel.write(new ChunkedFile(raf, 0, fileLength, 8192));
+          channel.write(new ChunkedFile(raf, 0, fileLength, 8192));
         }
       }
 
+      ChannelFuture future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
       if (!keepAlive) {
         future.addListener(ChannelFutureListener.CLOSE);
       }
-      channel.flush();
 
       fileWillBeClosed = true;
     }

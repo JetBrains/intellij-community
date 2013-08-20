@@ -52,6 +52,19 @@ public final class Responses {
 
   private static String SERVER_HEADER_VALUE;
 
+  public static FullHttpResponse response(HttpResponseStatus status) {
+    return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.EMPTY_BUFFER);
+  }
+
+  public static HttpResponse create(@Nullable String contentType, @Nullable ByteBuf content) {
+    HttpResponse response =
+      new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, content == null ? Unpooled.EMPTY_BUFFER : content);
+    if (contentType != null) {
+      response.headers().add(CONTENT_TYPE, contentType);
+    }
+    return response;
+  }
+
   public static void addAllowAnyOrigin(HttpResponse response) {
     response.headers().add(ACCESS_CONTROL_ALLOW_ORIGIN, "*");
   }
@@ -88,18 +101,10 @@ public final class Responses {
     }
   }
 
-  public static void send(String contentType, CharSequence content, Channel channel, HttpRequest request) {
-    send(create(contentType, Unpooled.copiedBuffer(content, CharsetUtil.UTF_8)), channel, request);
-  }
-
   public static void send(HttpResponse response, Channel channel, @Nullable HttpRequest request) {
-    if (response.getStatus() != HttpResponseStatus.NOT_MODIFIED) {
-      if (response instanceof FullHttpResponse) {
-        HttpHeaders.setContentLength(response, ((FullHttpResponse)response).content().readableBytes());
-      }
-      else if (!HttpHeaders.isContentLengthSet(response)) {
-        HttpHeaders.setContentLength(response, 0);
-      }
+    if (response.getStatus() != HttpResponseStatus.NOT_MODIFIED && !HttpHeaders.isContentLengthSet(response)) {
+      HttpHeaders.setContentLength(response,
+                                   response instanceof FullHttpResponse ? ((FullHttpResponse)response).content().readableBytes() : 0);
     }
 
     addCommonHeaders(response);
@@ -120,34 +125,12 @@ public final class Responses {
     addAllowAnyOrigin(response);
   }
 
-  public static HttpResponse create(String contentType) {
-    return create(contentType, null);
-  }
-
-  public static HttpResponse create(@Nullable String contentType, @Nullable ByteBuf content) {
-    HttpResponse response = content == null
-                            ? new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
-                            : new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, content);
-    if (contentType != null) {
-      response.headers().add(CONTENT_TYPE, contentType);
-    }
-    return response;
-  }
-
   public static void send(CharSequence content, Channel channel, @Nullable HttpRequest request) {
     send(content, CharsetUtil.US_ASCII, channel, request);
   }
 
   public static void send(CharSequence content, Charset charset, Channel channel, @Nullable HttpRequest request) {
-    send(create(null, Unpooled.copiedBuffer(content, charset)), channel, request);
-  }
-
-  public static void send(HttpResponse response, Channel channel) {
-    send(response, channel, true);
-  }
-
-  public static void send(HttpResponseStatus status, ChannelHandlerContext context) {
-    send(new DefaultHttpResponse(HttpVersion.HTTP_1_1, status), context.channel());
+    send(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, charset)), channel, request);
   }
 
   private static void send(HttpResponse response, Channel channel, boolean close) {
@@ -155,7 +138,11 @@ public final class Responses {
       return;
     }
 
-    ChannelFuture future = channel.writeAndFlush(response);
+    ChannelFuture future = channel.write(response);
+    if (!(response instanceof FullHttpResponse)) {
+      channel.write(LastHttpContent.EMPTY_LAST_CONTENT);
+    }
+    channel.flush();
     if (close) {
       future.addListener(ChannelFutureListener.CLOSE);
     }
@@ -173,14 +160,9 @@ public final class Responses {
     send(createStatusResponse(responseStatus, request, description), channel, request);
   }
 
-  public static void sendStatus(HttpResponse response, HttpRequest request, Channel channel) {
-    response.headers().add(CONTENT_TYPE, "text/html");
-    send(response, channel, request);
-  }
-
   private static HttpResponse createStatusResponse(HttpResponseStatus responseStatus, @Nullable HttpRequest request, @Nullable String description) {
     if (request != null && request.getMethod() == HttpMethod.HEAD) {
-      return new DefaultHttpResponse(HttpVersion.HTTP_1_1, responseStatus);
+      return response(responseStatus);
     }
 
     StringBuilder builder = new StringBuilder();
@@ -197,8 +179,7 @@ public final class Responses {
   }
 
   public static void sendOptionsResponse(String allowHeaders, HttpRequest request, ChannelHandlerContext context) {
-    HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-    addAllowAnyOrigin(response);
+    HttpResponse response = response(HttpResponseStatus.OK);
     response.headers().set(ACCESS_CONTROL_ALLOW_METHODS, allowHeaders);
     response.headers().set(ALLOW, allowHeaders);
     send(response, context.channel(), request);
