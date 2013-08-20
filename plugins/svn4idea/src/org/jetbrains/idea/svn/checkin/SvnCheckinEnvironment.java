@@ -261,6 +261,10 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
         public SVNURL convert(String[] o) {
           SVNInfo info = o.length > 0 ? mySvnVcs.getInfo(o[0]) : null;
 
+          if (info == null || info.getURL() == null) {
+            LOG.warn("Could not resolve repository url for commit. Paths - " + Arrays.toString(o));
+          }
+
           return info != null ? info.getURL() : null;
         }
       });

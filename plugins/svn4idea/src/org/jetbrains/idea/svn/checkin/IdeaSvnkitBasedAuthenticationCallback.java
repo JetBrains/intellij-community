@@ -80,8 +80,15 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   @Nullable
   @Override
   public SVNAuthentication requestCredentials(@Nullable SVNURL url, String type) {
-    return url != null ? myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getProvider().requestClientAuthentication(
-      type, url, url.toDecodedString(), null, null, true) : null;
+    SVNAuthentication authentication =
+      url != null ? myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getProvider().requestClientAuthentication(
+        type, url, url.toDecodedString(), null, null, true) : null;
+
+    if (authentication == null) {
+      LOG.warn("Could not get authentication. Type - " + type + ", Url - " + url);
+    }
+
+    return authentication;
   }
 
   @Override
