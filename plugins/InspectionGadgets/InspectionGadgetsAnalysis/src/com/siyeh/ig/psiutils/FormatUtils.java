@@ -20,7 +20,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class FormatUtils {
@@ -48,9 +50,13 @@ public class FormatUtils {
   private FormatUtils() {}
 
   public static boolean isFormatCall(PsiMethodCallExpression expression) {
+    return isFormatCall(expression, Collections.<String>emptyList(), Collections.<String>emptyList());
+  }
+
+  public static boolean isFormatCall(PsiMethodCallExpression expression, List<String> optionalMethods, List<String> optionalClasses) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final String name = methodExpression.getReferenceName();
-    if (!formatMethodNames.contains(name)) {
+    if (!formatMethodNames.contains(name) && !optionalMethods.contains(name)) {
       return false;
     }
     final PsiMethod method = expression.resolveMethod();
@@ -62,7 +68,7 @@ public class FormatUtils {
       return false;
     }
     final String className = containingClass.getQualifiedName();
-    return formatClassNames.contains(className);
+    return formatClassNames.contains(className) || optionalClasses.contains(className);
   }
 
   public static boolean isFormatCallArgument(PsiElement element) {
