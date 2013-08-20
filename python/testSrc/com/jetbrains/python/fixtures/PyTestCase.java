@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -46,7 +47,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   private static final String PARSED_ERROR_MSG = "Operations should have been performed on stubs but caused file to be parsed";
 
   protected CodeInsightTestFixture myFixture;
-  private static boolean ourPlatformPrefixInitialized;
 
   @Nullable
   protected static VirtualFile getVirtualFileByName(String fileName) {
@@ -147,18 +147,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   public static void initPlatformPrefix() {
-    if (!ourPlatformPrefixInitialized) {
-      ourPlatformPrefixInitialized = true;
-      boolean isIDEA = true;
-      try {
-        PyTestCase.class.getClassLoader().loadClass(IDEA_MARKER_CLASS);
-      }
-      catch (ClassNotFoundException e) {
-        isIDEA = false;
-      }
-      if (!isIDEA) {
-        System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.PYCHARM_PREFIX);
-      }
-    }
+    PlatformTestCase.initPlatformPrefix(IDEA_MARKER_CLASS, PlatformUtils.PYCHARM_PREFIX);
   }
 }
