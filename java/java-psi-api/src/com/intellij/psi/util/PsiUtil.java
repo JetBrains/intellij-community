@@ -1028,16 +1028,24 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static void ensureValidType(@NotNull PsiType type) {
+    ensureValidType(type, null);
+  }
+  public static void ensureValidType(@NotNull PsiType type, @Nullable String customMessage) {
     if (!type.isValid()) {
       TimeoutUtil.sleep(1); // to see if processing in another thread suddenly makes the type valid again (which is a bug)
       if (type.isValid()) {
-        LOG.error("PsiType resurrected: " + type + " of " + type.getClass());
+        LOG.error("PsiType resurrected: " + type + " of " + type.getClass() + " " + customMessage);
         return;
       }
       if (type instanceof PsiClassType) {
-        ((PsiClassType)type).resolve(); // should throw exception
+        try {
+          ((PsiClassType)type).resolve(); // should throw exception
+        }
+        catch (PsiInvalidElementAccessException e) {
+          throw customMessage == null? e : new RuntimeException(customMessage, e);
+        }
       }
-      throw new AssertionError("Invalid type: " + type + " of class " + type.getClass());
+      throw new AssertionError("Invalid type: " + type + " of class " + type.getClass() + " " + customMessage);
     }
   }
 
