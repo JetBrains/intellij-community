@@ -205,6 +205,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testIDEADEV40479() throws Exception { doTest(); }
 
   public void testMultilineReturn() throws Exception { doTest(); }
+  public void testMultilineCall() throws Exception { doTest(); }
 
   public void testIDEADEV13019() throws Exception {
     doTestBracesNextLineStyle();
