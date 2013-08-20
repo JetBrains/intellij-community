@@ -106,12 +106,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     boolean processed = false;
     while ((wk = (Key)myReferenceQueue.poll()) != null) {
       V value = wk.getValue();
-      boolean remove = myMap.remove(wk, wk.hashCode(), value);
-      //System.out.println("key tossed: "+wk+" "+remove);
-      if (!remove) {
-        int i =0;
-        boolean remove2 = myMap.remove(wk, wk.hashCode(), value);
-      }
+      myMap.remove(wk, value);
       processed = true;
     }
     return processed;
@@ -146,7 +141,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   public ConcurrentRefHashMap(@NotNull final TObjectHashingStrategy<K> hashingStrategy) {
-    this(ConcurrentHashMap.DEFAULT_INITIAL_CAPACITY, ConcurrentHashMap.DEFAULT_LOAD_FACTOR, ConcurrentHashMap.DEFAULT_SEGMENTS, hashingStrategy);
+    this(ConcurrentHashMap.DEFAULT_INITIAL_CAPACITY, ConcurrentHashMap.DEFAULT_LOAD_FACTOR, 2, hashingStrategy);
   }
 
   public ConcurrentRefHashMap(int initialCapacity,
@@ -156,22 +151,6 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     myHashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
     myMap = new ConcurrentHashMap<Key<K, V>, V>(initialCapacity, loadFactor, concurrencyLevel, CANONICAL);
   }
-
-  @NotNull
-  private static <K, V> TObjectHashingStrategy<Key<K, V>> convertKToKeyK(@NotNull final TObjectHashingStrategy<K> hashingStrategy) {
-    return new TObjectHashingStrategy<Key<K, V>>() {
-      @Override
-      public int computeHashCode(final Key<K, V> object) {
-        return hashingStrategy.computeHashCode(object.get());
-      }
-
-      @Override
-      public boolean equals(final Key<K, V> o1, final Key<K, V> o2) {
-        return hashingStrategy.equals(o1.get(), o2.get());
-      }
-    };
-  }
-
 
   @Override
   public int size() {
