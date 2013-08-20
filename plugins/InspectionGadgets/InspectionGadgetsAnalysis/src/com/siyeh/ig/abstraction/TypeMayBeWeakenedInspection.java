@@ -208,6 +208,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         if (declarationScope instanceof PsiCatchSection) {
           // do not weaken catch block parameters
           return;
+        } else if (declarationScope instanceof PsiLambdaExpression && parameter.getTypeElement() == null) {
+          //no need to check inferred lambda params
+          return;
         }
         else if (declarationScope instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)declarationScope;
