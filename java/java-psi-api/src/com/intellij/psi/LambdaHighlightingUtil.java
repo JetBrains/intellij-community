@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,8 +59,13 @@ public class LambdaHighlightingUtil {
       }
     } else if (functionalInterfaceReturnType != null) {
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
-      for (PsiExpression expression : returnExpressions) {
-        final PsiType expressionType = expression.getType();
+      for (final PsiExpression expression : returnExpressions) {
+        final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
+          @Override
+          public PsiType compute() {
+            return expression.getType();
+          }
+        });
         if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
           return "Incompatible return type " + expressionType.getPresentableText() + " in lambda expression";
         }
