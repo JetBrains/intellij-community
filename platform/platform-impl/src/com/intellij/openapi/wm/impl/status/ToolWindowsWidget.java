@@ -193,15 +193,11 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
           GotItMessage.createMessage(UIBundle.message("tool.window.quick.access.title"), UIBundle.message(
             "tool.window.quick.access.message"))
             .setDisposable(ToolWindowsWidget.this)
-            .setCallback(new Runnable() {
-              @Override
-              public void run() {
-                PropertiesComponent.getInstance().setValue(key, String.valueOf(true));
-              }
-            }).show(new RelativePoint(ToolWindowsWidget.this, new Point(10, 0)), Balloon.Position.above);
+            .show(new RelativePoint(ToolWindowsWidget.this, new Point(10, 0)), Balloon.Position.above);
+            PropertiesComponent.getInstance().setValue(key, String.valueOf(true));
           Disposer.dispose(alarm);
         }
-      }, 5000);
+      }, 10000);
     }
   }
 
