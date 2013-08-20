@@ -21,4 +21,6 @@ public interface DeploymentTask<D extends DeploymentConfiguration> {
 
   @NotNull
   LoggingHandler getLoggingHandler();
+
+  boolean isDebugMode();
 }

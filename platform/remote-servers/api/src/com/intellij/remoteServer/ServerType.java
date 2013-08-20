@@ -7,7 +7,9 @@ import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
+import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -43,4 +45,12 @@ public abstract class ServerType<C extends ServerConfiguration> {
 
   @NotNull
   public abstract ServerConnector<?> createConnector(@NotNull C configuration, @NotNull ServerTaskExecutor asyncTasksExecutor);
+
+  /**
+   * @return a non-null instance of {@link DebugConnector} if the server supports deployment in debug mode
+   */
+  @Nullable
+  public DebugConnector<?,?> createDebugConnector() {
+    return null;
+  }
 }

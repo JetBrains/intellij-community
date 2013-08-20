@@ -67,6 +67,11 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     myDeploymentConfigurator = deploymentConfigurator;
   }
 
+  @NotNull
+  public ServerType<S> getServerType() {
+    return myServerType;
+  }
+
   public String getServerName() {
     return myServerName;
   }

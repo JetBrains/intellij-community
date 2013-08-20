@@ -66,6 +66,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
   List<String> implementationModules = [platformImplementationModules,
     "compiler-impl",
     "remote-servers-impl",
+    "remote-servers-java",
     "debugger-impl",
     "dom-impl",
     "execution-impl",

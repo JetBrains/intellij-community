@@ -1,6 +1,7 @@
 package com.intellij.remoteServer.impl.runtime;
 
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.DefaultProgramRunner;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
@@ -18,6 +19,15 @@ public class DeployToServerRunner extends DefaultProgramRunner {
 
   @Override
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
-    return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) && profile instanceof DeployToServerRunConfiguration;
+    if (!(profile instanceof DeployToServerRunConfiguration)) {
+      return false;
+    }
+    if (executorId.equals(DefaultRunExecutor.EXECUTOR_ID)) {
+      return true;
+    }
+    if (executorId.equals(DefaultDebugExecutor.EXECUTOR_ID)) {
+      return ((DeployToServerRunConfiguration<?, ?>)profile).getServerType().createDebugConnector() != null;
+    }
+    return false;
   }
 }
