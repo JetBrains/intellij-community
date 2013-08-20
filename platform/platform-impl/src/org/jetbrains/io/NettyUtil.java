@@ -23,7 +23,6 @@ import io.netty.channel.*;
 import io.netty.channel.oio.OioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
-import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
@@ -113,6 +112,6 @@ public final class NettyUtil {
   }
 
   public static void initHttpHandlers(ChannelPipeline pipeline) {
-    pipeline.addLast(new HttpRequestDecoder(), new HttpObjectAggregator(1048576), new HttpResponseEncoder(), new HttpContentCompressor());
+    pipeline.addLast(new HttpRequestDecoder(), new HttpObjectAggregator(1048576), new HttpResponseEncoder());
   }
 }

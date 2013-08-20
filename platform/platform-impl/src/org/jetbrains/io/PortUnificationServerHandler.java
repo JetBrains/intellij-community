@@ -92,21 +92,19 @@ final class PortUnificationServerHandler extends Decoder<ByteBuf> {
     if (detectSsl && SslHandler.isEncrypted(buffer)) {
       SSLEngine engine = SSL_SERVER_CONTEXT.getValue().createSSLEngine();
       engine.setUseClientMode(false);
-      pipeline.addLast("ssl", new SslHandler(engine));
-      pipeline.addLast("streamer", new ChunkedWriteHandler());
-      pipeline.addLast("unificationWOSsl", new PortUnificationServerHandler(delegatingHttpRequestHandler, false, detectGzip));
+      pipeline.addLast(new SslHandler(engine), new ChunkedWriteHandler());
+      pipeline.addLast(new PortUnificationServerHandler(delegatingHttpRequestHandler, false, detectGzip));
     }
     else {
       int magic1 = buffer.getUnsignedByte(buffer.readerIndex());
       int magic2 = buffer.getUnsignedByte(buffer.readerIndex() + 1);
       if (detectGzip && magic1 == 31 && magic2 == 139) {
-        pipeline.addLast("gzipDeflater", new JZlibEncoder(ZlibWrapper.GZIP));
-        pipeline.addLast("gzipInflater", new JdkZlibDecoder(ZlibWrapper.GZIP));
-        pipeline.addLast("unificationWOGzip", new PortUnificationServerHandler(delegatingHttpRequestHandler, detectSsl, false));
+        pipeline.addLast(new JZlibEncoder(ZlibWrapper.GZIP), new JdkZlibDecoder(ZlibWrapper.GZIP));
+        pipeline.addLast(new PortUnificationServerHandler(delegatingHttpRequestHandler, detectSsl, false));
       }
       else {
         NettyUtil.initHttpHandlers(pipeline);
-        pipeline.addLast("handler", delegatingHttpRequestHandler);
+        pipeline.addLast(delegatingHttpRequestHandler);
       }
     }
     // must be after new channels handlers addition (netty bug?)

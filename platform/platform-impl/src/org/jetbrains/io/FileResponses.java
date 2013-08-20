@@ -16,6 +16,7 @@
 package org.jetbrains.io;
 
 
+import com.intellij.openapi.util.text.StringUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -42,14 +43,10 @@ public class FileResponses {
 
   private static boolean checkCache(HttpRequest request, Channel channel, long lastModified) {
     String ifModifiedSince = request.headers().get(HttpHeaders.Names.IF_MODIFIED_SINCE);
-    if (ifModifiedSince != null && !ifModifiedSince.isEmpty()) {
+    if (!StringUtil.isEmpty(ifModifiedSince)) {
       try {
         if (Responses.DATE_FORMAT.get().parse(ifModifiedSince).getTime() >= lastModified) {
-          HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_MODIFIED);
-          addAllowAnyOrigin(response);
-          addDate(response);
-          addServer(response);
-          send(response, channel, request);
+          sendStatus(request, channel, HttpResponseStatus.NOT_MODIFIED);
           return true;
         }
       }
@@ -71,8 +68,8 @@ public class FileResponses {
     try {
       long fileLength = raf.length();
       HttpResponse response = create(getContentType(file.getPath()));
-      addNoCache(response);
       addCommonHeaders(response);
+      response.headers().set(HttpHeaders.Names.CACHE_CONTROL, "private, must-revalidate");
       response.headers().set(HttpHeaders.Names.LAST_MODIFIED, Responses.DATE_FORMAT.get().format(new Date(file.lastModified())));
       boolean keepAlive = addKeepAliveIfNeed(response, request);
       if (request.getMethod() != HttpMethod.HEAD) {

@@ -57,11 +57,13 @@ public final class Responses {
   }
 
   public static void addDate(HttpResponse response) {
-    addDate(response, Calendar.getInstance().getTime());
+    if (!response.headers().contains(DATE)) {
+      addDate(response, Calendar.getInstance().getTime());
+    }
   }
 
   public static void addDate(HttpResponse response, Date date) {
-    response.headers().add(DATE, DATE_FORMAT.get().format(date));
+    response.headers().set(DATE, DATE_FORMAT.get().format(date));
   }
 
   public static void addNoCache(HttpResponse response) {
@@ -91,11 +93,13 @@ public final class Responses {
   }
 
   public static void send(HttpResponse response, Channel channel, @Nullable HttpRequest request) {
-    if (response instanceof FullHttpResponse) {
-      HttpHeaders.setContentLength(response, ((FullHttpResponse)response).content().readableBytes());
-    }
-    else {
-      HttpHeaders.setContentLength(response, 0);
+    if (response.getStatus() != HttpResponseStatus.NOT_MODIFIED) {
+      if (response instanceof FullHttpResponse) {
+        HttpHeaders.setContentLength(response, ((FullHttpResponse)response).content().readableBytes());
+      }
+      else if (!HttpHeaders.isContentLengthSet(response)) {
+        HttpHeaders.setContentLength(response, 0);
+      }
     }
 
     addCommonHeaders(response);
@@ -147,7 +151,7 @@ public final class Responses {
   }
 
   private static void send(HttpResponse response, Channel channel, boolean close) {
-    if (!channel.isOpen()) {
+    if (!channel.isActive()) {
       return;
     }
 
@@ -170,7 +174,7 @@ public final class Responses {
   }
 
   public static void sendStatus(HttpResponse response, HttpRequest request, Channel channel) {
-    response.headers().set(CONTENT_TYPE, "text/html");
+    response.headers().add(CONTENT_TYPE, "text/html");
     send(response, channel, request);
   }
 
