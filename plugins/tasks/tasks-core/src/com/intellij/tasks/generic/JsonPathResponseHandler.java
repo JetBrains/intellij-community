@@ -52,11 +52,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
   @NotNull
   @Override
   public Task[] doParseIssues(String response) throws Exception {
-    Object tasksMatch = JsonPath.read(response, getSelectorPath("tasks"));
-    if (!(tasksMatch instanceof List)) {
-      throw new Exception("Selector 'task' should match array of tasks. Got " + tasksMatch.toString() + " instead");
-    }
-    List<Object> tasks = (List<Object>)tasksMatch;
+    List<Object> tasks = (List<Object>)extractList(response, getSelector("tasks"));
     List<GenericTask> result = new ArrayList<GenericTask>(tasks.size());
     for (Object rawTask : tasks) {
       String taskText = rawTask.toString();
@@ -119,7 +115,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  @Nullable
+  @NotNull
   private String extractId(String task, Selector idSelector) throws Exception {
     Object rawId;
     try {
@@ -145,6 +141,10 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
 
   private Long extractLong(String source, Selector selector) throws Exception {
     return extractValueAndCheckType(source, selector, Long.class);
+  }
+
+  private List extractList(String source, Selector selector) throws Exception {
+    return extractValueAndCheckType(source, selector, List.class);
   }
 
   private Date extractDate(String response, Selector selector) throws Exception {
