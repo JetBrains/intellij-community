@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.ComplementPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DependencyRule {
@@ -34,7 +35,7 @@ public class DependencyRule {
     myDenyRule = isDenyRule;
   }
 
-  public boolean isForbiddenToUse(PsiFile from, PsiFile to) {
+  public boolean isForbiddenToUse(@NotNull PsiFile from, @NotNull PsiFile to) {
     if (myFromScope == null || myToScope == null) return false;
     final PackageSet fromSet = myFromScope.getValue();
     final PackageSet toSet = myToScope.getValue();
@@ -46,7 +47,7 @@ public class DependencyRule {
            && toSet.contains(to, holder);
   }
 
-  public boolean isApplicable(PsiFile file){
+  public boolean isApplicable(@NotNull PsiFile file){
     if (myFromScope == null || myToScope == null) return false;
     final PackageSet fromSet = myFromScope.getValue();
     if (fromSet == null) return false;

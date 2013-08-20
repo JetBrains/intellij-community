@@ -419,14 +419,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final DumbService.DumbModeListener dumbModeListener = new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
-        for (final String id : getToolWindowIds()) {
-          if (!myDumbAwareIds.contains(id)) {
-            if (isToolWindowVisible(id)) {
-              hideToolWindow(id, true);
-            }
-            getStripeButton(id).setEnabled(false);
-          }
-        }
+        disableStripeButtons();
       }
 
       @Override
@@ -443,7 +436,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       public void run() {
         registerToolWindowsFromBeans();
         if (DumbService.getInstance(myProject).isDumb()) {
-          dumbModeListener.enteredDumbMode();
+          disableStripeButtons();
         }
       }
     });
@@ -457,6 +450,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         return false;
       }
     }, myProject);
+  }
+
+  private void disableStripeButtons() {
+    for (final String id : getToolWindowIds()) {
+      if (!myDumbAwareIds.contains(id)) {
+        if (isToolWindowVisible(id)) {
+          hideToolWindow(id, true);
+        }
+        getStripeButton(id).setEnabled(false);
+      }
+    }
   }
 
   private JComponent createEditorComponent(Project project) {

@@ -60,6 +60,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     uiSettings.addUISettingsListener(new MyUISettingsListener(), project);
   }
 
+  @Override
   public void projectOpened(){
 
     MessageBusConnection connection = myProject.getMessageBus().connect();
@@ -68,6 +69,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
 
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
       new DumbAwareRunnable() {
+        @Override
         public void run() {
           // myElement may be null if node that corresponds to this manager does not exist
           if (myElement != null) {
@@ -95,6 +97,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     );
   }
 
+  @Override
   @NotNull
   public String getComponentName(){
     return "editorHistoryManager";
@@ -305,6 +308,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     }
   }
 
+  @Override
   public void readExternal(final Element element) {
     // we have to delay xml processing because history entries require EditorStates to be created
     // which is done via corresponding EditorProviders, those are not accessible before their
@@ -312,6 +316,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     myElement = element.clone();
   }
 
+  @Override
   public void writeExternal(final Element element){
     // update history before saving
     final VirtualFile[] openFiles = FileEditorManager.getInstance(myProject).getOpenFiles();
@@ -331,10 +336,12 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
    * Updates history
    */
   private final class MyEditorManagerListener extends FileEditorManagerAdapter{
+    @Override
     public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file){
       fileOpenedImpl(file);
     }
 
+    @Override
     public void selectionChanged(@NotNull final FileEditorManagerEvent event){
       updateHistoryEntry(event.getOldFile(), event.getOldEditor(), event.getOldProvider(), false);
       updateHistoryEntry(event.getNewFile(), true);
@@ -352,6 +359,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
    * Cuts/extends history length
    */
   private final class MyUISettingsListener implements UISettingsListener{
+    @Override
     public void uiSettingsChanged(final UISettings source) {
       trimToSize();
     }

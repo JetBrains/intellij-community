@@ -135,7 +135,7 @@ public class GithubApiUtil {
                                    @Nullable final String requestBody,
                                    @NotNull final Collection<Header> headers,
                                    @NotNull final HttpVerb verb) throws IOException {
-    HttpClient client = getHttpClient(auth.getBasicAuth());
+    HttpClient client = getHttpClient(auth.getBasicAuth(), auth.isUseProxy());
     return GithubSslSupport.getInstance()
       .executeSelfSignedCertificateAwareRequest(client, uri, new ThrowableConvertor<String, HttpMethod, IOException>() {
         @Override
@@ -173,7 +173,7 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  private static HttpClient getHttpClient(@Nullable GithubAuthData.BasicAuth basicAuth) {
+  private static HttpClient getHttpClient(@Nullable GithubAuthData.BasicAuth basicAuth, boolean useProxy) {
     final HttpClient client = new HttpClient();
     HttpConnectionManagerParams params = client.getHttpConnectionManager().getParams();
     params.setConnectionTimeout(CONNECTION_TIMEOUT); //set connection timeout (how long it takes to connect to remote host)
@@ -182,7 +182,7 @@ public class GithubApiUtil {
     client.getParams().setContentCharset("UTF-8");
     // Configure proxySettings if it is required
     final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
-    if (proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST)) {
+    if (useProxy && proxySettings.USE_HTTP_PROXY && !StringUtil.isEmptyOrSpaces(proxySettings.PROXY_HOST)) {
       client.getHostConfiguration().setProxy(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT);
       if (proxySettings.PROXY_AUTHENTICATION) {
         client.getState().setProxyCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxySettings.PROXY_LOGIN,

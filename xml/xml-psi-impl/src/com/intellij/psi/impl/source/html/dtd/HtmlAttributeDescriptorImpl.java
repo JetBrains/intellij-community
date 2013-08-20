@@ -19,11 +19,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 
 /**
  * @author Maxim.Mossienko
  */
-public class HtmlAttributeDescriptorImpl implements XmlAttributeDescriptor {
+public class HtmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   private final XmlAttributeDescriptor delegate;
   private final boolean myCaseSensitive;
 

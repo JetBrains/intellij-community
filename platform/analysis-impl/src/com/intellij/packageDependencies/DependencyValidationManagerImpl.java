@@ -25,7 +25,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -46,6 +48,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.DependencyValidationManagerImpl");
 
   private final List<DependencyRule> myRules = new ArrayList<DependencyRule>();
+  private final NamedScopeManager myNamedScopeManager;
 
   public boolean SKIP_IMPORT_STATEMENTS = false;
 
@@ -59,8 +62,15 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   private final Map<String, PackageSet> myUnnamedScopes = new HashMap<String, PackageSet>();
 
-  public DependencyValidationManagerImpl(final Project project) {
+  public DependencyValidationManagerImpl(final Project project, NamedScopeManager namedScopeManager) {
     super(project);
+    myNamedScopeManager = namedScopeManager;
+    namedScopeManager.addScopeListener(new ScopeListener() {
+      @Override
+      public void scopesChanged() {
+        reloadScopes();
+      }
+    });
   }
 
   @Override
@@ -95,7 +105,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @Override
   @Nullable
-  public DependencyRule getViolatorDependencyRule(PsiFile from, PsiFile to) {
+  public DependencyRule getViolatorDependencyRule(@NotNull PsiFile from, @NotNull PsiFile to) {
     for (DependencyRule dependencyRule : myRules) {
       if (dependencyRule.isForbiddenToUse(from, to)) return dependencyRule;
     }
@@ -105,7 +115,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @Override
   @NotNull
-  public DependencyRule[] getViolatorDependencyRules(PsiFile from, PsiFile to) {
+  public DependencyRule[] getViolatorDependencyRules(@NotNull PsiFile from, @NotNull PsiFile to) {
     ArrayList<DependencyRule> result = new ArrayList<DependencyRule>();
     for (DependencyRule dependencyRule : myRules) {
       if (dependencyRule.isForbiddenToUse(from, to)) {
@@ -117,7 +127,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @NotNull
   @Override
-  public DependencyRule[] getApplicableRules(PsiFile file) {
+  public DependencyRule[] getApplicableRules(@NotNull PsiFile file) {
     ArrayList<DependencyRule> result = new ArrayList<DependencyRule>();
     for (DependencyRule dependencyRule : myRules) {
       if (dependencyRule.isApplicable(file)) {
@@ -137,11 +147,13 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     SKIP_IMPORT_STATEMENTS = skip;
   }
 
+  @NotNull
   @Override
   public Map<String, PackageSet> getUnnamedScopes() {
     return myUnnamedScopes;
   }
 
+  @NotNull
   @Override
   public DependencyRule[] getAllRules() {
     return myRules.toArray(new DependencyRule[myRules.size()]);
@@ -153,7 +165,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   @Override
-  public void addRule(DependencyRule rule) {
+  public void addRule(@NotNull DependencyRule rule) {
     appendUnnamedScope(rule.getFromScope());
     appendUnnamedScope(rule.getToScope());
     myRules.add(rule);
@@ -193,8 +205,8 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     catch (InvalidDataException e) {
       LOG.info(e);
     }
-    super.loadState(element);
 
+    super.loadState(element);
     myUnnamedScopes.clear();
     final List unnamedScopes = element.getChildren(UNNAMED_SCOPE);
     final PackageSetFactory packageSetFactory = PackageSetFactory.getInstance();
@@ -212,7 +224,8 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   private void readRules(Element element) {
-    myRules.clear();
+    removeAllRules();
+
     List rules = element.getChildren(DENY_RULE_KEY);
     for (Object rule1 : rules) {
       DependencyRule rule = readRule((Element)rule1);
@@ -336,4 +349,40 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
   }
 
+
+  private final List<Pair<NamedScope, NamedScopesHolder>> myScopes = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  private void reloadScopes() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (getProject().isDisposed()) return;
+        List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
+        addScopesToList(scopeList, DependencyValidationManagerImpl.this);
+        addScopesToList(scopeList, myNamedScopeManager);
+        myScopes.clear();
+        myScopes.addAll(scopeList);
+        reloadRules();
+      }
+    });
+  }
+
+  private static void addScopesToList(@NotNull final List<Pair<NamedScope, NamedScopesHolder>> scopeList,
+                                      @NotNull final NamedScopesHolder holder) {
+    NamedScope[] scopes = holder.getScopes();
+    for (NamedScope scope : scopes) {
+      scopeList.add(Pair.create(scope, holder));
+    }
+  }
+
+  @NotNull
+  public List<Pair<NamedScope, NamedScopesHolder>> getScopeBasedHighlightingCachedScopes() {
+    return myScopes;
+  }
+
+  @Override
+  public void fireScopeListeners() {
+    super.fireScopeListeners();
+    reloadScopes();
+  }
 }

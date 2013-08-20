@@ -47,6 +47,7 @@ public class EditorWithProviderComposite extends EditorComposite {
     return myProviders;
   }
 
+  @Override
   public boolean isModified() {
     final FileEditor [] editors = getEditors ();
     for (FileEditor editor : editors) {
@@ -57,6 +58,7 @@ public class EditorWithProviderComposite extends EditorComposite {
     return false;
   }
 
+  @Override
   @NotNull
   public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider() {
     LOG.assertTrue(myEditors.length > 0, myEditors.length);

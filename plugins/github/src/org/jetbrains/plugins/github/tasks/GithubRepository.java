@@ -269,7 +269,7 @@ public class GithubRepository extends BaseRepositoryImpl {
   }
 
   private GithubAuthData getAuthData() {
-      return GithubAuthData.createTokenAuth(getUrl(), getToken());
+      return GithubAuthData.createTokenAuth(getUrl(), getToken(), isUseProxy());
   }
 
   @Override

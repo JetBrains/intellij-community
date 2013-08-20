@@ -67,7 +67,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -171,7 +173,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             }
             rebuildList(pattern);
           }
-        }, 400);
+        }, Registry.intValue("ide.goto.rebuild.delay"));
       }
     });
     editor.addFocusListener(new FocusAdapter() {
@@ -307,7 +309,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return field;
   }
 
-  private static class MySearchTextField extends SearchTextField {
+  private static class MySearchTextField extends SearchTextField implements DataProvider {
     public MySearchTextField() {
       super(false);
       setOpaque(false);
@@ -316,6 +318,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     @Override
     protected void showPopup() {
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
+        return getTextEditor().getText();
+      }
+      return null;
     }
   }
 

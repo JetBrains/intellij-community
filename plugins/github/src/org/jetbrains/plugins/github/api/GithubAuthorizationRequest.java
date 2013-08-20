@@ -25,10 +25,10 @@ import java.util.List;
  */
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
 class GithubAuthorizationRequest {
-  @NotNull List<String> scopes;
+  @NotNull private final List<String> scopes;
 
-  @Nullable String note;
-  @Nullable String noteUrl;
+  @Nullable private final String note;
+  @Nullable private final String noteUrl;
 
   public GithubAuthorizationRequest(@NotNull List<String> scopes, @Nullable String note, @Nullable String noteUrl) {
     this.scopes = scopes;

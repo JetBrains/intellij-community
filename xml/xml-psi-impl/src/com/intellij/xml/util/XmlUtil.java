@@ -933,26 +933,33 @@ public class XmlUtil {
     });
   }
 
+  /**
+   * @return true if enumeration is exhaustive
+   */
   public static boolean processEnumerationValues(final XmlTag element, final Processor<XmlTag> tagProcessor) {
-    boolean exaustiveEnum = true;
+    boolean exhaustiveEnum = true;
 
     for (final XmlTag tag : element.getSubTags()) {
       @NonNls final String localName = tag.getLocalName();
 
       if (localName.equals(ENUMERATION_TAG_NAME)) {
         final String attributeValue = tag.getAttributeValue(VALUE_ATTR_NAME);
-        if (attributeValue != null) tagProcessor.process(tag);
+        if (attributeValue != null) {
+          if (!tagProcessor.process(tag)) {
+            return exhaustiveEnum;
+          }
+        }
       }
       else if (localName.equals("union")) {
-        exaustiveEnum = false;
+        exhaustiveEnum = false;
         processEnumerationValues(tag, tagProcessor);
       }
       else if (!localName.equals("annotation")) {
         // don't go into annotation
-        exaustiveEnum &= processEnumerationValues(tag, tagProcessor);
+        exhaustiveEnum &= processEnumerationValues(tag, tagProcessor);
       }
     }
-    return exaustiveEnum;
+    return exhaustiveEnum;
   }
 
   /**
@@ -1063,12 +1070,15 @@ public class XmlUtil {
     return new Pair<XmlTagChild, XmlTagChild>(first, last);
   }
 
-  public static boolean isSimpleXmlAttributeValue(final String unquotedValue, final XmlAttributeValue context) {
+  public static boolean isSimpleXmlAttributeValue(@NotNull final String unquotedValue, final XmlAttributeValue context) {
     for (int i = 0; i < unquotedValue.length(); ++i) {
       final char ch = unquotedValue.charAt(i);
       if (!Character.isJavaIdentifierPart(ch) && ch != ':' && ch != '-') {
         final XmlFile file = PsiTreeUtil.getParentOfType(context, XmlFile.class);
-        return file != null && !tagFromTemplateFramework(file.getRootTag());
+        if (file != null) {
+          XmlTag tag = file.getRootTag();
+          return tag != null && !tagFromTemplateFramework(tag);
+        }
       }
     }
     return true;

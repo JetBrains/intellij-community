@@ -19,6 +19,7 @@
 
     <applicationService serviceInterface="org.jetbrains.plugins.github.util.GithubSslSupport"
                         serviceImplementation="org.jetbrains.plugins.github.util.GithubSslSupport"/>
+    <webBrowserUrlProvider implementation="org.jetbrains.plugins.github.extensions.GithubWebBrowserUrlProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

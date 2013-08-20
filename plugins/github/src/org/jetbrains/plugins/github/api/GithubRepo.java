@@ -23,18 +23,18 @@ import org.jetbrains.annotations.Nullable;
  * @author Aleksey Pivovarov
  */
 public class GithubRepo {
-  @NotNull private String myName;
-  @NotNull private String myDescription;
+  @NotNull private final String myName;
+  @NotNull private final String myDescription;
 
-  private boolean myIsPrivate;
-  private boolean myIsFork;
+  private final boolean myIsPrivate;
+  private final boolean myIsFork;
 
-  @NotNull private String myHtmlUrl;
-  @NotNull private String myCloneUrl;
+  @NotNull private final String myHtmlUrl;
+  @NotNull private final String myCloneUrl;
 
-  @Nullable private String myDefaultBranch;
+  @Nullable private final String myDefaultBranch;
 
-  @NotNull private GithubUser myOwner;
+  @NotNull private final GithubUser myOwner;
 
   public GithubRepo(@NotNull String name,
                     @Nullable String description,

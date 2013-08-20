@@ -5,7 +5,9 @@
     <constraints>
       <xy x="20" y="20" width="529" height="177"/>
     </constraints>
-    <properties/>
+    <properties>
+      <opaque value="false"/>
+    </properties>
     <border type="none"/>
     <children>
       <component id="6805" class="javax.swing.JLabel">
@@ -45,7 +47,9 @@
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties/>
+        <properties>
+          <opaque value="false"/>
+        </properties>
         <border type="none"/>
         <children>
           <grid id="50d71" binding="myButton" custom-create="true" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -54,6 +58,7 @@
             </constraints>
             <properties>
               <background color="-16750951"/>
+              <opaque value="false"/>
             </properties>
             <border type="empty">
               <size top="2" left="10" bottom="2" right="8"/>

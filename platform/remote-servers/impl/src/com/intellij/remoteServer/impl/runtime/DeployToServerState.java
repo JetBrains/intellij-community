@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,7 @@ import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
+import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import com.intellij.util.ParameterizedRunnable;
@@ -62,7 +64,14 @@ public class DeployToServerState<S extends ServerConfiguration, D extends Deploy
     RemoteServersView.getInstance(project).showServerConnection(connection);
 
     LoggingHandler loggingHandler = new LoggingHandlerImpl(project);
-    connection.deploy(new DeploymentTaskImpl(mySource, myConfiguration, project, loggingHandler), new ParameterizedRunnable<String>() {
+    DebugConnector<?,?> debugConnector;
+    if (DefaultDebugExecutor.getDebugExecutorInstance().equals(executor)) {
+      debugConnector = myServer.getType().createDebugConnector();
+    }
+    else {
+      debugConnector = null;
+    }
+    connection.deploy(new DeploymentTaskImpl(mySource, myConfiguration, project, loggingHandler, debugConnector, myEnvironment), new ParameterizedRunnable<String>() {
       @Override
       public void run(String s) {
         RemoteServersView.getInstance(project).showDeployment(connection, s);

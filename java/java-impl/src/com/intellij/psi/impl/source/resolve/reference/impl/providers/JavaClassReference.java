@@ -41,7 +41,6 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -413,7 +412,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       PsiFile containingFile = psiElement.getContainingFile();
 
       if (containingFile instanceof PsiJavaFile) {
-        if (containingFile instanceof JspFile) {
+        if (containingFile instanceof ServerPageFile) {
           containingFile = containingFile.getViewProvider().getPsi(JavaLanguage.INSTANCE);
           if (containingFile == null) return JavaResolveResult.EMPTY;
         }

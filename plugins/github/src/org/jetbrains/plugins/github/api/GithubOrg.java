@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Aleksey Pivovarov
  */
 public class GithubOrg {
-  @NotNull String myLogin;
+  @NotNull private final String myLogin;
 
   public GithubOrg(@NotNull String login) {
     myLogin = login;

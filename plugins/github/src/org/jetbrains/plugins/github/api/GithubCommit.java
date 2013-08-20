@@ -26,18 +26,18 @@ import java.util.List;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubCommit extends GithubCommitSha {
-  @Nullable private GithubUser myAuthor;
-  @Nullable private GithubUser myCommitter;
+  @Nullable private final GithubUser myAuthor;
+  @Nullable private final GithubUser myCommitter;
 
-  @NotNull private List<GithubCommitSha> myParents;
+  @NotNull private final List<GithubCommitSha> myParents;
 
-  @NotNull private GitCommit myCommit;
+  @NotNull private final GitCommit myCommit;
 
   public static class GitCommit {
-    @NotNull private String myMessage;
+    @NotNull private final String myMessage;
 
-    @NotNull private GitUser myAuthor;
-    @NotNull private GitUser myCommitter;
+    @NotNull private final GitUser myAuthor;
+    @NotNull private final GitUser myCommitter;
 
     public GitCommit(@NotNull String message, @NotNull GitUser author, @NotNull GitUser committer) {
       myMessage = message;
@@ -62,9 +62,9 @@ public class GithubCommit extends GithubCommitSha {
   }
 
   public static class GitUser {
-    @NotNull private String myName;
-    @NotNull private String myEmail;
-    @NotNull private Date myDate;
+    @NotNull private final String myName;
+    @NotNull private final String myEmail;
+    @NotNull private final Date myDate;
 
     public GitUser(@NotNull String name, @NotNull String email, @NotNull Date date) {
       myName = name;

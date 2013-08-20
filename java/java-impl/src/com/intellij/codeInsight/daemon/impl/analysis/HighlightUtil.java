@@ -2603,11 +2603,13 @@ public class HighlightUtil extends HighlightUtilBase {
     return info;
   }
 
-  public static void registerChangeVariableTypeFixes(PsiVariable parameter, PsiType itemType, HighlightInfo highlightInfo) {
+  public static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter, PsiType itemType, HighlightInfo highlightInfo) {
     if (itemType instanceof PsiMethodReferenceType) return;
-    for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
-      for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, action);
+    if (itemType != null) {
+      for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
+        for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, action);
+        }
       }
     }
     ChangeParameterClassFix.registerQuickFixAction(parameter.getType(), itemType, highlightInfo);
@@ -2656,10 +2658,12 @@ public class HighlightUtil extends HighlightUtilBase {
     LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions"),
     TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations");
 
+    @NotNull
     private final LanguageLevel level;
+    @NotNull
     private final String key;
 
-    Feature(final LanguageLevel level, @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) final String key) {
+    Feature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) final String key) {
       this.level = level;
       this.key = key;
     }

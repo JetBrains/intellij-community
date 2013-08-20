@@ -27,7 +27,7 @@ public class LoggingHandlerImpl implements LoggingHandler {
     myConsole.print(s, ConsoleViewContentType.NORMAL_OUTPUT);
   }
 
-  public void printSystemMessage(@NotNull String s) {
+  public void printlnSystemMessage(@NotNull String s) {
     myConsole.print(s + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 

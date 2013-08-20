@@ -23,10 +23,10 @@ import org.jetbrains.annotations.NotNull;
  */
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
 class GithubRepoRequest {
-  @NotNull String name;
-  @NotNull String description;
+  @NotNull private final String name;
+  @NotNull private final String description;
 
-  @SerializedName("public") boolean isPublic;
+  @SerializedName("public") private final boolean isPublic;
 
   GithubRepoRequest(@NotNull String name, @NotNull String description, boolean aPublic) {
     this.name = name;

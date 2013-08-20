@@ -479,6 +479,7 @@ public class EditorsSplitters extends JBPanel {
     myFilesToUpdateIconsFor.add(file);
     myIconUpdaterAlarm.cancelAllRequests();
     myIconUpdaterAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         if (myManager.getProject().isDisposed()) return;
         for (VirtualFile file : myFilesToUpdateIconsFor) {
@@ -650,6 +651,7 @@ public class EditorsSplitters extends JBPanel {
   }
 
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
+    @Override
     public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
       if (myCurrentWindow != null) {
         final EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
@@ -708,6 +710,7 @@ public class EditorsSplitters extends JBPanel {
     final EditorWithProviderComposite newEditor = window != null? window.getSelectedEditor() : null;
 
     Runnable fireRunnable = new Runnable() {
+      @Override
       public void run() {
         getManager().fireSelectionChanged(newEditor);
       }
@@ -824,6 +827,7 @@ public class EditorsSplitters extends JBPanel {
   }
 
   private final class MyFocusWatcher extends FocusWatcher {
+    @Override
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
       EditorWindow newWindow = null;
 

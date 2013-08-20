@@ -20,11 +20,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Aleksey Pivovarov
  */
+@SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
 class GithubPullRequestRequest {
-  @NotNull String title;
-  @NotNull String body;
-  @NotNull String head; // branch with changes
-  @NotNull String base; // branch requested to
+  @NotNull private final String title;
+  @NotNull private final String body;
+  @NotNull private final String head; // branch with changes
+  @NotNull private final String base; // branch requested to
 
   public GithubPullRequestRequest(@NotNull String title, @NotNull String description, @NotNull String head, @NotNull String base) {
     this.title = title;

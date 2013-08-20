@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Aleksey Pivovarov
  */
 public class GithubBranch {
-  @NotNull private String name;
+  @NotNull private final String name;
 
   public GithubBranch(@NotNull String name) {
     this.name = name;

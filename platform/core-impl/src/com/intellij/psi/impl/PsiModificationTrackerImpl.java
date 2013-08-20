@@ -39,9 +39,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     final MessageBus bus = project.getMessageBus();
     myPublisher = bus.syncPublisher(TOPIC);
     bus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-
-      @Override
-      public void enteredDumbMode() {
+      private void doIncCounter() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
@@ -51,8 +49,13 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
       }
 
       @Override
+      public void enteredDumbMode() {
+        doIncCounter();
+      }
+
+      @Override
       public void exitDumbMode() {
-        enteredDumbMode();
+        doIncCounter();
       }
     });
   }

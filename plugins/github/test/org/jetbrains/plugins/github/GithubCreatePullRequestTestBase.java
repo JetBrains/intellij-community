@@ -30,6 +30,7 @@ import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.util.Random;
 
+import static com.intellij.dvcs.test.Executor.cd;
 import static git4idea.test.GitExecutor.git;
 
 /**
@@ -48,6 +49,12 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
     BRANCH_NAME = "branch_" + getTestName(false) + "_" + DateFormatUtil.formatDate(time).replace('/', '-') + "_" + rnd.nextLong();
 
     registerHttpAuthService();
+
+    cd(myProjectRoot.getPath());
+    cloneRepo();
+    createBranch();
+    createChanges();
+    initGitChecks();
   }
 
   @Override

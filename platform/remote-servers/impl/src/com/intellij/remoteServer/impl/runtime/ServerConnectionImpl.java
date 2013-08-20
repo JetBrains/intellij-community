@@ -1,10 +1,14 @@
 package com.intellij.remoteServer.impl.runtime;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentImpl;
+import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
 import com.intellij.remoteServer.runtime.ConnectionStatus;
 import com.intellij.remoteServer.runtime.Deployment;
@@ -14,6 +18,9 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
+import com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionData;
+import com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionDataNotAvailableException;
+import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
 import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +32,7 @@ import java.util.*;
  * @author nik
  */
 public class ServerConnectionImpl<D extends DeploymentConfiguration> implements ServerConnection<D> {
+  private static final Logger LOG = Logger.getInstance(ServerConnectionImpl.class);
   private final RemoteServer<?> myServer;
   private final ServerConnector<D> myConnector;
   private final ServerConnectionEventDispatcher myEventDispatcher;
@@ -102,10 +110,10 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         String deploymentName = instance.getDeploymentName(source);
         myLocalDeployments.put(deploymentName, new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYING, null, null));
         LoggingHandlerImpl handler = (LoggingHandlerImpl)task.getLoggingHandler();
-        handler.printSystemMessage("Deploying '" + deploymentName + "'...");
+        handler.printlnSystemMessage("Deploying '" + deploymentName + "'...");
         myLoggingHandlers.put(deploymentName, handler);
         onDeploymentStarted.run(deploymentName);
-        instance.deploy(task, new DeploymentOperationCallbackImpl(deploymentName, handler));
+        instance.deploy(task, new DeploymentOperationCallbackImpl(deploymentName, (DeploymentTaskImpl<D>)task, handler));
       }
     });
   }
@@ -162,11 +170,11 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     myLocalDeployments.put(deploymentName, new DeploymentImpl(deploymentName, DeploymentStatus.UNDEPLOYING, null, null));
     myEventDispatcher.queueDeploymentsChanged(this);
     final LoggingHandlerImpl loggingHandler = myLoggingHandlers.get(deploymentName);
-    loggingHandler.printSystemMessage("Undeploying '" + deploymentName + "'...");
+    loggingHandler.printlnSystemMessage("Undeploying '" + deploymentName + "'...");
     runtime.undeploy(new DeploymentRuntime.UndeploymentTaskCallback() {
       @Override
       public void succeeded() {
-        loggingHandler.printSystemMessage("'" + deploymentName + "' has been undeployed successfully.");
+        loggingHandler.printlnSystemMessage("'" + deploymentName + "' has been undeployed successfully.");
         myLocalDeployments.remove(deploymentName);
         myLoggingHandlers.remove(deploymentName);
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
@@ -174,7 +182,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
       @Override
       public void errorOccurred(@NotNull String errorMessage) {
-        loggingHandler.printSystemMessage("Failed to undeploy '" + deploymentName + "': " + errorMessage);
+        loggingHandler.printlnSystemMessage("Failed to undeploy '" + deploymentName + "': " + errorMessage);
         myLocalDeployments.put(deploymentName, new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYED, errorMessage, runtime));
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
       }
@@ -235,23 +243,51 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
   private class DeploymentOperationCallbackImpl implements ServerRuntimeInstance.DeploymentOperationCallback {
     private final String myDeploymentName;
+    private final DeploymentTaskImpl<D> myDeploymentTask;
     private final LoggingHandlerImpl myLoggingHandler;
 
-    public DeploymentOperationCallbackImpl(String deploymentName, LoggingHandlerImpl handler) {
+    public DeploymentOperationCallbackImpl(String deploymentName, DeploymentTaskImpl<D> deploymentTask, LoggingHandlerImpl handler) {
       myDeploymentName = deploymentName;
+      myDeploymentTask = deploymentTask;
       myLoggingHandler = handler;
     }
 
     @Override
     public void succeeded(@NotNull DeploymentRuntime deployment) {
-      myLoggingHandler.printSystemMessage("'" + myDeploymentName + "' has been deployed successfully.");
+      myLoggingHandler.printlnSystemMessage("'" + myDeploymentName + "' has been deployed successfully.");
       myLocalDeployments.put(myDeploymentName, new DeploymentImpl(myDeploymentName, DeploymentStatus.DEPLOYED, null, deployment));
       myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
+      DebugConnector<?,?> debugConnector = myDeploymentTask.getDebugConnector();
+      if (debugConnector != null) {
+        launchDebugger(debugConnector, deployment);
+      }
+    }
+
+    private <D extends DebugConnectionData, R extends DeploymentRuntime> void launchDebugger(@NotNull final DebugConnector<D, R> debugConnector,
+                                                                                             @NotNull DeploymentRuntime runtime) {
+      try {
+        final D debugInfo = debugConnector.getConnectionData((R)runtime);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            try {
+              debugConnector.getLauncher().startDebugSession(debugInfo, myDeploymentTask.getExecutionEnvironment(), myServer);
+            }
+            catch (ExecutionException e) {
+              myLoggingHandler.print("Cannot start debugger: " + e.getMessage() + "\n");
+              LOG.info(e);
+            }
+          }
+        });
+      }
+      catch (DebugConnectionDataNotAvailableException e) {
+        myLoggingHandler.print("Cannot retrieve debug connection: " + e.getMessage() + "\n");
+        LOG.info(e);
+      }
     }
 
     @Override
     public void errorOccurred(@NotNull String errorMessage) {
-      myLoggingHandler.printSystemMessage("Failed to deploy '" + myDeploymentName + "': " + errorMessage);
+      myLoggingHandler.printlnSystemMessage("Failed to deploy '" + myDeploymentName + "': " + errorMessage);
       myLocalDeployments.put(myDeploymentName, new DeploymentImpl(myDeploymentName, DeploymentStatus.NOT_DEPLOYED, errorMessage, null));
       myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
     }

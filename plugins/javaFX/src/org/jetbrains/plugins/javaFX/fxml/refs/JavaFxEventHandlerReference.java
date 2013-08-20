@@ -93,7 +93,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
   public static class JavaFxUnresolvedReferenceHandlerQuickfixProvider extends UnresolvedReferenceQuickFixProvider<JavaFxEventHandlerReference> {
 
     @Override
-    public void registerFixes(final JavaFxEventHandlerReference ref, final QuickFixActionRegistrar registrar) {
+    public void registerFixes(@NotNull final JavaFxEventHandlerReference ref, @NotNull final QuickFixActionRegistrar registrar) {
       if (ref.myController != null && ref.myEventHandler == null) {
         final CreateMethodQuickFix quickFix = CreateMethodQuickFix.createFix(ref.myController, getHandlerSignature(ref), "");
         if (quickFix != null) {

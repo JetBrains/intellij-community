@@ -175,6 +175,9 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
       url.readExternal((Element)groupElement);
       myActions.add(url);
     }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      System.err.println("read custom actions: " + myActions.toString());
+    }
     readIcons(element);
   }
 

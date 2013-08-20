@@ -149,8 +149,8 @@ public class JavaFxPsiUtil {
   }
 
   public static PsiClassType getPropertyClassType(PsiElement field, final String superTypeFQN) {
-    if (field instanceof PsiField) {
-      final PsiType type = ((PsiField)field).getType();
+    if (field instanceof PsiMember) {
+      final PsiType type = PropertyUtil.getPropertyType((PsiMember)field);
       if (type instanceof PsiClassType) {
         final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
         final PsiClass attributeClass = resolveResult.getElement();
@@ -165,6 +165,9 @@ public class JavaFxPsiUtil {
               if (propertyType instanceof PsiClassType) {
                 return (PsiClassType)propertyType;
               }
+            }
+            else {
+              return (PsiClassType)type;
             }
           }
         }

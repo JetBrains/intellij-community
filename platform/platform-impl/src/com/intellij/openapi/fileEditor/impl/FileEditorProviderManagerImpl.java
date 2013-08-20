@@ -57,10 +57,12 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   public FileEditorProviderManagerImpl(FileEditorProvider[] providers) {
     Extensions.getRootArea().getExtensionPoint(FileEditorProvider.EP_FILE_EDITOR_PROVIDER).addExtensionPointListener(
       new ExtensionPointListener<FileEditorProvider>() {
+        @Override
         public void extensionAdded(@NotNull final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
           registerProvider(extension);
         }
 
+        @Override
         public void extensionRemoved(@NotNull final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
           unregisterProvider(extension);
         }
@@ -74,6 +76,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   public FileEditorProviderManagerImpl() {
   }
 
+  @Override
   @NotNull
   public synchronized FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file){
     // Collect all possible editors
@@ -113,6 +116,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     }
   }
 
+  @Override
   @Nullable
   public synchronized FileEditorProvider getProvider(@NotNull String editorTypeId){
     for(int i=myProviders.size()-1;i>=0;i--){
@@ -211,6 +215,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
              : Double.MAX_VALUE;
     }
 
+    @Override
     public int compare(FileEditorProvider provider1, FileEditorProvider provider2) {
       final int i1 = provider1.getPolicy().ordinal();
       final int i2 = provider2.getPolicy().ordinal();

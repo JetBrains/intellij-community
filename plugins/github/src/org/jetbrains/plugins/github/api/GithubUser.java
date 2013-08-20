@@ -22,11 +22,11 @@ import org.jetbrains.annotations.Nullable;
  * @author Aleksey Pivovarov
  */
 public class GithubUser {
-  @NotNull private String myLogin;
+  @NotNull private final String myLogin;
 
-  @NotNull private String myHtmlUrl;
+  @NotNull private final String myHtmlUrl;
 
-  @Nullable private String myGravatarId;
+  @Nullable private final String myGravatarId;
 
   public GithubUser(@NotNull String login, @NotNull String htmlUrl, @Nullable String gravatarId) {
     myLogin = login;

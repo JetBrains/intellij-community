@@ -25,6 +25,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -48,7 +49,7 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
 
   public static final GroovyRefactoringSupportProvider INSTANCE = new GroovyRefactoringSupportProvider();
 
-  public boolean isSafeDeleteAvailable(PsiElement element) {
+  public boolean isSafeDeleteAvailable(@NotNull PsiElement element) {
     return element instanceof GrTypeDefinition ||
            element instanceof GrField ||
            element instanceof GrMethod;
@@ -73,7 +74,7 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
   }
 
   @Override
-  public boolean isInplaceRenameAvailable(PsiElement elementToRename, PsiElement nameSuggestionContext) {
+  public boolean isInplaceRenameAvailable(@NotNull PsiElement elementToRename, PsiElement nameSuggestionContext) {
     //local vars & params renames GrVariableInplaceRenameHandler
 
     if (nameSuggestionContext != null && nameSuggestionContext.getContainingFile() != elementToRename.getContainingFile()) return false;
@@ -93,13 +94,13 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
   }
 
   @Override
-  public boolean isInplaceIntroduceAvailable(PsiElement element, PsiElement context) {
+  public boolean isInplaceIntroduceAvailable(@NotNull PsiElement element, PsiElement context) {
     if (context == null || context.getContainingFile() != element.getContainingFile()) return false;
     return true;
   }
 
   @Override
-  public boolean isMemberInplaceRenameAvailable(PsiElement element, PsiElement context) {
+  public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement element, PsiElement context) {
     PsiElement parent = context.getParent();
 
     //don't try to inplace rename aliased imported references

@@ -159,6 +159,11 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (!myEnabled) hideHint();
   }
 
+  @Override
+  public boolean isEnabled() {
+    return myEnabled;
+  }
+
   @NotNull
   @Override
   public Collection<KeyType> getExpandedItems() {

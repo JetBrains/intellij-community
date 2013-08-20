@@ -3,6 +3,9 @@
   <item name="java.util.concurrent.BlockingQueue E poll(long, java.util.concurrent.TimeUnit) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.concurrent.BlockingQueue boolean offer(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.util.concurrent.BlockingQueue boolean offer(E, long, java.util.concurrent.TimeUnit) 2">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -200,6 +203,9 @@
   </item>
   <item name="java.util.concurrent.FutureTask V get(long, java.util.concurrent.TimeUnit) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.concurrent.LinkedBlockingQueue boolean offer(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; schedule(java.lang.Runnable, long, java.util.concurrent.TimeUnit)">
     <annotation name="org.jetbrains.annotations.NotNull" />

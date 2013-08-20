@@ -28,6 +28,7 @@ import com.intellij.ui.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -35,7 +36,10 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class DiffOptionsPanel implements OptionsPanel {
   private final ColorAndFontOptions myOptions;
@@ -242,7 +246,7 @@ public class DiffOptionsPanel implements OptionsPanel {
     return myStripeMarkColorComponent.getComponent();
   }
 
-  public static void addSchemeDescriptions(ArrayList<EditorSchemeAttributeDescriptor> descriptions, EditorColorsScheme scheme) {
+  public static void addSchemeDescriptions(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, @NotNull EditorColorsScheme scheme) {
     for (TextDiffType diffType : TextDiffType.MERGE_TYPES) {
       descriptions.add(new MyColorAndFontDescription(diffType, scheme));
     }
@@ -265,7 +269,7 @@ public class DiffOptionsPanel implements OptionsPanel {
     private final EditorColorsScheme myScheme;
     private final TextDiffType myDiffType;
 
-    public MyColorAndFontDescription(TextDiffType diffType, EditorColorsScheme scheme) {
+    public MyColorAndFontDescription(@NotNull TextDiffType diffType, @NotNull EditorColorsScheme scheme) {
       myScheme = scheme;
       myDiffType = diffType;
       TextAttributes attrs = diffType.getTextAttributes(myScheme);

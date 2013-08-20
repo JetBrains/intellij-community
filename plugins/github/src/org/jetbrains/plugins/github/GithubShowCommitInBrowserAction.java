@@ -32,7 +32,7 @@ import org.jetbrains.plugins.github.util.GithubUtil;
 abstract class GithubShowCommitInBrowserAction extends DumbAwareAction {
 
   public GithubShowCommitInBrowserAction() {
-    super("Open in Browser", "Open the selected commit in browser", GithubIcons.Github_icon);
+    super("Open on GitHub", "Open the selected commit in browser", GithubIcons.Github_icon);
   }
 
   protected static void openInBrowser(Project project, GitRepository repository, String revisionHash) {

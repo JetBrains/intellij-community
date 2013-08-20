@@ -21,13 +21,14 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Aleksey Pivovarov
  */
+@SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
 public class GithubRepoOrg extends GithubRepo {
-  @NotNull Permissions myPermissions;
+  @NotNull private final Permissions myPermissions;
 
   public static class Permissions {
-    private boolean myAdmin;
-    private boolean myPull;
-    private boolean myPush;
+    private final boolean myAdmin;
+    private final boolean myPull;
+    private final boolean myPush;
 
     public Permissions(boolean admin, boolean pull, boolean push) {
       myAdmin = admin;

@@ -246,18 +246,21 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
   public void updateWrapperControls(@Nullable String linkedProjectPath) {
     if (linkedProjectPath != null && GradleUtil.isGradleWrapperDefined(linkedProjectPath)) {
-      myUseWrapperButton.setText(GradleBundle.message("gradle.settings.text.use.wrapper"));
       myUseWrapperButton.setEnabled(true);
+      myUseWrapperButton.setText(GradleBundle.message("gradle.settings.text.use.wrapper"));
       if (getInitialSettings().isPreferLocalInstallationToWrapper()) {
+        myGradleHomePathField.setEnabled(true);
         myUseLocalDistributionButton.setSelected(true);
       }
       else {
+        myGradleHomePathField.setEnabled(false);
         myUseWrapperButton.setSelected(true);
       }
     }
     else {
       myUseWrapperButton.setText(GradleBundle.message("gradle.settings.text.use.wrapper.disabled"));
       myUseWrapperButton.setEnabled(false);
+      myGradleHomePathField.setEnabled(true);
       myUseLocalDistributionButton.setSelected(true);
     }
   }

@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
@@ -53,7 +52,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
 
     PsiFile topLevelFile = InjectedLanguageManager.getInstance(containingFile.getProject()).getTopLevelFile(containingFile);
 
-    if (!(topLevelFile instanceof PsiJavaFile) || topLevelFile instanceof JspFile) {
+    if (!(topLevelFile instanceof PsiJavaFile) || topLevelFile instanceof ServerPageFile) {
       return null;
     }
     PsiElement containingClass = topLevelFile == containingFile ? psiElement : InjectedLanguageManager

@@ -38,7 +38,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -91,7 +90,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
            && field.getManager().isInProject(field)
            && !field.hasModifierProperty(PsiModifier.STATIC)
            && containingClass != null
-           && !(containingClass instanceof JspClass)
+           && !(containingClass instanceof PsiSyntheticClass)
            && containingClass.getName() != null;
   }
 

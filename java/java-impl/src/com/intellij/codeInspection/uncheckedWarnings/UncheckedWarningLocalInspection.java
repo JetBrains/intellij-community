@@ -473,14 +473,16 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     }
   }
 
-  public static LocalQuickFix[] getChangeVariableTypeFixes(PsiVariable parameter, PsiType itemType) {
+  public static LocalQuickFix[] getChangeVariableTypeFixes(@NotNull PsiVariable parameter, PsiType itemType) {
     if (itemType instanceof PsiMethodReferenceType) return LocalQuickFix.EMPTY_ARRAY;
     final List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
     LOG.assertTrue(parameter.isValid());
-    for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
-      for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
-        if (action instanceof LocalQuickFix) {
-          result.add((LocalQuickFix)action);
+    if (itemType != null) {
+      for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
+        for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
+          if (action instanceof LocalQuickFix) {
+            result.add((LocalQuickFix)action);
+          }
         }
       }
     }

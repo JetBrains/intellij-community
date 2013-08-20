@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.completion.weighers;
 
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.proximity.ReferenceListWeigher;
@@ -29,10 +30,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
  * @author peter
  */
 public class GrReferenceListWeigher extends ReferenceListWeigher {
+  private static final PsiElementPattern.Capture<PsiElement> INSIDE_REFERENCE_LIST =
+    PlatformPatterns.psiElement().withParents(GrCodeReferenceElement.class, GrReferenceList.class);
+
   @Override
   protected Preference getPreferredCondition(@NotNull ProximityLocation location) {
     PsiElement position = location.getPosition();
-    if (PlatformPatterns.psiElement().withParents(GrCodeReferenceElement.class, GrReferenceList.class).accepts(position)) {
+    if (INSIDE_REFERENCE_LIST.accepts(position)) {
       assert position != null;
       GrReferenceList list = (GrReferenceList)position.getParent().getParent();
       PsiElement parent = list.getParent();

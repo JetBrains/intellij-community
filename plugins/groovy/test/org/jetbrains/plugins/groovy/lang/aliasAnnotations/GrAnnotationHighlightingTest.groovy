@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.aliasAnnotations
 
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
 
 /**
@@ -199,4 +200,24 @@ def aaa() {}
 def bbb() {}
 ''')
   }
+
+  void testCompileDynamic() {
+    testHighlighting('''\
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class B {
+    B() {
+        println <error>x</error>
+    }
+
+    @CompileDynamic
+    def foo() {
+        println <warning>y</warning>
+    }
+}
+''', GrUnresolvedAccessInspection)
+  }
+
 }

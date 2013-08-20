@@ -19,21 +19,19 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.application.options.colors.ColorAndFontOptions;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.application.options.colors.ScopeAttributesUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -233,14 +231,14 @@ public class HighlightNamesUtil {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     TextAttributes result = null;
-    final DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(file.getProject());
-    List<Pair<NamedScope,NamedScopesHolder>> scopes = daemonCodeAnalyzer.getScopeBasedHighlightingCachedScopes();
+    DependencyValidationManagerImpl validationManager = (DependencyValidationManagerImpl)DependencyValidationManager.getInstance(file.getProject());
+    List<Pair<NamedScope,NamedScopesHolder>> scopes = validationManager.getScopeBasedHighlightingCachedScopes();
     for (Pair<NamedScope, NamedScopesHolder> scope : scopes) {
       NamedScope namedScope = scope.getFirst();
       NamedScopesHolder scopesHolder = scope.getSecond();
       PackageSet packageSet = namedScope.getValue();
       if (packageSet != null && packageSet.contains(file, scopesHolder)) {
-        TextAttributesKey scopeKey = ColorAndFontOptions.getScopeTextAttributeKey(namedScope.getName());
+        TextAttributesKey scopeKey = ScopeAttributesUtil.getScopeTextAttributeKey(namedScope.getName());
         TextAttributes attributes = colorsScheme.getAttributes(scopeKey);
         if (attributes == null || attributes.isEmpty()) {
           continue;
@@ -252,7 +250,7 @@ public class HighlightNamesUtil {
   }
 
   public static TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
-    if (method instanceof JspHolderMethod) return TextRange.EMPTY_RANGE;
+    if (method instanceof SyntheticElement) return TextRange.EMPTY_RANGE;
     int start = stripAnnotationsFromModifierList(method.getModifierList());
     final TextRange throwsRange = method.getThrowsList().getTextRange();
     LOG.assertTrue(throwsRange != null, method);

@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware {
 
+  @Override
   public void actionPerformed(final AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
@@ -46,6 +47,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
     }
   }
 
+  @Override
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();

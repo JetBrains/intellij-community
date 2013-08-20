@@ -161,7 +161,7 @@ public class EditorWindow {
         boolean editorToTheDown = false;
 
         Splitter splitter = (Splitter)parent;
-        
+
         boolean vertical = splitter.getOrientation();
         if (vertical && splitter.getFirstComponent() == c) {
           editorToTheDown = true;
@@ -172,7 +172,7 @@ public class EditorWindow {
           if (splitter.getSecondComponent() == c) editorToTheLeft = true;
         }
 
-        
+
         //Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, c);
         //if (frame instanceof IdeFrame) {
         //  Project project = ((IdeFrame)frame).getProject();
@@ -218,10 +218,10 @@ public class EditorWindow {
         int bottom = editorToTheDown ? 1 : 0;
         return new Insets(0, left, bottom, right);
       }
-      
+
       return new Insets(0, 0, 0, 0);
     }
-    
+
     @Nullable
     private static Splitter nextOuterSplitter(Component c) {
       Container parent = c.getParent();
@@ -290,6 +290,7 @@ public class EditorWindow {
   public void closeFile(final VirtualFile file, final boolean unsplit, final boolean transferFocus) {
     final FileEditorManagerImpl editorManager = getManager();
     editorManager.runChange(new FileEditorManagerChange() {
+      @Override
       public void run(EditorsSplitters splitters) {
         final List<EditorWithProviderComposite> editors = splitters.findEditorComposites(file);
         if (editors.isEmpty()) return;
@@ -308,6 +309,7 @@ public class EditorWindow {
               myRemovedTabs.push(Pair.create(file.getUrl(), componentIndex));
               final ActionCallback removeTab = myTabbedPane.removeTabAt(componentIndex, indexToSelect, transferFocus);
               final Runnable disposer = new Runnable() {
+                @Override
                 public void run() {
                   editorManager.disposeComposite(editor);
                 }
@@ -378,11 +380,11 @@ public class EditorWindow {
           return histFileIndex;
         }
       }
-    } else 
+    } else
     if (uiSettings.ACTIVATE_RIGHT_EDITOR_ON_CLOSE && (fileIndex + 1 < myTabbedPane.getTabCount())) {
       return fileIndex + 1;
     }
-    
+
     // by default select previous neighbour
     if (fileIndex > 0) {
       return fileIndex - 1;
@@ -553,6 +555,7 @@ public class EditorWindow {
       return myWindow;
     }
 
+    @Override
     public Object getData(String dataId) {
       if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)){
         final VirtualFile virtualFile = myEditor.getFile();
@@ -570,6 +573,7 @@ public class EditorWindow {
       super(window, editor);
     }
 
+    @Override
     public Object getData(String dataId) {
       // this is essential for ability to close opened file
       if (DATA_KEY.is(dataId)){
@@ -636,6 +640,7 @@ public class EditorWindow {
       final int index = findFileIndex(editor.getFile());
       if (index != -1) {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
           public void run() {
             myTabbedPane.setSelectedIndex(index, focusEditor);
           }
@@ -663,12 +668,12 @@ public class EditorWindow {
         if (initialIndex == null) {
           int selectedIndex = myTabbedPane.getSelectedIndex();
           if (selectedIndex >= 0) {
-            indexToInsert = UISettings.getInstance().ACTIVATE_RIGHT_EDITOR_ON_CLOSE ? selectedIndex : selectedIndex + 1; 
+            indexToInsert = UISettings.getInstance().ACTIVATE_RIGHT_EDITOR_ON_CLOSE ? selectedIndex : selectedIndex + 1;
           }
         } else {
           indexToInsert = initialIndex;
         }
-        
+
         final VirtualFile file = editor.getFile();
         final Icon template = AllIcons.FileTypes.Text;
         myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(this, editor), null, indexToInsert);
@@ -709,7 +714,7 @@ public class EditorWindow {
         myPanel.setOpaque(false);
         myPanel.setBorder(new AdaptiveBorder());
         myPanel.setOpaque(false);
-        
+
         final Splitter splitter = new Splitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
         final EditorWindow res = new EditorWindow(myOwner);
         if (myTabbedPane != null) {
@@ -772,7 +777,7 @@ public class EditorWindow {
 
   /**
    * Tries to setup caret and viewport for the given editor from the selected one.
-   * 
+   *
    * @param toSync    editor to setup caret and viewport for
    */
   private void syncCaretIfPossible(@Nullable FileEditor[] toSync) {
@@ -809,6 +814,7 @@ public class EditorWindow {
         scrollingModel.scrollVertically(scrollOffset);
 
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (!editor.isDisposed()) {
               scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);

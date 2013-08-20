@@ -711,9 +711,9 @@ public class LambdaUtil {
       }
     }
 
-    final PsiClassType.ClassResolveResult r = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(returnType));
+    final PsiClassType.ClassResolveResult r = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(returnType, false));
     final PsiClass rClass = r.getElement();
-    final PsiClassType.ClassResolveResult r1 = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(returnType1));
+    final PsiClassType.ClassResolveResult r1 = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(returnType1, false));
     final PsiClass rClass1 = r1.getElement();
     if (rClass != null && rClass1 != null) {
       if (rClass == rClass1) {
@@ -722,13 +722,13 @@ public class LambdaUtil {
           final PsiType t = r.getSubstitutor().substituteWithBoundsPromotion(parameter);
           final PsiType t1 = r1.getSubstitutor().substituteWithBoundsPromotion(parameter);
           if (t == null || t1 == null) continue;
-          if (t1.isAssignableFrom(t) && !GenericsUtil.eliminateWildcards(t1).equals(t)) {
+          if (t1.isAssignableFrom(t)) {
             if (moreSpecific == 1) {
               return 0;
             }
             moreSpecific = -1;
           }
-          else if (t.isAssignableFrom(t1) && !GenericsUtil.eliminateWildcards(t).equals(t1)) {
+          else if (t.isAssignableFrom(t1)) {
             if (moreSpecific == -1) {
               return 0;
             }

@@ -682,18 +682,18 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     }
 
     @Override
-    public void register(IntentionAction action) {
+    public void register(@NotNull IntentionAction action) {
       myKey = HighlightDisplayKey.find(SHORT_NAME);
       QuickFixAction.registerQuickFixAction(myInfo, action, myKey);
     }
 
     @Override
-    public void register(TextRange fixRange, IntentionAction action, HighlightDisplayKey key) {
+    public void register(@NotNull TextRange fixRange, @NotNull IntentionAction action, HighlightDisplayKey key) {
       QuickFixAction.registerQuickFixAction(myInfo, fixRange, action, key);
     }
 
     @Override
-    public void unregister(Condition<IntentionAction> condition) {
+    public void unregister(@NotNull Condition<IntentionAction> condition) {
       if (myInfo != null) {
         QuickFixAction.unregisterQuickFixAction(myInfo, condition);
       }

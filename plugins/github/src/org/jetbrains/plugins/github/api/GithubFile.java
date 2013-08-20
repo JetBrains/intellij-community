@@ -22,15 +22,15 @@ import org.jetbrains.annotations.NotNull;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubFile {
-  @NotNull private String myFilename;
+  @NotNull private final String myFilename;
 
-  private int myAdditions;
-  private int myDeletions;
-  private int myChanges;
-  @NotNull private String myStatus;
+  private final int myAdditions;
+  private final int myDeletions;
+  private final int myChanges;
+  @NotNull private final String myStatus;
 
-  @NotNull private String myRawUrl;
-  @NotNull private String myPatch;
+  @NotNull private final String myRawUrl;
+  @NotNull private final String myPatch;
 
   public GithubFile(@NotNull String filename, int additions,
                      int deletions,

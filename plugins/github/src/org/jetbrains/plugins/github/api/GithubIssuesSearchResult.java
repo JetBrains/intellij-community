@@ -24,7 +24,7 @@ import java.util.List;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GithubIssuesSearchResult {
-  @NotNull private List<GithubIssue> issues;
+  @NotNull private final List<GithubIssue> issues;
 
   public GithubIssuesSearchResult(@NotNull List<GithubIssue> issues) {
     this.issues = issues;

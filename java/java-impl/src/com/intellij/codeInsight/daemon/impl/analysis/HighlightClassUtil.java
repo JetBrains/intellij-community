@@ -47,7 +47,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
@@ -893,7 +892,7 @@ public class HighlightClassUtil {
     PsiClass outerClass = aClass.getContainingClass();
     if (outerClass == null) return null;
 
-    if (outerClass instanceof JspClass || hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true, false)) return null;
+    if (outerClass instanceof PsiSyntheticClass || hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true, false)) return null;
     return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, element);
   }
 

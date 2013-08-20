@@ -1198,7 +1198,8 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  public static TextRange getFixRange(PsiElement element) {
+  @NotNull
+  public static TextRange getFixRange(@NotNull PsiElement element) {
     TextRange range = element.getTextRange();
     int start = range.getStartOffset();
     int end = range.getEndOffset();
