@@ -13,7 +13,7 @@ abstract class Annotations {
     @pkg.Annotations.A2
     abstract void m2a();
 
-    @pkg.Annotations.A2("+")
+    @pkg.Annotations.A2(value = "+")
     abstract void m2b();
 
     @pkg.Annotations.A3(a1 = @pkg.Annotations.A1, a2 = @pkg.Annotations.A2)

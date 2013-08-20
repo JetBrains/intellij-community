@@ -5,7 +5,7 @@
 package pkg;
 
 class ClassRefs {
-    @pkg.DefaultArgAnno(java.lang.String.class)
+    @pkg.DefaultArgAnno(value = java.lang.String.class)
     @pkg.NamedArgAnno(type = java.lang.String.class)
     public static final java.lang.Class<?> cls;
 

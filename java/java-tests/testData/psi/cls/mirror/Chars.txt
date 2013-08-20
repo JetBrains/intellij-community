@@ -1,0 +1,14 @@
+
+  // IntelliJ API Decompiler stub source generated from a class file
+  // Implementation of methods is not available
+
+package pkg;
+
+class Chars {
+    public static final char c = 'c';
+
+    Chars() { /* compiled code */ }
+
+    @pkg.CharAnno(value = 'c')
+    public static char c() { /* compiled code */ }
+}
