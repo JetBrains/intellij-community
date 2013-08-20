@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,16 @@
  */
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class JNDIResourceInspection extends ResourceInspection {
-
-  @SuppressWarnings({"PublicField"})
-  public boolean insideTryAllowed = false;
 
   @Override
   @NotNull
@@ -39,118 +35,36 @@ public class JNDIResourceInspection extends ResourceInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "jndi.resource.opened.not.closed.display.name");
+    return InspectionGadgetsBundle.message("jndi.resource.opened.not.closed.display.name");
   }
 
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final PsiExpression expression = (PsiExpression)infos[0];
-    final PsiType type = expression.getType();
-    assert type != null;
-    final String text = type.getPresentableText();
-    return InspectionGadgetsBundle.message(
-      "resource.opened.not.closed.problem.descriptor", text);
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "allow.resource.to.be.opened.inside.a.try.block"),
-                                          this, "insideTryAllowed");
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new JNDIResourceVisitor();
-  }
-
-  private class JNDIResourceVisitor extends BaseInspectionVisitor {
-
-    @NonNls
-    private static final String LIST = "list";
-    @NonNls
-    private static final String LIST_BINDING = "listBindings";
-    @NonNls
-    private static final String GET_ALL = "getAll";
-
-    @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      if (!isJNDIFactoryMethod(expression)) {
-        return;
-      }
-      final PsiElement parent = getExpressionParent(expression);
-      if (parent instanceof PsiReturnStatement) {
-        return;
-      }
-      final PsiVariable boundVariable = getVariable(parent);
-      if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
-        return;
-      }
-      if (isResourceEscapedFromMethod(boundVariable, expression)) {
-        return;
-      }
-      registerError(expression, expression);
-    }
-
-
-    @Override
-    public void visitNewExpression(
-      @NotNull PsiNewExpression expression) {
-      super.visitNewExpression(expression);
-      if (!isJNDIResource(expression)) {
-        return;
-      }
-      final PsiElement parent = getExpressionParent(expression);
-      if (parent instanceof PsiReturnStatement) {
-        return;
-      }
-      final PsiVariable boundVariable = getVariable(parent);
-      if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
-        return;
-      }
-      if (isResourceEscapedFromMethod(boundVariable, expression)) {
-        return;
-      }
-      registerError(expression, expression);
-    }
-
-    private boolean isJNDIResource(PsiNewExpression expression) {
-      return TypeUtils.expressionHasTypeOrSubtype(expression,
-                                                  "javax.naming.InitialContext");
-    }
-
-    private boolean isJNDIFactoryMethod(
-      PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      if (LIST.equals(methodName) || LIST_BINDING.equals(methodName)) {
-        final PsiExpression qualifier =
-          methodExpression.getQualifierExpression();
+  protected boolean isResourceCreation(PsiExpression expression) {
+    if (expression instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
+      if ("list".equals(methodName) || "listBindings".equals(methodName)) {
+        final PsiExpression qualifier = methodExpression.getQualifierExpression();
         if (qualifier == null) {
           return false;
         }
-        return TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                                                    "javax.naming.Context");
+        return TypeUtils.expressionHasTypeOrSubtype(qualifier, "javax.naming.Context");
       }
-      else if (GET_ALL.equals(methodName)) {
-        final PsiExpression qualifier =
-          methodExpression.getQualifierExpression();
+      else if ("getAll".equals(methodName)) {
+        final PsiExpression qualifier = methodExpression.getQualifierExpression();
         if (qualifier == null) {
           return false;
         }
-        return TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                                                    "javax.naming.directory.Attribute") ||
-               TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                                                    "javax.naming.directory.Attributes");
+        return TypeUtils.expressionHasTypeOrSubtype(qualifier, "javax.naming.directory.Attribute", "javax.naming.directory.Attributes") !=
+               null;
       }
       else {
         return false;
       }
     }
+    else if (expression instanceof PsiNewExpression) {
+      return TypeUtils.expressionHasTypeOrSubtype(expression, "javax.naming.InitialContext");
+    }
+    return false;
   }
 }
