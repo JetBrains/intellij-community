@@ -151,7 +151,8 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
 
           final Dimension size = list.getPreferredSize();
           final JComponent c = ToolWindowsWidget.this;
-          final RelativePoint point = new RelativePoint(c, new Point(-4, -4 - size.height));
+          final Insets padding = UIUtil.getListViewportPadding();
+          final RelativePoint point = new RelativePoint(c, new Point(-4, -padding.top - padding.bottom -4 - size.height));
 
           if (popup != null && popup.isVisible()) {
             return;
@@ -161,6 +162,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
           PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
           popup = builder
             .setAutoselectOnMouseMove(true)
+            .setRequestFocus(false)
             .setItemChoosenCallback(new Runnable() {
               @Override
               public void run() {
