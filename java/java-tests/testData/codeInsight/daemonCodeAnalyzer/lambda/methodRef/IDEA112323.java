@@ -1,8 +1,11 @@
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.*;
+interface Stream<T> {
+    <R> Stream<R> map(Function<? super T, ? extends R> mapper);
+}
+
+interface Function<T, R> {
+    R apply(T t);
+}
 
 class Test1
 {
@@ -11,15 +14,4 @@ class Test1
         Stream<String> map = stream.map(Map.Entry::getKey);
     }
 
-    public static void main(String[] args)
-    {
-        Map<String, Long> storage = new HashMap<>();
-        storage.put("One", 1l);
-        List<String> keys = storage
-                .entrySet()
-                .stream()
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-        keys.stream().forEach(System.out::println);
-    }
 }
