@@ -78,6 +78,8 @@
 
     <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
+    <extensionPoint name="projectStructureConfigurableFilter" interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter"/>
+    <extensionPoint name="projectStructureConfigurableAdder" interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableAdder"/>
 
     <extensionPoint name="compiler" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.Compiler"/>
     <extensionPoint name="compilerFactory" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.CompilerFactory"/>
