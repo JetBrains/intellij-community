@@ -1239,8 +1239,16 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public boolean isDeclaredInside(PsiVariable variable) {
     if (variable instanceof ImplicitVariable) return false;
-    int startOffset = myElements[0].getTextRange().getStartOffset();
-    int endOffset = myElements[myElements.length - 1].getTextRange().getEndOffset();
+    int startOffset;
+    int endOffset;
+    if (myExpression != null) {
+      final TextRange range = myExpression.getTextRange();
+      startOffset = range.getStartOffset();
+      endOffset = range.getEndOffset();
+    } else {
+      startOffset = myElements[0].getTextRange().getStartOffset();
+      endOffset = myElements[myElements.length - 1].getTextRange().getEndOffset();
+    }
     PsiIdentifier nameIdentifier = variable.getNameIdentifier();
     if (nameIdentifier == null) return false;
     final TextRange range = nameIdentifier.getTextRange();
