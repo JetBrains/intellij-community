@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,6 +210,9 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         myScrollPane = null;
         if (myNavigationBar != null && !Disposer.isDisposed(myNavigationBar)) {
           Disposer.dispose(myNavigationBar);
+        }
+        if (myProject == null) {
+          return;
         }
         myNavigationBar = new NavBarPanel(myProject, true);
         myWrapperPanel.putClientProperty("NavBarPanel", myNavigationBar);
