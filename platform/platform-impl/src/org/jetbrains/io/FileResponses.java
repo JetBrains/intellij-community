@@ -15,7 +15,6 @@
  */
 package org.jetbrains.io;
 
-
 import com.intellij.openapi.util.text.StringUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -27,6 +26,7 @@ import io.netty.handler.stream.ChunkedFile;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.text.ParseException;
@@ -64,16 +64,26 @@ public class FileResponses {
       return;
     }
 
+    HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+    response.headers().add(CONTENT_TYPE, getContentType(file.getPath()));
+    addCommonHeaders(response);
+    response.headers().set(HttpHeaders.Names.CACHE_CONTROL, "private, must-revalidate");
+    response.headers().set(HttpHeaders.Names.LAST_MODIFIED, Responses.DATE_FORMAT.get().format(new Date(file.lastModified())));
+
+    boolean keepAlive = addKeepAliveIfNeed(response, request);
+
     boolean fileWillBeClosed = false;
-    RandomAccessFile raf = new RandomAccessFile(file, "r");
+    RandomAccessFile raf;
+    try {
+      raf = new RandomAccessFile(file, "r");
+    }
+    catch (FileNotFoundException ignored) {
+      send(response(HttpResponseStatus.NOT_FOUND), channel, request);
+      return;
+    }
+
     try {
       long fileLength = raf.length();
-      HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-      response.headers().add(CONTENT_TYPE, getContentType(file.getPath()));
-      addCommonHeaders(response);
-      response.headers().set(HttpHeaders.Names.CACHE_CONTROL, "private, must-revalidate");
-      response.headers().set(HttpHeaders.Names.LAST_MODIFIED, Responses.DATE_FORMAT.get().format(new Date(file.lastModified())));
-      boolean keepAlive = addKeepAliveIfNeed(response, request);
       if (request.getMethod() != HttpMethod.HEAD) {
         HttpHeaders.setContentLength(response, fileLength);
       }
@@ -81,26 +91,25 @@ public class FileResponses {
       channel.write(response);
       if (request.getMethod() != HttpMethod.HEAD) {
         if (channel.pipeline().get(SslHandler.class) == null) {
-          // No encryption - use zero-copy
+          // no encryption - use zero-copy
           channel.write(new DefaultFileRegion(raf.getChannel(), 0, fileLength));
         }
         else {
-          // Cannot use zero-copy with HTTPS
-          channel.write(new ChunkedFile(raf, 0, fileLength, 8192));
+          // cannot use zero-copy with HTTPS
+          channel.write(new ChunkedFile(raf));
         }
       }
-
-      ChannelFuture future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
-      if (!keepAlive) {
-        future.addListener(ChannelFutureListener.CLOSE);
-      }
-
       fileWillBeClosed = true;
     }
     finally {
       if (!fileWillBeClosed) {
         raf.close();
       }
+    }
+
+    ChannelFuture future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+    if (!keepAlive) {
+      future.addListener(ChannelFutureListener.CLOSE);
     }
   }
 }
