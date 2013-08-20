@@ -1477,5 +1477,21 @@ class Cls {
     myFixture.assertPreferredCompletionItems 0, 'sout', 'mySout'
   }
 
+  public void "test single overriding getter"() {
+    myFixture.configureByText "a.java", """
+public class Foo {
+    public int getField() {}
+}
+
+class X extends Foo {
+    int field;
+
+    <caret>
+}
+"""
+    type 'getf'
+    assert myFixture.lookupElementStrings == ['public int getField']
+  }
+
 
 }
