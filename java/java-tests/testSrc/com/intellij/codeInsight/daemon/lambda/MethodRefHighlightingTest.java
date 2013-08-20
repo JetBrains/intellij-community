@@ -83,6 +83,10 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA112323() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

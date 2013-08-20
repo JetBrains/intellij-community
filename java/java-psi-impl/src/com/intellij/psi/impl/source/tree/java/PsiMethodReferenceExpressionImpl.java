@@ -393,7 +393,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     }
 
     private PsiSubstitutor getSubstitutor(PsiType type) {
-      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
+      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(type));
       PsiSubstitutor psiSubstitutor = resolveResult.getSubstitutor();
       if (type instanceof PsiClassType) {
         final PsiClass psiClass = resolveResult.getElement();
