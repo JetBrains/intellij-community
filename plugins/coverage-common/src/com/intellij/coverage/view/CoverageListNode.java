@@ -55,19 +55,23 @@ public class CoverageListNode extends AbstractTreeNode {
 
   @Override
   protected void update(final PresentationData presentation) {
-    final Object value = getValue();
-    if (value instanceof PsiNamedElement) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          if (value instanceof PsiQualifiedNamedElement && (myStateBean.myFlattenPackages && ((PsiNamedElement)value).getContainingFile() == null || getParent() instanceof CoverageListRootNode)) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        final Object value = getValue();
+        if (value instanceof PsiNamedElement) {
+
+          if (value instanceof PsiQualifiedNamedElement &&
+              (myStateBean.myFlattenPackages && ((PsiNamedElement)value).getContainingFile() == null ||
+               getParent() instanceof CoverageListRootNode)) {
             presentation.setPresentableText(((PsiQualifiedNamedElement)value).getQualifiedName());
-          } else {
+          }
+          else {
             presentation.setPresentableText(((PsiNamedElement)value).getName());
           }
           presentation.setIcon(((PsiElement)value).getIcon(0));
         }
-      });
-    }
+      }
+    });
   }
 
   @Override
