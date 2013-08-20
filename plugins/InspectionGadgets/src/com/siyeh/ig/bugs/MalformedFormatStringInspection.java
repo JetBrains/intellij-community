@@ -15,6 +15,10 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -23,9 +27,69 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.FormatUtils;
+import com.siyeh.ig.ui.UiUtils;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
+
 public class MalformedFormatStringInspection extends BaseInspection {
+  /**
+   * @noinspection PublicField
+   */
+  @NonNls public String additionalClasses = "";
+
+  /**
+   * @noinspection PublicField
+   */
+  @NonNls public String additionalMethods = "";
+
+  final List<String> classNames;
+  final List<String> methodNames;
+
+  public MalformedFormatStringInspection() {
+    classNames = new ArrayList<String>();
+    methodNames = new ArrayList<String>();
+    parseString(additionalClasses, classNames);
+    parseString(additionalMethods, methodNames);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    ListWrappingTableModel classTableModel =
+      new ListWrappingTableModel(classNames, InspectionGadgetsBundle.message("string.format.class.column.name"));
+    JPanel classChooserPanel = UiUtils
+      .createAddRemoveTreeClassChooserPanel(new ListTable(classTableModel), InspectionGadgetsBundle.message("string.format.choose.class"));
+
+    ListWrappingTableModel methodTableModel =
+      new ListWrappingTableModel(methodNames, InspectionGadgetsBundle.message("string.format.class.method.name"));
+    JPanel methodPanel = UiUtils.createAddRemovePanel(new ListTable(methodTableModel));
+
+    final JPanel panel = new JPanel();
+    BoxLayout boxLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+    panel.setLayout(boxLayout);
+
+    panel.add(classChooserPanel);
+    panel.add(methodPanel);
+    return panel;
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    super.readSettings(node);
+    parseString(additionalClasses, classNames);
+    parseString(additionalMethods, methodNames);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    additionalClasses = formatString(classNames);
+    additionalMethods = formatString(methodNames);
+    super.writeSettings(node);
+  }
 
   @Override
   @NotNull
@@ -61,12 +125,12 @@ public class MalformedFormatStringInspection extends BaseInspection {
     return new MalformedFormatStringVisitor();
   }
 
-  private static class MalformedFormatStringVisitor extends BaseInspectionVisitor {
+  private class MalformedFormatStringVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!FormatUtils.isFormatCall(expression)) {
+      if (!FormatUtils.isFormatCall(expression, methodNames, classNames)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
