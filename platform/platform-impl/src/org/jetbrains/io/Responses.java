@@ -166,10 +166,10 @@ public final class Responses {
   }
 
   public static void sendStatus(HttpResponseStatus responseStatus, Channel channel, @Nullable HttpRequest request) {
-    sendStatus(request, channel, responseStatus, null);
+    sendStatus(responseStatus, channel, null, request);
   }
 
-  public static void sendStatus(@Nullable HttpRequest request, Channel channel, HttpResponseStatus responseStatus, @Nullable String description) {
+  public static void sendStatus(HttpResponseStatus responseStatus, Channel channel, @Nullable String description, @Nullable HttpRequest request) {
     send(createStatusResponse(responseStatus, request, description), channel, request);
   }
 
