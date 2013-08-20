@@ -267,6 +267,27 @@ class Impl extends Bar implements Foo {}
     myFixture.assertPreferredCompletionItems 0, 'see', 'see bar.Bar', 'see foo.Foo'
   }
 
+  public void testShortenMethodParameterTypes() {
+    CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = false
+    try {
+      myFixture.addClass("package foo; public class Foo {}")
+      myFixture.configureByText "a.java", '''
+import foo.*;
+
+/**
+ * {@link #go<caret>
+ */
+class Goo { void goo(Foo foo {} }
+'''
+      myFixture.completeBasic()
+      assert myFixture.editor.document.text.contains('@link #goo(Foo)')
+    }
+    finally {
+      CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = true
+    }
+    
+  }
+
   public void testCustomReferenceProvider() throws Exception {
     PsiReferenceRegistrarImpl registrar =
       (PsiReferenceRegistrarImpl) ReferenceProvidersRegistry.getInstance().getRegistrar(StdLanguages.JAVA);
