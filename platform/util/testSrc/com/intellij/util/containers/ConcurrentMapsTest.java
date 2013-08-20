@@ -18,6 +18,8 @@ package com.intellij.util.containers;
 import gnu.trove.TObjectHashingStrategy;
 import junit.framework.TestCase;
 
+import java.lang.ref.SoftReference;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,7 +36,7 @@ public class ConcurrentMapsTest extends TestCase {
     assertEquals(1, map.underlyingMapSize());
   }
 
-  public void testRemoveFromEntrySet() {
+  public void testRemoveFromSoftEntrySet() {
     ConcurrentSoftHashMap<Object, Object> map = new ConcurrentSoftHashMap<Object, Object>();
     map.put(this, this);
     Set<Map.Entry<Object,Object>> entries = map.entrySet();
@@ -43,5 +45,77 @@ public class ConcurrentMapsTest extends TestCase {
     entries.remove(entry);
 
     assertTrue(map.isEmpty());
+  }
+
+  public void testRemoveFromWeakEntrySet() {
+    ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>();
+    map.put(this, this);
+    Set<Map.Entry<Object,Object>> entries = map.entrySet();
+    assertEquals(1, entries.size());
+    Map.Entry<Object, Object> entry = entries.iterator().next();
+    entries.remove(entry);
+
+    assertTrue(map.isEmpty());
+  }
+
+  public void testTossedWeakKeysAreRemoved() {
+    ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>();
+    map.put(new Object(), new Object());
+
+    do {
+      System.gc();
+    }
+    while (!map.processQueue());
+    assertEquals(0, map.underlyingMapSize());
+    map.put(this, this);
+    assertEquals(1, map.underlyingMapSize());
+  }
+
+  public static void tryGcSoftlyReachableObjects() {
+    SoftReference reference = new SoftReference(new Object());
+    List<Object> list = ContainerUtil.newArrayList();
+    while (reference.get() != null) {
+      list.add(new SoftReference<byte[]>(new byte[(int)Runtime.getRuntime().freeMemory() / 2]));
+    }
+  }
+
+  public void testTossedSoftKeysAreRemoved() {
+    ConcurrentSoftHashMap<Object, Object> map = new ConcurrentSoftHashMap<Object, Object>();
+    map.put(new Object(), new Object());
+
+    tryGcSoftlyReachableObjects();
+    do {
+      System.gc();
+    }
+    while (!map.processQueue());
+    assertEquals(0, map.underlyingMapSize());
+    map.put(this, this);
+    assertEquals(1, map.underlyingMapSize());
+  }
+
+  public void testTossedWeakValueIsRemoved() {
+    ConcurrentWeakValueHashMap<Object, Object> map = new ConcurrentWeakValueHashMap<Object, Object>();
+    map.put(new Object(), new Object());
+
+    do {
+      System.gc();
+    }
+    while (!map.processQueue());
+    assertEquals(0, map.underlyingMapSize());
+    map.put(this, this);
+    assertEquals(1, map.underlyingMapSize());
+  }
+  public void testTossedSoftValueIsRemoved() {
+    ConcurrentSoftValueHashMap<Object, Object> map = new ConcurrentSoftValueHashMap<Object, Object>();
+    map.put(new Object(), new Object());
+
+    tryGcSoftlyReachableObjects();
+    do {
+      System.gc();
+    }
+    while (!map.processQueue());
+    assertEquals(0, map.underlyingMapSize());
+    map.put(this, this);
+    assertEquals(1, map.underlyingMapSize());
   }
 }
