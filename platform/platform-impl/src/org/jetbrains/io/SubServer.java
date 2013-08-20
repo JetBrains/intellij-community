@@ -17,24 +17,23 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.net.NetUtils;
-import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.EventLoopGroup;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.CustomPortServerManager;
 
 import java.net.InetSocketAddress;
 
 final class SubServer implements CustomPortServerManager.CustomPortService, Disposable {
-  private final ChannelGroup openChannels = new DefaultChannelGroup();
+  private final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
+
   private final CustomPortServerManager user;
   private final ServerBootstrap bootstrap;
 
-  public SubServer(CustomPortServerManager user, NioServerSocketChannelFactory channelFactory) {
+  public SubServer(CustomPortServerManager user, EventLoopGroup eventLoopGroup) {
     this.user = user;
     user.setManager(this);
-    bootstrap = BuiltInServer.createServerBootstrap(channelFactory, openChannels, user.createXmlRpcHandlers());
+    bootstrap = BuiltInServer.createServerBootstrap(eventLoopGroup, channelRegistrar, user.createXmlRpcHandlers());
   }
 
   public boolean bind(int port) {
@@ -43,7 +42,8 @@ final class SubServer implements CustomPortServerManager.CustomPortService, Disp
     }
 
     try {
-      openChannels.add(bootstrap.bind(user.isAvailableExternally() ? new InetSocketAddress(port) : new InetSocketAddress(NetUtils.getLoopbackAddress(), port)));
+      bootstrap.localAddress(user.isAvailableExternally() ? new InetSocketAddress(port) : new InetSocketAddress(NetUtils.getLoopbackAddress(), port));
+      channelRegistrar.add(bootstrap.bind().syncUninterruptibly().channel());
       return true;
     }
     catch (Exception e) {
@@ -55,12 +55,11 @@ final class SubServer implements CustomPortServerManager.CustomPortService, Disp
 
   @Override
   public boolean isBound() {
-    return !openChannels.isEmpty();
+    return !channelRegistrar.isEmpty();
   }
 
   private void stop() {
-    openChannels.close().awaitUninterruptibly();
-    openChannels.clear();
+    channelRegistrar.close(false);
   }
 
   @Override

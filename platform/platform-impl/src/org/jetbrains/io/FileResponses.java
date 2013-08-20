@@ -15,13 +15,14 @@
  */
 package org.jetbrains.io;
 
-import org.jboss.netty.channel.*;
-import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.ssl.SslHandler;
-import org.jboss.netty.handler.stream.ChunkedFile;
+
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.DefaultFileRegion;
+import io.netty.handler.codec.http.*;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.stream.ChunkedFile;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
@@ -30,28 +31,21 @@ import java.io.RandomAccessFile;
 import java.text.ParseException;
 import java.util.Date;
 
-import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.*;
-import static org.jboss.netty.handler.codec.http.HttpHeaders.setContentLength;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_MODIFIED;
-import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static org.jetbrains.io.Responses.*;
 
 public class FileResponses {
   private static final MimetypesFileTypeMap FILE_MIMETYPE_MAP = new MimetypesFileTypeMap();
 
-  public static HttpResponse createResponse(String path) {
-    HttpResponse response = create(FILE_MIMETYPE_MAP.getContentType(path));
-    response.setHeader(CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0");
-    response.setHeader(PRAGMA, "no-cache");
-    return response;
+  public static String getContentType(String path) {
+    return FILE_MIMETYPE_MAP.getContentType(path);
   }
 
   private static boolean checkCache(HttpRequest request, Channel channel, long lastModified) {
-    String ifModifiedSince = request.getHeader(IF_MODIFIED_SINCE);
+    String ifModifiedSince = request.headers().get(HttpHeaders.Names.IF_MODIFIED_SINCE);
     if (ifModifiedSince != null && !ifModifiedSince.isEmpty()) {
       try {
         if (Responses.DATE_FORMAT.get().parse(ifModifiedSince).getTime() >= lastModified) {
-          HttpResponse response = new DefaultHttpResponse(HTTP_1_1, NOT_MODIFIED);
+          HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_MODIFIED);
           addAllowAnyOrigin(response);
           addDate(response);
           addServer(response);
@@ -76,30 +70,23 @@ public class FileResponses {
     RandomAccessFile raf = new RandomAccessFile(file, "r");
     try {
       long fileLength = raf.length();
-      HttpResponse response = createResponse(file.getPath());
+      HttpResponse response = create(getContentType(file.getPath()));
+      addNoCache(response);
       addCommonHeaders(response);
-      response.setHeader(LAST_MODIFIED, Responses.DATE_FORMAT.get().format(new Date(file.lastModified())));
+      response.headers().set(HttpHeaders.Names.LAST_MODIFIED, Responses.DATE_FORMAT.get().format(new Date(file.lastModified())));
       boolean keepAlive = addKeepAliveIfNeed(response, request);
       if (request.getMethod() != HttpMethod.HEAD) {
-        setContentLength(response, fileLength);
+        HttpHeaders.setContentLength(response, fileLength);
       }
 
       ChannelFuture future = channel.write(response);
-
       if (request.getMethod() != HttpMethod.HEAD) {
-        if (channel.getPipeline().get(SslHandler.class) == null) {
-          // No encryption - use zero-copy.
-          final FileRegion region = new DefaultFileRegion(raf.getChannel(), 0, fileLength);
-          future = channel.write(region);
-          future.addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture future) {
-              region.releaseExternalResources();
-            }
-          });
+        if (channel.pipeline().get(SslHandler.class) == null) {
+          // No encryption - use zero-copy
+          future = channel.write(new DefaultFileRegion(raf.getChannel(), 0, fileLength));
         }
         else {
-          // Cannot use zero-copy with HTTPS.
+          // Cannot use zero-copy with HTTPS
           future = channel.write(new ChunkedFile(raf, 0, fileLength, 8192));
         }
       }
@@ -107,6 +94,7 @@ public class FileResponses {
       if (!keepAlive) {
         future.addListener(ChannelFutureListener.CLOSE);
       }
+      channel.flush();
 
       fileWillBeClosed = true;
     }

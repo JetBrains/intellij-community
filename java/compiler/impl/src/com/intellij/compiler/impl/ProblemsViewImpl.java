@@ -47,7 +47,7 @@ public class ProblemsViewImpl extends ProblemsView{
   private static final String PROBLEMS_TOOLWINDOW_ID = "Problems";
   
   private final ProblemsViewPanel myPanel;
-  private final SequentialTaskExecutor myViewUpdater = new SequentialTaskExecutor(new PooledThreadExecutor());
+  private final SequentialTaskExecutor myViewUpdater = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
 
   public ProblemsViewImpl(final Project project, final ToolWindowManager wm) {
     super(project);
