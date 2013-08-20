@@ -36,7 +36,8 @@ public class HgVersionTest extends HgPlatformTest {
     new TestHgVersion("Mercurial Distributed SCM (version 2.4.2+20130102)", 2, 4, 2),
     new TestHgVersion("Распределенная SCM Mercurial (версия 2.6.1)", 2, 6, 1),
     new TestHgVersion("[Mercurial Distributed SCM (version 2.6.2+20130606)]", 2, 6, 2),
-    new TestHgVersion("[Mercurial Distributed SCM (version 2.4.2+20130203)]", 2, 4, 2)
+    new TestHgVersion("[Mercurial Distributed SCM (version 2.4.2+20130203)]\n", 2, 4, 2),
+    new TestHgVersion("Mercurial Distributed SCM (version 2.6.2)\n", 2, 6, 2)
   };
 
   public void testParseSupported() throws Exception {
