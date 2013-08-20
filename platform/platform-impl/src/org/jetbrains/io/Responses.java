@@ -56,7 +56,7 @@ public final class Responses {
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.EMPTY_BUFFER);
   }
 
-  public static HttpResponse create(@Nullable String contentType, @Nullable ByteBuf content) {
+  public static HttpResponse response(@Nullable String contentType, @Nullable ByteBuf content) {
     HttpResponse response =
       new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, content == null ? Unpooled.EMPTY_BUFFER : content);
     if (contentType != null) {

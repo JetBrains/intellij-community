@@ -70,7 +70,7 @@ final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBas
         BufferedImage image = UIUtil.createImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
         icon.paintIcon(null, image.getGraphics(), 0, 0);
         byte[] icoBytes = Sanselan.writeImageToBytes(image, ImageFormat.IMAGE_FORMAT_ICO, null);
-        HttpResponse response = Responses.create(FileResponses.getContentType(urlDecoder.path()), Unpooled.wrappedBuffer(icoBytes));
+        HttpResponse response = Responses.response(FileResponses.getContentType(urlDecoder.path()), Unpooled.wrappedBuffer(icoBytes));
         Responses.addNoCache(response);
         Responses.send(response, context.channel(), request);
         return true;
