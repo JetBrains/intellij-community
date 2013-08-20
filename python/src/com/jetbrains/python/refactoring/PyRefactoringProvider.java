@@ -17,6 +17,7 @@ import com.jetbrains.python.refactoring.introduce.parameter.PyIntroduceParameter
 import com.jetbrains.python.refactoring.introduce.constant.PyIntroduceConstantHandler;
 import com.jetbrains.python.refactoring.introduce.field.PyIntroduceFieldHandler;
 import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -59,7 +60,7 @@ public class PyRefactoringProvider extends RefactoringSupportProvider {
   }
 
   @Override
-  public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
+  public boolean isInplaceRenameAvailable(@NotNull PsiElement element, PsiElement context) {
     if (context != null && context.getContainingFile() != element.getContainingFile()) return false;
     PyFunction containingFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (containingFunction != null) {

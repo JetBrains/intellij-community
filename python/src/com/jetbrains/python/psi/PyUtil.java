@@ -435,6 +435,10 @@ public class PyUtil {
     if (!thing) throw new IncorrectOperationException();
   }
 
+  public static boolean isAttribute(PyTargetExpression ex) {
+    return isInstanceAttribute(ex) || isClassAttribute(ex);
+  }
+
   public static boolean isInstanceAttribute(PyExpression target) {
     if (!(target instanceof PyTargetExpression)) {
       return false;
@@ -443,6 +447,9 @@ public class PyUtil {
     if (owner instanceof PyFunction) {
       final PyFunction method = (PyFunction)owner;
       if (method.getContainingClass() != null) {
+        if (method.getStub() != null) {
+          return true;
+        }
         final PyParameter[] params = method.getParameterList().getParameters();
         if (params.length > 0) {
           final PyTargetExpression targetExpr = (PyTargetExpression)target;

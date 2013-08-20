@@ -1,7 +1,6 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -10,9 +9,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 
 /**
@@ -197,17 +194,12 @@ public class PyRenameTest extends PyTestCase {
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     myFixture.configureFromTempProjectFile("a.py");
     myFixture.renameElementAtCaret(newName);
-    VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + "/" + RENAME_DATA_PATH + testName + "/after");
+    VirtualFile dir2 = PyTestCase.getVirtualFileByName(PythonTestUtil.getTestDataPath() + "/" + RENAME_DATA_PATH + testName + "/after");
     try {
       PlatformTestUtil.assertDirectoriesEqual(dir2, dir1);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  @Nullable
-  private static VirtualFile getVirtualFileByName(String fileName) {
-    return LocalFileSystem.getInstance().findFileByPath(fileName.replace(File.separatorChar, '/'));
   }
 }

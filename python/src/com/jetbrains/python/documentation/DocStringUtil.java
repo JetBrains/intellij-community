@@ -1,7 +1,5 @@
 package com.jetbrains.python.documentation;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -17,12 +15,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DocStringUtil {
   private DocStringUtil() {
-  }
-
-  public static String trimDocString(String s) {
-    return s.trim()
-            .replaceFirst("^((:py)?:class:`[~!]?|[A-Z]\\{)", "")
-            .replaceFirst("(`|\\})?\\.?$", "");
   }
 
   @Nullable
@@ -82,24 +74,6 @@ public class DocStringUtil {
   }
 
   @Nullable
-  public static PyStringLiteralExpression getAttributeDocString(@NotNull PyTargetExpression attr) {
-    if (attr.getParent() instanceof PyAssignmentStatement) {
-      final PyAssignmentStatement assignment = (PyAssignmentStatement)attr.getParent();
-      PsiElement nextSibling = assignment.getNextSibling();
-      while (nextSibling != null && (nextSibling instanceof PsiWhiteSpace || nextSibling instanceof PsiComment)) {
-        nextSibling = nextSibling.getNextSibling();
-      }
-      if (nextSibling instanceof PyExpressionStatement) {
-        final PyExpression expression = ((PyExpressionStatement)nextSibling).getExpression();
-        if (expression instanceof PyStringLiteralExpression) {
-          return (PyStringLiteralExpression)expression;
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
   public static String getAttributeDocComment(@NotNull PyTargetExpression attr) {
     if (attr.getParent() instanceof PyAssignmentStatement) {
       final PyAssignmentStatement assignment = (PyAssignmentStatement)attr.getParent();
@@ -115,31 +89,26 @@ public class DocStringUtil {
   }
 
   public static boolean isVariableDocString(@NotNull PyStringLiteralExpression expr) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(expr);
-    if (module == null) return false;
-    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(module);
-    if (settings.isEpydocFormat(expr.getContainingFile()) || settings.isReSTFormat(expr.getContainingFile())) {
-      final PsiElement parent = expr.getParent();
-      if (!(parent instanceof PyExpressionStatement)) {
-        return false;
-      }
-      PsiElement prevElement = parent.getPrevSibling();
-      while (prevElement instanceof PsiWhiteSpace || prevElement instanceof PsiComment) {
-        prevElement = prevElement.getPrevSibling();
-      }
-      if (prevElement instanceof PyAssignmentStatement) {
-        if (expr.getText().contains("type:")) return true;
+    final PsiElement parent = expr.getParent();
+    if (!(parent instanceof PyExpressionStatement)) {
+      return false;
+    }
+    PsiElement prevElement = parent.getPrevSibling();
+    while (prevElement instanceof PsiWhiteSpace || prevElement instanceof PsiComment) {
+      prevElement = prevElement.getPrevSibling();
+    }
+    if (prevElement instanceof PyAssignmentStatement) {
+      if (expr.getText().contains("type:")) return true;
 
-        final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)prevElement;
-        final ScopeOwner scope = PsiTreeUtil.getParentOfType(prevElement, ScopeOwner.class);
-        if (scope instanceof PyClass || scope instanceof PyFile) {
-          return true;
-        }
-        if (scope instanceof PyFunction) {
-          for (PyExpression target : assignmentStatement.getTargets()) {
-            if (PyUtil.isInstanceAttribute(target)) {
-              return true;
-            }
+      final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)prevElement;
+      final ScopeOwner scope = PsiTreeUtil.getParentOfType(prevElement, ScopeOwner.class);
+      if (scope instanceof PyClass || scope instanceof PyFile) {
+        return true;
+      }
+      if (scope instanceof PyFunction) {
+        for (PyExpression target : assignmentStatement.getTargets()) {
+          if (PyUtil.isInstanceAttribute(target)) {
+            return true;
           }
         }
       }
