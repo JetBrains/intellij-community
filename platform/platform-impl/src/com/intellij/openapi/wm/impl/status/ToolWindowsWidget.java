@@ -151,7 +151,8 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
 
           final Dimension size = list.getPreferredSize();
           final JComponent c = ToolWindowsWidget.this;
-          final RelativePoint point = new RelativePoint(c, new Point(-4, -4 - size.height));
+          final Insets padding = UIUtil.getListViewportPadding();
+          final RelativePoint point = new RelativePoint(c, new Point(-4, -padding.top - padding.bottom -4 - size.height));
 
           if (popup != null && popup.isVisible()) {
             return;
@@ -161,6 +162,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
           PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
           popup = builder
             .setAutoselectOnMouseMove(true)
+            .setRequestFocus(false)
             .setItemChoosenCallback(new Runnable() {
               @Override
               public void run() {
@@ -191,15 +193,11 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
           GotItMessage.createMessage(UIBundle.message("tool.window.quick.access.title"), UIBundle.message(
             "tool.window.quick.access.message"))
             .setDisposable(ToolWindowsWidget.this)
-            .setCallback(new Runnable() {
-              @Override
-              public void run() {
-                PropertiesComponent.getInstance().setValue(key, String.valueOf(true));
-              }
-            }).show(new RelativePoint(ToolWindowsWidget.this, new Point(10, 0)), Balloon.Position.above);
+            .show(new RelativePoint(ToolWindowsWidget.this, new Point(10, 0)), Balloon.Position.above);
+            PropertiesComponent.getInstance().setValue(key, String.valueOf(true));
           Disposer.dispose(alarm);
         }
-      }, 5000);
+      }, 10000);
     }
   }
 

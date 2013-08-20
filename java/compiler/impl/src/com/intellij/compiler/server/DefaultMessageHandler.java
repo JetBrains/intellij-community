@@ -16,7 +16,7 @@
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.make.CachingSearcher;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -30,8 +30,7 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.cls.ClsUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.Channels;
+import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -50,7 +49,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   private final Project myProject;
   private int myConstantSearchesCount = 0;
   private final CachingSearcher mySearcher;
-  private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new PooledThreadExecutor());
+  private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
 
   protected DefaultMessageHandler(Project project) {
     myProject = project;
@@ -102,6 +101,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
       }
       else {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             try {
               String qualifiedName = ownerClassName.replace('$', '.');
@@ -137,8 +137,8 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
                       continue;
                     }
                     foundAtLeastOne = true;
-                    final boolean sucess = performChangedConstantSearch(aClass, changedField, accessFlags, accessChanged, affectedPaths);
-                    if (!sucess) {
+                    final boolean success = performChangedConstantSearch(aClass, changedField, accessFlags, accessChanged, affectedPaths);
+                    if (!success) {
                       isSuccess.set(Boolean.FALSE);
                       break;
                     }
@@ -175,7 +175,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         builder.setIsSuccess(false);
         LOG.debug("Constant search task: unsuccessful");
       }
-      Channels.write(channel, CmdlineProtoUtil.toMessage(sessionId, CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
+      channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
         CmdlineRemoteProto.Message.ControllerMessage.Type.CONSTANT_SEARCH_RESULT).setConstantSearchResult(builder.build()).build()
       ));
     }
@@ -219,11 +219,11 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         //}
       }
     }
-    catch (PsiInvalidElementAccessException e) {
+    catch (PsiInvalidElementAccessException ignored) {
       LOG.debug("Constant search task: PIEAE thrown while searching of usages of changed constant");
       return false;
     }
-    catch (ProcessCanceledException e) {
+    catch (ProcessCanceledException ignored) {
       LOG.debug("Constant search task: PCE thrown while searching of usages of changed constant");
       return false;
     }
@@ -262,7 +262,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
           }
           return true;
         }
-        catch (PsiInvalidElementAccessException e) {
+        catch (PsiInvalidElementAccessException ignored) {
           result.set(Boolean.FALSE);
           LOG.debug("Constant search task: PIEAE thrown while searching of usages of removed constant");
           return false;
@@ -285,6 +285,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
 
   private static boolean processIdentifiers(PsiSearchHelper helper, @NotNull final PsiElementProcessor<PsiIdentifier> processor, @NotNull final String identifier, @NotNull SearchScope searchScope, short searchContext) {
     TextOccurenceProcessor processor1 = new TextOccurenceProcessor() {
+      @Override
       public boolean execute(PsiElement element, int offsetInElement) {
         return !(element instanceof PsiIdentifier) || processor.execute((PsiIdentifier)element);
       }
@@ -332,7 +333,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         if (containingFile == null) {
           return null;
         }
-        return StdLanguages.JAVA.equals(containingFile.getLanguage())? psiClass : null;
+        return JavaLanguage.INSTANCE.equals(containingFile.getLanguage())? psiClass : null;
       }
       element = element.getParent();
     }

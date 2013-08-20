@@ -15,24 +15,28 @@
  */
 package org.jetbrains.io;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class Decoder extends SimpleChannelUpstreamHandler {
-  protected ChannelBuffer cumulation;
+public abstract class Decoder<I> extends SimpleChannelInboundHandler<I> {
+  protected ByteBuf cumulation;
+
+  protected Decoder() {
+    super(false);
+  }
 
   @Nullable
-  protected final ChannelBuffer getBufferIfSufficient(ChannelBuffer input, int requiredLength, ChannelHandlerContext context) {
-    if (!input.readable()) {
+  protected final ByteBuf getBufferIfSufficient(ByteBuf input, int requiredLength, ChannelHandlerContext context) {
+    if (!input.isReadable()) {
       return null;
     }
 
     if (cumulation == null) {
       if (input.readableBytes() < requiredLength) {
-        cumulation = context.getChannel().getConfig().getBufferFactory().getBuffer(requiredLength);
+        cumulation = context.channel().config().getAllocator().buffer(requiredLength);
         cumulation.writeBytes(input);
         return null;
       }
@@ -46,7 +50,7 @@ public abstract class Decoder extends SimpleChannelUpstreamHandler {
         return null;
       }
       else {
-        ChannelBuffer buffer = ChannelBuffers.wrappedBuffer(cumulation, input);
+        ByteBuf buffer = Unpooled.wrappedBuffer(cumulation, input);
         input.skipBytes(input.readableBytes());
         cumulation = null;
         return buffer;

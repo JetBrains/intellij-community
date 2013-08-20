@@ -49,7 +49,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     new HashMap<String, RunnerAndConfigurationSettings>();
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<String, RunnerAndConfigurationSettings>(); // template configurations are not included here
-  private final Map<Object, List<RunnerAndConfigurationSettings>> myExternalSettings =
+  final Map<Object, List<RunnerAndConfigurationSettings>> myExternalSettings =
     new java.util.HashMap<Object, List<RunnerAndConfigurationSettings>>();
   private final Map<String, Boolean> mySharedConfigurations = new TreeMap<String, Boolean>();
   private final Map<RunConfiguration, List<BeforeRunTask>> myConfigurationToBeforeTasksMap = new WeakHashMap<RunConfiguration, List<BeforeRunTask>>();
@@ -403,6 +403,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @Override
   public void removeConfiguration(@Nullable RunnerAndConfigurationSettings settings) {
     if (settings == null) return;
+    for (Map.Entry<Object, List<RunnerAndConfigurationSettings>> entry : myExternalSettings.entrySet()) {
+      if (entry.getValue().remove(settings)) break;
+    }
 
     for (Iterator<RunnerAndConfigurationSettings> it = getSortedConfigurations().iterator(); it.hasNext(); ) {
       final RunnerAndConfigurationSettings configuration = it.next();
@@ -784,7 +787,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public void removeExternalSettings(@NotNull Object removerKey) {
-    List<RunnerAndConfigurationSettings> settingsList = myExternalSettings.get(removerKey);
+    List<RunnerAndConfigurationSettings> settingsList = getExternalSettings(removerKey);
     for (RunnerAndConfigurationSettings each : settingsList) {
       removeConfiguration(each);
     }

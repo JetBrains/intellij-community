@@ -20,15 +20,14 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import gnu.trove.THashMap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import org.apache.xmlrpc.*;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.HttpRequestHandler;
@@ -57,13 +56,13 @@ public class XmlRpcServerImpl implements XmlRpcServer {
 
   static final class XmlRpcRequestHandler extends HttpRequestHandler {
     @Override
-    public boolean isSupported(HttpRequest request) {
+    public boolean isSupported(FullHttpRequest request) {
       return request.getMethod() == HttpMethod.POST || request.getMethod() == HttpMethod.OPTIONS;
     }
 
     @Override
-    public boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context) throws IOException {
-      return SERVICE.getInstance().process(urlDecoder.getPath(), request, context, null);
+    public boolean process(QueryStringDecoder urlDecoder, FullHttpRequest request, ChannelHandlerContext context) throws IOException {
+      return SERVICE.getInstance().process(urlDecoder.path(), request, context, null);
     }
   }
 
@@ -83,14 +82,14 @@ public class XmlRpcServerImpl implements XmlRpcServer {
   }
 
   @Override
-  public boolean process(@NotNull String path, @NotNull HttpRequest request, @NotNull ChannelHandlerContext context, @Nullable Map<String, Object> handlers) throws IOException {
+  public boolean process(@NotNull String path, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context, @Nullable Map<String, Object> handlers) throws IOException {
     if (!(path.isEmpty() || (path.length() == 1 && path.charAt(0) == '/') || path.equalsIgnoreCase("/RPC2"))) {
       return false;
     }
 
     if (request.getMethod() == HttpMethod.POST) {
-      ChannelBuffer result;
-      ChannelBufferInputStream in = new ChannelBufferInputStream(request.getContent());
+      ByteBuf result;
+      ByteBufInputStream in = new ByteBufInputStream(request.content());
       try {
         XmlRpcServerRequest xmlRpcServerRequest = new XmlRpcRequestProcessor().decodeRequest(in);
 
@@ -100,10 +99,10 @@ public class XmlRpcServerImpl implements XmlRpcServer {
         }
 
         Object response = invokeHandler(getHandler(xmlRpcServerRequest.getMethodName(), handlers == null ? handlerMapping : handlers), xmlRpcServerRequest);
-        result = ChannelBuffers.copiedBuffer(new XmlRpcResponseProcessor().encodeResponse(response, CharsetToolkit.UTF8));
+        result = Unpooled.copiedBuffer(new XmlRpcResponseProcessor().encodeResponse(response, CharsetToolkit.UTF8));
       }
       catch (Throwable e) {
-        context.getChannel().close();
+        context.channel().close();
         LOG.error(e);
         return true;
       }
@@ -111,12 +110,10 @@ public class XmlRpcServerImpl implements XmlRpcServer {
         in.close();
       }
 
-      HttpResponse response = Responses.create("text/xml");
-      response.setContent(result);
-      Responses.send(response, context.getChannel(), request);
+      Responses.send(Responses.response("text/xml", result), context.channel(), request);
       return true;
     }
-    else if (HttpMethod.POST.getName().equals(request.getHeader("Access-Control-Request-Method"))) {
+    else if (HttpMethod.POST.name().equals(request.headers().get("Access-Control-Request-Method"))) {
       LOG.assertTrue(request.getMethod() == HttpMethod.OPTIONS);
       Responses.sendOptionsResponse("POST, OPTIONS", request, context);
       return true;

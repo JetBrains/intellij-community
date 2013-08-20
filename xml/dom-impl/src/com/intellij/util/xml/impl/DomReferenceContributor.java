@@ -27,6 +27,6 @@ public class DomReferenceContributor extends PsiReferenceContributor{
     GenericValueReferenceProvider provider = new GenericValueReferenceProvider();
 
     registrar.registerReferenceProvider(XmlPatterns.xmlTag(), provider);
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue(), provider);
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue(), provider, PsiReferenceRegistrar.HIGHER_PRIORITY);
   }
 }

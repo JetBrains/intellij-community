@@ -16,30 +16,24 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.handler.codec.compression.ZlibDecoder;
-import org.jboss.netty.handler.codec.compression.ZlibEncoder;
-import org.jboss.netty.handler.codec.compression.ZlibWrapper;
-import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
-import org.jboss.netty.handler.codec.http.HttpContentCompressor;
-import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
-import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
-import org.jboss.netty.handler.ssl.SslHandler;
-import org.jboss.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.*;
+import io.netty.handler.codec.compression.JZlibEncoder;
+import io.netty.handler.codec.compression.JdkZlibDecoder;
+import io.netty.handler.codec.compression.ZlibWrapper;
+import io.netty.handler.codec.http.HttpMessage;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.stream.ChunkedWriteHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
-import java.net.SocketAddress;
 import java.security.KeyStore;
 import java.security.Security;
 
 @ChannelHandler.Sharable
-final class PortUnificationServerHandler extends Decoder {
+final class PortUnificationServerHandler extends Decoder<ByteBuf> {
   private static final AtomicNotNullLazyValue<SSLContext> SSL_SERVER_CONTEXT = new AtomicNotNullLazyValue<SSLContext>() {
     @NotNull
     @Override
@@ -69,73 +63,67 @@ final class PortUnificationServerHandler extends Decoder {
   private final boolean detectSsl;
   private final boolean detectGzip;
 
-  private final ChannelGroup openChannels;
   private final DelegatingHttpRequestHandler delegatingHttpRequestHandler;
 
-  public PortUnificationServerHandler(ChannelGroup openChannels) {
-    this(new DelegatingHttpRequestHandler(), openChannels, true, true);
+  public PortUnificationServerHandler() {
+    this(new DelegatingHttpRequestHandler(), true, true);
   }
 
-  private PortUnificationServerHandler(DelegatingHttpRequestHandler delegatingHttpRequestHandler, @Nullable ChannelGroup openChannels, boolean detectSsl, boolean detectGzip) {
+  private PortUnificationServerHandler(DelegatingHttpRequestHandler delegatingHttpRequestHandler, boolean detectSsl, boolean detectGzip) {
     this.delegatingHttpRequestHandler = delegatingHttpRequestHandler;
-    this.openChannels = openChannels;
     this.detectSsl = detectSsl;
     this.detectGzip = detectGzip;
   }
 
   @Override
-  public void channelOpen(ChannelHandlerContext context, ChannelStateEvent e) {
-    if (openChannels != null) {
-      openChannels.add(e.getChannel());
+  protected void channelRead0(ChannelHandlerContext context, ByteBuf message) throws Exception {
+    ByteBuf buffer = getBufferIfSufficient(message, 5, context);
+    if (buffer == null) {
+      message.release();
+    }
+    else {
+      decode(context, buffer);
     }
   }
 
-  @Override
-  public void messageReceived(ChannelHandlerContext context, MessageEvent e) throws Exception {
-    Object m = e.getMessage();
-    if (!(m instanceof ChannelBuffer)) {
-      context.sendUpstream(e);
-      return;
-    }
-
-    ChannelBuffer buffer = getBufferIfSufficient((ChannelBuffer)m, 5, context);
-    if (buffer != null) {
-      decode(context, buffer, e.getRemoteAddress());
-    }
-  }
-
-  private void decode(ChannelHandlerContext context, ChannelBuffer buffer, SocketAddress remoteAddress) throws Exception {
-    ChannelPipeline pipeline = context.getPipeline();
+  private void decode(ChannelHandlerContext context, ByteBuf buffer) throws Exception {
+    ChannelPipeline pipeline = context.pipeline();
     if (detectSsl && SslHandler.isEncrypted(buffer)) {
       SSLEngine engine = SSL_SERVER_CONTEXT.getValue().createSSLEngine();
       engine.setUseClientMode(false);
-      pipeline.addLast("ssl", new SslHandler(engine));
-      pipeline.addLast("streamer", new ChunkedWriteHandler());
-      pipeline.addLast("unificationWOSsl", new PortUnificationServerHandler(delegatingHttpRequestHandler, null, false, detectGzip));
+      pipeline.addLast(new SslHandler(engine), new ChunkedWriteHandler());
+      pipeline.addLast(new PortUnificationServerHandler(delegatingHttpRequestHandler, false, detectGzip));
     }
     else {
       int magic1 = buffer.getUnsignedByte(buffer.readerIndex());
       int magic2 = buffer.getUnsignedByte(buffer.readerIndex() + 1);
       if (detectGzip && magic1 == 31 && magic2 == 139) {
-        pipeline.addLast("gzipDeflater", new ZlibEncoder(ZlibWrapper.GZIP));
-        pipeline.addLast("gzipInflater", new ZlibDecoder(ZlibWrapper.GZIP));
-        pipeline.addLast("unificationWOGzip", new PortUnificationServerHandler(delegatingHttpRequestHandler, null, detectSsl, false));
+        pipeline.addLast(new JZlibEncoder(ZlibWrapper.GZIP), new JdkZlibDecoder(ZlibWrapper.GZIP));
+        pipeline.addLast(new PortUnificationServerHandler(delegatingHttpRequestHandler, detectSsl, false));
       }
       else {
-        pipeline.addLast("decoder", new HttpRequestDecoder());
-        pipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
-        pipeline.addLast("encoder", new HttpResponseEncoder());
-        pipeline.addLast("deflater", new HttpContentCompressor());
-        pipeline.addLast("handler", delegatingHttpRequestHandler);
+        NettyUtil.initHttpHandlers(pipeline);
+        pipeline.addLast(delegatingHttpRequestHandler);
+        if (BuiltInServer.LOG.isDebugEnabled()) {
+          pipeline.addLast(new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) throws Exception {
+              if (message instanceof HttpMessage) {
+                BuiltInServer.LOG.debug("OUT HTTP:\n" + message);
+              }
+              super.write(context, message, promise);
+            }
+          });
+        }
       }
     }
     // must be after new channels handlers addition (netty bug?)
     pipeline.remove(this);
-    Channels.fireMessageReceived(context, buffer, remoteAddress);
+    context.fireChannelRead(buffer);
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
-    NettyUtil.log(event.getCause(), BuiltInServer.LOG);
+  public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
+    NettyUtil.log(cause, BuiltInServer.LOG);
   }
 }

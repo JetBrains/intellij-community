@@ -19,6 +19,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -217,14 +218,14 @@ public class PsiImmediateClassType extends PsiClassType {
       pineBuffer.append('<');
       for (int i = 0; i < typeParameters.length; i++) {
         PsiTypeParameter typeParameter = typeParameters[i];
-        assert typeParameter.isValid();
+        PsiUtilCore.ensureValid(typeParameter);
         if (i > 0) pineBuffer.append(',');
         final PsiType substitutionResult = substitutor.substitute(typeParameter);
         if (substitutionResult == null) {
           pineBuffer = null;
           break;
         }
-        assert substitutionResult.isValid();
+        PsiUtil.ensureValidType(substitutionResult);
         if (canonical) {
           if (internal) {
             pineBuffer.append(substitutionResult.getInternalCanonicalText());

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.javac;
 
-import org.jboss.netty.channel.MessageEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.client.SimpleProtobufClient;
@@ -33,9 +32,9 @@ public class JavacServerClient extends SimpleProtobufClient<JavacServerResponseH
 
   public JavacServerClient() {
     super(JavacRemoteProto.Message.getDefaultInstance(), SharedThreadPool.getInstance(), new UUIDGetter() {
+      @Override
       @NotNull
-      public UUID getSessionUUID(@NotNull MessageEvent e) {
-        final JavacRemoteProto.Message message = (JavacRemoteProto.Message)e.getMessage();
+      public UUID getSessionUUID(@NotNull JavacRemoteProto.Message message) {
         final JavacRemoteProto.Message.UUID uuid = message.getSessionId();
         return new UUID(uuid.getMostSigBits(), uuid.getLeastSigBits());
       }
@@ -46,6 +45,7 @@ public class JavacServerClient extends SimpleProtobufClient<JavacServerResponseH
     final JavacServerResponseHandler rh = new JavacServerResponseHandler(diagnosticSink, outputSink);
     final JavacRemoteProto.Message.Request request = JavacProtoUtil.createCompilationRequest(options, files, classpath, platformCp, sourcePath, outs);
     return sendRequest(request, rh, new RequestFuture.CancelAction<JavacServerResponseHandler>() {
+      @Override
       public void cancel(RequestFuture<JavacServerResponseHandler> javacServerResponseHandlerRequestFuture) throws Exception {
         sendRequest(JavacProtoUtil.createCancelRequest(), null, null);
       }

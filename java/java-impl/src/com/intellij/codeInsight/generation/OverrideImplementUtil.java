@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -245,7 +246,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden, boolean insertOverride) {
     if (insertOverride && canInsertOverride(overridden, targetClass)) {
-      annotate(method, Override.class.getName());
+      AddAnnotationPsiFix.addPhysicalAnnotation(Override.class.getName(), PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(targetClass);
     final GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
@@ -255,7 +256,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       for (String annotation : each.getAnnotations(project)) {
         if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
         if (AnnotationUtil.isAnnotated(overridden, annotation, false, false)) {
-          annotate(method, annotation, each.annotationsToRemove(project, annotation));
+          AddAnnotationPsiFix.removePhysicalAnnotations(method, each.annotationsToRemove(project, annotation));
+          AddAnnotationPsiFix.addPhysicalAnnotation(annotation, PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
         }
       }
     }

@@ -52,11 +52,11 @@ public final class ModuleRunConfigurationManager extends ModuleAdapter implement
   private static final Logger LOG = Logger.getInstance(ModuleRunConfigurationManager.class);
   @NonNls static final String COMPONENT_NAME = "ModuleRunConfigurationManager";
 
-  private final Object myRemoverKey;
+  final Object myRemoverKey;
   @NotNull
   private final Module myModule;
   @NotNull
-  private final RunManagerImpl myManager;
+  final RunManagerImpl myManager;
   @Nullable
   private List<Element> myUnloadedElements = null;
 

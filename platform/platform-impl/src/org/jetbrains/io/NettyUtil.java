@@ -17,12 +17,17 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelException;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.ChannelFuture;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.*;
+import io.netty.channel.oio.OioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.oio.OioSocketChannel;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -40,18 +45,18 @@ public final class NettyUtil {
     }
   }
 
-  public static Channel connectClient(ClientBootstrap bootstrap, SocketAddress remoteAddress, ActionCallback asyncResult) {
+  public static Channel connectClient(Bootstrap bootstrap, SocketAddress remoteAddress, ActionCallback asyncResult) {
     return connect(bootstrap, remoteAddress, asyncResult, DEFAULT_CONNECT_ATTEMPT_COUNT);
   }
 
   @Nullable
-  public static Channel connect(ClientBootstrap bootstrap, SocketAddress remoteAddress, ActionCallback asyncResult, int maxAttemptCount) {
+  public static Channel connect(Bootstrap bootstrap, SocketAddress remoteAddress, ActionCallback asyncResult, int maxAttemptCount) {
     int attemptCount = 0;
     while (true) {
       try {
         ChannelFuture future = bootstrap.connect(remoteAddress).await();
         if (future.isSuccess()) {
-          return future.getChannel();
+          return future.channel();
         }
         else if (asyncResult.isRejected()) {
           return null;
@@ -84,13 +89,29 @@ public final class NettyUtil {
 
   // applicable only in case of ClientBootstrap&OioClientSocketChannelFactory
   public static void closeAndReleaseFactory(Channel channel) {
-    ChannelFactory channelFactory = channel.getFactory();
+    EventLoop channelFactory = channel.eventLoop();
     try {
       channel.close().awaitUninterruptibly();
     }
     finally {
       // in our case it does nothing, we don't use ExecutorService, but we are aware of future changes
-      channelFactory.releaseExternalResources();
+      channelFactory.shutdownGracefully();
     }
+  }
+
+  public static ServerBootstrap nioServerBootstrap(EventLoopGroup eventLoopGroup) {
+    ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(NioServerSocketChannel.class);
+    bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true);
+    return bootstrap;
+  }
+
+  public static Bootstrap oioClientBootstrap() {
+    Bootstrap bootstrap = new Bootstrap().group(new OioEventLoopGroup(1, PooledThreadExecutor.INSTANCE)).channel(OioSocketChannel.class);
+    bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
+    return bootstrap;
+  }
+
+  public static void initHttpHandlers(ChannelPipeline pipeline) {
+    pipeline.addLast(new HttpRequestDecoder(), new HttpObjectAggregator(1048576), new HttpResponseEncoder());
   }
 }

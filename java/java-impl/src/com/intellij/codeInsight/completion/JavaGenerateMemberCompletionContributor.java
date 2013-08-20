@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.ui.RowIcon;
@@ -35,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -55,15 +57,16 @@ public class JavaGenerateMemberCompletionContributor {
       andNot(psiElement().afterLeaf(psiElement().inside(PsiModifierList.class))).accepts(position)) {
       final PsiClass parent = CompletionUtil.getOriginalElement((PsiClass)position.getParent().getParent().getParent());
       if (parent != null) {
-        addGetterSetterElements(result, parent);
-        addSuperSignatureElements(parent, true, result);
-        addSuperSignatureElements(parent, false, result);
+        Set<MethodSignature> addedSignatures = ContainerUtil.newHashSet();
+        addGetterSetterElements(result, parent, addedSignatures);
+        addSuperSignatureElements(parent, true, result, addedSignatures);
+        addSuperSignatureElements(parent, false, result, addedSignatures);
       }
     }
 
   }
 
-  private static void addGetterSetterElements(CompletionResultSet result, PsiClass parent) {
+  private static void addGetterSetterElements(CompletionResultSet result, PsiClass parent, Set<MethodSignature> addedSignatures) {
     List<PsiMethod> prototypes = ContainerUtil.newArrayList();
     for (PsiField field : parent.getFields()) {
       if (!(field instanceof PsiEnumConstant)) {
@@ -72,7 +75,7 @@ public class JavaGenerateMemberCompletionContributor {
       }
     }
     for (final PsiMethod prototype : prototypes) {
-      if (parent.findMethodBySignature(prototype, false) == null) {
+      if (parent.findMethodBySignature(prototype, false) == null && addedSignatures.add(prototype.getSignature(PsiSubstitutor.EMPTY))) {
         Icon icon = prototype.getIcon(Iconable.ICON_FLAG_VISIBILITY);
         result.addElement(createGenerateMethodElement(prototype, PsiSubstitutor.EMPTY, icon, "", new InsertHandler<LookupElement>() {
           @Override
@@ -91,13 +94,14 @@ public class JavaGenerateMemberCompletionContributor {
     context.commitDocument();
   }
 
-  private static void addSuperSignatureElements(final PsiClass parent, boolean implemented, CompletionResultSet result) {
+  private static void addSuperSignatureElements(final PsiClass parent, boolean implemented, CompletionResultSet result, Set<MethodSignature> addedSignatures) {
     for (CandidateInfo candidate : OverrideImplementExploreUtil.getMethodsToOverrideImplement(parent, implemented)) {
       PsiMethod baseMethod = (PsiMethod)candidate.getElement();
       assert baseMethod != null;
       PsiClass baseClass = baseMethod.getContainingClass();
-      if (!baseMethod.isConstructor() && baseClass != null) {
-        result.addElement(createOverridingLookupElement(parent, implemented, baseMethod, baseClass, candidate.getSubstitutor()));
+      PsiSubstitutor substitutor = candidate.getSubstitutor();
+      if (!baseMethod.isConstructor() && baseClass != null && addedSignatures.add(baseMethod.getSignature(substitutor))) {
+        result.addElement(createOverridingLookupElement(parent, implemented, baseMethod, baseClass, substitutor));
       }
     }
   }
