@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.html.dtd;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -90,5 +91,10 @@ public class HtmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   @Override
   public String toString() {
     return delegate.toString();
+  }
+
+  @Override
+  protected PsiElement getEnumeratedValueDeclaration(XmlAttributeValue attributeValue, String value) {
+    return super.getEnumeratedValueDeclaration(attributeValue, myCaseSensitive ? value : value.toLowerCase());
   }
 }
