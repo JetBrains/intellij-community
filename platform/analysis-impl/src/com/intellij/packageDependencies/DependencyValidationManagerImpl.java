@@ -206,6 +206,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
       LOG.info(e);
     }
 
+    super.loadState(element);
     myUnnamedScopes.clear();
     final List unnamedScopes = element.getChildren(UNNAMED_SCOPE);
     final PackageSetFactory packageSetFactory = PackageSetFactory.getInstance();
@@ -220,11 +221,11 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
 
     readRules(element);
-    super.loadState(element); // fire listeners after all reads
   }
 
   private void readRules(Element element) {
-    myRules.clear();
+    removeAllRules();
+
     List rules = element.getChildren(DENY_RULE_KEY);
     for (Object rule1 : rules) {
       DependencyRule rule = readRule((Element)rule1);
