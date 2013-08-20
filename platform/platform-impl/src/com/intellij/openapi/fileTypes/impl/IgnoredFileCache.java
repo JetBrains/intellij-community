@@ -16,7 +16,6 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -35,11 +34,10 @@ import java.util.List;
  * @author peter
  */
 class IgnoredFileCache {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.IgnoredFileCache");
   private final BitSet myCheckedIds = new BitSet();
   private final TIntHashSet myIgnoredIds = new TIntHashSet();
   private final IgnoredPatternSet myIgnoredPatterns;
-  private boolean myEnableCache = true;
+  private int myVfsEventNesting = 0;
 
   IgnoredFileCache(IgnoredPatternSet ignoredPatterns) {
     myIgnoredPatterns = ignoredPatterns;
@@ -48,17 +46,14 @@ class IgnoredFileCache {
       @Override
       public void before(@NotNull List<? extends VFileEvent> events) {
         // during VFS event processing the system may be in inconsistent state, don't cache it
-        if (!myEnableCache) {
-          LOG.error("VFS before event received without a matching after: " + events);
-        }
-        myEnableCache = false;
+        myVfsEventNesting++;
         clearCacheForChangedFiles(events);
       }
 
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         clearCacheForChangedFiles(events);
-        myEnableCache = true;
+        myVfsEventNesting--;
       }
 
       private void clearCacheForChangedFiles(List<? extends VFileEvent> events) {
@@ -98,7 +93,7 @@ class IgnoredFileCache {
   }
 
   boolean isFileIgnored(VirtualFile file) {
-    if (!myEnableCache || !(file instanceof NewVirtualFile)) {
+    if (myVfsEventNesting == 0 || !(file instanceof NewVirtualFile)) {
       return isFileIgnoredNoCache(file);
     }
 
@@ -113,7 +108,7 @@ class IgnoredFileCache {
       }
     }
 
-    boolean result = isFileIgnoredNoCache(file);;
+    boolean result = isFileIgnoredNoCache(file);
     synchronized (myCheckedIds) {
       myCheckedIds.set(id);
       if (result) {
