@@ -21,6 +21,8 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -76,7 +78,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * unbounded retries if tables undergo continuous modification
    * which would make it impossible to obtain an accurate result.
    */
-  static final int RETRIES_BEFORE_LOCK = 2;
+  private static final int RETRIES_BEFORE_LOCK = 2;
 
     /* ---------------- Fields -------------- */
 
@@ -84,21 +86,21 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * Mask value for indexing into segments. The upper bits of a
    * key's hash code are used to choose the segment.
    */
-  final int segmentMask;
+  private final int segmentMask;
 
   /**
    * Shift value for indexing within segments.
    */
-  final int segmentShift;
+  private final int segmentShift;
 
   /**
    * The segments, each of which is a specialized hash table
    */
-  final Segment[] segments;
+  private final Segment[] segments;
 
-  transient Set<K> keySet;
-  transient Set<Entry<K, V>> entrySet;
-  transient Collection<V> values;
+  private transient Set<K> keySet;
+  private transient Set<Entry<K, V>> entrySet;
+  private transient Collection<V> values;
   private final TObjectHashingStrategy<K> myHashingStrategy;
 
   /* ---------------- Small Utilities -------------- */
@@ -109,8 +111,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * @param hash the hash code for the key
    * @return the segment
    */
-  final Segment<K, V> segmentFor(int hash) {
-    return segments[(hash >>> segmentShift) & segmentMask];
+  private Segment<K, V> segmentFor(int hash) {
+    return segments[hash >>> segmentShift & segmentMask];
   }
 
   /* ---------------- Inner Classes -------------- */
@@ -127,13 +129,13 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * backup in case a null (pre-initialized) value is ever seen in
    * an unsynchronized access method.
    */
-  static final class HashEntry<K, V> {
-    final K key;
-    final int hash;
-    volatile V value;
-    final HashEntry<K, V> next;
+  private static final class HashEntry<K, V> {
+    private final K key;
+    private final int hash;
+    private volatile V value;
+    private final HashEntry<K, V> next;
 
-    HashEntry(K key, int hash, HashEntry<K, V> next, V value) {
+    private HashEntry(K key, int hash, HashEntry<K, V> next, V value) {
       this.key = key;
       this.hash = hash;
       this.next = next;
@@ -146,7 +148,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * subclasses from ReentrantLock opportunistically, just to
    * simplify some locking and avoid separate construction.
    */
-  static final class Segment<K, V> extends ReentrantLock implements Serializable {
+  private static final class Segment<K, V> extends ReentrantLock implements Serializable {
         /*
          * Segments maintain a table of entry lists that are ALWAYS
          * kept in a consistent state, so can be read without locking.
@@ -189,7 +191,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     /**
      * The number of elements in this segment's region.
      */
-    transient volatile int count;
+    private transient volatile int count;
 
     /**
      * Number of updates that alter the size of the table. This is
@@ -199,20 +201,20 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * we might have an inconsistent view of state so (usually)
      * must retry.
      */
-    transient int modCount;
+    private transient int modCount;
 
     /**
      * The table is rehashed when its size exceeds this threshold.
      * (The value of this field is always (int)(capacity *
      * loadFactor).)
      */
-    transient int threshold;
+    private transient int threshold;
 
     /**
      * The per-segment table. Declared as a raw type, casted
      * to HashEntry<K,V> on each use.
      */
-    transient volatile HashEntry[] table;
+    private transient volatile HashEntry[] table;
 
     /**
      * The load factor for the hash table.  Even though this value
@@ -221,10 +223,10 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      *
      * @serial
      */
-    final float loadFactor;
+    private final float loadFactor;
     private final TObjectHashingStrategy<K> myHashingStrategy;
 
-    Segment(int initialCapacity, float lf, TObjectHashingStrategy<K> hashingStrategy) {
+    private Segment(int initialCapacity, float lf, TObjectHashingStrategy<K> hashingStrategy) {
       loadFactor = lf;
       myHashingStrategy = hashingStrategy;
       setTable(new HashEntry[initialCapacity]);
@@ -234,7 +236,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * Set table to new HashEntry array.
      * Call only while holding lock or in constructor.
      */
-    void setTable(HashEntry[] newTable) {
+    private void setTable(HashEntry[] newTable) {
       threshold = (int)(newTable.length * loadFactor);
       table = newTable;
     }
@@ -242,9 +244,9 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     /**
      * Return properly casted first entry of bin for given hash
      */
-    HashEntry<K, V> getFirst(int hash) {
+    private HashEntry<K, V> getFirst(int hash) {
       HashEntry[] tab = table;
-      return (HashEntry<K, V>)tab[hash & (tab.length - 1)];
+      return (HashEntry<K, V>)tab[hash & tab.length - 1];
     }
 
     /**
@@ -254,7 +256,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * its table assignment, which is legal under memory model
      * but is not known to ever occur.
      */
-    V readValueUnderLock(HashEntry<K, V> e) {
+    private V readValueUnderLock(HashEntry<K, V> e) {
       lock();
       try {
         return e.value;
@@ -266,7 +268,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
 
         /* Specialized implementations of map methods */
 
-    V get(K key, int hash) {
+    private V get(K key, int hash) {
       if (count != 0) { // read-volatile
         HashEntry<K, V> e = getFirst(hash);
         while (e != null) {
@@ -283,7 +285,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       return null;
     }
 
-    boolean containsKey(K key, int hash) {
+    private boolean containsKey(K key, int hash) {
       if (count != 0) { // read-volatile
         HashEntry<K, V> e = getFirst(hash);
         while (e != null) {
@@ -296,12 +298,11 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       return false;
     }
 
-    boolean containsValue(Object value) {
+    private boolean containsValue(Object value) {
       if (count != 0) { // read-volatile
         HashEntry[] tab = table;
-        int len = tab.length;
-        for (int i = 0; i < len; i++) {
-          for (HashEntry<K, V> e = (HashEntry<K, V>)tab[i];
+        for (HashEntry tabEntry : tab) {
+          for (HashEntry<K, V> e = (HashEntry<K, V>)tabEntry;
                e != null;
                e = e.next) {
             V v = e.value;
@@ -318,7 +319,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       return false;
     }
 
-    boolean replace(K key, int hash, V oldValue, V newValue) {
+    private boolean replace(K key, int hash, V oldValue, V newValue) {
       lock();
       try {
         HashEntry<K, V> e = getFirst(hash);
@@ -338,7 +339,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       }
     }
 
-    V replace(K key, int hash, V newValue) {
+    private V replace(K key, int hash, V newValue) {
       lock();
       try {
         HashEntry<K, V> e = getFirst(hash);
@@ -358,8 +359,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       }
     }
 
-
-    V put(K key, int hash, V value, boolean onlyIfAbsent) {
+    private V put(K key, int hash, V value, boolean onlyIfAbsent) {
       lock();
       try {
         int c = count;
@@ -368,7 +368,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
           rehash();
         }
         HashEntry[] tab = table;
-        int index = hash & (tab.length - 1);
+        int index = hash & tab.length - 1;
         HashEntry<K, V> first = (HashEntry<K, V>)tab[index];
         HashEntry<K, V> e = first;
         while (e != null && (e.hash != hash || !myHashingStrategy.equals(key, e.key))) {
@@ -395,7 +395,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       }
     }
 
-    void rehash() {
+    private void rehash() {
       HashEntry[] oldTable = table;
       int oldCapacity = oldTable.length;
       if (oldCapacity >= MAXIMUM_CAPACITY) {
@@ -464,12 +464,12 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     /**
      * Remove; match on key only if value null, else match both.
      */
-    V remove(K key, int hash, V value) {
+    private V remove(K key, int hash, V value) {
       lock();
       try {
         int c = count - 1;
         HashEntry[] tab = table;
-        int index = hash & (tab.length - 1);
+        int index = hash & tab.length - 1;
         HashEntry<K, V> first = (HashEntry<K, V>)tab[index];
         HashEntry<K, V> e = first;
         while (e != null && (e.hash != hash || !myHashingStrategy.equals(key, e.key))) {
@@ -500,7 +500,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       }
     }
 
-    void clear() {
+    private void clear() {
       if (count != 0) {
         lock();
         try {
@@ -517,8 +517,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       }
     }
   }
-
-
 
     /* ---------------- Public operations -------------- */
 
@@ -557,10 +555,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
 
     // Find power-of-two sizes best matching arguments
-    int sshift = 0;
     int ssize = 1;
     while (ssize < concurrencyLevel) {
-      ++sshift;
       ssize <<= 1;
     }
     segmentShift =
@@ -745,7 +741,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    */
   @Override
   public boolean containsValue(@NotNull Object value) {
-
     // See explanation of modCount use above
 
     final Segment[] segments = this.segments;
@@ -777,21 +772,21 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       }
     }
     // Resort to locking all segments
-    for (int i = 0; i < segments.length; ++i) {
-      segments[i].lock();
+    for (Segment segment : segments) {
+      segment.lock();
     }
     boolean found = false;
     try {
-      for (int i = 0; i < segments.length; ++i) {
-        if (segments[i].containsValue(value)) {
+      for (Segment segment : segments) {
+        if (segment.containsValue(value)) {
           found = true;
           break;
         }
       }
     }
     finally {
-      for (int i = 0; i < segments.length; ++i) {
-        segments[i].unlock();
+      for (Segment segment : segments) {
+        segment.unlock();
       }
     }
     return found;
@@ -872,7 +867,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * @param t Mappings to be stored in this map.
    */
   @Override
-  public void putAll(Map<? extends K, ? extends V> t) {
+  public void putAll(@NotNull Map<? extends K, ? extends V> t) {
     for (
       Iterator<? extends Entry<? extends K, ? extends V>> it = (Iterator<? extends Entry<? extends K, ? extends V>>)t.entrySet().iterator();
       it.hasNext(); ) {
@@ -996,10 +991,11 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    *
    * @return a set view of the keys contained in this map.
    */
+  @NotNull
   @Override
   public Set<K> keySet() {
     Set<K> ks = keySet;
-    return (ks != null) ? ks : (keySet = new KeySet());
+    return ks != null ? ks : (keySet = new KeySet());
   }
 
 
@@ -1019,10 +1015,11 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    *
    * @return a collection view of the values contained in this map.
    */
+  @NotNull
   @Override
   public Collection<V> values() {
     Collection<V> vs = values;
-    return (vs != null) ? vs : (values = new Values());
+    return vs == null ? (values = new Values()) : vs;
   }
 
 
@@ -1043,10 +1040,11 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    *
    * @return a collection view of the mappings contained in this map.
    */
+  @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
     Set<Entry<K, V>> es = entrySet;
-    return (es != null) ? es : (entrySet = (Set<Entry<K, V>>)(Set)new EntrySet());
+    return es != null ? es : (entrySet = (Set<Entry<K, V>>)(Set)new EntrySet());
   }
 
 
@@ -1072,14 +1070,14 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
 
     /* ---------------- Iterator Support -------------- */
 
-  abstract class HashIterator {
-    int nextSegmentIndex;
-    int nextTableIndex;
-    HashEntry[] currentTable;
-    HashEntry<K, V> nextEntry;
+  private abstract class HashIterator {
+    private int nextSegmentIndex;
+    private int nextTableIndex;
+    private HashEntry[] currentTable;
+    private HashEntry<K, V> nextEntry;
     HashEntry<K, V> lastReturned;
 
-    HashIterator() {
+    private HashIterator() {
       nextSegmentIndex = segments.length - 1;
       nextTableIndex = -1;
       advance();
@@ -1089,7 +1087,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       return hasNext();
     }
 
-    final void advance() {
+    private void advance() {
       if (nextEntry != null && (nextEntry = nextEntry.next) != null) {
         return;
       }
@@ -1101,7 +1099,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       }
 
       while (nextSegmentIndex >= 0) {
-        Segment seg = (Segment)segments[nextSegmentIndex--];
+        Segment seg = segments[nextSegmentIndex--];
         if (seg.count != 0) {
           currentTable = seg.table;
           for (int j = currentTable.length - 1; j >= 0; --j) {
@@ -1136,7 +1134,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
   }
 
-  final class KeyIterator extends HashIterator implements Iterator<K>, Enumeration<K> {
+  private final class KeyIterator extends HashIterator implements Iterator<K>, Enumeration<K> {
     @Override
     public K next() {
       return super.nextEntry().key;
@@ -1148,7 +1146,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
   }
 
-  final class ValueIterator extends HashIterator implements Iterator<V>, Enumeration<V> {
+  private final class ValueIterator extends HashIterator implements Iterator<V>, Enumeration<V> {
     @Override
     public V next() {
       return super.nextEntry().value;
@@ -1167,7 +1165,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * cannot return internal HashEntry objects. Instead, the iterator
    * itself acts as a forwarding pseudo-entry.
    */
-  final class EntryIterator extends HashIterator implements Entry<K, V>, Iterator<Entry<K, V>> {
+  private final class EntryIterator extends HashIterator implements Entry<K, V>, Iterator<Entry<K, V>> {
     @Override
     public Entry<K, V> next() {
       nextEntry();
@@ -1220,8 +1218,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
 
       Object k = getKey();
       Object v = getValue();
-      return ((k == null) ? 0 : k.hashCode()) ^
-             ((v == null) ? 0 : v.hashCode());
+      return (k == null ? 0 : k.hashCode()) ^
+             (v == null ? 0 : v.hashCode());
     }
 
     public String toString() {
@@ -1234,12 +1232,13 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       }
     }
 
-    boolean eq(Object o1, Object o2) {
-      return (o1 == null ? o2 == null : o1.equals(o2));
+    private boolean eq(Object o1, Object o2) {
+      return o1 == null ? o2 == null : o1.equals(o2);
     }
   }
 
-  final class KeySet extends AbstractSet<K> {
+  private final class KeySet extends AbstractSet<K> {
+    @NotNull
     @Override
     public Iterator<K> iterator() {
       return new KeyIterator();
@@ -1265,26 +1264,29 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       ConcurrentHashMap.this.clear();
     }
 
+    @NotNull
     @Override
     public Object[] toArray() {
       Collection<K> c = new ArrayList<K>();
-      for (Iterator<K> i = iterator(); i.hasNext(); ) {
-        c.add(i.next());
+      for (K k : this) {
+        c.add(k);
       }
       return c.toArray();
     }
 
+    @NotNull
     @Override
-    public <T> T[] toArray(T[] a) {
+    public <T> T[] toArray(@NotNull T[] a) {
       Collection<K> c = new ArrayList<K>();
-      for (Iterator<K> i = iterator(); i.hasNext(); ) {
-        c.add(i.next());
+      for (K k : this) {
+        c.add(k);
       }
       return c.toArray(a);
     }
   }
 
-  final class Values extends AbstractCollection<V> {
+  private final class Values extends AbstractCollection<V> {
+    @NotNull
     @Override
     public Iterator<V> iterator() {
       return new ValueIterator();
@@ -1305,26 +1307,29 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       ConcurrentHashMap.this.clear();
     }
 
+    @NotNull
     @Override
     public Object[] toArray() {
       Collection<V> c = new ArrayList<V>();
-      for (Iterator<V> i = iterator(); i.hasNext(); ) {
-        c.add(i.next());
+      for (V v : this) {
+        c.add(v);
       }
       return c.toArray();
     }
 
+    @NotNull
     @Override
-    public <T> T[] toArray(T[] a) {
+    public <T> T[] toArray(@NotNull T[] a) {
       Collection<V> c = new ArrayList<V>();
-      for (Iterator<V> i = iterator(); i.hasNext(); ) {
-        c.add(i.next());
+      for (V v : this) {
+        c.add(v);
       }
       return c.toArray(a);
     }
   }
 
-  final class EntrySet extends AbstractSet<Entry<K, V>> {
+  private final class EntrySet extends AbstractSet<Entry<K, V>> {
+    @NotNull
     @Override
     public Iterator<Entry<K, V>> iterator() {
       return new EntryIterator();
@@ -1359,22 +1364,24 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       ConcurrentHashMap.this.clear();
     }
 
+    @NotNull
     @Override
     public Object[] toArray() {
       // Since we don't ordinarily have distinct Entry objects, we
       // must pack elements using exportable SimpleEntry
       Collection<Entry<K, V>> c = new ArrayList<Entry<K, V>>(size());
-      for (Iterator<Entry<K, V>> i = iterator(); i.hasNext(); ) {
-        c.add(new SimpleEntry(i.next()));
+      for (Entry<K, V> entry : this) {
+        c.add(new SimpleEntry(entry));
       }
       return c.toArray();
     }
 
+    @NotNull
     @Override
-    public <T> T[] toArray(T[] a) {
+    public <T> T[] toArray(@NotNull T[] a) {
       Collection<Entry<K, V>> c = new ArrayList<Entry<K, V>>(size());
-      for (Iterator<Entry<K, V>> i = iterator(); i.hasNext(); ) {
-        c.add(new SimpleEntry(i.next()));
+      for (Entry<K, V> entry : this) {
+        c.add(new SimpleEntry(entry));
       }
       return c.toArray(a);
     }
@@ -1385,8 +1392,8 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * is made accessible.
    */
   final class SimpleEntry implements Entry<K, V> {
-    K key;
-    V value;
+    private final K key;
+    private V value;
 
     public SimpleEntry(K key, V value) {
       this.key = key;
@@ -1425,8 +1432,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
 
     public int hashCode() {
-      return ((key == null) ? 0 : key.hashCode()) ^
-             ((value == null) ? 0 : value.hashCode());
+      return (key == null ? 0 : key.hashCode()) ^ (value == null ? 0 : value.hashCode());
     }
 
     public String toString() {
@@ -1434,7 +1440,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     }
 
     boolean eq(Object o1, Object o2) {
-      return (o1 == null ? o2 == null : o1.equals(o2));
+      return o1 == null ? o2 == null : o1.equals(o2);
     }
   }
 
@@ -1450,16 +1456,16 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * for each key-value mapping, followed by a null pair.
    * The key-value mappings are emitted in no particular order.
    */
-  private void writeObject(java.io.ObjectOutputStream s) throws IOException {
+  private void writeObject(ObjectOutputStream s) throws IOException {
     s.defaultWriteObject();
 
-    for (int k = 0; k < segments.length; ++k) {
-      Segment seg = segments[k];
+    for (Segment seg : segments) {
       seg.lock();
       try {
         HashEntry[] tab = seg.table;
-        for (int i = 0; i < tab.length; ++i) {
-          for (HashEntry<K, V> e = (HashEntry<K, V>)tab[i]; e != null; e = e.next) {
+        for (HashEntry tabEntry : tab) {
+          HashEntry<K, V> entry = (HashEntry<K, V>)tabEntry;
+          for (HashEntry<K, V> e = entry; e != null; e = e.next) {
             s.writeObject(e.key);
             s.writeObject(e.value);
           }
@@ -1480,17 +1486,17 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    *
    * @param s the stream
    */
-  private void readObject(java.io.ObjectInputStream s)
+  private void readObject(ObjectInputStream s)
     throws IOException, ClassNotFoundException {
     s.defaultReadObject();
 
     // Initialize each segment to be minimally sized, and let grow.
-    for (int i = 0; i < segments.length; ++i) {
-      segments[i].setTable(new HashEntry[1]);
+    for (Segment segment : segments) {
+      segment.setTable(new HashEntry[1]);
     }
 
     // Read the keys and values, and put the mappings in the table
-    for (; ; ) {
+    while (true) {
       K key = (K)s.readObject();
       V value = (V)s.readObject();
       if (key == null) {
@@ -1504,9 +1510,9 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
   public int computeHashCode(final K object) {
     int h = object.hashCode();
     h += ~(h << 9);
-    h ^= (h >>> 14);
-    h += (h << 4);
-    h ^= (h >>> 10);
+    h ^= h >>> 14;
+    h += h << 4;
+    h ^= h >>> 10;
     return h;
   }
 
