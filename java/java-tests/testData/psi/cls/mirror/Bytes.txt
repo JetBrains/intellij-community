@@ -9,6 +9,6 @@ class Bytes {
 
     Bytes() { /* compiled code */ }
 
-    @pkg.ByteAnno(1)
+    @pkg.ByteAnno(value = 1)
     public static byte b() { /* compiled code */ }
 }

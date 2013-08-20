@@ -9,6 +9,6 @@ class Shorts {
 
     Shorts() { /* compiled code */ }
 
-    @pkg.ShortAnno(1)
+    @pkg.ShortAnno(value = 1)
     public static short s() { /* compiled code */ }
 }

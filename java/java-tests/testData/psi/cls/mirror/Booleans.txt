@@ -10,9 +10,9 @@ class Booleans {
 
     Booleans() { /* compiled code */ }
 
-    @pkg.BooleanAnno(true)
+    @pkg.BooleanAnno(value = true)
     public static boolean TRUE() { /* compiled code */ }
 
-    @pkg.BooleanAnno(false)
+    @pkg.BooleanAnno(value = false)
     public static boolean FALSE() { /* compiled code */ }
 }

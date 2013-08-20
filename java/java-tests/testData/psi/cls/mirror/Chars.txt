@@ -9,6 +9,6 @@ class Chars {
 
     Chars() { /* compiled code */ }
 
-    @pkg.CharAnno('c')
+    @pkg.CharAnno(value = 'c')
     public static char c() { /* compiled code */ }
 }
