@@ -46,7 +46,7 @@ public class FileResponses {
     if (!StringUtil.isEmpty(ifModifiedSince)) {
       try {
         if (Responses.DATE_FORMAT.get().parse(ifModifiedSince).getTime() >= lastModified) {
-          sendStatus(request, channel, HttpResponseStatus.NOT_MODIFIED);
+          sendStatus(HttpResponseStatus.NOT_MODIFIED, channel, request);
           return true;
         }
       }

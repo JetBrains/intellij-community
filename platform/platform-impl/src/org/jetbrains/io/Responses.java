@@ -162,10 +162,10 @@ public final class Responses {
   }
 
   public static void sendStatus(HttpResponseStatus responseStatus, Channel channel) {
-    sendStatus(null, channel, responseStatus);
+    sendStatus(responseStatus, channel, null);
   }
 
-  public static void sendStatus(@Nullable HttpRequest request, Channel channel, HttpResponseStatus responseStatus) {
+  public static void sendStatus(HttpResponseStatus responseStatus, Channel channel, @Nullable HttpRequest request) {
     sendStatus(request, channel, responseStatus, null);
   }
 

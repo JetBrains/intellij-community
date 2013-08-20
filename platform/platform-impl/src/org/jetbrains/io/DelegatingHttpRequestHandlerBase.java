@@ -29,7 +29,7 @@ abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHand
     //}
 
     if (!process(context, message, new QueryStringDecoder(message.getUri()))) {
-      Responses.sendStatus(message, context.channel(), HttpResponseStatus.NOT_FOUND);
+      Responses.sendStatus(HttpResponseStatus.NOT_FOUND, context.channel(), message);
     }
   }
 
