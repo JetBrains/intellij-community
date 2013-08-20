@@ -17,14 +17,20 @@
 package org.intellij.plugins.relaxNG.model.descriptors;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.DelimitedListProcessor;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlAttributeValueReference;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -200,5 +206,25 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
 
   private static String normalizeSpace(String value) {
     return value.replaceAll("\\s+", " ").trim();
+  }
+
+  @Override
+  public PsiReference[] getValueReferences(final XmlAttributeValue value) {
+    String text = value.getValue();
+    if (text == null) return PsiReference.EMPTY_ARRAY;
+    final int offset = ElementManipulators.getValueTextRange(value).getStartOffset();
+    final List<PsiReference> list = new ArrayList<PsiReference>();
+    new DelimitedListProcessor("") {
+      @Override
+      protected boolean isDelimiter(char ch) {
+        return Character.isWhitespace(ch);
+      }
+
+      @Override
+      protected void processToken(int start, int end, boolean delimitersOnly) {
+        list.add(new XmlAttributeValueReference(value, TextRange.create(offset + start, offset + end), RngXmlAttributeDescriptor.this));
+      }
+    }.processText(text);
+    return list.toArray(new PsiReference[list.size()]);
   }
 }

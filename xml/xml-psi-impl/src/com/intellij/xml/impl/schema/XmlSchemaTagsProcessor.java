@@ -31,6 +31,8 @@ import java.util.Set;
  */
 public abstract class XmlSchemaTagsProcessor {
 
+  public final static ThreadLocal<Boolean> PROCESSING_FLAG = new ThreadLocal<Boolean>();
+
   private final Set<XmlTag> myVisited = new HashSet<XmlTag>();
   protected final XmlNSDescriptorImpl myNsDescriptor;
   private final String[] myTagsToIgnore;
@@ -41,10 +43,16 @@ public abstract class XmlSchemaTagsProcessor {
   }
 
   public final void startProcessing(XmlTag tag) {
-    processTag(tag, null);
+    try {
+      PROCESSING_FLAG.set(Boolean.TRUE);
+      processTag(tag, null);
+    }
+    finally {
+      PROCESSING_FLAG.set(null);
+    }
   }
 
-  public void processTag(XmlTag tag, @Nullable XmlTag context) {
+  private void processTag(XmlTag tag, @Nullable XmlTag context) {
 
     if (myVisited.contains(tag)) return;
     myVisited.add(tag);
@@ -80,6 +88,7 @@ public abstract class XmlSchemaTagsProcessor {
       if (ref == null) return;
       XmlTag group;
       XmlTag parentTag = tag.getParentTag();
+      assert parentTag != null;
       if (XmlNSDescriptorImpl.equalsToSchemaName(parentTag, "attributeGroup") &&
         ref.equals(parentTag.getAttributeValue("name"))) {
         group = resolveTagReference(tag.getAttribute("ref"));

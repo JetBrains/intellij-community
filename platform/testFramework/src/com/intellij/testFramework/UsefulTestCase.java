@@ -530,7 +530,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static <T> T assertOneElement(T[] ts) {
     Assert.assertNotNull(ts);
-    Assert.assertEquals(1, ts.length);
+    Assert.assertEquals(Arrays.asList(ts).toString(), 1, ts.length);
     return ts[0];
   }
 

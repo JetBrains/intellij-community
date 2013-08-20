@@ -757,7 +757,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return true;
   }
 
-  protected static boolean equalsToSchemaName(XmlTag tag, @NonNls String schemaName) {
+  protected static boolean equalsToSchemaName(@NotNull XmlTag tag, @NonNls String schemaName) {
     return schemaName.equals(tag.getLocalName()) && checkSchemaNamespace(tag);
   }
 

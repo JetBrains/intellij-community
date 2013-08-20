@@ -102,9 +102,6 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                         new ImportReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().and(attributeValueInFxml),
-                                        new EnumeratedAttributeReferenceProvider()); 
-
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().and(attributeValueInFxml),
                                         new JavaFxColorReferenceProvider()); 
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue()
