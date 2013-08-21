@@ -166,6 +166,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
       XmlAttributeValue valueElement = declaration.getAttribute("name").getValueElement();
       pairProcessor.process(valueElement, "true");
       pairProcessor.process(valueElement, "false");
+      myExhaustiveEnum = true;
       return true;
     }
 
