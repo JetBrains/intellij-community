@@ -401,7 +401,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
         try {
           if (tool.isGraphNeeded()) {
-            ((RefManagerImpl)getRefManager()).findAllDeclarations();
+            try {
+              ((RefManagerImpl)getRefManager()).findAllDeclarations();
+            }
+            catch (Throwable e) {
+              getStdJobDescriptors().BUILD_GRAPH.setDoneAmount(0);
+              throw e;
+            }
           }
           tool.runInspection(scope, inspectionManager, this, toolPresentation);
           if (tool.queryExternalUsagesRequests(inspectionManager, this, toolPresentation)) {
