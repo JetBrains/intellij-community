@@ -257,6 +257,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
     <!--<statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeSettingsUsagesCollector"/>-->
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.LaFUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsInfoUsageCollector"/>
 
     <applicationConfigurable instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
                              displayName="Usage Statistics"/>
