@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -181,10 +182,10 @@ public class GrIntroduceFieldProcessor {
     final PsiElement place = context.getPlace();
 
     final GrMember member = GrIntroduceFieldHandler.getContainer(place, scope);
-    LOG.assertTrue(member != null);
-    GrOpenBlock container = member instanceof GrMethod? ((GrMethod)member).getBlock():
-                            member instanceof GrClassInitializer ? ((GrClassInitializer)member).getBlock():
-                            null;
+    GrStatementOwner container = member instanceof GrMethod ? ((GrMethod)member).getBlock() :
+                                 member instanceof GrClassInitializer ? ((GrClassInitializer)member).getBlock() :
+                                 place.getContainingFile() instanceof GroovyFile ? ((GroovyFile)place.getContainingFile()) :
+                                 null;
     assert container != null;
 
     final GrStatement anchor;
@@ -241,16 +242,16 @@ public class GrIntroduceFieldProcessor {
 
   private void generateAssignment(GrVariable field,
                                   @Nullable GrStatement anchor,
-                                  GrCodeBlock defaultContainer) {
+                                  GrStatementOwner defaultContainer) {
     final GrExpression initializer = getInitializer();
     GrAssignmentExpression init = (GrAssignmentExpression)GroovyPsiElementFactory.getInstance(context.getProject())
       .createExpressionFromText(settings.getName() + " = " + initializer.getText());
 
-    GrCodeBlock block;
+    GrStatementOwner block;
     if (anchor != null) {
       anchor = GroovyRefactoringUtil.addBlockIntoParent(anchor);
-      LOG.assertTrue(anchor.getParent() instanceof GrCodeBlock);
-      block = (GrCodeBlock)anchor.getParent();
+      LOG.assertTrue(anchor.getParent() instanceof GrStatementOwner);
+      block = (GrStatementOwner)anchor.getParent();
     }
     else {
       block = defaultContainer;
