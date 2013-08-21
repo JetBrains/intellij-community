@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.EfficientChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -31,16 +31,14 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
 
 public class DefaultFileNavigationContributor implements EfficientChooseByNameContributor, DumbAware {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor");
 
   @Override
   @NotNull
@@ -55,7 +53,9 @@ public class DefaultFileNavigationContributor implements EfficientChooseByNameCo
           return true;
         }
       }, getScope(project, includeNonProjectItems), filter);
-      System.out.println("All names retrieved2:" + names.size());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("All names retrieved2:" + names.size());
+      }
       return ArrayUtil.toStringArray(names);
     } else {
       return FilenameIndex.getAllFilenames(project);
@@ -86,7 +86,9 @@ public class DefaultFileNavigationContributor implements EfficientChooseByNameCo
       FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, null);
     }
 
-    System.out.println("Done filter " + (System.currentTimeMillis()  -started) + ":" + idSet.size());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Done filter " + (System.currentTimeMillis()  -started) + ":" + idSet.size());
+    }
     return new IdFilter() {
       @Override
       public boolean contains(int id) {
@@ -120,6 +122,8 @@ public class DefaultFileNavigationContributor implements EfficientChooseByNameCo
         return processor.process(s);
       }
     }, scope, filter);
-    System.out.println("All names retrieved:" + (System.currentTimeMillis() - started));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("All names retrieved:" + (System.currentTimeMillis() - started));
+    }
   }
 }
