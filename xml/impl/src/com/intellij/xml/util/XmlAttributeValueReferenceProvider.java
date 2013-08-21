@@ -51,7 +51,8 @@ public class XmlAttributeValueReferenceProvider extends PsiReferenceProvider {
     PsiElement parent = value.getParent();
     if (parent instanceof XmlAttribute) {
       final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-      if (descriptor instanceof BasicXmlAttributeDescriptor && (descriptor.isFixed() || descriptor.isEnumerated())) {
+      if (descriptor instanceof BasicXmlAttributeDescriptor &&
+          (descriptor.isFixed() || descriptor.isEnumerated() || unquotedValue.equals(descriptor.getDefaultValue()))) { // todo case insensitive
         return ((BasicXmlAttributeDescriptor)descriptor).getValueReferences(value);
       }
     }

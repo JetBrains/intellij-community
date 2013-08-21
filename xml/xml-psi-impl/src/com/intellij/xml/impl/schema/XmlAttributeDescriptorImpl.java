@@ -134,6 +134,10 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
         return true;
       }
     });
+    String defaultValue = getDefaultValue();
+    if (defaultValue != null) {
+      list.add(defaultValue);
+    }
     return ArrayUtil.toStringArray(list);
   }
 
