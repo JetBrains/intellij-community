@@ -21,6 +21,7 @@ import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,6 +56,14 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @NotNull
   private final ConcurrentMap<String, List<PsiFile>> myExternalAnnotations = new ConcurrentSoftValueHashMap<String, List<PsiFile>>(10, 0.75f, 2);
   protected final PsiManager myPsiManager;
+
+  @SuppressWarnings("UnusedDeclaration")
+  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
+    @Override
+    public void run() {
+      dropCache();
+    }
+  });
 
   public BaseExternalAnnotationsManager(final PsiManager psiManager) {
     myPsiManager = psiManager;
@@ -215,7 +224,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   protected void duplicateError(@NotNull PsiFile file, @NotNull String externalName, @NotNull String text) {
-    LOG.error(text + "; for signature: '" + externalName + "' in the file " + file.getVirtualFile().getPresentableUrl());
+    VirtualFile virtualFile = file.getVirtualFile();
+    LOG.error(text + "; for signature: '" + externalName + "' in the file " + (virtualFile != null ? virtualFile.getPresentableUrl() : null));
   }
 
   @NotNull
@@ -406,7 +416,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     @NotNull private final String annotationClassFqName;
     @NotNull private final String annotationParameters;
     private final VirtualFile virtualFile;
-    private PsiAnnotation annotation;
+    private volatile PsiAnnotation annotation;
 
     private AnnotationData(@NotNull String annotationClassFqName, @NotNull String annotationParameters, VirtualFile virtualFile) {
       this.annotationClassFqName = annotationClassFqName;
