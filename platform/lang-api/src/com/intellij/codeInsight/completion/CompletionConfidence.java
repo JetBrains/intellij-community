@@ -31,6 +31,10 @@ public abstract class CompletionConfidence {
   @NotNull
   public abstract ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters);
 
+  /**
+   * This method is invoked first when a completion autopopup is scheduled. Extensions are able to cancel this completion process based on location.
+   * For example, in string literals or comments completion autopopup may do more harm than good.
+   */
   @NotNull
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     return ThreeState.UNSURE;
