@@ -305,7 +305,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   @Override
   public SearchScope getSearchScope(Editor editor, PsiElement element) {
-    final PsiReferenceExpression referenceExpression = findReferenceExpression(editor);
+    final PsiReferenceExpression referenceExpression = editor != null ? findReferenceExpression(editor) : null;
     if (referenceExpression != null && element instanceof PsiMethod) {
       final PsiClass[] memberClass = getMemberClass(referenceExpression, element);
       if (memberClass != null && memberClass.length == 1) {
