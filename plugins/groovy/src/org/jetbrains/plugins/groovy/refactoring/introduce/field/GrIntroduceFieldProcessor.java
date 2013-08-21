@@ -62,10 +62,12 @@ public class GrIntroduceFieldProcessor {
 
   private final GrIntroduceContext context;
   private final GrIntroduceFieldSettings settings;
+  private boolean myForInplacePrepare;
 
-  public GrIntroduceFieldProcessor(@NotNull GrIntroduceContext context, @NotNull GrIntroduceFieldSettings settings) {
+  public GrIntroduceFieldProcessor(@NotNull GrIntroduceContext context, @NotNull GrIntroduceFieldSettings settings, boolean forInplacePrepare) {
     this.context = context;
     this.settings = settings;
+    myForInplacePrepare = forInplacePrepare;
   }
 
   public GrVariable run() {
@@ -117,7 +119,7 @@ public class GrIntroduceFieldProcessor {
       else {
         final GrExpression expression = context.getExpression();
         assert expression != null;
-        if (PsiUtil.isExpressionStatement(expression)) {
+        if (!myForInplacePrepare && PsiUtil.isExpressionStatement(expression)) {
           expression.delete();
         }
         else {
