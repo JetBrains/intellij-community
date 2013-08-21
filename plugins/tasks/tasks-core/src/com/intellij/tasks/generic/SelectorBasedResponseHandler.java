@@ -131,9 +131,9 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
 
   @Override
   public boolean isConfigured() {
-    Selector idSelector = getSelector("id");
+    Selector idSelector = getSelector(ID);
     if (StringUtil.isEmpty(idSelector.getPath())) return false;
-    Selector summarySelector = getSelector("summary");
+    Selector summarySelector = getSelector(SUMMARY);
     if (StringUtil.isEmpty(summarySelector.getPath())) return false;
     return true;
   }
@@ -158,9 +158,9 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
   @NotNull
   @Override
   public final Task[] parseIssues(String response, int max) throws Exception {
-    if (StringUtil.isEmpty(getSelectorPath("tasks")) ||
-        StringUtil.isEmpty(getSelectorPath("id")) ||
-        StringUtil.isEmpty(getSelectorPath("summary"))) {
+    if (StringUtil.isEmpty(getSelectorPath(TASKS)) ||
+        StringUtil.isEmpty(getSelectorPath(ID)) ||
+        StringUtil.isEmpty(getSelectorPath(SUMMARY))) {
       throw new Exception("Selectors 'tasks', 'id' and 'summary' are mandatory");
     }
     List<Object> tasks = selectTasksList(response, max);
@@ -232,8 +232,8 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
   @Nullable
   @Override
   public final Task parseIssue(String response) throws Exception {
-    if (StringUtil.isEmpty(getSelectorPath("singleTask-id")) ||
-        StringUtil.isEmpty(getSelectorPath("singleTask-summary"))) {
+    if (StringUtil.isEmpty(getSelectorPath(SINGLE_TASK_ID)) ||
+        StringUtil.isEmpty(getSelectorPath(SINGLE_TASK_SUMMARY))) {
       throw new Exception("Selectors 'singleTask-id' and 'singleTask-summary' are mandatory");
     }
     String id = selectString(getSelector(SINGLE_TASK_ID), response);
