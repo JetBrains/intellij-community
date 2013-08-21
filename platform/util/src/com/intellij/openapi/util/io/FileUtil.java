@@ -28,10 +28,7 @@ import com.intellij.util.text.FilePathHashingStrategy;
 import com.intellij.util.text.StringFactory;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -633,23 +630,23 @@ public class FileUtil extends FileUtilRt {
    * Please note that this method is symlink-unfriendly (i.e. result of "/path/to/link/../next" most probably will differ from
    * what {@link java.io.File#getCanonicalPath()} will return) - so use with care.
    */
-  @Nullable
+  @Contract("null -> null")
   public static String toCanonicalPath(@Nullable String path) {
     return toCanonicalPath(path, File.separatorChar);
   }
 
-  @Nullable
-  public static String toCanonicalPath(@Nullable String path, final char separatorChar) {
+  @Contract("null, _ -> null")
+  public static String toCanonicalPath(@Nullable String path, char separatorChar) {
     return toCanonicalPath(path, separatorChar, true);
   }
 
-  @Nullable
+  @Contract("null -> null")
   public static String toCanonicalUriPath(@Nullable String path) {
     return toCanonicalPath(path, '/', false);
   }
 
-  @Nullable
-  private static String toCanonicalPath(@Nullable String path, final char separatorChar, boolean removeLastSlash) {
+  @Contract("null, _, _ -> null")
+  private static String toCanonicalPath(@Nullable String path, char separatorChar, boolean removeLastSlash) {
     if (path == null || path.isEmpty()) {
       return path;
     }
@@ -682,7 +679,7 @@ public class FileUtil extends FileUtilRt {
           ++dots;
         }
         else {
-          result.append(c);
+          result.append('.');
         }
         separator = false;
       }
