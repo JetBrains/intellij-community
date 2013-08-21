@@ -93,7 +93,7 @@ class IgnoredFileCache {
   }
 
   boolean isFileIgnored(VirtualFile file) {
-    if (myVfsEventNesting == 0 || !(file instanceof NewVirtualFile)) {
+    if (myVfsEventNesting != 0 || !(file instanceof NewVirtualFile)) {
       return isFileIgnoredNoCache(file);
     }
 
