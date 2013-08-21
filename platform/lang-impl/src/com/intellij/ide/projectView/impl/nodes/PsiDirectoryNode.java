@@ -62,7 +62,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   }
 
   protected boolean shouldShowModuleName() {
-    return !PlatformUtils.isAppCode();
+    return !PlatformUtils.isCidr();
   }
 
   @Override

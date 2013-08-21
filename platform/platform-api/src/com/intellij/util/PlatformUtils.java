@@ -56,6 +56,10 @@ public class PlatformUtils extends PlatformUtilsCore {
     return RUBY_PREFIX.equals(getPlatformPrefix());
   }
 
+  public static boolean isCidr() {
+    return isAppCode() || isCppIde();
+  }
+
   public static boolean isAppCode() {
     return APPCODE_PREFIX.equals(getPlatformPrefix());
   }
