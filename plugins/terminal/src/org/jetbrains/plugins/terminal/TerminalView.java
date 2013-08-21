@@ -10,6 +10,8 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.jediterm.terminal.ui.JediTermWidget;
+import com.jediterm.terminal.ui.TabbedTerminalWidget;
 import com.jediterm.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +28,7 @@ public class TerminalView {
   private JBTabbedTerminalWidget myTerminalWidget;
   private Project myProject;
 
-  public void initTerminal(Project project, ToolWindow toolWindow) {
+  public void initTerminal(Project project, final ToolWindow toolWindow) {
     myProject = project;
     LocalTerminalDirectRunner terminalRunner = OpenLocalTerminalAction.createTerminalRunner(project);
     
@@ -34,6 +36,12 @@ public class TerminalView {
     
     if (terminalRunner != null) {
       myTerminalWidget = terminalRunner.createTerminalWidget();
+      myTerminalWidget.addTabListener(new TabbedTerminalWidget.TabListener() {
+        @Override
+        public void tabClosed(JediTermWidget terminal) {
+          hideIfNoActiveSessions(toolWindow, myTerminalWidget);
+        }
+      });
     }
 
     Content content = createToolWindowContentPanel(terminalRunner, myTerminalWidget, toolWindow);
@@ -142,6 +150,19 @@ public class TerminalView {
     }, true);
   }
 
+  private void hideIfNoActiveSessions(final ToolWindow toolWindow, JBTabbedTerminalWidget terminal) {
+    if (terminal.isNoActiveSessions()) {
+      toolWindow.getContentManager().removeAllContents(true);
+
+      toolWindow.getActivation().doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          initTerminal(myProject, toolWindow);
+        }
+      });
+    }
+  }
+
   private static class NewSession extends AnAction {
     private final LocalTerminalDirectRunner myTerminalRunner;
     private final TerminalWidget myTerminal;
@@ -170,20 +191,9 @@ public class TerminalView {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      boolean singleSession = myTerminal.isSingleSession();
-      
       myTerminal.closeCurrentSession();
-      
-      if (singleSession) {
-        myToolWindow.getContentManager().removeAllContents(true);
-        
-        myToolWindow.getActivation().doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            initTerminal(myProject, myToolWindow);
-          }
-        });
-      }
+
+      hideIfNoActiveSessions(myToolWindow, myTerminal);
     }
   }
 }
