@@ -289,5 +289,6 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
     Disposer.dispose(this);
     KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", this);
     myStatusBar = null;
+    popup = null;
   }
 }
