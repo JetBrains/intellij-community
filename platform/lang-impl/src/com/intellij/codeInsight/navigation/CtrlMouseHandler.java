@@ -71,7 +71,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.search.searches.DefinitionsSearch;
+import com.intellij.psi.search.searches.DefinitionsScopedSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
@@ -524,9 +524,9 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       PsiElement[] targetElements = new ImplementationSearcher() {
         @Override
         @NotNull
-        protected PsiElement[] searchDefinitions(final PsiElement element) {
+        protected PsiElement[] searchDefinitions(final PsiElement element, Editor editor) {
           final List<PsiElement> found = new ArrayList<PsiElement>(2);
-          DefinitionsSearch.search(element).forEach(new Processor<PsiElement>() {
+          DefinitionsScopedSearch.search(element, getSearchScope(element, editor)).forEach(new Processor<PsiElement>() {
             @Override
             public boolean process(final PsiElement psiElement) {
               found.add(psiElement);
