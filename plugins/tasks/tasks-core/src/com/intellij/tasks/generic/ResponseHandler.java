@@ -45,7 +45,7 @@ public abstract class ResponseHandler implements Cloneable {
   public abstract ResponseType getResponseType();
 
   @NotNull
-  public abstract Task[] parseIssues(String response) throws Exception;
+  public abstract Task[] parseIssues(String response, int max) throws Exception;
 
   @Nullable
   public abstract Task parseIssue(String response) throws Exception;

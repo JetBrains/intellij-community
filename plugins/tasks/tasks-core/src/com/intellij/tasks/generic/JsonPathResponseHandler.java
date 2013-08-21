@@ -51,7 +51,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
   @SuppressWarnings("unchecked")
   @NotNull
   @Override
-  public Task[] doParseIssues(String response) throws Exception {
+  public Task[] doParseIssues(String response, int max) throws Exception {
     List<Object> tasks = (List<Object>)extractList(response, getSelector("tasks"));
     List<GenericTask> result = new ArrayList<GenericTask>(tasks.size());
     for (Object rawTask : tasks) {
@@ -131,22 +131,27 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     return String.valueOf(rawId);
   }
 
+  @Nullable
   private String extractString(String source, Selector selector) throws Exception {
     return extractValueAndCheckType(source, selector, String.class);
   }
 
+  @Nullable
   private Boolean extractBoolean(String source, Selector selector) throws Exception {
     return extractValueAndCheckType(source, selector, Boolean.class);
   }
 
+  @Nullable
   private Long extractLong(String source, Selector selector) throws Exception {
     return extractValueAndCheckType(source, selector, Long.class);
   }
 
+  @Nullable
   private List extractList(String source, Selector selector) throws Exception {
     return extractValueAndCheckType(source, selector, List.class);
   }
 
+  @Nullable
   private Date extractDate(String response, Selector selector) throws Exception {
     String dateString = extractString(response, selector);
     if (dateString == null) {

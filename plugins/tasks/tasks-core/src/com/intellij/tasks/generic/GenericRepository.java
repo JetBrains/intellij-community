@@ -160,6 +160,9 @@ public class GenericRepository extends BaseRepositoryImpl {
 
   @Override
   public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
+    if (StringUtil.isEmpty(myTasksListUrl)) {
+      throw new Exception("'Task list URL' configuration parameter is mandatory");
+    }
     if (!isLoginAnonymously() && !isUseHttpAuthentication()) {
       executeMethod(getLoginMethod());
     }
@@ -168,7 +171,7 @@ public class GenericRepository extends BaseRepositoryImpl {
                                               new TemplateVariable("since", since));
     String requestUrl = GenericRepositoryUtil.substituteTemplateVariables(getTasksListUrl(), variables);
     String responseBody = executeMethod(getHttpMethod(requestUrl, myTasksListMethodType));
-    Task[] tasks = getActiveResponseHandler().parseIssues(responseBody);
+    Task[] tasks = getActiveResponseHandler().parseIssues(responseBody, max);
     if (!StringUtil.isEmpty(mySingleTaskUrl) && !(myResponseType == ResponseType.TEXT)) {
       for (int i = 0; i < tasks.length; i++) {
         tasks[i] = findTask(tasks[i].getId());

@@ -41,7 +41,7 @@ public final class XPathResponseHandler extends SelectorBasedResponseHandler {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Task[] doParseIssues(String response) throws Exception {
+  public Task[] doParseIssues(String response, int max) throws Exception {
     Document document = new SAXBuilder(false).build(new StringReader(response));
     Element root = document.getRootElement();
     XPath idXPath = lazyCompile(getSelectorPath(ID));
@@ -59,7 +59,8 @@ public final class XPathResponseHandler extends SelectorBasedResponseHandler {
     }
     List<Element> taskElements = (List<Element>)rawTaskElements;
     ArrayList<Task> result = new ArrayList<Task>();
-    for (Element taskElement : taskElements) {
+    for (int i = 0; i < Math.min(taskElements.size(), max); i++) {
+      Element taskElement = taskElements.get(i);
       GenericTask task = new GenericTask(selectString(taskElement, idXPath), selectString(taskElement, summaryXPath), myRepository);
       if (descriptionXPath != null) {
         task.setDescription(selectString(taskElement, descriptionXPath));

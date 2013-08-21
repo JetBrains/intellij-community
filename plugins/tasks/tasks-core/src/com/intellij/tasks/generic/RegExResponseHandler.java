@@ -86,7 +86,7 @@ public final class RegExResponseHandler extends ResponseHandler {
 
   @NotNull
   @Override
-  public Task[] parseIssues(String response) throws Exception {
+  public Task[] parseIssues(String response, int max) throws Exception {
     final List<String> placeholders = getPlaceholders(myTaskRegex);
     if (!placeholders.contains(ID_PLACEHOLDER) || !placeholders.contains(SUMMARY_PLACEHOLDER)) {
       throw new Exception("Incorrect Task Pattern");

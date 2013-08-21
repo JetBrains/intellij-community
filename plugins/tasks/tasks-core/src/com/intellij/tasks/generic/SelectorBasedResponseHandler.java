@@ -153,16 +153,16 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
 
   @NotNull
   @Override
-  public final Task[] parseIssues(String response) throws Exception {
+  public final Task[] parseIssues(String response, int max) throws Exception {
     if (StringUtil.isEmpty(getSelectorPath("tasks")) ||
         StringUtil.isEmpty(getSelectorPath("id")) ||
         StringUtil.isEmpty(getSelectorPath("summary"))) {
       throw new Exception("Selectors 'tasks', 'id' and 'summary' are mandatory");
     }
-    return doParseIssues(response);
+    return doParseIssues(response, max);
   }
 
-  protected abstract Task[] doParseIssues(String response) throws Exception;
+  protected abstract Task[] doParseIssues(String response, int max) throws Exception;
 
   @Nullable
   @Override
