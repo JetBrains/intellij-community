@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -25,9 +26,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.NonFocusableCheckBox;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrFinalListener;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrInplaceIntroducer;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,4 +94,14 @@ public class GrInplaceVariableIntroducer extends GrInplaceIntroducer {
     return panel;
 
   }
+
+  @Override
+  protected void addAdditionalVariables(TemplateBuilderImpl builder) {
+    GrVariable variable = getVariable();
+    assert variable != null;
+    TypeConstraint[] constraints = {SubtypeConstraint.create(variable.getType())};
+    ChooseTypeExpression typeExpression = new ChooseTypeExpression(constraints, variable.getManager(), true, variable.getResolveScope());
+    builder.replaceElement(variable.getTypeElementGroovy(), "Variable_type", typeExpression, true, true);
+  }
+
 }
