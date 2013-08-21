@@ -172,6 +172,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void setRowHeight(int rowHeight) {
     myRowHeight = rowHeight;
     myRowHeightIsExplicitlySet = true;
+    // call super to clean rowModel
+    super.setRowHeight(rowHeight);
   }
 
   @Override

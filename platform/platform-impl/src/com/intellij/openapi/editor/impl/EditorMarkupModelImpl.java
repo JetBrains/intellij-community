@@ -87,7 +87,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static int myMinMarkHeight = 3;
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
-    super((DocumentImpl)editor.getDocument());
+    super(editor.getDocument());
     myEditor = editor;
   }
 

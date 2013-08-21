@@ -27,7 +27,7 @@ import java.awt.*;
  * same height and length.
  */
 public class FixedSizeButton extends JButton {
-  private final int mySize;
+  private int mySize;
   private JComponent myComponent;
 
   public FixedSizeButton() {
@@ -102,8 +102,11 @@ public class FixedSizeButton extends JButton {
   }
 
   public JComponent getAttachedComponent() {
-
     return myComponent;
+  }
+
+  public void setSize(int size) {
+    mySize = size;
   }
 }
 

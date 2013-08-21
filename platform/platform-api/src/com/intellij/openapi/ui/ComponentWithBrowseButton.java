@@ -242,6 +242,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   public final void setNextFocusableComponent(Component aComponent) {
+    super.setNextFocusableComponent(aComponent);
     myComponent.setNextFocusableComponent(aComponent);
   }
 
