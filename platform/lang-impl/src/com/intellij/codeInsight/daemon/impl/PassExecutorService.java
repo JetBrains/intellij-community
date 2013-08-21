@@ -47,12 +47,10 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -518,5 +516,22 @@ public abstract class PassExecutorService implements Disposable {
   }
   public static Throwable getSavedException(DaemonProgressIndicator indicator) {
     return indicator.getUserData(THROWABLE_KEY);
+  }
+
+  @TestOnly
+  public void waitFor(int millis) throws Exception {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    try {
+      for (Job<Void> job : mySubmittedPasses.values()) {
+        if (!job.isDone()) {
+          for (FutureTask task : ((JobImpl)job).getTasks()) {
+            task.get(millis, TimeUnit.MILLISECONDS);
+          }
+        }
+      }
+    }
+    catch (TimeoutException ignored) {
+
+    }
   }
 }
