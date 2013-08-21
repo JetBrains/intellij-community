@@ -181,7 +181,7 @@ public abstract class ContributorsBasedGotoByModel implements EfficientChooseByN
           return true;
         }
         TIntHashSet filter = myContributorToItsSymbolsMap.get(contributor);
-        if (!filter.contains(name.hashCode())) return true;
+        if (filter != null && !filter.contains(name.hashCode())) return true;
         try {
           long contributorStarted = System.currentTimeMillis();
           NavigationItem[] itemsByName = contributor.getItemsByName(name, pattern, myProject, checkBoxState);
