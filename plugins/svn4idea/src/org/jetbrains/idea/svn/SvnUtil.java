@@ -729,9 +729,9 @@ public class SvnUtil {
     SVNWCClient wcClient = vcs.createWCClient();
     try {
       if (isUrl) {
-        wcClient.doGetFileContents(SVNURL.parseURIEncoded(path), pegRevision, revision, true, buffer);
+        wcClient.doGetFileContents(SVNURL.parseURIEncoded(path), revision, revision, true, buffer);
       } else {
-        wcClient.doGetFileContents(new File(path), pegRevision, revision, true, buffer);
+        wcClient.doGetFileContents(new File(path), revision, revision, true, buffer);
       }
       ContentRevisionCache.checkContentsSize(path, buffer.size());
     } catch (FileTooBigRuntimeException e) {
