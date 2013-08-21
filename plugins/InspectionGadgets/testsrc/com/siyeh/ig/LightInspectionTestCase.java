@@ -47,6 +47,14 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     myFixture.addClass(classText);
   }
 
+  protected final void doStatementTest(@Language(value="JAVA", prefix="class X { void m() {", suffix="}}") @NotNull @NonNls String statementText) {
+    doTest("class X { void m() {" + statementText + "}}");
+  }
+
+  protected final void doMemberTest(@Language(value="JAVA", prefix="class X {", suffix="}") @NotNull @NonNls String memberText) {
+    doTest("class X {" + memberText + "}");
+  }
+
   protected final void doTest(@Language("JAVA") @NotNull @NonNls String classText) {
     @NonNls final StringBuilder newText = new StringBuilder();
     int start = 0;
