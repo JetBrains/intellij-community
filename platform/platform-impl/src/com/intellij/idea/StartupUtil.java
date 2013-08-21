@@ -105,6 +105,7 @@ public class StartupUtil {
     loadSystemLibraries(log);
 
     if (!Main.isHeadless()) {
+      AppUIUtil.patchSystem();
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       AppUIUtil.registerBundledFonts();
     }

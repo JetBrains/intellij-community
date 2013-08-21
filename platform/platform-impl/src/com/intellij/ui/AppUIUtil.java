@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.Patches;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.PlatformUtils;
@@ -46,6 +48,21 @@ import java.util.List;
  */
 public class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
+
+  public static void patchSystem() {
+    if (Patches.SUN_BUG_ID_9000030 && Registry.is("ide.x11.suppress.xinerama")) {
+      GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+      if (ge.getScreenDevices().length > 1) {
+        try {
+          @SuppressWarnings("SpellCheckingInspection") Field xinerState = ge.getClass().getDeclaredField("xinerState");
+          xinerState.setAccessible(true);
+          xinerState.set(null, Boolean.FALSE);
+          Logger.getInstance(AppUIUtil.class).info("Xinerama detection suppressed");
+        }
+        catch (Exception ignored) { }
+      }
+    }
+  }
 
   public static void updateWindowIcon(@NotNull Window window) {
     window.setIconImages(getAppIconImages());

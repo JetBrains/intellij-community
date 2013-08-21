@@ -244,7 +244,7 @@ public class X11UiUtil {
 
   @SuppressWarnings("SpellCheckingInspection")
   public static void patchDetectedWm(String wmName) {
-    if (X11 == null || Registry.is("idea.x11.skip.wm.patching")) return;
+    if (X11 == null || !Registry.is("ide.x11.override.wm")) return;
 
     try {
       if (wmName.startsWith("Mutter") || "Muffin".equals(wmName) || "GNOME Shell".equals(wmName)) {
