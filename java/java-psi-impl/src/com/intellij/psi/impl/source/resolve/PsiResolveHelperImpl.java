@@ -1199,6 +1199,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
         PsiType[] superTypes = typeParameter.getSuperTypes();
         if (superTypes.length == 0) return null;
+        final PsiType[] types = new PsiType[superTypes.length];
         for (int i = 0; i < superTypes.length; i++) {
           PsiType superType = substitutor.substitute(superTypes[i]);
           if (superType instanceof PsiClassType && ((PsiClassType)superType).isRaw()) {
@@ -1206,9 +1207,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           }
           if (superType == null) superType = PsiType.getJavaLangObject(myManager, scope);
           if (superType == null) return null;
-          superTypes[i] = superType;
+          types[i] = superType;
         }
-        return policy.getInferredTypeWithNoConstraint(myManager, PsiIntersectionType.createIntersection(superTypes));
+        return policy.getInferredTypeWithNoConstraint(myManager, PsiIntersectionType.createIntersection(types));
       }
       return null;
     }
