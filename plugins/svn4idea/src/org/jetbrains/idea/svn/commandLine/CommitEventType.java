@@ -13,35 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tigris.subversion.javahl;
-
-import org.jetbrains.annotations.NotNull;
+package org.jetbrains.idea.svn.commandLine;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
  * Date: 2/25/13
- * Time: 6:29 PM
+ * Time: 6:51 PM
  */
-public class BindClientException extends ClientException {
-  private Throwable myCause;
+public enum CommitEventType {
+  adding("Adding"),
+  deleting("Deleting"),
+  sending("Sending"),
+  replacing("Replacing"),
+  transmittingDeltas("Transmitting file data"),
+  committedRevision("Committed revision");
 
-  public BindClientException(String message, String source, int aprError) {
-    super(message, source, aprError);
+  private final String myText;
+
+  CommitEventType(String text) {
+    myText = text;
   }
 
-  public BindClientException(org.apache.subversion.javahl.ClientException ex) {
-    super(ex);
+  public String getText() {
+    return myText;
   }
 
-  public static BindClientException create(@NotNull final Throwable t, final int code) {
-    final BindClientException exception = new BindClientException(t.getMessage(), null, code);
-    exception.myCause = t;
-    return exception;
-  }
-
-  @Override
-  public Throwable getCause() {
-    return myCause;
+  public static CommitEventType create(String text) {
+    text = text.trim();
+    for (CommitEventType value : CommitEventType.values()) {
+      if (value.getText().equals(text)) return value;
+    }
+    return null;
   }
 }

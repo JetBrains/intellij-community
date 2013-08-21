@@ -13,37 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn.commandLine;
+
+import com.intellij.openapi.vcs.VcsException;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
  * Date: 2/25/13
- * Time: 6:51 PM
+ * Time: 5:57 PM
+ *
+ * Marker exception
  */
-public enum CommitEventType {
-  adding("Adding"),
-  deleting("Deleting"),
-  sending("Sending"),
-  replacing("Replacing"),
-  transmittingDeltas("Transmitting file data"),
-  committedRevision("Committed revision");
-
-  private final String myText;
-
-  CommitEventType(String text) {
-    myText = text;
+public class SvnBindException extends VcsException {
+  public SvnBindException(String message) {
+    super(message);
   }
 
-  public String getText() {
-    return myText;
-  }
-
-  public static CommitEventType create(String text) {
-    text = text.trim();
-    for (CommitEventType value : CommitEventType.values()) {
-      if (value.getText().equals(text)) return value;
-    }
-    return null;
+  public SvnBindException(Throwable throwable) {
+    super(throwable);
   }
 }

@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Convertor;
 import org.apache.subversion.javahl.types.Revision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.commandLine.LineCommandListener;
-import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.jetbrains.idea.svn.commandLine.SvnLineCommand;
-import org.jetbrains.idea.svn.config.SvnBindException;
-import org.tigris.subversion.javahl.BindClientException;
-import org.tigris.subversion.javahl.ClientException;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
@@ -44,7 +39,7 @@ import java.util.*;
 public class SvnCommitRunner {
   private final String myExePath;
   @Nullable private final AuthenticationCallback myAuthenticationCallback;
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnCommitRunner");
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.commandLine.SvnCommitRunner");
   private SvnCommitRunner.CommandListener myCommandListener;
 
   public SvnCommitRunner(@NotNull String path, @Nullable CommitEventHandler handler, @Nullable AuthenticationCallback authenticationCallback) {
@@ -59,7 +54,7 @@ public class SvnCommitRunner {
                      boolean noUnlock,
                      boolean keepChangelist,
                      String[] changelists,
-                     Map revpropTable, Convertor<String[], SVNURL> urlProvider) throws ClientException {
+                     Map revpropTable, Convertor<String[], SVNURL> urlProvider) throws VcsException {
     if (paths.length == 0) return Revision.SVN_INVALID_REVNUM;
 
     final List<String> parameters = new ArrayList<String>();
@@ -86,13 +81,8 @@ public class SvnCommitRunner {
     Arrays.sort(paths);
     parameters.addAll(Arrays.asList(paths));
 
-    try {
-      SvnLineCommand.runWithAuthenticationAttempt(myExePath, new File(paths[0]), urlProvider.convert(paths), SvnCommandName.ci,
-                                                  myCommandListener, myAuthenticationCallback, ArrayUtil.toStringArray(parameters));
-    }
-    catch (SvnBindException e) {
-      throw BindClientException.create(e, Revision.SVN_INVALID_REVNUM);
-    }
+    SvnLineCommand.runWithAuthenticationAttempt(myExePath, new File(paths[0]), urlProvider.convert(paths), SvnCommandName.ci,
+                                                myCommandListener, myAuthenticationCallback, ArrayUtil.toStringArray(parameters));
     myCommandListener.throwExceptionIfOccurred();
 
     return myCommandListener.getCommittedRevision();
@@ -108,9 +98,9 @@ public class SvnCommitRunner {
       myHandler = handler;
     }
 
-    public void throwExceptionIfOccurred() throws BindClientException {
+    public void throwExceptionIfOccurred() throws VcsException {
       if (myException != null) {
-        throw BindClientException.create(myException, Revision.SVN_INVALID_REVNUM);
+        throw myException;
       }
     }
 

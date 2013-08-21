@@ -48,8 +48,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.commandLine.SvnBindClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
-import org.tigris.subversion.javahl.ClientException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -273,8 +273,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       final long revision = client.commit(ArrayUtil.toStringArray(paths), comment, false, false);
       reportCommittedRevisions(feedback, String.valueOf(revision));
     }
-    catch (ClientException e) {
-      exception.add(new VcsException(e));
+    catch (VcsException e) {
+      exception.add(e);
     } finally {
       authenticationCallback.reset();
     }
