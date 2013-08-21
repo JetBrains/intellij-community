@@ -22,7 +22,7 @@ import java.io.InputStream;
 public class UnsyncByteArrayInputStream extends InputStream {
   protected byte[] myBuffer;
   private int myPosition;
-  private final int myCount;
+  private int myCount;
   private int myMarkedPosition;
 
   public UnsyncByteArrayInputStream(@NotNull byte[] buf) {
@@ -30,6 +30,10 @@ public class UnsyncByteArrayInputStream extends InputStream {
   }
 
   public UnsyncByteArrayInputStream(byte[] buf, int offset, int length) {
+    init(buf, offset, length);
+  }
+
+  public void init(byte[] buf, int offset, int length) {
     myBuffer = buf;
     myPosition = offset;
     myCount = length;
