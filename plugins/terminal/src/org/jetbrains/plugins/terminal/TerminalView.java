@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.ToolWindow;
@@ -163,7 +164,7 @@ public class TerminalView {
     }
   }
 
-  private static class NewSession extends AnAction {
+  private static class NewSession extends DumbAwareAction {
     private final LocalTerminalDirectRunner myTerminalRunner;
     private final TerminalWidget myTerminal;
 
@@ -179,7 +180,7 @@ public class TerminalView {
     }
   }
 
-  private class CloseSession extends AnAction {
+  private class CloseSession extends DumbAwareAction {
     private final JBTabbedTerminalWidget myTerminal;
     private ToolWindow myToolWindow;
 
