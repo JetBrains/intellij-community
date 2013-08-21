@@ -383,4 +383,8 @@ public class GenericRepository extends BaseRepositoryImpl {
   public void setSubtypeName(String subtypeName) {
     mySubtypeName = subtypeName;
   }
+
+  public boolean downloadTasksSeparetely() {
+    return true;
+  }
 }

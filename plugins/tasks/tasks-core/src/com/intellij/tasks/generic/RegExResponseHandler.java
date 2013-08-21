@@ -99,7 +99,7 @@ public final class RegExResponseHandler extends ResponseHandler {
       .matcher(response);
 
     List<Task> tasks = new ArrayList<Task>();
-    while (matcher.find()) {
+    for (int i = 0; i < max && matcher.find(); i++) {
       String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
       String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
       // temporary workaround to make AssemblaIntegrationTestPass

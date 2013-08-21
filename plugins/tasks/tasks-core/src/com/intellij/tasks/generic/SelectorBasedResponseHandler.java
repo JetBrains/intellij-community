@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -96,15 +97,18 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
     }
   }
 
-  @Nullable
-  public Selector getSelector(@NotNull String name) {
+  /**
+   * Only predefined selectors should be accessed.
+   */
+  @NotNull
+  protected Selector getSelector(@NotNull String name) {
     return mySelectors.get(name);
   }
 
-  @Nullable
-  public String getSelectorPath(@NotNull String name) {
+  @NotNull
+  protected String getSelectorPath(@NotNull String name) {
     Selector s = getSelector(name);
-    return s == null ? null : s.getPath();
+    return s.getPath();
   }
 
   @Override
@@ -128,9 +132,9 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
   @Override
   public boolean isConfigured() {
     Selector idSelector = getSelector("id");
-    if (idSelector == null || StringUtil.isEmpty(idSelector.getPath())) return false;
+    if (StringUtil.isEmpty(idSelector.getPath())) return false;
     Selector summarySelector = getSelector("summary");
-    if (summarySelector == null || StringUtil.isEmpty(summarySelector.getPath())) return false;
+    if (StringUtil.isEmpty(summarySelector.getPath())) return false;
     return true;
   }
 
@@ -159,10 +163,71 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
         StringUtil.isEmpty(getSelectorPath("summary"))) {
       throw new Exception("Selectors 'tasks', 'id' and 'summary' are mandatory");
     }
-    return doParseIssues(response, max);
+    List<Object> tasks = selectTasksList(response, max);
+    List<Task> result = new ArrayList<Task>(tasks.size());
+    for (Object context : tasks) {
+      String id = selectString(getSelector(ID), context);
+      String summary = selectString(getSelector(SUMMARY), context);
+      assert id != null && summary != null;
+      GenericTask task = new GenericTask(id, summary, myRepository);
+      if (!myRepository.downloadTasksSeparetely()) {
+        String description = selectString(getSelector(DESCRIPTION), context);
+        if (description != null) {
+          task.setDescription(description);
+        }
+        String issueUrl = selectString(getSelector(ISSUE_URL), context);
+        if (issueUrl != null) {
+          task.setIssueUrl(issueUrl);
+        }
+        Boolean closed = selectBoolean(getSelector(CLOSED), context);
+        if (closed != null) {
+          task.setClosed(closed);
+        }
+        Date updated = selectDate(getSelector(UPDATED), context);
+        if (updated != null) {
+          task.setUpdated(updated);
+        }
+        Date created = selectDate(getSelector(CREATED), context);
+        if (created != null) {
+          task.setCreated(created);
+        }
+      }
+      result.add(task);
+    }
+    return result.toArray(new Task[result.size()]);
   }
 
-  protected abstract Task[] doParseIssues(String response, int max) throws Exception;
+  @Nullable
+  private Date selectDate(@NotNull Selector selector, @NotNull Object context) throws Exception {
+    String s = selectString(selector, context);
+    if (s == null) {
+      return null;
+    }
+    return GenericRepositoryUtil.parseISO8601Date(s);
+  }
+
+  @Nullable
+  protected Boolean selectBoolean(@NotNull Selector selector, @NotNull Object context) throws Exception {
+    String s = selectString(selector, context);
+    if (s == null) {
+      return null;
+    }
+    s = s.trim().toLowerCase();
+    if (s.equals("true")) {
+      return true;
+    }
+    else if (s.equals("false")) {
+      return false;
+    }
+    throw new Exception(
+      String.format("Expression '%s' should match boolean value. Got '%s' instead", selector.getName(), s));
+  }
+
+  @NotNull
+  protected abstract List<Object> selectTasksList(@NotNull String response, int max) throws Exception;
+
+  @Nullable
+  protected abstract String selectString(@NotNull Selector selector, @NotNull Object context) throws Exception;
 
   @Nullable
   @Override
@@ -171,8 +236,30 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
         StringUtil.isEmpty(getSelectorPath("singleTask-summary"))) {
       throw new Exception("Selectors 'singleTask-id' and 'singleTask-summary' are mandatory");
     }
-    return doParseIssue(response);
+    String id = selectString(getSelector(SINGLE_TASK_ID), response);
+    String summary = selectString(getSelector(SINGLE_TASK_SUMMARY), response);
+    assert id != null && summary != null;
+    GenericTask task = new GenericTask(id, summary, myRepository);
+    String description = selectString(getSelector(SINGLE_TASK_DESCRIPTION), response);
+    if (description != null) {
+      task.setDescription(description);
+    }
+    String issueUrl = selectString(getSelector(SINGLE_TASK_ISSUE_URL), response);
+    if (issueUrl != null) {
+      task.setIssueUrl(issueUrl);
+    }
+    Boolean closed = selectBoolean(getSelector(SINGLE_TASK_CLOSED), response);
+    if (closed != null) {
+      task.setClosed(closed);
+    }
+    Date updated = selectDate(getSelector(SINGLE_TASK_UPDATED), response);
+    if (updated != null) {
+      task.setUpdated(updated);
+    }
+    Date created = selectDate(getSelector(SINGLE_TASK_CREATED), response);
+    if (created != null) {
+      task.setCreated(created);
+    }
+    return task;
   }
-
-  protected abstract Task doParseIssue(String response) throws Exception;
 }
