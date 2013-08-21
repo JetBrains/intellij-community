@@ -16,21 +16,83 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.navigation.EfficientChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.IdFilter;
+import gnu.trove.THashSet;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultFileNavigationContributor implements ChooseByNameContributor, DumbAware {
+import java.util.BitSet;
+
+public class DefaultFileNavigationContributor implements EfficientChooseByNameContributor, DumbAware {
 
   @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    return FilenameIndex.getAllFilenames(project);
+    if (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping) {
+      final THashSet<String> names = new THashSet<String>(1000);
+      IdFilter filter = getFilter(project, includeNonProjectItems);
+      processNames(new Processor<String>() {
+        @Override
+        public boolean process(String s) {
+          names.add(s);
+          return true;
+        }
+      }, getScope(project, includeNonProjectItems), filter);
+      System.out.println("All names retrieved2:" + names.size());
+      return ArrayUtil.toStringArray(names);
+    } else {
+      return FilenameIndex.getAllFilenames(project);
+    }
+  }
+
+  public static GlobalSearchScope getScope(Project project, boolean includeNonProjectItems) {
+    return includeNonProjectItems ? GlobalSearchScope.projectScope(project) : GlobalSearchScope.allScope(project);
+  }
+
+  public static IdFilter getFilter(Project project, boolean includeNonProjectItems) {
+    long started = System.currentTimeMillis();
+    final BitSet idSet = new BitSet();
+
+    ContentIterator iterator = new ContentIterator() {
+      @Override
+      public boolean processFile(VirtualFile fileOrDir) {
+        idSet.set(
+          ((VirtualFileWithId)fileOrDir).getId()
+        );
+        return true;
+      }
+    };
+
+    if (!includeNonProjectItems) {
+      ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
+    } else {
+      FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, null);
+    }
+
+    System.out.println("Done filter " + (System.currentTimeMillis()  -started) + ":" + idSet.size());
+    return new IdFilter() {
+      @Override
+      public boolean contains(int id) {
+        return idSet.get(id);
+      }
+    };
   }
 
   @Override
@@ -47,5 +109,17 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
       items = FilenameIndex.getFilesByName(project, name, scope, true);
     }
     return items;
+  }
+
+  @Override
+  public void processNames(final Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+    long started = System.currentTimeMillis();
+    FileBasedIndex.getInstance().processAllKeys(FilenameIndex.NAME, new Processor<String>() {
+      @Override
+      public boolean process(String s) {
+        return processor.process(s);
+      }
+    }, scope, filter);
+    System.out.println("All names retrieved:" + (System.currentTimeMillis() - started));
   }
 }

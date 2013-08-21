@@ -27,6 +27,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -99,6 +100,16 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     CommonProcessors.UniqueProcessor<String> uniqueProcessor = new CommonProcessors.UniqueProcessor<String>(processor);
     for (PsiShortNamesCache cache : myCaches) {
       if (!cache.processAllClassNames(uniqueProcessor)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean processAllClassNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+    for (PsiShortNamesCache cache : myCaches) {
+      if (!cache.processAllClassNames(processor, scope, filter)) {
         return false;
       }
     }

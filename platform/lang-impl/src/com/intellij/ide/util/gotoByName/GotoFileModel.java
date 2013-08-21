@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,6 +113,11 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
   @Override
   public PsiElementListCellRenderer getListCellRenderer() {
     return new GotoFileCellRenderer(myMaxSize);
+  }
+
+  @Override
+  public boolean sameNamesForProjectAndLibraries() {
+    return !FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
   }
 
   @Override

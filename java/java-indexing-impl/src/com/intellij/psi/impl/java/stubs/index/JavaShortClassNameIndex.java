@@ -26,6 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -33,8 +34,14 @@ import java.util.Collection;
 public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> {
 
   private static final JavaShortClassNameIndex ourInstance = new JavaShortClassNameIndex();
+
   public static JavaShortClassNameIndex getInstance() {
     return ourInstance;
+  }
+
+  @Override
+  public int getVersion() {
+    return super.getVersion() + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 1 : 0);
   }
 
   @NotNull
@@ -46,5 +53,10 @@ public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> 
   @Override
   public Collection<PsiClass> get(final String s, final Project project, @NotNull final GlobalSearchScope scope) {
     return StubIndex.getInstance().safeGet(getKey(), s, project, new JavaSourceFilterScope(scope), PsiClass.class);
+  }
+
+  @Override
+  public boolean traceKeyHashToVirtualFileMapping() {
+    return FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
   }
 }
