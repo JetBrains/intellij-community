@@ -71,6 +71,7 @@ public class GenericRepository extends BaseRepositoryImpl {
   private List<TemplateVariable> myTemplateVariables = new ArrayList<TemplateVariable>();
 
   private String mySubtypeName;
+  private boolean myDownloadTasksInSeparateRequests;
 
   /**
    * Serialization constructor
@@ -100,8 +101,9 @@ public class GenericRepository extends BaseRepositoryImpl {
 
     myResponseType = other.getResponseType();
     myTemplateVariables = other.getTemplateVariables();
+    mySubtypeName = other.getSubtypeName();
+    myDownloadTasksInSeparateRequests = other.getDownloadTasksInSeparateRequests();
     myResponseHandlersMap = new EnumMap<ResponseType, ResponseHandler>(ResponseType.class);
-    mySubtypeName = other.mySubtypeName;
     for (Map.Entry<ResponseType, ResponseHandler> e : other.myResponseHandlersMap.entrySet()) {
       ResponseHandler handler = e.getValue().clone();
       handler.setRepository(this);
@@ -113,6 +115,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     myLoginURL = "";
     myTasksListUrl = "";
     mySingleTaskUrl = "";
+    myDownloadTasksInSeparateRequests = false;
     myLoginMethodType = HTTPMethod.GET;
     myTasksListMethodType = HTTPMethod.GET;
     mySingleTaskMethodType = HTTPMethod.GET;
@@ -144,6 +147,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     if (!Comparing.equal(getResponseType(), that.getResponseType())) return false;
     if (!Comparing.equal(getTemplateVariables(), that.getTemplateVariables())) return false;
     if (!Comparing.equal(getResponseHandlers(), that.getResponseHandlers())) return false;
+    if (!Comparing.equal(getDownloadTasksInSeparateRequests(), that.getDownloadTasksInSeparateRequests())) return false;
     return true;
   }
 
@@ -172,7 +176,10 @@ public class GenericRepository extends BaseRepositoryImpl {
     String requestUrl = GenericRepositoryUtil.substituteTemplateVariables(getTasksListUrl(), variables);
     String responseBody = executeMethod(getHttpMethod(requestUrl, myTasksListMethodType));
     Task[] tasks = getActiveResponseHandler().parseIssues(responseBody, max);
-    if (!StringUtil.isEmpty(mySingleTaskUrl) && !(myResponseType == ResponseType.TEXT)) {
+    if (myResponseType == ResponseType.TEXT) {
+      return tasks;
+    }
+    if (StringUtil.isNotEmpty(mySingleTaskUrl) && myDownloadTasksInSeparateRequests) {
       for (int i = 0; i < tasks.length; i++) {
         tasks[i] = findTask(tasks[i].getId());
       }
@@ -384,7 +391,11 @@ public class GenericRepository extends BaseRepositoryImpl {
     mySubtypeName = subtypeName;
   }
 
-  public boolean downloadTasksSeparetely() {
-    return true;
+  public boolean getDownloadTasksInSeparateRequests() {
+    return myDownloadTasksInSeparateRequests;
+  }
+
+  public void setDownloadTasksInSeparateRequests(boolean downloadTasksInSeparateRequests) {
+    myDownloadTasksInSeparateRequests = downloadTasksInSeparateRequests;
   }
 }

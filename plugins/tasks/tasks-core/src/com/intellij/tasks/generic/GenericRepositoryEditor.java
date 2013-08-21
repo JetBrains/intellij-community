@@ -7,6 +7,7 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,6 +50,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
   private JButton myResetToDefaultsButton;
   private JPanel myCardPanel;
   private JBLabel mySingleTaskURLLabel;
+  private JBCheckBox myDownloadTasksInSeparateRequests;
 
   private Map<JTextField, TemplateVariable> myField2Variable;
   private Map<JRadioButton, ResponseType> myRadio2ResponseType;
@@ -100,6 +102,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     installListener(myLoginURLText);
     installListener(myTasksListURLText);
     installListener(mySingleTaskURLText);
+    installListener(myDownloadTasksInSeparateRequests);
     myTabbedPane.addTab("Server configuration", myPanel);
 
     // Put appropriate configuration components on the card panel
@@ -147,7 +150,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
       @Override
       public void actionPerformed(final ActionEvent e) {
         myRepository.resetToDefaults();
-        // XXX: Why clone() here?
+        // TODO: look closely
         reset(myRepository.clone());
       }
     });
@@ -156,6 +159,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     selectCardByResponseType();
     loginUrlEnablingChanged();
     singleTaskUrlEnablingChanged();
+    myDownloadTasksInSeparateRequests.setSelected(myRepository.getDownloadTasksInSeparateRequests());
   }
 
   private void singleTaskUrlEnablingChanged() {
@@ -202,6 +206,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     selectRadioButtonByResponseType();
     selectCardByResponseType();
     loginUrlEnablingChanged();
+    myDownloadTasksInSeparateRequests.setSelected(myRepository.getDownloadTasksInSeparateRequests());
   }
 
   private void selectRadioButtonByResponseType() {
@@ -227,6 +232,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     myRepository.setTasksListMethodType(HTTPMethod.valueOf((String)myTasksListMethodTypeComboBox.getSelectedItem()));
     myRepository.setSingleTaskMethodType(HTTPMethod.valueOf((String)mySingleTaskMethodComboBox.getSelectedItem()));
 
+    myRepository.setDownloadTasksInSeparateRequests(myDownloadTasksInSeparateRequests.isSelected());
    for (Map.Entry<JTextField, TemplateVariable> entry : myField2Variable.entrySet()) {
       TemplateVariable variable = entry.getValue();
       JTextField field = entry.getKey();

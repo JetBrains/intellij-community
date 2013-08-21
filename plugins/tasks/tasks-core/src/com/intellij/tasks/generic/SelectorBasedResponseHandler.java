@@ -58,7 +58,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
     // standard selectors
     setSelectors(ContainerUtil.newArrayList(
       // matched against list of tasks at whole downloaded from "taskListUrl"
-      new Selector("tasks", ""),
+      new Selector(TASKS),
 
       // matched against single tasks extracted from the list downloaded from "taskListUrl"
       new Selector(ID),
@@ -170,7 +170,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
       String summary = selectString(getSelector(SUMMARY), context);
       assert id != null && summary != null;
       GenericTask task = new GenericTask(id, summary, myRepository);
-      if (!myRepository.downloadTasksSeparetely()) {
+      if (!myRepository.getDownloadTasksInSeparateRequests()) {
         String description = selectString(getSelector(DESCRIPTION), context);
         if (description != null) {
           task.setDescription(description);
