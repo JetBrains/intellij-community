@@ -21,12 +21,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
+import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
+import javax.swing.*;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Nadya Zabrodina
@@ -75,5 +79,11 @@ public class HgUiUtil {
         successHandler.consume(branchTagInfo);
       }
     }.queue();
+  }
+
+  public static void loadContentToDialog(@Nullable VirtualFile root, @NotNull Map<VirtualFile, Collection<HgTagBranch>> contentMap,
+                                         @NotNull JComboBox selector) {
+    assert contentMap.get(root) != null : "No information about root " + root;
+    selector.setModel(new DefaultComboBoxModel(contentMap.get(root).toArray()));
   }
 }
