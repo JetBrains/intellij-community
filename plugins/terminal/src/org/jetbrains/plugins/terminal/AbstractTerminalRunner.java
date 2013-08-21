@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
+import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.emulator.ColorPalette;
 import com.jediterm.terminal.ui.AbstractSystemSettingsProvider;
@@ -201,6 +202,11 @@ public abstract class AbstractTerminalRunner<T extends Process> {
       }
 
       return keyStrokes.toArray(new KeyStroke[keyStrokes.size()]);
+    }
+
+    @Override
+    public boolean shouldCloseTabOnLogout(TtyConnector ttyConnector) {
+      return ttyConnector instanceof PtyProcessTtyConnector; //close tab only on logout of local pty, not remote
     }
   }
 
