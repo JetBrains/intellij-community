@@ -80,12 +80,16 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
           return false;
         }
       }, everywhere);
-      System.out.println("loaded + matched:"+ (System.currentTimeMillis() - started)+ "," + collect.getResult().size());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("loaded + matched:"+ (System.currentTimeMillis() - started)+ "," + collect.getResult().size());
+      }
     } else {
       String[] names = base.getNames(everywhere);
       started = System.currentTimeMillis();
       processNamesByPattern(base, names, matchingPattern, indicator, collect);
-      System.out.println("matched:"+ (System.currentTimeMillis() - started)+ "," + names.length);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("matched:"+ (System.currentTimeMillis() - started)+ "," + names.length);
+      }
     }
 
     indicator.checkCanceled();
@@ -93,7 +97,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     List<MatchResult> results = (List<MatchResult>)collect.getResult();
     sortNamesList(matchingPattern, results);
 
-    System.out.println("sorted:"+ (System.currentTimeMillis() - started) + ",results:" + results.size());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("sorted:"+ (System.currentTimeMillis() - started) + ",results:" + results.size());
+    }
     indicator.checkCanceled();
 
     List<Object> sameNameElements = new SmartList<Object>();
