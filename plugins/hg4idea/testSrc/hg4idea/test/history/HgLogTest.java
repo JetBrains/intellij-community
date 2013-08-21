@@ -33,18 +33,19 @@ public class HgLogTest extends HgPlatformTest {
 
   public void testParseCopiedWithoutBraces() throws HgCommandException {
     parseCopied("f.txt");
+    if (!SystemInfo.isWindows) {
+      myVcs.getGlobalSettings().setRunViaBash(true);
+      try {
+        parseCopied("f1.txt");
+      }
+      finally {
+        myVcs.getGlobalSettings().setRunViaBash(false);
+      }
+    }
   }
 
   public void testParseCopiedWithBraces() throws HgCommandException {
     parseCopied("(f.txt)");
-  }
-
-  public void testLogCommandViaBash() throws HgCommandException {
-    if (SystemInfo.isWindows) {
-      return;
-    }
-    myVcs.getGlobalSettings().setRunViaBash(true);
-    parseCopied("f.txt");
   }
 
   public void testParseFileCopiesWithWhitespaces() {
