@@ -102,6 +102,7 @@ import java.util.List;
 public class CtrlMouseHandler extends AbstractProjectComponent {
   private static final AbstractDocumentationTooltipAction[] ourTooltipActions = {new ShowQuickDocAtPinnedWindowFromTooltipAction()};
   private static Key<Boolean> ourDebuggerHighlighterKey;
+  private static Key<Boolean> ourXDebuggerHighlighterKey;
   private final EditorColorsManager myEditorColorsManager;
 
   private       HighlightersSet myHighlighter;
@@ -896,7 +897,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     TextAttributes attributes = myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
     for (TextRange range : info.getRanges()) {
-      TextAttributes attr = patchAttributesColor(attributes, range, editor);
+      TextAttributes attr = patchAttributesColor(attributes, range, editor, getOrInitDebuggerHighlighterKey());
+      attr = patchAttributesColor(attributes, range, editor, getOrInitXDebuggerHighlighterKey());
       final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
                                                                                        HighlighterLayer.SELECTION + 1,
                                                                                        attr,
@@ -912,8 +914,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
    * Patches attributes to be visible under debugger active line
    */
   @SuppressWarnings("UseJBColor")
-  private static TextAttributes patchAttributesColor(TextAttributes attributes, TextRange range, Editor editor) {
-    Key<Boolean> key = getOrInitDebuggerHighlighterKey();
+  private static TextAttributes patchAttributesColor(TextAttributes attributes, TextRange range, Editor editor, Key<Boolean> key) {
     if (key != null) {
       int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
       for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
@@ -937,6 +938,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       ourDebuggerHighlighterKey = Key.findKeyByName("HIGHLIGHTER_USERDATA_KEY");
     }
     return ourDebuggerHighlighterKey;
+  }
+  private static Key<Boolean> getOrInitXDebuggerHighlighterKey() {
+    if (ourXDebuggerHighlighterKey == null) {
+      ourXDebuggerHighlighterKey = Key.findKeyByName("EXECUTION_POINT_HIGHLIGHTER_KEY");
+    }
+    return ourXDebuggerHighlighterKey;
   }
 
   private class HighlightersSet {
