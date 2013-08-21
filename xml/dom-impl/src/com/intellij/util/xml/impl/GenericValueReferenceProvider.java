@@ -88,6 +88,10 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
       }
     }
     if (references.length > 0) {
+      if (converter instanceof EnumConverter && !((EnumConverter)converter).isExhaustive()) {
+        // will be handled by core XML
+        return PsiReference.EMPTY_ARRAY;
+      }
       context.put(XmlAttributeValueReferenceProvider.SUPPRESS, Boolean.TRUE);
     }
     return references;
