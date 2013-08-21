@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,25 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public abstract class SelectorBasedResponseHandler extends ResponseHandler {
+
+  // Supported selector names
+  @NonNls protected static final String TASKS = "tasks";
+
+  @NonNls protected static final String SUMMARY = "summary";
+  @NonNls protected static final String DESCRIPTION = "description";
+  @NonNls protected static final String ISSUE_URL = "issueUrl";
+  @NonNls protected static final String CLOSED = "closed";
+  @NonNls protected static final String UPDATED = "updated";
+  @NonNls protected static final String CREATED = "created";
+
+  @NonNls protected static final String SINGLE_TASK_ID = "singleTask-id";
+  @NonNls protected static final String SINGLE_TASK_SUMMARY = "singleTask-summary";
+  @NonNls protected static final String SINGLE_TASK_DESCRIPTION = "singleTask-description";
+  @NonNls protected static final String SINGLE_TASK_ISSUE_URL = "singleTask-issueUrl";
+  @NonNls protected static final String SINGLE_TASK_CLOSED = "singleTask-closed";
+  @NonNls protected static final String SINGLE_TASK_UPDATED = "singleTask-updated";
+  @NonNls protected static final String SINGLE_TASK_CREATED = "singleTask-created";
+  @NonNls protected static final String ID = "id";
 
   protected LinkedHashMap<String, Selector> mySelectors = new LinkedHashMap<String, Selector>();
 
@@ -40,22 +60,22 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
       new Selector("tasks", ""),
 
       // matched against single tasks extracted from the list downloaded from "taskListUrl"
-      new Selector("id"),
-      new Selector("summary"),
-      new Selector("description"),
-      new Selector("updated"),
-      new Selector("created"),
-      new Selector("closed"),
-      new Selector("issueUrl"),
+      new Selector(ID),
+      new Selector(SUMMARY),
+      new Selector(DESCRIPTION),
+      new Selector(UPDATED),
+      new Selector(CREATED),
+      new Selector(CLOSED),
+      new Selector(ISSUE_URL),
 
       // matched against single task downloaded from "singleTaskUrl"
-      new Selector("singleTask-id"),
-      new Selector("singleTask-summary"),
-      new Selector("singleTask-description"),
-      new Selector("singleTask-updated"),
-      new Selector("singleTask-created"),
-      new Selector("singleTask-closed"),
-      new Selector("singleTask-issueUrl")
+      new Selector(SINGLE_TASK_ID),
+      new Selector(SINGLE_TASK_SUMMARY),
+      new Selector(SINGLE_TASK_DESCRIPTION),
+      new Selector(SINGLE_TASK_UPDATED),
+      new Selector(SINGLE_TASK_CREATED),
+      new Selector(SINGLE_TASK_CLOSED),
+      new Selector(SINGLE_TASK_ISSUE_URL)
     ));
   }
 

@@ -3,6 +3,7 @@ package com.intellij.tasks.generic;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.intellij.lang.xpath.XPathFileType;
 import org.jdom.Document;
@@ -13,36 +14,18 @@ import org.jdom.xpath.XPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathFactory;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Mikhail Golubev
  */
 @Tag("XPathResponseHandler")
 public final class XPathResponseHandler extends SelectorBasedResponseHandler {
-
-  private final static DocumentBuilder ourDocumentBuilder = createDocumentBuilder();
-  private static DocumentBuilder createDocumentBuilder() {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    factory.setNamespaceAware(true);
-    try {
-      return factory.newDocumentBuilder();
-    } catch (ParserConfigurationException e) {
-      throw new AssertionError("Can't create DocumentBuilder");
-    }
-  }
-
-  private final static XPathFactory ourXPathFactory = createXPathFactory();
-  private static XPathFactory createXPathFactory() {
-    return XPathFactory.newInstance();
-  }
+  private final Map<String, XPath> myCompiledCache = new HashMap<String, XPath>();
 
   /**
    * Serialization constructor
@@ -61,126 +44,134 @@ public final class XPathResponseHandler extends SelectorBasedResponseHandler {
   public Task[] doParseIssues(String response) throws Exception {
     Document document = new SAXBuilder(false).build(new StringReader(response));
     Element root = document.getRootElement();
-    XPath idXPath = compile(getSelectorPath("id"));
-    XPath summaryXPath = compile(getSelectorPath("summary"));
+    XPath idXPath = lazyCompile(getSelectorPath(ID));
+    XPath summaryXPath = lazyCompile(getSelectorPath(SUMMARY));
     assert idXPath != null && summaryXPath != null;    // should not be empty
-    XPath descriptionXPath = compile(getSelectorPath("description"));
-    XPath updatedXPath = compile(getSelectorPath("updated"));
-    XPath createdXPath = compile(getSelectorPath("created"));
-    XPath issueUrlXPath = compile(getSelectorPath("issueUrl"));
-    XPath closedXPath = compile(getSelectorPath("closed"));
+    XPath descriptionXPath = lazyCompile(getSelectorPath(DESCRIPTION));
+    XPath updatedXPath = lazyCompile(getSelectorPath(UPDATED));
+    XPath createdXPath = lazyCompile(getSelectorPath(CREATED));
+    XPath issueUrlXPath = lazyCompile(getSelectorPath(ISSUE_URL));
+    XPath closedXPath = lazyCompile(getSelectorPath(CLOSED));
 
-    List<?> rawTaskElements = XPath.selectNodes(root, getSelectorPath("tasks"));
+    List<?> rawTaskElements = XPath.selectNodes(root, getSelectorPath(TASKS));
     if (!rawTaskElements.isEmpty() && !(rawTaskElements.get(0) instanceof Element)) {
-      throw new Exception(String.format("Selector 'tasks' should match list of elements. Got '%s' instead.", rawTaskElements.toString()));
+      throw new Exception(String.format("Selector 'tasks' should match list of XML elements. Got '%s' instead.", rawTaskElements.toString()));
     }
     List<Element> taskElements = (List<Element>)rawTaskElements;
     ArrayList<Task> result = new ArrayList<Task>();
     for (Element taskElement : taskElements) {
-      GenericTask task = new GenericTask(selectId(taskElement, idXPath), selectString(taskElement, summaryXPath, "summary"), myRepository);
-      task.setDescription(selectString(taskElement, descriptionXPath, "description"));
-      task.setIssueUrl(selectString(taskElement, issueUrlXPath, "issueUrl"));
-      task.setCreated(selectDate(taskElement, createdXPath, "created"));
-      task.setUpdated(selectDate(taskElement, updatedXPath, "updated"));
-      Boolean selected = selectBoolean(taskElement, closedXPath, "closed");
-      if (selected != null) {
-        task.setClosed(selected);
+      GenericTask task = new GenericTask(selectString(taskElement, idXPath), selectString(taskElement, summaryXPath), myRepository);
+      if (descriptionXPath != null) {
+        task.setDescription(selectString(taskElement, descriptionXPath));
+      }
+      if (issueUrlXPath != null) {
+        task.setIssueUrl(selectString(taskElement, issueUrlXPath));
+      }
+      if (createdXPath != null) {
+        task.setCreated(selectDate(taskElement, createdXPath));
+      }
+      if (updatedXPath != null) {
+        task.setUpdated(selectDate(taskElement, updatedXPath));
+      }
+      if (closedXPath != null) {
+        task.setClosed(selectBoolean(taskElement, closedXPath));
       }
       result.add(task);
     }
     return result.toArray(new Task[result.size()]);
   }
 
+  @Nullable
+  @Override
+  public Task doParseIssue(String response) throws Exception {
+    Element taskElement = new SAXBuilder(false).build(response).getRootElement();
+    XPath idXPath = lazyCompile(getSelectorPath(SINGLE_TASK_ID));
+    XPath summaryXPath = lazyCompile(getSelectorPath(SINGLE_TASK_SUMMARY));
+    assert idXPath != null && summaryXPath != null;
+    XPath descriptionXPath = lazyCompile(getSelectorPath(SINGLE_TASK_DESCRIPTION));
+    XPath updatedXPath = lazyCompile(getSelectorPath(SINGLE_TASK_UPDATED));
+    XPath createdXPath = lazyCompile(getSelectorPath(SINGLE_TASK_CREATED));
+    XPath issueUrlXPath = lazyCompile(getSelectorPath(SINGLE_TASK_ISSUE_URL));
+    XPath closedXPath = lazyCompile(getSelectorPath(SINGLE_TASK_CLOSED));
+    GenericTask task = new GenericTask(selectString(taskElement, idXPath),
+                                       selectString(taskElement, summaryXPath),
+                                       myRepository);
+    if (descriptionXPath != null) {
+      task.setDescription(selectString(taskElement, descriptionXPath));
+    }
+    if (issueUrlXPath != null) {
+      task.setIssueUrl(selectString(taskElement, issueUrlXPath));
+    }
+    if (createdXPath != null) {
+      task.setCreated(selectDate(taskElement, createdXPath));
+    }
+    if (updatedXPath != null) {
+      task.setUpdated(selectDate(taskElement, updatedXPath));
+    }
+    if (closedXPath != null) {
+      task.setClosed(selectBoolean(taskElement, closedXPath));
+    }
+    return task;
+  }
+
   @NotNull
-  private String selectId(@NotNull Element context, @NotNull XPath idXPath) throws Exception {
-    Object value = idXPath.selectSingleNode(context);
-    if (!(value instanceof String) && !(value instanceof Long)) {
-      throw new Exception("Selector 'id' should match either String or Long value");
+  private static String selectString(@NotNull Element context, @NotNull XPath xPath) throws Exception {
+    String s = xPath.valueOf(context);
+    if (s == null) {
+      throw new Exception(String.format("XPath expression '%s' doesn't match", xPath.getXPath()));
     }
-    return String.valueOf(value);
+    return s;
   }
 
-  @SuppressWarnings("unchecked")
-  @Nullable
-  private <T> T selectSingleNodeAndCheckType(@NotNull Element context,
-                                             @Nullable XPath xPath,
-                                             @NotNull String selectorName,
-                                             @NotNull Class<T> cls) throws Exception {
-    if (xPath == null) {
-      return null;
+  private static long selectLong(@NotNull Element context, @NotNull XPath xPath) throws Exception {
+    String s = selectString(context, xPath);
+    try {
+      return Long.parseLong(s);
     }
-    Object value = xPath.selectSingleNode(context);
-    if (!cls.isInstance(value)) {
+    catch (NumberFormatException e) {
       throw new Exception(
-        String.format("Selector %s should match '%s'. Got '%s' instead", selectorName, cls.getSimpleName(), value.toString()));
+        String.format("XPath expression '%s' should match long value. Got '%s' instead", xPath.getXPath(), s));
     }
-    if (value == null) {
-      throw new Exception(String.format("Selector '%s' doesn't match", selectorName));
+  }
+
+  private static boolean selectBoolean(@NotNull Element context, @NotNull XPath xPath) throws Exception {
+    String s = selectString(context, xPath).trim().toLowerCase();
+    if (s.equals("true")) {
+      return true;
     }
-    return (T)value;
-  }
-
-  //@Nullable
-  //private String selectString(@NotNull Element context, @Nullable XPath xPath, @NotNull String selectorName) throws Exception {
-  //  Object selected = xPath.selectSingleNode(context);
-  //  if (selected == null) {
-  //    return null;
-  //  }
-  //  if (selected instanceof Attribute) {
-  //    return ((Attribute)selected).getValue();
-  //  }
-  //  else if (selected instanceof Text) {
-  //    return ((Text)selected).getText();
-  //  }
-  //  else if (selected instanceof Content) {
-  //    // element, CDATA, Comment or ProcessingInstruction
-  //    throw new Exception(
-  //      String.format("Selector '%s' should match single atomic value. Got '%s' instead.", selectorName, selected.toString()));
-  //  }
-  //  // String, Double, Boolean
-  //  return selected.toString();
-  //}
-
-  @Nullable
-  private String selectString(@NotNull Element context, @Nullable XPath xPath, @NotNull String selectorName) throws Exception {
-    return selectSingleNodeAndCheckType(context, xPath, selectorName, String.class);
+    else if (s.equals("false")) {
+      return false;
+    }
+    throw new Exception(
+      String.format("XPath expression '%s' should match boolean value. Got '%s' instead", xPath.getXPath(), s));
   }
 
   @Nullable
-  private Boolean selectBoolean(@NotNull Element context, @Nullable XPath xPath, @NotNull String selectorName) throws Exception {
-    return selectSingleNodeAndCheckType(context, xPath, selectorName, Boolean.class);
+  private static Date selectDate(@NotNull Element context, @NotNull XPath xPath) throws Exception {
+    String s = selectString(context, xPath);
+    return GenericRepositoryUtil.parseISO8601Date(s);
   }
 
   @Nullable
-  private Date selectDate(@NotNull Element context, @Nullable XPath xPath, @NotNull String selectorName) throws Exception {
-    String s = selectString(context, xPath, selectorName);
-    return s == null ? null : GenericRepositoryUtil.parseISO8601Date(s);
-  }
-
-
-
-  @Nullable
-  private XPath compile(@Nullable String path) throws Exception {
+  private XPath lazyCompile(@Nullable String path) throws Exception {
     if (StringUtil.isEmpty(path)) {
       return null;
     }
-    try {
-      return XPath.newInstance(path);
+    if (!myCompiledCache.containsKey(path)) {
+      try {
+        final XPath compiled =  XPath.newInstance(path);
+        myCompiledCache.put(path, compiled);
+      }
+      catch (JDOMException e) {
+        throw new Exception(String.format("Malformed XPath expression '%s'", path));
+      }
     }
-    catch (JDOMException e) {
-      throw new Exception(String.format("Malformed XPath expression '%s'", path));
-    }
+    return myCompiledCache.get(path);
   }
 
   @Override
   public FileType getSelectorFileType() {
-    return XPathFileType.XPATH2;
-  }
-
-  @Nullable
-  @Override
-  public Task doParseIssue(String response) throws Exception {
-    return null;
+    return XPathFileType.XPATH;
   }
 
   @Override
