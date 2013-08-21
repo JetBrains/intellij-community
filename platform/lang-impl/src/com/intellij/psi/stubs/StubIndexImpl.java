@@ -142,7 +142,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           IndexInfrastructure.getStorageFile(indexKey),
           extension.getKeyDescriptor(),
           new StubIdExternalizer(),
-          extension.getCacheSize()
+          extension.getCacheSize(),
+          false,
+          extension instanceof StringStubIndexExtension && ((StringStubIndexExtension)extension).traceKeyHashToVirtualFileMapping()
         );
 
         final MemoryIndexStorage<K, StubIdList> memStorage = new MemoryIndexStorage<K, StubIdList>(storage);
@@ -285,11 +287,16 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   @Override
   public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project, Processor<K> processor) {
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
+    return processAllKeys(indexKey, processor, GlobalSearchScope.allScope(project), null);
+  }
+
+  public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, Processor<K> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
     final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
     try {
-      return index.processAllKeys(processor);
+      return index.processAllKeys(processor, idFilter);
     }
     catch (StorageException e) {
       forceRebuild(e);

@@ -413,7 +413,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           extension.getKeyDescriptor(),
           extension.getValueExternalizer(),
           extension.getCacheSize(),
-          extension.isKeyHighlySelective()
+          extension.isKeyHighlySelective(),
+          extension.traceKeyHashToVirtualFileMapping()
         );
 
         final MemoryIndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
@@ -722,13 +723,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Override
   public <K> boolean processAllKeys(@NotNull final ID<K, ?> indexId, Processor<K> processor, @Nullable Project project) {
+    return processAllKeys(indexId, processor, project != null ? GlobalSearchScope.allScope(project) : new EverythingGlobalScope(), null);
+  }
+
+  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     try {
       final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
       if (index == null) {
         return true;
       }
-      ensureUpToDate(indexId, project, project != null ? GlobalSearchScope.allScope(project) : new EverythingGlobalScope());
-      return index.processAllKeys(processor);
+      ensureUpToDate(indexId, scope.getProject(), scope);
+      return index.processAllKeys(processor, idFilter);
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);
@@ -1014,7 +1019,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     myContentlessIndicesUpdateQueue.signalUpdateEnd();
   }
 
-  public static final class ProjectIndexableFilesFilter {
+  public static final class ProjectIndexableFilesFilter extends IdFilter {
     private static final int SHIFT = 6;
     private static final int MASK = (1 << SHIFT) - 1;
     private final long[] myBitMask;
@@ -1735,7 +1740,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
     FileType fileType = file.getFileType();
     if(isProjectOrWorkspaceFile(file, fileType)) return Collections.emptyList();
-
+    if (fileType == StdFileTypes.HTML || fileType == StdFileTypes.XML) {
+      int a = 1;
+    }
     List<ID<?, ?>> ids = myFileType2IndicesWithFileTypeInfoMap.get(fileType);
     if (ids == null) ids = myIndicesWithoutFileTypeInfo;
     return ids;
