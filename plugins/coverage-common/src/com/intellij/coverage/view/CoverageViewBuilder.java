@@ -4,6 +4,7 @@ import com.intellij.ide.commander.AbstractListBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -38,7 +39,12 @@ public class CoverageViewBuilder extends AbstractListBuilder {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Building coverage report...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        buildRoot();
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            buildRoot();
+          }
+        });
       }
 
       @Override
