@@ -127,7 +127,7 @@ public class JBTerminalPanel extends TerminalPanel {
         return font;
       }
     }
-    return "Monospaced-14";
+    return super.getFontName();
   }
 
   private static boolean isApplicable(String font) {
