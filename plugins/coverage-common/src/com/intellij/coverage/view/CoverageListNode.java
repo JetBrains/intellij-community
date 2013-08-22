@@ -76,11 +76,11 @@ public class CoverageListNode extends AbstractTreeNode {
 
   @Override
   public FileStatus getFileStatus() {
-    final Object value = getValue();
     final PsiFile containingFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Nullable
       @Override
       public PsiFile compute() {
+        Object value = getValue();
         if (value instanceof PsiElement && ((PsiElement)value).isValid()) {
           return ((PsiElement)value).getContainingFile();
         }
@@ -115,11 +115,26 @@ public class CoverageListNode extends AbstractTreeNode {
   }
 
   @Override
+  public Object getValue() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
+      @Override
+      public Object compute() {
+        return CoverageListNode.super.getValue();
+      }
+    });
+  }
+
+  @Override
   public int getWeight() {
-    //todo weighted
-    final Object value = getValue();
-    if (value instanceof PsiElement && ((PsiElement)value).getContainingFile() != null) return 40;
-    return 30;
+    return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+      @Override
+      public Integer compute() {
+        //todo weighted
+        final Object value = getValue();
+        if (value instanceof PsiElement && ((PsiElement)value).getContainingFile() != null) return 40;
+        return 30;
+      }
+    });
   }
 
   public boolean contains(VirtualFile file) {
