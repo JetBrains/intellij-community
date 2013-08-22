@@ -91,7 +91,8 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       if (curElement!=null) {
         return formatDocFromComment(curElement, ((XmlElementDecl)element).getNameElement().getText());
       }
-    } else if (element instanceof XmlTag) {
+    }
+    else if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
       MyPsiElementProcessor processor = new MyPsiElementProcessor();
       String name = tag.getAttributeValue(NAME_ATTR_NAME);
@@ -271,7 +272,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return generateDoc(text, name,null, null);
   }
 
-  private XmlTag getComplexOrSimpleTypeDefinition(PsiElement element, PsiElement originalElement) {
+  private static XmlTag getComplexOrSimpleTypeDefinition(PsiElement element, PsiElement originalElement) {
     XmlElementDescriptor descriptor = element.getUserData(DESCRIPTOR_KEY);
 
     XmlTag contextTag = null;
@@ -421,14 +422,13 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     if (object instanceof String && originalElement != null) {
       PsiElement result = findDeclWithName((String)object, originalElement);
 
-      PsiElement originalElementParent;
-      if (result == null && element instanceof XmlTag && (originalElementParent = originalElement.getParent()) instanceof XmlAttributeValue) {
-        PsiElement originalElementGrandParent = originalElementParent.getParent();
-        XmlAttributeDescriptor descriptor = originalElementGrandParent instanceof XmlAttribute ?
-                                            ((XmlAttribute)originalElementGrandParent).getDescriptor():null;
-
-        if (descriptor != null && descriptor.getDeclaration() instanceof XmlTag) {
-          result = findEnumerationValue((String)object, (XmlTag)descriptor.getDeclaration());
+      if (result == null && element instanceof XmlTag) {
+        XmlAttribute attribute = PsiTreeUtil.getParentOfType(originalElement, XmlAttribute.class, false);
+        if (attribute != null) {
+          XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+          if (descriptor != null && descriptor.getDeclaration() instanceof XmlTag) {
+            result = findEnumerationValue((String)object, (XmlTag)descriptor.getDeclaration());
+          }
         }
       }
       return result;

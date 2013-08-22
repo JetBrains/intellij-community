@@ -16,7 +16,7 @@
 package org.zmlx.hg4idea.util;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.HgTagBranch;
 
@@ -29,11 +29,9 @@ import java.util.Map;
 
 public class HgBranchesAndTags {
 
-  @NotNull private final Map<VirtualFile, Collection<HgTagBranch>> branchesForRepos = new HashMap<VirtualFile, Collection<HgTagBranch>>();
-  @NotNull private final Map<VirtualFile, Collection<HgTagBranch>> tagsForRepos = new HashMap<VirtualFile, Collection<HgTagBranch>>();
-  @NotNull private final Map<VirtualFile, Collection<HgTagBranch>> bookmarks =
-    new java.util.HashMap<VirtualFile, Collection<HgTagBranch>>();
-
+  @NotNull private final Map<VirtualFile, Collection<HgTagBranch>> branchesForRepos = ContainerUtil.newHashMap();
+  @NotNull private final Map<VirtualFile, Collection<HgTagBranch>> tagsForRepos = ContainerUtil.newHashMap();
+  @NotNull private final Map<VirtualFile, Collection<HgTagBranch>> bookmarks = ContainerUtil.newHashMap();
 
   @NotNull
   public Map<VirtualFile, Collection<HgTagBranch>> getBranchesForRepos() {

@@ -541,11 +541,15 @@ public class FileWatcher {
       }
 
       if (op == WatcherOp.CHANGE) {
+        // collapse subsequent change file change notifications that happen once we copy large file,
+        // this allows reduction of path checks at least 20% for Windows
         synchronized (myLock) {
           ++myChangeRequests;
 
           // TODO: remove logging once finalized
-          if ((myChangeRequests & 0x3ff) == 0) LOG.info("Change requests:" + myChangeRequests + ", filtered:" + myFilteredRequests);
+          if ((myChangeRequests & 0x3fff) == 0) {
+            LOG.info("Change requests:" + myChangeRequests + ", filtered:" + myFilteredRequests);
+          }
 
           for(int i = 0; i < myLastChangedPathes.length; ++i) {
             int last = myLastChangedPathIndex - i - 1;

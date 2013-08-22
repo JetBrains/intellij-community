@@ -1,13 +1,14 @@
 <Generic shared="false" url="https://app.asana.com/api/1.0">
   <commitMessageFormat>{id} {summary}</commitMessageFormat>
   <password/>
+  <option name="downloadTasksInSeparateRequests" value="true" />
   <option name="loginAnonymously" value="false"/>
   <option name="loginMethodType" value="GET"/>
   <option name="loginUrl" value=""/>
   <option name="responseHandlers">
     <XPathResponseHandler>
       <selectors>
-        <selector name="tasks" path="foo"/>
+        <selector name="tasks" path=""/>
         <selector name="id" path=""/>
         <selector name="summary" path=""/>
         <selector name="description" path=""/>
@@ -30,7 +31,7 @@
         <selector name="description" path=""/>
         <selector name="updated" path=""/>
         <selector name="created" path=""/>
-        <selector name="completed" path=""/>
+        <selector name="closed" path=""/>
         <selector name="issueUrl" path=""/>
         <selector name="singleTask-id" path="data.id"/>
         <selector name="singleTask-summary" path="data.name"/>

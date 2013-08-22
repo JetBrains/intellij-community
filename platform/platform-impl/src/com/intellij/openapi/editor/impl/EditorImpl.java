@@ -145,7 +145,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
   public static final JBColor CURSOR_FOREGROUND = new JBColor(Color.white, Color.black);
-  @NotNull private final DocumentImpl myDocument;
+  @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
   @NotNull private final JScrollPane myScrollPane;
@@ -310,7 +310,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project) {
     myProject = project;
-    myDocument = (DocumentImpl)document;
+    myDocument = (DocumentEx)document;
     myScheme = createBoundColorSchemeDelegate(null);
     initTabPainter();
     myIsViewer = viewer;
@@ -645,6 +645,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public EditorSettings getSettings() {
     assertReadAccess();
     return mySettings;
+  }
+
+  public void resetSizes() {
+    mySizeContainer.reset();
   }
 
   @Override
@@ -1070,7 +1074,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // We mark that we're under such circumstances then.
     boolean activeSoftWrapProcessed = logicalPosition.softWrapLinesOnCurrentLogicalLine <= 0;
 
-    CharSequence text = myDocument.getCharsNoThreadCheck();
+    CharSequence text = myDocument.getCharsSequence();
 
     LogicalPosition endLogicalPosition = visualToLogicalPosition(new VisualPosition(line + 1, 0));
     int endOffset = logicalPositionToOffset(endLogicalPosition);
@@ -1460,7 +1464,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     int offset = startOffset;
-    CharSequence text = myDocument.getCharsNoThreadCheck();
+    CharSequence text = myDocument.getCharsSequence();
     int textLength = myDocument.getTextLength();
 
     // We need to calculate max offset to provide to the IterationState here based on the given start offset and target
@@ -2661,7 +2665,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int fontType = attributes.getFontType();
       g.setColor(currentColor);
 
-      final char[] chars = myDocument.getRawChars();
+      char[] chars = myDocument instanceof DocumentImpl ? ((DocumentImpl)myDocument).getRawChars() : myDocument.getChars();
 
       while (!iterationState.atEnd() && !lIterator.atEnd()) {
         int hEnd = iterationState.getEndOffset();
@@ -2784,7 +2788,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + ", soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off")
            + ", soft wraps data: " + getSoftWrapModel().dumpState()
            + "\n\nfolding data: " + getFoldingModel().dumpState()
-           + "\n\ndocument info: " + myDocument.dumpState();
+           + (myDocument instanceof DocumentImpl ? "\n\ndocument info: " + ((DocumentImpl)myDocument).dumpState() : "");
   }
 
   private class CachedFontContent {
@@ -3531,7 +3535,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (pos.column == 0) return start;
     int end = myDocument.getLineEndOffset(pos.line);
 
-    CharSequence text = myDocument.getCharsNoThreadCheck();
+    CharSequence text = myDocument.getCharsSequence();
 
     return EditorUtil.calcOffset(this, text, start, end, pos.column, EditorUtil.getTabSize(this), debugBuffer);
   }
@@ -4421,7 +4425,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         g.fillRect(x, y, myWidth, lineHeight - 1);
         final LogicalPosition startPosition = getCaretModel().getLogicalPosition();
         final int offset = logicalPositionToOffset(startPosition);
-        char[] chars = myDocument.getRawChars();
+        char[] chars = myDocument instanceof DocumentImpl ? ((DocumentImpl)myDocument).getRawChars() : myDocument.getChars();
         if (chars.length > offset) {
           FoldRegion folding = myFoldingModel.getCollapsedRegionAtOffset(offset);
           final char ch;
@@ -6367,7 +6371,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           return;
         }
 
-        final CharSequence text = myDocument.getCharsNoThreadCheck();
+        final CharSequence text = myDocument.getCharsSequence();
         int documentLength = myDocument.getTextLength();
         int x = 0;
         boolean lastLineLengthCalculated = false;

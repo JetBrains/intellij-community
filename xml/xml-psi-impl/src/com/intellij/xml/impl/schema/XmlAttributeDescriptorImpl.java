@@ -177,7 +177,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
         public boolean process(XmlTag tag) {
           found.set(Boolean.TRUE);
           XmlAttribute name = tag.getAttribute("value");
-          return name == null || pairProcessor.process(name.getValueElement(), name.getValue());
+          return name == null || pairProcessor.process(tag, name.getValue());
         }
       });
       return found.get();
@@ -248,7 +248,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
   }
 
   @Override
-  protected PsiElement getEnumeratedValueDeclaration(XmlAttributeValue attributeValue, final String value) {
+  public PsiElement getEnumeratedValueDeclaration(XmlAttributeValue attributeValue, final String value) {
     final Ref<PsiElement> result = new Ref<PsiElement>();
     processEnumeration(myTag, new PairProcessor<PsiElement, String>() {
       @Override

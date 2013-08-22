@@ -53,7 +53,7 @@ public class AsanaGenericIntegrationTest extends TaskManagerTestCase {
   }
 
   public void testParsing() throws Exception {
-    Task[] tasks = myRepository.getActiveResponseHandler().parseIssues(RESPONSE);
+    Task[] tasks = myRepository.getActiveResponseHandler().parseIssues(RESPONSE, 50);
     List<Task> expected = ContainerUtil.<Task>newArrayList(
       new GenericTask("5479650606120", "Task #1", myRepository),
       new GenericTask("5202014833559", "Task #2", myRepository)

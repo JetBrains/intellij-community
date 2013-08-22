@@ -771,7 +771,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         Task[] tasks = repository.getIssues(request, max, since, cancelled);
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<Task>(tasks.length);
-        if (!repository.isSupported(TaskRepository.NATIVE_SEARCH)) {
+        if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {
           List<Task> filteredTasks = TaskSearchSupport.filterTasks(request, ContainerUtil.list(tasks));
           ContainerUtil.addAll(issues, filteredTasks);
         } else {

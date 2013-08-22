@@ -4,16 +4,15 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.Task;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.jayway.jsonpath.InvalidPathException;
 import com.jayway.jsonpath.JsonPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +31,8 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     new Pair<Class<?>, String>(Boolean.class, "JSON boolean")
   );
 
+  private final Map<String, JsonPath> myCompiledCache = new HashMap<String, JsonPath>();
+
   /**
    * Serialization constructor
    */
@@ -48,111 +49,95 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     return PlainTextFileType.INSTANCE;
   }
 
-  @SuppressWarnings("unchecked")
-  @NotNull
-  @Override
-  public Task[] doParseIssues(String response) throws Exception {
-    Object tasksMatch = JsonPath.read(response, getSelectorPath("tasks"));
-    if (!(tasksMatch instanceof List)) {
-      throw new Exception("Selector 'task' should match array of tasks. Got " + tasksMatch.toString() + " instead");
-    }
-    List<Object> tasks = (List<Object>)tasksMatch;
-    List<GenericTask> result = new ArrayList<GenericTask>(tasks.size());
-    for (Object rawTask : tasks) {
-      String taskText = rawTask.toString();
-      String id = extractId(taskText, getSelector("id"));
-      String summary = extractString(taskText, getSelector("summary"));
-      assert summary != null;
-      GenericTask task = new GenericTask(id, summary, myRepository);
-      task.setDescription(extractString(response, getSelector("description")));
-      task.setIssueUrl(extractString(response, getSelector("issueUrl")));
-      Boolean closed = extractBoolean(response, getSelector("closed"));
-      if (closed != null) {
-        task.setClosed(closed);
-      }
-      task.setUpdated(extractDate(response, getSelector("updated")));
-      task.setCreated(extractDate(response, getSelector("created")));
-      result.add(task);
-    }
-    return result.toArray(new Task[result.size()]);
-  }
-
   @Nullable
-  @Override
-  public Task doParseIssue(String response) throws Exception {
-    String id = extractId(response, getSelector("singleTask-id"));
-    String summary = extractString(response, getSelector("singleTask-summary"));
-    GenericTask task = new GenericTask(id, summary, myRepository);
-    task.setDescription(extractString(response, getSelector("singleTask-description")));
-    task.setIssueUrl(extractString(response, getSelector("singleTask-issueUrl")));
-    Boolean closed = extractBoolean(response, getSelector("singleTask-closed"));
-    if (closed != null) {
-      task.setClosed(closed);
-    }
-    task.setUpdated(extractDate(response, getSelector("singleTask-updated")));
-    task.setCreated(extractDate(response, getSelector("singleTask-created")));
-    return task;
-  }
-
-  @SuppressWarnings({"unchecked", "MethodMayBeStatic"})
-  @Nullable
-  private <T> T extractValueAndCheckType(String source, Selector selector, Class<T> cls) throws Exception {
-    if (selector == null || StringUtil.isEmpty(selector.getPath())) {
+  private Object extractRawValue(@NotNull Selector selector, @NotNull String source) throws Exception {
+    if (StringUtil.isEmpty(selector.getPath())) {
       return null;
     }
+    JsonPath jsonPath = lazyCompile(selector.getPath());
     Object value;
     try {
-      value = JsonPath.read(source, selector.getPath());
+      value = jsonPath.read(source);
     }
     catch (InvalidPathException e) {
-      // NOTE: could be thrown when selector is actually invalid or just not matched
-      throw new Exception(String.format("JsonPath expression '%s' is malformed or didn't match", selector.getPath()), e);
+      throw new Exception(String.format("JsonPath expression '%s' doesn't match", selector.getPath()), e);
     }
+    if (value == null) {
+      return null;
+    }
+    return value;
+  }
+
+  @Nullable
+  private <T> T extractValueAndCheckType(@NotNull Selector selector, @NotNull String source, Class<T> cls) throws Exception {
+    final Object value = extractRawValue(selector, source);
     if (value == null) {
       return null;
     }
     if (!(cls.isInstance(value))) {
       throw new Exception(
-        String.format("Selector '%s' should match %s. Got '%s' instead", selector.getName(), JSON_TYPES.get(cls), value.toString()));
+        String.format("JsonPath expression '%s' should match %s. Got '%s' instead",
+                      selector.getPath(), JSON_TYPES.get(cls), value));
     }
-    return (T)value;
+    @SuppressWarnings("unchecked")
+    T casted = (T)value;
+    return casted;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
+  @NotNull
+  @Override
+  protected List<Object> selectTasksList(@NotNull String response, int max) throws Exception {
+    @SuppressWarnings("unchecked")
+    List<Object> list = (List<Object>)extractValueAndCheckType(getSelector(TASKS), response, List.class);
+    if (list == null) {
+      return ContainerUtil.emptyList();
+    }
+    return ContainerUtil.map2List(list, new Function<Object, Object>() {
+      @Override
+      public Object fun(Object o) {
+        return o.toString();
+      }
+    }).subList(0, Math.min(list.size(), max));
+  }
+
   @Nullable
-  private String extractId(String task, Selector idSelector) throws Exception {
-    Object rawId;
-    try {
-      rawId = JsonPath.read(task, idSelector.getPath());
-    }
-    catch (InvalidPathException e) {
-      throw new Exception(String.format("JsonPath expression '%s' is malformed or didn't match", idSelector.getPath()), e);
-    }
-    if (!(rawId instanceof String) && !(rawId instanceof Long)) {
-      throw new Exception(
-        String.format("Selector 'id' should match either JSON string or JSON number value. Got '%s' instead", rawId.toString()));
-    }
-    return String.valueOf(rawId);
-  }
-
-  private String extractString(String source, Selector selector) throws Exception {
-    return extractValueAndCheckType(source, selector, String.class);
-  }
-
-  private Boolean extractBoolean(String source, Selector selector) throws Exception {
-    return extractValueAndCheckType(source, selector, Boolean.class);
-  }
-
-  private Long extractLong(String source, Selector selector) throws Exception {
-    return extractValueAndCheckType(source, selector, Long.class);
-  }
-
-  private Date extractDate(String response, Selector selector) throws Exception {
-    String dateString = extractString(response, selector);
-    if (dateString == null) {
+  @Override
+  protected String selectString(@NotNull Selector selector, @NotNull Object context) throws Exception {
+    //return extractValueAndCheckType((String)context, selector, String.class);
+    final Object value = extractRawValue(selector, (String)context);
+    if (value == null) {
       return null;
     }
-    return GenericRepositoryUtil.parseISO8601Date(dateString);
+    if (value instanceof String || value instanceof Long || value instanceof Boolean) {
+      return value.toString();
+    }
+    throw new Exception(String.format("JsonPath expression '%s' should match string value. Got '%s' instead",
+                                      selector.getPath(), value));
+  }
+
+  @Nullable
+  @Override
+  protected Boolean selectBoolean(@NotNull Selector selector, @NotNull Object context) throws Exception {
+    return extractValueAndCheckType(selector, (String)context, Boolean.class);
+  }
+
+  @Nullable
+  private Long selectLong(@NotNull Selector selector, @NotNull String source) throws Exception {
+    return extractValueAndCheckType(selector, source, Long.class);
+  }
+
+  @NotNull
+  private JsonPath lazyCompile(@NotNull String path) throws Exception {
+    if (!myCompiledCache.containsKey(path)) {
+      try {
+        final JsonPath jsonPath = JsonPath.compile(path);
+        myCompiledCache.put(path, jsonPath);
+      }
+      catch (InvalidPathException e) {
+        throw new Exception(String.format("Malformed JsonPath expression '%s'", path));
+      }
+    }
+    return myCompiledCache.get(path);
   }
 
   @Override

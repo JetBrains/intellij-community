@@ -28,6 +28,8 @@ public class JBTerminalWidget extends JediTermWidget {
 
   public JBTerminalWidget(SystemSettingsProvider settingsProvider) {
     super(settingsProvider);
+
+    JBTabbedTerminalWidget.convertActions(this, getActions());
   }
 
   @Override

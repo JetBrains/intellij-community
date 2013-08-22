@@ -44,10 +44,14 @@ public class WinDockDelegate implements SystemDock.Delegate {
   public void updateRecentProjectsMenu () {
     final AnAction[] recentProjectActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
     RecentTasks.clear();
-    for (final AnAction action : recentProjectActions) {
-      ReopenProjectAction rpa = ((ReopenProjectAction)action);
-      RecentTasks.addTask(new File(javaExe), argsToExecute + rpa.getProjectPath(), rpa.getProjectName());
+    RecentTasks.Task[] tasks = new RecentTasks.Task[recentProjectActions.length];
+    for (int i = 0; i < recentProjectActions.length; i ++) {
+      ReopenProjectAction rpa = (ReopenProjectAction)recentProjectActions[i];
+      tasks[i] = new RecentTasks.Task(javaExe,
+                                   argsToExecute + rpa.getProjectPath(),
+                                   rpa.getProjectName());
     }
+    RecentTasks.addTasks(tasks);
   }
   synchronized public static SystemDock.Delegate getInstance() {
     if (!initialized) {

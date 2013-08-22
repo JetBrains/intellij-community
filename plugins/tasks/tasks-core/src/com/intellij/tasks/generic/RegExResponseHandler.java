@@ -86,7 +86,7 @@ public final class RegExResponseHandler extends ResponseHandler {
 
   @NotNull
   @Override
-  public Task[] parseIssues(String response) throws Exception {
+  public Task[] parseIssues(String response, int max) throws Exception {
     final List<String> placeholders = getPlaceholders(myTaskRegex);
     if (!placeholders.contains(ID_PLACEHOLDER) || !placeholders.contains(SUMMARY_PLACEHOLDER)) {
       throw new Exception("Incorrect Task Pattern");
@@ -99,7 +99,7 @@ public final class RegExResponseHandler extends ResponseHandler {
       .matcher(response);
 
     List<Task> tasks = new ArrayList<Task>();
-    while (matcher.find()) {
+    for (int i = 0; i < max && matcher.find(); i++) {
       String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
       String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
       // temporary workaround to make AssemblaIntegrationTestPass

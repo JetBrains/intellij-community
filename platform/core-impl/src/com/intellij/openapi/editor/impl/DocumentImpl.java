@@ -206,12 +206,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return myRangeMarkers.removeInterval(rangeMarker);
   }
 
-  public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker,
-                             int start,
-                             int end,
-                             boolean greedyToLeft,
-                             boolean greedyToRight,
-                             int layer) {
+  public void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker,
+                                  int start,
+                                  int end,
+                                  boolean greedyToLeft,
+                                  boolean greedyToRight,
+                                  int layer) {
     myRangeMarkers.addInterval(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
   }
 
