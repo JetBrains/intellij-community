@@ -75,10 +75,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       progress.setText(SvnBundle.message("progress.text.updating", root.getAbsolutePath()));
     }
 
-    protected long doUpdate(
-      final File root,
-      final SVNUpdateClient client) throws
-                                    SVNException {
+    protected long doUpdate(final File root) throws SVNException {
       final long rev;
 
       final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());

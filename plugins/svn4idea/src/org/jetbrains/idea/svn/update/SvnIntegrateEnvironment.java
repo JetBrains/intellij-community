@@ -91,10 +91,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
       }
     }
 
-    protected long doUpdate(
-      final File root,
-      final SVNUpdateClient client) throws
-                                                                                                        SVNException {
+    protected long doUpdate(final File root) throws SVNException {
       final SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
 
       MergeRootInfo info = svnConfig.getMergeRootInfo(root, myVcs);
