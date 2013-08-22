@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,17 +76,16 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "test.method.without.assertion.problem.descriptor");
+    return InspectionGadgetsBundle.message("test.method.without.assertion.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     final ListTable table = new ListTable(
-      new ListWrappingTableModel(Arrays.asList(classNames, methodNamePatterns), InspectionGadgetsBundle.message("class.name"),
+      new ListWrappingTableModel(Arrays.asList(classNames, methodNamePatterns), "Assertion class name",
                                  InspectionGadgetsBundle.message("method.name.pattern")));
-    final JPanel tablePanel = UiUtils.createAddRemovePanel(table);
+    final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose assertion class");
     final CheckBox checkBox =
       new CheckBox(InspectionGadgetsBundle.message("assert.keyword.is.considered.an.assertion"), this, "assertKeywordIsAssertion");
     panel.add(tablePanel, BorderLayout.CENTER);
