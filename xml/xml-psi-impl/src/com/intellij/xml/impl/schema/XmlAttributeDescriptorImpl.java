@@ -177,7 +177,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
         public boolean process(XmlTag tag) {
           found.set(Boolean.TRUE);
           XmlAttribute name = tag.getAttribute("value");
-          return name == null || pairProcessor.process(name.getValueElement(), name.getValue());
+          return name == null || pairProcessor.process(tag, name.getValue());
         }
       });
       return found.get();

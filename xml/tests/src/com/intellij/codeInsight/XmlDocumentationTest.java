@@ -79,7 +79,9 @@ public class XmlDocumentationTest extends DaemonAnalyzerTestCase {
     VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(pathname));
     assertNotNull(pathname + " not found", vfile);
     String expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile));
-    assertEquals(expectedText, StringUtil.convertLineSeparators(context.generateDoc()));
+    String text = context.generateDoc();
+    assertNotNull(text);
+    assertEquals(expectedText, StringUtil.convertLineSeparators(text));
 
     if (completionVariant != null) {
       vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(getTestDataPath() +baseFileNames[0] + ".expected.completion.html"));
