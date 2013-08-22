@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.SynchronizedCollectConsumer;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -150,7 +151,7 @@ public abstract class ContributorsBasedGotoByModel implements EfficientChooseByN
   public String[] getNames(final boolean checkBoxState) {
     final THashSet<String> allNames = ContainerUtil.newTroveSet();
 
-    processNames(new CommonProcessors.CollectProcessor<String>(allNames), checkBoxState);
+    processNames(new CommonProcessors.CollectProcessor<String>(Collections.synchronizedCollection(allNames)), checkBoxState);
     if (LOG.isDebugEnabled()) {
       LOG.debug("getNames(): (got "+allNames.size()+" elements)");
     }
