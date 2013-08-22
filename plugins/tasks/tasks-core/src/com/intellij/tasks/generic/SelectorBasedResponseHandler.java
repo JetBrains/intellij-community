@@ -4,6 +4,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -203,7 +204,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
     if (s == null) {
       return null;
     }
-    return GenericRepositoryUtil.parseISO8601Date(s);
+    return TaskUtil.parseDate(s);
   }
 
   @Nullable
