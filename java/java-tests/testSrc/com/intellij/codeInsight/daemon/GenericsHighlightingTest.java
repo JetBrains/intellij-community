@@ -316,6 +316,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAmbiguousTypeParamVsConcrete() { doTest5(false); }
   public void testRawAssignments() throws Exception { doTest5(false); }
   public void testIDEA87860() throws Exception { doTest5(false); }
+  public void testIDEA67584() throws Exception { doTest5(false); }
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
