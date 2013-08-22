@@ -508,4 +508,20 @@ enum E {
 }
 ''')
   }
+
+  void testInc() {
+    testHighlighting('''\
+class Aaa {
+    final int foo = 0
+
+    def test(final String p) {
+        ++<warning>foo</warning>
+        ++<warning>p</warning>
+
+        final int i = 0
+        ++<warning>i</warning>
+    }
+}
+''')
+  }
 }

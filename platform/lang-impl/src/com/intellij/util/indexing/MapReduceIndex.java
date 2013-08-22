@@ -155,11 +155,11 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   @Override
-  public boolean processAllKeys(Processor<Key> processor) throws StorageException {
+  public boolean processAllKeys(Processor<Key> processor, IdFilter idFilter) throws StorageException {
     final Lock lock = getReadLock();
     try {
       lock.lock();
-      return myStorage.processKeys(processor);
+      return myStorage.processKeys(processor, idFilter);
     }
     finally {
       lock.unlock();

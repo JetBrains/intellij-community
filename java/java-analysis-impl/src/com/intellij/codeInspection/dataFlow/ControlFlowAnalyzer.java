@@ -998,13 +998,19 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       PsiType type = expression.getType();
       if (op == JavaTokenType.ANDAND) {
-        generateAndExpression(operands, type);
+        generateAndExpression(operands, type, true);
       }
       else if (op == JavaTokenType.OROR) {
-        generateOrExpression(operands, type);
+        generateOrExpression(operands, type, true);
       }
       else if (op == JavaTokenType.XOR && PsiType.BOOLEAN.equals(type)) {
         generateXorExpression(expression, operands, type);
+      }
+      else if (op == JavaTokenType.AND && PsiType.BOOLEAN.equals(type)) {
+        generateAndExpression(operands, type, false);
+      }
+      else if (op == JavaTokenType.OR && PsiType.BOOLEAN.equals(type)) {
+        generateOrExpression(operands, type, false);
       }
       else {
         generateOther(expression, op, operands, type);
@@ -1104,11 +1110,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private void generateOrExpression(PsiExpression[] operands, final PsiType exprType) {
+  private void generateOrExpression(PsiExpression[] operands, final PsiType exprType, boolean shortCircuit) {
     for (int i = 0; i < operands.length; i++) {
       PsiExpression operand = operands[i];
       operand.accept(this);
       generateBoxingUnboxingInstructionFor(operand, exprType);
+      if (!shortCircuit) {
+        if (i > 0) {
+          combineStackBooleans(false, operand);
+        }
+        continue;
+      }
+
       PsiExpression nextOperand = i == operands.length - 1 ? null : operands[i + 1];
       if (nextOperand != null) {
         addInstruction(new ConditionalGotoInstruction(getStartOffset(nextOperand), true, operand));
@@ -1125,7 +1138,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     lExpression.accept(this);
     generateBoxingUnboxingInstructionFor(lExpression, exprType);
 
-    ConditionalGotoInstruction toPopAndPushSuccess = new ConditionalGotoInstruction(-1, and, lExpression);
+    combineStackBooleans(and, lExpression);
+  }
+
+  private void combineStackBooleans(boolean and, PsiExpression anchor) {
+    ConditionalGotoInstruction toPopAndPushSuccess = new ConditionalGotoInstruction(-1, and, anchor);
     addInstruction(toPopAndPushSuccess);
     GotoInstruction overPushSuccess = new GotoInstruction(-1);
     addInstruction(overPushSuccess);
@@ -1140,15 +1157,27 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     overPushSuccess.setOffset(pushSuccess.getIndex() + 1);
   }
 
-  private void generateAndExpression(PsiExpression[] operands, final PsiType exprType) {
+  private void generateAndExpression(PsiExpression[] operands, final PsiType exprType, boolean shortCircuit) {
     List<ConditionalGotoInstruction> branchToFail = new ArrayList<ConditionalGotoInstruction>();
-    for (PsiExpression operand : operands) {
+    for (int i = 0; i < operands.length; i++) {
+      PsiExpression operand = operands[i];
       operand.accept(this);
       generateBoxingUnboxingInstructionFor(operand, exprType);
+
+      if (!shortCircuit) {
+        if (i > 0) {
+          combineStackBooleans(false, operand);
+        }
+        continue;
+      }
 
       ConditionalGotoInstruction onFail = new ConditionalGotoInstruction(-1, true, operand);
       branchToFail.add(onFail);
       addInstruction(onFail);
+    }
+
+    if (!shortCircuit) {
+      return;
     }
 
     addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));

@@ -605,7 +605,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     if (helper.supportsFlattenPackages()) {
       group.addAction(new FavoritesAbbreviatePackageNamesAction(myProject, myBuilder));
     }
-    if (!PlatformUtils.isAppCode()) {
+    if (!PlatformUtils.isCidr()) {
       group.add(new FavoritesShowMembersAction(myProject, myBuilder));
     }
 

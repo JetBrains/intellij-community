@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -41,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -60,10 +62,12 @@ public class GrIntroduceFieldProcessor {
 
   private final GrIntroduceContext context;
   private final GrIntroduceFieldSettings settings;
+  private boolean myForInplacePrepare;
 
-  public GrIntroduceFieldProcessor(@NotNull GrIntroduceContext context, @NotNull GrIntroduceFieldSettings settings) {
+  public GrIntroduceFieldProcessor(@NotNull GrIntroduceContext context, @NotNull GrIntroduceFieldSettings settings, boolean forInplacePrepare) {
     this.context = context;
     this.settings = settings;
+    myForInplacePrepare = forInplacePrepare;
   }
 
   public GrVariable run() {
@@ -115,7 +119,7 @@ public class GrIntroduceFieldProcessor {
       else {
         final GrExpression expression = context.getExpression();
         assert expression != null;
-        if (PsiUtil.isExpressionStatement(expression)) {
+        if (!myForInplacePrepare && PsiUtil.isExpressionStatement(expression)) {
           expression.delete();
         }
         else {
@@ -181,10 +185,10 @@ public class GrIntroduceFieldProcessor {
     final PsiElement place = context.getPlace();
 
     final GrMember member = GrIntroduceFieldHandler.getContainer(place, scope);
-    LOG.assertTrue(member != null);
-    GrOpenBlock container = member instanceof GrMethod? ((GrMethod)member).getBlock():
-                            member instanceof GrClassInitializer ? ((GrClassInitializer)member).getBlock():
-                            null;
+    GrStatementOwner container = member instanceof GrMethod ? ((GrMethod)member).getBlock() :
+                                 member instanceof GrClassInitializer ? ((GrClassInitializer)member).getBlock() :
+                                 place.getContainingFile() instanceof GroovyFile ? ((GroovyFile)place.getContainingFile()) :
+                                 null;
     assert container != null;
 
     final GrStatement anchor;
@@ -199,35 +203,21 @@ public class GrIntroduceFieldProcessor {
     generateAssignment(field, anchor, container);
   }
 
-  void initializeInConstructor(GrVariable field) {
+  void initializeInConstructor(@NotNull GrVariable field) {
     final PsiClass scope = (PsiClass)context.getScope();
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
 
     if (scope instanceof GrAnonymousClassDefinition) {
-      final GrClassInitializer[] initializers = ((GrAnonymousClassDefinition)scope).getInitializers();
-      final GrClassInitializer initializer;
-      if (initializers.length == 0) {
-        initializer = (GrClassInitializer)scope.add(factory.createClassInitializer());
-      }
-      else {
-        initializer = initializers[0];
-      }
-
-
-      final PsiElement anchor = findAnchorForAssignment(initializer.getBlock());
-      generateAssignment(field, (GrStatement)anchor, initializer.getBlock());
-      return;
+      initializeInAnonymousClassInitializer(field, (GrAnonymousClassDefinition)scope);
     }
+    else {
+      initializeInConstructor(field, scope);
+    }
+  }
 
-
+  private void initializeInConstructor(@NotNull GrVariable field, @NotNull PsiClass scope) {
     PsiMethod[] constructors = scope.getConstructors();
     if (constructors.length == 0) {
-      final String name = scope.getName();
-      LOG.assertTrue(name != null, scope.getText());
-      final GrMethod constructor =
-        factory.createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}", scope);
-      final PsiElement added = scope.add(constructor);
-      constructors = new PsiMethod[]{(PsiMethod)added};
+      constructors = new PsiMethod[]{generateConstructor(scope)};
     }
 
     for (PsiMethod constructor : constructors) {
@@ -239,18 +229,39 @@ public class GrIntroduceFieldProcessor {
     }
   }
 
+  @NotNull
+  private PsiMethod generateConstructor(@NotNull PsiClass scope) {
+    final String name = scope.getName();
+    LOG.assertTrue(name != null, scope.getText());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
+    final GrMethod
+      constructor = factory.createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}", scope);
+    if (scope instanceof GroovyScriptClass) constructor.getModifierList().setModifierProperty(GrModifier.DEF, true);
+    return (PsiMethod)scope.add(constructor);
+  }
+
+  private void initializeInAnonymousClassInitializer(@NotNull GrVariable field, @NotNull GrAnonymousClassDefinition scope) {
+    final GrClassInitializer[] initializers = scope.getInitializers();
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
+    final GrClassInitializer initializer = initializers.length == 0 ? (GrClassInitializer)scope.add(factory.createClassInitializer())
+                                                                    : initializers[0];
+
+    final PsiElement anchor = findAnchorForAssignment(initializer.getBlock());
+    generateAssignment(field, (GrStatement)anchor, initializer.getBlock());
+  }
+
   private void generateAssignment(GrVariable field,
                                   @Nullable GrStatement anchor,
-                                  GrCodeBlock defaultContainer) {
+                                  GrStatementOwner defaultContainer) {
     final GrExpression initializer = getInitializer();
     GrAssignmentExpression init = (GrAssignmentExpression)GroovyPsiElementFactory.getInstance(context.getProject())
       .createExpressionFromText(settings.getName() + " = " + initializer.getText());
 
-    GrCodeBlock block;
+    GrStatementOwner block;
     if (anchor != null) {
       anchor = GroovyRefactoringUtil.addBlockIntoParent(anchor);
-      LOG.assertTrue(anchor.getParent() instanceof GrCodeBlock);
-      block = (GrCodeBlock)anchor.getParent();
+      LOG.assertTrue(anchor.getParent() instanceof GrStatementOwner);
+      block = (GrStatementOwner)anchor.getParent();
     }
     else {
       block = defaultContainer;

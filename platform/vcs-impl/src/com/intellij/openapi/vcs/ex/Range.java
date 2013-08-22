@@ -19,12 +19,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.util.diff.Diff;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
  */
 public class Range {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.Range");
+  private static final Logger LOG = Logger.getInstance(Range.class);
   public static final byte MODIFIED = 1;
   public static final byte INSERTED = 2;
   public static final byte DELETED = 3;
@@ -34,10 +36,9 @@ public class Range {
   private final int myUpToDateOffset1;
   private final int myUpToDateOffset2;
   private final byte myType;
-  private RangeHighlighter myRangeHighlighter;
+  @Nullable private RangeHighlighter myRangeHighlighter;
 
-  public static Range createOn(Diff.Change change, int shift, int upToDateShift) {
-
+  public static Range createOn(@NotNull Diff.Change change, int shift, int upToDateShift) {
     byte type = getChangeTypeFrom(change);
 
     int offset1 = shift + change.line1;
@@ -49,7 +50,7 @@ public class Range {
     return new Range(offset1, offset2, uOffset1, uOffset2, type);
   }
 
-  private static byte getChangeTypeFrom(Diff.Change change) {
+  private static byte getChangeTypeFrom(@NotNull Diff.Change change) {
     if ((change.deleted > 0) && (change.inserted > 0)) return MODIFIED;
     if ((change.deleted > 0)) return DELETED;
     if ((change.inserted > 0)) return INSERTED;
@@ -73,8 +74,7 @@ public class Range {
     if (!(object instanceof Range)) return false;
     Range other = (Range)object;
     return
-      (myOffset1 == other.myOffset1)
-      && (myUpToDateOffset1 == other.myUpToDateOffset1)
+      (myUpToDateOffset1 == other.myUpToDateOffset1)
       && (myUpToDateOffset2 == other.myUpToDateOffset2)
       && (myOffset1 == other.myOffset1)
       && (myOffset2 == other.myOffset2)
@@ -82,20 +82,11 @@ public class Range {
   }
 
   public String toString() {
-    StringBuffer result = new StringBuffer();
-    result.append(String.valueOf(myOffset1));
-    result.append(", ");
-    result.append(String.valueOf(myOffset2));
-    result.append(", ");
-    result.append(String.valueOf(myUpToDateOffset1));
-    result.append(", ");
-    result.append(String.valueOf(myUpToDateOffset2));
-    result.append(", ");
-    result.append(getTypeName());
-    return result.toString();
+    return String.format("%s, %s, %s, %s, %s", myOffset1, myOffset2, myUpToDateOffset1, myUpToDateOffset2, getTypeName());
   }
 
-  @NonNls private String getTypeName() {
+  @NonNls
+  private String getTypeName() {
     switch (myType) {
       case MODIFIED:
         return "MODIFIED";
@@ -115,22 +106,9 @@ public class Range {
     return myUpToDateOffset2 - myUpToDateOffset1;
   }
 
-  public boolean isInRange(int from, int to) {
-    return (myOffset2 >= from && myOffset1 <= from) ||
-           ((myOffset1 <= to) && (myOffset2 >= to));
-  }
-
   public void shift(int shift) {
     myOffset1 += shift;
     myOffset2 += shift;
-  }
-
-  public boolean isAfter(int to) {
-    return myOffset1 > to;
-  }
-
-  public int getCurrentLength() {
-    return myOffset2 - myOffset1;
   }
 
   public int getOffset1() {
@@ -149,17 +127,18 @@ public class Range {
     return myUpToDateOffset2;
   }
 
-  public boolean canBeMergedWith(Range range) {
+  public boolean canBeMergedWith(@NotNull Range range) {
     return myOffset2 == range.myOffset1;
   }
 
-  public Range mergeWith(Range range, LineStatusTracker tracker) {
+  @NotNull
+  public Range mergeWith(@NotNull Range range) {
     return new Range(myOffset1, range.myOffset2, myUpToDateOffset1, range.myUpToDateOffset2, mergedStatusWith(range));
   }
 
-  private byte mergedStatusWith(Range range) {
+  private byte mergedStatusWith(@NotNull Range range) {
     byte type = myType;
-    if (myType != range.myType) type = Range.MODIFIED;
+    if (myType != range.myType) type = MODIFIED;
     return type;
   }
 
@@ -171,6 +150,7 @@ public class Range {
     myRangeHighlighter = highlighter;
   }
 
+  @Nullable
   public RangeHighlighter getHighlighter() {
     return myRangeHighlighter;
   }
@@ -185,7 +165,7 @@ public class Range {
     return myOffset1 <= line && myOffset2 >= line;
   }
 
-  public boolean isMoreThen(int line) {
+  public boolean isAfter(int line) {
     if (myType == DELETED)
       return (getOffset1() - 1) > line;
     else

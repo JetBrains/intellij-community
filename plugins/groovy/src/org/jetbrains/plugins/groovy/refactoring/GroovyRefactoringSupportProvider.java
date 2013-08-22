@@ -100,7 +100,8 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
   }
 
   @Override
-  public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement element, PsiElement context) {
+  public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement element, @Nullable PsiElement context) {
+    if (context == null) return false;
     PsiElement parent = context.getParent();
 
     //don't try to inplace rename aliased imported references

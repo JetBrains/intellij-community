@@ -32,6 +32,8 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -112,6 +114,11 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @Override
   public boolean processAllClassNames(Processor<String> processor) {
     return JavaShortClassNameIndex.getInstance().processAllKeys(myManager.getProject(), processor);
+  }
+
+  @Override
+  public boolean processAllClassNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+    return StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.CLASS_SHORT_NAMES, processor, scope, filter);
   }
 
   @Override

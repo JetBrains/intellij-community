@@ -39,7 +39,7 @@ public final class HgVersion implements Comparable<HgVersion> {
 
   private static final Logger LOGGER = Logger.getInstance(HgVersion.class);
   private static final Pattern HG_VERSION_PATTERN =
-    Pattern.compile(".+\\(\\s*\\S+\\s+(\\d+)\\.(\\d+)[\\+\\.-]?(\\d*)?.*\\s*\\)\\s*", Pattern.CASE_INSENSITIVE);
+    Pattern.compile(".+\\(\\s*\\S+\\s+(\\d+)\\.(\\d+)[\\+\\.-]?(\\d*)?.*\\s*\\)\\s*.*\\s*", Pattern.CASE_INSENSITIVE);
   //f.e. Mercurial Distributed SCM (version 2.6+20130507) or Mercurial Distributed SCM (version 2.6.2), 2.7-rc+5-ca2dfc2f63eb
 
   /**

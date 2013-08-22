@@ -25,6 +25,7 @@ import java.lang.reflect.Field;
  */
 public class HgVersionTest extends HgPlatformTest {
 
+  //todo: should be changed to Junit Parameterized tests
   private static final TestHgVersion[] commonTests = {
     new TestHgVersion("Mercurial Distributed SCM (version 2.6.2)", 2, 6, 2),
     new TestHgVersion("Mercurial Distributed SCM (version 2.6+20130507)", 2, 6, 20130507),
@@ -33,7 +34,10 @@ public class HgVersionTest extends HgPlatformTest {
     new TestHgVersion("Mercurial Distributed SCM (version 2.7-rc+5-ca2dfc2f63eb)", 2, 7, 0),
     new TestHgVersion("Распределенная SCM Mercurial (версия 2.0.2)", 2, 0, 2),
     new TestHgVersion("Mercurial Distributed SCM (version 2.4.2+20130102)", 2, 4, 2),
-    new TestHgVersion("Распределенная SCM Mercurial (версия 2.6.1)", 2, 6, 1)
+    new TestHgVersion("Распределенная SCM Mercurial (версия 2.6.1)", 2, 6, 1),
+    new TestHgVersion("[Mercurial Distributed SCM (version 2.6.2+20130606)]", 2, 6, 2),
+    new TestHgVersion("[Mercurial Distributed SCM (version 2.4.2+20130203)]\n", 2, 4, 2),
+    new TestHgVersion("Mercurial Distributed SCM (version 2.6.2)\n", 2, 6, 2)
   };
 
   public void testParseSupported() throws Exception {

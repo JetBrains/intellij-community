@@ -70,6 +70,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -153,6 +154,7 @@ public abstract class ChooseByNameBase {
   private String myFindUsagesTitle;
   private ShortcutSet myCheckBoxShortcut;
   protected boolean myInitIsDone;
+  static final boolean ourLoadNamesEachTime = FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
 
   public boolean checkDisposed() {
     if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
@@ -795,7 +797,10 @@ public abstract class ChooseByNameBase {
       }
     }
 
-    if (index == 1 && myModel instanceof ContributorsBasedGotoByModel && myNames[0] != null) {
+    if (index == 1 &&
+        myModel instanceof ContributorsBasedGotoByModel &&
+        ((ContributorsBasedGotoByModel)myModel).sameNamesForProjectAndLibraries() &&
+        myNames[0] != null) {
       // there is no way in indices to have different keys for project symbols vs libraries, we always have same ones
       myNames[1] = myNames[0];
       return;
@@ -814,6 +819,10 @@ public abstract class ChooseByNameBase {
 
   @NotNull
   public String[] getNames(boolean checkboxState) {
+    if (ourLoadNamesEachTime) {
+      myNames[checkboxState ? 1 : 0] = null;
+      ensureNamesLoaded(checkboxState);
+    }
     return checkboxState ? myNames[1] : myNames[0];
   }
 
@@ -1193,8 +1202,9 @@ public abstract class ChooseByNameBase {
     }
 
     final String text = myTextField.getText();
+    if (text.length() == 0) return Collections.emptyList();
     final boolean checkBoxState = myCheckBox.isSelected();
-    //ensureNamesLoaded(checkBoxState);
+    if (ourLoadNamesEachTime) ensureNamesLoaded(checkBoxState);
     final String[] names = checkBoxState ? myNames[1] : myNames[0];
     if (names == null) return Collections.emptyList();
 
@@ -1489,7 +1499,7 @@ public abstract class ChooseByNameBase {
                 public void run() {
                   try {
                     boolean everywhere = myCheckboxState;
-                    ensureNamesLoaded(everywhere);
+                    if (!ourLoadNamesEachTime) ensureNamesLoaded(everywhere);
                     addElementsByPattern(myPattern, elements, myCancelled, everywhere);
                   }
                   catch (ProcessCanceledException e) {

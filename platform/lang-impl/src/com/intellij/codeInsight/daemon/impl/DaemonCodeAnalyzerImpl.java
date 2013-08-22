@@ -250,6 +250,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           if (callbackWhileWaiting != null) {
             callbackWhileWaiting.run();
           }
+          myPassExecutorService.waitFor(50);
           UIUtil.dispatchAllInvocationEvents();
           Throwable savedException = PassExecutorService.getSavedException(progress);
           if (savedException != null) throw savedException;

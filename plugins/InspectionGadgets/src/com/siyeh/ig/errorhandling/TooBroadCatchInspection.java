@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +87,12 @@ public class TooBroadCatchInspection extends BaseInspection {
     final List<PsiClass> maskedTypes = (List<PsiClass>)infos[0];
     final List<InspectionGadgetsFix> fixes = new ArrayList();
     for (PsiClass thrown : maskedTypes) {
-      fixes.add(new AddCatchSectionFix(thrown));
+      if (CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION.equals(maskedTypes.get(0).getQualifiedName())) {
+        fixes.add(new ReplaceWithRuntimeExceptionFix());
+      }
+      else {
+        fixes.add(new AddCatchSectionFix(thrown));
+      }
     }
     return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
   }
@@ -98,6 +104,33 @@ public class TooBroadCatchInspection extends BaseInspection {
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.test.code"), "ignoreInTestCode");
     panel.addCheckbox(InspectionGadgetsBundle.message("overly.broad.throws.clause.ignore.thrown.option"), "ignoreThrown");
     return panel;
+  }
+
+  private static class ReplaceWithRuntimeExceptionFix extends InspectionGadgetsFix {
+    @NotNull
+    @Override
+    public String getName() {
+      return "Replace with 'catch' clause for 'RuntimeException'";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiTypeElement)) {
+        return;
+      }
+      final PsiTypeElement typeElement = (PsiTypeElement)element;
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final PsiClassType type = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION);
+      final PsiTypeElement newTypeElement = factory.createTypeElement(type);
+      typeElement.replace(newTypeElement);
+    }
   }
 
   private static class AddCatchSectionFix extends InspectionGadgetsFix {
@@ -207,31 +240,42 @@ public class TooBroadCatchInspection extends BaseInspection {
       if (ignoreInTestCode && TestUtils.isInTestCode(statement)) {
         return;
       }
-      final Set<PsiClassType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock);
-      final int numExceptionsThrown = exceptionsThrown.size();
-      final Set<PsiType> exceptionsCaught = new HashSet<PsiType>(numExceptionsThrown);
+      final Set<PsiClassType> thrownTypes = ExceptionUtils.calculateExceptionsThrown(tryBlock);
+      final Set<PsiType> caughtTypes = new HashSet<PsiType>(thrownTypes.size());
       final PsiCatchSection[] catchSections = statement.getCatchSections();
       for (final PsiCatchSection catchSection : catchSections) {
         final PsiParameter parameter = catchSection.getParameter();
         if (parameter == null) {
           continue;
         }
-        final PsiType typeCaught = parameter.getType();
-        if (typeCaught instanceof PsiDisjunctionType) {
-          final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)typeCaught;
+        final PsiType caughtType = parameter.getType();
+        if (caughtType instanceof PsiDisjunctionType) {
+          final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)caughtType;
           final List<PsiType> types = disjunctionType.getDisjunctions();
           for (PsiType type : types) {
-            check(exceptionsThrown, exceptionsCaught, parameter, type);
+            check(thrownTypes, caughtTypes, parameter, type);
           }
         }
         else {
-          check(exceptionsThrown, exceptionsCaught, parameter, typeCaught);
+          if (thrownTypes.isEmpty()) {
+            if (CommonClassNames.JAVA_LANG_EXCEPTION.equals(caughtType.getCanonicalText())) {
+              final PsiTypeElement typeElement = parameter.getTypeElement();
+              if (typeElement == null) {
+                continue;
+              }
+              final PsiClass runtimeExceptionClass = ClassUtils.findClass(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, parameter);
+              registerError(typeElement, Collections.singletonList(runtimeExceptionClass));
+            }
+          }
+          else {
+            check(thrownTypes, caughtTypes, parameter, caughtType);
+          }
         }
       }
     }
 
-    private void check(Set<PsiClassType> exceptionsThrown, Set<PsiType> exceptionsCaught, PsiParameter parameter, PsiType type) {
-      final List<PsiClass> maskedExceptions = findMaskedExceptions(exceptionsThrown, exceptionsCaught, type);
+    private void check(Set<PsiClassType> thrownTypes, Set<PsiType> caughtTypes, PsiParameter parameter, PsiType caughtType) {
+      final List<PsiClass> maskedExceptions = findMaskedExceptions(thrownTypes, caughtTypes, caughtType);
       if (maskedExceptions.isEmpty()) {
         return;
       }
@@ -242,30 +286,30 @@ public class TooBroadCatchInspection extends BaseInspection {
       registerError(typeElement, maskedExceptions);
     }
 
-    private List<PsiClass> findMaskedExceptions(Set<PsiClassType> exceptionsThrown, Set<PsiType> exceptionsCaught, PsiType typeCaught) {
-      if (exceptionsThrown.contains(typeCaught)) {
+    private List<PsiClass> findMaskedExceptions(Set<PsiClassType> thrownTypes, Set<PsiType> caughtTypes, PsiType caughtType) {
+      if (thrownTypes.contains(caughtType)) {
         if (ignoreThrown) {
           return Collections.emptyList();
         }
-        exceptionsCaught.add(typeCaught);
-        exceptionsThrown.remove(typeCaught);
+        caughtTypes.add(caughtType);
+        thrownTypes.remove(caughtType);
       }
       if (onlyWarnOnRootExceptions) {
-        if (!ExceptionUtils.isGenericExceptionClass(typeCaught)) {
+        if (!ExceptionUtils.isGenericExceptionClass(caughtType)) {
           return Collections.emptyList();
         }
       }
-      final List<PsiClass> typesMasked = new ArrayList();
-      for (PsiClassType typeThrown : exceptionsThrown) {
-        if (!exceptionsCaught.contains(typeThrown) && typeCaught.isAssignableFrom(typeThrown)) {
-          exceptionsCaught.add(typeThrown);
+      final List<PsiClass> maskedTypes = new ArrayList();
+      for (PsiClassType typeThrown : thrownTypes) {
+        if (!caughtTypes.contains(typeThrown) && caughtType.isAssignableFrom(typeThrown)) {
+          caughtTypes.add(typeThrown);
           final PsiClass aClass = typeThrown.resolve();
           if (aClass != null) {
-            typesMasked.add(aClass);
+            maskedTypes.add(aClass);
           }
         }
       }
-      return typesMasked;
+      return maskedTypes;
     }
   }
 }

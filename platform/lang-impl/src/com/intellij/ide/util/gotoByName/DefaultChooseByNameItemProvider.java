@@ -47,11 +47,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @Override
-  public boolean filterElements(@NotNull ChooseByNameBase base,
-                                @NotNull String pattern,
+  public boolean filterElements(@NotNull final ChooseByNameBase base,
+                                @NotNull final String pattern,
                                 boolean everywhere,
                                 @NotNull ProgressIndicator indicator,
-                                @NotNull Processor<Object> consumer) {
+                                @NotNull final Processor<Object> consumer) {
     String namePattern = getNamePattern(base, pattern);
     String qualifierPattern = getQualifierPattern(base, pattern);
 
@@ -60,13 +60,46 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     final ChooseByNameModel model = base.getModel();
     String matchingPattern = convertToMatchingPattern(base, namePattern);
     List<MatchResult> namesList = new ArrayList<MatchResult>();
-    String[] names = base.getNames(everywhere);
-    CollectConsumer<MatchResult> collect = new SynchronizedCollectConsumer<MatchResult>(namesList);
-    processNamesByPattern(base, names, matchingPattern, indicator, collect);
+
+    final CollectConsumer<MatchResult> collect = new SynchronizedCollectConsumer<MatchResult>(namesList);
+    long started;
+
+    if (model instanceof EfficientChooseByNameModel) {
+      indicator.checkCanceled();
+      started = System.currentTimeMillis();
+      final MinusculeMatcher matcher = buildPatternMatcher(matchingPattern, NameUtil.MatchingCaseSensitivity.NONE);
+      ((EfficientChooseByNameModel)model).processNames(new Processor<String>() {
+        @Override
+        public boolean process(String sequence) {
+          ProgressManager.checkCanceled();
+          MatchResult result = matches(base, pattern, matcher, sequence);
+          if (result != null) {
+            collect.consume(result);
+            return true;
+          }
+          return false;
+        }
+      }, everywhere);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("loaded + matched:"+ (System.currentTimeMillis() - started)+ "," + collect.getResult().size());
+      }
+    } else {
+      String[] names = base.getNames(everywhere);
+      started = System.currentTimeMillis();
+      processNamesByPattern(base, names, matchingPattern, indicator, collect);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("matched:"+ (System.currentTimeMillis() - started)+ "," + names.length);
+      }
+    }
 
     indicator.checkCanceled();
-    sortNamesList(matchingPattern, (List<MatchResult>)collect.getResult());
+    started = System.currentTimeMillis();
+    List<MatchResult> results = (List<MatchResult>)collect.getResult();
+    sortNamesList(matchingPattern, results);
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("sorted:"+ (System.currentTimeMillis() - started) + ",results:" + results.size());
+    }
     indicator.checkCanceled();
 
     List<Object> sameNameElements = new SmartList<Object>();

@@ -43,6 +43,8 @@ import com.intellij.pom.PomTarget;
 import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -356,5 +358,9 @@ public class TargetElementUtilBase {
 
   public boolean acceptImplementationForReference(PsiReference reference, PsiElement element) {
     return true;
+  }
+  
+  public SearchScope getSearchScope(Editor editor, PsiElement element) {
+    return PsiSearchHelper.SERVICE.getInstance(element.getProject()).getUseScope(element);
   }
 }

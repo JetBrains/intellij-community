@@ -127,7 +127,7 @@ public class XmlCompletionData extends CompletionData {
   }
 
   protected XmlAttributeValueGetter getAttributeValueGetter() {
-    return null;
+    return new XmlAttributeValueGetter();
   }
 
   protected ElementFilter createAttributeCompletionFilter() {

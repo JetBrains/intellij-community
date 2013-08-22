@@ -80,6 +80,10 @@ public abstract class FileBasedIndexExtension<K, V> {
     return false;
   }
 
+  public boolean traceKeyHashToVirtualFileMapping() {
+    return false;
+  }
+
   /** Per-filetype index version support */
   public Map<FileType, Integer> getVersionMap() {
     return Collections.emptyMap();
