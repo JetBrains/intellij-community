@@ -64,10 +64,11 @@ public class SvnLineCommand extends SvnCommand {
   public static final String CANNOT_AUTHENTICATE_TO_PROXY = "Could not authenticate to proxy server";
   public static final String AUTHENTICATION_FAILED_MESSAGE = "Authentication failed";
 
-  private static final String INVALID_CREDENTIALS_FOR_SVN_PROTOCOL = "svn: E170001: Can't get password";
+  private static final String INVALID_CREDENTIALS_FOR_SVN_PROTOCOL = "svn: E170001: Can't get";
   private static final String UNTRUSTED_SERVER_CERTIFICATE = "Server SSL certificate untrusted";
   private static final String ACCESS_TO_PREFIX = "Access to ";
   private static final String FORBIDDEN_STATUS = "forbidden";
+  private static final String PASSWORD_STRING = "password";
 
   private static final Pattern UNABLE_TO_CONNECT_TO_URL_PATTERN = Pattern.compile("Unable to connect to a repository at URL '(.*)'");
 
@@ -204,7 +205,8 @@ public class SvnLineCommand extends SvnCommand {
     if (errText.contains(AUTHENTICATION_FAILED_MESSAGE)) {
       return new UsernamePasswordCallback(callback, base, url);
     }
-    if (errText.contains(INVALID_CREDENTIALS_FOR_SVN_PROTOCOL)) {
+    // messages could be "Can't get password", "Can't get username or password"
+    if (errText.contains(INVALID_CREDENTIALS_FOR_SVN_PROTOCOL) && errText.contains(PASSWORD_STRING)) {
       // svn protocol invalid credentials
       return new UsernamePasswordCallback(callback, base, url);
     }
