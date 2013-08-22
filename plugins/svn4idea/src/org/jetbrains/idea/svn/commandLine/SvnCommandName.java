@@ -36,7 +36,8 @@ public enum SvnCommandName {
   revert("revert", true),
   delete("delete", true),
   copy("copy", true),
-  move("move", true);
+  move("move", true),
+  resolve("resolve", true);
 
   private final String myName;
   private final boolean myWriteable;

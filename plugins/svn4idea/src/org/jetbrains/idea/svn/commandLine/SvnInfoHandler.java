@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -97,16 +98,13 @@ public class SvnInfoHandler extends DefaultHandler {
   public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
     assertSAX(! myParseStack.isEmpty());
     ElementHandlerBase current = myParseStack.get(myParseStack.size() - 1);
-    if (mySb.length() > 0) {
-      current.characters(mySb.toString().trim(), myPending);
-      mySb.setLength(0);
-    }
 
     while (true) {
       final boolean createNewChild = current.startElement(uri, localName, qName, attributes);
       if (createNewChild) {
         assertSAX(myElementsMap.containsKey(qName));
         final ElementHandlerBase newChild = myElementsMap.get(qName).get();
+        newChild.setParent(current);
         newChild.updateInfo(attributes, myPending);
         myParseStack.add(newChild);
         return;
@@ -120,6 +118,18 @@ public class SvnInfoHandler extends DefaultHandler {
         current = myParseStack.get(myParseStack.size() - 1);
       }
     }
+  }
+
+  @Override
+  public void endElement(String uri, String localName, String qName) throws SAXException {
+    ElementHandlerBase current = myParseStack.get(myParseStack.size() - 1);
+    String value = mySb.toString().trim();
+
+    if (!StringUtil.isEmpty(value)) {
+      current.characters(value, myPending);
+    }
+
+    mySb.setLength(0);
   }
 
   @Override
@@ -332,6 +342,12 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
+      // TODO: Currently information for conflict (not tree-conflict) available in svn 1.8 is not used
+      // TODO: And it also not suite well for SVNKit api
+      if (getParent() instanceof Conflict) {
+        return;
+      }
+
       final String side = attributes.getValue("side");
       if ("source-left".equals(side)) {
         final SvnInfoStructure.ConflictVersion conflictVersion = new SvnInfoStructure.ConflictVersion();
@@ -419,7 +435,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      structure.myConflictWorking = s;
+      structure.myConflictNew = new File(s).getName();
     }
   }
 
@@ -434,7 +450,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      structure.myConflictNew = s;
+      structure.myConflictWorking = new File(s).getName();
     }
   }
 
@@ -449,14 +465,13 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      // todo path? or plus base
-      structure.myConflictOld = s;
+      structure.myConflictOld = new File(s).getName();
     }
   }
 
   private static class Conflict extends ElementHandlerBase {
     private Conflict() {
-      super(new String[]{"prev-base-file","prev-wc-file","cur-base-file","prop-file"}, new String[]{});
+      super(new String[]{"prev-base-file","prev-wc-file","cur-base-file","prop-file"}, new String[]{"version"});
     }
 
     @Override
@@ -842,10 +857,20 @@ public class SvnInfoHandler extends DefaultHandler {
   private abstract static class ElementHandlerBase {
     private final Set<String> myAwaitedChildren;
     private final Set<String> myAwaitedChildrenMultiple;
+    private ElementHandlerBase parent;
 
     ElementHandlerBase(String[] awaitedChildren, String[] awaitedChildrenMultiple) {
       myAwaitedChildren = new HashSet<String>(Arrays.asList(awaitedChildren));
       myAwaitedChildrenMultiple = new HashSet<String>(Arrays.asList(awaitedChildrenMultiple));
+    }
+
+    @NotNull
+    public ElementHandlerBase getParent() {
+      return parent;
+    }
+
+    public void setParent(@NotNull ElementHandlerBase parent) {
+      this.parent = parent;
     }
 
     protected abstract void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException;

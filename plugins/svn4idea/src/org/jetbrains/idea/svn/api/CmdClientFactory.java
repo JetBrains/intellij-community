@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.CmdAddClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
+import org.jetbrains.idea.svn.conflict.CmdConflictClient;
 import org.jetbrains.idea.svn.copy.CmdCopyMoveClient;
 import org.jetbrains.idea.svn.delete.CmdDeleteClient;
 import org.jetbrains.idea.svn.history.CmdHistoryClient;
@@ -25,6 +26,7 @@ public class CmdClientFactory extends ClientFactory {
     revertClient = new CmdRevertClient();
     deleteClient = new CmdDeleteClient();
     copyMoveClient = new CmdCopyMoveClient();
+    conflictClient = new CmdConflictClient();
     statusClient = new SvnCommandLineStatusClient(myVcs.getProject());
   }
 }

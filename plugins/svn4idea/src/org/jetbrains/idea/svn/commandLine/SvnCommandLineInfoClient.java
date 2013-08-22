@@ -114,7 +114,14 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       // not a working copy exception
       // "E155007: '' is not a working copy"
       if (notEmpty && text.contains("is not a working copy")) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY), e);
+        if (StringUtil.isNotEmpty(command.getOutput())) {
+          // workaround: as in subversion 1.8 "svn info" on a working copy root outputs such error for parent folder,
+          // if there are files with conflicts.
+          // but the requested info is still in the output except root closing tag
+          return command.getOutput() + "</info>";
+        } else {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY), e);
+        }
       }
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }

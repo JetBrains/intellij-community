@@ -27,8 +27,8 @@ import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -57,38 +57,34 @@ public class SvnMergeProvider implements MergeProvider {
     final MergeData data = new MergeData();
     VcsRunnable runnable = new VcsRunnable() {
       public void run() throws VcsException {
-        SvnVcs vcs = SvnVcs.getInstance(myProject);
         File oldFile = null;
         File newFile = null;
         File workingFile = null;
-        SVNWCClient client;
         boolean mergeCase = false;
-        try {
-          client = vcs.createWCClient();
-          SVNInfo info = client.doInfo(new File(file.getPath()), SVNRevision.UNDEFINED);
-          if (info != null) {
-            oldFile = info.getConflictOldFile();
-            newFile = info.getConflictNewFile();
-            workingFile = info.getConflictWrkFile();
-            mergeCase = workingFile == null || workingFile.getName().contains("working");
-            // for debug
-            if (workingFile == null) {
-              LOG.info("Null working file when merging text conflict for " + file.getPath() + " old file: " + oldFile + " new file: " + newFile);
-            }
-            if (mergeCase) {
-              // this is merge case
-              oldFile = info.getConflictNewFile();
-              newFile = info.getConflictOldFile();
-              workingFile = info.getConflictWrkFile();
-            }
-            data.LAST_REVISION_NUMBER = new SvnRevisionNumber(info.getRevision());
+        SvnVcs vcs = SvnVcs.getInstance(myProject);
+        SVNInfo info = vcs.getInfo(file);
+
+        if (info != null) {
+          oldFile = info.getConflictOldFile();
+          newFile = info.getConflictNewFile();
+          workingFile = info.getConflictWrkFile();
+          mergeCase = workingFile == null || workingFile.getName().contains("working");
+          // for debug
+          if (workingFile == null) {
+            LOG.info("Null working file when merging text conflict for " + file.getPath() + " old file: " + oldFile + " new file: " + newFile);
           }
-        }
-        catch (SVNException e) {
-          throw new VcsException(e);
+          if (mergeCase) {
+            // this is merge case
+            oldFile = info.getConflictNewFile();
+            newFile = info.getConflictOldFile();
+            workingFile = info.getConflictWrkFile();
+          }
+          data.LAST_REVISION_NUMBER = new SvnRevisionNumber(info.getRevision());
+        } else {
+          throw new VcsException("Could not get info for " + file.getPath());
         }
         if (oldFile == null || newFile == null || workingFile == null) {
-          ByteArrayOutputStream bos = getBaseRevisionContents(client, file);
+          ByteArrayOutputStream bos = getBaseRevisionContents(vcs, file);
           data.ORIGINAL = bos.toByteArray();
           data.LAST = bos.toByteArray();
           data.CURRENT = readFile(new File(file.getPath()));
@@ -99,7 +95,7 @@ public class SvnMergeProvider implements MergeProvider {
           data.CURRENT = readFile(workingFile);
         }
         if (mergeCase) {
-          final ByteArrayOutputStream contents = getBaseRevisionContents(vcs.createWCClient(), file);
+          final ByteArrayOutputStream contents = getBaseRevisionContents(vcs, file);
           if (! Arrays.equals(contents.toByteArray(), data.ORIGINAL)) {
             // swap base and server: another order of merge arguments
             byte[] original = data.ORIGINAL;
@@ -114,13 +110,17 @@ public class SvnMergeProvider implements MergeProvider {
     return data;
   }
 
-  private ByteArrayOutputStream getBaseRevisionContents(SVNWCClient client, VirtualFile file) {
+  private ByteArrayOutputStream getBaseRevisionContents(SvnVcs vcs, VirtualFile file) {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try {
-      client.doGetFileContents(new File(file.getPath()), SVNRevision.UNDEFINED, SVNRevision.BASE, true, bos);
+      byte[] contents = SvnUtil.getFileContents(vcs, file.getPath(), false, SVNRevision.BASE, SVNRevision.UNDEFINED);
+      bos.write(contents);
     }
-    catch (SVNException e) {
-      //
+    catch (VcsException e) {
+      LOG.warn(e);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
     }
     return bos;
   }
@@ -135,13 +135,14 @@ public class SvnMergeProvider implements MergeProvider {
   }
 
   public void conflictResolvedForFile(VirtualFile file) {
+    // TODO: Add possibility to resolve content conflicts separately from property conflicts.
     SvnVcs vcs = SvnVcs.getInstance(myProject);
+    File path = new File(file.getPath());
     try {
-      SVNWCClient client = vcs.createWCClient();
-      client.doResolve(new File(file.getPath()), SVNDepth.EMPTY, true, false, SVNConflictChoice.MERGED);
+      vcs.getFactory(path).createConflictClient().resolve(path, false);
     }
-    catch (SVNException e) {
-      //
+    catch (VcsException e) {
+      LOG.warn(e);
     }
     // the .mine/.r## files have been deleted
     final VirtualFile parent = file.getParent();
