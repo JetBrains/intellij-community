@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,11 +34,10 @@ import java.util.Enumeration;
 import java.util.List;
 
 public class UrlClassLoader extends ClassLoader {
+  @NonNls static final String CLASS_EXTENSION = ".class";
+
   private final ClassPath myClassPath;
   private final List<URL> myURLs;
-  @NonNls static final String CLASS_EXTENSION = ".class";
-  protected static final boolean myDebugTime = false;
-  protected static final long NS_THRESHOLD = 10000000;
 
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(Arrays.asList(((URLClassLoader)parent).getURLs()), parent.getParent(), true, true);
@@ -57,7 +55,12 @@ public class UrlClassLoader extends ClassLoader {
     this(urls, parent, canLockJars, canUseCache, false, true);
   }
 
-  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls, final boolean preloadJarContents) {
+  public UrlClassLoader(List<URL> urls,
+                        @Nullable ClassLoader parent,
+                        boolean canLockJars,
+                        boolean canUseCache,
+                        boolean acceptUnescapedUrls,
+                        boolean preloadJarContents) {
     super(parent);
 
     List<URL> list = ContainerUtil.map(urls, new Function<URL, URL>() {
@@ -70,7 +73,6 @@ public class UrlClassLoader extends ClassLoader {
     myURLs = list;
   }
 
-  @NotNull
   public static URL internProtocol(@NotNull URL url) {
     try {
       final String protocol = url.getProtocol();
@@ -80,7 +82,7 @@ public class UrlClassLoader extends ClassLoader {
       return url;
     }
     catch (MalformedURLException e) {
-      LOG.error(e);
+      Logger.getInstance(UrlClassLoader.class).error(e);
       return null;
     }
   }
@@ -133,12 +135,12 @@ public class UrlClassLoader extends ClassLoader {
   private Class defineClass(String name, Resource res) throws IOException {
     int i = name.lastIndexOf('.');
     if (i != -1) {
-      String pkgname = name.substring(0, i);
+      String pkgName = name.substring(0, i);
       // Check if package already loaded.
-      Package pkg = getPackage(pkgname);
+      Package pkg = getPackage(pkgName);
       if (pkg == null) {
         try {
-          definePackage(pkgname, null, null, null, null, null, null, null);
+          definePackage(pkgName, null, null, null, null, null, null, null);
         }
         catch (IllegalArgumentException e) {
           // do nothing, package already defined by some other thread
@@ -157,28 +159,17 @@ public class UrlClassLoader extends ClassLoader {
   @Override
   @Nullable  // Accessed from PluginClassLoader via reflection // TODO do we need it?
   public URL findResource(final String name) {
-    final long started = myDebugTime ? System.nanoTime():0;
-
-    try {
-      return findResourceImpl(name);
-    } finally {
-      long doneFor = myDebugTime ? (System.nanoTime() - started):0;
-      if (doneFor > NS_THRESHOLD) {
-        System.out.println((doneFor / 1000000) + " ms for UrlClassLoader.getResource, resource:"+name);
-      }
-    }
+    return findResourceImpl(name);
   }
 
   protected URL findResourceImpl(final String name) {
     Resource res = _getResource(name);
-    if (res == null) return null;
-    return res.getURL();
+    return res != null ? res.getURL() : null;
   }
 
   @Nullable
   private Resource _getResource(final String name) {
     String n = name;
-
     if (n.startsWith("/")) n = n.substring(1);
     return myClassPath.getResource(n, true);
   }
@@ -200,13 +191,5 @@ public class UrlClassLoader extends ClassLoader {
   @Override
   protected Enumeration<URL> findResources(String name) throws IOException {
     return myClassPath.getResources(name, true);
-  }
-  
-  static final boolean doDebug = System.getProperty("idea.classloading.debug") != null;
-  private static final Logger LOG = Logger.getInstance("idea.UrlClassLoader");
-
-  static void debug(String s) {
-    System.out.println(s); // TODO: remove
-    LOG.debug(s);
   }
 }
