@@ -2,12 +2,14 @@ package com.intellij.tasks.generic;
 
 import com.intellij.execution.util.ListTableWithButtons;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.List;
@@ -105,6 +107,27 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
             };
           }
           return super.getRenderer(variable);
+        }
+
+        @Nullable
+        @Override
+        public TableCellEditor getEditor(final TemplateVariable variable) {
+          if (variable.getIsHidden()) {
+            return new AbstractTableCellEditor() {
+              private JPasswordField myPasswordField;
+              @Override
+              public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+                myPasswordField = new JPasswordField(variable.getValue());
+                return myPasswordField;
+              }
+
+              @Override
+              public Object getCellEditorValue() {
+                return myPasswordField.getText();
+              }
+            };
+          }
+          return super.getEditor(variable);
         }
 
         @Nullable
