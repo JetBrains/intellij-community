@@ -97,8 +97,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     setBackground(UIUtil.getPanelBackground());
     AppUIUtil.updateWindowIcon(this);
     final Dimension size = ScreenUtil.getMainScreenBounds().getSize();
-    size.width-=20;
-    size.height -=40;
+    
+    size.width = Math.min(1400, size.width - 20);
+    size.height= Math.min(1000, size.height - 40);
+    
     setSize(size);
     setLocationRelativeTo(null);
 
