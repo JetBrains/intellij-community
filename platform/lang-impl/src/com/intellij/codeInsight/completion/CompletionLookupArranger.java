@@ -226,7 +226,7 @@ public class CompletionLookupArranger extends LookupArranger {
     ArrayList<LookupElement> result = new ArrayList<LookupElement>(model);
     if (result.size() > 1) {
       LookupElement first = result.get(0);
-      if (isLiveTemplate(first) && isPrefixItem(lookup, first, true)) {
+      if (isLiveTemplate(first) && isPrefixItem(lookup, first, true) && CompletionServiceImpl.isStartMatch(result.get(1), lookup)) {
         ContainerUtil.swapElements(result, 0, 1);
       }
     }
@@ -351,9 +351,13 @@ public class CompletionLookupArranger extends LookupArranger {
     String selectedText = lookup.getEditor().getSelectionModel().getSelectedText();
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
-      if (isAlphaSorted() && isPrefixItem(lookup, item, true) && !isLiveTemplate(item) ||
+      boolean isTemplate = isLiveTemplate(item);
+      if (isAlphaSorted() && isPrefixItem(lookup, item, true) && !isTemplate ||
           item.getLookupString().equals(selectedText)) {
         return i;
+      }
+      if (i == 0 && isTemplate && items.size() > 1 && !CompletionServiceImpl.isStartMatch(items.get(1), lookup)) {
+        return 0;
       }
     }
 

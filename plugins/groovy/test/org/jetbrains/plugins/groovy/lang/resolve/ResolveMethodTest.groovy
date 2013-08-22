@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
@@ -1646,5 +1647,223 @@ def foo(x) {
 }
 ''', PsiMethod)
 
+  }
+
+  void testInferredTypeInsideGStringInjection() {
+    resolveByText('''\
+class A {}
+class B extends A {
+    String bar() {'bar'}
+}
+
+def foo(A b) {
+    if (b instanceof B) {
+        doSomethingElse("Message: ${b.ba<caret>r()}")
+
+    }
+}
+''', PsiMethod)
+  }
+
+  void 'test IDEA-110562'() {
+    assertNotResolved('''\
+interface GrTypeDefinition {
+    def baz()
+}
+
+class Foo {
+    private static void extractSuperInterfaces(Object subclass) {
+        if (!(subclass instanceof GrTypeDefinition)) {
+            foo()
+            subclass.b<caret>az()
+        }
+    }
+
+    static def foo() {}
+}
+''')
+  }
+
+  private void assertNotResolved(String text) {
+    final ref = configureByText(text)
+    assertNotNull(ref)
+    final resolved = ref.resolve()
+    assertNull(resolved)
+  }
+
+  void 'test IDEA-110562 2'() {
+    resolveByText('''\
+interface GrTypeDefinition {
+    def baz()
+}
+
+class Foo {
+    private static void extractSuperInterfaces(Object subclass) {
+        if (subclass instanceof GrTypeDefinition) {
+            foo()
+            subclass.b<caret>az()
+        }
+    }
+
+    static def foo() {}
+}
+''', PsiMethod)
+  }
+
+  void testInstanceOf1() {
+    resolveByText('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o.fo<caret>o() && o.bar()) {
+    print o.foo()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testInstanceOf2() {
+    assertNotResolved('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o.foo() && o.ba<caret>r()) {
+    print o.foo()
+  }
+}
+''')
+  }
+
+  void testInstanceOf3() {
+    resolveByText('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o instanceof Bar o.fo<caret>o() && o.bar()) {
+    print o.foo()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testInstanceOf4() {
+    resolveByText('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o instanceof Bar o.foo() && o.b<caret>ar()) {
+    print o.foo()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testInstanceOf5() {
+    assertNotResolved('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o.foo() && o.bar()) {
+    print o.foo()
+  }
+  else {
+    print o.fo<caret>o()
+  }
+}
+''')
+  }
+
+  void testInstanceOf6() {
+    assertNotResolved('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o instanceof Bar && o.foo() && o.bar()) {
+    print o.foo()
+  }
+  else {
+    print o.fo<caret>o()
+  }
+}
+''')
+  }
+
+  void testInstanceOf7() {
+    assertNotResolved('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o instanceof Bar && o.foo() && o.bar()) {
+    print o.foo()
+  }
+  else {
+    print o.ba<caret>r()
+  }
+}
+''')
+  }
+
+  void testBinaryWithQualifiedRefsInArgs() {
+    GrBinaryExpression expr = configureByText('_.groovy', '''\
+class Base {
+    public static final int SHOW_NAME = 0x0001; // variable, method, class
+    public static final int SHOW_TYPE = 0x0002; // variable, method
+    public static final int TYPE_AFTER = 0x0004; // variable, method
+    public static final int SHOW_MODIFIERS = 0x0008; // variable, method, class
+    public static final int MODIFIERS_AFTER = 0x0010; // variable, method, class
+}
+
+class GrTypeDefinition  {
+    def foo() {
+        print (Base.SHOW_NAME <caret>| Base.SHOW_TYPE)
+
+    }
+}
+''', GrBinaryExpression)
+
+    assert expr.multiResolve(false).length == 1
+    assert expr.multiResolve(true).length > 1
   }
 }

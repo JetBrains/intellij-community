@@ -192,41 +192,25 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testReferenceParameters() throws Exception {
     configureByFile("ReferenceParameters.java");
     assertNotNull(myItems);
-    assertEquals(myItems.length, 2);
-    assertEquals(myItems[0].getLookupString(), "AAAA");
-    assertEquals(myItems[1].getLookupString(), "AAAB");
+    assert myFixture.lookupElementStrings == ['AAAA', 'AAAB']
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true
+    super.tearDown()
   }
 
   public void testConstructorName1() throws Exception{
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    final boolean autocomplete_on_code_completion = settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
-    settings.AUTOCOMPLETE_ON_CODE_COMPLETION = false;
-    configureByFile("ConstructorName1.java");
-    assertNotNull(myItems);
-    boolean failed = true;
-    for (final LookupElement item : myItems) {
-      if (item.getLookupString().equals("ABCDE")) {
-        failed = false;
-      }
-    }
-    assertFalse(failed);
-    settings.AUTOCOMPLETE_ON_CODE_COMPLETION = autocomplete_on_code_completion;
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
+    configure();
+    assert 'ABCDE' in myFixture.lookupElementStrings
   }
 
   public void testConstructorName2() throws Exception{
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    final boolean autocomplete_on_code_completion = settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
-    settings.AUTOCOMPLETE_ON_CODE_COMPLETION = false;
-    configureByFile("ConstructorName2.java");
-    assertNotNull(myItems);
-    boolean failed = true;
-    for (final LookupElement item : myItems) {
-      if (item.getLookupString().equals("ABCDE")) {
-        failed = false;
-      }
-    }
-    assertFalse(failed);
-    settings.AUTOCOMPLETE_ON_CODE_COMPLETION = autocomplete_on_code_completion;
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
+    configure();
+    assert 'ABCDE' in myFixture.lookupElementStrings
   }
 
   public void testObjectsInThrowsBlock() throws Exception {
@@ -918,6 +902,7 @@ public class ListUtils {
   public void testDontCastInstanceofedQualifier() throws Throwable { doTest(); }
   public void testQualifierCastingWithUnknownAssignments() throws Throwable { doTest(); }
   public void testQualifierCastingBeforeLt() throws Throwable { doTest(); }
+  public void testCastQualifierForPrivateFieldReference() throws Throwable { doTest(); }
   public void testNoReturnInTernary() throws Throwable { doTest(); }
 
   public void testOrAssignmentDfa() throws Throwable { doTest(); }
@@ -1336,6 +1321,29 @@ class XInternalError {}
     assert p.typeText == 'Foo'
 
     lookup.currentItem = item
+    myFixture.type('\n')
+    checkResult()
+  }
+
+  public void testAccessorViaCompletion() {
+    configure()
+
+    def getter = myFixture.lookupElements.find { it.lookupString == 'public int getField' }
+    def setter = myFixture.lookupElements.find { it.lookupString == 'public void setField' }
+    assert getter : myFixture.lookupElementStrings
+    assert setter : myFixture.lookupElementStrings
+
+    def p = LookupElementPresentation.renderElement(getter)
+    assert p.itemText == getter.lookupString
+    assert p.tailText == '() {...}'
+    assert !p.typeText
+
+    p = LookupElementPresentation.renderElement(setter)
+    assert p.itemText == setter.lookupString
+    assert p.tailText == '(field) {...}'
+    assert !p.typeText
+
+    lookup.currentItem = getter
     myFixture.type('\n')
     checkResult()
   }

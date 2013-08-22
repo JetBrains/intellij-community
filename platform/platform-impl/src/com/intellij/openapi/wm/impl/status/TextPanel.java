@@ -32,6 +32,7 @@ public class TextPanel extends JComponent {
 
   private boolean myDecorate = true;
   private float myAlignment;
+  private int myRightPadding = 20;
 
   protected TextPanel() {
     setFont(SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont());
@@ -154,8 +155,12 @@ public class TextPanel extends JComponent {
     return getPanelDimensionFromFontMetrics(text);
   }
 
+  public void setRightPadding(int rightPadding) {
+    myRightPadding = rightPadding;
+  }
+
   private Dimension getPanelDimensionFromFontMetrics (String text) {
-    int width = (text == null) ? 0 : 20 + getFontMetrics(getFont()).stringWidth(text);
+    int width = (text == null) ? 0 : myRightPadding + getFontMetrics(getFont()).stringWidth(text);
     int height = (myPrefHeight == null) ? getMinimumSize().height : myPrefHeight;
 
     return new Dimension(width, height);

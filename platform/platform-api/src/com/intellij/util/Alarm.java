@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -248,14 +248,24 @@ public class Alarm implements Disposable {
   }
 
   private class Request implements Runnable {
-    private Runnable myTask;
+    private Runnable myTask; // guarded by LOCK
     private final ModalityState myModalityState;
-    private Future<?> myFuture;
+    private Future<?> myFuture; // guarded by LOCK
     private final long myDelay;
 
-    private Request(@NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
+    private Request(@NotNull final Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
       synchronized (LOCK) {
-        myTask = task;
+        myTask = new Runnable() {
+          @Override
+          public void run() {
+            try {
+              task.run();
+            }
+            catch (Exception e) {
+              LOG.error("Exception in task " + task, e);
+            }
+          }
+        };
         myModalityState = modalityState;
         myDelay = delayMillis;
       }
@@ -281,37 +291,33 @@ public class Alarm implements Disposable {
               myTask = null;
 
               myRequests.remove(Request.this);
+              myFuture = null;
             }
 
             if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
-              try {
-                SwingUtilities.invokeAndWait(task);
-              }
-              catch (Exception e) {
-                LOG.error(e);
-              }
+              //noinspection SSBasedInspection
+              SwingUtilities.invokeLater(task);
             }
             else {
-              try {
-                task.run();
-              }
-              catch (Exception e) {
-                LOG.error(e);
-              }
+              task.run();
             }
           }
         };
 
         if (myModalityState == null) {
-          myFuture = myExecutorService.submit(scheduledTask);
+          Future<?> future = myExecutorService.submit(scheduledTask);
+          synchronized (LOCK) {
+            myFuture = future;
+          }
         }
         else {
           final Application app = ApplicationManager.getApplication();
-          if (app != null) {
-            app.invokeLater(scheduledTask, myModalityState);
+          if (app == null) {
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(scheduledTask);
           }
           else {
-            SwingUtilities.invokeLater(scheduledTask);
+            app.invokeLater(scheduledTask, myModalityState);
           }
         }
       }
@@ -327,7 +333,9 @@ public class Alarm implements Disposable {
     }
 
     public void setFuture(@NotNull ScheduledFuture<?> future) {
-      myFuture = future;
+      synchronized (LOCK) {
+        myFuture = future;
+      }
     }
 
     public ModalityState getModalityState() {
@@ -340,6 +348,7 @@ public class Alarm implements Disposable {
           myFuture.cancel(false);
           // TODO Use java.util.concurrent.ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true) when on jdk 1.7
           ((ScheduledThreadPoolExecutor)JobScheduler.getScheduler()).remove((Runnable)myFuture);
+          myFuture = null;
         }
         myTask = null;
       }

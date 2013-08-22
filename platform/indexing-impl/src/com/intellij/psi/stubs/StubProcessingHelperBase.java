@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,10 +35,11 @@ public abstract class StubProcessingHelperBase {
   public <Psi extends PsiElement> boolean processStubsInFile(final Project project, final VirtualFile file, StubIdList value, final Processor<? super Psi> processor) {
     StubTree stubTree = null;
 
-    final PsiFile _psifile = PsiManager.getInstance(project).findFile(file);
+    PsiFile _psifile = PsiManager.getInstance(project).findFile(file);
     PsiFileWithStubSupport psiFile = null;
 
     if (_psifile != null && !(_psifile instanceof PsiPlainTextFile)) {
+      _psifile = _psifile.getViewProvider().getStubBindingRoot();
       if (_psifile instanceof PsiFileWithStubSupport) {
         psiFile = (PsiFileWithStubSupport)_psifile;
         stubTree = psiFile.getStubTree();
@@ -59,11 +61,13 @@ public abstract class StubProcessingHelperBase {
       final List<StubElement<?>> plained = stubTree.getPlainList();
       for (int i = 0, size = value.size(); i < size; i++) {
         final StubElement<?> stub = plained.get(value.get(i));
+        PsiUtilCore.ensureValid(psiFile);
         final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
 
         if (tree != null) {
           if (tree.getElementType() == stubType(stub)) {
             Psi psi = (Psi)tree.getPsi();
+            PsiUtilCore.ensureValid(psi);
             if (!processor.process(psi)) return false;
           }
           else {
@@ -102,6 +106,7 @@ public abstract class StubProcessingHelperBase {
           break;
         }
         Psi psi = (Psi)plained.get(stubTreeIndex).getPsi();
+        PsiUtilCore.ensureValid(psi);
         if (!processor.process(psi)) return false;
       }
     }

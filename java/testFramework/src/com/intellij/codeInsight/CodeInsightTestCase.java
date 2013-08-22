@@ -109,7 +109,11 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     configureByFile(filePath, null);
   }
 
+  /**
+   * @param files the first file will be loaded in editor
+   */
   protected VirtualFile configureByFiles(@Nullable String projectRoot,String... files) throws Exception {
+    if (files.length == 0) return null;
     final VirtualFile[] vFiles = new VirtualFile[files.length];
     for (int i = 0; i < files.length; i++) {
       String path = files[i];

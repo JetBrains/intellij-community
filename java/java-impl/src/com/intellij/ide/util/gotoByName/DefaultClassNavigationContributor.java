@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.navigation.EfficientChooseByNameContributor;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
@@ -22,14 +23,27 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class DefaultClassNavigationContributor implements GotoClassContributor {
+public class DefaultClassNavigationContributor implements EfficientChooseByNameContributor, GotoClassContributor {
   @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
+    if (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping) {
+      GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+      CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<String>();
+      processNames(processor, scope, DefaultFileNavigationContributor.getFilter(project, includeNonProjectItems));
+
+      return ArrayUtil.toStringArray(processor.getResults());
+    }
+
     return PsiShortNamesCache.getInstance(project).getAllClassNames();
   }
 
@@ -54,18 +68,26 @@ public class DefaultClassNavigationContributor implements GotoClassContributor {
   @Override
   public String getQualifiedName(final NavigationItem item) {
     if (item instanceof PsiClass) {
-      final PsiClass psiClass = (PsiClass)item;
-      final String qName = psiClass.getQualifiedName();
-      if (qName != null) return qName;
-
-      final String containerText = SymbolPresentationUtil.getSymbolContainerText(psiClass);
-      return containerText + "." + psiClass.getName();
+      return getQualifiedNameForClass((PsiClass)item);
     }
     return null;
+  }
+
+  public static String getQualifiedNameForClass(PsiClass psiClass) {
+    final String qName = psiClass.getQualifiedName();
+    if (qName != null) return qName;
+
+    final String containerText = SymbolPresentationUtil.getSymbolContainerText(psiClass);
+    return containerText + "." + psiClass.getName();
   }
 
   @Override
   public String getQualifiedNameSeparator() {
     return ".";
+  }
+
+  @Override
+  public void processNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+    PsiShortNamesCache.getInstance(scope.getProject()).processAllClassNames(processor, scope, filter);
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,11 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public boolean isInternal() {
+    return false;
+  }
+
+  @Override
+  public boolean isEAP() {
     return false;
   }
 
@@ -259,14 +265,7 @@ public class MockApplication extends MockComponentManager implements Application
     private static final ExecutorService ourThreadExecutorsService = createServiceImpl();
 
     private static ThreadPoolExecutor createServiceImpl() {
-      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
-        @NotNull
-        @Override
-        @SuppressWarnings({"HardCodedStringLiteral"})
-        public Thread newThread(@NotNull Runnable r) {
-          return new Thread(r, "MockApplication pooled thread");
-        }
-      });
+      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("MockApplication pooled thread"));
     }
   }
 }

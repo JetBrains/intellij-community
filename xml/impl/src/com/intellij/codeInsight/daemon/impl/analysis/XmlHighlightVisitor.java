@@ -17,15 +17,12 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.BundleBase;
 import com.intellij.codeInsight.daemon.*;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
-import com.intellij.codeInsight.daemon.impl.SeverityUtil;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
-import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.lang.ASTNode;
@@ -361,7 +358,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         localizedMessage,
         isInjectedHtmlTagForWhichNoProblemsReporting((HtmlTag)tag) ?
           HighlightInfoType.INFORMATION :
-          SeverityUtil.getSeverityRegistrar(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key, tag).getSeverity()),
+          SeverityRegistrar.getSeverityRegistrar(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key, tag).getSeverity()),
         addAttributeFix,
         basicIntention);
     } else if (!htmlTag) {
@@ -414,6 +411,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   private void checkAttribute(XmlAttribute attribute) {
     XmlTag tag = attribute.getParent();
+    if (tag == null) return;
 
     final String name = attribute.getName();
 
@@ -619,7 +617,17 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         .range(startOffset + referenceRange.getStartOffset(), startOffset + referenceRange.getEndOffset())
         .descriptionAndTooltip(description).create();
       addToResults(info);
-      if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
+      if (reference instanceof LocalQuickFixProvider) {
+        LocalQuickFix[] fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
+        if (fixes != null) {
+          InspectionManager manager = InspectionManager.getInstance(reference.getElement().getProject());
+          for (LocalQuickFix fix : fixes) {
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(value, description, fix,
+                                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true);
+            QuickFixAction.registerQuickFixAction(info, new LocalQuickFixAsIntentionAdapter(fix, descriptor));
+          }
+        }
+      }
       UnresolvedReferenceQuickFixProvider.registerReferenceFixes(reference, new QuickFixActionRegistrarImpl(info));
     }
   }
@@ -679,7 +687,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         addElementsForTag((XmlTag)context, message, infoType, null);
       }
       else {
-        addToResults(HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(context).descriptionAndTooltip(message).create());
+        addToResults(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message).create());
       }
     }
   }

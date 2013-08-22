@@ -19,7 +19,6 @@ package com.intellij.application.options.colors;
 import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
@@ -56,6 +55,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -151,15 +152,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return mySelectedScheme.getDescriptors();
   }
 
-  public static boolean isReadOnly(final EditorColorsScheme scheme) {
+  public static boolean isReadOnly(@NotNull final EditorColorsScheme scheme) {
     return ((MyColorScheme)scheme).isReadOnly();
   }
 
+  @NotNull
   public String[] getSchemeNames() {
-    ArrayList<MyColorScheme> schemes = new ArrayList<MyColorScheme>(mySchemes.values());
+    List<MyColorScheme> schemes = new ArrayList<MyColorScheme>(mySchemes.values());
     Collections.sort(schemes, new Comparator<MyColorScheme>() {
       @Override
-      public int compare(MyColorScheme o1, MyColorScheme o2) {
+      public int compare(@NotNull MyColorScheme o1, @NotNull MyColorScheme o2) {
         if (isReadOnly(o1) && !isReadOnly(o2)) return -1;
         if (!isReadOnly(o1) && isReadOnly(o2)) return 1;
 
@@ -167,7 +169,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       }
     });
 
-    ArrayList<String> names = new ArrayList<String>(schemes.size());
+    List<String> names = new ArrayList<String>(schemes.size());
     for (MyColorScheme scheme : schemes) {
       names.add(scheme.getName());
     }
@@ -175,6 +177,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return ArrayUtil.toStringArray(names);
   }
 
+  @NotNull
   public Collection<EditorColorsScheme> getSchemes() {
     return new ArrayList<EditorColorsScheme>(mySchemes.values());
   }
@@ -198,7 +201,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     resetSchemesCombo(null);
   }
 
-  public void addImportedScheme(final EditorColorsScheme imported) {
+  public void addImportedScheme(@NotNull final EditorColorsScheme imported) {
     MyColorScheme newScheme = new MyColorScheme(imported);
     initScheme(newScheme);
 
@@ -312,6 +315,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return true;
   }
 
+  @NotNull
   @Override
   public Configurable[] buildConfigurables() {
     myDisposeCompleted = false;
@@ -329,6 +333,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return result.toArray(new Configurable[result.size()]);
   }
 
+  @NotNull
   private Set<NewColorAndFontPanel> getPanels() {
     Set<NewColorAndFontPanel> result = new HashSet<NewColorAndFontPanel>();
     for (InnerSearchableConfigurable configurable : mySubPanelFactories.values()) {
@@ -341,7 +346,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   protected List<ColorAndFontPanelFactory> createPanelFactories() {
-    ArrayList<ColorAndFontPanelFactory> result = new ArrayList<ColorAndFontPanelFactory>();
+    List<ColorAndFontPanelFactory> result = new ArrayList<ColorAndFontPanelFactory>();
     result.add(new FontConfigurableFactory());
 
     List<ColorAndFontPanelFactory> extensions = new ArrayList<ColorAndFontPanelFactory>();
@@ -443,6 +448,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return "Console Font";
     }
 
+     @NotNull
      @Override
      public DisplayPriority getPriority() {
        return DisplayPriority.COMMON_SETTINGS;
@@ -499,8 +505,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     assert mySelectedScheme != null : EditorColorsManager.getInstance().getGlobalScheme().getName() + "; myschemes=" + mySchemes;
   }
 
-  private static void initScheme(MyColorScheme scheme) {
-    ArrayList<EditorSchemeAttributeDescriptor> descriptions = new ArrayList<EditorSchemeAttributeDescriptor>();
+  private static void initScheme(@NotNull MyColorScheme scheme) {
+    List<EditorSchemeAttributeDescriptor> descriptions = new ArrayList<EditorSchemeAttributeDescriptor>();
     initPluggedDescriptions(descriptions, scheme);
     initDiffDescriptors(descriptions, scheme);
     initFileStatusDescriptors(descriptions, scheme);
@@ -509,7 +515,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     scheme.setDescriptors(descriptions.toArray(new EditorSchemeAttributeDescriptor[descriptions.size()]));
   }
 
-  private static void initPluggedDescriptions(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
+  private static void initPluggedDescriptions(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     for (ColorSettingsPage page : pages) {
       initDescriptions(page, descriptions, scheme);
@@ -519,9 +525,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
   }
 
-  private static void initDescriptions(ColorAndFontDescriptorsProvider provider,
-                                       ArrayList<EditorSchemeAttributeDescriptor> descriptions,
-                                       MyColorScheme scheme) {
+  private static void initDescriptions(@NotNull ColorAndFontDescriptorsProvider provider,
+                                       @NotNull List<EditorSchemeAttributeDescriptor> descriptions,
+                                       @NotNull MyColorScheme scheme) {
     String group = provider.getDisplayName();
     List<AttributesDescriptor> attributeDescriptors = ColorSettingsUtil.getAllAttributeDescriptors(provider);
     for (AttributesDescriptor descriptor : attributeDescriptors) {
@@ -536,11 +542,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
   }
 
-  private static void initDiffDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
+  private static void initDiffDescriptors(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
     DiffOptionsPanel.addSchemeDescriptions(descriptions, scheme);
   }
 
-  private static void initFileStatusDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
+  private static void initFileStatusDescriptors(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
 
     FileStatus[] statuses = FileStatusFactory.getInstance().getAllFileStatuses();
 
@@ -554,22 +560,22 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     }
   }
-  private static void initScopesDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
+  private static void initScopesDescriptors(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
     Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = new THashSet<Pair<NamedScope,NamedScopesHolder>>(new TObjectHashingStrategy<Pair<NamedScope,NamedScopesHolder>>() {
       @Override
-      public int computeHashCode(final Pair<NamedScope, NamedScopesHolder> object) {
+      public int computeHashCode(@NotNull final Pair<NamedScope, NamedScopesHolder> object) {
         return object.getFirst().getName().hashCode();
       }
 
       @Override
-      public boolean equals(final Pair<NamedScope, NamedScopesHolder> o1, final Pair<NamedScope, NamedScopesHolder> o2) {
+      public boolean equals(@NotNull final Pair<NamedScope, NamedScopesHolder> o1, @NotNull final Pair<NamedScope, NamedScopesHolder> o2) {
         return o1.getFirst().getName().equals(o2.getFirst().getName());
       }
     });
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
-      DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
-      List<Pair<NamedScope,NamedScopesHolder>> cachedScopes = codeAnalyzer.getScopeBasedHighlightingCachedScopes();
+      DependencyValidationManagerImpl validationManager = (DependencyValidationManagerImpl)DependencyValidationManager.getInstance(project);
+      List<Pair<NamedScope,NamedScopesHolder>> cachedScopes = validationManager.getScopeBasedHighlightingCachedScopes();
       namedScopes.addAll(cachedScopes);
     }
 
@@ -577,14 +583,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     Collections.sort(list, new Comparator<Pair<NamedScope,NamedScopesHolder>>() {
       @Override
-      public int compare(final Pair<NamedScope,NamedScopesHolder> o1, final Pair<NamedScope,NamedScopesHolder> o2) {
+      public int compare(@NotNull final Pair<NamedScope,NamedScopesHolder> o1, @NotNull final Pair<NamedScope,NamedScopesHolder> o2) {
         return o1.getFirst().getName().compareToIgnoreCase(o2.getFirst().getName());
       }
     });
     for (Pair<NamedScope,NamedScopesHolder> pair : list) {
       NamedScope namedScope = pair.getFirst();
       String name = namedScope.getName();
-      TextAttributesKey textAttributesKey = getScopeTextAttributeKey(name);
+      TextAttributesKey textAttributesKey = ScopeAttributesUtil.getScopeTextAttributeKey(name);
       if (scheme.getAttributes(textAttributesKey) == null) {
         scheme.setAttributes(textAttributesKey, new TextAttributes());
       }
@@ -600,16 +606,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
   }
 
-  public static TextAttributesKey getScopeTextAttributeKey(final String scope) {
-    return TextAttributesKey.find("SCOPE_KEY_" + scope);
-  }
-
-  private static void addEditorSettingDescription(ArrayList<EditorSchemeAttributeDescriptor> array,
-                                                                     String name,
-                                                                     String group,
-                                                                     ColorKey backgroundKey,
-                                                                     ColorKey foregroundKey,
-                                                                     EditorColorsScheme scheme) {
+  private static void addEditorSettingDescription(@NotNull List<EditorSchemeAttributeDescriptor> array,
+                                                  String name,
+                                                  String group,
+                                                  @Nullable ColorKey backgroundKey,
+                                                  @Nullable ColorKey foregroundKey,
+                                                  EditorColorsScheme scheme) {
     String type = null;
     if (foregroundKey != null) {
       type = foregroundKey.getExternalName();
@@ -623,8 +625,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     array.add(descr);
   }
 
-  private static void addSchemedDescription(ArrayList<EditorSchemeAttributeDescriptor> array, String name, String group, TextAttributesKey key,
-                                            MyColorScheme scheme,
+  private static void addSchemedDescription(@NotNull List<EditorSchemeAttributeDescriptor> array,
+                                            String name,
+                                            String group,
+                                            @NotNull TextAttributesKey key,
+                                            @NotNull MyColorScheme scheme,
                                             Icon icon,
                                             String toolTip) {
     ColorAndFontDescription descr = new SchemeTextAttributesDescription(name, group, key, scheme, icon, toolTip);
@@ -757,12 +762,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
 
   private static class SchemeTextAttributesDescription extends TextAttributesDescription {
-    private final TextAttributes myAttributesToApply;
-    private final TextAttributesKey key;
+    @NotNull private final TextAttributes myAttributesToApply;
+    @NotNull private final TextAttributesKey key;
     private TextAttributes myFallbackAttributes;
     private Pair<ColorSettingsPage,AttributesDescriptor> myBaseAttributeDescriptor;
 
-    private SchemeTextAttributesDescription(String name, String group, TextAttributesKey key, MyColorScheme  scheme, Icon icon,
+    private SchemeTextAttributesDescription(String name, String group, @NotNull TextAttributesKey key, @NotNull MyColorScheme  scheme, Icon icon,
                                            String toolTip) {
       super(name, group,
             getInitialAttributes(scheme, key).clone(),
@@ -783,7 +788,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
 
     @NotNull
-    private static TextAttributes getInitialAttributes(MyColorScheme scheme, TextAttributesKey key) {
+    private static TextAttributes getInitialAttributes(@NotNull MyColorScheme scheme, @NotNull TextAttributesKey key) {
       TextAttributes attributes = scheme.getAttributes(key);
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
       if (fallbackKey != null && !scheme.containsKey(key)) {
@@ -798,9 +803,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     @Override
     public void apply(EditorColorsScheme scheme) {
       if (scheme == null) scheme = getScheme();
-      if (myAttributesToApply != null) {
-        scheme.setAttributes(key, getTextAttributes());
-      }
+      scheme.setAttributes(key, getTextAttributes());
     }
 
     @Override
@@ -900,6 +903,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     public void setExternalEffectType(EffectType type) {
     }
 
+    @NotNull
     @Override
     public EffectType getExternalEffectType() {
       return EffectType.LINE_UNDERSCORE;
@@ -995,7 +999,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private String                            myName;
     private boolean myIsNew = false;
 
-    private MyColorScheme(EditorColorsScheme parentScheme) {
+    private MyColorScheme(@NotNull EditorColorsScheme parentScheme) {
       super(parentScheme, DefaultColorSchemesManager.getInstance());
       parentScheme.getFontPreferences().copyTo(getFontPreferences());
       setLineSpacing(parentScheme.getLineSpacing());
@@ -1052,21 +1056,19 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private boolean isFontModified() {
       if (!getFontPreferences().equals(myParentScheme.getFontPreferences())) return true;
       if (getLineSpacing() != myParentScheme.getLineSpacing()) return true;
-      if (getQuickDocFontSize() != myParentScheme.getQuickDocFontSize()) return true;
-      return false;
+      return getQuickDocFontSize() != myParentScheme.getQuickDocFontSize();
     }
 
     private boolean isConsoleFontModified() {
       if (!getConsoleFontPreferences().equals(myParentScheme.getConsoleFontPreferences())) return true;
-      if (getConsoleLineSpacing() != myParentScheme.getConsoleLineSpacing()) return true;
-      return false;
+      return getConsoleLineSpacing() != myParentScheme.getConsoleLineSpacing();
     }
 
     public void apply() {
       apply(myParentScheme);
     }
 
-    public void apply(EditorColorsScheme scheme) {
+    public void apply(@NotNull EditorColorsScheme scheme) {
       scheme.setFontPreferences(getFontPreferences());
       scheme.setLineSpacing(myLineSpacing);
       scheme.setQuickDocFontSize(getQuickDocFontSize());
@@ -1095,6 +1097,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return myIsNew;
     }
 
+    @NotNull
     @Override
     public String toString() {
       return "temporary scheme for " + myName;
@@ -1114,7 +1117,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   @Nullable
-  public InnerSearchableConfigurable findSubConfigurable(final Class pageClass) {
+  public InnerSearchableConfigurable findSubConfigurable(@NotNull final Class pageClass) {
     if (mySubPanelFactories == null) {
       buildConfigurables();
     }
@@ -1142,12 +1145,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll {
     private NewColorAndFontPanel mySubPanel;
     private boolean mySubInitInvoked = false;
-    private final ColorAndFontPanelFactory myFactory;
+    @NotNull private final ColorAndFontPanelFactory myFactory;
 
     private InnerSearchableConfigurable(@NotNull ColorAndFontPanelFactory factory) {
       myFactory = factory;
     }
 
+    @NotNull
     @Override
     @Nls
     public String getDisplayName() {
@@ -1255,11 +1259,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return createPanel().showOption(option);
     }
 
+    @NotNull
     @Override
     public Set<String> processListOptions() {
       return createPanel().processListOptions();
     }
 
+    @NotNull
     @NonNls
     @Override
     public String toString() {

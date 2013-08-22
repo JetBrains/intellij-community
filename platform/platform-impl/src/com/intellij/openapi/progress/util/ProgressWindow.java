@@ -483,6 +483,11 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     public void dispose() {
       UIUtil.disposeProgress(myProgressBar);
       UIUtil.dispose(myTitlePanel);
+      final ActionListener[] listeners = myCancelButton.getActionListeners();
+      for (ActionListener listener : listeners) {
+        myCancelButton.removeActionListener(listener);
+      }
+
     }
 
     public JPanel getPanel() {

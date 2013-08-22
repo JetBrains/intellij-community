@@ -221,7 +221,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     begin.addSuccessor(end);
     end.addPredecessor(begin);
 
-    if (!(begin instanceof ReadWriteVariableInstruction || begin instanceof MixinTypeInstruction)) {
+    if (!(begin instanceof MixinTypeInstruction)) {
       end.addNegationsFrom(begin);
     }
   }

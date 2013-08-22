@@ -30,6 +30,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -59,7 +60,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   private long myLastTimeProgressWasAtZero;
   private boolean myLastTimeProgressWasZero;
 
-  public InlineProgressIndicator(boolean compact, TaskInfo processInfo) {
+  public InlineProgressIndicator(boolean compact, @NotNull TaskInfo processInfo) {
     myCompact = compact;
     myInfo = processInfo;
 
@@ -105,8 +106,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myComponent.setLayout(new BorderLayout());
       myProcessName.setText(processInfo.getTitle());
       myComponent.add(myProcessName, BorderLayout.NORTH);
-      final Font font = myProcessName.getFont();
-
       myProcessName.setForeground(UIUtil.getPanelBackground().brighter().brighter());
       myProcessName.setBorder(new EmptyBorder(2, 2, 2, 2));
       myProcessName.setDecorate(false);
@@ -280,7 +279,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   private static class MyProgressBar extends JProgressBar {
-
     private boolean myActive = true;
     private final boolean myCompact;
 
@@ -296,6 +294,13 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       super.paint(g);
     }
 
+    @Override
+    public void setIndeterminate(boolean newValue) {
+      super.setIndeterminate(newValue);
+      if (myCompact) {
+        setVisible(!newValue);
+      }
+    }
 
     public boolean isActive() {
       return myActive;
@@ -377,7 +382,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myComponent = null;
 
     if (myProgress != null) {
-      UIUtil.disposeProgress(myProgress);  
+      UIUtil.disposeProgress(myProgress);
     }
     myProgress = null;
     myInfo = null;

@@ -390,6 +390,10 @@ public class RedundantCastUtil {
               return;
             }
             if (!checkResolveAfterRemoveCast(parent)) return;
+            final PsiExpression thenExpression = ((PsiConditionalExpression)parent).getThenExpression();
+            final PsiExpression elseExpression = ((PsiConditionalExpression)parent).getElseExpression();
+            final PsiExpression opposite = thenExpression == typeCast ? elseExpression : thenExpression;
+            if (opposite == null || !Comparing.equal(conditionalType, opposite.getType())) return;
           }
         } else if (parent instanceof PsiSynchronizedStatement && (expr instanceof PsiExpression && ((PsiExpression)expr).getType() instanceof PsiPrimitiveType)) {
           return;
@@ -455,7 +459,22 @@ public class RedundantCastUtil {
       PsiTypeElement typeElement = typeCast.getCastType();
       if (typeElement == null) return;
       final PsiType castTo = typeElement.getType();
-      final PsiType opType = typeCast.getOperand().getType();
+      final PsiExpression operand = typeCast.getOperand();
+
+      PsiType opType = operand.getType();
+      final PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(typeCast);
+      if (expectedTypeByParent != null) {
+        try {
+          final PsiDeclarationStatement declarationStatement =
+            (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(operand.getProject()).createStatementFromText(
+              expectedTypeByParent.getCanonicalText() + " l = " + operand.getText() + ";", parent);
+          final PsiExpression initializer = ((PsiLocalVariable)declarationStatement.getDeclaredElements()[0]).getInitializer();
+          LOG.assertTrue(initializer != null, operand.getText());
+          opType = initializer.getType();
+        }
+        catch (IncorrectOperationException ignore) {}
+      }
+
       if (opType == null) return;
       if (parent instanceof PsiReferenceExpression) {
         if (castTo instanceof PsiClassType && opType instanceof PsiPrimitiveType) return; //explicit boxing
@@ -467,7 +486,7 @@ public class RedundantCastUtil {
           PsiClass accessClass = ((PsiClassType)opType).resolve();
           if (accessClass == null) return;
           if (!JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper().isAccessible((PsiMember)element, typeCast, accessClass)) return;
-          if (!isCastRedundantInRefExpression(refExpression, typeCast.getOperand())) return;
+          if (!isCastRedundantInRefExpression(refExpression, operand)) return;
         }
       }
 
@@ -477,7 +496,35 @@ public class RedundantCastUtil {
         }
       }
       else {
-        if (TypeConversionUtil.isAssignable(castTo, opType, false)) {
+        if (parent instanceof PsiInstanceOfExpression && opType instanceof PsiPrimitiveType) {
+          return;
+        }
+        if (parent instanceof PsiForeachStatement) {
+          if (InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(opType), false, CommonClassNames.JAVA_LANG_ITERABLE)) {
+            addToResults(typeCast);
+            return;
+          }
+        }
+        if (parent instanceof PsiThrowStatement) {
+          final PsiClass thrownClass = PsiUtil.resolveClassInType(opType);
+          if (InheritanceUtil.isInheritor(thrownClass, false, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
+            addToResults(typeCast);
+            return;
+          }
+          if (InheritanceUtil.isInheritor(thrownClass, false, CommonClassNames.JAVA_LANG_THROWABLE)) {
+            final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+            if (method != null) {
+              for (PsiClassType thrownType : method.getThrowsList().getReferencedTypes()) {
+                if (TypeConversionUtil.isAssignable(thrownType, opType, false)) {
+                  addToResults(typeCast);
+                  return;
+                }
+              }
+            }
+          }
+        }
+        if (parent instanceof PsiInstanceOfExpression || (TypeConversionUtil.isAssignable(castTo, opType, false) && 
+                                                          (expectedTypeByParent == null || TypeConversionUtil.isAssignable(expectedTypeByParent, opType, false)))) {
           addToResults(typeCast);
         }
       }

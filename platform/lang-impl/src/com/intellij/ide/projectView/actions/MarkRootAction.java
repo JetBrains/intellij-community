@@ -59,7 +59,9 @@ public class MarkRootAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE);
     VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-    assert vFiles != null;
+    if (module == null || vFiles == null) {
+      return;
+    }
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     for (VirtualFile vFile : vFiles) {
       ContentEntry entry = findContentEntry(model, vFile);

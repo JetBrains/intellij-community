@@ -33,4 +33,8 @@ public abstract class StringStubIndexExtension<Psi extends PsiElement> extends A
   public KeyDescriptor<String> getKeyDescriptor() {
     return new EnumeratorStringDescriptor();
   }
+
+  public boolean traceKeyHashToVirtualFileMapping() {
+    return false;
+  }
 }

@@ -34,10 +34,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlBundle;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.*;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -334,6 +331,11 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   }
 
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, Object object, PsiElement element) {
+
+    if (object instanceof XmlExtension.TagInfo) {
+      return ((XmlExtension.TagInfo)object).getDeclaration();
+    }
+
     final PsiElement originalElement = element;
     boolean isAttrCompletion = element instanceof XmlAttribute;
 

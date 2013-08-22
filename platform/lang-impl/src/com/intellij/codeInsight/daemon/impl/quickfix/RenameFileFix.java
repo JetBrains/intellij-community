@@ -20,7 +20,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -29,7 +28,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,7 +72,7 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
       new WriteCommandAction(project) {
         @Override
         protected void run(Result result) throws Throwable {
-          invoke(project, FileEditorManager.getInstance(project).getSelectedTextEditor(), file);
+          invoke(project, null, file);
         }
       }.execute();
     }
@@ -100,11 +98,8 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
     try {
       vFile.rename(file.getManager(), myNewFileName);
     }
-    catch(IOException e){
+    catch (IOException e) {
       MessagesEx.error(project, e.getMessage()).showLater();
-    }
-    if (editor != null) {
-      DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
     }
   }
 

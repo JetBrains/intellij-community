@@ -25,6 +25,7 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.ui.HgUpdateToDialog;
 import org.zmlx.hg4idea.util.HgBranchesAndTags;
 import org.zmlx.hg4idea.util.HgErrorUtil;
@@ -34,7 +35,9 @@ import java.util.Collection;
 
 public class HgUpdateToAction extends HgAbstractGlobalAction {
 
-  protected void execute(final Project project, final Collection<VirtualFile> repos, @Nullable final VirtualFile selectedRepo) {
+  protected void execute(@NotNull final Project project,
+                         @NotNull final Collection<VirtualFile> repos,
+                         @Nullable final VirtualFile selectedRepo) {
     HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<HgBranchesAndTags>() {
       @Override
       public void consume(HgBranchesAndTags info) {
@@ -66,7 +69,8 @@ public class HgUpdateToAction extends HgAbstractGlobalAction {
   }
 
   public void updateTo(HgUpdateToDialog dialog, final Project project) {
-    final HgUpdateCommand command = new HgUpdateCommand(project, dialog.getRepository());
+    final VirtualFile repository = dialog.getRepository();
+    final HgUpdateCommand command = new HgUpdateCommand(project, repository);
     command.setClean(dialog.isRemoveLocalChanges());
     if (dialog.isRevisionSelected()) {
       command.setRevision(dialog.getRevision());
@@ -77,10 +81,14 @@ public class HgUpdateToAction extends HgAbstractGlobalAction {
     if (dialog.isTagSelected()) {
       command.setRevision(dialog.getTag().getName());
     }
+    if (dialog.isBookmarkSelected()) {
+      command.setRevision(dialog.getBookmark().getName());
+    }
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         HgCommandResult result = command.execute();
+        new HgConflictResolver(project).resolve(repository);
         if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
           new HgCommandResultNotifier(project).notifyError(result, "", "Update failed");
         }

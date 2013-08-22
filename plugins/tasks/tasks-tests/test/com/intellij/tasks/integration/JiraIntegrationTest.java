@@ -46,6 +46,49 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     assertEquals(JiraRepository.LOGIN_FAILED_CHECK_YOUR_PERMISSIONS, exception.getMessage());
   }
 
+  /**
+   * JIRA 5.0.6, REST API 2.0
+   */
+  public void testVersionDiscovery1() throws Exception {
+    myRepository.setUrl("http://trackers-tests.labs.intellij.net:8015");
+    myRepository.setUsername("buildtest");
+    myRepository.setPassword("buildtest");
+    assertEquals("2.0", myRepository.discoverRestApiVersion().getVersionName());
+  }
+
+  /**
+   * JIRA 4.4.5, REST API 2.0.alpha1
+   */
+  public void testVersionDiscovery2() throws Exception {
+    myRepository.setUrl("http://trackers-tests.labs.intellij.net:8014");
+    myRepository.setUsername("buildtest");
+    myRepository.setPassword("buildtest");
+    assertEquals("2.0.alpha1", myRepository.discoverRestApiVersion().getVersionName());
+  }
+
+  public void testJqlQuery() throws Exception {
+    myRepository.setUsername("buildtest");
+    myRepository.setPassword("buildtest");
+    myRepository.setSearchQuery("assignee = currentUser() AND (summary ~ 'foo' or resolution = Fixed)");
+    assertEquals(2, myRepository.getIssues("", 50, 0).length);
+  }
+
+  /**
+   * Holds only for JIRA > 5.x.x
+   */
+  public void testExtractedErrorMessage() throws Exception {
+    myRepository.setUsername("buildtest");
+    myRepository.setPassword("buildtest");
+    myRepository.setSearchQuery("foo < bar");
+    try {
+      myRepository.getIssues("", 50, 0);
+      fail();
+    }
+    catch (Exception e) {
+      assertEquals("Search failed. Reason: \"Field 'foo' does not exist or you do not have permission to view it.\"", e.getMessage());
+    }
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();

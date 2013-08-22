@@ -474,10 +474,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         return;
       }
       if (parent instanceof PsiParenthesizedExpression) {
-        context.setDummyIdentifier("xxx)yyy "); // to handle type cast
+        context.setDummyIdentifier(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED + ")" + CompletionUtil.DUMMY_IDENTIFIER_TRIMMED + " "); // to handle type cast
         return;
       }
     }
-    context.setDummyIdentifier("xxx");
+    context.setDummyIdentifier(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
   }
 }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceSettings;
 
@@ -34,6 +35,17 @@ public interface GrIntroduceFieldSettings extends GrIntroduceSettings {
   boolean removeLocalVar();
 
   enum Init {
-    CUR_METHOD, FIELD_DECLARATION, CONSTRUCTOR, SETUP_METHOD
+    CUR_METHOD("current method"), FIELD_DECLARATION("field declaration"), CONSTRUCTOR("class constructor(s)"), SETUP_METHOD("setUp method");
+
+    private final String myName;
+
+    Init(@NotNull String name) {
+      myName = name;
+    }
+
+    @Override
+    public String toString() {
+      return myName;
+    }
   }
 }

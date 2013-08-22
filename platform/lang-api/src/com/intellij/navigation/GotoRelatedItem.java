@@ -59,6 +59,11 @@ public class GotoRelatedItem {
   }
 
   @Nullable
+  public String getCustomContainerName() {
+    return null;
+  }
+
+  @Nullable
   public Icon getCustomIcon() {
     return null;
   }

@@ -16,7 +16,7 @@
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.impl.SeverityUtil;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
@@ -328,7 +328,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     SimpleTextAttributes result = highlightMap.get(attrs);
     if (result == null) {
-      final TextAttributesKey attrKey = SeverityUtil.getSeverityRegistrar(myProject).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
+      final TextAttributesKey attrKey = SeverityRegistrar.getSeverityRegistrar(myProject).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
       TextAttributes textAttrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attrKey);
       textAttrs = TextAttributes.merge(attrs.toTextAttributes(), textAttrs);
       result = SimpleTextAttributes.fromTextAttributes(textAttrs);

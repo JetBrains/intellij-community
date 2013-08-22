@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -247,7 +248,6 @@ public class StringUtil extends StringUtilRt {
     return html.replaceAll("<(.|\n)*?>", "");
   }
 
-  @Nullable
   public static String toLowerCase(@Nullable final String str) {
     //noinspection ConstantConditions
     return str == null ? null : str.toLowerCase();
@@ -735,6 +735,7 @@ public class StringUtil extends StringUtilRt {
     return toUpperCase(s.charAt(0)) + s.substring(1);
   }
 
+  @Contract("null -> false")
   public static boolean isCapitalized(@Nullable String s) {
     return s != null && !s.isEmpty() && Character.isUpperCase(s.charAt(0));
   }
@@ -885,14 +886,17 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
+  @Contract("null -> false")
   public static boolean isNotEmpty(@Nullable String s) {
     return s != null && !s.isEmpty();
   }
 
+  @Contract("null -> true")
   public static boolean isEmpty(@Nullable String s) {
     return s == null || s.isEmpty();
   }
 
+  @Contract("null -> true")
   public static boolean isEmpty(@Nullable CharSequence cs) {
     return cs == null || cs.length() == 0;
   }
@@ -927,6 +931,7 @@ public class StringUtil extends StringUtilRt {
     return s;
   }
 
+  @Contract("null -> true")
   public static boolean isEmptyOrSpaces(@Nullable final String s) {
     if(s == null || s.isEmpty()) {
       return true;
@@ -1454,7 +1459,7 @@ public class StringUtil extends StringUtilRt {
    * @param filter search filter
    * @return position of the first character accepted or -1 if not found
    */
-  public static int findFirst(@NotNull final String s, @NotNull CharFilter filter) {
+  public static int findFirst(@NotNull final CharSequence s, @NotNull CharFilter filter) {
     for (int i = 0; i < s.length(); i++) {
       char ch = s.charAt(i);
       if (filter.accept(ch)) {
@@ -2473,6 +2478,14 @@ public class StringUtil extends StringUtilRt {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Say smallPart = "op" and bigPart="open". Method returns true for "Ope" and false for "ops"
+   */
+  public static boolean isBetween(@NotNull String string, @NotNull String smallPart, @NotNull String bigPart) {
+    final String s = string.toLowerCase();
+    return s.startsWith(smallPart.toLowerCase()) && bigPart.toLowerCase().startsWith(s);
   }
 
   /**

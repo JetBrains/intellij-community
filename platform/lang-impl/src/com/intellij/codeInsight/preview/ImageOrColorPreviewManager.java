@@ -104,7 +104,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
             Point location = pointerInfo.getLocation();
             SwingUtilities.convertPointFromScreen(location, editor.getContentComponent());
             alarm.cancelAllRequests();
-            alarm.addRequest(new PreviewRequest(location, editor), 100);
+            alarm.addRequest(new PreviewRequest(location, editor, true), 100);
           }
         }
       }
@@ -135,9 +135,10 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     }
 
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (psiFile == null || psiFile instanceof PsiCompiledElement) {
+    if (psiFile == null || psiFile instanceof PsiCompiledElement || !psiFile.isValid()) {
       return null;
     }
+
     return InjectedLanguageUtil.findElementAtNoCommit(psiFile, editor.logicalPositionToOffset(editor.xyToLogicalPosition(point)));
   }
 
@@ -157,7 +158,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     alarm.cancelAllRequests();
     Point point = event.getMouseEvent().getPoint();
     if (elementRef == null && event.getMouseEvent().isShiftDown()) {
-      alarm.addRequest(new PreviewRequest(point, editor), 100);
+      alarm.addRequest(new PreviewRequest(point, editor, false), 100);
     }
     else if (elementRef != null && elementRef.get() != getPsiElementAt(point, editor)) {
       PsiElement element = elementRef.get();
@@ -181,10 +182,12 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
   private final class PreviewRequest implements Runnable {
     private final Point point;
     private final Editor editor;
+    private final boolean keyTriggered;
 
-    public PreviewRequest(Point point, Editor editor) {
+    public PreviewRequest(Point point, Editor editor, boolean keyTriggered) {
       this.point = point;
       this.editor = editor;
+      this.keyTriggered = keyTriggered;
     }
 
     @Override
@@ -200,7 +203,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
       elementRef = new WeakReference<PsiElement>(element);
       for (ElementPreviewProvider provider : Extensions.getExtensions(ElementPreviewProvider.EP_NAME)) {
         try {
-          provider.show(element, editor, point);
+          provider.show(element, editor, point, keyTriggered);
         }
         catch (Exception e) {
           LOG.error(e);

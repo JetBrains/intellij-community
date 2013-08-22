@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,6 +30,7 @@ import com.intellij.util.indexing.FileContent;
  * @author max
  */
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClassFileStubBuilder");
   public static final int STUB_VERSION = JavaFileElementType.STUB_VERSION + 6;
 
   @Override
@@ -48,6 +50,9 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
           PsiFileStub stub = factory.buildFileStub(file, content, project);
           if (stub != null) return stub;
         }
+      }
+      if (!fileContent.getFileName().contains("$")) {
+        LOG.info("No stub built for file " + fileContent);
       }
       return null;
     }

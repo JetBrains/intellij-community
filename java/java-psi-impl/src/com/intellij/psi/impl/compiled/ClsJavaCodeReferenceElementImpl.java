@@ -199,7 +199,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
   @Override
-  public void processVariants(PsiScopeProcessor processor) {
+  public void processVariants(@NotNull PsiScopeProcessor processor) {
     throw new RuntimeException("Variants are not available for light references");
   }
 

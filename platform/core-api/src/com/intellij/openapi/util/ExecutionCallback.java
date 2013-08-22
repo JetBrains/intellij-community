@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,23 +36,28 @@ class ExecutionCallback {
     myCountToExecution = executedCount;
   }
 
-  void setExecuted() {
-    signalExecution();
-    if (isExecuted()) {
-      Runnable[] all;
-      synchronized (this) {
-        if (myRunnables == null) {
-          all = ArrayUtil.EMPTY_RUNNABLE_ARRAY;
-        }
-        else {
-          all = myRunnables.toArray(new Runnable[myRunnables.size()]);
-          myRunnables.clear();
-        }
+  /**
+   * @return true if was executed, false if specified executed count is not yet done
+   */
+  boolean setExecuted() {
+    if (!signalExecution()) {
+      return false;
+    }
+
+    List<Runnable> all;
+    synchronized (this) {
+      if (myRunnables == null) {
+        return true;
       }
-      for (Runnable each : all) {
-        each.run();
+      else {
+        all = myRunnables;
+        myRunnables = null;
       }
     }
+    for (Runnable each : all) {
+      each.run();
+    }
+    return true;
   }
 
   private static class CompositeRunnable extends ArrayList<Runnable> implements Runnable {
@@ -84,21 +88,27 @@ class ExecutionCallback {
         }
       }
       else {
-        toRun = EmptyRunnable.getInstance();
         if (myRunnables == null) {
           myRunnables = new SmartList<Runnable>();
         }
 
         myRunnables.add(runnable);
+        return;
       }
     }
 
     toRun.run();
   }
 
+  /**
+   * Avoid memory leak in case: myDone executed but myRejected still keep doWhenRejected listeners (and vice versa)
+   */
+  synchronized void clear() {
+    myRunnables = null;
+  }
 
-  private synchronized void signalExecution() {
-    myCurrentCount++;
+  private synchronized boolean signalExecution() {
+    return ++myCurrentCount >= myCountToExecution;
   }
 
   synchronized boolean isExecuted() {

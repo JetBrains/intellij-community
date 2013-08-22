@@ -31,8 +31,8 @@ import java.util.Map;
 @State(
   name = "ValidationConfiguration",
   storages = {
-    @Storage( file = StoragePathMacros.WORKSPACE_FILE),
-    @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/validation.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage(file = StoragePathMacros.WORKSPACE_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/validation.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
 public class ValidationConfiguration implements PersistentStateComponent<ValidationConfiguration> {
@@ -81,8 +81,8 @@ public class ValidationConfiguration implements PersistentStateComponent<Validat
   @State(
       name = "ExcludeFromValidation",
       storages = {
-          @Storage( file = StoragePathMacros.PROJECT_FILE),
-          @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/excludeFromValidation.xml", scheme = StorageScheme.DIRECTORY_BASED)
+          @Storage(file = StoragePathMacros.PROJECT_FILE),
+          @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/excludeFromValidation.xml", scheme = StorageScheme.DIRECTORY_BASED)
       }
   )
   public static class ExcludedFromValidationConfiguration extends ExcludedEntriesConfiguration {}

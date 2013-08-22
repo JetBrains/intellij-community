@@ -519,11 +519,11 @@ public class VfsUtil extends VfsUtilCore {
     return name == null || name.isEmpty() || "/".equals(name) || "\\".equals(name);
   }
 
-  public static VirtualFile createDirectories(@NotNull final String dir) throws IOException {
+  public static VirtualFile createDirectories(@NotNull final String directoryPath) throws IOException {
     return new WriteAction<VirtualFile>() {
       @Override
       protected void run(Result<VirtualFile> result) throws Throwable {
-        VirtualFile res = createDirectoryIfMissing(dir);
+        VirtualFile res = createDirectoryIfMissing(directoryPath);
         result.setResult(res);
       }
     }.execute().throwException().getResultObject();
@@ -545,14 +545,14 @@ public class VfsUtil extends VfsUtilCore {
     return doCreateDirectoriesIfMissing(FileUtil.toSystemIndependentName(directoryPath));
   }
 
-  private static VirtualFile doCreateDirectoriesIfMissing(String dir) throws IOException {
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir);
+  private static VirtualFile doCreateDirectoriesIfMissing(String path) throws IOException {
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     if (file == null) {
-      int pos = dir.lastIndexOf('/');
+      int pos = path.lastIndexOf('/');
       if (pos < 0) return null;
-      VirtualFile parent = createDirectoryIfMissing(dir.substring(0, pos));
+      VirtualFile parent = createDirectoryIfMissing(path.substring(0, pos));
       if (parent == null) return null;
-      final String dirName = dir.substring(pos + 1);
+      final String dirName = path.substring(pos + 1);
       return parent.createChildDirectory(LocalFileSystem.getInstance(), dirName);
     }
     return file;
@@ -587,29 +587,6 @@ public class VfsUtil extends VfsUtilCore {
         }
       } while (!queue.isEmpty());
     }
-  }
-
-  public static boolean processFilesRecursively(@NotNull VirtualFile root, @NotNull Processor<VirtualFile> processor) {
-    if (!processor.process(root)) return false;
-
-    if (root.isDirectory()) {
-      final LinkedList<VirtualFile[]> queue = new LinkedList<VirtualFile[]>();
-
-      queue.add(root.getChildren());
-
-      do {
-        final VirtualFile[] files = queue.removeFirst();
-
-        for (VirtualFile file : files) {
-          if (!processor.process(file)) return false;
-          if (file.isDirectory()) {
-            queue.add(file.getChildren());
-          }
-        }
-      } while (!queue.isEmpty());
-    }
-
-    return true;
   }
 
   @Nullable

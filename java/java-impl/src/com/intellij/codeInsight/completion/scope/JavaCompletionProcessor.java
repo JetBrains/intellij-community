@@ -95,8 +95,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
         }
       }
       else if (qualifier != null) {
-        myQualifierType = qualifier.getType();
-        myQualifierClass = PsiUtil.resolveClassInType(myQualifierType);
+        setQualifierType(qualifier.getType());
         if (myQualifierType == null && qualifier instanceof PsiJavaCodeReferenceElement) {
           final PsiElement target = ((PsiJavaCodeReferenceElement)qualifier).resolve();
           if (target instanceof PsiClass) {
@@ -254,6 +253,11 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       }
     }
     return false;
+  }
+
+  public void setQualifierType(@Nullable PsiType qualifierType) {
+    myQualifierType = qualifierType;
+    myQualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifierType);
   }
 
   @Nullable

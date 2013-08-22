@@ -44,9 +44,10 @@ import java.util.Set;
 @State(
   name = "ProjectRunConfigurationManager",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/runConfigurations/", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter.class)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/runConfigurations/", scheme = StorageScheme.DIRECTORY_BASED,
+             stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter.class)
+  }
 )
 public class ProjectRunConfigurationManager implements ProjectComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ProjectRunConfigurationManager");
@@ -119,15 +120,15 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
       }
 
       if (configuration != null) {
-        existing.add(RunManagerImpl.getUniqueName(configuration.getConfiguration()));
+        existing.add(configuration.getUniqueID());
       }
     }
 
     myManager.removeNotExistingSharedConfigurations(existing);
     if (myManager.getSelectedConfiguration() == null) {
-      final RunConfiguration[] allConfigurations = myManager.getAllConfigurations();
+      final List<RunConfiguration> allConfigurations = myManager.getAllConfigurationsList();
       for (final RunConfiguration configuration : allConfigurations) {
-        final RunnerAndConfigurationSettings settings = myManager.getSettings(allConfigurations[0]);
+        final RunnerAndConfigurationSettings settings = myManager.getSettings(allConfigurations.get(0));
         if (!(configuration instanceof UnknownRunConfiguration)) {
           myManager.setSelectedConfiguration(settings);
           break;

@@ -18,6 +18,7 @@ package com.intellij.tasks;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,12 @@ public abstract class TaskManager {
 
   public static TaskManager getManager(@NotNull Project project) {
     return project.getComponent(TaskManager.class);
+  }
+
+  public enum VcsOperation {
+    CREATE_BRANCH,
+    CREATE_CHANGELIST,
+    DO_NOTHING
   }
 
   /**
@@ -69,7 +76,7 @@ public abstract class TaskManager {
 
   public abstract LocalTask createLocalTask(String summary);
 
-  public abstract void activateTask(@NotNull Task task, boolean clearContext, boolean createChangelist);
+  public abstract LocalTask activateTask(@NotNull Task task, boolean clearContext);
 
   @NotNull
   public abstract LocalTask getActiveTask();
@@ -84,6 +91,8 @@ public abstract class TaskManager {
   public abstract void updateIssues(@Nullable Runnable onComplete);
 
   public abstract boolean isVcsEnabled();
+
+  public abstract AbstractVcs getActiveVcs();
 
   public abstract boolean isLocallyClosed(LocalTask localTask);
 

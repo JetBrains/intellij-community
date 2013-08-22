@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class SimpleProviderBinding<Provider> implements ProviderBinding<Provider> {
-  private final List<ProviderInfo<Provider, ElementPattern>> myProviderPairs = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<ProviderInfo<Provider, ElementPattern>> myProviderPairs = new SmartList<ProviderInfo<Provider, ElementPattern>>();
 
   public void registerProvider(Provider provider, ElementPattern pattern, double priority) {
     myProviderPairs.add(new ProviderInfo<Provider, ElementPattern>(provider, pattern, priority));

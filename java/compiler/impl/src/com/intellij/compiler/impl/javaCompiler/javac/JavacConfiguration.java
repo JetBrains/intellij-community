@@ -24,9 +24,9 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 @State(
   name = "JavacSettings",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
 )
 public class JavacConfiguration implements PersistentStateComponent<JpsJavaCompilerOptions> {
   private final JpsJavaCompilerOptions mySettings = new JpsJavaCompilerOptions();

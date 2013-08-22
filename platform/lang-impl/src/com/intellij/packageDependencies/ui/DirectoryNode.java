@@ -170,9 +170,9 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   public PsiDirectory getTargetDirectory() {
     DirectoryNode dirNode = this;
-    while (dirNode.getCompactedDirNode() != null) {
-      dirNode = dirNode.getCompactedDirNode();
-      assert dirNode != null;
+    DirectoryNode compacted;
+    while ((compacted = dirNode.getCompactedDirNode()) != null) {
+      dirNode = compacted;
     }
 
     return dirNode.getPsiDirectory();

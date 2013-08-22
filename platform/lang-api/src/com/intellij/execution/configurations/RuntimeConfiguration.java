@@ -16,16 +16,15 @@
 
 package com.intellij.execution.configurations;
 
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class RuntimeConfiguration extends RunConfigurationBase implements LocatableConfiguration, Cloneable, ModuleRunConfiguration {
-  public static final DataKey<RuntimeConfiguration> DATA_KEY = DataKey.create("runtimeConfiguration");
-
+/**
+ * @deprecated
+ */
+public abstract class RuntimeConfiguration extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
   protected RuntimeConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(project, factory, name);
   }
@@ -37,25 +36,13 @@ public abstract class RuntimeConfiguration extends RunConfigurationBase implemen
   }
 
   @Override
-  public void checkConfiguration() throws RuntimeConfigurationException {
-  }
-
-
-  @Override
   public RuntimeConfiguration clone() {
     return (RuntimeConfiguration)super.clone();
   }
 
-  @Override
-  public boolean isGeneratedName() {
-    return false;
-  }
-
-  @Override
-  @NonNls public String suggestedName() {
-    return null;
-  }
-
+  /**
+   * @deprecated use {@link #suggestedName()} instead
+   */
   @Nullable
   public String getGeneratedName() {
     return suggestedName();

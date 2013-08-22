@@ -138,9 +138,6 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     return myMainPanel;
   }
 
-  public void disposeEditor() {
-  }
-
   @Override
   public JComponent getAnchor() {
     return anchor;

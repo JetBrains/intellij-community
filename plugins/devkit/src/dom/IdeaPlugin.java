@@ -31,12 +31,14 @@ import java.util.List;
  */
 @DefinesXml
 @Presentation(icon = "AllIcons.Nodes.Plugin")
+@Stubbed
 public interface IdeaPlugin extends DomElement {
   @Nullable
   String getPluginId();
 
   @NotNull
   @NameValue
+  @Stubbed
   GenericDomValue<String> getId();
 
   @NotNull
@@ -49,6 +51,7 @@ public interface IdeaPlugin extends DomElement {
   GenericAttributeValue<Boolean> getUseIdeaClassloader();
 
   @NotNull
+  @Stubbed
   GenericDomValue<String> getName();
 
 
@@ -89,12 +92,14 @@ public interface IdeaPlugin extends DomElement {
 
 
   @NotNull
+  @Stubbed
   @SubTagList("depends")
   List<Dependency> getDependencies();
   @SubTagList("depends")
   Dependency addDependency();
 
   @NotNull
+  @Stubbed
   @SubTagList("module")
   List<PluginModule> getModules();
 
@@ -104,6 +109,7 @@ public interface IdeaPlugin extends DomElement {
   Extensions addExtensions();
 
   @NotNull
+  @Stubbed
   @SubTagList("extensionPoints")
   List<ExtensionPoints> getExtensionPoints();
   ExtensionPoints addExtensionPoints();

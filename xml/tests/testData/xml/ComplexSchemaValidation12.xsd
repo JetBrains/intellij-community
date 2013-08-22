@@ -7,7 +7,7 @@ Test XML-schema
 	<xs:complexType>
 	    <xs:sequence>
                 <!--Type is not allowed with ref-->
-                <xs:element ref="TestElement" <error>type="xs:string"</error>/>
+                <xs:element ref="TestElement" <error descr="Attribute type is not allowed here when element reference is used">type</error>="xs:string"/>
 	    </xs:sequence>
 	</xs:complexType>
     </xs:element>

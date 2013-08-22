@@ -8,7 +8,10 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.util.containers.HashMap;
+import com.jediterm.terminal.TerminalStarter;
+import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.display.BackBuffer;
+import com.jediterm.terminal.display.JediTerminal;
 import com.jediterm.terminal.display.StyleState;
 import com.jediterm.terminal.ui.JediTermWidget;
 import com.jediterm.terminal.ui.SystemSettingsProvider;
@@ -32,6 +35,11 @@ public class JBTerminalWidget extends JediTermWidget {
                                                 @NotNull StyleState styleState,
                                                 @NotNull BackBuffer backBuffer) {
     return new JBTerminalPanel(settingsProvider, backBuffer, styleState, getColorScheme());
+  }
+
+  @Override
+  protected TerminalStarter createTerminalStarter(JediTerminal terminal, TtyConnector connector) {
+    return new JBTerminalStarter(terminal, connector);
   }
 
   public EditorColorsScheme getColorScheme() {

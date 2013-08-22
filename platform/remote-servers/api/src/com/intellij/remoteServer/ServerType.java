@@ -4,8 +4,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.deployment.Deployer;
+import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
+import com.intellij.remoteServer.runtime.ServerConnector;
+import com.intellij.remoteServer.runtime.ServerTaskExecutor;
+import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -37,5 +41,16 @@ public abstract class ServerType<C extends ServerConfiguration> {
   public abstract UnnamedConfigurable createConfigurable(@NotNull C configuration);
 
   @NotNull
-  public abstract Deployer<C> createDeployer(Project project);
+  public abstract DeploymentConfigurator<?> createDeploymentConfigurator(Project project);
+
+  @NotNull
+  public abstract ServerConnector<?> createConnector(@NotNull C configuration, @NotNull ServerTaskExecutor asyncTasksExecutor);
+
+  /**
+   * @return a non-null instance of {@link DebugConnector} if the server supports deployment in debug mode
+   */
+  @Nullable
+  public DebugConnector<?,?> createDebugConnector() {
+    return null;
+  }
 }

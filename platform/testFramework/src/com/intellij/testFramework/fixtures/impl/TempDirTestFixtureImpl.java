@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +89,12 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     return createTempDirectory().getAbsolutePath();
   }
 
-  public File createTempFile(String prefix, String suffix) throws IOException {
+  public File createTempFile(String fileName) throws IOException {
+    String prefix = StringUtil.getPackageName(fileName);
+    if (prefix.length() < 3) {
+      prefix += "___";
+    }
+    String suffix = "." + StringUtil.getShortName(fileName);
     return FileUtil.createTempFile(new File(getTempDirPath()), prefix, suffix, true);
   }
 

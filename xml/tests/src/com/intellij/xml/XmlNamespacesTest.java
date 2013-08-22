@@ -4,7 +4,7 @@ import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.htmlInspections.XmlInspectionToolProvider;
-import com.intellij.javaee.ExternalResourceManagerImpl;
+import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.IdeaTestCase;
@@ -208,6 +208,18 @@ public class XmlNamespacesTest extends CodeInsightFixtureTestCase {
     doOptimizeImportsTest(text);
   }
 
+  public void testUsedInXmlns() throws Exception {
+    myFixture.testHighlighting("spring.xml", "spring-beans-2.5.xsd", "spring-batch-2.1.xsd");
+    IntentionAction action = myFixture.getAvailableIntention(XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix.NAME);
+    assertNotNull(action);
+    myFixture.launchAction(action);
+    myFixture.checkResultByFile("spring_after.xml");
+  }
+
+  public void testXsiType() throws Exception {
+    myFixture.testHighlighting("import.xml", "import.xsd");
+  }
+
   private void doUnusedDeclarationTest(String text, String after, String name) throws Exception {
     doUnusedDeclarationTest(text, after, name, true);
   }
@@ -241,12 +253,12 @@ public class XmlNamespacesTest extends CodeInsightFixtureTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new XmlInspectionToolProvider());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd",
-                                                            getTestDataPath() + "/web-app_2_5.xsd", getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://xml.apache.org/axis/wsdd/",
-                                                            getTestDataPath() + "/wsdd.dtd", getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://xml.apache.org/axis/wsdd/providers/java",
-                                                            getTestDataPath() + "/wsdd_provider_java.xsd", getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd",
+                                                              getTestDataPath() + "/web-app_2_5.xsd", getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://xml.apache.org/axis/wsdd/",
+                                                              getTestDataPath() + "/wsdd.dtd", getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://xml.apache.org/axis/wsdd/providers/java",
+                                                              getTestDataPath() + "/wsdd_provider_java.xsd", getTestRootDisposable());
   }
 
   @Override

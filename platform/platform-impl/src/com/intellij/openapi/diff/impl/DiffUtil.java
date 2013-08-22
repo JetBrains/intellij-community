@@ -34,6 +34,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -80,15 +81,6 @@ public class DiffUtil {
   public static boolean isWritable(DiffContent content) {
     Document document = content.getDocument();
     return document != null && document.isWritable();
-  }
-
-  public static int getTextLength(String text) {
-    return text != null ? text.length() : 0;
-  }
-
-  public static boolean isEmpty(DiffFragment fragment) {
-    return getTextLength(fragment.getText1()) == 0 &&
-           getTextLength(fragment.getText2()) == 0;
   }
 
   public static EditorEx createEditor(Document document, Project project, boolean isViewer) {

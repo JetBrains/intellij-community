@@ -352,7 +352,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       pipette.setUI(new BasicButtonUI());
       pipette.setRolloverEnabled(true);
       pipette.setIcon(AllIcons.Ide.Pipette);
-      pipette.setBorder(IdeBorderFactory.createEmptyBorder(0));
+      pipette.setBorder(IdeBorderFactory.createEmptyBorder());
       pipette.setRolloverIcon(AllIcons.Ide.Pipette_rollover);
       pipette.setFocusable(false);
       pipette.addActionListener(new ActionListener() {

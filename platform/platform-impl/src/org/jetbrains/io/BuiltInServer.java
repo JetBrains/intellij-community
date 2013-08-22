@@ -15,73 +15,82 @@
  */
 package org.jetbrains.io;
 
+import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import com.intellij.util.net.NetUtils;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.CustomPortServerManager;
 import org.jetbrains.ide.PooledThreadExecutor;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.Executor;
-
-import static org.jboss.netty.channel.Channels.pipeline;
+import java.util.Map;
 
 public class BuiltInServer implements Disposable {
-  private final ChannelGroup openChannels = new DefaultChannelGroup();
+  private final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
 
   static final Logger LOG = Logger.getInstance(BuiltInServer.class);
 
-  private final NioServerSocketChannelFactory channelFactory;
-
-  public BuiltInServer() {
-    this(1);
-  }
-
-  public BuiltInServer(int workerCount) {
-    Executor pooledThreadExecutor = new PooledThreadExecutor();
-    channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, workerCount);
-  }
-
   public boolean isRunning() {
-    return !openChannels.isEmpty();
+    return !channelRegistrar.isEmpty();
   }
 
   public void start(int port) {
-    start(port, 1, false);
+    start(1, port, 1, false);
   }
 
-  public int start(int firstPort, int portsCount, boolean tryAnyPort) {
+  public int start(int workerCount, int firstPort, int portsCount, boolean tryAnyPort) {
     if (isRunning()) {
       throw new IllegalStateException("server already started");
     }
 
-    ServerBootstrap bootstrap = createServerBootstrap(channelFactory, openChannels);
+    NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE);
+    ServerBootstrap bootstrap = createServerBootstrap(eventLoopGroup, channelRegistrar, null);
     int port = bind(firstPort, portsCount, tryAnyPort, bootstrap);
-    bindCustomPorts(firstPort, port);
+    bindCustomPorts(firstPort, port, eventLoopGroup);
     return port;
   }
 
-  static ServerBootstrap createServerBootstrap(NioServerSocketChannelFactory channelFactory, ChannelGroup openChannels) {
-    ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
-    bootstrap.setOption("child.tcpNoDelay", true);
-    bootstrap.setOption("child.keepAlive", true);
-    bootstrap.setPipelineFactory(new ChannelPipelineFactoryImpl(new PortUnificationServerHandler(openChannels)));
+  static ServerBootstrap createServerBootstrap(EventLoopGroup eventLoopGroup, final ChannelRegistrar channelRegistrar, @Nullable Map<String, Object> xmlRpcHandlers) {
+    ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(eventLoopGroup);
+    if (xmlRpcHandlers == null) {
+      final PortUnificationServerHandler portUnificationServerHandler = new PortUnificationServerHandler();
+      bootstrap.childHandler(new ChannelInitializer() {
+        @Override
+        protected void initChannel(Channel channel) throws Exception {
+          channel.pipeline().addLast(channelRegistrar, portUnificationServerHandler);
+        }
+      });
+    }
+    else {
+      final XmlRpcDelegatingHttpRequestHandler handler = new XmlRpcDelegatingHttpRequestHandler(xmlRpcHandlers);
+      bootstrap.childHandler(new ChannelInitializer() {
+        @Override
+        protected void initChannel(Channel channel) throws Exception {
+          channel.pipeline().addLast(channelRegistrar);
+          NettyUtil.initHttpHandlers(channel.pipeline());
+          channel.pipeline().addLast(handler);
+        }
+      });
+    }
     return bootstrap;
   }
 
-  private void bindCustomPorts(int firstPort, int port) {
+  private void bindCustomPorts(int firstPort, int port, NioEventLoopGroup eventLoopGroup) {
     for (CustomPortServerManager customPortServerManager : CustomPortServerManager.EP_NAME.getExtensions()) {
       try {
         int customPortServerManagerPort = customPortServerManager.getPort();
-        SubServer subServer = new SubServer(customPortServerManager, channelFactory);
+        SubServer subServer = new SubServer(customPortServerManager, eventLoopGroup);
         Disposer.register(this, subServer);
         if (customPortServerManagerPort != firstPort && customPortServerManagerPort != port) {
           subServer.bind(customPortServerManagerPort);
@@ -93,80 +102,55 @@ public class BuiltInServer implements Disposable {
     }
   }
 
-  // IDEA-91436 idea <121 binds to 127.0.0.1, but >=121 must be available not only from localhost
-  // but if we bind only to any local port (0.0.0.0), instance of idea <121 can bind to our ports and any request to us will be intercepted
-  // so, we bind to 127.0.0.1 and 0.0.0.0
   private int bind(int firstPort, int portsCount, boolean tryAnyPort, ServerBootstrap bootstrap) {
-    InetAddress localAddress;
-    try {
-      localAddress = InetAddress.getByName("127.0.0.1");
-    }
-    catch (UnknownHostException e) {
-      LOG.error(e);
-      return -1;
-    }
-
+    InetAddress loopbackAddress = NetUtils.getLoopbackAddress();
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;
-      try {
-        openChannels.add(bootstrap.bind(new InetSocketAddress(localAddress, port)));
+      ChannelFuture future = bootstrap.bind(loopbackAddress, port).awaitUninterruptibly();
+      if (future.isSuccess()) {
+        channelRegistrar.add(future.channel());
         return port;
       }
-      catch (ChannelException e) {
-        if (!openChannels.isEmpty()) {
-          openChannels.close();
-          openChannels.clear();
-        }
-
-        if (portsCount == 1) {
-          throw e;
-        }
-        else if (!tryAnyPort && i == (portsCount - 1)) {
-          LOG.error(e);
-        }
+      else if (!tryAnyPort && i == (portsCount - 1)) {
+        LOG.error(future.cause());
+        return -1;
       }
     }
 
-    if (tryAnyPort) {
-      LOG.info("We cannot bind to our default range, so, try to bind to any free port");
-      try {
-        Channel channel = bootstrap.bind(new InetSocketAddress(localAddress, 0));
-        openChannels.add(channel);
-        return ((InetSocketAddress)channel.getLocalAddress()).getPort();
-      }
-      catch (ChannelException e) {
-        LOG.error(e);
-      }
+    LOG.info("We cannot bind to our default range, so, try to bind to any free port");
+    ChannelFuture future = bootstrap.bind(loopbackAddress, 0).awaitUninterruptibly();
+    if (future.isSuccess()) {
+      channelRegistrar.add(future.channel());
+      return ((InetSocketAddress)future.channel().localAddress()).getPort();
     }
-
-    return -1;
+    else {
+      LOG.error(future.cause());
+      return -1;
+    }
   }
 
   @Override
   public void dispose() {
-    try {
-      openChannels.close().awaitUninterruptibly();
-    }
-    finally {
-      channelFactory.releaseExternalResources();
-    }
+    channelRegistrar.close();
     LOG.info("web server stopped");
   }
 
-  public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull SimpleChannelUpstreamHandler messageChannelHandler) {
-    context.getPipeline().replace(DelegatingHttpRequestHandler.class, "replacedDefaultHandler", messageChannelHandler);
+  public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull SimpleChannelInboundHandler messageChannelHandler) {
+    context.pipeline().replace(DelegatingHttpRequestHandler.class, "replacedDefaultHandler", messageChannelHandler);
   }
 
-  private static class ChannelPipelineFactoryImpl implements ChannelPipelineFactory {
-    private final ChannelHandler defaultHandler;
+  @ChannelHandler.Sharable
+  private static final class XmlRpcDelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBase {
+    private final Map<String, Object> handlers;
 
-    public ChannelPipelineFactoryImpl(ChannelHandler defaultHandler) {
-      this.defaultHandler = defaultHandler;
+    public XmlRpcDelegatingHttpRequestHandler(Map<String, Object> handlers) {
+      this.handlers = handlers;
     }
 
     @Override
-    public ChannelPipeline getPipeline() throws Exception {
-      return pipeline(defaultHandler);
+    protected boolean process(ChannelHandlerContext context, FullHttpRequest request, QueryStringDecoder urlDecoder) throws IOException {
+      return (request.getMethod() == HttpMethod.POST || request.getMethod() == HttpMethod.OPTIONS) &&
+             XmlRpcServer.SERVICE.getInstance().process(urlDecoder.path(), request, context, handlers);
     }
   }
 }

@@ -146,7 +146,12 @@ class GitBrancherImpl implements GitBrancher {
       execute(indicator);
       if (myCallInAwtAfterExecution != null) {
         Application application = ApplicationManager.getApplication();
-        application.invokeLater(myCallInAwtAfterExecution, application.getDefaultModalityState());
+        if (application.isUnitTestMode()) {
+          myCallInAwtAfterExecution.run();
+        }
+        else {
+          application.invokeLater(myCallInAwtAfterExecution, application.getDefaultModalityState());
+        }
       }
     }
 

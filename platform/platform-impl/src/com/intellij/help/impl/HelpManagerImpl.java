@@ -46,7 +46,7 @@ public class HelpManagerImpl extends HelpManager {
 
   private HelpSet myHelpSet = null;
   private IdeaHelpBroker myBroker = null;
-  private Object myFXHelpBrowser;
+  private Object myFXHelpBrowser = null;
 
   public void invokeHelp(@Nullable String id) {
 
@@ -87,60 +87,44 @@ public class HelpManagerImpl extends HelpManager {
     myBroker.setDisplayed(true);
   }
 
-  private void showHelpInFXBrowser(String id) {
+  private void showHelpInFXBrowser(final String id) {
     if (myHelpSet == null) {
       Messages.showInfoMessage("Looks like you have enabled 'ide.help.fxbrowser' registry key but we cannot load JavaHelp bundle. " +
                                "Please put ideahelp.jar in the help directory.",
                                "Cannot find JavaHelp bundle");
       return;
     }
-
-    Class<?> myFXHelpBrowserClass= null;
     try {
-      myFXHelpBrowserClass = Class.forName("com.intellij.help.impl.FXHelpBrowser");
+      final Class<?> myFXHelpBrowserClass = Class.forName("com.intellij.help.impl.FXHelpBrowser");
+
+      if (myFXHelpBrowser == null) {
+        Object[] arguments = {myHelpSet};
+
+        Class[] argTypes = {HelpSet.class};
+        Constructor constructor = myFXHelpBrowserClass.getDeclaredConstructor(argTypes);
+        myFXHelpBrowser = constructor.newInstance(arguments);
+      }
+      Class[] showDocumentationMethodArgTypes = {String.class};
+      Method showDocumentationMethod = myFXHelpBrowserClass.getDeclaredMethod("showDocumentationById", showDocumentationMethodArgTypes);
+      showDocumentationMethod.invoke(myFXHelpBrowser, id);
+
     }
     catch (ClassNotFoundException e) {
       LOG.error(e);
     }
-
-    Class[] argTypes = {HelpSet.class};
-    Constructor constructor = null;
-    try {
-      constructor = myFXHelpBrowserClass.getDeclaredConstructor(argTypes);
+    catch (IllegalAccessException e) {
+      LOG.error(e);
     }
     catch (NoSuchMethodException e) {
       LOG.error(e);
     }
-
-    Object[] arguments = {myHelpSet};
-    try {
-      myFXHelpBrowser = constructor.newInstance(arguments);
+    catch (InvocationTargetException e) {
+      LOG.error(e);
     }
     catch (InstantiationException e) {
       LOG.error(e);
     }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
 
-    Class[] showDocumentationMethodArgTypes = {String.class};
-
-    try {
-      Method showDocumentationMethod = myFXHelpBrowserClass.getDeclaredMethod("showDocumentation", showDocumentationMethodArgTypes);
-      showDocumentationMethod.invoke(myFXHelpBrowser, id);
-    }
-    catch (NoSuchMethodException e) {
-      LOG.error(e);
-    }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
   }
 
   @Nullable

@@ -16,17 +16,15 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -89,7 +87,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
             systemItems.addAll(getRoots(forModule, true));
           }
         } else {
-          systemItems.addAll(getRoots(ModuleUtil.findModuleForPsiElement(getElement()), true));
+          systemItems.addAll(getRoots(ModuleUtilCore.findModuleForPsiElement(getElement()), true));
         }
         return systemItems;
       }
@@ -146,7 +144,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
     if (thisModule == null) return Collections.emptyList();
     Set<Module> modules = new com.intellij.util.containers.HashSet<Module>();
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(thisModule);
-    ModuleUtil.getDependencies(thisModule, modules);
+    ModuleUtilCore.getDependencies(thisModule, modules);
     List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
     final PsiManager psiManager = PsiManager.getInstance(thisModule.getProject());
     if (includingClasses) {
@@ -166,7 +164,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
         if (aPackage != null && aPackage.getName() != null) {
           // package prefix
-          result.add(PackagePrefixFileSystemItem.create(directory));
+          result.add(PackagePrefixFileSystemItemImpl.create(directory));
         }
         else {
           result.add(directory);

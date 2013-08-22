@@ -71,14 +71,5 @@
             description="Generate a new XML tag according to schema information">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
-
-    <action id="OpenInBrowser" class="com.intellij.ide.browsers.OpenFileInBrowserAction"
-            text="Open in _Browser" description="Open a selected file in browser"
-            icon="AllIcons.Nodes.PpWeb">
-      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewSource"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CutCopyPasteGroup"/>
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="EditSource"/>
-    </action>
-
   </actions>
 </component>

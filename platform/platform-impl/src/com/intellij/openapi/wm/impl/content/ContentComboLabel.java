@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
 
@@ -67,29 +68,8 @@ public class ContentComboLabel extends BaseLabel {
   }
 
   @Override
-  protected void paintComponent(Graphics g) {
-    if (isToDrawCombo()) {
-      //g.translate(0, -TAB_SHIFT);
-      super.paintComponent(g);
-      //g.translate(0, TAB_SHIFT);
-    } else {
-      super.paintComponent(g);
-    }
-  }
-
-  @Override
   protected boolean allowEngravement() {
     return myUi == null || myUi.myWindow.isActive();
-  }
-
-  @Override
-  protected Color getActiveFg(boolean selected) {
-    return super.getActiveFg(selected);
-  }
-
-  @Override
-  protected Color getPassiveFg(boolean selected) {
-    return super.getPassiveFg(selected);
   }
 
   @Override
@@ -130,7 +110,7 @@ public class ContentComboLabel extends BaseLabel {
     super.paintChildren(g);
     if (isToDrawCombo()) {
       myComboIcon.paintIcon(this, g);
-      g.setColor(new Color(255, 255, 255, 100));
+      g.setColor(Gray._255.withAlpha(100));
     }
   }
 

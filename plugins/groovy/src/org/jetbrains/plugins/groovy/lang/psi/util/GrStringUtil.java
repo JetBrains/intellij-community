@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -265,6 +266,7 @@ public class GrStringUtil {
     if (!forInjection) {
       unescapeCharacters(b, isSingleLine ? "'" : "'\"", true);
     }
+    if (!isSingleLine) escapeLastSymbols(b, '\"');
   }
 
   public static String escapeSymbolsForString(String s, boolean isSingleLine, boolean forInjection) {
@@ -273,7 +275,14 @@ public class GrStringUtil {
     if (!forInjection) {
       unescapeCharacters(builder, isSingleLine ? "$\"" : "$'\"", true);
     }
+    if (!isSingleLine) escapeLastSymbols(builder, '\'');
     return builder.toString();
+  }
+
+  private static void escapeLastSymbols(StringBuilder builder, char toEscape) {
+    for (int i = builder.length() - 1; i >= 0 && builder.charAt(i) == toEscape; i--) {
+      builder.insert(i, '\\');
+    }
   }
 
   @NotNull
@@ -515,8 +524,10 @@ public class GrStringUtil {
     final GrExpression expression = injection.getExpression();
     LOG.assertTrue(expression != null);
     final GroovyPsiElementFactory instance = GroovyPsiElementFactory.getInstance(injection.getProject());
-    final GrClosableBlock closure = instance.createClosureFromText("{" + expression.getText() + "}");
-    injection.getNode().replaceChild(expression.getNode(), closure.getNode());
+    final GrClosableBlock closure = instance.createClosureFromText("{foo}");
+    closure.getNode().replaceChild(closure.getStatements()[0].getNode(), expression.getNode());
+    injection.getNode().addChild(closure.getNode());
+    CodeEditUtil.setNodeGeneratedRecursively(expression.getNode(), true);
   }
 
   public static boolean checkGStringInjectionForUnnecessaryBraces(GrStringInjection injection) {

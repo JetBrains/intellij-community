@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.Patches;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.PlatformUtils;
@@ -35,16 +37,32 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.net.URL;
 import java.util.List;
 
 /**
  * @author yole
  */
 public class AppUIUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.AppUIUtil");
   private static final String VENDOR_PREFIX = "jetbrains-";
+
+  public static void patchSystem() {
+    if (Patches.SUN_BUG_ID_9000030 && Registry.is("ide.x11.suppress.xinerama")) {
+      GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+      if (ge.getScreenDevices().length > 1) {
+        try {
+          @SuppressWarnings("SpellCheckingInspection") Field xinerState = ge.getClass().getDeclaredField("xinerState");
+          xinerState.setAccessible(true);
+          xinerState.set(null, Boolean.FALSE);
+          Logger.getInstance(AppUIUtil.class).info("Xinerama detection suppressed");
+        }
+        catch (Exception ignored) { }
+      }
+    }
+  }
 
   public static void updateWindowIcon(@NotNull Window window) {
     window.setIconImages(getAppIconImages());
@@ -142,7 +160,12 @@ public class AppUIUtil {
 
   private static void registerFont(@NonNls String name) {
     try {
-      InputStream is = AppUIUtil.class.getResourceAsStream(name);
+      URL url = AppUIUtil.class.getResource(name);
+      if (url == null) {
+        throw new IOException("Resource missing: " + name);
+      }
+
+      InputStream is = url.openStream();
       try {
         Font font = Font.createFont(Font.TRUETYPE_FONT, is);
         GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
@@ -152,7 +175,7 @@ public class AppUIUtil {
       }
     }
     catch (Exception e) {
-      LOG.error("Cannot register font: " + name, e);
+      Logger.getInstance(AppUIUtil.class).error("Cannot register font: " + name, e);
     }
   }
 

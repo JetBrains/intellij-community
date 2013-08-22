@@ -17,7 +17,7 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -69,7 +69,7 @@ public class TestsUIUtil {
       }
     }
     if (Location.DATA_KEY.is(dataId)) return testProxy.getLocation(project, properties.getScope());
-    if (RuntimeConfiguration.DATA_KEY.is(dataId)) return properties.getConfiguration();
+    if (RunConfiguration.DATA_KEY.is(dataId)) return properties.getConfiguration();
     return null;
   }
 
@@ -203,13 +203,14 @@ public class TestsUIUtil {
       } else{
         List allTests = Filter.LEAF.select(myRoot.getAllTests());
         final List<AbstractTestProxy> failed = Filter.DEFECTIVE_LEAF.select(allTests);
-        int failedCount = failed.size();
         final List<AbstractTestProxy> notStarted = Filter.NOT_PASSED.select(allTests);
         notStarted.removeAll(failed);
         final List ignored = Filter.IGNORED.select(allTests);
         notStarted.removeAll(ignored);
-        int notStartedCount = notStarted.size();
-        int passedCount = allTests.size() - failedCount - notStartedCount - ignored.size();
+        failed.removeAll(ignored);
+        int failedCount = failed.size();
+        int notStartedCount = notStarted.size() + ignored.size();
+        int passedCount = allTests.size() - failedCount - notStartedCount;
         if (failedCount > 0) {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
           myText = passedCount + " passed, " + failedCount + " failed" + (notStartedCount > 0 ? ", " + notStartedCount + " not started" : "");

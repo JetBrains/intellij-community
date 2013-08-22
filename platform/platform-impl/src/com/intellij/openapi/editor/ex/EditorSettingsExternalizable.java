@@ -47,7 +47,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public String USE_SOFT_WRAPS;
     public boolean USE_CUSTOM_SOFT_WRAP_INDENT = false;
     public int CUSTOM_SOFT_WRAP_INDENT = 0;
-    public boolean IS_VIRTUAL_SPACE = true;
+    public boolean IS_VIRTUAL_SPACE = false;
     public boolean IS_CARET_INSIDE_TABS;
     @NonNls public String STRIP_TRAILING_SPACES = STRIP_TRAILING_SPACES_CHANGED;
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;

@@ -24,6 +24,8 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -59,9 +61,19 @@ public class ConflictsUtil {
                                           final PsiMethod prototype,
                                           final MultiMap<PsiElement,String> conflicts) {
     if (prototype == null) return;
-    final String protoMethodInfo = getMethodPrototypeString(prototype);
+    String protoMethodInfo = getMethodPrototypeString(prototype);
 
     PsiMethod method = aClass != null ? aClass.findMethodBySignature(prototype, true) : null;
+    if (method == null && aClass != null) {
+      final MethodSignature signature = prototype.getSignature(PsiSubstitutor.EMPTY);
+      for (PsiMethod classMethod : aClass.getMethods()) {
+        if (MethodSignatureUtil.areSignaturesErasureEqual(signature, classMethod.getSignature(PsiSubstitutor.EMPTY))) {
+          method = classMethod;
+          protoMethodInfo = "with same erasure";
+          break;
+        }
+      }
+    }
 
     if (method != null && method != refactoredMethod) {
       if (aClass.equals(method.getContainingClass())) {
@@ -69,7 +81,7 @@ public class ConflictsUtil {
                                   RefactoringBundle.message("current.class") :
                                   RefactoringUIUtil.getDescription(aClass, false);
         conflicts.putValue(method, RefactoringBundle.message("method.0.is.already.defined.in.the.1",
-                                                getMethodPrototypeString(prototype),
+                                                protoMethodInfo,
                                                 classDescr));
       }
       else { // method somewhere in base class

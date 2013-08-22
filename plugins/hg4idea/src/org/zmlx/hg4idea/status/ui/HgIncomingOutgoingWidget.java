@@ -199,5 +199,15 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   public HgChangesetStatus getChangesetStatus() {
     return myChangesStatus;
   }
+
+  //if smb call hide widget then it removed from status bar ans dispose method called.
+  // if we do not override dispose IDE call EditorWidget dispose method and set connection to null.
+  //next, if we repeat hide/show dipose eth will be calles several times,but connection will be null -> NPE or already disposed message.
+  @Override
+  public void dispose() {
+    if (!isDisposed()) {
+      super.dispose();
+    }
+  }
 }
 

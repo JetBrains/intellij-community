@@ -81,9 +81,6 @@ public class PsiScopesUtil {
       if (scope == maxScope) break;
       prevParent = scope;
       scope = prevParent.getContext();
-      if (scope != null && scope != prevParent.getParent() && !scope.isValid()) {
-        break;
-      }
       processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
     }
 
@@ -220,11 +217,14 @@ public class PsiScopesUtil {
     return true;
   }
 
-  public static void setupAndRunProcessor(MethodsProcessor processor, PsiCallExpression call, boolean dummyImplicitConstructor)
-    throws MethodProcessorSetupFailedException {
+  public static void setupAndRunProcessor(@NotNull MethodsProcessor processor,
+                                          @NotNull PsiCallExpression call,
+                                          boolean dummyImplicitConstructor)
+  throws MethodProcessorSetupFailedException {
     if (call instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)call;
       final PsiJavaCodeReferenceElement ref = methodCall.getMethodExpression();
+
 
       processor.setArgumentList(methodCall.getArgumentList());
       processor.obtainTypeArguments(methodCall);
@@ -313,7 +313,7 @@ public class PsiScopesUtil {
           PsiType type = ((PsiExpression)qualifier).getType();
           if (type != null && qualifier instanceof PsiReferenceExpression) {
             final PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
-            if (resolve instanceof PsiVariable && ((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL)) {
+            if (resolve instanceof PsiVariable && ((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL) && ((PsiVariable)resolve).hasInitializer()) {
               final PsiExpression initializer = ((PsiVariable)resolve).getInitializer();
               if (initializer instanceof PsiNewExpression) {
                 final PsiAnonymousClass anonymousClass = ((PsiNewExpression)initializer).getAnonymousClass();
@@ -406,9 +406,9 @@ public class PsiScopesUtil {
     return true;
   }
 
-  private static boolean processQualifierResult(JavaResolveResult qualifierResult,
-                                                final MethodsProcessor processor,
-                                                PsiMethodCallExpression methodCall) throws MethodProcessorSetupFailedException {
+  private static boolean processQualifierResult(@NotNull JavaResolveResult qualifierResult,
+                                                @NotNull MethodsProcessor processor,
+                                                @NotNull PsiMethodCallExpression methodCall) throws MethodProcessorSetupFailedException {
     PsiElement resolve = qualifierResult.getElement();
 
     if (resolve == null) {

@@ -76,7 +76,7 @@ public abstract class InjectedLanguageManager {
   @NotNull
   public abstract List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit);
 
-  public abstract boolean isInjectedFragment(PsiFile file);
+  public abstract boolean isInjectedFragment(@NotNull PsiFile file);
 
   @Nullable
   public abstract PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset);
@@ -92,4 +92,6 @@ public abstract class InjectedLanguageManager {
   public abstract List<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile);
 
   public abstract void startRunInjectors(@NotNull Document hostDocument, boolean synchronously);
+
+  public abstract void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);
 }

@@ -158,12 +158,15 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     for (Tools tools : myTools.values()) {
       for (ScopeToolState state : tools.getTools()) {
         InspectionToolWrapper toolWrapper = state.getTool();
-        toolWrapper.cleanup();
+        toolWrapper.cleanup(myProject);
       }
     }
     myTools.clear();
 
-    EntryPointsManager.getInstance(getProject()).cleanup();
+    EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(getProject());
+    if (entryPointsManager != null) {
+      entryPointsManager.cleanup();
+    }
 
     if (myRefManager != null) {
       ((RefManagerImpl)myRefManager).cleanup();
@@ -295,7 +298,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       DumbService.getInstance(myProject).showDumbModeNotification("Usage search is not available until indices are ready");
       throw new ProcessCanceledException();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.error(e);
     }
     finally {

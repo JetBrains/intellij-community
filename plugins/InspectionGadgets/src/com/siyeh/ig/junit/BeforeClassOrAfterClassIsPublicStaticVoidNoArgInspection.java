@@ -131,6 +131,12 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
       }
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Fix modifiers";
+    }
+
     @Override
     @NotNull
     public String getName() {

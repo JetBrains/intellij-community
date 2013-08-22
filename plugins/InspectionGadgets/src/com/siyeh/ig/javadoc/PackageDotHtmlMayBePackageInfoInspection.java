@@ -79,6 +79,12 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.delete.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
@@ -106,6 +112,11 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
 
     public PackageDotHtmlMayBePackageInfoFix(String aPackage) {
       this.aPackage = aPackage;
+    }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
     }
 
     @Override

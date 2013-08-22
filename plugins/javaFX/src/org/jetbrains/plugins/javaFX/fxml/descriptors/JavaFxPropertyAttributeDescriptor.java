@@ -7,6 +7,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
@@ -21,7 +22,7 @@ import java.util.List;
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor {
+public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescriptor {
   private final String myName;
   private final PsiClass myPsiClass;
 
@@ -62,7 +63,7 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
 
   @Override
   public boolean isEnumerated() {
-    return getEnum() != null;
+    return getEnumeratedValues() != null;
   }
 
   @Nullable
@@ -87,7 +88,7 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
       return new String[] {"true", "false"};
     }
 
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return null;
   }
 
   protected boolean isConstant(PsiField enumField) {
@@ -99,13 +100,14 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
     return aClass != null && aClass.isEnum() ? aClass : null;
   }
 
-  public PsiField getEnumConstant(String attrValue) {
-    if (isEnumerated()) {
-      final PsiClass aClass = getEnum();
-      final PsiField fieldByName = aClass.findFieldByName(attrValue, false);
-      return fieldByName != null ? fieldByName : aClass.findFieldByName(attrValue.toUpperCase(), false);
+  @Override
+  protected PsiElement getEnumeratedValueDeclaration(XmlAttributeValue attributeValue, String value) {
+    final PsiClass aClass = getEnum();
+    if (aClass != null) {
+      final PsiField fieldByName = aClass.findFieldByName(value, false);
+      return fieldByName != null ? fieldByName : aClass.findFieldByName(value.toUpperCase(), false);
     }
-    return null;
+    return attributeValue;
   }
 
   @Nullable
@@ -204,6 +206,12 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
       return JavaFxPsiUtil.findPropertySetter(myName, myPsiClass);
     }
     return null;
+  }
+
+  @Override
+  public PsiReference[] getValueReferences(XmlAttributeValue value) {
+    String s = value.getValue();
+    return s != null && !s.startsWith("${") ? super.getValueReferences(value) : PsiReference.EMPTY_ARRAY;
   }
 
   @Override

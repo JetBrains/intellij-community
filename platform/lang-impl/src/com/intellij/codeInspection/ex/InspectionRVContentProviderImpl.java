@@ -53,7 +53,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
   @Nullable
   public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
     final RefEntity[] refEntities = tree.getSelectedElements();
-    InspectionToolPresentation presentation = ((GlobalInspectionContextImpl)toolWrapper.getContext()).getPresentation(toolWrapper);
+    InspectionToolPresentation presentation = tree.getContext().getPresentation(toolWrapper);
     return refEntities.length == 0 ? null : presentation.getQuickFixes(refEntities);
   }
 
@@ -118,20 +118,19 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     final RefEntity refElement = refElementDescriptor.getUserObject();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     if (context.getUIOptions().SHOW_ONLY_DIFF && presentation.getElementStatus(refElement) == FileStatus.NOT_CHANGED) return;
-    if (toolWrapper instanceof LocalInspectionToolWrapper) {
-      final CommonProblemDescriptor[] problems = refElementDescriptor.getProblemDescriptors();
-      if (problems != null) {
+    final CommonProblemDescriptor[] problems = refElementDescriptor.getProblemDescriptors();
+    if (problems != null) {
         final RefElementNode elemNode = addNodeToParent(container, presentation, pNode);
         for (CommonProblemDescriptor problem : problems) {
+          assert problem != null;
           if (context.getUIOptions().SHOW_ONLY_DIFF && presentation.getProblemStatus(problem) == FileStatus.NOT_CHANGED) {
             continue;
           }
-          elemNode.add(new ProblemDescriptionNode(refElement, problem, toolWrapper));
+          elemNode.add(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation));
           if (problems.length == 1) {
             elemNode.setProblem(problems[0]);
           }
         }
-      }
     }
     else {
       if (canPackageRepeat) {

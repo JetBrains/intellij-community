@@ -113,8 +113,7 @@ public class HgBranchPopup {
       HgRepository repo = HgRepositoryImpl.getInstance(repository, myProject, myProject);
       popupGroup.add(new RootAction<HgRepository>(repo, isMultiRepoConfig ? myCurrentRepository : null,
                                                   new HgBranchPopupActions(repo.getProject(), repo).createActions(null),
-                                                  HgUtil.getDisplayableBranchText(repo),
-                                                  repo.getCurrentBranch()));
+                                                  HgUtil.getDisplayableBranchText(repo)));
     }
     return popupGroup;
   }

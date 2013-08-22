@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 
 class JavaWithIfExpressionSurrounder extends JavaExpressionSurrounder{
@@ -35,7 +36,7 @@ class JavaWithIfExpressionSurrounder extends JavaExpressionSurrounder{
     PsiElement parent = expr.getParent();
     if (!(parent instanceof PsiExpressionStatement)) return false;
     final PsiElement element = parent.getParent();
-    if (!(element instanceof PsiCodeBlock) && !(JspPsiUtil.isInJspFile(element)  && element instanceof PsiFile)) return false;
+    if (!(element instanceof PsiCodeBlock) && !(FileTypeUtils.isInServerPageFile(element)  && element instanceof PsiFile)) return false;
     return true;
   }
 

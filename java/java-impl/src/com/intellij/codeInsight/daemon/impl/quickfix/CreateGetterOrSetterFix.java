@@ -17,13 +17,13 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -116,16 +116,12 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
     PsiClass aClass = myField.getContainingClass();
     final List<PsiMethod> methods = new ArrayList<PsiMethod>();
     if (myCreateGetter) {
-      methods.add(PropertyUtil.generateGetterPrototype(myField));
+      methods.add(GenerateMembersUtil.generateGetterPrototype(myField));
     }
     if (myCreateSetter) {
-      methods.add(PropertyUtil.generateSetterPrototype(myField));
+      methods.add(GenerateMembersUtil.generateSetterPrototype(myField));
     }
     for (PsiMethod method : methods) {
-      String modifier = PsiUtil.getMaximumModifierForMember(aClass);
-      if (modifier != null) {
-        PsiUtil.setModifierProperty(method, modifier, true);
-      }
       aClass.add(method);
     }
   }

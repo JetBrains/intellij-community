@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -76,18 +77,18 @@ final class Surface extends JComponent {
       if (myDirection == 1) {
         g.setClip(null);
         g.clipRect(myOffset, 0, bounds.width - myOffset, bounds.height);
-        g.drawImage(myBottomImage, 0, 0, null);
+        UIUtil.drawImage(g, myBottomImage, 0, 0, null);
         g.setClip(null);
         g.clipRect(0, 0, myOffset, bounds.height);
-        g.drawImage(myTopImage, myOffset - bounds.width, 0, null);
+        UIUtil.drawImage(g, myTopImage, myOffset - bounds.width, 0, null);
       }
       else {
         g.setClip(null);
         g.clipRect(bounds.width - myOffset, 0, myOffset, bounds.height);
-        g.drawImage(myBottomImage, 0, 0, null);
+        UIUtil.drawImage(g, myBottomImage, 0, 0, null);
         g.setClip(null);
         g.clipRect(0, 0, bounds.width - myOffset, bounds.height);
-        g.drawImage(myTopImage, -myOffset, 0, null);
+        UIUtil.drawImage(g, myTopImage, -myOffset, 0, null);
       }
       myTopImage.flush();
     }
@@ -95,54 +96,54 @@ final class Surface extends JComponent {
       if (myDirection == 1) {
         g.setClip(null);
         g.clipRect(0, 0, bounds.width - myOffset, bounds.height);
-        g.drawImage(myBottomImage, 0, 0, null);
+        UIUtil.drawImage(g, myBottomImage, 0, 0, null);
         g.setClip(null);
         g.clipRect(bounds.width - myOffset, 0, myOffset, bounds.height);
-        g.drawImage(myTopImage, bounds.width - myOffset, 0, null);
+        UIUtil.drawImage(g, myTopImage, bounds.width - myOffset, 0, null);
       }
       else {
         g.setClip(null);
         g.clipRect(0, 0, myOffset, bounds.height);
-        g.drawImage(myBottomImage, 0, 0, null);
+        UIUtil.drawImage(g, myBottomImage, 0, 0, null);
         g.setClip(null);
         g.clipRect(myOffset, 0, bounds.width - myOffset, bounds.height);
-        g.drawImage(myTopImage, myOffset, 0, null);
+        UIUtil.drawImage(g, myTopImage, myOffset, 0, null);
       }
     }
     else if (myAnchor == ToolWindowAnchor.TOP) {
       if (myDirection == 1) {
         g.setClip(null);
         g.clipRect(0, myOffset, bounds.width, bounds.height - myOffset);
-        g.drawImage(myBottomImage, 0, 0, null);
+        UIUtil.drawImage(g, myBottomImage, 0, 0, null);
         g.setClip(null);
         g.clipRect(0, 0, bounds.width, myOffset);
-        g.drawImage(myTopImage, 0, -bounds.height + myOffset, null);
+        UIUtil.drawImage(g, myTopImage, 0, -bounds.height + myOffset, null);
       }
       else {
         g.setClip(null);
         g.clipRect(0, bounds.height - myOffset, bounds.width, myOffset);
-        g.drawImage(myBottomImage, 0, 0, null);
+        UIUtil.drawImage(g, myBottomImage, 0, 0, null);
         g.setClip(null);
         g.clipRect(0, 0, bounds.width, bounds.height - myOffset);
-        g.drawImage(myTopImage, 0, -myOffset, null);
+        UIUtil.drawImage(g, myTopImage, 0, -myOffset, null);
       }
     }
     else if (myAnchor == ToolWindowAnchor.BOTTOM) {
       if (myDirection == 1) {
         g.setClip(null);
         g.clipRect(0, 0, bounds.width, bounds.height - myOffset);
-        g.drawImage(myBottomImage, 0, 0, null);
+        UIUtil.drawImage(g, myBottomImage, 0, 0, null);
         g.setClip(null);
         g.clipRect(0, bounds.height - myOffset, bounds.width, myOffset);
-        g.drawImage(myTopImage, 0, bounds.height - myOffset, null);
+        UIUtil.drawImage(g, myTopImage, 0, bounds.height - myOffset, null);
       }
       else {
         g.setClip(null);
         g.clipRect(0, 0, bounds.width, myOffset);
-        g.drawImage(myBottomImage, 0, 0, null);
+        UIUtil.drawImage(g, myBottomImage, 0, 0, null);
         g.setClip(null);
         g.clipRect(0, myOffset, bounds.width, bounds.height - myOffset);
-        g.drawImage(myTopImage, 0, myOffset, null);
+        UIUtil.drawImage(g, myTopImage, 0, myOffset, null);
       }
     }
   }

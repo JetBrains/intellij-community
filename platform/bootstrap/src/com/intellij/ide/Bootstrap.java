@@ -35,7 +35,7 @@ public class Bootstrap {
   }
 
   public static void main(String[] args, String mainClass, String methodName, List<URL> classpathElements) throws Exception {
-    UrlClassLoader newClassLoader = ClassloaderUtil.initClassloader(classpathElements);
+    UrlClassLoader newClassLoader = ClassloaderUtil.initClassloader(classpathElements, args.length == 0);
     WindowsCommandLineProcessor.ourMirrorClass = Class.forName(WindowsCommandLineProcessor.class.getName(), true, newClassLoader);
 
     Class<?> klass = Class.forName(PLUGIN_MANAGER, true, newClassLoader);

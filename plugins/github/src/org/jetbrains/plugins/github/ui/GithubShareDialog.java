@@ -24,7 +24,7 @@ public class GithubShareDialog extends DialogWrapper {
     myAvailableNames = availableNames;
     myGithubSharePanel = new GithubSharePanel(this);
     init();
-    setTitle("Share project on GitHub");
+    setTitle("Share Project On GitHub");
     setOKButtonText("Share");
     myGithubSharePanel.setRepositoryName(project.getName());
     myGithubSharePanel.setPrivateRepoAvailable(privateRepoAllowed);
@@ -32,14 +32,14 @@ public class GithubShareDialog extends DialogWrapper {
     updateOkButton();
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
   @Override
   protected String getHelpId() {
     return "github.share";
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "Github.ShareDialog";
   }
 
   @Override

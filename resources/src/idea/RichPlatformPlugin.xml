@@ -50,6 +50,9 @@
     <extensionPoint name="compiler.makeDependencyProcessor"
                     interface="com.intellij.compiler.DependencyProcessor"/>
 
+    <extensionPoint name="compiler.optionsManager"
+                    interface="com.intellij.compiler.options.CompilerOptionsManager"/>
+
     <extensionPoint name="compiler.resourceCompilerExtension"
                     interface="com.intellij.compiler.impl.resourceCompiler.ResourceCompilerExtension"/>
 
@@ -75,6 +78,8 @@
 
     <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
+    <extensionPoint name="projectStructureConfigurableFilter" interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter"/>
+    <extensionPoint name="projectStructureConfigurableAdder" interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableAdder"/>
 
     <extensionPoint name="compiler" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.Compiler"/>
     <extensionPoint name="compilerFactory" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.CompilerFactory"/>
@@ -128,8 +133,6 @@
                         serviceImplementation="com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.ide.util.projectWizard.ProjectWizardStepFactory"
                         serviceImplementation="com.intellij.ide.util.projectWizard.ProjectWizardStepFactoryImpl"/>
-
-    <applicationService serviceInterface="com.intellij.peer.PeerFactory" serviceImplementation="com.intellij.peer.impl.PeerFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.deployment.DeploymentUtil"
                         serviceImplementation="com.intellij.openapi.deployment.DeploymentUtilImpl"/>
@@ -222,6 +225,7 @@
                     serviceImplementation="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"/>
     <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.jikes.JikesConfiguration"
                     serviceImplementation="com.intellij.compiler.impl.javaCompiler.jikes.JikesConfiguration"/>
+    <pathMacroFilter implementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfigurationMacroFilter"/>
 
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.IdeaFrameTitleBuilder"/>
@@ -282,6 +286,8 @@
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider"/>
+
+    <attachSourcesProvider implementation="com.intellij.jarFinder.InternetAttachSourceProvider"/>
 
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"/>
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"/>
@@ -361,12 +367,6 @@
     <exportable serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
     <schemeOwner serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"/>
 
-    <!-- File Exclusions -->
-    <!--
-    <projectService serviceInterface="com.intellij.openapi.file.exclude.ProjectFileExclusionManager"
-                    serviceImplementation="com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl"/>
-    <projectConfigurable instance="com.intellij.openapi.file.exclude.ui.ExcludedFilesConfigurable"/>
-    -->
     <fileTypeFactory implementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory"/>
     <applicationService serviceInterface="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"
                     serviceImplementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"/>

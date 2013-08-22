@@ -54,14 +54,17 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     return get(module) instanceof PluginModuleType;
   }
 
+  @NotNull
   public PluginModuleBuilder createModuleBuilder() {
     return new PluginModuleBuilder();
   }
 
+  @NotNull
   public String getName() {
     return DevKitBundle.message("module.title");
   }
 
+  @NotNull
   public String getDescription() {
     return DevKitBundle.message("module.description");
   }
@@ -117,7 +120,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   @Override
-  public boolean isValidSdk(final Module module, final Sdk projectSdk) {
+  public boolean isValidSdk(@NotNull final Module module, final Sdk projectSdk) {
     return JavaModuleType.isValidJavaSdk(module);
   }
 

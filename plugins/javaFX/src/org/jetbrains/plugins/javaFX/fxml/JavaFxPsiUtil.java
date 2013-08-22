@@ -149,8 +149,8 @@ public class JavaFxPsiUtil {
   }
 
   public static PsiClassType getPropertyClassType(PsiElement field, final String superTypeFQN) {
-    if (field instanceof PsiField) {
-      final PsiType type = ((PsiField)field).getType();
+    if (field instanceof PsiMember) {
+      final PsiType type = PropertyUtil.getPropertyType((PsiMember)field);
       if (type instanceof PsiClassType) {
         final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
         final PsiClass attributeClass = resolveResult.getElement();
@@ -165,6 +165,9 @@ public class JavaFxPsiUtil {
               if (propertyType instanceof PsiClassType) {
                 return (PsiClassType)propertyType;
               }
+            }
+            else {
+              return (PsiClassType)type;
             }
           }
         }
@@ -187,7 +190,7 @@ public class JavaFxPsiUtil {
   public static PsiMethod findPropertySetter(String attributeName, PsiClass classWithStaticProperty) {
     final String setterName = PropertyUtil.suggestSetterName(StringUtil.getShortName(attributeName));
     final PsiMethod[] setters = classWithStaticProperty.findMethodsByName(setterName, true);
-    if (setters.length == 1) {
+    if (setters.length >= 1) {
       return setters[0];
     }
     return null;

@@ -16,15 +16,12 @@
 
 package org.intellij.plugins.intelliLang.inject;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
@@ -51,6 +48,11 @@ public class TemporaryPlacesRegistry {
     @Override
     public String getId() {
       return "temp";
+    }
+
+    @Override
+    public boolean isApplicableTo(PsiLanguageInjectionHost host) {
+      return true;
     }
 
     @NotNull
@@ -159,8 +161,8 @@ public class TemporaryPlacesRegistry {
   }
 
   @Nullable
-  public InjectedLanguage getLanguageFor(@NotNull PsiLanguageInjectionHost host) {
-    PsiLanguageInjectionHost originalHost = CompletionUtil.getOriginalElement(host);
+  public InjectedLanguage getLanguageFor(@NotNull PsiLanguageInjectionHost host, PsiFile containingFile) {
+    PsiLanguageInjectionHost originalHost = CompletionUtilCoreImpl.getOriginalElement(host, containingFile);
     PsiLanguageInjectionHost injectionHost = originalHost == null ? host : originalHost;
     getInjectionPlacesSafe();
     return injectionHost.getUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE);

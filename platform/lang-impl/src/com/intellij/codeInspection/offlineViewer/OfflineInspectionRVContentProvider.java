@@ -98,7 +98,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
     final RefEntity[] selectedRefElements = selectedElements.toArray(new RefEntity[selectedElements.size()]);
 
-    InspectionToolPresentation presentation = ((GlobalInspectionContextImpl)toolWrapper.getContext()).getPresentation(toolWrapper);
+    GlobalInspectionContextImpl context = tree.getContext();
+    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     return presentation.extractActiveFixes(selectedRefElements, actions);
   }
 
@@ -181,7 +182,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     final RefElementNode elemNode = addNodeToParent(container, presentation, packageNode);
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
       elemNode.add(new OfflineProblemDescriptorNode(((OfflineProblemDescriptorContainer)container).getUserObject(),
-                                                    (LocalInspectionToolWrapper)toolWrapper));
+                                                    (LocalInspectionToolWrapper)toolWrapper, presentation));
     }
   }
 

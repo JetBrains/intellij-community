@@ -40,7 +40,7 @@ public class RemoteConfigurationType implements ConfigurationType {
   public RemoteConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
-        return new RemoteConfiguration("", project, this);
+        return new RemoteConfiguration(project, this);
       }
 
     };

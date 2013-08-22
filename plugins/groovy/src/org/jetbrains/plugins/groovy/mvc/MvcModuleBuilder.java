@@ -20,6 +20,7 @@ import com.intellij.ide.util.projectWizard.SdkSettingsStep;
 import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.Condition;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyAwareModuleBuilder;
 
@@ -44,7 +45,7 @@ public class MvcModuleBuilder extends GroovyAwareModuleBuilder {
 
   @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
+  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     return new SdkSettingsStep(settingsStep, this, new Condition<SdkTypeId>() {
           @Override
           public boolean value(SdkTypeId sdkType) {

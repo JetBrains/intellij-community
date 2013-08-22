@@ -57,6 +57,9 @@ public abstract class FileBasedIndex implements BaseComponent {
     throw new IllegalArgumentException("Virtual file doesn't support id: " + file + ", implementation class: " + file.getClass().getName());
   }
 
+  // note: upsource implementation requires access to Project here, please don't remove
+  public abstract VirtualFile findFileById(Project project, int id);
+
   public void requestRebuild(ID<?, ?> indexId) {
     requestRebuild(indexId, new Throwable());
   }
@@ -123,6 +126,10 @@ public abstract class FileBasedIndex implements BaseComponent {
    */
   public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, Processor<K> processor, @Nullable Project project);
 
+  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+    return processAllKeys(indexId, processor, scope.getProject());
+  }
+
   public interface ValueProcessor<V> {
     /**
      * @param value a value to process
@@ -142,4 +149,7 @@ public abstract class FileBasedIndex implements BaseComponent {
   public interface FileTypeSpecificInputFilter extends InputFilter {
     void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
   }
+
+  // TODO: remove once changes becomes permamnent
+  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = ApplicationManager.getApplication().isInternal();
 }

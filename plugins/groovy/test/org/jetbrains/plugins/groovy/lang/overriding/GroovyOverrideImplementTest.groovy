@@ -92,7 +92,7 @@ class Test<T> extends Base<T> {<caret>}
     myFixture.checkResult """
 class Test<T> extends Base<T> {
     @Override
-    def <T> T[] toArray(T[] t) {
+    def <T1> T1[] toArray(T1[] t) {
         return super.toArray(t)
     }
 }

@@ -160,18 +160,19 @@ public class PsiImplUtil {
         return GrStringUtil.replaceStringInjectionByLiteral((GrStringInjection)oldParent, (GrLiteral)newExpr);
       }
       else {
-        newExpr = factory.createExpressionFromText("{" + newExpr.getText() + "}");
-        oldParent.getNode().replaceChild(oldExpr.getNode(), newExpr.getNode());
-        return newExpr;
+        GrClosableBlock block = factory.createClosureFromText("{foo}");
+        oldParent.getNode().replaceChild(oldExpr.getNode(), block.getNode());
+        GrStatement[] statements = block.getStatements();
+        return ((GrExpression)statements[0]).replaceWithExpression(newExpr, removeUnnecessaryParentheses);
       }
     }
     
     if (PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class, false, GrCodeBlock.class) != null) {
-      final PsiElement replaced = oldExpr.replace(newExpr);
-      final GrStringInjection stringInjection = PsiTreeUtil.getParentOfType(replaced, GrStringInjection.class);
+      final GrStringInjection stringInjection = PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class);
       GrStringUtil.wrapInjection(stringInjection);
       assert stringInjection != null;
-      return stringInjection.getClosableBlock();
+      final PsiElement replaced = oldExpr.replaceWithExpression(newExpr, removeUnnecessaryParentheses);
+      return (GrExpression)replaced;
     }
     
     //check priorities    

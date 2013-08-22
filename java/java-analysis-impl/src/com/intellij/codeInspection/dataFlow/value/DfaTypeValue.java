@@ -25,8 +25,10 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,12 +49,10 @@ public class DfaTypeValue extends DfaValue {
 
     @NotNull
     public DfaTypeValue create(@NotNull PsiType type, boolean nullable) {
+      type = TypeConversionUtil.erasure(type);
       mySharedInstance.myType = type;
-      mySharedInstance.myCanonicalText = type.getCanonicalText();
+      mySharedInstance.myCanonicalText = StringUtil.notNullize(type.getCanonicalText(), PsiKeyword.NULL);
       mySharedInstance.myIsNullable = nullable;
-      if (mySharedInstance.myCanonicalText == null) {
-        mySharedInstance.myCanonicalText = PsiKeyword.NULL;
-      }
 
       String id = mySharedInstance.toString();
       ArrayList<DfaTypeValue> conditions = myStringToObject.get(id);
@@ -65,7 +65,7 @@ public class DfaTypeValue extends DfaValue {
         }
       }
 
-      DfaTypeValue result = new DfaTypeValue(type, nullable, myFactory);
+      DfaTypeValue result = new DfaTypeValue(type, nullable, myFactory, mySharedInstance.myCanonicalText);
       conditions.add(result);
       return result;
     }
@@ -83,14 +83,11 @@ public class DfaTypeValue extends DfaValue {
     super(factory);
   }
 
-  private DfaTypeValue(PsiType type, boolean isNullable, DfaValueFactory factory) {
+  private DfaTypeValue(PsiType type, boolean isNullable, DfaValueFactory factory, String canonicalText) {
     super(factory);
     myType = type;
     myIsNullable = isNullable;
-    myCanonicalText = type.getCanonicalText();
-    if (myCanonicalText == null) {
-      myCanonicalText = PsiKeyword.NULL;
-    }
+    myCanonicalText = canonicalText;
   }
 
   public PsiType getType() {

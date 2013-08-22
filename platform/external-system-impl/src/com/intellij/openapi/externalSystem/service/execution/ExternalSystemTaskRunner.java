@@ -17,16 +17,15 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.GenericProgramRunner;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,21 +43,20 @@ public class ExternalSystemTaskRunner extends GenericProgramRunner {
 
   @Override
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
-    return profile instanceof ExternalSystemRunConfiguration && ToolWindowId.RUN.equals(executorId);
+    return profile instanceof ExternalSystemRunConfiguration && DefaultRunExecutor.EXECUTOR_ID.equals(executorId);
   }
 
   @Nullable
   @Override
   protected RunContentDescriptor doExecute(Project project,
-                                           Executor executor,
                                            RunProfileState state,
                                            RunContentDescriptor contentToReuse,
                                            ExecutionEnvironment env) throws ExecutionException
   {
-    ExecutionResult executionResult = state.execute(executor, this);
+    ExecutionResult executionResult = state.execute(env.getExecutor(), this);
     if (executionResult == null) return null;
 
-    final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, executor, executionResult, env);
+    final RunContentBuilder contentBuilder = new RunContentBuilder(this, executionResult, env);
     return contentBuilder.showRunContent(contentToReuse);
   }
 }

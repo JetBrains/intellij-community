@@ -105,6 +105,12 @@ public class IncrementDecrementUsedAsExpressionInspection
         elementText);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Extract to separate statement";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

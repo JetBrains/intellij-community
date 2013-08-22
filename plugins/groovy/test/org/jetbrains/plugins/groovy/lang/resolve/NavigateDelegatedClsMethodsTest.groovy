@@ -35,7 +35,7 @@ import static org.jetbrains.plugins.groovy.util.TestUtils.getAbsoluteTestDataPat
 public class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + 'resolve/clsMethod'
 
-  final LightProjectDescriptor projectDescriptor = new GroovyLightProjectDescriptor() {
+  final LightProjectDescriptor projectDescriptor = new GroovyLightProjectDescriptor(TestUtils.mockGroovy2_1LibraryName) {
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry)

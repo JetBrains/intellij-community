@@ -340,7 +340,7 @@ public class LineStatusTracker {
     private Range getLastRangeBeforeLine(int line) {
       Range result = null;
       for (Range range : myRanges) {
-        if (range.isMoreThen(line)) return result;
+        if (range.isAfter(line)) return result;
         result = range;
       }
       return result;
@@ -439,7 +439,7 @@ public class LineStatusTracker {
           if (prev.getHighlighter() != null) {
             prev.getHighlighter().dispose();
           }
-          prev = prev.mergeWith(range, LineStatusTracker.this);
+          prev = prev.mergeWith(range);
         }
         else {
           result.add(prev);

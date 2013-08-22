@@ -62,7 +62,7 @@ public final class HgCommandExecutor {
   private final HgVcs myVcs;
   private final String myDestination;
 
-  private Charset myCharset = HgEncodingUtil.getDefaultCharset();
+  @NotNull private Charset myCharset;
   private boolean myIsSilent = false;
   private boolean myShowOutput = false;
   private List<String> myOptions = DEFAULT_OPTIONS;
@@ -81,10 +81,13 @@ public final class HgCommandExecutor {
     myVcs = HgVcs.getInstance(project);
     myDestination = destination;
     myState = state;
+    myCharset = HgEncodingUtil.getDefaultCharset(myProject);
   }
 
-  public void setCharset(Charset charset) {
-    myCharset = charset;
+  public void setCharset(@Nullable Charset charset) {
+    if (charset != null) {
+      myCharset = charset;
+    }
   }
 
   public void setSilent(boolean isSilent) {
@@ -189,6 +192,10 @@ public final class HgCommandExecutor {
     cmdLine.add(operation);
     if (arguments != null && arguments.size() != 0) {
       cmdLine.addAll(arguments);
+    }
+    if (HgVcs.HGENCODING == null) {
+      cmdLine.add("--encoding");
+      cmdLine.add(myCharset.name());
     }
     ShellCommand shellCommand = new ShellCommand(myVcs.getGlobalSettings().isRunViaBash());
     HgCommandResult result;

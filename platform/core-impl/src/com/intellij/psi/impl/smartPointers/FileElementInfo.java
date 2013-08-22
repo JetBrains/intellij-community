@@ -67,6 +67,12 @@ class FileElementInfo implements SmartPointerElementInfo {
   }
 
   @Override
+  public PsiFile restoreFile() {
+    PsiElement element = restoreElement();
+    return element == null ? null : element.getContainingFile(); // can be directory
+  }
+
+  @Override
   public int elementHashCode() {
     return myVirtualFile.hashCode();
   }
@@ -75,6 +81,10 @@ class FileElementInfo implements SmartPointerElementInfo {
   public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
     if (other instanceof FileElementInfo) {
       return Comparing.equal(myVirtualFile, ((FileElementInfo)other).myVirtualFile);
+    }
+    if (other instanceof SelfElementInfo || other instanceof ClsElementInfo) {
+      // optimisation: SelfElementInfo need psi (parsing) for element restoration and apriori could not reference psi file
+      return false;
     }
     return Comparing.equal(restoreElement(), other.restoreElement());
   }
@@ -93,5 +103,10 @@ class FileElementInfo implements SmartPointerElementInfo {
   @Override
   public Project getProject() {
     return myProject;
+  }
+
+  @Override
+  public void cleanup() {
+
   }
 }

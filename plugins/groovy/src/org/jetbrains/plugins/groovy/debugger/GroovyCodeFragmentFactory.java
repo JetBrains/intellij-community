@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.debugger;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
@@ -140,7 +139,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
       javaText.append("|mc = |thiz0.getMetaClass();\n");
     } else {
       assert contextClass != null;
-      javaText.append("|clazz = java.lang.Class.forName(\"").append(contextClass.getQualifiedName()).append("\");\n");
+      javaText.append("|clazz = java.lang.Class.forName(\"").append(ClassUtil.getJVMClassName(contextClass)).append("\");\n");
       javaText.append("|mc = groovy.lang.GroovySystem.getMetaClassRegistry().getMetaClass(|clazz);\n");
     }
 
@@ -202,7 +201,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
         PsiElement resolved = referenceExpression.resolve();
         if (resolved instanceof PsiMember && (resolved instanceof PsiClass || ((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC))) {
-          String qName = StaticImportMethodFix.getMemberQualifiedName((PsiMember)resolved);
+          String qName = com.intellij.psi.util.PsiUtil.getMemberQualifiedName((PsiMember)resolved);
           if (qName != null && qName.contains(".") && !referenceExpression.isQualified()) {
             replaceWithReference(referenceExpression, qName);
             return;
@@ -299,9 +298,10 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
   private static boolean isStaticContext(PsiElement context) {
     PsiElement parent = context;
     while (parent != null) {
-      if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC)) return true;
+      if (parent instanceof PsiMember) {
+        return ((PsiMember)parent).hasModifierProperty(PsiModifier.STATIC);
+      }
       if (parent instanceof GroovyFile && parent.isPhysical()) return false;
-      if (parent instanceof GrTypeDefinition) return false;
       if (parent instanceof GrClosableBlock) return false;
 
       parent = parent.getContext();

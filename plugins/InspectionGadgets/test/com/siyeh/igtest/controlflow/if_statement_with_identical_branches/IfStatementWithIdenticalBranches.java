@@ -103,6 +103,14 @@ public class IfStatementWithIdenticalBranches {
 
         }
     }
+
+  void blocks() {
+    if (true) {
+      System.out.println();
+      return;
+    }
+    System.out.println();
+  }
 }
 
 class NotADup {

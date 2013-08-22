@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.gradle.tooling.ModelBuilder;
@@ -24,18 +25,17 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.idea.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
+import org.jetbrains.plugins.gradle.settings.ClassHolder;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -43,12 +43,15 @@ import java.util.Set;
  */
 public class GradleProjectResolver implements ExternalSystemProjectResolver<GradleExecutionSettings> {
 
+  @NotNull @NonNls private static final String UNRESOLVED_DEPENDENCY_PREFIX = "unresolved dependency - ";
+
   @NotNull private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
 
   private final GradleLibraryNamesMixer myLibraryNamesMixer = new GradleLibraryNamesMixer();
 
-  @Nullable private Pair<List<String>, List<GradleProjectResolverExtension>> myCachedExtensions;
-
+  @Nullable
+  private Pair<List<ClassHolder<? extends GradleProjectResolverExtension>>, List<GradleProjectResolverExtension>> myCachedExtensions;
+  
   @Nullable
   @Override
   public DataNode<ProjectData> resolveProjectInfo(@NotNull final ExternalSystemTaskId id,
@@ -59,19 +62,23 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException
   {
     if (settings != null) {
-      List<String> extensionClassNames = settings.getResolverExtensions();
-      if (myCachedExtensions == null || !myCachedExtensions.first.equals(extensionClassNames)) {
-        List<String> classNames = ContainerUtilRt.newArrayList(extensionClassNames);
+      List<ClassHolder<? extends GradleProjectResolverExtension>> extensionClasses = settings.getResolverExtensions();
+      if (myCachedExtensions == null || !myCachedExtensions.first.equals(extensionClasses)) {
         List<GradleProjectResolverExtension> extensions = ContainerUtilRt.newArrayList();
-        for (String className : classNames) {
+        for (ClassHolder<? extends GradleProjectResolverExtension> holder : extensionClasses) {
           try {
-            extensions.add((GradleProjectResolverExtension)Class.forName(className).newInstance());
+            final GradleProjectResolverExtension extension = holder.getTargetClass().newInstance();
+            extensions.add(extension);
           }
-          catch (Exception e) {
-            throw new IllegalArgumentException(String.format("Can't instantiate project resolve extension for class '%s'", className), e);
+          catch (Throwable e) {
+            throw new IllegalArgumentException(
+              String.format("Can't instantiate project resolve extension for class '%s'", holder.getTargetClassName()),
+              e
+            );
           }
         }
-        myCachedExtensions = Pair.create(classNames, extensions);
+        List<ClassHolder<? extends GradleProjectResolverExtension>> key = ContainerUtilRt.newArrayList(extensionClasses);
+        myCachedExtensions = Pair.create(key, extensions);
       }
       for (GradleProjectResolverExtension extension : myCachedExtensions.second) {
         DataNode<ProjectData> result = extension.resolveProjectInfo(id, projectPath, downloadLibraries, settings, listener);
@@ -80,7 +87,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
       }
     }
-    
+
     return myHelper.execute(projectPath, settings, new Function<ProjectConnection, DataNode<ProjectData>>() {
       @Override
       public DataNode<ProjectData> fun(ProjectConnection connection) {
@@ -350,16 +357,40 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     // Gradle API doesn't provide library name at the moment.
-    final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, FileUtil.getNameWithoutExtension(binaryPath));
-    library.addPath(LibraryPathType.BINARY, binaryPath.getAbsolutePath());
+    String libraryName = FileUtil.getNameWithoutExtension(binaryPath);
+    
+    // Gradle API doesn't explicitly provide information about unresolved libraries (http://issues.gradle.org/browse/GRADLE-1995).
+    // That's why we use this dirty hack here.
+    boolean unresolved = libraryName.startsWith(UNRESOLVED_DEPENDENCY_PREFIX);
+    if (unresolved) {
+      // Gradle uses names like 'unresolved dependency - commons-collections commons-collections 3.2' for unresolved dependencies.
+      libraryName = binaryPath.getName().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
+      int i = libraryName.indexOf(' ');
+      if (i >= 0) {
+        i = CharArrayUtil.shiftForward(libraryName, i + 1, " ");
+      }
+      
+      if (i >= 0 && i < libraryName.length()) {
+        int dependencyNameIndex = i;
+        i = libraryName.indexOf(' ', dependencyNameIndex);
+        if (i > 0) {
+          libraryName = String.format("%s-%s", libraryName.substring(dependencyNameIndex, i), libraryName.substring(i + 1));
+        }
+      }
+    }
+    
+    final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, unresolved);
+    if (!unresolved) {
+      library.addPath(LibraryPathType.BINARY, binaryPath.getAbsolutePath());
+    }
 
     File sourcePath = dependency.getSource();
-    if (sourcePath != null) {
+    if (!unresolved && sourcePath != null) {
       library.addPath(LibraryPathType.SOURCE, sourcePath.getAbsolutePath());
     }
 
     File javadocPath = dependency.getJavadoc();
-    if (javadocPath != null) {
+    if (!unresolved && javadocPath != null) {
       library.addPath(LibraryPathType.DOC, javadocPath.getAbsolutePath());
     }
 
@@ -408,8 +439,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     // Our aim is to make sub-project nodes contain corresponding TaskData nodes and add root project tasks to ProjectData node.
     // The later is achieved by composing all tasks from IdeaModule which corresponds to the IdeaProject plus all tasks
     // which are shared between all sub-projects.
-    
-    final String rootProjectPath = rootProjectNode.getData().getLinkedExternalProjectPath();
+
+    ProjectData projectData = rootProjectNode.getData();
+    final String rootProjectPath = projectData.getLinkedExternalProjectPath();
     Map<String/* module name */, Collection<TaskData>> tasksByModule = ContainerUtilRt.newHashMap();
     TObjectIntHashMap<Pair<String/* task name */, String /* task description */>> rootProjectTaskCandidates
       = new TObjectIntHashMap<Pair<String, String>>();
@@ -424,7 +456,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
 
         String s = name.toLowerCase();
-        if (s.contains("idea") || s.contains("eclipse")) {
+        if (s.contains("idea")) {
           continue;
         }
 
@@ -447,7 +479,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     rootProjectTaskCandidates.forEachEntry(new TObjectIntProcedure<Pair<String, String>>() {
       @Override
       public boolean execute(Pair<String, String> p, int occurrenceNumber) {
-        if (occurrenceNumber >= modules.size() - 1) {
+        if (modules.size() == 1 || occurrenceNumber >= modules.size() - 1) {
           rootProjectTasks.add(new TaskData(GradleConstants.SYSTEM_ID, p.first, rootProjectPath, p.second));
         }
         return true;
@@ -459,7 +491,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(rootProjectNode, ProjectKeys.MODULE);
     for (DataNode<ModuleData> moduleNode : moduleNodes) {
-      Collection<TaskData> tasks = tasksByModule.get(moduleNode.getData().getName());
+      ModuleData moduleData = moduleNode.getData();
+      if (rootProjectPath.equals(moduleData.getLinkedExternalProjectPath()) && !projectData.getName().equals(moduleData.getName())) {
+        moduleData.setName(projectData.getName());
+      }
+      Collection<TaskData> tasks = tasksByModule.get(moduleData.getName());
       if (tasks != null && !tasks.isEmpty()) {
         for (TaskData task : tasks) {
           moduleNode.createChild(ProjectKeys.TASK, task);

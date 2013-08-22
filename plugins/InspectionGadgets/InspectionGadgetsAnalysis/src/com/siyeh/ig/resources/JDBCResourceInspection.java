@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,12 @@
  */
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -56,11 +53,7 @@ public class JDBCResourceInspection extends ResourceInspection {
     };
 
   @SuppressWarnings({"StaticCollection"})
-  private static final Set<String> creationMethodNameSet =
-    new HashSet<String>(9);
-
-  @SuppressWarnings({"PublicField"})
-  public boolean insideTryAllowed = false;
+  private static final Set<String> creationMethodNameSet = new HashSet<String>(9);
 
   static {
     ContainerUtil.addAll(creationMethodNameSet, creationMethodName);
@@ -75,89 +68,39 @@ public class JDBCResourceInspection extends ResourceInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "jdbc.resource.opened.not.closed.display.name");
+    return InspectionGadgetsBundle.message("jdbc.resource.opened.not.closed.display.name");
   }
 
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final PsiExpression expression = (PsiExpression)infos[0];
-    final PsiType type = expression.getType();
-    assert type != null;
-    final String text = type.getPresentableText();
-    return InspectionGadgetsBundle.message(
-      "jdbc.resource.opened.not.closed.problem.descriptor", text);
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "allow.resource.to.be.opened.inside.a.try.block"),
-                                          this, "insideTryAllowed");
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new JDBCResourceVisitor();
-  }
-
-  private class JDBCResourceVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      if (!isJDBCResourceCreation(expression)) {
-        return;
-      }
-      final PsiElement parent = getExpressionParent(expression);
-      if (parent instanceof PsiReturnStatement ||
-          parent instanceof PsiResourceVariable) {
-        return;
-      }
-      final PsiVariable boundVariable = getVariable(parent);
-      if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
-        return;
-      }
-      if (isResourceEscapedFromMethod(boundVariable, expression)) {
-        return;
-      }
-      registerError(expression, expression);
-    }
-
-    private boolean isJDBCResourceCreation(
-      PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final String name = methodExpression.getReferenceName();
-      if (name == null) {
-        return false;
-      }
-      if (!creationMethodNameSet.contains(name)) {
-        return false;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return false;
-      }
-      for (int i = 0; i < creationMethodName.length; i++) {
-        if (!name.equals(creationMethodName[i])) {
-          continue;
-        }
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass == null) {
-          return false;
-        }
-        final String className = containingClass.getQualifiedName();
-        if (className == null) {
-          return false;
-        }
-        if (className.equals(creationMethodClassName[i])) {
-          return true;
-        }
-      }
+  protected boolean isResourceCreation(PsiExpression expression) {
+    if (!(expression instanceof PsiMethodCallExpression)) {
       return false;
     }
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+    final String name = methodExpression.getReferenceName();
+    if (name == null || !creationMethodNameSet.contains(name)) {
+      return false;
+    }
+    final PsiMethod method = methodCallExpression.resolveMethod();
+    if (method == null) {
+      return false;
+    }
+    for (int i = 0; i < creationMethodName.length; i++) {
+      if (!name.equals(creationMethodName[i])) {
+        continue;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return false;
+      }
+      final String className = containingClass.getQualifiedName();
+      if (className == null) {
+        return false;
+      }
+      if (className.equals(creationMethodClassName[i])) {
+        return true;
+      }
+    }
+    return false;
   }
 }

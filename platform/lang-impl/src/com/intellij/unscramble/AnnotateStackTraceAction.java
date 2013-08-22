@@ -73,7 +73,7 @@ class AnnotateStackTraceAction extends AnAction implements DumbAware {
   private boolean myGutterShowed = false;
   private final HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
 
-  AnnotateStackTraceAction(ConsoleViewImpl consoleView) {
+  AnnotateStackTraceAction(@NotNull ConsoleViewImpl consoleView) {
     super("Show files modification info", null, AllIcons.Actions.Annotate);
     myHyperlinks = consoleView.getHyperlinks();
     myEditor = consoleView.getEditor();

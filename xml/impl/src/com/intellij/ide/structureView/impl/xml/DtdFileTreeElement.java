@@ -89,7 +89,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
     public String getLocationString() {
       final XmlElement owner = (XmlElement)getElement();
 
-      final XmlAttlistDecl[] attLists= owner instanceof XmlElementDecl ? XmlElementDescriptorImpl.getCachedAttDecls(owner): XmlAttlistDecl.EMPTY_ARRAY;
+      final XmlAttlistDecl[] attLists= owner instanceof XmlElementDecl ? XmlElementDescriptorImpl.getCachedAttributeDeclarations(owner): XmlAttlistDecl.EMPTY_ARRAY;
 
       if (attLists.length > 0) {
         Map<String,XmlAttributeDecl> attrMap = null;

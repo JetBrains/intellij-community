@@ -74,12 +74,12 @@ public class JavaGenericsUtil {
     return false;
   }
 
-  public static boolean isUncheckedWarning(PsiJavaCodeReferenceElement expression, JavaResolveResult resolveResult) {
+  public static boolean isUncheckedWarning(@NotNull PsiJavaCodeReferenceElement expression,
+                                           @NotNull JavaResolveResult resolveResult,
+                                           @NotNull LanguageLevel languageLevel) {
     final PsiElement resolve = resolveResult.getElement();
     if (resolve instanceof PsiMethod) {
       final PsiMethod psiMethod = (PsiMethod)resolve;
-
-      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
 
       if (psiMethod.isVarArgs()) {
         if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_7) || !AnnotationUtil.isAnnotated(psiMethod, "java.lang.SafeVarargs", false)) {

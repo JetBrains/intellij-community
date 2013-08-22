@@ -41,7 +41,7 @@ public class TypeCheckedAnnotationChecker extends CustomAnnotationChecker {
       return false;
     }
 
-    if (!GroovyConfigUtils.GROOVY2_1_0.equals(GroovyConfigUtils.getInstance().getSDKVersion(annotation))) return false;
+    if (!GroovyConfigUtils.GROOVY2_1.equals(GroovyConfigUtils.getInstance().getSDKVersion(annotation))) return false;
 
     GrAnnotationNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     Map<PsiElement, String> errorMap = ContainerUtil.newHashMap();

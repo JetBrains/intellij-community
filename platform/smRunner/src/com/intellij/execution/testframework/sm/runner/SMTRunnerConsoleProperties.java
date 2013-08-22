@@ -16,7 +16,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.Filter;
@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
  * @author: Roman Chernyatchik
  */
 public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParser {
-  private final RuntimeConfiguration myConfiguration;
+  private final RunConfiguration myConfiguration;
   protected final CompositeFilter myCustomFilter;
 
   /**
@@ -51,7 +51,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
    * @param executor
    */
-  public SMTRunnerConsoleProperties(@NotNull final RuntimeConfiguration config,
+  public SMTRunnerConsoleProperties(@NotNull final RunConfiguration config,
                                     @NotNull final String testFrameworkName,
                                     @NotNull final Executor executor)
   {
@@ -62,7 +62,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     myCustomFilter = new CompositeFilter(config.getProject());
   }
 
-  public RuntimeConfiguration getConfiguration() {
+  public RunConfiguration getConfiguration() {
     return myConfiguration;
   }
 

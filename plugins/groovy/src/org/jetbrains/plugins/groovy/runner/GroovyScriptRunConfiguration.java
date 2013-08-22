@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -83,11 +82,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   public GroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(name, new RunConfigurationModule(project), factory);
     workDir = PathUtil.getLocalPath(project.getBaseDir());
-  }
-
-  @Override
-  protected ModuleBasedConfiguration createInstance() {
-    return new GroovyScriptRunConfiguration(getName(), getProject(), getFactory());
   }
 
   public void setWorkDir(String dir) {
@@ -184,7 +178,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
     final boolean tests = ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(script);
 
-    final JavaCommandLineState state = new JavaCommandLineState(environment) {
+    return new JavaCommandLineState(environment) {
       @NotNull
       @Override
       protected OSProcessHandler startProcess() throws ExecutionException {
@@ -212,9 +206,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
         return params;
       }
     };
-
-    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
-    return state;
   }
 
   public void setScriptParameters(String scriptParameters) {
@@ -236,11 +227,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
           if (newElement instanceof GroovyFile) {
             GroovyFile file = (GroovyFile)newElement;
             setScriptPath(file.getVirtualFile().getPath());
-
-            final PsiClass newClassToRun = GroovyRunnerUtil.getRunningClass(newElement);
-            if (newClassToRun instanceof GroovyScriptClass) {
-              setName(GroovyRunnerUtil.getConfigurationName(file.getScriptClass(), getConfigurationModule()));
-            }
           }
         }
 
@@ -305,6 +291,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     return GroovyRunnerUtil.getRunningClass(file);
   }
 
+  @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new GroovyRunConfigurationEditor();
   }

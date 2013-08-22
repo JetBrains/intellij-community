@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 
+import java.util.LinkedHashSet;
+
 /**
 * @author Maxim.Medvedev
 */
@@ -103,6 +105,14 @@ class IntroduceFieldTestHandler extends GrIntroduceFieldHandler {
       @Override
       public boolean isOK() {
         return true;
+      }
+
+      @NotNull
+      @Override
+      public LinkedHashSet<String> suggestNames() {
+        LinkedHashSet<String> strings = new LinkedHashSet<String>();
+        strings.add("f");
+        return strings;
       }
     };
   }

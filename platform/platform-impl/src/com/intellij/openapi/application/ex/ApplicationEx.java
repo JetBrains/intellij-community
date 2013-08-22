@@ -82,8 +82,6 @@ public interface ApplicationEx extends Application {
                                               JComponent parentComponent,
                                               final String cancelText);
 
-  boolean isInModalProgressThread();
-
   void assertIsDispatchThread(@Nullable JComponent component);
 
   void assertTimeConsuming();
@@ -91,7 +89,7 @@ public interface ApplicationEx extends Application {
   void runEdtSafeAction(@NotNull Runnable runnable);
 
   /**
-   * Grab the lock and run the action, in a nonblocking fashion
+   * Grab the lock and run the action, in a non-blocking fashion
    *
    * @return true if action was run while holding the lock, false if was unable to get the lock and action was not run
    */

@@ -44,7 +44,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -95,7 +94,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
     return editor;
   }
-  
+
   public void performForContext(DataContext dataContext, boolean invokedByShortcut) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
@@ -150,7 +149,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         implsList.toArray( impls = new PsiElement[implsList.size()] );
       }
     }
-    
+
 
     showImplementations(impls, project, text, editor, file, element, isInvokedFromEditor, invokedByShortcut);
   }
@@ -240,7 +239,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         return;
       }
     }
-    
+
     final ImplementationViewComponent component = new ImplementationViewComponent(impls, index);
     if (component.hasElementsToShow()) {
       final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
@@ -275,7 +274,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
       PopupPositionManager.positionPopupInBestPosition(popup, editor, DataManager.getInstance().getDataContext());
       component.setHint(popup, title);
-      
+
       myPopupRef = new WeakReference<JBPopup>(popup);
     }
   }

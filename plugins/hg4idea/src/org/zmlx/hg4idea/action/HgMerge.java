@@ -43,7 +43,9 @@ import java.util.Collection;
 public class HgMerge extends HgAbstractGlobalAction {
 
   @Override
-  public void execute(final Project project, final Collection<VirtualFile> repos, @Nullable final VirtualFile selectedRepo) {
+  public void execute(@NotNull final Project project,
+                      @NotNull final Collection<VirtualFile> repos,
+                      @Nullable final VirtualFile selectedRepo) {
     HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<HgBranchesAndTags>() {
 
       @Override
@@ -92,6 +94,12 @@ public class HgMerge extends HgAbstractGlobalAction {
     if (tag != null) {
       hgMergeCommand.setRevision(tag.getName());
       incomingRevision = tag.getHead();
+    }
+
+    HgTagBranch bookmark = dialog.getBookmark();
+    if (bookmark != null) {
+      hgMergeCommand.setRevision(bookmark.getName());
+      incomingRevision = bookmark.getHead();
     }
 
     String revision = dialog.getRevision();

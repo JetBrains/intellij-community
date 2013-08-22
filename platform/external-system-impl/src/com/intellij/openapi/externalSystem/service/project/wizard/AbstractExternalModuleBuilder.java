@@ -20,13 +20,12 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.options.ConfigurationException;
@@ -53,7 +52,6 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
 
   private static final Logger LOG = Logger.getInstance("#" + AbstractExternalModuleBuilder.class.getName());
 
-  @NotNull private final ExternalSystemSettingsManager mySettingsManager;
   @NotNull private final Icon                          myIcon;
   @NotNull private final ProjectSystemId               myExternalSystemId;
 
@@ -61,18 +59,9 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
   @Nullable private final String                                    myTemplateConfigName;
 
   protected AbstractExternalModuleBuilder(@NotNull ProjectSystemId externalSystemId,
-                                          @Nullable AbstractExternalProjectSettingsControl<S> control,
-                                          @Nullable String templateConfigName)
-  {
-    this(ServiceManager.getService(ExternalSystemSettingsManager.class), externalSystemId, control, templateConfigName);
-  }
-
-  protected AbstractExternalModuleBuilder(@NotNull ExternalSystemSettingsManager manager,
-                                          @NotNull ProjectSystemId externalSystemId,
                                           @Nullable AbstractExternalProjectSettingsControl<S> externalProjectSettingsControl,
                                           @Nullable String templateConfigName)
   {
-    mySettingsManager = manager;
     myExternalSystemId = externalSystemId;
     myTemplateConfigName = templateConfigName;
     myExternalProjectSettingsControl = externalProjectSettingsControl;
@@ -111,7 +100,7 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
   }
 
   @Override
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     return myExternalProjectSettingsControl == null
            ? ModuleWizardStep.EMPTY_ARRAY
            : new ModuleWizardStep[]{new ExternalModuleSettingsStep<S>(myExternalProjectSettingsControl)};
@@ -123,7 +112,6 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
     if (StringUtil.isEmpty(contentPath)) {
       return;
     }
-    assert contentPath != null;
     File contentRootDir = new File(contentPath);
     FileUtilRt.createDirectory(contentRootDir);
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
@@ -152,7 +140,7 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
       }
     }
 
-    AbstractExternalSystemSettings settings = mySettingsManager.getSettings(model.getProject(), myExternalSystemId);
+    AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(model.getProject(), myExternalSystemId);
     S externalProjectSettings = createSettings();
     if (myExternalProjectSettingsControl != null) {
       String errorMessage = myExternalProjectSettingsControl.apply(externalProjectSettings);
@@ -164,13 +152,13 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
     //noinspection unchecked
     settings.linkProject(externalProjectSettings);
   }
-  
+
   @NotNull
   protected abstract S createSettings();
 
   /**
    * Asks external system-specific module builder to prepare external system config file if necessary.
-   * 
+   *
    * @param contentRootDir  new module's content root dir
    * @return                external system config file created by the external system-specific implementation (if any);
    *                        <code>null</code> as an indication that no external system config file has been created

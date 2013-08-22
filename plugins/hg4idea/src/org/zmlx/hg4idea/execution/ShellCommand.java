@@ -43,11 +43,11 @@ public final class ShellCommand {
     }
 
     if (myRunViaBash) {
-      // run via bash -cl <hg command> => need to escape bash special symbols
+      // run via bash -cl <hg command> => need to escape bash special symbols but not quoted
       // '-l' makes bash execute as a login shell thus reading .bash_profile
       StringBuilder hgCommandBuilder = new StringBuilder();
       for (String command : commandLine) {
-        hgCommandBuilder.append(escapeSpacesIfNeeded(command));
+        hgCommandBuilder.append(command); //do not escape whitespaces because arguments may be quoted
         hgCommandBuilder.append(" ");
       }
       String hgCommand = escapeBashControlCharacters(hgCommandBuilder.toString());
@@ -72,42 +72,33 @@ public final class ShellCommand {
       int exitValue = processOutput.getExitCode();
       out.write(processOutput.getStdout());
       err.write(processOutput.getStderr());
-      return new HgCommandResult(out, err, exitValue );
-    } catch (IOException e) {
+      return new HgCommandResult(out, err, exitValue);
+    }
+    catch (IOException e) {
       throw new ShellCommandException(e);
     }
   }
 
   /**
-   * Escapes charactes in the command which will be executed via 'bash -c' - these are standard chars like \n, and some bash specials.
+   * Escapes characters in the command which will be executed via 'bash -c' - these are standard chars like \n, and some bash specials.
+   *
    * @param source Original string.
    * @return Escaped string.
    */
-  private static String escapeBashControlCharacters(String source) {
-    final String controlChars = "|>$\"'&";
-    final String standardChars = "\b\t\n\f\r";
-    final String standardCharsLetters = "btnfr";
+  private static String escapeBashControlCharacters(@NotNull String source) {
+    //need to control other bash control chars manually to avoid conflicts with mercurial symbols (>,',", whitespaces)
+    final String controlChars = "|&$";
 
     final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < source.length(); i++) {
       char ch = source.charAt(i);
       if (controlChars.indexOf(ch) > -1) {
         sb.append("\\").append(ch);
-      } else {
-        final int index = standardChars.indexOf(ch);
-        if (index > -1) {
-          sb.append("\\").append(standardCharsLetters.charAt(index));
-        } else {
-          sb.append(ch);
-        }
+      }
+      else {
+        sb.append(ch);
       }
     }
     return sb.toString();
   }
-
-  @NotNull
-  private String escapeSpacesIfNeeded(@NotNull String s) {
-    return myRunViaBash ? s.replace(" ", "\\ ") : s;
-  }
-
 }

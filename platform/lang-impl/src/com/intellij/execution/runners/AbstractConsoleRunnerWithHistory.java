@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -107,7 +105,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     myConsoleView.attachToProcess(myProcessHandler);
 
 // Runner creating
-    final Executor defaultExecutor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+    final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
 
@@ -120,6 +118,16 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
     final RunContentDescriptor contentDescriptor =
       new RunContentDescriptor(myConsoleView, myProcessHandler, panel, constructConsoleTitle(myConsoleTitle));
+
+    contentDescriptor.setFocusComputable(new Computable<JComponent>() {
+      @Override
+      public JComponent compute() {
+        final EditorEx editor = getLanguageConsole().getConsoleEditor();
+        return editor != null ? editor.getContentComponent() : null;
+      }
+    });
+    contentDescriptor.setAutoFocusContent(isAutoFocusContent());
+
 
 // tool bar actions
     final List<AnAction> actions = fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
@@ -165,6 +173,10 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     }
 
     return consoleTitle;
+  }
+
+  public boolean isAutoFocusContent() {
+    return true;
   }
 
   protected boolean shouldAddNumberToTitle() {

@@ -20,46 +20,46 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.Location;
-import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.theoryinpractice.testng.model.TestData;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class TestNGConfigurationProducer extends JavaRuntimeConfigurationProducerBase implements Cloneable {
+import java.util.List;
+
+public abstract class TestNGConfigurationProducer extends JavaRunConfigurationProducerBase<TestNGConfiguration> implements Cloneable {
 
   public TestNGConfigurationProducer() {
     super(TestNGConfigurationType.getInstance());
   }
 
   @Override
-  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
-                                                                 ConfigurationContext context) {
-    final Module predefinedModule =
-      ((TestNGConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
-        .getConfigurationTemplate(getConfigurationFactory())
-        .getConfiguration()).getConfigurationModule().getModule();
-    for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
-      TestNGConfiguration config = (TestNGConfiguration)existingConfiguration.getConfiguration();
-      TestData testobject = config.getPersistantData();
-      if (testobject != null){
-        final PsiElement element = location.getPsiElement();
-        if (testobject.isConfiguredByElement(element)) {
-          final Module configurationModule = config.getConfigurationModule().getModule();
-          if (Comparing.equal(location.getModule(), configurationModule)) return existingConfiguration;
-          if(Comparing.equal(predefinedModule, configurationModule)) {
-            return existingConfiguration;
-          }
-        }
+  public boolean isConfigurationFromContext(TestNGConfiguration testNGConfiguration, ConfigurationContext context) {
+    final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(TestNGConfigurationType.getInstance());
+    Location location = JavaExecutionUtil.stepIntoSingleClass(context.getLocation());
+    final PsiElement element = location.getPsiElement();
+    RunnerAndConfigurationSettings template = RunManager.getInstance(location.getProject()).getConfigurationTemplate(getConfigurationFactory());
+    final Module predefinedModule = ((TestNGConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
+    final String vmParameters =
+      predefinedConfiguration instanceof TestNGConfiguration ? ((TestNGConfiguration)predefinedConfiguration).getVMParameters() : null;
+    if (vmParameters != null && !Comparing.strEqual(vmParameters, testNGConfiguration.getVMParameters())) return false;
+    TestData testobject = testNGConfiguration.getPersistantData();
+    if (testobject != null) {
+      if (testobject.isConfiguredByElement(element)) {
+        final Module configurationModule = testNGConfiguration.getConfigurationModule().getModule();
+        if (Comparing.equal(location.getModule(), configurationModule)) return true;
+        if (Comparing.equal(predefinedModule, configurationModule)) return true;
       }
     }
-    return null;
+    return false;
   }
 }

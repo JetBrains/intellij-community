@@ -70,6 +70,11 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
   }
 
   private static class MakePrivateFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

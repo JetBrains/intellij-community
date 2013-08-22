@@ -46,10 +46,14 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
   protected PsiClass myAccessClass = null;
   private PsiExpressionList myArgumentList;
   private PsiType[] myTypeArguments;
-  private LanguageLevel myLanguageLevel;
+  private final LanguageLevel myLanguageLevel;
 
-  public MethodsProcessor(@NotNull PsiConflictResolver[] resolvers, @NotNull List<CandidateInfo> container, @NotNull PsiElement place) {
-    super(null, ourFilter, resolvers, container, place);
+  public MethodsProcessor(@NotNull PsiConflictResolver[] resolvers,
+                          @NotNull List<CandidateInfo> container,
+                          @NotNull PsiElement place,
+                          @NotNull PsiFile placeFile) {
+    super(null, ourFilter, resolvers, container, place, placeFile);
+    myLanguageLevel = PsiUtil.getLanguageLevel(placeFile);
   }
 
   public PsiExpressionList getArgumentList() {
@@ -58,14 +62,14 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
 
   public void setArgumentList(@Nullable PsiExpressionList argList) {
     myArgumentList = argList;
-    myLanguageLevel = PsiUtil.getLanguageLevel(argList == null ? myPlace : argList);
   }
 
-  protected LanguageLevel getLanguageLevel() {
+  @NotNull
+  public LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
 
-  public void obtainTypeArguments(PsiCallExpression callExpression) {
+  public void obtainTypeArguments(@NotNull PsiCallExpression callExpression) {
     final PsiType[] typeArguments = callExpression.getTypeArguments();
     if (typeArguments.length > 0) {
       setTypeArguments(typeArguments);

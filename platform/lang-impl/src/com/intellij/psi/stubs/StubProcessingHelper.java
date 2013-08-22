@@ -1,7 +1,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.errordialog.Attachment;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vfs.VirtualFile;

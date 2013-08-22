@@ -308,6 +308,6 @@ public class RedmineRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return BASIC_HTTP_AUTHORIZATION;
+    return super.getFeatures() | BASIC_HTTP_AUTHORIZATION;
   }
 }

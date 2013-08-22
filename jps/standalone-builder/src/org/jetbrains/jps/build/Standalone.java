@@ -168,13 +168,20 @@ public class Standalone {
       }
     }
     if (!artifactsList.isEmpty()) {
-      scopes.add(TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId()).setForceBuild(forceBuild).addAllTargetId(artifactsList).build());
+      scopes.add(TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId())
+                   .setForceBuild(forceBuild).addAllTargetId(artifactsList).build());
     }
 
-    final BuildRunner buildRunner = new BuildRunner(loader, Collections.<String>emptyList(), Collections.<String, String>emptyMap());
+    runBuild(loader, dataStorageRoot, messageHandler, scopes, true);
+  }
+
+  public static void runBuild(JpsModelLoader loader, File dataStorageRoot, MessageHandler messageHandler, List<TargetTypeBuildScope> scopes,
+                              boolean includeDependenciesToScope) throws Exception {
+    final BuildRunner buildRunner = new BuildRunner(loader, Collections.<String>emptyList(), Collections.<String, String>emptyMap()
+    );
     ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
     try {
-      buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, BuildType.BUILD, scopes, true);
+      buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, BuildType.BUILD, scopes, includeDependenciesToScope);
     }
     finally {
       descriptor.release();

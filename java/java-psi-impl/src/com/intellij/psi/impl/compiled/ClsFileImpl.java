@@ -421,13 +421,13 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
       stubTree = (StubTree)StubTreeLoader.getInstance().readOrBuild(getProject(), getVirtualFile(), this);
       if (stubTree == null) {
-        LOG.warn("Class file is corrupted: " + getVirtualFile().getPresentableUrl());
+        LOG.warn("No stub for class file in index: " + getVirtualFile().getPresentableUrl());
         stubTree = new StubTree(new PsiJavaFileStubImpl("corrupted.classfiles", true));
       }
-
-      myStub = new SoftReference<StubTree>(stubTree);
       //noinspection unchecked
       ((PsiFileStubImpl)stubTree.getRoot()).setPsi(this);
+
+      myStub = new SoftReference<StubTree>(stubTree);
     }
 
     return stubTree;

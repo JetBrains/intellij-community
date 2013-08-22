@@ -79,6 +79,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   }
 
 
+  @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<JUnitConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new JUnitConfigurable(getProject()));
@@ -94,10 +95,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
     final RefactoringElementListener listener = myData.getTestObject(getProject(), this).getListener(element, this);
     return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
-  }
-
-  public String getGeneratedName() {
-    return myData.getGeneratedName(getConfigurationModule());
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
@@ -126,12 +123,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return new JUnitConfiguration(getName(), getProject(), myData.clone(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);// throw new RuntimeException("Should not call");
   }
 
-  public boolean isGeneratedName() {
-    final String name = getName();
-    return myData.isGeneratedName(name, getConfigurationModule());
+  public String suggestedName() {
+    return myData.getGeneratedName(getConfigurationModule());
   }
 
-  public String suggestedName() {
+  @Override
+  public String getActionName() {
     return getTestObject().suggestActionName();
   }
 
@@ -213,10 +210,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     final boolean shouldUpdateName = isGeneratedName();
     setModule(myData.setMainClass(testClass));
     if (shouldUpdateName) setGeneratedName();
-  }
-
-  public void setGeneratedName() {
-    setName(getGeneratedName());
   }
 
   public void beMethodConfiguration(final Location<PsiMethod> methodLocation) {
@@ -476,17 +469,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       METHOD_NAME = method.getName();
       TEST_OBJECT = TEST_METHOD;
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
-    }
-
-    public boolean isGeneratedName(final String name, final JavaRunConfigurationModule configurationModule) {
-      if (TEST_OBJECT == null) return true;
-      if ((TEST_CLASS.equals(TEST_OBJECT) || TEST_METHOD.equals(TEST_OBJECT)) && getMainClassName().length() == 0) {
-        return JavaExecutionUtil.isNewName(name);
-      }
-      if (TEST_METHOD.equals(TEST_OBJECT) && getMethodName().length() == 0) {
-        return JavaExecutionUtil.isNewName(name);
-      }
-      return Comparing.equal(name, getGeneratedName(configurationModule));
     }
 
     public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {

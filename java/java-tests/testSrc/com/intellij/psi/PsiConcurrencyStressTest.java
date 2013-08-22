@@ -182,7 +182,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
           public void visitElement(final PsiElement element) {
             super.visitElement(element);
 
-            final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile, HighlightInfoFilter.EMPTY_ARRAY);
+            final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile);
             final HighlightVisitorImpl visitor = new HighlightVisitorImpl(PsiResolveHelper.SERVICE.getInstance(getProject()));
             visitor.analyze(myFile, true, infoHolder, new Runnable() {
               @Override

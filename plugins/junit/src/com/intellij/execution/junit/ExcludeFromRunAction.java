@@ -21,7 +21,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +40,7 @@ public class ExcludeFromRunAction extends AnAction{
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     LOG.assertTrue(project != null);
-    final JUnitConfiguration configuration = (JUnitConfiguration)RuntimeConfiguration.DATA_KEY.getData(dataContext);
+    final JUnitConfiguration configuration = (JUnitConfiguration)RunConfiguration.DATA_KEY.getData(dataContext);
     LOG.assertTrue(configuration != null);
     final GlobalSearchScope searchScope = configuration.getConfigurationModule().getSearchScope();
     final Set<String> patterns = configuration.getPersistentData().getPatterns();
@@ -56,7 +56,7 @@ public class ExcludeFromRunAction extends AnAction{
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
-      final RuntimeConfiguration configuration = RuntimeConfiguration.DATA_KEY.getData(dataContext);
+      final RunConfiguration configuration = RunConfiguration.DATA_KEY.getData(dataContext);
       if (configuration instanceof JUnitConfiguration) {
         final JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();
         if (data.TEST_OBJECT == JUnitConfiguration.TEST_PATTERN) {

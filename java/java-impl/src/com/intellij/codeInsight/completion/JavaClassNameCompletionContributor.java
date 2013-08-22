@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
+import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -78,14 +79,16 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     return false;
   }
 
-  public static void addAllClasses(CompletionParameters parameters,
+  public static void addAllClasses(@NotNull CompletionParameters parameters,
                                    final boolean filterByScope,
                                    @NotNull final PrefixMatcher matcher,
                                    @NotNull final Consumer<LookupElement> consumer) {
     final PsiElement insertedElement = parameters.getPosition();
 
     final ElementFilter filter =
-      IN_TYPE_PARAMETER.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class)) : TrueFilter.INSTANCE;
+      IN_TYPE_PARAMETER.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class)) :
+      JavaCompletionContributor.ANNOTATION_NAME.accepts(insertedElement) ? new AnnotationTypeFilter() :
+      TrueFilter.INSTANCE;
 
     final boolean inJavaContext = parameters.getPosition() instanceof PsiIdentifier;
     final boolean afterNew = AFTER_NEW.accepts(insertedElement);

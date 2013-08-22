@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
@@ -131,10 +130,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
                                              final ExtensionPoint extensionPoint,
                                              String prefix,
                                              @Nullable String pluginId) {
-    final XmlTag tag = extensionPoint.getXmlTag();
-    String epName = tag.getAttributeValue("name");
+    String epName = extensionPoint.getName().getStringValue();
     if (epName != null && StringUtil.isNotEmpty(pluginId)) epName = pluginId + "." + epName;
-    if (epName == null) epName = tag.getAttributeValue("qualifiedName");
+    if (epName == null) epName = extensionPoint.getQualifiedName().getStringValue();
     if (epName == null) return;
     if (!epName.startsWith(prefix)) return;
 

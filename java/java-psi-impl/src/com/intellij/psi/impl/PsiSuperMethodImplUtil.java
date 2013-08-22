@@ -196,7 +196,7 @@ public class PsiSuperMethodImplUtil {
     for (Map.Entry<MethodSignature, HierarchicalMethodSignatureImpl> entry : map.entrySet()) {
       HierarchicalMethodSignatureImpl hierarchicalMethodSignature = entry.getValue();
       MethodSignature methodSignature = entry.getKey();
-      if (result.get(methodSignature) == null && PsiUtil.isAccessible(hierarchicalMethodSignature.getMethod(), aClass, aClass)) {
+      if (result.get(methodSignature) == null && PsiUtil.isAccessible(aClass.getProject(), hierarchicalMethodSignature.getMethod(), aClass, aClass)) {
         LOG.assertTrue(hierarchicalMethodSignature.getMethod().isValid());
         result.put(methodSignature, hierarchicalMethodSignature);
       }
@@ -205,10 +205,12 @@ public class PsiSuperMethodImplUtil {
     return result;
   }
 
-  private static void putInMap(PsiClass aClass, Map<MethodSignature, HierarchicalMethodSignature> result,
-                           Map<MethodSignature, HierarchicalMethodSignatureImpl> map, HierarchicalMethodSignature hierarchicalMethodSignature,
-                           MethodSignature signature) {
-    if (!PsiUtil.isAccessible(hierarchicalMethodSignature.getMethod(), aClass, aClass)) return;
+  private static void putInMap(PsiClass aClass,
+                               Map<MethodSignature, HierarchicalMethodSignature> result,
+                               Map<MethodSignature, HierarchicalMethodSignatureImpl> map,
+                               HierarchicalMethodSignature hierarchicalMethodSignature,
+                               MethodSignature signature) {
+    if (!PsiUtil.isAccessible(aClass.getProject(), hierarchicalMethodSignature.getMethod(), aClass, aClass)) return;
     HierarchicalMethodSignatureImpl existing = map.get(signature);
     if (existing == null) {
       HierarchicalMethodSignatureImpl copy = copy(hierarchicalMethodSignature);
@@ -266,7 +268,7 @@ public class PsiSuperMethodImplUtil {
     PsiClass containingClass = hierarchicalMethodSignature.getMethod().getContainingClass();
     if (!superMethod.isConstructor()) {
       if (!aClass.equals(superClass)) {
-        if (PsiUtil.isAccessible(superMethod, aClass, aClass)) {
+        if (PsiUtil.isAccessible(aClass.getProject(), superMethod, aClass, aClass)) {
           if (MethodSignatureUtil.isSubsignature(superSignatureHierarchical, hierarchicalMethodSignature)) {
             if (superClass != null) {
               if (superClass.isInterface() ||

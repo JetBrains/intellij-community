@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
@@ -79,6 +80,12 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("unnecessary.call.to.string.valueof.quickfix", replacementText);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)descriptor.getPsiElement();
@@ -103,10 +110,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls final String referenceName = methodExpression.getReferenceName();
-      if (!"valueOf".equals(referenceName)) {
-        return;
-      }
-      if (isCallToStringValueOfNecessary(expression)) {
+      if (!"valueOf".equals(referenceName) || ExpressionUtils.isConversionToStringNecessary(expression)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -136,89 +140,6 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
         return;
       }
       registerError(expression, calculateReplacementText(argument));
-    }
-
-    private static boolean isCallToStringValueOfNecessary(PsiMethodCallExpression expression) {
-      final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
-      if (parent instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
-        final PsiType type = polyadicExpression.getType();
-        if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type)) {
-          return true;
-        }
-        final PsiExpression[] operands = polyadicExpression.getOperands();
-        int index = -1;
-        for (int i = 0, length = operands.length; i < length; i++) {
-          final PsiExpression operand = operands[i];
-          if (expression.equals(operand)) {
-            index = i;
-          }
-        }
-        if (index > 0) {
-          if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, operands[index - 1].getType())) {
-            return true;
-          }
-        } else if (operands.length > 1) {
-          if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, operands[index + 1].getType())) {
-            return true;
-          }
-        } else {
-          return true;
-        }
-      } else if (parent instanceof PsiExpressionList) {
-        final PsiExpressionList expressionList = (PsiExpressionList)parent;
-        final PsiElement grandParent = expressionList.getParent();
-        if (!(grandParent instanceof PsiMethodCallExpression)) {
-          return true;
-        }
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
-        final PsiReferenceExpression methodExpression1 = methodCallExpression.getMethodExpression();
-        @NonNls final String name = methodExpression1.getReferenceName();
-        final PsiExpression[] expressions = expressionList.getExpressions();
-        if ("insert".equals(name)) {
-          if (expressions.length < 2 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[1]))) {
-            return true;
-          }
-          if (!isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer")) {
-            return true;
-          }
-
-        } else if ("append".equals(name)) {
-          if (expressions.length < 1 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[0]))) {
-            return true;
-          }
-          if (!isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer")) {
-            return true;
-          }
-        } else if ("print".equals(name) || "println".equals(name)) {
-          if (!isCallToMethodIn(methodCallExpression, "java.io.PrintStream", "java.io.PrintWriter")) {
-            return true;
-          }
-        } else {
-          return true;
-        }
-      } else {
-        return true;
-      }
-      return false;
-    }
-
-    private static boolean isCallToMethodIn(PsiMethodCallExpression methodCallExpression, String... classNames) {
-      final PsiMethod method = methodCallExpression.resolveMethod();
-      if (method == null) {
-        return false;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return false;
-      }
-      final String qualifiedName = containingClass.getQualifiedName();
-      for (String className : classNames) {
-        if (className.equals(qualifiedName)) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 }

@@ -199,6 +199,11 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   @NotNull
+  public String evaluateEffectivePom(@NotNull File file, @NotNull List<String> activeProfiles) {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
   public MavenArtifact resolve(@NotNull final MavenArtifactInfo info,
                                @NotNull final List<MavenRemoteRepository> remoteRepositories)
     throws MavenServerProcessCanceledException, RemoteException {

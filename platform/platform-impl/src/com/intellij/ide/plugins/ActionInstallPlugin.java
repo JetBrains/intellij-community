@@ -39,6 +39,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.util.*;
@@ -173,10 +174,16 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           }
         });
       }
-      catch (IOException e1) {
+      catch (final IOException e1) {
+        ourInstallingNodes.removeAll(list);
         PluginManagerMain.LOG.error(e1);
-        IOExceptionDialog
-          .showErrorDialog(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed"));
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            IOExceptionDialog
+              .showErrorDialog(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed"));
+          }
+        });
       }
     }
   }

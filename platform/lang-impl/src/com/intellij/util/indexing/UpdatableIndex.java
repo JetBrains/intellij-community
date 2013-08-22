@@ -16,8 +16,11 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -30,7 +33,7 @@ public interface UpdatableIndex<Key, Value, Input> extends AbstractIndex<Key,Val
 
   void flush() throws StorageException;
 
-  void update(int inputId, @Nullable Input content) throws StorageException;
+  Computable<Boolean> update(int inputId, @Nullable Input content);
   
   Lock getReadLock();
   

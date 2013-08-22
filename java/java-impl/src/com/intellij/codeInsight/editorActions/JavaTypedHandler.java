@@ -142,7 +142,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
   }
 
   @Override
-  public Result charTyped(final char c, final Project project, final Editor editor, @NotNull final PsiFile file) {
+  public Result charTyped(final char c, final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     if (myJavaLTTyped) {
       myJavaLTTyped = false;
       handleAfterJavaLT(editor, JavaTokenType.LT, JavaTokenType.GT, INVALID_INSIDE_REFERENCE);

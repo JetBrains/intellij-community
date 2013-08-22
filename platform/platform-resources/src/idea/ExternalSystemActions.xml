@@ -9,6 +9,9 @@
             class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction"/>
     <action id="ExternalSystem.DetachProject"
             class="com.intellij.openapi.externalSystem.action.DetachExternalProjectAction"/>
+    <action id="ExternalSystem.OpenConfig"
+            class="com.intellij.openapi.externalSystem.action.OpenExternalConfigAction"
+            use-shortcut-of="EditSource"/>
 
     <!--Tool window actions-->
     <group id="ExternalSystem.ToolWindow.Toolbar">
@@ -19,7 +22,9 @@
 
     <!--Context menu action-->
     <group id="ExternalSystem.Tree.Context" popup="true">
+      <reference ref="ExternalSystem.OpenConfig"/>
       <reference ref="ExternalSystem.DetachProject"/>
+      <separator/>
       <reference ref="RunContextGroup"/>
     </group>
     

@@ -38,12 +38,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.text.BlockSupport;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +62,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   protected final Project myProject;
   protected final PsiManager myPsiManager;
   protected final DocumentCommitProcessor myDocumentCommitProcessor;
-  protected final Set<Document> myUncommittedDocuments = Collections.synchronizedSet(new HashSet<Document>());
+  protected final Set<Document> myUncommittedDocuments = Collections.synchronizedSet(new THashSet<Document>());
 
   protected volatile boolean myIsCommitInProgress;
   protected final PsiToDocumentSynchronizer mySynchronizer;
@@ -360,7 +362,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         finally {
           myIsCommitInProgress = false;
         }
-        assert !myUncommittedDocuments.contains(document) : "Document :" + document;
+        assert !isInUncommittedSet(document) : "Document :" + document;
       }
     });
   }
@@ -375,6 +377,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
     });
     return ref.get();
+  }
+
+  @Override
+  public void reparseFiles(@NotNull Collection<VirtualFile> files, boolean includeOpenFiles) {
+    FileContentUtilCore.reparseFiles(files);
   }
 
   @Override
@@ -534,8 +541,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return myUncommittedDocuments.toArray(new Document[myUncommittedDocuments.size()]);
   }
 
-  public Collection<Document> getUncommittedDocumentsUnsafe() {
-    return myUncommittedDocuments;
+  boolean isInUncommittedSet(@NotNull Document document) {
+    if (document instanceof DocumentWindow) return isInUncommittedSet(((DocumentWindow)document).getDelegate());
+    return myUncommittedDocuments.contains(document);
   }
 
   @Override
@@ -545,8 +553,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public boolean isCommitted(@NotNull Document document) {
+    if (document instanceof DocumentWindow) return isCommitted(((DocumentWindow)document).getDelegate());
     if (getSynchronizer().isInSynchronization(document)) return true;
-    return !((DocumentEx)document).isInEventsHandling() && !myUncommittedDocuments.contains(document);
+    return !((DocumentEx)document).isInEventsHandling() && !isInUncommittedSet(document);
   }
 
   @Override
@@ -597,7 +606,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     boolean commitNecessary = true;
     for (PsiFile file : files) {
       mySmartPointerManager.unfastenBelts(file, event.getOffset());
-      
+
       final TextBlock textBlock = TextBlock.get(file);
       if (textBlock.isLocked()) {
         commitNecessary = false;
@@ -628,10 +637,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     if (commitNecessary) {
+      assert !(document instanceof DocumentWindow);
       myUncommittedDocuments.add(document);
       if (forceCommit) {
         commitDocument(document);
-      } else if (!((DocumentEx)document).isInBulkUpdate()) {
+      }
+      else if (!((DocumentEx)document).isInBulkUpdate()) {
         myDocumentCommitProcessor.commitAsynchronously(myProject, document, event);
       }
     }

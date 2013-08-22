@@ -17,6 +17,8 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -39,6 +41,7 @@ import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefres
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator;
 import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemRecentTasksList;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
@@ -54,14 +57,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
@@ -71,8 +76,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.*;
 import java.util.List;
 
@@ -86,13 +89,32 @@ public class ExternalSystemUtil {
   
   @NotNull private static final Map<String, String> RUNNER_IDS = ContainerUtilRt.newHashMap();
   static {
-    RUNNER_IDS.put(ToolWindowId.RUN, ExternalSystemConstants.RUNNER_ID);
-    RUNNER_IDS.put(ToolWindowId.DEBUG, ExternalSystemConstants.DEBUG_RUNNER_ID);
+    RUNNER_IDS.put(DefaultRunExecutor.EXECUTOR_ID, ExternalSystemConstants.RUNNER_ID);
+    RUNNER_IDS.put(DefaultDebugExecutor.EXECUTOR_ID, ExternalSystemConstants.DEBUG_RUNNER_ID);
   }
 
   private ExternalSystemUtil() {
   }
 
+  public static void ensureToolWindowInitialized(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
+    ToolWindowManager manager = ToolWindowManager.getInstance(project);
+    if (!(manager instanceof ToolWindowManagerEx)) {
+      return;
+    }
+    ToolWindowManagerEx managerEx = (ToolWindowManagerEx)manager;
+    String id = externalSystemId.getReadableName();
+    ToolWindow window = manager.getToolWindow(id);
+    if (window != null) {
+      return;
+    }
+    ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
+    for (final ToolWindowEP bean : beans) {
+      if (id.equals(bean.id)) {
+        managerEx.initToolWindow(bean);
+      }
+    }
+  }
+  
   @SuppressWarnings("unchecked")
   @Nullable
   public static <T> T getToolWindowElement(@NotNull Class<T> clazz,
@@ -133,30 +155,6 @@ public class ExternalSystemUtil {
   }
 
   /**
-   * {@link RemoteUtil#unwrap(Throwable) unwraps} given exception if possible and builds error message for it.
-   *
-   * @param e  exception to process
-   * @return error message for the given exception
-   */
-  @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
-  @NotNull
-  public static String buildErrorMessage(@NotNull Throwable e) {
-    Throwable unwrapped = RemoteUtil.unwrap(e);
-    String reason = unwrapped.getLocalizedMessage();
-    if (!StringUtil.isEmpty(reason)) {
-      return reason;
-    }
-    else if (unwrapped.getClass() == ExternalSystemException.class) {
-      return String.format("exception during working with external system: %s", ((ExternalSystemException)unwrapped).getOriginalReason());
-    }
-    else {
-      StringWriter writer = new StringWriter();
-      unwrapped.printStackTrace(new PrintWriter(writer));
-      return writer.toString();
-    }
-  }
-
-  /**
    * Asks to refresh all external projects of the target external system linked to the given ide project.
    * <p/>
    * 'Refresh' here means 'obtain the most up-to-date version and apply it to the ide'. 
@@ -182,7 +180,7 @@ public class ExternalSystemUtil {
     ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
 
       @NotNull
-      private final Set<String> myExternalModuleNames = ContainerUtilRt.newHashSet();
+      private final Set<String> myExternalModulePaths = ContainerUtilRt.newHashSet();
 
       @Override
       public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
@@ -191,7 +189,7 @@ public class ExternalSystemUtil {
         }
         Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(externalProject, ProjectKeys.MODULE);
         for (DataNode<ModuleData> node : moduleNodes) {
-          myExternalModuleNames.add(node.getData().getName());
+          myExternalModulePaths.add(node.getData().getLinkedExternalProjectPath());
         }
         ExternalSystemApiUtil.executeProjectChangeAction(true, new Runnable() {
           @Override
@@ -201,7 +199,7 @@ public class ExternalSystemUtil {
               public void run() {
                 projectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), project, true);
               }
-            }); 
+            });
           }
         });
         if (--counter[0] <= 0) {
@@ -221,7 +219,8 @@ public class ExternalSystemUtil {
 
         for (Module module : platformFacade.getModules(project)) {
           String s = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-          if (externalSystemIdAsString.equals(s) && !myExternalModuleNames.contains(module.getName())) {
+          String p = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+          if (externalSystemIdAsString.equals(s) && !myExternalModulePaths.contains(p)) {
             orphanIdeModules.add(module);
           }
         }
@@ -236,7 +235,7 @@ public class ExternalSystemUtil {
     Set<String> toRefresh = ContainerUtilRt.newHashSet();
     for (ExternalProjectSettings setting : projectsSettings) {
       Long oldModificationStamp = modificationStamps.get(setting.getExternalProjectPath());
-      long currentModificationStamp = getTimeStamp(setting.getExternalProjectPath());
+      long currentModificationStamp = getTimeStamp(setting.getExternalProjectPath(), externalSystemId);
       if (force || currentModificationStamp < 0 || oldModificationStamp == null || oldModificationStamp < currentModificationStamp) {
         toRefresh.add(setting.getExternalProjectPath());
       }
@@ -250,9 +249,21 @@ public class ExternalSystemUtil {
     }
   }
 
-  private static long getTimeStamp(@NotNull String path) {
+  private static long getTimeStamp(@NotNull String path, @NotNull ProjectSystemId externalSystemId) {
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
-    return vFile == null ? -1 : vFile.getTimeStamp();
+    if (vFile == null) {
+      return -1;
+    }
+    for (ExternalSystemConfigLocator locator : ExternalSystemConfigLocator.EP_NAME.getExtensions()) {
+      if (!externalSystemId.equals(locator.getTargetExternalSystemId())) {
+        continue;
+      }
+      VirtualFile adjusted = locator.adjust(vFile);
+      if (adjusted != null) {
+        vFile = adjusted;
+      }
+    }
+    return vFile.getTimeStamp();
   }
 
   /**
@@ -346,10 +357,10 @@ public class ExternalSystemUtil {
   /**
    * Queries slave gradle process to refresh target gradle project.
    *
-   * @param project             target intellij project to use
-   * @param externalProjectPath path of the target gradle project's file
-   * @param callback            callback to be notified on refresh result
-   * @param resolveLibraries    flag that identifies whether gradle libraries should be resolved during the refresh
+   * @param project               target intellij project to use
+   * @param externalProjectPath   path of the target gradle project's file
+   * @param callback              callback to be notified on refresh result
+   * @param resolveLibraries      flag that identifies whether gradle libraries should be resolved during the refresh
    * @return the most up-to-date gradle project (if any)
    */
   public static void refreshProject(@NotNull final Project project,
@@ -357,7 +368,27 @@ public class ExternalSystemUtil {
                                     @NotNull final String externalProjectPath,
                                     @NotNull final ExternalProjectRefreshCallback callback,
                                     final boolean resolveLibraries,
-                                    final boolean modal)
+                                    final boolean modal) {
+    refreshProject(project, externalSystemId, externalProjectPath, callback, resolveLibraries, modal, true);
+  }
+
+  /**
+   * Queries slave gradle process to refresh target gradle project.
+   *
+   * @param project               target intellij project to use
+   * @param externalProjectPath   path of the target gradle project's file
+   * @param callback              callback to be notified on refresh result
+   * @param resolveLibraries      flag that identifies whether gradle libraries should be resolved during the refresh
+   * @param reportRefreshError    prevent to show annoying error notification, e.g. if auto-import mode used
+   * @return the most up-to-date gradle project (if any)
+   */
+  public static void refreshProject(@NotNull final Project project,
+                                    @NotNull final ProjectSystemId externalSystemId,
+                                    @NotNull final String externalProjectPath,
+                                    @NotNull final ExternalProjectRefreshCallback callback,
+                                    final boolean resolveLibraries,
+                                    final boolean modal,
+                                    final boolean reportRefreshError)
   {
     File projectFile = new File(externalProjectPath);
     final String projectName;
@@ -376,7 +407,7 @@ public class ExternalSystemUtil {
         task.execute(indicator);
         final Throwable error = task.getError();
         if (error == null) {
-          long stamp = getTimeStamp(externalProjectPath);
+          long stamp = getTimeStamp(externalProjectPath, externalSystemId);
           if (stamp > 0) {
             ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
             assert manager != null;
@@ -386,7 +417,7 @@ public class ExternalSystemUtil {
           callback.onSuccess(externalProject);
           return;
         }
-        String message = buildErrorMessage(error);
+        String message = ExternalSystemApiUtil.buildErrorMessage(error);
         if (StringUtil.isEmpty(message)) {
           message = String.format(
             "Can't resolve %s project at '%s'. Reason: %s",
@@ -396,9 +427,18 @@ public class ExternalSystemUtil {
 
         callback.onFailure(message, extractDetails(error));
 
+        ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
+        if(manager == null) {
+          return;
+        }
+        AbstractExternalSystemSettings<?, ?, ?> settings = manager.getSettingsProvider().fun(project);
+        ExternalProjectSettings projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
+        if (projectSettings == null || !reportRefreshError) {
+          return;
+        }
         ExternalSystemIdeNotificationManager notificationManager = ServiceManager.getService(ExternalSystemIdeNotificationManager.class);
         if (notificationManager != null) {
-          notificationManager.processExternalProjectRefreshError(message, project, projectName, externalSystemId);
+          notificationManager.processExternalProjectRefreshError(error, project, projectName, externalSystemId);
         }
       }
     };
@@ -451,16 +491,16 @@ public class ExternalSystemUtil {
     }
 
     String name = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
-    RunnerAndConfigurationSettings settings = RunManagerEx.getInstanceEx(project).createConfiguration(name, configurationType.getFactory());
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(name, configurationType.getFactory());
     ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)settings.getConfiguration();
     runConfiguration.getSettings().setExternalProjectPath(taskSettings.getExternalProjectPath());
     runConfiguration.getSettings().setTaskNames(taskSettings.getTaskNames());
     
     
-    ExecutionEnvironment env = new ExecutionEnvironment(runner, settings, project);
+    ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, settings, project);
     
     try {
-      runner.execute(executor, env, null);
+      runner.execute(env, null);
     }
     catch (ExecutionException e) {
       LOG.warn("Can't execute task " + taskSettings, e);
@@ -509,6 +549,126 @@ public class ExternalSystemUtil {
   @Nullable
   public static String getRunnerId(@NotNull String executorId) {
     return RUNNER_IDS.get(executorId);
+  }
+
+  /**
+   * Allows to answer if given ide project has 1-1 mapping with the given external project, i.e. the ide project has been
+   * imported from external system and no other external projects have been added.
+   * <p/>
+   * This might be necessary in a situation when project-level setting is changed (e.g. project name). We don't want to rename
+   * ide project if it doesn't completely corresponds to the given ide project then.
+   *
+   * @param ideProject       target ide project
+   * @param externalProject  target external project
+   * @return                 <code>true</code> if given ide project has 1-1 mapping to the given external project;
+   *                         <code>false</code> otherwise
+   */
+  public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull DataNode<ProjectData> externalProject) {
+    String linkedExternalProjectPath = null;
+    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
+      ProjectSystemId externalSystemId = manager.getSystemId();
+      AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(ideProject, externalSystemId);
+      Collection projectsSettings = systemSettings.getLinkedProjectsSettings();
+      int linkedProjectsNumber = projectsSettings.size();
+      if (linkedProjectsNumber > 1) {
+        // More than one external project of the same external system type is linked to the given ide project.
+        return false;
+      }
+      else if (linkedProjectsNumber == 1) {
+        if (linkedExternalProjectPath == null) {
+          // More than one external project of different external system types is linked to the current ide project.
+          linkedExternalProjectPath = ((ExternalProjectSettings)projectsSettings.iterator().next()).getExternalProjectPath();
+        }
+        else {
+          return false;
+        }
+      }
+    }
+    
+    ProjectData projectData = externalProject.getData();
+    if (linkedExternalProjectPath != null && !linkedExternalProjectPath.equals(projectData.getLinkedExternalProjectPath())) {
+      // New external project is being linked.
+      return false;
+    }
+
+    Set<String> externalModulePaths = ContainerUtilRt.newHashSet();
+    for (DataNode<ModuleData> moduleNode : ExternalSystemApiUtil.findAll(externalProject, ProjectKeys.MODULE)) {
+      externalModulePaths.add(moduleNode.getData().getLinkedExternalProjectPath());
+    }
+    externalModulePaths.remove(linkedExternalProjectPath);
+    
+    PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+    for (Module module : platformFacade.getModules(ideProject)) {
+      String path = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+      if (!StringUtil.isEmpty(path) && !externalModulePaths.remove(path)) {
+        return false;
+      }
+    }
+    return externalModulePaths.isEmpty();
+  }
+
+  /**
+   * Tries to obtain external project info implied by the given settings and link that external project to the given ide project. 
+   * 
+   * @param externalSystemId         target external system
+   * @param projectSettings          settings of the external project to link
+   * @param project                  target ide project to link external project to
+   * @param executionResultCallback  it might take a while to resolve external project info, that's why it's possible to provide
+   *                                 a callback to be notified on processing result. It receives <code>true</code> if an external
+   *                                 project has been successfully linked to the given ide project;
+   *                                 <code>false</code> otherwise (note that corresponding notification with error details is expected
+   *                                 to be shown to the end-user then)
+   * @param resolveLibraries         flag which identifies if missing external project binaries should be downloaded
+   * @param modal                    flag which identifies if progress bar which represents current processing state should be modal
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  public static void linkExternalProject(@NotNull final ProjectSystemId externalSystemId,
+                                         @NotNull final ExternalProjectSettings projectSettings,
+                                         @NotNull final Project project,
+                                         @Nullable final Consumer<Boolean> executionResultCallback,
+                                         boolean resolveLibraries,
+                                         boolean modal)
+  {
+    ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
+      @SuppressWarnings("unchecked")
+      @Override
+      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+        if (externalProject == null) {
+          if (executionResultCallback != null) {
+            executionResultCallback.consume(false);
+          }
+          return;
+        }
+        AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, externalSystemId);
+        Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
+        projects.add(projectSettings);
+        systemSettings.setLinkedProjectsSettings(projects);
+        ensureToolWindowInitialized(project, externalSystemId);
+        ExternalSystemApiUtil.executeProjectChangeAction(new Runnable() {
+          @Override
+          public void run() {
+            ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
+              @Override
+              public void run() {
+                ProjectDataManager dataManager = ServiceManager.getService(ProjectDataManager.class);
+                dataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), project, true);
+              }
+            });
+          }
+        });
+        if (executionResultCallback != null) {
+          executionResultCallback.consume(true);
+        }
+      }
+
+      @Override
+      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+        if (executionResultCallback != null) {
+          executionResultCallback.consume(false);
+        }
+      }
+    };
+    refreshProject(project, externalSystemId, projectSettings.getExternalProjectPath(), callback, resolveLibraries, modal);
   }
   
   private interface TaskUnderProgress {

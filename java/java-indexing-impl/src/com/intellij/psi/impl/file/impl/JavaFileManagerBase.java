@@ -32,6 +32,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -121,7 +122,7 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
   @Override
   @Nullable
   public PsiPackage findPackage(@NotNull String packageName) {
-    Query<VirtualFile> dirs = myPackageIndex.getDirsByPackageName(packageName, false);
+    Query<VirtualFile> dirs = myPackageIndex.getDirsByPackageName(packageName, true);
     if (dirs.findFirst() == null) return null;
     return new PsiPackageImpl(myManager, packageName);
   }
@@ -138,7 +139,13 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
 
-      VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
+      PsiUtilCore.ensureValid(aClass);
+      PsiFile file = aClass.getContainingFile();
+      if (file == null) {
+        throw new AssertionError("No file for class: " + aClass + " of " + aClass.getClass());
+      }
+
+      VirtualFile vFile = file.getVirtualFile();
       if (!hasAcceptablePackage(vFile)) continue;
 
       result.add(aClass);

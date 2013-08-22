@@ -71,6 +71,11 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
     public String getName() {
       return InspectionGadgetsBundle.message("cloneable.class.without.clone.quickfix");
     }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {

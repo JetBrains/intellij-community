@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
@@ -52,7 +51,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     if (!field.hasInitializer()) return false;
     PsiClass psiClass = field.getContainingClass();
 
-    return psiClass != null && !psiClass.isInterface() && !(psiClass instanceof PsiAnonymousClass) && !(psiClass instanceof JspClass);
+    return psiClass != null && !psiClass.isInterface() && !(psiClass instanceof PsiAnonymousClass) && !(psiClass instanceof PsiSyntheticClass);
   }
 
   private boolean hasUnsuitableModifiers(@NotNull PsiField field) {

@@ -47,7 +47,6 @@ class ParameterInfoComponent extends JPanel {
   private final OneElementComponent[] myPanels;
 
   private static final Color BACKGROUND_COLOR = HintUtil.INFORMATION_COLOR;
-  private static final Color FOREGROUND_COLOR = JBColor.foreground();
   private static final Color HIGHLIGHTED_BORDER_COLOR = new JBColor(new Color(231, 254, 234), Gray._100);
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
@@ -276,6 +275,7 @@ class ParameterInfoComponent extends JPanel {
       int added = 0;
       for (int i = 0; i < texts.length; i++) {
         String line = texts[i];
+        if (lines.length <= index) break;
         String text = lines[index];
         final int paramCount = StringUtil.split(text, ", ").size();
         final EnumSet<ParameterInfoUIContextEx.Flag> flag = flags[i];
@@ -337,14 +337,19 @@ class ParameterInfoComponent extends JPanel {
       myLabel.setBackground(background);
       setBackground(background);
 
-      myLabel.setForeground(FOREGROUND_COLOR);
+      myLabel.setForeground(JBColor.foreground());
 
       if (flagsMap.isEmpty()) {
-        myLabel.setText(XmlStringUtil.wrapInHtml(text));
+        myLabel.setText(XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(text)));
       }
       else {
         String labelText = buildLabelText(text, flagsMap);
         myLabel.setText(labelText);
+      }
+
+      //IDEA-95904 Darcula parameter info pop-up colors hard to read
+      if (UIUtil.isUnderDarcula()) {
+        myLabel.setText(myLabel.getText().replace("<b>", "<b color=ffC800>"));
       }
     }
     private String buildLabelText(@NotNull final String text, @NotNull final Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,27 @@ package com.siyeh.ig.imports;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
 
+  private final PsiJavaFile myFile;
   private final List<PsiImportStatementBase> importStatements;
   private final List<PsiImportStatementBase> usedImportStatements = new ArrayList();
 
-  ImportsAreUsedVisitor(PsiImportStatementBase[] importStatements) {
-    this.importStatements = new ArrayList(Arrays.asList(importStatements));
-    Collections.reverse(this.importStatements);
+  ImportsAreUsedVisitor(PsiJavaFile file) {
+    myFile = file;
+    final PsiImportList importList = file.getImportList();
+    if (importList == null) {
+      importStatements = Collections.EMPTY_LIST;
+    } else {
+      final PsiImportStatementBase[] importStatements = importList.getAllImportStatements();
+      this.importStatements = new ArrayList(Arrays.asList(importStatements));
+      Collections.reverse(this.importStatements);
+    }
   }
 
   @Override
@@ -66,12 +72,12 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
     }
     final PsiImportStatementBase foundImport = findImport(element, importStatements);
     if (foundImport != null) {
-      removeAll(foundImport);
+      importStatements.remove(foundImport);
       usedImportStatements.add(foundImport);
     }
   }
 
-  private static PsiImportStatementBase findImport(PsiElement element, List<PsiImportStatementBase> importStatements) {
+  private PsiImportStatementBase findImport(PsiElement element, List<PsiImportStatementBase> importStatements) {
     final String qualifiedName;
     final String packageName;
     if (element instanceof PsiClass) {
@@ -100,12 +106,16 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
       referenceClass = null;
       referenceName = null;
     }
+    final boolean hasOnDemandImportConflict = qualifiedName != null && ImportUtils.hasOnDemandImportConflict(qualifiedName, myFile);
     for (PsiImportStatementBase importStatementBase : importStatements) {
       if (importStatementBase instanceof PsiImportStatement && qualifiedName != null && packageName != null) {
         final PsiImportStatement importStatement = (PsiImportStatement)importStatementBase;
         final String importName = importStatement.getQualifiedName();
         if (importName != null) {
           if (importStatement.isOnDemand()) {
+            if (hasOnDemandImportConflict) {
+              continue;
+            }
             if (importName.equals(packageName)) {
               return importStatement;
             }
@@ -134,17 +144,6 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
       }
     }
     return null;
-  }
-
-  private void removeAll(@NotNull PsiImportStatementBase importStatement) {
-    for (int i = importStatements.size() - 1; i >= 0; i--) {
-      final PsiImportStatementBase statement = importStatements.get(i);
-      final String statementText = statement.getText();
-      final String importText = importStatement.getText();
-      if (importText.equals(statementText)) {
-        importStatements.remove(i);
-      }
-    }
   }
 
   public PsiImportStatementBase[] getUnusedImportStatements() {

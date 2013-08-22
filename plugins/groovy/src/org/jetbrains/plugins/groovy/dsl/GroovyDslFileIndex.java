@@ -46,6 +46,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -73,7 +74,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -97,17 +97,11 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static final MultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>> filesInProcessing =
     new ConcurrentMultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>>();
 
-  private static final ThreadPoolExecutor ourPool = new ThreadPoolExecutor(0, 1, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
-    @NotNull
-    @Override
-    public Thread newThread(@NotNull Runnable r) {
-      return new Thread(r, "Groovy DSL File Index Executor");
-    }
-  });
+  private static final ThreadPoolExecutor ourPool = new ThreadPoolExecutor(0, 1, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("Groovy DSL File Index Executor"));
 
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
   private static final byte[] ENABLED_FLAG = new byte[]{(byte)239};
-  
+
   static {
     NotificationsConfigurationImpl.remove("Groovy DSL parsing");
   }
@@ -157,7 +151,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return 0;
   }
 
-  @Nullable 
+  @Nullable
   public static String getInactivityReason(VirtualFile file) {
     try {
       final byte[] bytes = ENABLED.readAttributeBytes(file);
@@ -168,7 +162,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       if (bytes[0] != 42) {
         return null;
       }
-      
+
       return new String(bytes, 1, bytes.length - 1);
     }
     catch (IOException e) {

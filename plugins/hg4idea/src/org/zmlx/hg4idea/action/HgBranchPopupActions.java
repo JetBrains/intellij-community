@@ -21,6 +21,8 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -31,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgBookmarkCreateCommand;
 import org.zmlx.hg4idea.command.HgBranchCreateCommand;
 import org.zmlx.hg4idea.command.HgMergeCommand;
@@ -223,32 +226,40 @@ public class HgBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        UpdatedFiles updatedFiles = UpdatedFiles.create();
-        HgMergeCommand hgMergeCommand = new HgMergeCommand(myProject, mySelectedRepository.getRoot());
+        final UpdatedFiles updatedFiles = UpdatedFiles.create();
+        final HgMergeCommand hgMergeCommand = new HgMergeCommand(myProject, mySelectedRepository.getRoot());
         hgMergeCommand.setBranch(myBranchName);
-        //hgMergeCommand.setRevision(myBranchName.getHead().getChangeset());
-        HgCommandResultNotifier notifier = new HgCommandResultNotifier(myProject);
-        try {
-          new HgHeadMerger(myProject, hgMergeCommand)
-            .merge(mySelectedRepository.getRoot(), updatedFiles, HgRevisionNumber.NULL_REVISION_NUMBER);
-          new HgConflictResolver(myProject, updatedFiles).resolve(mySelectedRepository.getRoot());
-        }
-        catch (VcsException exception) {
-          if (exception.isWarning()) {
-            notifier.notifyWarning("Warning during merge", exception.getMessage());
+        final HgCommandResultNotifier notifier = new HgCommandResultNotifier(myProject);
+        new Task.Backgroundable(myProject, "Merging changes...") {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            try {
+              new HgHeadMerger(myProject, hgMergeCommand)
+                .merge(mySelectedRepository.getRoot(), updatedFiles, HgRevisionNumber.NULL_REVISION_NUMBER);
+              new HgConflictResolver(myProject, updatedFiles).resolve(mySelectedRepository.getRoot());
+            }
+
+            catch (VcsException exception) {
+              if (exception.isWarning()) {
+                notifier.notifyWarning("Warning during merge", exception.getMessage());
+              }
+              else {
+                notifier.notifyError(null, "Exception during merge", exception.getMessage());
+              }
+            }
+            catch (Exception e1) {
+              HgAbstractGlobalAction.handleException(myProject, e1);
+            }
           }
-          else {
-            notifier.notifyError(null, "Exception during merge", exception.getMessage());
-          }
-        }
+        }.queue();
       }
     }
 
     private static class UpdateToAction extends DumbAwareAction {
 
-      private final Project myProject;
-      private final HgRepository mySelectedRepository;
-      private final String myBranch;
+      @NotNull private final Project myProject;
+      @NotNull private final HgRepository mySelectedRepository;
+      @NotNull private final String myBranch;
 
       public UpdateToAction(@NotNull Project project,
                             @NotNull HgRepository selectedRepository,
@@ -261,13 +272,21 @@ public class HgBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(myProject, mySelectedRepository.getRoot());
+        final VirtualFile repository = mySelectedRepository.getRoot();
+        final HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(myProject, repository);
         hgUpdateCommand.setBranch(myBranch);
-        HgCommandResult result = hgUpdateCommand.execute();
-        if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-          new HgCommandResultNotifier(myProject).notifyError(result, "", "Update failed");
-        }
-        myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
+        new Task.Backgroundable(myProject, HgVcsMessages.message("action.hg4idea.updateTo.description", myBranch)) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            HgCommandResult result = hgUpdateCommand.execute();
+            assert myProject != null;  // myProject couldn't be null, see annotation for updateTo action
+            if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+              new HgCommandResultNotifier(myProject).notifyError(result, "", "Update failed");
+              new HgConflictResolver(myProject).resolve(repository);
+            }
+            myProject.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
+          }
+        }.queue();
       }
     }
   }

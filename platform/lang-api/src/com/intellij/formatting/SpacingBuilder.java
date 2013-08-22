@@ -1,8 +1,11 @@
 package com.intellij.formatting;
 
+import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -109,11 +112,36 @@ public class SpacingBuilder {
     }
   }
 
-  private final CodeStyleSettings myCodeStyleSettings;
+  private final CommonCodeStyleSettings myCodeStyleSettings;
   private final List<SpacingRule> myRules = new ArrayList<SpacingRule>();
 
+  /**
+   * @param codeStyleSettings
+   * @deprecated Use other constructors!
+   */
+  @Deprecated
   public SpacingBuilder(CodeStyleSettings codeStyleSettings) {
+    // TODO: remove deprecated method (v.14)
     myCodeStyleSettings = codeStyleSettings;
+  }
+
+  /**
+   * Creates SpacingBuilder with given code style settings and language whose settings must be used. 
+   * @param codeStyleSettings The root code style settings.
+   * @param language          The language to obtain settings for.
+   */
+  public SpacingBuilder(@NotNull CodeStyleSettings codeStyleSettings, @NotNull Language language) {
+    myCodeStyleSettings = codeStyleSettings.getCommonSettings(language);
+  }
+
+  /**
+   * Creates SpacingBuilder with given language code style settings.
+   * @param languageCodeStyleSettings The language code style settings. Note that <code>getLanguage()</code> method must not 
+   *                                  return null!
+   */
+  public SpacingBuilder(@NotNull CommonCodeStyleSettings languageCodeStyleSettings) {
+    assert languageCodeStyleSettings.getLanguage() != null : "Only language code style settings are accepted (getLanguage() != null)";
+    myCodeStyleSettings = languageCodeStyleSettings;
   }
 
   public RuleBuilder after(IElementType elementType) {

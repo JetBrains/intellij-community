@@ -74,7 +74,7 @@ public class ResolveCache {
   }
 
   private static <K,V> ConcurrentWeakHashMap<K, V> createWeakMap() {
-    return new ConcurrentWeakHashMap<K,V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<ConcurrentWeakHashMap.Key<K,V>>canonicalStrategy());
+    return new ConcurrentWeakHashMap<K,V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy());
   }
 
   public void clearCache(boolean isPhysical) {
@@ -139,18 +139,12 @@ public class ResolveCache {
     return reference == null ? null : reference.get();
   }
 
-  public PsiElement resolveWithCaching(@NotNull PsiReference ref,
-                                       @NotNull Resolver resolver,
-                                       boolean needToPreventRecursion,
-                                       boolean incompleteCode) {
-    return resolve(ref, resolver, needToPreventRecursion, incompleteCode, false, ref.getElement().isPhysical());
-  }
-
   @Nullable
-  public <TRef extends PsiReference, TResult>TResult resolveWithCaching(@NotNull TRef ref,
-                                       @NotNull AbstractResolver<TRef, TResult> resolver,
-                                       boolean needToPreventRecursion,
-                                       boolean incompleteCode) {
+  public <TRef extends PsiReference, TResult>
+         TResult resolveWithCaching(@NotNull TRef ref,
+                                    @NotNull AbstractResolver<TRef, TResult> resolver,
+                                    boolean needToPreventRecursion,
+                                    boolean incompleteCode) {
     return resolve(ref, resolver, needToPreventRecursion, incompleteCode, false, ref.getElement().isPhysical());
   }
 

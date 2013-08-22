@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,14 +51,14 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   @Nullable private final Project myProject;
   private final Component myContextComponent;
 
-  private final ActionManager myActionManager = ActionManager.getInstance();
+  protected final ActionManager myActionManager = ActionManager.getInstance();
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
   private Pattern myCompiledPattern;
 
-  private final SearchableOptionsRegistrar myIndex;
-  private final Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
+  protected final SearchableOptionsRegistrar myIndex;
+  protected final Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
     @Override
     public int compare(AnAction o1, AnAction o2) {
       int compare = Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
@@ -233,7 +233,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return StringUtil.compare(getFullName(o1), getFullName(o2), true);
   }
 
-  protected static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
+  public static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
     final AnActionEvent event = new AnActionEvent(null, dataContext,
                                                   ActionPlaces.UNKNOWN, new Presentation(), ActionManager.getInstance(),
                                                   0);

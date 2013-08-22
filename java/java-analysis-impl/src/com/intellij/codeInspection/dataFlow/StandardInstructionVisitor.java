@@ -271,7 +271,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (methodType == MethodCallInstruction.MethodType.CAST) {
       if (qualifierValue instanceof DfaConstValue) {
-        return factory.getConstFactory().createFromValue(castConstValue((DfaConstValue)qualifierValue), type);
+        return factory.getConstFactory().createFromValue(castConstValue((DfaConstValue)qualifierValue), type, ((DfaConstValue)qualifierValue).getConstant());
       }
       return qualifierValue;
     }
@@ -467,6 +467,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (PsiTreeUtil.isAncestor(element, skipped, false)) {
         return true;
       }
+    }
+    if (PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null) {
+      return true;
     }
     return false;
   }

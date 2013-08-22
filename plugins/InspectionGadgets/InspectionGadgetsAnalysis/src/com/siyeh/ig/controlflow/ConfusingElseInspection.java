@@ -71,6 +71,11 @@ public class ConfusingElseInspection extends BaseInspection {
   }
 
   private static class ConfusingElseFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

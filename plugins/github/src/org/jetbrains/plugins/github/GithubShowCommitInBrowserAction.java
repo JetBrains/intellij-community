@@ -21,6 +21,10 @@ import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import icons.GithubIcons;
+import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 /**
  * @author Kirill Likhodedov
@@ -28,7 +32,7 @@ import icons.GithubIcons;
 abstract class GithubShowCommitInBrowserAction extends DumbAwareAction {
 
   public GithubShowCommitInBrowserAction() {
-    super("Open in Browser", "Open the selected commit in browser", GithubIcons.Github_icon);
+    super("Open on GitHub", "Open the selected commit in browser", GithubIcons.Github_icon);
   }
 
   protected static void openInBrowser(Project project, GitRepository repository, String revisionHash) {
@@ -38,15 +42,15 @@ abstract class GithubShowCommitInBrowserAction extends DumbAwareAction {
                                            GitUtil.getPrintableRemotes(repository.getRemotes())));
       return;
     }
-    GithubUserAndRepository userAndRepository = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url);
+    GithubFullPath userAndRepository = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url);
     if (userAndRepository == null) {
       GithubNotifications
         .showError(project, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER, "Cannot extract info about repository: " + url);
       return;
     }
 
-    String githubUrl = GithubUrlUtil.getGitHost() + '/' + userAndRepository.getUserName() + '/'
-                       + userAndRepository.getRepositoryName() + "/commit/" + revisionHash;
+    String githubUrl = GithubUrlUtil.getGitHost() + '/' + userAndRepository.getUser() + '/'
+                       + userAndRepository.getRepository() + "/commit/" + revisionHash;
     BrowserUtil.launchBrowser(githubUrl);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,32 +122,36 @@ public final class NavigationUtil {
   }
 
   public static boolean activateFileWithPsiElement(@NotNull PsiElement elt, boolean searchForOpen) {
+    return openFileWithPsiElement(elt, searchForOpen, true);
+  }
+
+  public static boolean openFileWithPsiElement(PsiElement element, boolean searchForOpen, boolean requestFocus) {
     boolean openAsNative = false;
-    if (elt instanceof PsiFile) {
-      VirtualFile virtualFile = ((PsiFile)elt).getVirtualFile();
+    if (element instanceof PsiFile) {
+      VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
       if (virtualFile != null) {
         openAsNative = ElementBase.isNativeFileType(virtualFile.getFileType());
       }
     }
 
     if (searchForOpen) {
-      elt.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
+      element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
     }
     else {
-      elt.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true);
+      element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true);
     }
 
-    if (openAsNative || !activatePsiElementIfOpen(elt, searchForOpen)) {
-      ((NavigationItem)elt).navigate(true);
+    if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
+      ((NavigationItem)element).navigate(requestFocus);
       return true;
     }
 
-    elt.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
+    element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
     return false;
   }
 
 
-  private static boolean activatePsiElementIfOpen(@NotNull PsiElement elt, boolean searchForOpen) {
+  private static boolean activatePsiElementIfOpen(@NotNull PsiElement elt, boolean searchForOpen, boolean requestFocus) {
     if (!elt.isValid()) return false;
     elt = elt.getNavigationElement();
     final PsiFile file = elt.getContainingFile();
@@ -160,7 +164,7 @@ public final class NavigationUtil {
 
     final FileEditorManager fem = FileEditorManager.getInstance(elt.getProject());
     if (!fem.isFileOpen(vFile)) {
-      fem.openFile(vFile, true, searchForOpen);
+      fem.openFile(vFile, requestFocus, searchForOpen);
     }
 
     final TextRange range = elt.getTextRange();
@@ -174,7 +178,7 @@ public final class NavigationUtil {
 
         if (range.containsOffset(offset)) {
           // select the file
-          fem.openFile(vFile, true, searchForOpen);
+          fem.openFile(vFile, requestFocus, searchForOpen);
           return true;
         }
       }

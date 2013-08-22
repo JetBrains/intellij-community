@@ -142,4 +142,9 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
   public final XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attr){
     return getAttributeDescriptor(attr.getName(), attr.getParent());
   }
+
+  @Override
+  public String toString() {
+    return getQualifiedName();
+  }
 }

@@ -121,20 +121,29 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     else {
       final PsiFile containingFile = myModifierListOwner.getContainingFile();
       if (!FileModificationService.getInstance().preparePsiElementForWrite(containingFile)) return;
-      for (String fqn : myAnnotationsToRemove) {
-        PsiAnnotation annotation = AnnotationUtil.findAnnotation(myModifierListOwner, fqn);
-        if (annotation != null) {
-          annotation.delete();
-        }
-      }
+      removePhysicalAnnotations(myModifierListOwner, myAnnotationsToRemove);
 
-      PsiAnnotation inserted = modifierList.addAnnotation(myAnnotation);
-      for (PsiNameValuePair pair : myPairs) {
-        inserted.setDeclaredAttributeValue(pair.getName(), pair.getValue());
-      }
+      PsiAnnotation inserted = addPhysicalAnnotation(myAnnotation, myPairs, modifierList);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
       if (containingFile != file) {
         UndoUtil.markPsiFileForUndo(file);
+      }
+    }
+  }
+
+  public static PsiAnnotation addPhysicalAnnotation(String fqn, PsiNameValuePair[] pairs, PsiModifierList modifierList) {
+    PsiAnnotation inserted = modifierList.addAnnotation(fqn);
+    for (PsiNameValuePair pair : pairs) {
+      inserted.setDeclaredAttributeValue(pair.getName(), pair.getValue());
+    }
+    return inserted;
+  }
+
+  public static void removePhysicalAnnotations(PsiModifierListOwner owner, String... fqns) {
+    for (String fqn : fqns) {
+      PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, fqn);
+      if (annotation != null) {
+        annotation.delete();
       }
     }
   }

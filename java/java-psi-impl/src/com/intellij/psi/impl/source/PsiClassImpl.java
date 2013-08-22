@@ -40,6 +40,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -515,7 +516,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
       }
     }
 
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, false);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, PsiUtil.getLanguageLevel(place), false);
   }
 
   @Override

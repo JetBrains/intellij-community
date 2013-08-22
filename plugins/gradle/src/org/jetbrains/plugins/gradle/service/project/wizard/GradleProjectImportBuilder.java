@@ -21,7 +21,6 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportBuilder;
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
@@ -46,8 +45,8 @@ import java.util.List;
  */
 public class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<ImportFromGradleControl> {
 
-  public GradleProjectImportBuilder(@NotNull ExternalSystemSettingsManager settingsManager, @NotNull ProjectDataManager dataManager) {
-    super(settingsManager, dataManager, new ImportFromGradleControl(), GradleConstants.SYSTEM_ID);
+  public GradleProjectImportBuilder(@NotNull ProjectDataManager dataManager) {
+    super(dataManager, new ImportFromGradleControl(), GradleConstants.SYSTEM_ID);
   }
 
   @NotNull

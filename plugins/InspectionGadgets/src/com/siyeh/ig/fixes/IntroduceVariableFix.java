@@ -53,6 +53,12 @@ public class IntroduceVariableFix extends InspectionGadgetsFix {
     }
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return InspectionGadgetsBundle.message("introduce.variable.quickfix");
+  }
+
   @Nullable
   public PsiExpression getExpressionToExtract(PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);

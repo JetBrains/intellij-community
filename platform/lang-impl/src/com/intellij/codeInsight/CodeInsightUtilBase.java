@@ -49,23 +49,20 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
     final VirtualFile file = psiFile.getVirtualFile();
     final Project project = psiFile.getProject();
 
-    final Editor editor =
-      psiFile.isWritable() ? null : FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
-    if (!ReadonlyStatusHandler.ensureFilesWritable(project, file)) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (editor != null && editor.getComponent().isDisplayable()) {
-            HintManager.getInstance()
-              .showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getPresentableUrl()));
-          }
-        }
-      });
-
-      return false;
+    if (ReadonlyStatusHandler.ensureFilesWritable(project, file)) {
+      return true;
     }
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
+        if (editor != null && editor.getComponent().isDisplayable()) {
+          HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getPresentableUrl()));
+        }
+      }
+    }, project.getDisposed());
 
-    return true;
+    return false;
   }
 
   @Override
@@ -85,8 +82,9 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
     Set<VirtualFile> files = new THashSet<VirtualFile>();
     Project project = null;
     for (PsiElement element : elements) {
+      if (element == null) continue;
       PsiFile file = element.getContainingFile();
-      if (file == null) continue;
+      if (file == null || !file.isPhysical()) continue;
       project = file.getProject();
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile == null) continue;

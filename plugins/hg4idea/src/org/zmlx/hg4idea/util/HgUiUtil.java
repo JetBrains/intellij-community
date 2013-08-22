@@ -33,9 +33,9 @@ import java.util.Collection;
  */
 public class HgUiUtil {
 
-  public static void loadBranchesInBackgroundableAndExecuteAction(final Project project,
-                                                                  final Collection<VirtualFile> repos,
-                                                                  final Consumer<HgBranchesAndTags> successHandler) {
+  public static void loadBranchesInBackgroundableAndExecuteAction(@NotNull final Project project,
+                                                                  @NotNull final Collection<VirtualFile> repos,
+                                                                  @NotNull final Consumer<HgBranchesAndTags> successHandler) {
     final HgBranchesAndTags branchTagInfo = new HgBranchesAndTags();
     new Task.Backgroundable(project, "Collecting information...") {
       @Override
@@ -54,6 +54,13 @@ public class HgUiUtil {
             return;
           }
           branchTagInfo.addTags(repo, HgTagBranchCommand.parseResult(result));
+
+          result = tagBranchCommand.collectBookmarks();
+          if (result == null) {
+            indicator.cancel();
+            return;
+          }
+          branchTagInfo.addBookmarks(repo, HgTagBranchCommand.parseResult(result));
         }
       }
 

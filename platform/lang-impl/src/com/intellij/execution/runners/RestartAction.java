@@ -105,8 +105,8 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
 
   public void restart() {
     Project project = myEnvironment.getProject();
-    if (project != null && !ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), myRunner.getRunnerId()))
-      ExecutionManager.getInstance(project).restartRunProfile(project, myExecutor, myRunner, myEnvironment, myDescriptor);
+    if (!ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), myRunner.getRunnerId()))
+      ExecutionManager.getInstance(project).restartRunProfile(myRunner, myEnvironment, myDescriptor);
   }
 
   @Override

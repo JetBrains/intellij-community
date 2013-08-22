@@ -50,8 +50,8 @@ import java.util.List;
 @State(
     name = "DynamicElementsStorage",
     storages = {
-        @Storage( file = StoragePathMacros.PROJECT_FILE),
-        @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/dynamic.xml", scheme = StorageScheme.DIRECTORY_BASED)
+        @Storage(file = StoragePathMacros.PROJECT_FILE),
+        @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/dynamic.xml", scheme = StorageScheme.DIRECTORY_BASED)
 })
 
 public class DynamicManagerImpl extends DynamicManager {

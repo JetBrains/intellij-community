@@ -279,9 +279,11 @@ public class Tool implements SchemeElement {
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
         assert runner != null;
 
-        ExecutionEnvironment executionEnvironment = new ExecutionEnvironmentBuilder().setRunProfile(profile).setProject(project).build();
+        ExecutionEnvironment executionEnvironment = new ExecutionEnvironmentBuilder(project, DefaultRunExecutor.getRunExecutorInstance())
+          .setRunProfile(profile)
+          .build();
         executionEnvironment.setExecutionId(executionId);
-        runner.execute(new DefaultRunExecutor(), executionEnvironment, new ProgramRunner.Callback() {
+        runner.execute(executionEnvironment, new ProgramRunner.Callback() {
           @Override
           public void processStarted(RunContentDescriptor descriptor) {
             ProcessHandler processHandler = descriptor.getProcessHandler();
@@ -315,7 +317,7 @@ public class Tool implements SchemeElement {
   @Nullable
   public GeneralCommandLine createCommandLine(DataContext dataContext) {
     if (StringUtil.isEmpty(getWorkingDirectory())) {
-      setWorkingDirectory(null);
+      setWorkingDirectory("$ProjectFileDir$");
     }
 
     GeneralCommandLine commandLine = new GeneralCommandLine();

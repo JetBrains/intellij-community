@@ -174,15 +174,6 @@ public class TestData implements Cloneable
     return data;
   }
 
-  public boolean isGeneratedName(String s, JavaRunConfigurationModule config) {
-    if (TEST_OBJECT == null) return true;
-    if ((TestType.CLASS.getType().equals(TEST_OBJECT) || TestType.METHOD.getType().equals(TEST_OBJECT)) && getMainClassName().length() == 0)
-      return JavaExecutionUtil.isNewName(s);
-    if (TestType.METHOD.getType().equals(TEST_OBJECT) && getMethodName().length() == 0)
-      return JavaExecutionUtil.isNewName(s);
-    else return Comparing.equal(s, getGeneratedName(config));
-  }
-
   public String getGeneratedName(JavaRunConfigurationModule runconfigurationmodule) {
     if (TestType.PACKAGE.getType().equals(TEST_OBJECT)) if (getPackageName().length() == 0) return "<default>";
     else return getPackageName();

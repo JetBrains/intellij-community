@@ -415,12 +415,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
   @Override
   public ActionCallback show() {
+    LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
     if (myTypeAheadCallback != null) {
       IdeFocusManager.getInstance(myProject).typeAheadUntil(myTypeAheadCallback);
-    }
+    }                         LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
     final ActionCallback result = new ActionCallback();
-
-    LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
 
     final AnCancelAction anCancelAction = new AnCancelAction();
     final JRootPane rootPane = getRootPane();

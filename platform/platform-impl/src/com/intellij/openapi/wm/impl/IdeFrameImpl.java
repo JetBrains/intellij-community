@@ -52,6 +52,7 @@ import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
+import org.java.ayatana.ApplicationMenu;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,6 +133,13 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
         updateBorder();
       }
     });
+    if (SystemInfo.isLinux && Registry.is("linux.native.menu")) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          ApplicationMenu.tryInstall(IdeFrameImpl.this);
+        }
+      });
+    }
   }
 
   private void updateBorder() {

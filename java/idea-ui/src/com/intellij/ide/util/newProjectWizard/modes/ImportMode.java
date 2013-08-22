@@ -66,7 +66,7 @@ public class ImportMode extends WizardMode {
   }
 
   @Nullable
-  protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
+  protected StepSequence createSteps(@NotNull final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
     final StepSequence stepSequence = new StepSequence();
     if (myProviders.length > 1) {
       stepSequence.addCommonStep(new ImportChooserStep(myProviders, stepSequence, context));

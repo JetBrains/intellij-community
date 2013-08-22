@@ -149,6 +149,12 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
       public String getName() {
         return infos.length > 0 ? (String)infos[0] : "Create @Parameterized.Parameters data provider";
       }
+
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return "Fix data provider signature";
+      }
     };
   }
 

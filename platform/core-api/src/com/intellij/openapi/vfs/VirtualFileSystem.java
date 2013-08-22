@@ -172,4 +172,8 @@ public abstract class VirtualFileSystem {
                                           @NotNull String copyName) throws IOException;
 
   public abstract boolean isReadOnly();
+
+  public boolean isCaseSensitive() {
+    return true;
+  }
 }

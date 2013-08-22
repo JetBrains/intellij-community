@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.XmlPatterns;
@@ -163,23 +162,20 @@ public class XmlCompletionContributor extends CompletionContributor {
       final CompletionResultSet newResult = result.withPrefixMatcher(pos >= 0 ? prefix.substring(pos + 1) : prefix);
 
       final XmlFile file = (XmlFile)parameters.getOriginalFile();
-      final List<Pair<String,String>> names = XmlExtension.getExtension(file).getAvailableTagNames(file, tag);
-      for (Pair<String, String> pair : names) {
-        final String name = pair.getFirst();
-        final String ns = pair.getSecond();
-        final LookupElement item = createLookupElement(name, ns, ns, namespacePrefix.isEmpty() ? null : namespacePrefix);
+      final List<XmlExtension.TagInfo> names = XmlExtension.getExtension(file).getAvailableTagNames(file, tag);
+      for (XmlExtension.TagInfo info : names) {
+        final LookupElement item = createLookupElement(info, info.namespace, namespacePrefix.isEmpty() ? null : namespacePrefix);
         newResult.addElement(item);
       }
     }
   }
 
-  public static LookupElement createLookupElement(final String name,
-                                                  final String namespace,
+  public static LookupElement createLookupElement(XmlExtension.TagInfo tagInfo,
                                                   final String tailText, @Nullable String namespacePrefix) {
     LookupElementBuilder builder =
-      LookupElementBuilder.create(Pair.create(name, namespace), name).withInsertHandler(
-        new ExtendedTagInsertHandler(name, namespace, namespacePrefix));
-    if (!StringUtil.isEmpty(namespace)) {
+      LookupElementBuilder.create(tagInfo, tagInfo.name).withInsertHandler(
+        new ExtendedTagInsertHandler(tagInfo.name, tagInfo.namespace, namespacePrefix));
+    if (!StringUtil.isEmpty(tailText)) {
       builder = builder.withTypeText(tailText, true);
     }
     return builder;

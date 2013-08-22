@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.encapsulateFields;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
@@ -509,8 +510,8 @@ public String getAccessorsVisibility() {
 
   private PsiMethod generateMethodPrototype(PsiField field, String methodName, boolean isGetter) {
     PsiMethod prototype = isGetter
-                          ? PropertyUtil.generateGetterPrototype(field)
-                          : PropertyUtil.generateSetterPrototype(field);
+                          ? GenerateMembersUtil.generateGetterPrototype(field)
+                          : GenerateMembersUtil.generateSetterPrototype(field);
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
       PsiIdentifier identifier = factory.createIdentifier(methodName);

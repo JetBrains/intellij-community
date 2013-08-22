@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.StatePreservingNavigatable;
 
 public class OpenSourceUtil {
 
@@ -49,6 +50,19 @@ public class OpenSourceUtil {
     for (Navigatable navigatable : navigatables) {
       if (navigatable.canNavigate()) {
         navigatable.navigate(requestFocus);
+      }
+    }
+  }
+
+  public static void navigate(final boolean requestFocus, final boolean tryNotToScroll, final Navigatable...navigatables) {
+    if (navigatables == null) return;
+    for (Navigatable navigatable : navigatables) {
+      if (navigatable.canNavigate()) {
+        if (tryNotToScroll && navigatable instanceof StatePreservingNavigatable) {
+          ((StatePreservingNavigatable)navigatable).navigate(requestFocus, true);
+        } else {
+          navigatable.navigate(requestFocus);
+        }
       }
     }
   }

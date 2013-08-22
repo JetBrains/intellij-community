@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.util.FileContentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
@@ -98,12 +99,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
       final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
       if (virtualFile != null && virtualFile.isValid()) {
         Collection<Project> projects = ProjectLocator.getInstance().getProjectsForFile(virtualFile);
-        LOG.assertTrue(projects.isEmpty() || projects.contains(myProject), "Trying to get PSI for an alien project. VirtualFile=" +
-                                                                           virtualFile +
-                                                                           ";\n myProject=" +
-                                                                           myProject +
-                                                                           ";\n projects returned: " +
-                                                                           projects);
+        if (!projects.isEmpty() && !projects.contains(myProject)) {
+          LOG.error("Trying to get PSI for an alien project. VirtualFile=" + virtualFile +
+                    ";\n myProject=" + myProject +
+                    ";\n projects returned: " + projects);
+        }
       }
     }
     return psiFile;
@@ -181,5 +181,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   @Override
   public String toString() {
     return super.toString() + " for the project " + myProject + ".";
+  }
+
+  @Override
+  public void reparseFiles(@NotNull Collection<VirtualFile> files, boolean includeOpenFiles) {
+    FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
   }
 }

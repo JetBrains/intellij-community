@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class InspectionEngine {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionEngine");
@@ -81,29 +83,49 @@ public class InspectionEngine {
                                                 final boolean isOnTheFly,
                                                 boolean failFastOnAcquireReadAction,
                                                 @NotNull final ProgressIndicator indicator) {
-    if (tools.isEmpty()) return Collections.emptyList();
-    final List<ProblemDescriptor> resultDescriptors = Collections.synchronizedList(new ArrayList<ProblemDescriptor>());
+    final Map<String, List<ProblemDescriptor>> problemDescriptors = inspectEx(tools, file, iManager, isOnTheFly, failFastOnAcquireReadAction, indicator);
+
+    final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+    for (List<ProblemDescriptor> group : problemDescriptors.values())
+      result.addAll(group);
+    return result;
+  }
+
+  @NotNull
+  public static Map<String, List<ProblemDescriptor>> inspectEx(@NotNull final List<LocalInspectionTool> tools,
+                                                               @NotNull final PsiFile file,
+                                                               @NotNull final InspectionManager iManager,
+                                                               final boolean isOnTheFly,
+                                                               boolean failFastOnAcquireReadAction,
+                                                               @NotNull final ProgressIndicator indicator) {
+    if (tools.isEmpty()) return Collections.emptyMap();
+    final Map<String, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<String, List<ProblemDescriptor>>();
     final List<PsiElement> elements = new ArrayList<PsiElement>();
 
     TextRange range = file.getTextRange();
     final LocalInspectionToolSession session = new LocalInspectionToolSession(file, range.getStartOffset(), range.getEndOffset());
-    Divider.divideInsideAndOutside(file, range.getStartOffset(), range.getEndOffset(), range, elements, Collections.<PsiElement>emptyList(), true, Condition.TRUE);
+    Divider.divideInsideAndOutside(file, range.getStartOffset(), range.getEndOffset(), range, elements, new ArrayList<ProperTextRange>(),
+                                   Collections.<PsiElement>emptyList(), Collections.<ProperTextRange>emptyList(), true, Condition.TRUE);
 
-    boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tools, indicator, failFastOnAcquireReadAction, new Processor<LocalInspectionTool>() {
-      @Override
-      public boolean process(LocalInspectionTool tool) {
-        ProblemsHolder holder = new ProblemsHolder(iManager, file, isOnTheFly);
-        createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, null);
+    boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tools, indicator, failFastOnAcquireReadAction,
+                                                                               new Processor<LocalInspectionTool>() {
+                                                                                 @Override
+                                                                                 public boolean process(LocalInspectionTool tool) {
+                                                                                   ProblemsHolder holder =
+                                                                                     new ProblemsHolder(iManager, file, isOnTheFly);
+                                                                                   createVisitorAndAcceptElements(tool, holder, isOnTheFly,
+                                                                                                                  session, elements, null);
 
-        tool.inspectionFinished(session, holder);
+                                                                                   tool.inspectionFinished(session, holder);
 
-        if (holder.hasResults()) {
-          resultDescriptors.addAll(holder.getResults());
-        }
+                                                                                   if (holder.hasResults()) {
+                                                                                     resultDescriptors
+                                                                                       .put(tool.getShortName(), holder.getResults());
+                                                                                   }
 
-        return true;
-      }
-    });
+                                                                                   return true;
+                                                                                 }
+                                                                               });
 
     return resultDescriptors;
   }
@@ -174,7 +196,7 @@ public class InspectionEngine {
     }
     finally {
       refManager.inspectionReadActionFinished();
-      toolWrapper.cleanup();
+      toolWrapper.cleanup(file.getProject());
       inspectionContext.cleanup();
     }
     return Collections.emptyList();

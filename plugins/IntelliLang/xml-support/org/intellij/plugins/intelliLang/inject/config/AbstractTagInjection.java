@@ -18,11 +18,13 @@ package org.intellij.plugins.intelliLang.inject.config;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.PsiElement;
+import org.intellij.plugins.intelliLang.inject.xml.XmlLanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.util.StringMatcher;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.jaxen.JaxenException;
 import org.jaxen.XPath;
 import org.jdom.Element;
@@ -58,7 +60,7 @@ public class AbstractTagInjection extends BaseInjection {
   private boolean myApplyToSubTagTexts;
 
   public AbstractTagInjection() {
-    super(LanguageInjectionSupport.XML_SUPPORT_ID);
+    super(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
   }
 
   @NotNull
@@ -219,5 +221,14 @@ public class AbstractTagInjection extends BaseInjection {
 
   public void setApplyToSubTagTexts(final boolean applyToSubTagTexts) {
     myApplyToSubTagTexts = applyToSubTagTexts;
+  }
+
+  @Override
+  public boolean acceptForReference(PsiElement element) {
+    if (element instanceof XmlAttributeValue) {
+      PsiElement parent = element.getParent();
+      return parent instanceof XmlAttribute && acceptsPsiElement(parent);
+    }
+    else return element instanceof XmlTag && acceptsPsiElement(element);
   }
 }

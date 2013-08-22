@@ -70,17 +70,22 @@ class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationP
     }
 
     if (tag.getName().equalsIgnoreCase("img") || tag.getName().equalsIgnoreCase("script")) {
-      String src = tag.getAttributeValue("src");
-      if (StringUtil.isEmpty(src)) {
-        return null;
-      }
-      else {
-        assert src != null;
-        return StringUtil.shortenPathWithEllipsis(src, MAX_TEXT_LENGTH, true);
-      }
+      return getPathDescription(tag.getAttributeValue("src"));
+    }
+    else if (tag.getName().equalsIgnoreCase("link")) {
+      return getPathDescription(tag.getAttributeValue("href"));
     }
     else {
       return StringUtil.nullize(normalizeSpacesAndShortenIfLong(tag.getValue().getTrimmedText()));
+    }
+  }
+
+  private static String getPathDescription(String src) {
+    if (StringUtil.isEmpty(src)) {
+      return null;
+    }
+    else {
+      return StringUtil.shortenPathWithEllipsis(src, MAX_TEXT_LENGTH, true);
     }
   }
 

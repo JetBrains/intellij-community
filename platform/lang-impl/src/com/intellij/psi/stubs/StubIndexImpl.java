@@ -19,7 +19,6 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
@@ -29,7 +28,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -140,20 +138,15 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final MapIndexStorage<K, StubIdList> storage = ProgressManager
-          .getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, StubIdList>, IOException>() {
-            @Override
-            public MapIndexStorage<K, StubIdList> compute() throws IOException {
-              FileBasedIndexImpl.configureIndexDataLoadingProgress(ProgressManager.getInstance().getProgressIndicator());
+        final MapIndexStorage<K, StubIdList> storage = new MapIndexStorage<K, StubIdList>(
+          IndexInfrastructure.getStorageFile(indexKey),
+          extension.getKeyDescriptor(),
+          new StubIdExternalizer(),
+          extension.getCacheSize(),
+          false,
+          extension instanceof StringStubIndexExtension && ((StringStubIndexExtension)extension).traceKeyHashToVirtualFileMapping()
+        );
 
-              return new MapIndexStorage<K, StubIdList>(
-                IndexInfrastructure.getStorageFile(indexKey),
-                extension.getKeyDescriptor(),
-                new StubIdExternalizer(),
-                extension.getCacheSize()
-              );
-            }
-          }, LangBundle.message("compacting.indices.title"), false, null);
         final MemoryIndexStorage<K, StubIdList> memStorage = new MemoryIndexStorage<K, StubIdList>(storage);
         myIndices.put(indexKey, new MyIndex<K>(memStorage));
         break;
@@ -294,11 +287,16 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   @Override
   public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project, Processor<K> processor) {
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
+    return processAllKeys(indexKey, processor, GlobalSearchScope.allScope(project), null);
+  }
+
+  public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, Processor<K> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
     final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
     try {
-      return index.processAllKeys(processor);
+      return index.processAllKeys(processor, idFilter);
     }
     catch (StorageException e) {
       forceRebuild(e);

@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.PathMacroManager;
@@ -31,7 +30,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
@@ -219,9 +217,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
       throw CantRunException.noJdkForModule(module);
     }
 
-    final JavaCommandLineState state = createCommandLineState(environment, module);
-    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
-    return state;
+    return createCommandLineState(environment, module);
 
   }
 
@@ -229,6 +225,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     return new MvcCommandLineState(environment, cmdLine, module, false);
   }
 
+  @NotNull
   public SettingsEditor<? extends MvcRunConfiguration> getConfigurationEditor() {
     return new MvcRunConfigurationEditor<MvcRunConfiguration>();
   }

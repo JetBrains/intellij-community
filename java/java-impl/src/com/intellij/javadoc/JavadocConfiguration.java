@@ -21,8 +21,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.RegexpFilter;
-import com.intellij.execution.filters.TextConsoleBuilder;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -45,7 +43,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -95,7 +92,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return new MyJavaCommandLineState(myProject, myGenerationScope);
+    return new MyJavaCommandLineState(myProject, myGenerationScope, env);
   }
 
   public String getName() {
@@ -134,14 +131,12 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
     private final Project myProject;
     @NonNls private static final String INDEX_HTML = "index.html";
 
-    public MyJavaCommandLineState(Project project, AnalysisScope generationOptions) {
-      super(null);
+    public MyJavaCommandLineState(Project project, AnalysisScope generationOptions, ExecutionEnvironment env) {
+      super(env);
       myGenerationOptions = generationOptions;
       myProject = project;
-      TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-      builder.addFilter(new RegexpFilter(project, "$FILE_PATH$:$LINE$:[^\\^]+\\^"));
-      builder.addFilter(new RegexpFilter(project, "$FILE_PATH$:$LINE$: warning - .+$"));
-      setConsoleBuilder(builder);
+      addConsoleFilters(new RegexpFilter(project, "$FILE_PATH$:$LINE$:[^\\^]+\\^"),
+                        new RegexpFilter(project, "$FILE_PATH$:$LINE$: warning - .+$"));
     }
 
     protected GeneralCommandLine createCommandLine() throws ExecutionException {
@@ -352,7 +347,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       if (file instanceof PsiJavaFile) {
         final PsiJavaFile javaFile = (PsiJavaFile)file;
         final String packageName = javaFile.getPackageName();
-        if (containsPackagePrefix(module, packageName) || (packageName.length() == 0 && !(javaFile instanceof JspFile)) || !myUsePackageNotation) {
+        if (containsPackagePrefix(module, packageName) || (packageName.length() == 0 && !(javaFile instanceof ServerPageFile)) || !myUsePackageNotation) {
           mySourceFiles.add(FileUtil.toSystemIndependentName(fileOrDir.getPath()));
         }
         else {

@@ -128,10 +128,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     final RemoteConnection debugParameters = DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerRunnerSettings, false);
 
-    RunnerSettings<JDOMExternalizable> runnerSettings = new RunnerSettings<JDOMExternalizable>(debuggerRunnerSettings, null);
-
-    final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(new ExecutionEnvironment(new MockConfiguration(), myProject,
-                                                                                                        runnerSettings, null, null)){
+    ExecutionEnvironment environment = new ExecutionEnvironment(new MockConfiguration(), DefaultDebugExecutor.getDebugExecutorInstance(),
+                                                                myProject, debuggerRunnerSettings);
+    final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(environment){
       @Override
       protected JavaParameters createJavaParameters() {
         return javaParameters;
@@ -149,7 +148,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       @Override
       public void run() {
         try {
-          myDebuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(new DefaultDebugExecutor(),
+          myDebuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(DefaultDebugExecutor.getDebugExecutorInstance(),
             runner, new MockConfiguration(), javaCommandLineState, debugParameters, false);
         }
         catch (ExecutionException e) {
@@ -186,10 +185,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     debuggerRunnerSettings.LOCAL = true;
     debuggerRunnerSettings.DEBUG_PORT = "3456";
 
-    RunnerSettings<JDOMExternalizable> runnerSettings = new RunnerSettings<JDOMExternalizable>(debuggerRunnerSettings, null);
-
-    final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(new ExecutionEnvironment(new MockConfiguration(), myProject,
-                                                                                                        runnerSettings, null, null)) {
+    ExecutionEnvironment environment = new ExecutionEnvironment(new MockConfiguration(), DefaultDebugExecutor.getDebugExecutorInstance(), myProject,
+                                                                debuggerRunnerSettings);
+    final JavaCommandLineState javaCommandLineState = new JavaCommandLineState(environment) {
       @Override
       protected JavaParameters createJavaParameters() {
         return javaParameters;
@@ -280,8 +278,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
   protected DebuggerSession attachVM(final RemoteConnection remoteConnection, final boolean pollConnection)
           throws InvocationTargetException, InterruptedException {
-    final RunnerSettings<JDOMExternalizable> runnerSettings = new RunnerSettings<JDOMExternalizable>(null, null);
-    final RemoteState remoteState = new RemoteStateState(myProject, remoteConnection, runnerSettings, null);
+    final RemoteState remoteState = new RemoteStateState(myProject, remoteConnection);
 
     final DebuggerSession[] debuggerSession = new DebuggerSession[1];
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -441,7 +438,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   protected DebuggerSession attachVirtualMachine(RunProfileState state, RemoteConnection remoteConnection, boolean pollConnection) throws ExecutionException {
-    return DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(new DefaultDebugExecutor(), new GenericDebuggerRunner(), new MockConfiguration(), state, remoteConnection, pollConnection);
+    return DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(DefaultDebugExecutor.getDebugExecutorInstance(),
+                                                                           new GenericDebuggerRunner(),
+                                                                           new MockConfiguration(), state, remoteConnection, pollConnection);
   }
 
   private static class MockConfiguration implements ModuleRunConfiguration {
@@ -466,6 +465,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    @NotNull
     @Override
     public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       return null;  //To change body of implemented methods use File | Settings | File Templates.
@@ -483,12 +483,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     }
 
     @Override
-    public JDOMExternalizable createRunnerSettings(final ConfigurationInfoProvider provider) {
+    public ConfigurationPerRunnerSettings createRunnerSettings(final ConfigurationInfoProvider provider) {
       return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(final ProgramRunner runner) {
+    public SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(final ProgramRunner runner) {
       return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

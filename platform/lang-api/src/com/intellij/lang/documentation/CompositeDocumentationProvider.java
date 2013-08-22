@@ -119,11 +119,15 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     for ( DocumentationProvider provider : myProviders ) {
       List<String> result = provider.getUrlFor(element,originalElement);
-      if ( result != null ) return result;
+      if ( result != null ) {
+        return result;
+      }
     }
     for (DocumentationProvider provider : Extensions.getExtensions(EP_NAME)) {
       final List<String> result = provider.getUrlFor(element, originalElement);
-      if (result != null) return result;
+      if (result != null) {
+        return result;
+      }
     }
     return null;
   }
@@ -132,11 +136,15 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     for ( DocumentationProvider provider : myProviders ) {
       String result = provider.generateDoc(element,originalElement);
-      if ( result != null ) return result;
+      if ( result != null ) {
+        return result;
+      }
     }
     for (DocumentationProvider provider : Extensions.getExtensions(EP_NAME)) {
       final String result = provider.generateDoc(element, originalElement);
-      if (result != null) return result;
+      if (result != null) {
+        return result;
+      }
     }
     return null;
   }
@@ -145,11 +153,15 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     for ( DocumentationProvider provider : myProviders ) {
       PsiElement result = provider.getDocumentationElementForLookupItem(psiManager,object,element);
-      if ( result != null ) return result;
+      if ( result != null ) {
+        return result;
+      }
     }
     for (DocumentationProvider provider : Extensions.getExtensions(EP_NAME)) {
       final PsiElement result = provider.getDocumentationElementForLookupItem(psiManager, object, element);
-      if (result != null) return result;
+      if (result != null) {
+        return result;
+      }
     }
     return null;
   }
@@ -183,7 +195,9 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
     for (DocumentationProvider provider : myProviders) {
       if (provider instanceof ExternalDocumentationProvider) {
         final String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(project, element, docUrls);
-        if (doc != null) return doc;
+        if (doc != null) {
+          return doc;
+        }
       }
     }
     return null;

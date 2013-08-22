@@ -135,6 +135,13 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
     }, false);
   }
 
+  public void testJavadocGenericsLink() throws Exception {
+    doTest(null, new ParameterInfoImpl[] {
+      new ParameterInfoImpl(-1, "y", JavaPsiFacade.getElementFactory(getProject()).createTypeFromText("java.util.List<java.lang.String>", null)),
+      new ParameterInfoImpl(0, "a", PsiType.BOOLEAN)
+    }, false);
+  }
+
   public void testParamNameSameAsFieldName() throws Exception {
     doTest(null, new ParameterInfoImpl[] {
       new ParameterInfoImpl(0, "fieldName", PsiType.INT)
@@ -149,6 +156,13 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
   }
 
   public void testParamJavadoc() throws Exception {
+    doTest(null, new ParameterInfoImpl[] {
+      new ParameterInfoImpl(1, "z", PsiType.INT),
+      new ParameterInfoImpl(0, "y", PsiType.INT)
+    }, false);
+  }
+
+  public void testParamJavadoc0() throws Exception {
     doTest(null, new ParameterInfoImpl[] {
       new ParameterInfoImpl(1, "z", PsiType.INT),
       new ParameterInfoImpl(0, "y", PsiType.INT)
@@ -348,6 +362,10 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
     doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
+  public void testVisibilityOfOverriddenMethod() throws Exception {
+    doTest(PsiModifier.PACKAGE_LOCAL, "foo", "void", new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+  }
+
   public void testRemoveExceptions() throws Exception {
     doTest(null, null, "void", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
@@ -414,7 +432,7 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
                                  method.getName(),
                                  CanonicalTypes.createTypeWrapper(PsiType.VOID), new ParameterInfoImpl[]{
         new ParameterInfoImpl(0, parameters[0].getName(), parameters[0].getType()),
-        new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN, "true")}, null,
+        new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN)}, null,
                                  propagateParametersMethods, null).run();
     @NonNls String after = basePath + "_after.java";
     checkResultByFile(after);

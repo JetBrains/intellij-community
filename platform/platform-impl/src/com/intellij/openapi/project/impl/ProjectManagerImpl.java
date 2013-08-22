@@ -292,7 +292,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
                                     boolean isDefault,
                                     boolean isOptimiseTestLoadSpeed) {
     return isDefault ? new DefaultProject(this, "", isOptimiseTestLoadSpeed, projectName)
-                     : new ProjectImpl(this, filePath, isOptimiseTestLoadSpeed, projectName);
+                     : new ProjectImpl(this, new File(filePath).getAbsolutePath(), isOptimiseTestLoadSpeed, projectName);
   }
 
   private static void scheduleDispose(final ProjectImpl project) {

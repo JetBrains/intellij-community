@@ -25,8 +25,15 @@
 
   <extensionPoints>
     <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
+    <extensionPoint name="resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"/>
   </extensionPoints>
 
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleRepositoriesContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDependenciesContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleRootContributor"/>
+  </extensions>
+  
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
@@ -41,6 +48,7 @@
     <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectOpenProcessor"/>
     <configurationType implementation="org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType"/>
 
+    <externalSystemConfigLocator implementation="org.jetbrains.plugins.gradle.service.settings.GradleConfigLocator"/>
     <externalSystemManager implementation="org.jetbrains.plugins.gradle.GradleManager"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
@@ -60,23 +68,11 @@
     <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
     <defaultImportContributor implementation="org.jetbrains.plugins.gradle.config.GradleDefaultImportContributor"/>
     <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.gradle.config.GradleGroovyConfigNotification"/>
+    
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptContributor"/>
+    <methodDescriptor class="org.gradle.api.Project" name="apply">
+      <namedArgument name="plugin" values="java,groovy,idea,eclipse,scala"/>
+    </methodDescriptor>
   </extensions>
-
-  <actions>
-
-    <!-- Tool window toolbar actions -->
-    <action id="Gradle.RefreshProject" class="com.intellij.openapi.externalSystem.action.RefreshAllExternalProjectsAction" icon="AllIcons.Actions.Refresh"/>
-    <action id="Gradle.OpenScript" class="org.jetbrains.plugins.gradle.action.GradleOpenScriptAction" icon="GradleIcons.GradleNavigate"/>
-    <action id="Gradle.Help.ToolWindow" class="org.jetbrains.plugins.gradle.action.GradleToolWindowHelpAction" icon="AllIcons.Actions.Help"/>
-    <group id="Gradle.ChangeActionsToolbar">
-      <reference id="Gradle.RefreshProject"/>
-      <reference id="Gradle.OpenScript"/>
-      <reference id="Gradle.Help.ToolWindow"/>
-    </group>
-
-    <group id="Gradle.TasksGroup">
-      <reference ref="RunContextGroup"/>
-    </group>
-  </actions>
-
+  
 </idea-plugin>

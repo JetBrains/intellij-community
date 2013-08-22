@@ -389,7 +389,7 @@ class Foo {
 
   @Override
   protected void invokeTestRunnable(final Runnable runnable) throws Exception {
-    if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar"]) {
+    if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar", "test escape string characters in soutv"]) {
       runnable.run();
       return;
     }
@@ -614,6 +614,44 @@ class Foo {
 }"""
     myFixture.type('\t')
     assert myFixture.lookupElementStrings == ['value', 'value1']
+  }
+
+  public void "test invoke surround template by tab"() {
+    myFixture.configureByText "a.txt", "B<caret>"
+    myFixture.type('\t')
+    myFixture.checkResult("{<caret>}")
+  }
+
+  public void "test escape string characters in soutv"() {
+    myFixture.configureByText "a.java", """
+class Foo {
+  {
+    soutv<caret>
+  }
+}
+"""
+    myFixture.type('\t"a"')
+    myFixture.checkResult """
+class Foo {
+  {
+      System.out.println("\\"a\\" = " + "a"<caret>);
+  }
+}
+"""
+  }
+
+  public void "test stop at SELECTION when invoked surround template by tab"() {
+    myFixture.configureByText "a.txt", "<caret>"
+    
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("xxx", "user", 'foo $ARG$ bar $END$ goo $SELECTION$ after');
+    template.addVariable("ARG", "", "", true);
+    
+    manager.startTemplate(editor, template);
+    myFixture.type('arg')
+    state.nextTab()
+    assert !state
+    checkResultByText 'foo arg bar  goo <caret> after';
   }
 
 }

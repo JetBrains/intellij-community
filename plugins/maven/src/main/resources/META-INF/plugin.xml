@@ -192,6 +192,14 @@
       <param name="filters/filter" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
     </pluginDescriptor>
 
+    <pluginDescriptor mavenId="org.apache.maven.plugins:maven-assembly-plugin">
+      <param name="descriptors/descriptor" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
+      <param name="encoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
+      <param name="filters/filter" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
+      <param name="formats/format" values="dir, zip, tar, tar.gz, tar.bz2" soft="true" />
+      <param name="tarLongFileMode" values="warn, fail, truncate, gnu, omit" />
+    </pluginDescriptor>
+
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-invoker-plugin">
       <param name="extraArtifacts/extraArtifact" refProvider="org.jetbrains.idea.maven.dom.references.MavenDependencyReferenceProvider"/>
       <param name="encoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
@@ -236,6 +244,9 @@
       <property name="buildNumber"/>
       <property name="timestamp"/>
     </pluginDescriptor>
+
+    <pluginDescriptor mavenId="org.codehaus.mojo:build-helper-maven-plugin" goal="reserve-network-port"
+                      propertyGenerator="org.jetbrains.idea.maven.plugins.buildHelper.MavenBuildHelperPropertyGenerator"/>
 
     <pluginDescriptor mavenId="org.codehaus.mojo:sql-maven-plugin">
       <param name="sqlCommand" language="SQL"/>
@@ -298,6 +309,10 @@
     <action id="Maven.ReimportProject" class="org.jetbrains.idea.maven.project.actions.ReimportProjectAction"
             text="Reimport" description="Reimport selected Maven projects"
             icon="AllIcons.Actions.Refresh">
+    </action>
+
+    <action id="Maven.ShowEffectivePom" class="org.jetbrains.idea.maven.project.actions.MavenShowEffectivePom"
+            text="Show Effective POM" description="Generate and show effective POM">
     </action>
 
     <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersAction"
@@ -513,6 +528,7 @@
       <separator/>
       <reference id="Maven.DownloadAllGroup"/>
       <separator/>
+      <reference id="Maven.ShowEffectivePom"/>
     </group>
 
     <group id="Maven.NavigatorProjectMenu" popup="true">

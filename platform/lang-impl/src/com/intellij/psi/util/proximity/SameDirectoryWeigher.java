@@ -18,6 +18,8 @@ package com.intellij.psi.util.proximity;
 import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,10 @@ public class SameDirectoryWeigher extends ProximityWeigher {
   });
 
   private static PsiDirectory getParentDirectory(PsiElement element) {
+    PsiFile file = InjectedLanguageUtil.getTopLevelFile(element);
+    if (file != null) {
+      element = file;
+    }
     while (element != null && !(element instanceof PsiDirectory)) {
       element = element.getParent();
     }

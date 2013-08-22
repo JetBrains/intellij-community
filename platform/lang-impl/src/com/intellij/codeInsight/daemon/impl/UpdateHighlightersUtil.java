@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -163,7 +164,7 @@ public class UpdateHighlightersUtil {
     if (info.getStartOffset() < startOffset || info.getEndOffset() > endOffset) return;
 
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
-    final SeverityRegistrar severityRegistrar = SeverityUtil.getSeverityRegistrar(project);
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     final boolean myInfoIsError = isSevere(info, severityRegistrar);
     Processor<HighlightInfo> otherHighlightInTheWayProcessor = new Processor<HighlightInfo>() {
       @Override
@@ -235,7 +236,7 @@ public class UpdateHighlightersUtil {
     final MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
     assertMarkupConsistent(markup, project);
 
-    final SeverityRegistrar severityRegistrar = SeverityUtil.getSeverityRegistrar(project);
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
     ContainerUtil.quickSort(infos, BY_START_OFFSET_NODUPS);
 
@@ -308,7 +309,7 @@ public class UpdateHighlightersUtil {
                                      final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final SeverityRegistrar severityRegistrar = SeverityUtil.getSeverityRegistrar(project);
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
     DaemonCodeAnalyzerImpl.processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), new Processor<HighlightInfo>() {
       @Override
@@ -434,8 +435,8 @@ public class UpdateHighlightersUtil {
         if (info != finalHighlighter.getErrorStripeTooltip()) {
           finalHighlighter.setErrorStripeTooltip(info);
         }
-        GutterIconRenderer renderer = info.getGutterIconRenderer();
-        finalHighlighter.setGutterIconRenderer(renderer);
+        GutterMark renderer = info.getGutterIconRenderer();
+        finalHighlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
 
         ranges2markersCache.put(finalInfoRange, info.highlighter);
         if (info.quickFixActionRanges != null) {

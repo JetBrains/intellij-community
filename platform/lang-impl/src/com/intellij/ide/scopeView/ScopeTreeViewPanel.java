@@ -41,21 +41,26 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.packageDependencies.DefaultScopesProvider;
@@ -499,6 +504,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   }
 
   private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+
+    private WolfTheProblemSolver myWolfTheProblemSolver = WolfTheProblemSolver.getInstance(myProject);
+
     @Override
     public void customizeCellRenderer(JTree tree,
                                       Object value,
@@ -522,6 +530,30 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         }
         final PsiElement psiElement = node.getPsiElement();
         textAttributes.setForegroundColor(CopyPasteManager.getInstance().isCutElement(psiElement) ? CopyPasteManager.CUT_COLOR : node.getColor());
+        if (getCurrentScope() != DefaultScopesProvider.getInstance(myProject).getProblemsScope()) {
+          final PsiFile containingFile = psiElement != null ? psiElement.getContainingFile() : null;
+          final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
+          boolean isProblem;
+          if (containingFile != null) {
+            isProblem = myWolfTheProblemSolver.isProblemFile(virtualFile);
+          }
+          else if (virtualFile != null) {
+            isProblem = myWolfTheProblemSolver.hasProblemFilesBeneath(new Condition<VirtualFile>() {
+              @Override
+              public boolean value(VirtualFile file) {
+                return VfsUtilCore.isAncestor(virtualFile, file, false);
+              }
+            });
+          }
+          else {
+            final Module module =  node instanceof ModuleNode ? ((ModuleNode)node).getModule() : null;
+            isProblem = module != null && myWolfTheProblemSolver.hasProblemFilesBeneath(module);
+          }
+          if (isProblem) {
+            textAttributes.setEffectColor(JBColor.RED);
+            textAttributes.setEffectType(EffectType.WAVE_UNDERSCORE);
+          }
+        }
         append(node.toString(), SimpleTextAttributes.fromTextAttributes(textAttributes));
 
         String oldToString = toString();

@@ -174,7 +174,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     doSetValue(s, getPolicy());
   }
 
-  private void doSetValue(final String s, XmlPsiPolicy policy) throws IncorrectOperationException {
+  public void doSetValue(final String s, XmlPsiPolicy policy) throws IncorrectOperationException {
     final ASTNode firstEncodedElement = policy.encodeXmlTextContents(s, this);
 
     if (firstEncodedElement == null) {

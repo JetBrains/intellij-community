@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.completion.PrefixMatcher;
@@ -38,7 +39,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
@@ -68,6 +68,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -138,6 +139,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private volatile LookupArranger myArranger;
   private LookupArranger myPresentableArranger;
   private final Map<LookupElement, PrefixMatcher> myMatchers = new ConcurrentHashMap<LookupElement, PrefixMatcher>(
+    ContainerUtil.<LookupElement>identityStrategy());
+  private final Map<LookupElement, Font> myCustomFonts = new ConcurrentWeakHashMap<LookupElement, Font>(
     ContainerUtil.<LookupElement>identityStrategy());
   private LookupHint myElementHint = null;
   private final Alarm myHintAlarm = new Alarm();
@@ -337,9 +340,19 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public LookupElementPresentation updateLookupWidth(LookupElement item) {
     final LookupElementPresentation presentation = renderItemApproximately(item);
-    int maxWidth = myCellRenderer.updateMaximumWidth(presentation);
+    final Font customFont = myCellRenderer.getFontAbleToDisplay(presentation);
+    if (customFont != null) {
+      myCustomFonts.put(item, customFont);
+    }
+    int maxWidth = myCellRenderer.updateMaximumWidth(presentation, item);
     myLookupTextWidth = Math.max(maxWidth, myLookupTextWidth);
     return presentation;
+  }
+
+  @Nullable
+  public Font getCustomFont(LookupElement item, boolean bold) {
+    Font font = myCustomFonts.get(item);
+    return font == null ? null : bold ? font.deriveFont(Font.BOLD) : font;
   }
 
   public void requestResize() {
@@ -570,7 +583,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
     Rectangle candidate = new Rectangle(location, dim);
     ScreenUtil.cropRectangleToFitTheScreen(candidate);
-    
+
     SwingUtilities.convertPointFromScreen(location, rootPane.getLayeredPane());
     return new Rectangle(location.x, location.y, dim.width, candidate.height);
   }
@@ -596,7 +609,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     final PsiFile file = getPsiFile();
-    boolean writableOk = file == null || WriteCommandAction.ensureFilesWritable(myProject, Arrays.asList(file));
+    boolean writableOk = file == null || FileModificationService.getInstance().prepareFileForWrite(file);
     if (myDisposed) { // ensureFilesWritable could close us by showing a dialog
       return;
     }
@@ -676,14 +689,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       EditorModificationUtil.deleteSelectedText(myEditor);
       final int caretOffset = myEditor.getCaretModel().getOffset();
       int lookupStart = caretOffset - prefix;
-  
+
       int len = document.getTextLength();
       LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,
                      "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
       LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
 
       document.replaceString(lookupStart, caretOffset, lookupString);
-  
+
       int offset = lookupStart + lookupString.length();
       myEditor.getCaretModel().moveToOffset(offset);
       myEditor.getSelectionModel().removeSelection();
@@ -697,7 +710,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (item.isCaseSensitive()) {
       return lookupString;
     }
-    
+
     final String prefix = itemPattern(item);
     final int length = prefix.length();
     if (length == 0 || !StringUtil.startsWithIgnoreCase(lookupString, prefix)) return lookupString;

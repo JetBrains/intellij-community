@@ -20,7 +20,10 @@ import com.intellij.openapi.command.AbnormalCommandTerminationException;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
@@ -351,6 +354,14 @@ public class CodeEditUtil {
   public static void setNodeGenerated(final ASTNode next, final boolean value) {
     if (next == null) return;
     next.putCopyableUserData(GENERATED_FLAG, value ? true : null);
+  }
+
+  public static void setNodeGeneratedRecursively(final ASTNode next, final boolean value) {
+    if (next == null) return;
+    setNodeGenerated(next, value);
+    for (ASTNode child = next.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      setNodeGeneratedRecursively(child, value);
+    }
   }
 
   public static void setOldIndentation(final TreeElement treeElement, final int oldIndentation) {

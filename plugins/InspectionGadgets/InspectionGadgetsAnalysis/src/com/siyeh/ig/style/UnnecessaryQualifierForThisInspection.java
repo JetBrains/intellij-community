@@ -64,6 +64,12 @@ public class UnnecessaryQualifierForThisInspection
         "unnecessary.qualifier.for.this.remove.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

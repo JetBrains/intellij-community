@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -129,7 +130,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
           caretModel.moveToOffset(myLtrSelection ? myReplacedTextRange.getEndOffset() : myReplacedTextRange.getStartOffset());
         }
         else {
-          if (myLtrSelection) {
+          if (myLtrSelection || editor instanceof EditorWindow) {
             editor.getSelectionModel().setSelection(myReplacedTextRange.getStartOffset(), myReplacedTextRange.getEndOffset());
           }
           else {

@@ -29,8 +29,8 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
   private static final RefEntryPointFilter myFilter = new RefEntryPointFilter();
   private QuickFixAction[] myQuickFixActions;
 
-  public DummyEntryPointsPresentation(UnusedDeclarationInspection inspection, @NotNull InspectionToolWrapper toolWrapper) {
-    super(toolWrapper);
+  public DummyEntryPointsPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
+    super(toolWrapper, context);
   }
 
   @Override

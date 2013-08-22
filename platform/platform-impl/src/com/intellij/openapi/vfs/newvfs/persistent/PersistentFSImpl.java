@@ -338,7 +338,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   private static boolean namesEqual(@NotNull VirtualFileSystem fs, @NotNull String n1, String n2) {
-    return ((NewVirtualFileSystem)fs).isCaseSensitive() ? n1.equals(n2) : n1.equalsIgnoreCase(n2);
+    return fs.isCaseSensitive() ? n1.equals(n2) : n1.equalsIgnoreCase(n2);
   }
 
   @Override

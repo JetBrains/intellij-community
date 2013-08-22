@@ -23,6 +23,8 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
@@ -61,14 +63,19 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       }
     """)
     type('i')
-    assertContains("iterable", "if", "int")
+    def les = myFixture.lookupElementStrings
+    assert 'iterable' in les
+    assert 'if' in les
+    assert 'int' in les
 
     type('t')
     assertContains "iterable"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     type('er')
-    assertContains "iterable", "iter"
+    les = myFixture.lookupElementStrings
+    assert 'iterable' in les
+    assert 'iter' in les
     assertEquals 'iterable', lookup.currentItem.lookupString
     assert lookup.focused
 
@@ -1424,5 +1431,67 @@ class Foo {
     joinCompletion()
     assert lookup
   }
+
+  public void "test typing during restart commit document"() {
+    def longText = "\nfoo(); bar();" * 100
+    myFixture.configureByText "a.java", "class Foo { void foo(int ab, int abde) { <caret>; $longText }}"
+    myFixture.type('a')
+    joinAutopopup()
+    myFixture.type('b')
+    myTester.joinCommit()
+    myFixture.type('c')
+    joinCompletion()
+    assert !lookup
+  }
+
+  public void "test no name autopopup in live template"() {
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    myFixture.configureByText 'a.java', '''class F {
+  String nameContainingIdentifier;
+<caret>
+}'''
+
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("m", "user", 'void foo(String $V1$) {}');
+    template.addVariable("V1", "", '"s"', true);
+
+    edt {
+      CommandProcessor.instance.executeCommand project, {manager.startTemplate(myFixture.editor, template)}, null, null
+    }
+
+    type('name')
+    assert !myFixture.lookupElementStrings
+    assert !lookup
+  }
+
+  public void "test template prefix is better than middle matches"() {
+    myFixture.configureByText "a.java", """
+class Cls {
+  void foo() {
+    <caret>
+  }
+  void mySout() {}
+}
+""" 
+    type('sout')
+    myFixture.assertPreferredCompletionItems 0, 'sout', 'mySout'
+  }
+
+  public void "test single overriding getter"() {
+    myFixture.configureByText "a.java", """
+public class Foo {
+    public int getField() {}
+}
+
+class X extends Foo {
+    int field;
+
+    <caret>
+}
+"""
+    type 'getf'
+    assert myFixture.lookupElementStrings == ['public int getField']
+  }
+
 
 }

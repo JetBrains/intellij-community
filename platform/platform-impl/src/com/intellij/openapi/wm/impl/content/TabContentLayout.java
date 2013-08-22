@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -328,7 +328,7 @@ class TabContentLayout extends ContentLayout {
       }
       
       if (image != null) {
-        g.drawImage(image, isIdVisible() ? r.x : r.x - 2, r.y, null);
+        UIUtil.drawImage(g, image, isIdVisible() ? r.x : r.x - 2, r.y, null);
       }
       
       prevSelected = each.isSelected();

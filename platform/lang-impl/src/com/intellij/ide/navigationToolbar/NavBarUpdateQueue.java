@@ -117,7 +117,9 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
 
   void restartRebuild() {
     myUserActivityAlarm.cancelAllRequests();
-    myUserActivityAlarm.addRequest(myUserActivityAlarmRunnable, Registry.intValue("navBar.userActivityMergeTime"));
+    if (!myUserActivityAlarm.isDisposed()) {
+      myUserActivityAlarm.addRequest(myUserActivityAlarmRunnable, Registry.intValue("navBar.userActivityMergeTime"));
+    }
   }
 
   private void processUserActivity() {

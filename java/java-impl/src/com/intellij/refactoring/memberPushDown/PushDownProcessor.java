@@ -20,6 +20,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -87,7 +88,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
-    UsageInfo[] usagesIn = refUsages.get();
+    final UsageInfo[] usagesIn = refUsages.get();
     final PushDownConflicts pushDownConflicts = new PushDownConflicts(myClass, myMemberInfos);
     pushDownConflicts.checkSourceClassConflicts();
 
@@ -115,14 +116,20 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
         } else if (answer != 1) return false;
       }
     }
-    for (UsageInfo usage : usagesIn) {
-      final PsiElement element = usage.getElement();
-      if (element instanceof PsiClass) {
-        boolean canceled = pushDownConflicts.checkTargetClassConflicts((PsiClass)element, usagesIn.length > 1, element);
-        if (canceled) return false;
+    Runnable runnable = new Runnable() {
+      public void run() {
+        for (UsageInfo usage : usagesIn) {
+          final PsiElement element = usage.getElement();
+          if (element instanceof PsiClass) {
+            pushDownConflicts.checkTargetClassConflicts((PsiClass)element, usagesIn.length > 1, element);
+          }
+        }
       }
-    }
+    };
 
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
+      return false;
+    }
     return showConflicts(pushDownConflicts.getConflicts(), usagesIn);
   }
 

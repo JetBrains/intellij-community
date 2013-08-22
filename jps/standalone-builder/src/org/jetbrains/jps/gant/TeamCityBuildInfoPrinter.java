@@ -50,27 +50,42 @@ public class TeamCityBuildInfoPrinter implements BuildInfoPrinter {
   }
 
   @Override
-  public void printProgressMessage(JpsGantProjectBuilder project, String message) {
+  public void printProgressMessage(JpsGantProjectBuilder builder, String message) {
     String escapedMessage = escape(message);
-    project.info("##teamcity[progressMessage '" + escapedMessage + "']");
+    builder.info("##teamcity[progressMessage '" + escapedMessage + "']");
   }
 
   @Override
-  public void printCompilationErrors(JpsGantProjectBuilder project, String compilerName, String messages) {
+  public void printBlockOpenedMessage(JpsGantProjectBuilder builder, String blockId) {
+    builder.info("##teamcity[blockOpened name='" + escape(blockId) + "']");
+  }
+
+  @Override
+  public void printBlockClosedMessage(JpsGantProjectBuilder builder, String blockId) {
+    builder.info("##teamcity[blockClosed name='" + escape(blockId) + "']");
+  }
+
+  @Override
+  public void printStatisticsMessage(JpsGantProjectBuilder builder, String key, String value) {
+    builder.info("##teamcity[buildStatisticValue key='" + escape(key) + "' value='" + escape(value) + "']");
+  }
+
+  @Override
+  public void printCompilationErrors(JpsGantProjectBuilder builder, String compilerName, String messages) {
     String escapedCompiler = escape(compilerName);
     String escapedOutput = escape(messages);
-    project.info("##teamcity[compilationStarted compiler='" + escapedCompiler + "']");
-    project.info("##teamcity[message text='" + escapedOutput + "' status='ERROR']");
-    project.info("##teamcity[compilationFinished compiler='" + escapedCompiler + "']");
+    builder.info("##teamcity[compilationStarted compiler='" + escapedCompiler + "']");
+    builder.info("##teamcity[message text='" + escapedOutput + "' status='ERROR']");
+    builder.info("##teamcity[compilationFinished compiler='" + escapedCompiler + "']");
   }
 
   @Override
-  public void printCompilationStart(JpsGantProjectBuilder project, String compilerName) {
-    project.info("##teamcity[compilationStarted compiler='" + escape(compilerName) + "']");
+  public void printCompilationStart(JpsGantProjectBuilder builder, String compilerName) {
+    builder.info("##teamcity[compilationStarted compiler='" + escape(compilerName) + "']");
   }
 
   @Override
-  public void printCompilationFinish(JpsGantProjectBuilder project, String compilerName) {
-    project.info("##teamcity[compilationFinished compiler='" + escape(compilerName) + "']");
+  public void printCompilationFinish(JpsGantProjectBuilder builder, String compilerName) {
+    builder.info("##teamcity[compilationFinished compiler='" + escape(compilerName) + "']");
   }
 }

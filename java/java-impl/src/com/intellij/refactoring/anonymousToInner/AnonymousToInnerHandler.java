@@ -37,6 +37,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +103,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       return;
     }
     PsiElement targetContainer = findTargetContainer(myAnonClass);
-    if (JspPsiUtil.isInJspFile(targetContainer) && targetContainer instanceof PsiFile) {
+    if (FileTypeUtils.isInServerPageFile(targetContainer) && targetContainer instanceof PsiFile) {
       String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
       showErrorMessage(editor, message);
       return;
@@ -208,7 +209,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       if (element instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)element;
         if (newExpression.getAnonymousClass() != null) {
-          return newExpression.getAnonymousClass();          
+          return newExpression.getAnonymousClass();
         }
       }
       element = element.getParent();

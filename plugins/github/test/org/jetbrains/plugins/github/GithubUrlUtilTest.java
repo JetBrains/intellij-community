@@ -19,11 +19,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubFullPath;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jetbrains.plugins.github.GithubUrlUtil.*;
+import static org.jetbrains.plugins.github.util.GithubUrlUtil.*;
 
 /**
  * @author Aleksey Pivovarov
@@ -32,7 +34,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
   private static class TestCase<T> {
     @NotNull final public List<Pair<String, T>> tests = new ArrayList<Pair<String, T>>();
 
-    public void add(String in, T out) {
+    public void add(@NotNull String in, @Nullable T out) {
       tests.add(Pair.create(in, out));
     }
 
@@ -150,30 +152,31 @@ public class GithubUrlUtilTest extends UsefulTestCase {
   }
 
   public void testGetUserAndRepositoryFromRemoteUrl() throws Throwable {
-    TestCase<GithubUserAndRepository> tests = new TestCase<GithubUserAndRepository>();
+    TestCase<GithubFullPath> tests = new TestCase<GithubFullPath>();
 
-    tests.add("http://github.com/username/reponame/", new GithubUserAndRepository("username", "reponame"));
-    tests.add("https://github.com/username/reponame/", new GithubUserAndRepository("username", "reponame"));
-    tests.add("git://github.com/username/reponame/", new GithubUserAndRepository("username", "reponame"));
-    tests.add("git@github.com:username/reponame/", new GithubUserAndRepository("username", "reponame"));
+    tests.add("http://github.com/username/reponame/", new GithubFullPath("username", "reponame"));
+    tests.add("https://github.com/username/reponame/", new GithubFullPath("username", "reponame"));
+    tests.add("git://github.com/username/reponame/", new GithubFullPath("username", "reponame"));
+    tests.add("git@github.com:username/reponame/", new GithubFullPath("username", "reponame"));
 
-    tests.add("https://github.com/username/reponame", new GithubUserAndRepository("username", "reponame"));
-    tests.add("https://github.com/username/reponame.git", new GithubUserAndRepository("username", "reponame"));
-    tests.add("https://github.com/username/reponame.git/", new GithubUserAndRepository("username", "reponame"));
-    tests.add("git@github.com:username/reponame.git/", new GithubUserAndRepository("username", "reponame"));
+    tests.add("https://github.com/username/reponame", new GithubFullPath("username", "reponame"));
+    tests.add("https://github.com/username/reponame.git", new GithubFullPath("username", "reponame"));
+    tests.add("https://github.com/username/reponame.git/", new GithubFullPath("username", "reponame"));
+    tests.add("git@github.com:username/reponame.git/", new GithubFullPath("username", "reponame"));
 
-    tests.add("http://login:passsword@github.com/username/reponame/", new GithubUserAndRepository("username", "reponame"));
+    tests.add("http://login:passsword@github.com/username/reponame/", new GithubFullPath("username", "reponame"));
 
-    tests.add("HTTPS://GitHub.com/username/reponame/", new GithubUserAndRepository("username", "reponame"));
-    tests.add("https://github.com/UserName/RepoName/", new GithubUserAndRepository("UserName", "RepoName"));
+    tests.add("HTTPS://GitHub.com/username/reponame/", new GithubFullPath("username", "reponame"));
+    tests.add("https://github.com/UserName/RepoName/", new GithubFullPath("UserName", "RepoName"));
 
     tests.add("https://github.com/RepoName/", null);
     tests.add("git@github.com:user/", null);
     tests.add("https://user:pass@github.com/", null);
 
-    runTestCase(tests, new Convertor<String, GithubUserAndRepository>() {
+    runTestCase(tests, new Convertor<String, GithubFullPath>() {
       @Override
-      public GithubUserAndRepository convert(String in) {
+      @Nullable
+      public GithubFullPath convert(String in) {
         return getUserAndRepositoryFromRemoteUrl(in);
       }
     });
@@ -204,6 +207,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
 
     runTestCase(tests, new Convertor<String, String>() {
       @Override
+      @Nullable
       public String convert(String in) {
         return makeGithubRepoUrlFromRemoteUrl(in, "https://github.com");
       }

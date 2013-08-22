@@ -67,6 +67,12 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
       return InspectionGadgetsBundle.message("call.to.string.concat.can.be.replaced.by.operator.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

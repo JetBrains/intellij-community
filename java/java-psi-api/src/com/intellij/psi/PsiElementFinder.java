@@ -120,7 +120,16 @@ public abstract class PsiElementFinder {
     return names;
   }
 
-  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiDirectory> consumer) {
+  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,
+                                           @NotNull GlobalSearchScope scope,
+                                           @NotNull Processor<PsiDirectory> consumer) {
+    return processPackageDirectories(psiPackage, scope, consumer, false);
+  }
+
+  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,
+                                           @NotNull GlobalSearchScope scope,
+                                           @NotNull Processor<PsiDirectory> consumer,
+                                           boolean includeLibrarySources) {
     return true;
   }
 

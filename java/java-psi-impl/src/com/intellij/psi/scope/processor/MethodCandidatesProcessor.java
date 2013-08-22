@@ -33,12 +33,12 @@ import java.util.List;
 public class MethodCandidatesProcessor extends MethodsProcessor{
   protected boolean myHasAccessibleStaticCorrectCandidate = false;
 
-  public MethodCandidatesProcessor(@NotNull PsiElement place, @NotNull PsiConflictResolver[] resolvers, @NotNull List<CandidateInfo> container) {
-    super(resolvers, container, place);
+  public MethodCandidatesProcessor(@NotNull PsiElement place, PsiFile placeFile, @NotNull PsiConflictResolver[] resolvers, @NotNull List<CandidateInfo> container) {
+    super(resolvers, container, place, placeFile);
   }
 
-  public MethodCandidatesProcessor(@NotNull PsiElement place) {
-    super(new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<CandidateInfo>(), place);
+  public MethodCandidatesProcessor(@NotNull PsiElement place, PsiFile placeFile) {
+    super(new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<CandidateInfo>(), place, placeFile);
   }
 
   @Override

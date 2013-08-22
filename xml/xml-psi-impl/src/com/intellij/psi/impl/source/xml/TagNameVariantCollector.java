@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
@@ -23,9 +24,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementDescriptorAwareAboutChildren;
@@ -40,23 +38,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class TagNameVariantCollector {
-  public static String[] getTagNameVariants(final XmlTag element,
-                                            final Collection<String> namespaces,
-                                            @Nullable List<String> nsInfo) {
 
-    final List<String> variants = getTagNameVariants(element, namespaces, nsInfo, new Function<XmlElementDescriptor, String>() {
-      @Override
-      public String fun(XmlElementDescriptor descriptor) {
-        return descriptor.getName(element);
-      }
-    });
-    return ArrayUtil.toStringArray(variants);
-  }
-
-  public static <T> List<T> getTagNameVariants(final XmlTag element,
-                                               final Collection<String> namespaces,
-                                               @Nullable List<String> nsInfo,
-                                               final Function<XmlElementDescriptor, T> f) {
+  public static List<XmlElementDescriptor> getTagDescriptors(final XmlTag element,
+                                                             final Collection<String> namespaces,
+                                                             @Nullable List<String> nsInfo) {
 
     XmlElementDescriptor elementDescriptor = null;
     String elementNamespace = null;
@@ -103,17 +88,17 @@ public class TagNameVariantCollector {
     }
 
     final boolean hasPrefix = StringUtil.isNotEmpty(element.getNamespacePrefix());
-    return ContainerUtil.mapNotNull(variants, new NullableFunction<XmlElementDescriptor, T>() {
-      public T fun(XmlElementDescriptor descriptor) {
+    return ContainerUtil.filter(variants, new Condition<XmlElementDescriptor>() {
+      @Override
+      public boolean value(XmlElementDescriptor descriptor) {
         if (descriptor instanceof AnyXmlElementDescriptor) {
-          return null;
+          return false;
         }
         else if (hasPrefix && descriptor instanceof XmlElementDescriptorImpl &&
                  !namespaces.contains(((XmlElementDescriptorImpl)descriptor).getNamespace())) {
-          return null;
+          return false;
         }
-
-        return f.fun(descriptor);
+        return true;
       }
     });
   }

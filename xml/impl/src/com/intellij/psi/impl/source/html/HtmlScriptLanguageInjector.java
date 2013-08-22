@@ -35,16 +35,25 @@ import java.util.List;
 public class HtmlScriptLanguageInjector implements MultiHostInjector {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement host) {
-    if (!(host instanceof XmlText) || !HtmlUtil.isHtmlTagContainingFile(host)) {
+    if (!host.isValid() || !(host instanceof XmlText) || !HtmlUtil.isHtmlTagContainingFile(host)) {
       return;
     }
     XmlTag scriptTag = ((XmlText)host).getParentTag();
-    if (!"script".equalsIgnoreCase(scriptTag.getLocalName())) {
+    if (scriptTag == null || !"script".equalsIgnoreCase(scriptTag.getLocalName())) {
       return;
     }
     String mimeType = scriptTag.getAttributeValue("type");
     Collection<Language> languages = Language.findInstancesByMimeType(mimeType);
-    Language language = languages.isEmpty() ? StdLanguages.TEXT : languages.iterator().next();
+    Language language;
+    if (!languages.isEmpty()) {
+      language = languages.iterator().next();
+    }
+    else if (mimeType != null && mimeType.contains("template")) {
+      language = StdLanguages.HTML;
+    }
+    else {
+      language = StdLanguages.TEXT;
+    }
     if (LanguageUtil.isInjectableLanguage(language)) {
       registrar
         .startInjecting(language)

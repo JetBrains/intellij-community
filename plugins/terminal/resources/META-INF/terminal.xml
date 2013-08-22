@@ -8,8 +8,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <toolWindow id="Terminal" anchor="bottom" icon="AllIcons.Ide.NoNotifications13"
-                factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory" secondary="true"/>
+    <toolWindow id="Terminal" anchor="bottom" icon="TerminalIcons.OpenTerminal_13x13"
+                factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory" secondary="false"/>
 
     <applicationService serviceInterface="org.jetbrains.plugins.terminal.TerminalView"
                         serviceImplementation="org.jetbrains.plugins.terminal.TerminalView"/>

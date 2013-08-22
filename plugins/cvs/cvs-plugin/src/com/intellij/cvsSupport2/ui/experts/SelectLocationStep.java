@@ -29,6 +29,7 @@ import com.intellij.openapi.fileChooser.ex.FileDrop;
 import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -295,8 +296,8 @@ public abstract class SelectLocationStep extends WizardStep {
     }
 
     protected void onSetActive(final boolean active) {
-      final String tooltip = AnAction.createTooltipText(ActionsBundle.message("action.FileChooser.TogglePathShowing.text"),
-                                                        ActionManager.getInstance().getAction("FileChooser.TogglePathShowing"));
+      final String tooltip = KeymapUtil.createTooltipText(ActionsBundle.message("action.FileChooser.TogglePathShowing.text"),
+                                                          ActionManager.getInstance().getAction("FileChooser.TogglePathShowing"));
       setToolTipText(tooltip);
     }
 

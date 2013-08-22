@@ -24,9 +24,9 @@ import org.jetbrains.jps.model.java.compiler.JikesCompilerOptions;
 @State(
   name = "JikesSettings",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
 )
 public class JikesConfiguration implements PersistentStateComponent<JikesCompilerOptions> {
   private final JikesCompilerOptions mySettings = new JikesCompilerOptions();

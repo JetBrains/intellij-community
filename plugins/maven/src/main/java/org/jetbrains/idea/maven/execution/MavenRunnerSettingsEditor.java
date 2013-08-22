@@ -75,9 +75,4 @@ public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfigurat
     myUseProjectSettings = pair.second;
     return pair.first;
   }
-
-  @Override
-  protected void disposeEditor() {
-
-  }
 }

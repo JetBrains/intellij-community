@@ -3,6 +3,9 @@
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>
+  <action id="SearchEverywhere">
+    <keyboard-shortcut first-keystroke="shift SPACE"/>
+  </action>
   <action id="FileChooser.TogglePathShowing">
     <keyboard-shortcut first-keystroke="control P"/>
   </action>
@@ -295,10 +298,13 @@
     <keyboard-shortcut first-keystroke="shift F11"/>
   </action>
   <action id="HighlightUsagesInFile">
-    <keyboard-shortcut first-keystroke="control shift F7"/>
+    <keyboard-shortcut first-keystroke="control shift F7"/> 
   </action>
   <action id="GotoFile">
     <keyboard-shortcut first-keystroke="control shift N"/>
+  </action>
+  <action id="ActivateTerminalToolWindow">
+    <keyboard-shortcut first-keystroke="alt MINUS"/>
   </action>
   <action id="ActivateMessagesToolWindow">
     <keyboard-shortcut first-keystroke="alt 0"/>
@@ -842,6 +848,9 @@
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="control F5"/>
   </action>
+  <action id="RerunTests">
+    <keyboard-shortcut first-keystroke="shift alt R"/>
+  </action>
   <action id="CollapseSelection">
     <keyboard-shortcut first-keystroke="control PERIOD"/>
   </action>
@@ -917,6 +926,8 @@
   <action id="VcsHistory.ShowAllAffected">
     <keyboard-shortcut first-keystroke="alt shift A" />
   </action>
+
+  <action id="DatabaseView.PropertiesAction"><keyboard-shortcut first-keystroke="F4"/><keyboard-shortcut first-keystroke="ENTER"/></action>
 
   <action id="Jdbc.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
   <action id="Jpa.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>

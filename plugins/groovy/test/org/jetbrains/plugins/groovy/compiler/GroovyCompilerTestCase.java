@@ -20,7 +20,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.process.*;
@@ -37,7 +36,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -221,13 +219,12 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
                                           ProgramRunner runner,
                                           RunProfile configuration) throws ExecutionException {
     final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass);
-    final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, getProject(),
-                                                                      new RunnerSettings<JDOMExternalizable>(null, null), null, null);
+    final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, executor, getProject(), null);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
     final AtomicReference<ProcessHandler> processHandler = new AtomicReference<ProcessHandler>();
-    runner.execute(executor, environment, new ProgramRunner.Callback() {
+    runner.execute(environment, new ProgramRunner.Callback() {
       @Override
       public void processStarted(final RunContentDescriptor descriptor) {
         disposeOnTearDown(new Disposable() {

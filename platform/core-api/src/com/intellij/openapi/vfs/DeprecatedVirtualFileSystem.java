@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.util.EventDispatcher;
@@ -29,7 +30,12 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
   private final EventDispatcher<VirtualFileListener> myEventDispatcher = EventDispatcher.create(VirtualFileListener.class);
 
   protected void startEventPropagation() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(
+    Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      return;
+    }
+
+    application.getMessageBus().connect().subscribe(
       VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(myEventDispatcher.getMulticaster(), this));
   }
 

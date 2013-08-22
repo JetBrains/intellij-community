@@ -148,6 +148,12 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
       return m_name;
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace concatenation";
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiLiteralExpression expression = (PsiLiteralExpression)descriptor.getPsiElement();

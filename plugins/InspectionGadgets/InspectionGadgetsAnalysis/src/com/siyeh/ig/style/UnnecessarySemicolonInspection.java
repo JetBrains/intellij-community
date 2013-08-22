@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -60,6 +61,11 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
   }
 
   private static class UnnecessarySemicolonFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull
@@ -88,27 +94,25 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
     }
   }
 
-  private static class UnnecessarySemicolonVisitor
-    extends BaseInspectionVisitor {
-
-    /**
-     * Finds semicolons between the top level classes in a java file.
-     */
+  private static class UnnecessarySemicolonVisitor extends BaseInspectionVisitor {
     @Override
     public void visitFile(PsiFile file) {
-      final PsiElement firstChild = file.getFirstChild();
-      PsiElement sibling = skipForwardWhiteSpacesAndComments(firstChild);
-      while (sibling != null) {
-        if (sibling instanceof PsiJavaToken) {
-          final PsiJavaToken token = (PsiJavaToken)sibling;
-          final IElementType tokenType = token.getTokenType();
-          if (tokenType.equals(JavaTokenType.SEMICOLON)) {
-            registerError(sibling);
-          }
-        }
-        sibling = skipForwardWhiteSpacesAndComments(sibling);
-      }
+      findTopLevelSemicolons(file);
       super.visitFile(file);
+    }
+
+    @Override
+    public void visitImportList(PsiImportList list) {
+      findTopLevelSemicolons(list);
+      super.visitImportList(list);
+    }
+
+    private void findTopLevelSemicolons(PsiElement element) {
+      for (PsiElement sibling = element.getFirstChild(); sibling != null; sibling = skipForwardWhiteSpacesAndComments(sibling)) {
+        if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON)) {
+          registerError(sibling);
+        }
+      }
     }
 
     @Override

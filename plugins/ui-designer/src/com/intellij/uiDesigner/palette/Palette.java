@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.*;
@@ -65,11 +66,11 @@ import java.util.Map;
 @State(
   name = "Palette2",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
 )
-public final class Palette implements ProjectComponent, PersistentStateComponent<Element> {
+public final class Palette implements Disposable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.Palette");
 
   private final MyLafManagerListener myLafManagerListener;
@@ -113,7 +114,7 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
   @NonNls private static final String ATTRIBUTE_IS_CONTAINER = "is-container";
 
   public static Palette getInstance(@NotNull final Project project) {
-    return project.getComponent(Palette.class);
+    return ServiceManager.getService(project, Palette.class);
   }
 
   /** Invoked by reflection */
@@ -128,6 +129,8 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
       mySpecialGroup.setReadOnly(true);
       mySpecialGroup.addItem(ComponentItem.createAnyComponentItem(project));
     }
+
+    LafManager.getInstance().addLafManagerListener(myLafManagerListener);
   }
 
   public Element getState() {
@@ -159,16 +162,8 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     }
   }
 
-  @NotNull
-  public String getComponentName(){
-    return "Palette2";
-  }
-
-  public void projectOpened() {
-    LafManager.getInstance().addLafManagerListener(myLafManagerListener);
-  }
-
-  public void projectClosed() {
+  @Override
+  public void dispose() {
     LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
   }
 
@@ -240,10 +235,6 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     writeGroups(element);
     //element.setAttribute(ATTRIBUTE_VERSION, "2");
   }
-
-  public void initComponent() {}
-
-  public void disposeComponent() {}
 
   /**
    * @return a predefined palette item which corresponds to the JPanel.

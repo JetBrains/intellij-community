@@ -15,6 +15,7 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -189,7 +190,12 @@ abstract class GitBranchOperation {
   }
 
   protected void notifyError(@NotNull String title, @NotNull String message) {
-    myUiHandler.notifyError(title, message);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new RuntimeException(title + ": " + message);
+    }
+    else {
+      myUiHandler.notifyError(title, message);
+    }
   }
 
   @NotNull

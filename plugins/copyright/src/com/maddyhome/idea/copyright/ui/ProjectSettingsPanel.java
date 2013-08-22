@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,12 +106,14 @@ public class ProjectSettingsPanel {
     myScopesLink.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          final DataContext dataContext = DataManager.getInstance().getDataContextFromFocus().getResult();
-          final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(dataContext);
-          if (optionsEditor != null) {
-            Configurable configurable = optionsEditor.findConfigurableById(ScopeChooserConfigurable.PROJECT_SCOPES);
-            if (configurable != null) {
-              optionsEditor.clearSearchAndSelect(configurable);
+          DataContext context = DataManager.getInstance().getDataContextFromFocus().getResult();
+          if (context != null) {
+            OptionsEditor optionsEditor = OptionsEditor.KEY.getData(context);
+            if (optionsEditor != null) {
+              Configurable configurable = optionsEditor.findConfigurableById(ScopeChooserConfigurable.PROJECT_SCOPES);
+              if (configurable != null) {
+                optionsEditor.clearSearchAndSelect(configurable);
+              }
             }
           }
         }

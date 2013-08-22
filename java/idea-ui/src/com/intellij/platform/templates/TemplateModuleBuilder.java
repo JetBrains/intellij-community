@@ -83,7 +83,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   @Override
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     ModuleBuilder builder = myType.createModuleBuilder();
     builder.setAvailableFrameworks(Collections.<String, Boolean>emptyMap());
     return builder.createWizardSteps(wizardContext, modulesProvider);
@@ -172,7 +172,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   private void fixModuleName(Module module) {
-    RunConfiguration[] configurations = RunManager.getInstance(module.getProject()).getAllConfigurations();
+    List<RunConfiguration> configurations = RunManager.getInstance(module.getProject()).getAllConfigurationsList();
     for (RunConfiguration configuration : configurations) {
       if (configuration instanceof ModuleBasedConfiguration) {
         ((ModuleBasedConfiguration)configuration).getConfigurationModule().setModule(module);

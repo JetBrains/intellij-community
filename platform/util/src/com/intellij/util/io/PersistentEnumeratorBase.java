@@ -39,7 +39,7 @@ import java.util.List;
  * @author jeka
  */
 @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
+abstract public class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
   protected static final int NULL_ID = 0;
 
@@ -427,8 +427,12 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     comparer.close();
 
     if (sameValue[0]) return true;
-
+    if (serializationEquivalenceIsExhausting()) return false;
     return myDataDescriptor.isEqual(valueOf(idx), value);
+  }
+
+  protected boolean serializationEquivalenceIsExhausting() {
+    return false;
   }
 
   protected int writeData(final Data value, int hashCode) {
@@ -498,7 +502,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     return pos;
   }
 
-  protected boolean iterateData(final Processor<Data> processor) throws IOException {
+  public boolean iterateData(final Processor<Data> processor) throws IOException {
     lockStorage();
     try {
       if (myKeyStorage == null) {
@@ -509,7 +513,12 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       myKeyStorage.force();
 
       DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new LimitedInputStream(new FileInputStream(keystreamFile()),
-                                                                                                      myKeyStoreFileLength)));
+                                                                                                      myKeyStoreFileLength) {
+        @Override
+        public int available() throws IOException {
+          return remainingLimit();
+        }
+      }, 32768));
       try {
         try {
           while (true) {

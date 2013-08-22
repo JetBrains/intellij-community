@@ -55,7 +55,8 @@ import java.util.*;
 public class DefaultInspectionToolPresentation implements ProblemDescriptionsProcessor, InspectionToolPresentation {
   @NotNull private final InspectionToolWrapper myToolWrapper;
 
-  private GlobalInspectionContextImpl myContext;
+  @NotNull
+  private final GlobalInspectionContextImpl myContext;
   protected static String ourOutputPath;
   protected InspectionNode myToolNode;
 
@@ -70,9 +71,11 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   private Map<RefEntity, CommonProblemDescriptor[]> myOldProblemElements = null;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
+  private boolean isDisposed;
 
-  public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper) {
+  public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     myToolWrapper = toolWrapper;
+    myContext = context;
   }
 
   @NotNull
@@ -136,6 +139,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   public RefManager getRefManager() {
     return getContext().getRefManager();
   }
+
+  @NotNull
   @Override
   public GlobalInspectionContextImpl getContext() {
     return myContext;
@@ -230,10 +235,9 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     }
   }
 
-  private boolean isDisposed() {
-    return myContext == null;
+  protected boolean isDisposed() {
+    return isDisposed;
   }
-
 
   private void writeOutput(@NotNull final CommonProblemDescriptor[] descriptions, @NotNull RefEntity refElement) {
     final Element parentNode = new Element(InspectionsBundle.message("inspection.problems"));
@@ -363,14 +367,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   }
 
   @Override
-  public void initialize(@NotNull GlobalInspectionContextImpl context) {
-    myContext = context;
-  }
-
-  @Override
   public void cleanup() {
-    myContext = null;
-
     myOldProblemElements = null;
 
     synchronized (lock) {
@@ -382,8 +379,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
     myContents = null;
     myModulesProblems = null;
+    isDisposed = true;
   }
-
 
   @Override
   public void finalCleanup() {
@@ -426,13 +423,13 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     }
   }
 
-  private void exportResults(@NotNull final CommonProblemDescriptor[] descriptions, @NotNull RefEntity refEntity, @NotNull Element parentNode) {
-    for (CommonProblemDescriptor description : descriptions) {
-      @NonNls final String template = description.getDescriptionTemplate();
-      int line = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
-      final PsiElement psiElement = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement() : null;
+  private void exportResults(@NotNull final CommonProblemDescriptor[] descriptors, @NotNull RefEntity refEntity, @NotNull Element parentNode) {
+    for (CommonProblemDescriptor descriptor : descriptors) {
+      @NonNls final String template = descriptor.getDescriptionTemplate();
+      int line = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getLineNumber() : -1;
+      final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
       @NonNls String problemText = StringUtil.replace(StringUtil.replace(template, "#ref", psiElement != null ? ProblemDescriptorUtil
-        .extractHighlightedText(description, psiElement) : ""), " #loc ", " ");
+        .extractHighlightedText(descriptor, psiElement) : ""), " #loc ", " ");
 
       Element element = refEntity.getRefManager().export(refEntity, parentNode, line);
       if (element == null) return;
@@ -441,8 +438,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       if (refEntity instanceof RefElement){
         final RefElement refElement = (RefElement)refEntity;
         final HighlightSeverity severity = getSeverity(refElement, getContext(), getToolWrapper());
-        ProblemHighlightType problemHighlightType = description instanceof ProblemDescriptor
-                                                    ? ((ProblemDescriptor)description).getHighlightType()
+        ProblemHighlightType problemHighlightType = descriptor instanceof ProblemDescriptor
+                                                    ? ((ProblemDescriptor)descriptor).getHighlightType()
                                                     : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
         final String attributeKey = getTextAttributeKey(refElement.getRefManager().getProject(), severity, problemHighlightType);
         problemClassElement.setAttribute("severity", severity.myName);
@@ -451,7 +448,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       element.addContent(problemClassElement);
       if (myToolWrapper instanceof GlobalInspectionToolWrapper) {
         final GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)myToolWrapper).getTool();
-        final QuickFix[] fixes = description.getFixes();
+        final QuickFix[] fixes = descriptor.getFixes();
         if (fixes != null) {
           @NonNls Element hintsElement = new Element("hints");
           for (QuickFix fix : fixes) {
@@ -485,7 +482,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   @Override
   public boolean hasReportedProblems() {
     final GlobalInspectionContextImpl context = getContext();
-    if (context != null && context.getUIOptions().SHOW_ONLY_DIFF) {
+    if (!isDisposed() && context.getUIOptions().SHOW_ONLY_DIFF) {
       for (CommonProblemDescriptor descriptor : getProblemToElements().keySet()) {
         if (getProblemStatus(descriptor) != FileStatus.NOT_CHANGED) {
           return true;
@@ -501,9 +498,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       return false;
     }
     if (!getProblemElements().isEmpty()) return true;
-    return context != null &&
-           context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN &&
-           myOldProblemElements != null && !myOldProblemElements.isEmpty();
+    return !isDisposed() && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN && myOldProblemElements != null && !myOldProblemElements.isEmpty();
   }
 
   @Override
@@ -642,9 +637,9 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   @Override
   @NotNull
-  public FileStatus getProblemStatus(final CommonProblemDescriptor descriptor) {
+  public FileStatus getProblemStatus(@NotNull final CommonProblemDescriptor descriptor) {
     final GlobalInspectionContextImpl context = getContext();
-    if (context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN){
+    if (!isDisposed() && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN){
       if (myOldProblemElements != null){
         final Set<CommonProblemDescriptor> allAvailable = new HashSet<CommonProblemDescriptor>();
         for (CommonProblemDescriptor[] descriptors : myOldProblemElements.values()) {
@@ -660,7 +655,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     return FileStatus.NOT_CHANGED;
   }
 
-  private static boolean containsDescriptor(CommonProblemDescriptor descriptor, Collection<CommonProblemDescriptor> descriptors){
+  private static boolean containsDescriptor(@NotNull CommonProblemDescriptor descriptor, Collection<CommonProblemDescriptor> descriptors){
     PsiElement element = null;
     if (descriptor instanceof ProblemDescriptor){
       element = ((ProblemDescriptor)descriptor).getPsiElement();
@@ -683,7 +678,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   @Override
   public FileStatus getElementStatus(final RefEntity element) {
     final GlobalInspectionContextImpl context = getContext();
-    if (context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN){
+    if (!isDisposed() && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN){
       if (myOldProblemElements != null){
         final boolean old = RefUtil.contains(element, myOldProblemElements.keySet());
         final boolean current = RefUtil.contains(element, getProblemElements().keySet());

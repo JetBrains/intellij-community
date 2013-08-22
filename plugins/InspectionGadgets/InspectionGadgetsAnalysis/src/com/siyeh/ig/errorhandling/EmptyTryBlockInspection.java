@@ -54,7 +54,7 @@ public class EmptyTryBlockInspection extends BaseInspection {
     @Override
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
-      if (FileTypeUtils.isInJsp(statement.getContainingFile())) {
+      if (FileTypeUtils.isInServerPageFile(statement.getContainingFile())) {
         return;
       }
       final PsiCodeBlock finallyBlock = statement.getTryBlock();

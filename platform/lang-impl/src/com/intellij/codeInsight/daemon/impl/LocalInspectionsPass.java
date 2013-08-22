@@ -47,10 +47,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
@@ -151,29 +148,32 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     result.clear();
   }
 
-  public void doInspectInBatch(@NotNull InspectionManagerEx iManager, @NotNull List<LocalInspectionToolWrapper> toolWrappers) {
+  public void doInspectInBatch(@NotNull GlobalInspectionContextImpl context,
+                               @NotNull InspectionManagerEx iManager,
+                               @NotNull List<LocalInspectionToolWrapper> toolWrappers) {
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     inspect(new ArrayList<LocalInspectionToolWrapper>(toolWrappers), iManager, false, false, false, progress);
-    addDescriptorsFromInjectedResults(iManager);
+    addDescriptorsFromInjectedResults(iManager, context);
     List<InspectionResult> resultList = result.get(myFile);
     if (resultList == null) return;
     for (InspectionResult inspectionResult : resultList) {
       LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
-        addDescriptors(toolWrapper, descriptor);
+        addDescriptors(toolWrapper, descriptor, context);
       }
     }
   }
 
-  private void addDescriptors(@NotNull LocalInspectionToolWrapper toolWrapper, @NotNull ProblemDescriptor descriptor) {
-    GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)toolWrapper.getContext();
+  private void addDescriptors(@NotNull LocalInspectionToolWrapper toolWrapper,
+                              @NotNull ProblemDescriptor descriptor,
+                              @NotNull GlobalInspectionContextImpl context) {
     InspectionToolPresentation toolPresentation = context.getPresentation(toolWrapper);
     LocalDescriptorsUtil.addProblemDescriptors(Collections.singletonList(descriptor), toolPresentation, myIgnoreSuppressed,
                                                context,
                                                toolWrapper.getTool());
   }
 
-  private void addDescriptorsFromInjectedResults(@NotNull InspectionManagerEx iManager) {
+  private void addDescriptorsFromInjectedResults(@NotNull InspectionManagerEx iManager, @NotNull GlobalInspectionContextImpl context) {
     InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
 
@@ -203,7 +203,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             }
             ProblemDescriptor patchedDescriptor = iManager.createProblemDescriptor(myFile, hostRange, descriptor.getDescriptionTemplate(),
                                                                                    descriptor.getHighlightType(), true, localFixes);
-            addDescriptors(toolWrapper, patchedDescriptor);
+            addDescriptors(toolWrapper, patchedDescriptor, context);
           }
         }
       }
@@ -221,7 +221,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     List<PsiElement> inside = new ArrayList<PsiElement>();
     List<PsiElement> outside = new ArrayList<PsiElement>();
-    Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside,
+    Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, new ArrayList<ProperTextRange>(), outside, new ArrayList<ProperTextRange>(),
                                    true, FILE_FILTER);
 
     MultiMap<LocalInspectionToolWrapper, String> tools = getToolsForElements(toolWrappers, checkDumbAwareness, inside, outside);
@@ -726,6 +726,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<LocalInspectionToolWrapper> enabled = new ArrayList<LocalInspectionToolWrapper>();
     final InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(element);
     InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
+    Language language = myFile.getLanguage();
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       if (!profile.isToolEnabled(HighlightDisplayKey.find(toolWrapper.getShortName()), element)) continue;
       LocalInspectionToolWrapper wrapper = null;
@@ -733,8 +734,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         wrapper = (LocalInspectionToolWrapper)toolWrapper;
       }
       if (wrapper == null) continue;
-      if (myIgnoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(myFile, wrapper.getTool())) {
-        continue;
+      if (myIgnoreSuppressed) {
+        if (wrapper.isApplicable(language) && InspectionManagerEx.inspectionResultSuppressed(myFile, wrapper.getTool())) {
+          continue;
+        }
       }
       enabled.add(wrapper);
     }

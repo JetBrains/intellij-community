@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -103,8 +104,8 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     else {
       // it seems like it's not possible to obtain dragged items _before_ accepting _drop_ on Macs, so just skip this check
       if (!SystemInfo.isMac) {
-        final PsiFileSystemItem[] psiFiles = getPsiFiles(getFileListFromAttachedObject(attached));
-        if (psiFiles == null) return false;
+        final PsiFileSystemItem[] psiFiles = getPsiFiles(FileCopyPasteUtil.getFileListFromAttachedObject(attached));
+        if (psiFiles == null || psiFiles.length == 0) return false;
         if (!MoveHandler.isValidTarget(getPsiElement(targetNode), psiFiles)) return false;
       }
     }
@@ -113,17 +114,6 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     event.setHighlighting(new RelativeRectangle(myTree, pathBounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
     event.setDropPossible(true);
     return false;
-  }
-
-  @Nullable
-  private static List<File> getFileListFromAttachedObject(Object attached) {
-    if (attached instanceof TransferableWrapper) {
-      return ((TransferableWrapper)attached).asFileList();
-    }
-    else if (attached instanceof EventInfo) {
-      return FileCopyPasteUtil.getFileList(((EventInfo)attached).getTransferable());
-    }
-    return null;
   }
 
   @Override
@@ -135,8 +125,8 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     final int dropAction = event.getAction().getActionId();
     if (sourceNodes == null) {
       if (FileCopyPasteUtil.isFileListFlavorSupported(event)) {
-        final List<File> fileList = getFileListFromAttachedObject(attached);
-        if (fileList != null) {
+        List<File> fileList = FileCopyPasteUtil.getFileListFromAttachedObject(attached);
+        if (!fileList.isEmpty()) {
           getDropHandler(dropAction).doDropFiles(fileList, targetNode);
         }
       }

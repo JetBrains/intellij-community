@@ -17,6 +17,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Pair;
 import org.jdom.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
@@ -37,7 +38,7 @@ class XmlSerializerImpl {
     this.filter = filter;
   }
 
-  Element serialize(Object object) throws XmlSerializationException {
+  Element serialize(@NotNull Object object) throws XmlSerializationException {
     try {
       return (Element)getBinding(object.getClass()).serialize(object, null, filter);
     }

@@ -102,9 +102,18 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
     if (!StringUtil.isEmpty(byteCode)) {
       component.setText(byteCode, element);
     } else {
-      PsiClass containingClass = getContainingClass(element);
-      PsiFile containingFile = element.getContainingFile();
-      component.setText("No bytecode found for " + SymbolPresentationUtil.getSymbolPresentableText(containingClass != null ? containingClass : containingFile));
+      PsiElement presentableElement = getContainingClass(element);
+      if (presentableElement == null) {
+        presentableElement = element.getContainingFile();
+        if (presentableElement == null && element instanceof PsiNamedElement) {
+          presentableElement = element;
+        }
+        if (presentableElement == null) {
+          component.setText("No bytecode found");
+          return;
+        }
+      }
+      component.setText("No bytecode found for " + SymbolPresentationUtil.getSymbolPresentableText(presentableElement));
     }
     content.setDisplayName(getTitle(element));
   }
@@ -225,6 +234,9 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
 
   private static PsiClass getContainingClass(PsiElement psiElement) {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class, false);
+    while (containingClass instanceof PsiTypeParameter) {
+      containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class); 
+    }
     if (containingClass == null) return null;
 
     return containingClass;

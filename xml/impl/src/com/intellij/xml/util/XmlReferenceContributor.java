@@ -89,5 +89,6 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
                                                        new XmlEncodingReferenceProvider());
 
     registrar.registerReferenceProvider(xmlAttributeValue(), new XmlPrefixReferenceProvider());
+    registrar.registerReferenceProvider(xmlAttributeValue(), new XmlAttributeValueReferenceProvider(), PsiReferenceRegistrar.LOWER_PRIORITY);
   }
 }

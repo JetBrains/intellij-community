@@ -66,7 +66,7 @@ import java.util.Map;
  */
 public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware{
   @Override
-  public void runActivity(final Project project) {
+  public void runActivity(@NotNull final Project project) {
     StartupManager.getInstance(project).registerPostStartupActivity(new DumbAwareRunnable() {
       @Override
       public void run() {

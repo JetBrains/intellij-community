@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,8 +26,9 @@ import java.util.List;
 /**
  * @author nik
  */
-public class XValueChildrenList {
+public class XValueChildrenList extends XValueChildrenProvider {
   public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.<String>emptyList(), Collections.<XValue>emptyList());
+
   private final List<String> myNames;
   private final List<XValue> myValues;
 
@@ -36,8 +38,8 @@ public class XValueChildrenList {
   }
 
   public XValueChildrenList() {
-    myNames = new ArrayList<String>();
-    myValues = new ArrayList<XValue>();
+    myNames = new SmartList<String>();
+    myValues = new SmartList<XValue>();
   }
 
   public static XValueChildrenList singleton(String name, @NotNull XValue value) {
@@ -54,28 +56,18 @@ public class XValueChildrenList {
     myValues.add(value);
   }
 
+  @Override
   public int size() {
     return myNames.size();
   }
 
+  @Override
   public String getName(int i) {
     return myNames.get(i);
   }
 
+  @Override
   public XValue getValue(int i) {
     return myValues.get(i);
-  }
-
-  /**
-   * @deprecated use {@link XCompositeNode#isAlreadySorted} (to remove in IDEA 13)
-   */
-  public boolean isAlreadySorted() {
-    return false;
-  }
-
-  /**
-   * @deprecated use {@link XCompositeNode#setAlreadySorted} instead (to remove in IDEA 13)
-   */
-  public void setAlreadySorted(boolean alreadySorted) {
   }
 }

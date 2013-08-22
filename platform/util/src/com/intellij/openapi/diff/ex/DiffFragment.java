@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.diff.ex;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 public class DiffFragment {
   public static DiffFragment[] EMPTY_ARRAY = new DiffFragment[0];
 
@@ -22,10 +24,18 @@ public class DiffFragment {
   private final String myText2;
   private boolean myIsModified;
 
+  private StringBuilder myText1Builder;
+  private StringBuilder myText2Builder;
+
   public DiffFragment(String text1, String text2) {
     myText1 = text1;
     myText2 = text2;
     myIsModified = (text1 == null || text2 == null || !text1.equals(text2));
+  }
+
+  public static boolean isEmpty(DiffFragment fragment) {
+    return StringUtil.length(fragment.getText1()) == 0 &&
+           StringUtil.length(fragment.getText2()) == 0;
   }
 
   /**
@@ -39,19 +49,35 @@ public class DiffFragment {
   public void setModified(boolean modified) {
     myIsModified = modified;
   }
-  
+
+  public void appendText1(String str) {
+    assert myText1 != null;
+    if (myText1Builder == null) {
+      myText1Builder = new StringBuilder(myText1);
+    }
+    myText1Builder.append(str);
+  }
+
+  public void appendText2(String str) {
+    assert myText2 != null;
+    if (myText2Builder == null) {
+      myText2Builder = new StringBuilder(myText2);
+    }
+    myText2Builder.append(str);
+  }
+
   /**
    * null if absent
    */
   public String getText1() {
-    return myText1;
+    return myText1Builder != null ? myText1Builder.toString() : myText1;
   }
   
   /**
    * null if absent
    */
   public String getText2() {
-    return myText2;
+    return myText2Builder != null ? myText2Builder.toString() : myText2;
   }
 
   /**

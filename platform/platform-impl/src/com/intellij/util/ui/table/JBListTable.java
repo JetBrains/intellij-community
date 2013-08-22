@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,14 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.ui.DottedBorder;
-import com.intellij.ui.EditorSettingsProvider;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -71,6 +69,15 @@ public abstract class JBListTable extends JPanel {
       }
     };
     mainTable = new JBTable(model) {
+      @Override
+      public void editingStopped(ChangeEvent e) {
+        super.editingStopped(e);
+      }
+
+      @Override
+      public void editingCanceled(ChangeEvent e) {
+        super.editingCanceled(e);
+      }
 
       @Override
       protected void processKeyEvent(KeyEvent e) {
@@ -132,6 +139,7 @@ public abstract class JBListTable extends JPanel {
             if (0 <= newRow && newRow < model.getRowCount()) {
               setRowSelectionInterval(newRow, newRow);
             }
+
           }
         }
 
@@ -175,8 +183,8 @@ public abstract class JBListTable extends JPanel {
           return true;
         }
 
-        final boolean isUp = e.getKeyCode() == KeyEvent.VK_UP;
-        final boolean isDown = e.getKeyCode() == KeyEvent.VK_DOWN;
+        final boolean isUp = e.getKeyCode() == VK_UP;
+        final boolean isDown = e.getKeyCode() == VK_DOWN;
 
         if (isEditing() && (isUp || isDown) && e.getModifiers() == 0 && e.getID() == KEY_PRESSED) {
           int row = getSelectedRow();
@@ -224,7 +232,7 @@ public abstract class JBListTable extends JPanel {
     TableUtil.stopEditing(mainTable);
   }
 
-  private void installPaddingAndBordersForEditors(JBTableRowEditor editor) {
+  private static void installPaddingAndBordersForEditors(JBTableRowEditor editor) {
     final List<EditorTextField> editors = UIUtil.findComponentsOfType(editor, EditorTextField.class);
     for (EditorTextField textField : editors) {
       textField.putClientProperty("JComboBox.isTableCellEditor", Boolean.FALSE);
@@ -291,6 +299,7 @@ public abstract class JBListTable extends JPanel {
   private static class RowResizeAnimator extends Thread {
     private final JTable myTable;
     private final int myRow;
+    private final JScrollPane myScrollPane;
     private int neededHeight;
     private final JBTableRowEditor myEditor;
     private final Ref<Integer> myIndex;
@@ -305,13 +314,18 @@ public abstract class JBListTable extends JPanel {
       myEditor = editor;
       myIndex = index;
       currentHeight = myTable.getRowHeight(myRow);
+      myScrollPane = (JScrollPane)myTable.getParent().getParent();
     }
 
     @Override
     public void run() {
+      final boolean exitEditing = currentHeight > neededHeight;
       try {
         sleep(50);
-
+        final JScrollBar bar = myScrollPane.getVerticalScrollBar();
+        if (bar == null || !bar.isVisible()) {
+          myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        }
         while (currentHeight != neededHeight) {
           if (Math.abs(currentHeight - neededHeight) < step) {
             currentHeight = neededHeight;
@@ -343,12 +357,23 @@ public abstract class JBListTable extends JPanel {
           }
         }
       }
-      catch (InterruptedException e) {
+      catch (InterruptedException ignore) {
+      } finally {
+        TableUtil.scrollSelectionToVisible(myTable);
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (exitEditing && !myTable.isEditing()) {
+              myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+            }
+          }
+        });
       }
     }
   }
 
-  private class MyCellEditor extends AbstractTableCellEditor {
+  private class MyCellEditor extends AbstractTableCellEditor implements Animated {
     JTable curTable;
     private final JBTableRowEditor myEditor;
 

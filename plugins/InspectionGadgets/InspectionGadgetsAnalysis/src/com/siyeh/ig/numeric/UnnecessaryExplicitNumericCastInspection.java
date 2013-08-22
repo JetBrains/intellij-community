@@ -75,6 +75,11 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
   }
 
   private static class UnnecessaryExplicitNumericCastFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @NotNull
     @Override

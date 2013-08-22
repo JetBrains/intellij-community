@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.actions;
 
+import com.intellij.ide.actions.CopyElementAction;
 import com.intellij.ide.actions.QuickSwitchSchemeAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -59,7 +60,8 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
           destinationGroup.add(child);
         }
         else {
-          if (child instanceof BaseRefactoringAction && ((BaseRefactoringAction)child).hasAvailableHandler(dataContext)) {
+          if (child instanceof BaseRefactoringAction && ((BaseRefactoringAction)child).hasAvailableHandler(dataContext) ||
+              child instanceof CopyElementAction) {
             final Presentation presentation = new Presentation();
             final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, presentation, actionManager, 0);
             child.update(event);

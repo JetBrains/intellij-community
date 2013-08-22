@@ -22,6 +22,7 @@ package com.intellij.util.io.storage;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.io.PagePool;
@@ -40,12 +41,7 @@ import java.util.zip.InflaterInputStream;
 public class RefCountingStorage extends AbstractStorage {
   private final Map<Integer, Future<?>> myPendingWriteRequests = new ConcurrentHashMap<Integer, Future<?>>();
   private int myPendingWriteRequestsSize;
-  private final ThreadPoolExecutor myPendingWriteRequestsExecutor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
-    @Override
-    public Thread newThread(Runnable runnable) {
-      return new Thread(runnable, "RefCountingStorage write content helper");
-    }
-  });
+  private final ThreadPoolExecutor myPendingWriteRequestsExecutor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("RefCountingStorage write content helper"));
 
   private final boolean myDoNotZipCaches = Boolean.valueOf(System.getProperty("idea.doNotZipCaches")).booleanValue();
   private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;

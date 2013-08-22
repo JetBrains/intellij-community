@@ -91,6 +91,8 @@ public class FileWatcher {
 
   private final Object myLock = new Object();
   private DirtyPaths myDirtyPaths = new DirtyPaths();
+  private final String[] myLastChangedPathes = new String[2];
+  private int myLastChangedPathIndex;
 
   /** @deprecated use {@linkplain com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl#getFileWatcher()} (to remove in IDEA 13) */
   public static FileWatcher getInstance() {
@@ -153,6 +155,8 @@ public class FileWatcher {
     synchronized (myLock) {
       DirtyPaths dirtyPaths = myDirtyPaths;
       myDirtyPaths = new DirtyPaths();
+      myLastChangedPathIndex = 0;
+      for(int i = 0; i < myLastChangedPathes.length; ++i) myLastChangedPathes[i] = null;
       return dirtyPaths;
     }
   }
@@ -346,11 +350,6 @@ public class FileWatcher {
     protected boolean useAdaptiveSleepingPolicyWhenReadingOutput() {
       return true;
     }
-
-    @Override
-    protected boolean processHasSeparateErrorStream() {
-      return false;
-    }
   }
 
   @NotNull
@@ -436,7 +435,7 @@ public class FileWatcher {
     @Override
     public void onTextAvailable(ProcessEvent event, Key outputType) {
       if (outputType == ProcessOutputTypes.STDERR) {
-        LOG.warn(event.getText());
+        LOG.warn(event.getText().trim());
       }
       if (outputType != ProcessOutputTypes.STDOUT) {
         return;
@@ -527,6 +526,8 @@ public class FileWatcher {
       notifyOnEvent();
     }
 
+    private int myChangeRequests, myFilteredRequests;
+
     private void processChange(String path, WatcherOp op) {
       if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY && path.length() == 3 && Character.isLetter(path.charAt(0))) {
         VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
@@ -537,6 +538,27 @@ public class FileWatcher {
         }
         notifyOnEvent();
         return;
+      }
+
+      if (op == WatcherOp.CHANGE) {
+        synchronized (myLock) {
+          ++myChangeRequests;
+
+          // TODO: remove logging once finalized
+          if ((myChangeRequests & 0x3ff) == 0) LOG.info("Change requests:" + myChangeRequests + ", filtered:" + myFilteredRequests);
+
+          for(int i = 0; i < myLastChangedPathes.length; ++i) {
+            int last = myLastChangedPathIndex - i - 1;
+            if (last < 0) last += myLastChangedPathes.length;
+            String lastChangedPath = myLastChangedPathes[last];
+            if (lastChangedPath != null && lastChangedPath.equals(path)) {
+              ++myFilteredRequests;
+              return;
+            }
+          }
+          myLastChangedPathes[myLastChangedPathIndex ++] = path;
+          if (myLastChangedPathIndex == myLastChangedPathes.length) myLastChangedPathIndex = 0;
+        }
       }
 
       boolean exactPath = op != WatcherOp.DIRTY && op != WatcherOp.RECDIRTY;

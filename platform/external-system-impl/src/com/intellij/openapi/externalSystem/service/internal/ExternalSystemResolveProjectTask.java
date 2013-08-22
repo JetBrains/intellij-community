@@ -9,7 +9,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -48,8 +48,8 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     
     setState(ExternalSystemTaskState.IN_PROGRESS);
     try {
-      ExternalSystemSettingsManager settingsManager = ServiceManager.getService(ExternalSystemSettingsManager.class);
-      ExternalSystemExecutionSettings settings = settingsManager.getExecutionSettings(ideProject, myProjectPath, getExternalSystemId());
+      ExternalSystemExecutionSettings settings = ExternalSystemApiUtil
+        .getExecutionSettings(ideProject, myProjectPath, getExternalSystemId());
       DataNode<ProjectData> project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries, settings);
 
       if (project == null) {

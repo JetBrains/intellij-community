@@ -1,0 +1,163 @@
+package com.intellij.execution.actions;
+
+import com.intellij.execution.BaseConfigurationTestCase;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.application.ApplicationConfiguration;
+import com.intellij.execution.junit.*;
+import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.testFramework.MapDataContext;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+
+public class ContextConfigurationTest extends BaseConfigurationTestCase {
+  private static final String PACKAGE_NAME = "apackage";
+  private static final String SHORT_CLASS_NAME = "SampleClass";
+  private static final String CLASS_NAME = PACKAGE_NAME + "." + SHORT_CLASS_NAME;
+  private static final String METHOD_NAME = "test1";
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    addModule("commonConfiguration");
+  }
+
+  public void testJUnitMethodTest() {
+    PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
+    PsiMethod testMethod = psiClass.findMethodsByName(METHOD_NAME, false)[0];
+    JUnitConfiguration configuration = (JUnitConfiguration)createConfiguration(testMethod);
+    checkTestObject(JUnitConfiguration.TEST_METHOD, configuration);
+    checkClassName(CLASS_NAME, configuration);
+    checkMethodName(METHOD_NAME, configuration);
+    checkPackage(PACKAGE_NAME, configuration);
+    checkGeneretedName(configuration, SHORT_CLASS_NAME + "." + METHOD_NAME);
+  }
+
+  public void testJUnitClassTest() {
+    PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
+    final MapDataContext dataContext = new MapDataContext();
+    JUnitConfiguration configuration = createJUnitConfiguration(psiClass, TestClassConfigurationProducer.class,  dataContext);
+    checkTestObject(JUnitConfiguration.TEST_CLASS, configuration);
+    checkClassName(CLASS_NAME, configuration);
+    checkPackage(PACKAGE_NAME, configuration);
+    checkGeneretedName(configuration, SHORT_CLASS_NAME);
+  }
+
+
+  public void testRecreateJUnitClass() throws IOException {
+    createEmptyModule();
+    addDependency(getModule2(), getModule1());
+    PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
+    PsiPackage psiPackage = JUnitUtil.getContainingPackage(psiClass);
+    JUnitConfiguration configuration = createJUnitConfiguration(psiPackage, AllInPackageConfigurationProducer.class, new MapDataContext());
+    configuration.getPersistentData().setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
+    configuration.setModule(getModule2());
+    MapDataContext dataContext = new MapDataContext();
+    dataContext.put(DataConstantsEx.RUNTIME_CONFIGURATION, configuration);
+    configuration = createJUnitConfiguration(psiClass, TestClassConfigurationProducer.class, dataContext);
+    checkClassName(psiClass.getQualifiedName(), configuration);
+    assertEquals(Collections.singleton(getModule2()), new HashSet(Arrays.asList(configuration.getModules())));
+  }
+
+  public void testJUnitPackage() {
+    PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
+    PsiPackage psiPackage = JUnitUtil.getContainingPackage(psiClass);
+    final MapDataContext dataContext = new MapDataContext();
+    final Module module = ModuleUtil.findModuleForPsiElement(psiClass);
+    dataContext.put(DataConstants.MODULE, module);
+    JUnitConfiguration configuration = createJUnitConfiguration(psiPackage, AllInPackageConfigurationProducer.class, dataContext);
+    checkTestObject(JUnitConfiguration.TEST_PACKAGE, configuration);
+    checkPackage(PACKAGE_NAME, configuration);
+    checkGeneretedName(configuration, PACKAGE_NAME + " in " + module.getName());
+  }
+
+  public void testJUnitDefaultPackage() {
+    PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
+    PsiPackage psiPackage = JUnitUtil.getContainingPackage(psiClass);
+    PsiPackage defaultPackage = psiPackage.getParentPackage();
+    final Module module = ModuleUtil.findModuleForPsiElement(psiClass);
+    final MapDataContext dataContext = new MapDataContext();
+    dataContext.put(DataConstants.MODULE, module);
+    JUnitConfiguration configuration = createJUnitConfiguration(defaultPackage, AllInPackageConfigurationProducer.class, dataContext);
+    checkTestObject(JUnitConfiguration.TEST_PACKAGE, configuration);
+    checkPackage("", configuration);
+    checkGeneretedName(configuration, "All in " + module.getName());
+  }
+
+  public void testApplication() {
+    PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
+    PsiMethod psiMethod = psiClass.findMethodsByName("main", false)[0];
+    ApplicationConfiguration configuration = createConfiguration(psiMethod);
+    assertEquals(CLASS_NAME, configuration.MAIN_CLASS_NAME);
+    assertEquals(configuration.suggestedName(), configuration.getName());
+    assertEquals(SHORT_CLASS_NAME, configuration.getName());
+  }
+
+  public void testReusingConfiguration() {
+    RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
+    PsiPackage psiPackage = JUnitUtil.getContainingPackage(psiClass);
+
+    ConfigurationContext context = createContext(psiClass);
+    assertEquals(null, context.findExisting());
+    RunnerAndConfigurationSettings testClass = context.getConfiguration();
+    runManager.addConfiguration(testClass,  false);
+    context = createContext(psiClass);
+    assertSame(testClass, context.findExisting());
+
+    runManager.setSelectedConfiguration(testClass);
+    context = createContext(psiPackage);
+    assertEquals(null, context.findExisting());
+    RunnerAndConfigurationSettings testPackage = context.getConfiguration();
+    runManager.addConfiguration(testPackage,  false);
+    context = createContext(psiPackage);
+    assertSame(testPackage, context.findExisting());
+    assertSame(testClass, runManager.getSelectedConfiguration());
+    runManager.setSelectedConfiguration(context.findExisting());
+    assertSame(testPackage, runManager.getSelectedConfiguration());
+  }
+
+  public void testJUnitGeneratedName() {
+    PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
+    PsiPackage psiPackage = JUnitUtil.getContainingPackage(psiClass);
+    JUnitConfiguration configuration = new JUnitConfiguration(null, myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    data.PACKAGE_NAME = psiPackage.getQualifiedName();
+    data.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
+    assertEquals(PACKAGE_NAME, configuration.suggestedName());
+    data.PACKAGE_NAME = "not.existing.pkg";
+    assertEquals("not.existing.pkg", configuration.suggestedName());
+
+    data.TEST_OBJECT = JUnitConfiguration.TEST_CLASS;
+    data.MAIN_CLASS_NAME = psiClass.getQualifiedName();
+    assertEquals(SHORT_CLASS_NAME, configuration.suggestedName());
+    data.MAIN_CLASS_NAME = "not.existing.TestClass";
+    assertEquals("TestClass", configuration.suggestedName());
+    data.MAIN_CLASS_NAME = "pkg.TestClass.";
+    assertEquals("pkg.TestClass.", configuration.suggestedName());
+    data.MAIN_CLASS_NAME = "TestClass";
+    assertEquals("TestClass", configuration.suggestedName());
+
+    data.TEST_OBJECT = JUnitConfiguration.TEST_METHOD;
+    data.MAIN_CLASS_NAME = psiClass.getQualifiedName();
+    data.METHOD_NAME = METHOD_NAME;
+    assertEquals(SHORT_CLASS_NAME + "." + METHOD_NAME, configuration.suggestedName());
+    data.MAIN_CLASS_NAME = "not.existing.TestClass";
+    assertEquals("TestClass." + METHOD_NAME, configuration.suggestedName());
+  }
+
+  private static void checkGeneretedName(JUnitConfiguration configuration, String name) {
+    assertEquals(configuration.suggestedName(), configuration.getName());
+    assertEquals(name, configuration.getName());
+  }
+}

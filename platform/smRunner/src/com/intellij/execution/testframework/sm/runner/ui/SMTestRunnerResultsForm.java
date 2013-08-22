@@ -15,9 +15,8 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
@@ -90,22 +89,20 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private String myCurrentCustomProgressCategory;
   private final Set<String> myMentionedCategories = new LinkedHashSet<String>();
 
-  public SMTestRunnerResultsForm(final RunConfigurationBase runConfiguration,
+  public SMTestRunnerResultsForm(final RunConfiguration runConfiguration,
                                  @NotNull final JComponent console,
                                  final TestConsoleProperties consoleProperties,
-                                 final RunnerSettings runnerSettings,
-                                 final ConfigurationPerRunnerSettings configurationSettings) {
-    this(runConfiguration, console, AnAction.EMPTY_ARRAY, consoleProperties, runnerSettings, configurationSettings, null);
+                                 final ExecutionEnvironment environment) {
+    this(runConfiguration, console, AnAction.EMPTY_ARRAY, consoleProperties, environment, null);
   }
 
-  public SMTestRunnerResultsForm(final RunConfigurationBase runConfiguration,
+  public SMTestRunnerResultsForm(final RunConfiguration runConfiguration,
                                  @NotNull final JComponent console,
                                  AnAction[] consoleActions,
                                  final TestConsoleProperties consoleProperties,
-                                 final RunnerSettings runnerSettings,
-                                 final ConfigurationPerRunnerSettings configurationSettings,
+                                 final ExecutionEnvironment environment,
                                  final String splitterPropertyName) {
-    super(console, consoleActions, consoleProperties, runnerSettings, configurationSettings,
+    super(console, consoleActions, consoleProperties, environment,
           splitterPropertyName != null ? DEFAULT_SM_RUNNER_SPLITTER_PROPERTY : splitterPropertyName, 0.5f);
     myConsoleProperties = consoleProperties;
 
@@ -142,7 +139,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   protected ToolbarPanel createToolbarPanel() {
-    return new SMTRunnerToolbarPanel(myConsoleProperties, myRunnerSettings, myConfigurationSettings, this, this);
+    return new SMTRunnerToolbarPanel(myConsoleProperties, myEnvironment, this, this);
   }
 
   protected JComponent createTestTreeView() {

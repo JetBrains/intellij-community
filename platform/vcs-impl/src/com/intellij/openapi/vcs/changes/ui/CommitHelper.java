@@ -119,7 +119,7 @@ public class CommitHelper {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(action, myActionName, true, myProject);
       boolean success = doesntContainErrors(processor.getVcsExceptions());
       if (success) {
-        reportSuccess(processor);
+        reportResult(processor);
       }
       return success;
     }
@@ -140,7 +140,7 @@ public class CommitHelper {
           @Override
           public NotificationInfo notifyFinished() {
             if (myCustomResultHandler == null) {
-              String text = reportSuccess(processor);
+              String text = reportResult(processor);
               return new NotificationInfo("VCS Commit", "VCS Commit Finished", text, true);
             }
             return null;
@@ -182,7 +182,7 @@ public class CommitHelper {
     }
   }
 
-  private String reportSuccess(GeneralCommitProcessor processor) {
+  private String reportResult(GeneralCommitProcessor processor) {
     final List<Change> changesFailedToCommit = processor.getChangesFailedToCommit();
 
     int failed = changesFailedToCommit.size();
@@ -197,8 +197,16 @@ public class CommitHelper {
       content.append("\n");
       content.append(s);
     }
-    VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(content.toString(), NotificationType.INFORMATION).notify(myProject);
+    NotificationType notificationType = resolveNotificationType(processor);
+    VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(content.toString(), notificationType).notify(myProject);
     return text;
+  }
+
+  private static NotificationType resolveNotificationType(@NotNull GeneralCommitProcessor processor) {
+    boolean hasExceptions = !processor.getVcsExceptions().isEmpty();
+    boolean hasOnlyWarnings = doesntContainErrors(processor.getVcsExceptions());
+
+    return hasExceptions ? (hasOnlyWarnings ? NotificationType.WARNING : NotificationType.ERROR) : NotificationType.INFORMATION;
   }
 
   /*

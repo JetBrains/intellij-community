@@ -93,6 +93,12 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
       return InspectionGadgetsBundle.message("unnecessary.qualifier.for.this.remove.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();

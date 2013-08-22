@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -39,7 +40,7 @@ public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
 
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
-    final GrAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector(annotation);
+    final PsiAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector(annotation);
     if (annotationCollector == null) {
       return false;
     }
@@ -62,7 +63,7 @@ public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
 
   @Override
   public boolean checkArgumentList(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
-    final GrAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector(annotation);
+    final PsiAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector(annotation);
     if (annotationCollector == null) {
       return false;
     }

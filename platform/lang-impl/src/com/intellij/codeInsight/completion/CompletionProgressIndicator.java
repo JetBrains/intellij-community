@@ -357,7 +357,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private boolean shouldShowLookup() {
-    if (isAutopopupCompletion() && myLookup.isCalculating()) {
+    if (isAutopopupCompletion() && myLookup.isCalculating() && Registry.is("ide.completion.delay.autopopup.until.completed")) {
       return false;
     }
     return true;
@@ -638,6 +638,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(this, myEditor);
     CompletionServiceImpl.setCompletionPhase(phase);
+    phase.ignoreCurrentDocumentChange();
 
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {

@@ -80,7 +80,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
     @Override
     public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
-      if (FileTypeUtils.isInJsp(statement.getContainingFile())) {
+      if (FileTypeUtils.isInServerPageFile(statement.getContainingFile())) {
         return;
       }
       if (statement.getReturnValue() != null) {

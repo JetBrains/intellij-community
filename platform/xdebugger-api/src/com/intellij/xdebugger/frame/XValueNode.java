@@ -92,13 +92,13 @@ public interface XValueNode extends Obsolescent {
 
   /**
    * @deprecated use {@link #setPresentation(javax.swing.Icon, String, String, boolean)} instead. Names for values should be passed to
-   * {@link XCompositeNode#addChildren(com.intellij.xdebugger.frame.XValueChildrenList, boolean)}
+   * {@link XCompositeNode#addChildren(XValueChildrenProvider, boolean)}
    */
   void setPresentation(@NonNls String name, @Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
 
   /**
    * @deprecated use {@link #setPresentation(javax.swing.Icon, String, String, String, boolean)} instead. Names for values should be passed to
-   * {@link XCompositeNode#addChildren(com.intellij.xdebugger.frame.XValueChildrenList, boolean)}
+   * {@link XCompositeNode#addChildren(XValueChildrenProvider, boolean)}
    */
   void setPresentation(@NonNls String name, @Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
 }

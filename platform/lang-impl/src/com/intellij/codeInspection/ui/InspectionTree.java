@@ -56,13 +56,15 @@ import java.util.*;
 
 public class InspectionTree extends Tree {
   private final HashSet<Object> myExpandedUserObjects;
+  @NotNull private final GlobalInspectionContextImpl myContext;
   private SelectionPath mySelectionPath;
   private static final ProblemDescriptor[] EMPTY_DESCRIPTORS = new ProblemDescriptor[0];
 
-  public InspectionTree(final Project project) {
+  public InspectionTree(@NotNull Project project, @NotNull GlobalInspectionContextImpl context) {
     super(new InspectionRootNode(project));
+    myContext = context;
 
-    setCellRenderer(new CellRenderer());//project));
+    setCellRenderer(new CellRenderer());
     setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(this);
     addTreeWillExpandListener(new ExpandListener());
@@ -163,7 +165,7 @@ public class InspectionTree extends Tree {
 
   public CommonProblemDescriptor[] getSelectedDescriptors() {
     final InspectionToolWrapper toolWrapper = getSelectedToolWrapper();
-    if (getSelectionCount() == 0 || !(toolWrapper instanceof LocalInspectionToolWrapper)) return EMPTY_DESCRIPTORS;
+    if (getSelectionCount() == 0) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = getSelectionPaths();
     final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
     for (TreePath path : paths) {
@@ -375,5 +377,10 @@ public class InspectionTree extends Tree {
         }
       }
     }
+  }
+
+  @NotNull
+  public GlobalInspectionContextImpl getContext() {
+    return myContext;
   }
 }

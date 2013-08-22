@@ -34,7 +34,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -44,11 +43,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -63,6 +61,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -336,7 +335,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
-  static HighlightInfo checkAssignmentOperatorApplicable(@NotNull PsiAssignmentExpression assignment) {
+  static HighlightInfo checkAssignmentOperatorApplicable(@NotNull PsiAssignmentExpression assignment,@NotNull PsiFile containingFile) {
     PsiJavaToken operationSign = assignment.getOperationSign();
     IElementType eqOpSign = operationSign.getTokenType();
     IElementType opSign = TypeConversionUtil.convertEQtoOperation(eqOpSign);
@@ -347,7 +346,7 @@ public class HighlightUtil extends HighlightUtilBase {
     final PsiType rType = rExpression.getType();
     HighlightInfo errorResult = null;
     if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, lType, rType, true) ||
-        PsiType.getJavaLangObject(assignment.getManager(), assignment.getResolveScope()).equals(lType)) {
+        PsiType.getJavaLangObject(containingFile.getManager(), assignment.getResolveScope()).equals(lType)) {
       String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
       String message = JavaErrorMessages.message("binary.operator.not.applicable", operatorText,
                                                  JavaHighlightUtil.formatType(lType),
@@ -483,7 +482,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (method == null && lambda != null) {
       //todo check return statements type inside lambda
     }
-    else if (method == null && !(parent instanceof JspFile)) {
+    else if (method == null && !(parent instanceof ServerPageFile)) {
       description = JavaErrorMessages.message("return.outside.method");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
     }
@@ -621,6 +620,22 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
+  @Nullable
+  public static HighlightInfo checkUnderscore(@NotNull PsiIdentifier identifier, @NotNull PsiVariable variable) {
+    if ("_".equals(variable.getName()) && PsiUtil.isLanguageLevel8OrHigher(variable)) {
+      if (variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiLambdaExpression) {
+        String message = JavaErrorMessages.message("underscore.lambda.identifier");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(message).create();
+      }
+      else {
+        String message = JavaErrorMessages.message("underscore.identifier");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(identifier).descriptionAndTooltip(message).create();
+      }
+    }
+
+    return null;
+  }
+
   @NotNull
   public static String formatClass(@NotNull PsiClass aClass) {
     return formatClass(aClass, true);
@@ -680,11 +695,11 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   private static HighlightInfoType getUnhandledExceptionHighlightType(final PsiElement element) {
-    if (!JspPsiUtil.isInJspFile(element)) {
+    if (!FileTypeUtils.isInServerPageFile(element)) {
       return HighlightInfoType.UNHANDLED_EXCEPTION;
     }
     PsiMethod targetMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    if (!(targetMethod instanceof JspHolderMethod)) return HighlightInfoType.UNHANDLED_EXCEPTION;
+    if (!(targetMethod instanceof SyntheticElement)) return HighlightInfoType.UNHANDLED_EXCEPTION;
     // ignore JSP top level errors - it handled by UnhandledExceptionInJSP inspection
     return null;
   }
@@ -789,7 +804,7 @@ public class HighlightUtil extends HighlightUtilBase {
         if (PsiModifier.PUBLIC.equals(modifier)) {
           isAllowed = modifierOwnerParent instanceof PsiJavaFile ||
                       modifierOwnerParent instanceof PsiClass &&
-                      (modifierOwnerParent instanceof JspClass || ((PsiClass)modifierOwnerParent).getQualifiedName() != null);
+                      (modifierOwnerParent instanceof PsiSyntheticClass || ((PsiClass)modifierOwnerParent).getQualifiedName() != null);
         }
         else if (PsiModifier.STATIC.equals(modifier) || PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) ||
                  PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
@@ -845,7 +860,8 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  public static HighlightInfo checkLiteralExpressionParsingError(@NotNull final PsiLiteralExpression expression) {
+  public static HighlightInfo checkLiteralExpressionParsingError(@NotNull final PsiLiteralExpression expression,
+                                                                 @NotNull LanguageLevel languageLevel, @NotNull PsiFile containingFile) {
     PsiElement literal = expression.getFirstChild();
     assert literal instanceof PsiJavaToken : literal;
     IElementType type = ((PsiJavaToken)literal).getTokenType();
@@ -860,19 +876,19 @@ public class HighlightUtil extends HighlightUtilBase {
 
     if (isFP) {
       if (text.startsWith(PsiLiteralExpressionImpl.HEX_PREFIX)) {
-        final HighlightInfo info = checkFeature(expression, Feature.HEX_FP_LITERALS);
+        final HighlightInfo info = checkFeature(expression, Feature.HEX_FP_LITERALS, languageLevel, containingFile);
         if (info != null) return info;
       }
     }
     if (isInt) {
       if (text.startsWith(PsiLiteralExpressionImpl.BIN_PREFIX)) {
-        final HighlightInfo info = checkFeature(expression, Feature.BIN_LITERALS);
+        final HighlightInfo info = checkFeature(expression, Feature.BIN_LITERALS, languageLevel, containingFile);
         if (info != null) return info;
       }
     }
     if (isInt || isFP) {
       if (text.contains("_")) {
-        HighlightInfo info = checkFeature(expression, Feature.UNDERSCORES);
+        HighlightInfo info = checkFeature(expression, Feature.UNDERSCORES, languageLevel, containingFile);
         if (info != null) return info;
         info = checkUnderscores(expression, text, isInt);
         if (info != null) return info;
@@ -1176,7 +1192,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   static Collection<HighlightInfo> checkWithImprovedCatchAnalysis(@NotNull final PsiParameter parameter,
-                                                                  @NotNull final Collection<PsiClassType> thrownInTryStatement) {
+                                                                  @NotNull final Collection<PsiClassType> thrownInTryStatement,@NotNull PsiFile containingFile) {
     final PsiElement scope = parameter.getDeclarationScope();
     if (!(scope instanceof PsiCatchSection)) return null;
 
@@ -1186,8 +1202,10 @@ public class HighlightUtil extends HighlightUtilBase {
     if (idx <= 0) return null;
 
     final Collection<PsiClassType> thrownTypes = ContainerUtil.newHashSet(thrownInTryStatement);
-    thrownTypes.add(PsiType.getJavaLangError(parameter.getManager(), parameter.getResolveScope()));
-    thrownTypes.add(PsiType.getJavaLangRuntimeException(parameter.getManager(), parameter.getResolveScope()));
+    PsiManager manager = containingFile.getManager();
+    GlobalSearchScope parameterResolveScope = parameter.getResolveScope();
+    thrownTypes.add(PsiType.getJavaLangError(manager, parameterResolveScope));
+    thrownTypes.add(PsiType.getJavaLangRuntimeException(manager, parameterResolveScope));
     final Collection<HighlightInfo> result = ContainerUtil.newArrayList();
 
     final List<PsiTypeElement> parameterTypeElements = PsiUtil.getParameterTypeElements(parameter);
@@ -1251,25 +1269,26 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   public static HighlightInfo checkSwitchSelectorType(@NotNull PsiSwitchStatement statement) {
     final PsiExpression expression = statement.getExpression();
-    HighlightInfo errorResult = null;
     PsiType type = expression == null ? null : expression.getType();
-    if (type != null) {
-      if (!isValidTypeForSwitchSelector(type, PsiUtil.isLanguageLevel7OrHigher(expression))) {
-        String message =
-          JavaErrorMessages.message("incompatible.types", JavaErrorMessages.message("valid.switch.selector.types"), JavaHighlightUtil
-            .formatType(type));
-        errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        QuickFixAction.registerQuickFixAction(errorResult, new ConvertSwitchToIfIntention(statement));
-        if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
-          QuickFixAction.registerQuickFixAction(errorResult, new AddTypeCastFix(PsiType.INT, expression));
-        }
+    if (type == null) {
+      return null;
+    }
+    HighlightInfo errorResult = null;
+    if (!isValidTypeForSwitchSelector(type, PsiUtil.isLanguageLevel7OrHigher(expression))) {
+      String message =
+        JavaErrorMessages.message("incompatible.types", JavaErrorMessages.message("valid.switch.selector.types"), JavaHighlightUtil.formatType(
+          type));
+      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+      QuickFixAction.registerQuickFixAction(errorResult, new ConvertSwitchToIfIntention(statement));
+      if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
+        QuickFixAction.registerQuickFixAction(errorResult, new AddTypeCastFix(PsiType.INT, expression));
       }
-      else {
-        final PsiClass member = PsiUtil.resolveClassInClassTypeOnly(type);
-        if (member != null && !PsiUtil.isAccessible(member, expression, null)) {
-          String message = PsiFormatUtil.formatClass(member, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME) + " is inaccessible here";
-          errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        }
+    }
+    else {
+      final PsiClass member = PsiUtil.resolveClassInClassTypeOnly(type);
+      if (member != null && !PsiUtil.isAccessible(member.getProject(), member, expression, null)) {
+        String message = PsiFormatUtil.formatClass(member, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME) + " is inaccessible here";
+        errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
       }
     }
     return errorResult;
@@ -1805,7 +1824,9 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  public static HighlightInfo checkMemberReferencedBeforeConstructorCalled(@NotNull PsiElement expression, PsiElement resolved) {
+  public static HighlightInfo checkMemberReferencedBeforeConstructorCalled(@NotNull PsiElement expression,
+                                                                           PsiElement resolved,
+                                                                           @NotNull PsiFile containingFile) {
     PsiClass referencedClass;
     @NonNls String resolvedName;
     PsiType type;
@@ -1903,13 +1924,14 @@ public class HighlightUtil extends HighlightUtilBase {
       return null;
     }
     if (referencedClass == null) return null;
-    return checkReferenceToOurInstanceInsideThisOrSuper(expression, referencedClass, resolvedName);
+    return checkReferenceToOurInstanceInsideThisOrSuper(expression, referencedClass, resolvedName, containingFile);
   }
 
   @Nullable
   private static HighlightInfo checkReferenceToOurInstanceInsideThisOrSuper(@NotNull final PsiElement expression,
                                                                             @NotNull PsiClass referencedClass,
-                                                                            final String resolvedName) {
+                                                                            final String resolvedName,
+                                                                            @NotNull PsiFile containingFile) {
     if (PsiTreeUtil.getParentOfType(expression, PsiReferenceParameterList.class) != null) return null;
     PsiElement element = expression.getParent();
     while (element != null) {
@@ -1958,7 +1980,16 @@ public class HighlightUtil extends HighlightUtilBase {
       }
 
       if (element instanceof PsiReferenceExpression) {
-        final PsiElement resolve = ((PsiReferenceExpression)element).resolve();
+        final PsiElement resolve;
+        if (element instanceof PsiReferenceExpressionImpl) {
+          PsiReferenceExpressionImpl referenceExpression = (PsiReferenceExpressionImpl)element;
+          JavaResolveResult[] results = JavaResolveUtil
+            .resolveWithContainingFile(referenceExpression, PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE, true, false, containingFile);
+          resolve = results.length == 1 ? results[0].getElement() : null;
+        }
+        else {
+          resolve = ((PsiReferenceExpression)element).resolve();
+        }
         if (resolve instanceof PsiField && ((PsiField)resolve).hasModifierProperty(PsiModifier.STATIC)) {
           return null;
         }
@@ -1976,8 +2007,8 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  public static HighlightInfo checkImplicitThisReferenceBeforeSuper(@NotNull PsiClass aClass) {
-    if (JavaVersionService.getInstance().isAtLeast(aClass, JavaSdkVersion.JDK_1_7)) return null;
+  public static HighlightInfo checkImplicitThisReferenceBeforeSuper(@NotNull PsiClass aClass, @NotNull JavaSdkVersion javaSdkVersion) {
+    if (javaSdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7)) return null;
     if (aClass instanceof PsiAnonymousClass || aClass instanceof PsiTypeParameter) return null;
     PsiClass superClass = aClass.getSuperClass();
     if (superClass == null || !PsiUtil.isInnerClass(superClass)) return null;
@@ -2205,13 +2236,13 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
-  public static HighlightInfo checkSynchronizedExpressionType(@NotNull PsiExpression expression, @Nullable PsiType type) {
+  public static HighlightInfo checkSynchronizedExpressionType(@NotNull PsiExpression expression, @Nullable PsiType type,@NotNull PsiFile containingFile) {
     if (type == null) return null;
     if (expression.getParent() instanceof PsiSynchronizedStatement) {
       PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)expression.getParent();
       if (expression == synchronizedStatement.getLockExpression() &&
           (type instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(type))) {
-        PsiClassType objectType = PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
+        PsiClassType objectType = PsiType.getJavaLangObject(containingFile.getManager(), expression.getResolveScope());
         return createIncompatibleTypeHighlightInfo(objectType, type, expression.getTextRange(), 0);
       }
     }
@@ -2308,14 +2339,14 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   public static HighlightInfo checkSingleImportClassConflict(@NotNull PsiImportStatement statement,
-                                                             @NotNull Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> importedClasses) {
+                                                             @NotNull Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> importedClasses,@NotNull PsiFile containingFile) {
     if (statement.isOnDemand()) return null;
     PsiElement element = statement.resolve();
     if (element instanceof PsiClass) {
       String name = ((PsiClass)element).getName();
       Pair<PsiImportStaticReferenceElement, PsiClass> imported = importedClasses.get(name);
       PsiClass importedClass = imported == null ? null : imported.getSecond();
-      if (importedClass != null && !element.getManager().areElementsEquivalent(importedClass, element)) {
+      if (importedClass != null && !containingFile.getManager().areElementsEquivalent(importedClass, element)) {
         String description = JavaErrorMessages.message("single.import.class.conflict", formatClass(importedClass));
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
       }
@@ -2378,13 +2409,16 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
-  static HighlightInfo checkReference(@NotNull final PsiJavaCodeReferenceElement ref, @NotNull final JavaResolveResult result) {
+  static HighlightInfo checkReference(@NotNull final PsiJavaCodeReferenceElement ref,
+                                      @NotNull final JavaResolveResult result,
+                                      @NotNull PsiFile containingFile,
+                                      @NotNull LanguageLevel languageLevel) {
     final PsiElement refName = ref.getReferenceNameElement();
 
     if (!(refName instanceof PsiIdentifier) && !(refName instanceof PsiKeyword)) return null;
     final PsiElement resolved = result.getElement();
 
-    HighlightInfo highlightInfo = checkMemberReferencedBeforeConstructorCalled(ref, resolved);
+    HighlightInfo highlightInfo = checkMemberReferencedBeforeConstructorCalled(ref, resolved, containingFile);
     if (highlightInfo != null) return highlightInfo;
 
     PsiElement refParent = ref.getParent();
@@ -2454,7 +2488,8 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     }
     if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !(resolved instanceof ImplicitVariable)) {
-      highlightInfo = HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref);
+      highlightInfo = HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref,
+                                                                        languageLevel);
     }
     else if (resolved instanceof PsiClass) {
       if (Comparing.strEqual(((PsiClass)resolved).getQualifiedName(), ((PsiClass)resolved).getName())) {
@@ -2508,7 +2543,8 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkElementInReferenceList(@NotNull PsiJavaCodeReferenceElement ref,
                                                    @NotNull PsiReferenceList referenceList,
-                                                   @NotNull JavaResolveResult resolveResult) {
+                                                   @NotNull JavaResolveResult resolveResult,
+                                                   @NotNull LanguageLevel languageLevel) {
     PsiElement resolved = resolveResult.getElement();
     HighlightInfo highlightInfo = null;
     PsiElement refGrandParent = referenceList.getParent();
@@ -2516,7 +2552,7 @@ public class HighlightUtil extends HighlightUtilBase {
       PsiClass aClass = (PsiClass)resolved;
       if (refGrandParent instanceof PsiClass) {
         if (refGrandParent instanceof PsiTypeParameter) {
-          highlightInfo = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, (PsiClass)refGrandParent, resolveResult, ref);
+          highlightInfo = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, (PsiClass)refGrandParent, resolveResult, ref, languageLevel);
         }
         else {
           highlightInfo = HighlightClassUtil.checkExtendsClassAndImplementsInterface(referenceList, resolveResult, ref);
@@ -2567,11 +2603,13 @@ public class HighlightUtil extends HighlightUtilBase {
     return info;
   }
 
-  public static void registerChangeVariableTypeFixes(PsiVariable parameter, PsiType itemType, HighlightInfo highlightInfo) {
+  public static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter, PsiType itemType, HighlightInfo highlightInfo) {
     if (itemType instanceof PsiMethodReferenceType) return;
-    for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
-      for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, action);
+    if (itemType != null) {
+      for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
+        for (IntentionAction action : fixProvider.getFixes(parameter, itemType)) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, action);
+        }
       }
     }
     ChangeParameterClassFix.registerQuickFixAction(parameter.getType(), itemType, highlightInfo);
@@ -2620,18 +2658,23 @@ public class HighlightUtil extends HighlightUtilBase {
     LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions"),
     TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations");
 
+    @NotNull
     private final LanguageLevel level;
+    @NotNull
     private final String key;
 
-    Feature(final LanguageLevel level, @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) final String key) {
+    Feature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) final String key) {
       this.level = level;
       this.key = key;
     }
   }
 
   @Nullable
-  private static HighlightInfo checkFeature(@Nullable final PsiElement element, @NotNull final Feature feature) {
-    if (element != null && element.getManager().isInProject(element) && !PsiUtil.getLanguageLevel(element).isAtLeast(feature.level)) {
+  private static HighlightInfo checkFeature(@NotNull final PsiElement element,
+                                            @NotNull Feature feature,
+                                            @NotNull LanguageLevel languageLevel,
+                                            @NotNull PsiFile containingFile) {
+    if (containingFile.getManager().isInProject(containingFile) && !languageLevel.isAtLeast(feature.level)) {
       String message = JavaErrorMessages.message("insufficient.language.level", JavaErrorMessages.message(feature.key));
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(feature.level));
@@ -2643,62 +2686,69 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  public static HighlightInfo checkGenericsFeature(PsiElement parameterList, int listSize) {
-    return listSize > 0 ? checkFeature(parameterList, Feature.GENERICS) : null;
+  public static HighlightInfo checkGenericsFeature(@NotNull PsiElement parameterList,
+                                                   int listSize,
+                                                   @NotNull LanguageLevel languageLevel,
+                                                   @NotNull PsiFile containingFile) {
+    return listSize > 0 ? checkFeature(parameterList, Feature.GENERICS, languageLevel, containingFile) : null;
   }
 
   @Nullable
-  public static HighlightInfo checkAnnotationFeature(PsiElement element) {
-    return checkFeature(element, Feature.ANNOTATIONS);
+  public static HighlightInfo checkAnnotationFeature(@NotNull PsiElement element,
+                                                     @NotNull LanguageLevel languageLevel,
+                                                     @NotNull PsiFile containingFile) {
+    return checkFeature(element, Feature.ANNOTATIONS, languageLevel, containingFile);
   }
 
   @Nullable
-  public static HighlightInfo checkForEachFeature(PsiForeachStatement statement) {
-    return checkFeature(statement, Feature.FOR_EACH);
+  public static HighlightInfo checkForEachFeature(@NotNull PsiForeachStatement statement, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+    return checkFeature(statement, Feature.FOR_EACH, languageLevel, containingFile);
   }
 
   @Nullable
-  public static HighlightInfo checkStaticImportFeature(PsiImportStaticStatement statement) {
-    return checkFeature(statement, Feature.STATIC_IMPORTS);
+  public static HighlightInfo checkStaticImportFeature(@NotNull PsiImportStaticStatement statement, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+    return checkFeature(statement, Feature.STATIC_IMPORTS, languageLevel, containingFile);
   }
 
   @Nullable
-  public static HighlightInfo checkVarargFeature(PsiParameter parameter) {
-    return checkFeature(parameter, Feature.VARARGS);
+  public static HighlightInfo checkVarargFeature(@NotNull PsiParameter parameter, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+    return checkFeature(parameter, Feature.VARARGS, languageLevel, containingFile);
   }
 
   @Nullable
-  public static HighlightInfo checkDiamondFeature(PsiTypeElement typeElement) {
-    return typeElement.getType() instanceof PsiDiamondType ? checkFeature(typeElement.getParent(), Feature.DIAMOND_TYPES) : null;
+  public static HighlightInfo checkDiamondFeature(@NotNull PsiTypeElement typeElement, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+    return typeElement.getType() instanceof PsiDiamondType ? checkFeature(typeElement.getParent(), Feature.DIAMOND_TYPES,
+                                                                          languageLevel, containingFile) : null;
   }
 
   @Nullable
-  public static HighlightInfo checkMultiCatchFeature(PsiParameter parameter) {
-    return parameter.getType() instanceof PsiDisjunctionType ? checkFeature(parameter, Feature.MULTI_CATCH) : null;
+  public static HighlightInfo checkMultiCatchFeature(@NotNull PsiParameter parameter, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+    return parameter.getType() instanceof PsiDisjunctionType ? checkFeature(parameter, Feature.MULTI_CATCH,
+                                                                            languageLevel, containingFile) : null;
   }
 
   @Nullable
-  public static HighlightInfo checkTryWithResourcesFeature(PsiResourceVariable resourceVariable) {
-    return checkFeature(resourceVariable.getParent(), Feature.TRY_WITH_RESOURCES);
+  public static HighlightInfo checkTryWithResourcesFeature(@NotNull PsiResourceVariable resourceVariable, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+    return checkFeature(resourceVariable.getParent(), Feature.TRY_WITH_RESOURCES, languageLevel, containingFile);
   }
 
   @Nullable
-  public static HighlightInfo checkExtensionMethodsFeature(PsiMethod method) {
-    return checkFeature(method, Feature.EXTENSION_METHODS);
+  public static HighlightInfo checkExtensionMethodsFeature(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+    return checkFeature(method, Feature.EXTENSION_METHODS, languageLevel, containingFile);
   }
 
   @Nullable
-  public static HighlightInfo checkMethodReferencesFeature(PsiMethodReferenceExpression expression) {
-    return checkFeature(expression, Feature.METHOD_REFERENCES);
+  public static HighlightInfo checkMethodReferencesFeature(@NotNull PsiMethodReferenceExpression expression, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+    return checkFeature(expression, Feature.METHOD_REFERENCES, languageLevel, containingFile);
   }
 
   @Nullable
-  public static HighlightInfo checkLambdaFeature(PsiLambdaExpression expression) {
-    return checkFeature(expression, Feature.LAMBDA_EXPRESSIONS);
+  public static HighlightInfo checkLambdaFeature(@NotNull PsiLambdaExpression expression, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+    return checkFeature(expression, Feature.LAMBDA_EXPRESSIONS, languageLevel, containingFile);
   }
 
   @Nullable
-  public static HighlightInfo checkTypeAnnotationFeature(PsiAnnotation annotation) {
-    return checkFeature(annotation, Feature.TYPE_ANNOTATIONS);
+  public static HighlightInfo checkTypeAnnotationFeature(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+    return checkFeature(annotation, Feature.TYPE_ANNOTATIONS, languageLevel, containingFile);
   }
 }

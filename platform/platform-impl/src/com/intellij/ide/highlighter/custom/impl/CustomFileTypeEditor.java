@@ -128,10 +128,6 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     return panel;
   }
 
-  public void disposeEditor() {
-  }
-
-
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,13 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   // todo: drop unless J. will insist to keep old style look
   private static final boolean FRAMED_STYLE = SystemInfo.isMac || !SystemProperties.getBooleanProperty("idea.ui.old.mem.use", false);
 
-  @NonNls private static final String SAMPLE_STRING = "0000M of 0000M";
   private static final int MEGABYTE = 1024 * 1024;
+  @NonNls private static final String SAMPLE_STRING;
+  
+  static {
+    long maxMemory = Math.min(Runtime.getRuntime().maxMemory() / MEGABYTE, 9999);
+    SAMPLE_STRING = maxMemory + " of " + maxMemory + "M ";
+  }
   private static final int HEIGHT = 16;
   private static final Color USED_COLOR_1 = new JBColor(Gray._185, Gray._150);
   private static final Color USED_COLOR_2 = new JBColor(Gray._145, Gray._120);
@@ -185,7 +190,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       g2.dispose();
     }
 
-    g.drawImage(myBufferedImage, 0, 0, null);
+    UIUtil.drawImage(g, myBufferedImage, 0, 0, null);
   }
 
   private static void setGradient(Graphics2D g2, boolean invert, int height, Color start, Color end) {

@@ -19,8 +19,11 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -36,6 +39,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+
+import java.util.List;
 
 /**
  * @author ilyas
@@ -123,6 +128,50 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
       context.getEditor().getSelectionModel().removeSelection();
     }
     return insertedVar;
+  }
+
+  @Override
+  protected GrInplaceVariableIntroducer getIntroducer(@NotNull GrVariable var,
+                                                      @NotNull GrIntroduceContext context,
+                                                      @NotNull GroovyIntroduceVariableSettings settings,
+                                                      @NotNull List<RangeMarker> occurrenceMarkers,
+                                                      RangeMarker varRangeMarker, RangeMarker expressionRangeMarker,
+                                                      RangeMarker stringPartRangeMarker) {
+    context.getEditor().getCaretModel().moveToOffset(var.getTextOffset());
+    return new GrInplaceVariableIntroducer(var, context.getEditor(), context.getProject(), REFACTORING_NAME, occurrenceMarkers, var);
+  }
+
+  @Override
+  protected GroovyIntroduceVariableSettings getSettingsForInplace(final GrIntroduceContext context, final OccurrencesChooser.ReplaceChoice choice) {
+    return new GroovyIntroduceVariableSettings() {
+      @Override
+      public boolean isDeclareFinal() {
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public String getName() {
+        return new GrVariableNameSuggester(context, new GroovyVariableValidator(context)).suggestNames().iterator().next();
+      }
+
+      @Override
+      public boolean replaceAllOccurrences() {
+        return choice == OccurrencesChooser.ReplaceChoice.ALL;
+      }
+
+      @Nullable
+      @Override
+      public PsiType getSelectedType() {
+        GrExpression expression = context.getExpression();
+        StringPartInfo stringPart = context.getStringPart();
+        GrVariable var = context.getVar();
+        return expression != null ? expression.getType() :
+               var != null ? var.getType() :
+               stringPart != null ? stringPart.getLiteral().getType() :
+               null;
+      }
+    };
   }
 
   @NotNull

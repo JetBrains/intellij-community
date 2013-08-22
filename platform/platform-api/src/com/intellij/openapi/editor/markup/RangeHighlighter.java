@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.markup;
 
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.RangeMarker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

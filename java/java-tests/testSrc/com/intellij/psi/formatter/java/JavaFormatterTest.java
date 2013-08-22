@@ -320,18 +320,20 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testClassComment() throws Exception {
-    doTextTest("/**\n" +
-                "* @author smbd\n" +
-                "* @param <T> some param\n" +
-                "* @since 1.9\n" +
-                "*/\n" +
-                "class Test<T>{}",
-               "/**\n" +
-                " * @param <T> some param\n" +
-                " * @author smbd\n" +
-                " * @since 1.9\n" +
-                " */\n" +
-                "class Test<T> {\n}");
+    String before = "/**\n" +
+                  "* @author smbd\n" +
+                  "* @param <T> some param\n" +
+                  "* @since 1.9\n" +
+                  "*/\n" +
+                  "class Test<T>{}";
+    String after = "/**\n" +
+                   " * @param <T> some param\n" +
+                   " * @author smbd\n" +
+                   " * @since 1.9\n" +
+                   " */\n" +
+                   "class Test<T> {\n" +
+                   "}";
+    doTextTest(before,after);
   }
 
   public void testStringBinaryOperation() throws Exception {
@@ -1166,23 +1168,27 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testNewLineAfterJavaDocs() throws Exception {
-    doTextTest("/** @noinspection InstanceVariableNamingConvention*/class Foo{\n" +
-               "/** @noinspection InstanceVariableNamingConvention*/int myFoo;\n" +
-"/** @noinspection InstanceVariableNamingConvention*/ void foo(){}}", "/**\n" +
-                                                                      " * @noinspection InstanceVariableNamingConvention\n" +
-                                                                      " */\n" +
-                                                                      "class Foo {\n" +
-                                                                      "    /**\n" +
-                                                                      "     * @noinspection InstanceVariableNamingConvention\n" +
-                                                                      "     */\n" +
-                                                                      "    int myFoo;\n" +
-                                                                      "\n" +
-                                                                      "    /**\n" +
-                                                                      "     * @noinspection InstanceVariableNamingConvention\n" +
-                                                                      "     */\n" +
-                                                                      "    void foo() {\n" +
-                                                                      "    }\n" +
-                                                                      "}");
+    String before = "/** @noinspection InstanceVariableNamingConvention*/class Foo{\n" +
+                    "/** @noinspection InstanceVariableNamingConvention*/int myFoo;\n" +
+                    "/** @noinspection InstanceVariableNamingConvention*/ void foo(){}}";
+
+    String after = "/**\n" +
+                   " * @noinspection InstanceVariableNamingConvention\n" +
+                   " */\n" +
+                   "class Foo {\n" +
+                   "    /**\n" +
+                   "     * @noinspection InstanceVariableNamingConvention\n" +
+                   "     */\n" +
+                   "    int myFoo;\n" +
+                   "\n" +
+                   "    /**\n" +
+                   "     * @noinspection InstanceVariableNamingConvention\n" +
+                   "     */\n" +
+                   "    void foo() {\n" +
+                   "    }\n" +
+                   "}";
+
+    doTextTest(before, after);
   }
 
   public void testArrayInitializerWrapping() throws Exception {

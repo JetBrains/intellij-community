@@ -17,12 +17,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Thread-safe.
@@ -79,20 +81,34 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
       public void run() {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         final ModifiableRootModel model = moduleRootManager.getModifiableModel();
+        final ContentEntry[] contentEntries = model.getContentEntries();
+        final Map<String, ContentEntry> contentEntriesMap = ContainerUtilRt.newHashMap();
+        for(ContentEntry contentEntry : contentEntries) {
+          contentEntriesMap.put(contentEntry.getUrl(), contentEntry);
+        }
         try {
           for (DataNode<ContentRootData> data : datas) {
             ContentRootData contentRoot = data.getData();
             ContentEntry contentEntry = findOrCreateContentRoot(model, contentRoot.getRootPath());
             LOG.info(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
+            final Set<String> retainedPaths = ContainerUtilRt.newHashSet();
             for (String path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE)) {
               createSourceRootIfAbsent(contentEntry, path, module.getName());
+              retainedPaths.add(ExternalSystemApiUtil.toCanonicalPath(path));
             }
             for (String path : contentRoot.getPaths(ExternalSystemSourceType.TEST)) {
               createTestRootIfAbsent(contentEntry, path, module.getName());
+              retainedPaths.add(ExternalSystemApiUtil.toCanonicalPath(path));
             }
             for (String path : contentRoot.getPaths(ExternalSystemSourceType.EXCLUDED)) {
               createExcludedRootIfAbsent(contentEntry, path, module.getName());
+              retainedPaths.add(ExternalSystemApiUtil.toCanonicalPath(path));
             }
+            contentEntriesMap.remove(contentEntry.getUrl());
+            removeOutdatedContentFolders(contentEntry, retainedPaths);
+          }
+          for(ContentEntry contentEntry : contentEntriesMap.values()) {
+            model.removeContentEntry(contentEntry);
           }
         }
         finally {
@@ -100,6 +116,23 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
         }
       }
     });
+  }
+
+  private static void removeOutdatedContentFolders(@NotNull final ContentEntry entry, @NotNull final Set<String> retainedContentFolders) {
+    final List<SourceFolder> sourceFolders = ContainerUtilRt.newArrayList(entry.getSourceFolders());
+    for(final SourceFolder sourceFolder : sourceFolders) {
+      final String path = VirtualFileManager.extractPath(sourceFolder.getUrl());
+      if(!retainedContentFolders.contains(path)) {
+        entry.removeSourceFolder(sourceFolder);
+      }
+    }
+    final List<ExcludeFolder> excludeFolders =  ContainerUtilRt.newArrayList(entry.getExcludeFolders());
+    for(final ExcludeFolder excludeFolder : excludeFolders) {
+      final String path = VirtualFileManager.extractPath(excludeFolder.getUrl());
+      if(!(excludeFolder instanceof ExcludedOutputFolder) && !retainedContentFolders.contains(path)) {
+       entry.removeExcludeFolder(excludeFolder);
+      }
+    }
   }
 
   @NotNull

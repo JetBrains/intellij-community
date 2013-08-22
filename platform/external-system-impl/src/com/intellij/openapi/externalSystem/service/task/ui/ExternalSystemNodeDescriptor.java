@@ -37,6 +37,10 @@ public class ExternalSystemNodeDescriptor<T> extends PresentableNodeDescriptor<T
     setIcon(icon);
   }
 
+  public void setName(@NotNull String name) {
+    myName = name;
+  }
+  
   @Override
   protected void update(PresentationData presentation) {
     presentation.setPresentableText(myName);

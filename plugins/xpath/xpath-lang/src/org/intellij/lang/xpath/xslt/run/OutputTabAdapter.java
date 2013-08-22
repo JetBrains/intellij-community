@@ -21,6 +21,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -28,7 +29,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -43,6 +43,7 @@ class OutputTabAdapter extends ProcessAdapter {
         myConsole = console;
     }
 
+    @Override
     public void startNotified(ProcessEvent event) {
         final XsltCommandLineState state = event.getProcessHandler().getUserData(XsltCommandLineState.STATE);
         if (state != null) {
@@ -52,6 +53,7 @@ class OutputTabAdapter extends ProcessAdapter {
 
     public void attachOutputConsole(final int port) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
             public void run() {
                 try {
                     final InputStream stream;
@@ -92,7 +94,7 @@ class OutputTabAdapter extends ProcessAdapter {
     @Nullable
     private InputStream connect(int port) throws IOException {
         final long s = System.currentTimeMillis();
-        final InetSocketAddress endpoint = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port);
+        final InetSocketAddress endpoint = new InetSocketAddress(NetUtils.getLoopbackAddress(), port);
 
         myStartedProcess.notifyTextAvailable("Connecting to XSLT runner on " + endpoint + "\n", ProcessOutputTypes.SYSTEM);
 
@@ -109,7 +111,7 @@ class OutputTabAdapter extends ProcessAdapter {
                 return socket.getInputStream();
             } catch (ConnectException e) {
                 ex = e;
-                try { Thread.sleep(500); } catch (InterruptedException e1) { break; }
+                try { Thread.sleep(500); } catch (InterruptedException ignored) { break; }
             }
             if (myStartedProcess.isProcessTerminated() || myStartedProcess.isProcessTerminating()) {
                 return null;

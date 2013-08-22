@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.intelliLang;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
@@ -30,11 +31,14 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
@@ -65,6 +69,12 @@ import java.util.*;
 public class Configuration implements PersistentStateComponent<Element>, ModificationTracker {
 
   static final Logger LOG = Logger.getInstance(Configuration.class.getName());
+  private static final Condition<BaseInjection> LANGUAGE_INJECTION_CONDITION = new Condition<BaseInjection>() {
+    @Override
+    public boolean value(BaseInjection o) {
+      return Language.findLanguageByID(o.getInjectedLanguageId()) != null;
+    }
+  };
 
   @State(
     name = Configuration.COMPONENT_NAME,
@@ -104,8 +114,10 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
   }
   @State(
     name = Configuration.COMPONENT_NAME,
-    storages = {@Storage( file = StoragePathMacros.PROJECT_FILE),
-      @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)})
+    storages = {
+      @Storage(file = StoragePathMacros.PROJECT_FILE),
+      @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/IntelliLang.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    })
   public static class Prj extends Configuration {
 
     private final Configuration myParentConfiguration;
@@ -122,6 +134,13 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
     @Override
     public List<BaseInjection> getDefaultInjections() {
       return myParentConfiguration.getDefaultInjections();
+    }
+
+    @Override
+    protected Collection<BaseInjection> getAllInjections() {
+      Collection<BaseInjection> injections = super.getAllInjections();
+      injections.addAll(myParentConfiguration.getAllInjections());
+      return injections;
     }
 
     @NotNull
@@ -147,8 +166,8 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
                                      List<? extends BaseInjection> originalInjections,
                                      boolean forceLevel) {
       if (!forceLevel && !originalInjections.isEmpty()) {
-        if (myParentConfiguration.replaceInjections(Collections.<BaseInjection>emptyList(), originalInjections, forceLevel)) {
-          myParentConfiguration.replaceInjections(newInjections, Collections.<BaseInjection>emptyList(), forceLevel);
+        if (myParentConfiguration.replaceInjections(Collections.<BaseInjection>emptyList(), originalInjections, false)) {
+          myParentConfiguration.replaceInjections(newInjections, Collections.<BaseInjection>emptyList(), false);
           return true;
         }
       }
@@ -167,14 +186,10 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
   @NonNls public static final String COMPONENT_NAME = "LanguageInjectionConfiguration";
 
   // element names
-  @NonNls private static final String TAG_INJECTION_NAME = "TAGS";
-  @NonNls private static final String ATTRIBUTE_INJECTION_NAME = "ATTRIBUTES";
-  @NonNls private static final String PARAMETER_INJECTION_NAME = "PARAMETERS";
   @NonNls private static final String INSTRUMENTATION_TYPE_NAME = "INSTRUMENTATION";
   @NonNls private static final String LANGUAGE_ANNOTATION_NAME = "LANGUAGE_ANNOTATION";
   @NonNls private static final String PATTERN_ANNOTATION_NAME = "PATTERN_ANNOTATION";
   @NonNls private static final String SUBST_ANNOTATION_NAME = "SUBST_ANNOTATION";
-  @NonNls private static final String ENTRY_NAME = "entry";
   @NonNls private static final String RESOLVE_REFERENCES = "RESOLVE_REFERENCES";
   @NonNls private static final String LOOK_FOR_VAR_ASSIGNMENTS = "LOOK_FOR_VAR_ASSIGNMENTS";
   @NonNls private static final String USE_DFA_IF_AVAILABLE = "USE_DFA_IF_AVAILABLE";
@@ -187,6 +202,26 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
       return ContainerUtil.createLockFreeCopyOnWriteList();
     }
   };
+
+  protected Collection<BaseInjection> getAllInjections() {
+    ArrayList<BaseInjection> injections = new ArrayList<BaseInjection>();
+    for (List<BaseInjection> list : myInjections.values()) {
+      injections.addAll(list);
+    }
+    return injections;
+  }
+
+  private CachedValue<MultiMap<String, BaseInjection>> myInjectionsById = new CachedValueImpl<MultiMap<String, BaseInjection>>(new CachedValueProvider<MultiMap<String, BaseInjection>>() {
+    @Nullable
+    @Override
+    public Result<MultiMap<String, BaseInjection>> compute() {
+      MultiMap<String, BaseInjection> map = new MultiMap<String, BaseInjection>();
+      for (BaseInjection injection : getAllInjections()) {
+        map.putValue(injection.getInjectedLanguageId(), injection);
+      }
+      return Result.create(map, Configuration.this);
+    }
+  });
 
   private volatile long myModificationCount;
 
@@ -203,8 +238,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       supports.put(support.getId(), support);
     }
-    loadStateOld(element, supports.get(LanguageInjectionSupport.XML_SUPPORT_ID), supports.get(LanguageInjectionSupport.JAVA_SUPPORT_ID));
-    for (Element child : (List<Element>)element.getChildren("injection")){
+    for (Element child : element.getChildren("injection")){
       final String key = child.getAttributeValue("injector-id");
       final LanguageInjectionSupport support = supports.get(key);
       final BaseInjection injection = support == null ? new BaseInjection(key) : support.createInjection(child);
@@ -227,31 +261,6 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
       }
     }
     return places.length != 0 && result.length == 0? null : result;
-  }
-
-  private void loadStateOld(Element element, final LanguageInjectionSupport xmlSupport, final LanguageInjectionSupport javaSupport) {
-    if (xmlSupport != null) {
-      final Element xmlTagMarker = new Element("XmlTagInjection");
-      myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(TAG_INJECTION_NAME), new Factory<BaseInjection>() {
-        public BaseInjection create() {
-          return xmlSupport.createInjection(xmlTagMarker);
-        }
-      }));
-      final Element xmlAttributeMarker = new Element("XmlAttributeInjection");
-      myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(ATTRIBUTE_INJECTION_NAME), new Factory<BaseInjection>() {
-        public BaseInjection create() {
-          return xmlSupport.createInjection(xmlAttributeMarker);
-        }
-      }));
-    }
-    if (javaSupport != null) {
-      final Element javaMethodMarker = new Element("MethodParameterInjection");
-      myInjections.get(LanguageInjectionSupport.JAVA_SUPPORT_ID).addAll(readExternal(element.getChild(PARAMETER_INJECTION_NAME), new Factory<BaseInjection>() {
-        public BaseInjection create() {
-          return javaSupport.createInjection(javaMethodMarker);
-        }
-      }));
-    }
   }
 
   private static boolean readBoolean(Element element, String key, boolean defValue) {
@@ -322,20 +331,6 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
     return element;
   }
 
-  @SuppressWarnings({"unchecked"})
-  private static <T extends BaseInjection> List<T> readExternal(Element element, Factory<T> factory) {
-    final List<T> injections = new ArrayList<T>();
-    if (element != null) {
-      final List<Element> list = element.getChildren(ENTRY_NAME);
-      for (Element entry : list) {
-        final T o = factory.create();
-        o.loadState(entry);
-        injections.add(o);
-      }
-    }
-    return injections;
-  }
-
   public static Configuration getInstance() {
     return ServiceManager.getService(Configuration.class);
   }
@@ -346,6 +341,10 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
 
   public List<BaseInjection> getDefaultInjections() {
     return Collections.emptyList();
+  }
+
+  public Collection<BaseInjection> getInjectionsByLanguageId(String languageId) {
+    return myInjectionsById.getValue().get(languageId);
   }
 
   @Nullable
@@ -436,7 +435,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
     }
   }
 
-  public void configurationModified() {
+  private void configurationModified() {
     myModificationCount ++;
   }
 
@@ -490,6 +489,9 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
     }
   }
 
+  /**
+   * @param injectorId see {@link org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport#getId()}
+   */
   @NotNull
   public List<BaseInjection> getInjections(final String injectorId) {
     return Collections.unmodifiableList(myInjections.get(injectorId));
@@ -504,7 +506,10 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
                                 public boolean process(final List<? extends BaseInjection> add,
                                                        final List<? extends BaseInjection> remove) {
                                   replaceInjectionsWithUndoInner(add, remove);
-                                  FileContentUtil.reparseOpenedFiles();
+                                  if (ContainerUtil.find(add, LANGUAGE_INJECTION_CONDITION) != null || ContainerUtil.find(remove,
+                                                                                                                          LANGUAGE_INJECTION_CONDITION) != null) {
+                                    FileContentUtil.reparseOpenedFiles();
+                                  }
                                   return true;
                                 }
                               });

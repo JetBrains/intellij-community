@@ -14,8 +14,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
-import org.jboss.netty.channel.ChannelException;
+import io.netty.channel.ChannelException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
@@ -37,7 +38,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
 
   @Nullable
   private BuiltInServer server;
-  private boolean myEnabledInUnitTestMode = true;
+  private boolean enabledInUnitTestMode = true;
 
   @Override
   public int getPort() {
@@ -68,7 +69,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
     private boolean veryFirstProjectOpening = true;
 
     @Override
-    public void runActivity(Project project) {
+    public void runActivity(@NotNull Project project) {
       if (!veryFirstProjectOpening) {
         return;
       }
@@ -83,7 +84,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
 
   private Future<?> startServerInPooledThread() {
     Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() && !myEnabledInUnitTestMode) {
+    if (application.isUnitTestMode() && !enabledInUnitTestMode) {
       return null;
     }
 
@@ -107,7 +108,8 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
         }
 
         try {
-          server = new BuiltInServer(workerCount);
+          server = new BuiltInServer();
+          detectedPortNumber = server.start(workerCount, defaultPort, PORTS_COUNT, true);
         }
         catch (ChannelException e) {
           LOG.info(e);
@@ -120,6 +122,13 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
           return;
         }
 
+        if (detectedPortNumber == -1) {
+          LOG.info("built-in server cannot be started, cannot bind to port");
+          return;
+        }
+
+        LOG.info("built-in server started, port " + detectedPortNumber);
+
         Disposer.register(ApplicationManager.getApplication(), server);
         ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
           @Override
@@ -130,14 +139,6 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
             }
           }
         });
-
-        detectedPortNumber = server.start(defaultPort, PORTS_COUNT, true);
-        if (detectedPortNumber == -1) {
-          LOG.info("built-in server cannot be started, cannot bind to port");
-        }
-        else {
-          LOG.info("built-in server started, port " + detectedPortNumber);
-        }
       }
     });
   }
@@ -153,7 +154,6 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
    */
   @TestOnly
   public void setEnabledInUnitTestMode(boolean enabled) {
-    myEnabledInUnitTestMode = enabled;
+    enabledInUnitTestMode = enabled;
   }
-
 }

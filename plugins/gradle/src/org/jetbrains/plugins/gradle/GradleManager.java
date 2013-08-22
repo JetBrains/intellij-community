@@ -58,12 +58,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.remote.GradleJavaHelper;
-import org.jetbrains.plugins.gradle.remote.impl.GradleTaskManager;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.*;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -73,6 +73,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -169,10 +170,11 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
         boolean useWrapper = projectLevelSettings != null && !projectLevelSettings.isPreferLocalInstallationToWrapper();
         GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
                                                                      settings.getServiceDirectoryPath(),
-                                                                     useWrapper);
+                                                                     useWrapper,
+                                                                     settings.getGradleVmOptions());
 
         for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
-          result.addResolverExtensionClass(extension.getClass().getName());
+          result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
         }
         String javaHome = myJavaHelper.getJdkHome(pair.first);
         if (!StringUtil.isEmpty(javaHome)) {
@@ -185,7 +187,7 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
   }
 
   @Override
-  public void enhanceParameters(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
+  public void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
     PathsList classPath = parameters.getClassPath();
 
     // Gradle i18n bundle.
@@ -211,7 +213,7 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
     for (String jar : gradleJars) {
       classPath.add(new File(gradleJarsDir, jar).getAbsolutePath());
     }
-    
+
     List<String> additionalEntries = ContainerUtilRt.newArrayList();
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(JavaProjectData.class));
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(LanguageLevel.class));
@@ -224,8 +226,12 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
     }
 
     for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
-      extension.enhanceParameters(parameters);
+      extension.enhanceRemoteProcessing(parameters);
     }
+  }
+
+  @Override
+  public void enhanceLocalProcessing(@NotNull List<URL> urls) {
   }
 
   @NotNull
@@ -282,7 +288,7 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
   }
 
   @Override
-  public void runActivity(final Project project) {
+  public void runActivity(@NotNull final Project project) {
     // We want to automatically refresh linked projects on gradle service directory change.
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(GradleSettings.getInstance(project).getChangesTopic(), new GradleSettingsListenerAdapter() {
@@ -291,9 +297,9 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
         ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
       }
     });
-    
+
     // We used to assume that gradle scripts are always named 'build.gradle' and kept path to that build.gradle file at ide settings.
-    // However, it was found out that that is incorrect assumption (IDEA-109064). Now we keep paths to gradle script's directories   
+    // However, it was found out that that is incorrect assumption (IDEA-109064). Now we keep paths to gradle script's directories
     // instead. However, we don't want to force old users to re-import gradle projects because of that. That's why we check gradle
     // config and re-point it from build.gradle to the parent dir if necessary.
     Map<String, String> adjustedPaths = patchLinkedProjects(project);

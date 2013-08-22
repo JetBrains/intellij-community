@@ -20,7 +20,6 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -322,12 +321,6 @@ public class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(AWTEvent e) {
-    if (e instanceof InputEvent && !IdeaApplication.isLoaded()) {
-      // input event processing requires application components to be instantiated
-      ((InputEvent)e).consume();
-      return;
-    }
-
     e = mapEvent(e);
 
     boolean wasInputEvent = myIsInInputEvent;

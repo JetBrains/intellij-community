@@ -35,7 +35,7 @@ import java.lang.ref.SoftReference;
 * User: cdr
 */
 public class SelfElementInfo implements SmartPointerElementInfo {
-  private final VirtualFile myVirtualFile;
+  protected final VirtualFile myVirtualFile;
   private Reference<RangeMarker> myMarkerRef; // create marker only in case of live document
   private int mySyncStartOffset;
   private int mySyncEndOffset;
@@ -51,13 +51,14 @@ public class SelfElementInfo implements SmartPointerElementInfo {
          anchor.getContainingFile().getLanguage());
   }
   public SelfElementInfo(@NotNull Project project,
-                         @NotNull ProperTextRange anchor,
+                         @NotNull ProperTextRange range,
                          @NotNull Class anchorClass,
                          @NotNull PsiFile containingFile,
                          @NotNull Language language) {
     myLanguage = language;
     myVirtualFile = PsiUtilCore.getVirtualFile(containingFile);
     myType = anchorClass;
+    assert !PsiFile.class.isAssignableFrom(anchorClass) : "FileElementInfo must be used for files";
 
     myProject = project;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
@@ -67,25 +68,8 @@ public class SelfElementInfo implements SmartPointerElementInfo {
       return;
     }
 
-    //if (file.getTextLength() != document.getTextLength()) {
-    //  final String docText = document.getText();
-    //  file.accept(new PsiRecursiveElementWalkingVisitor() {
-    //    @Override
-    //    public void visitElement(PsiElement element) {
-    //      super.visitElement(element);
-    //      TextRange elementRange = element.getTextRange();
-    //      final String rangeText = docText.length() < elementRange.getEndOffset() ? "(IOOBE: "+elementRange +" is out of (0,"+docText.length()+"))" : elementRange.substring(docText);
-    //      final String elemText = element.getText();
-    //      if (!rangeText.equals(elemText)) {
-    //        throw new AssertionError("PSI text doesn't equal to the document's one: element: " + element + "\ndocText=" + rangeText + "\npsiText: " + elemText);
-    //      }
-    //    }
-    //  });
-    //  LOG.error("File=" + file);
-    //}
-
     mySyncMarkerIsValid = true;
-    setRange(anchor);
+    setRange(range);
   }
 
   protected void setRange(@NotNull Segment range) {
@@ -115,29 +99,29 @@ public class SelfElementInfo implements SmartPointerElementInfo {
       Document document = myVirtualFile == null ? null : FileDocumentManager.getInstance().getDocument(myVirtualFile);
       if (document == null) {
         mySyncMarkerIsValid = false;
-        return;
-      }
-      int start = Math.min(getSyncStartOffset(), document.getTextLength());
-      int end = Math.min(Math.max(getSyncEndOffset(), start), document.getTextLength());
-      // use supplied cached markers if available
-      if (cachedRangeMarkers != null) {
-        for (RangeMarker cachedRangeMarker : cachedRangeMarkers) {
-          if (cachedRangeMarker.isValid() &&
-              cachedRangeMarker.getStartOffset() == start &&
-              cachedRangeMarker.getEndOffset() == end) {
-            marker = cachedRangeMarker;
-            break;
-          }
-        }
       }
       else {
-        marker = document.createRangeMarker(start, end, true);
+        int start = Math.min(getSyncStartOffset(), document.getTextLength());
+        int end = Math.min(Math.max(getSyncEndOffset(), start), document.getTextLength());
+        // use supplied cached markers if available
+        if (cachedRangeMarkers != null) {
+          for (RangeMarker cachedRangeMarker : cachedRangeMarkers) {
+            if (cachedRangeMarker.isValid() &&
+                cachedRangeMarker.getStartOffset() == start &&
+                cachedRangeMarker.getEndOffset() == end) {
+              marker = cachedRangeMarker;
+              break;
+            }
+          }
+        }
+        else {
+          marker = document.createRangeMarker(start, end, true);
+        }
       }
       setMarker(marker);
     }
     else if (!marker.isValid()) {
       mySyncMarkerIsValid = false;
-      marker.dispose();
       setMarker(null);
       marker = null;
     }
@@ -167,14 +151,19 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     PsiFile file = restoreFile();
     if (file == null || !file.isValid()) return null;
 
+    return restoreFromFile(file);
+  }
+
+  protected PsiElement restoreFromFile(@NotNull PsiFile file) {
     final int syncStartOffset = getSyncStartOffset();
     final int syncEndOffset = getSyncEndOffset();
 
     return findElementInside(file, syncStartOffset, syncEndOffset, myType, myLanguage);
   }
 
-  protected PsiFile restoreFile() {
-    return restoreFileFromVirtual(myVirtualFile, myProject);
+  @Override
+  public PsiFile restoreFile() {
+    return restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
   }
 
   protected static PsiElement findElementInside(@NotNull PsiFile file, int syncStartOffset, int syncEndOffset, @NotNull Class type, @NotNull Language language) {
@@ -200,9 +189,18 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     return null;
   }
 
-  RangeMarker getMarker() {
+  private RangeMarker getMarker() {
     Reference<RangeMarker> ref = myMarkerRef;
     return ref == null ? null : ref.get();
+  }
+
+  @Override
+  public void cleanup() {
+    RangeMarker marker = getMarker();
+    if (marker != null) marker.dispose();
+    unfastenBelt(0);
+    setMarker(null);
+    mySyncMarkerIsValid = false;
   }
 
   private void setMarker(RangeMarker marker) {
@@ -235,7 +233,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
         if (file != null && language != null) {
           return file.getViewProvider().getPsi(language);
         }
-        
+
         return file;
       }
     });

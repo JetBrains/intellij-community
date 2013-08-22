@@ -16,6 +16,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.RunManager;
+import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +24,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
+
+import java.util.List;
 
 /**
  * @author spleaner
@@ -33,11 +36,11 @@ public class RunConfigurationRefactoringElementListenerProvider implements Refac
   @Override
   public RefactoringElementListener getListener(final PsiElement element) {
     RefactoringElementListenerComposite composite = null;
-    final RunConfiguration[] configurations = RunManager.getInstance(element.getProject()).getAllConfigurations();
+    final List<RunConfiguration> configurations = RunManager.getInstance(element.getProject()).getAllConfigurationsList();
 
     for (RunConfiguration configuration : configurations) {
       if (configuration instanceof RefactoringListenerProvider) { // todo: perhaps better way to handle listeners?
-        final RefactoringElementListener listener;
+        RefactoringElementListener listener;
         try {
           listener = ((RefactoringListenerProvider)configuration).getRefactoringElementListener(element);
         }
@@ -46,6 +49,9 @@ public class RunConfigurationRefactoringElementListenerProvider implements Refac
           continue;
         }
         if (listener != null) {
+          if (configuration instanceof LocatableConfiguration) {
+            listener = new NameGeneratingListenerDecorator((LocatableConfiguration)configuration, listener);
+          }
           if (composite == null) {
             composite = new RefactoringElementListenerComposite();
           }

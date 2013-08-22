@@ -18,16 +18,15 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.editorActions.wordSelection.DocTagSelectioner;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -38,20 +37,20 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 /**
@@ -113,11 +112,78 @@ public class JavaDocCompletionContributor extends CompletionContributor {
     });
   }
 
+  private static PsiParameter getDocTagParam(PsiElement tag) {
+    if (tag instanceof PsiDocTag && "param".equals(((PsiDocTag)tag).getName())) {
+      PsiDocTagValue value = ((PsiDocTag)tag).getValueElement();
+      if (value instanceof PsiDocParamRef) {
+        final PsiReference psiReference = value.getReference();
+        PsiElement target = psiReference != null ? psiReference.resolve() : null;
+        if (target instanceof PsiParameter) {
+          return (PsiParameter)target;
+        }
+      }
+    }
+    return null;
+  }
+
   @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    if (PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_COMMENT_DATA).accepts(parameters.getPosition())) return;
+
+    PsiElement position = parameters.getPosition();
+    if (PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_COMMENT_DATA).accepts(position)) {
+      final PsiParameter param = getDocTagParam(position.getParent());
+      if (param != null) {
+        suggestSimilarParameterDescriptions(result, position, param);
+      }
+
+      return;
+    }
 
     super.fillCompletionVariants(parameters, result);
+  }
+
+  private static void suggestSimilarParameterDescriptions(CompletionResultSet result, PsiElement position, final PsiParameter param) {
+    final Set<String> descriptions = ContainerUtil.newHashSet();
+    position.getContainingFile().accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        PsiParameter param1 = getDocTagParam(element);
+        if (param1 != null && param1 != param &&
+            Comparing.equal(param1.getName(), param.getName()) && Comparing.equal(param1.getType(), param.getType())) {
+          String text = "";
+          for (PsiElement psiElement : ((PsiDocTag)element).getDataElements()) {
+            if (psiElement != ((PsiDocTag)element).getValueElement()) {
+              text += psiElement.getText();
+            }
+          }
+          text = text.trim();
+          if (text.contains(" ")) {
+            descriptions.add(text);
+          }
+        }
+
+        super.visitElement(element);
+      }
+    });
+    for (String description : descriptions) {
+      result.addElement(LookupElementBuilder.create(description).withInsertHandler(new InsertHandler<LookupElement>() {
+        @Override
+        public void handleInsert(InsertionContext context, LookupElement item) {
+          if (context.getCompletionChar() != Lookup.REPLACE_SELECT_CHAR) return;
+          
+          context.commitDocument();
+          PsiDocTag docTag = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiDocTag.class, false);
+          if (docTag != null) {
+            Document document = context.getDocument();
+            int tagEnd = DocTagSelectioner.getDocTagRange(docTag, document.getCharsSequence(), 0).getEndOffset();
+            int tail = context.getTailOffset();
+            if (tail < tagEnd) {
+              document.deleteString(tail, tagEnd);
+            }
+          }
+        }
+      }));
+    }
   }
 
   private static class TagChooser extends CompletionProvider<CompletionParameters> {

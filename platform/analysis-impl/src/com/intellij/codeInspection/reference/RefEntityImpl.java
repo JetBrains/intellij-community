@@ -40,7 +40,7 @@ public abstract class RefEntityImpl implements RefEntity {
   private RefEntityImpl myOwner;
   protected List<RefEntity> myChildren;
   private final String myName;
-  private Map myUserMap = null;
+  private Map<Key, Object> myUserMap;
   protected int myFlags = 0;
   protected final RefManagerImpl myManager;
 
@@ -122,7 +122,7 @@ public abstract class RefEntityImpl implements RefEntity {
     synchronized(this){
       if (myUserMap == null){
         if (value == null) return;
-        myUserMap = new THashMap();
+        myUserMap = new THashMap<Key, Object>();
       }
       if (value != null){
         //noinspection unchecked

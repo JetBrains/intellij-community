@@ -180,7 +180,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
       String name = declaredName == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : declaredName;
 
       if (resolved instanceof PsiClass) {
-        final GrAnnotation collector = GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved);
+        final PsiAnnotation collector = GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved);
         if (collector != null) {
           return multiResolveFromAlias(annotation, name, collector);
         }
@@ -205,7 +205,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     return results;
   }
 
-  private static GroovyResolveResult[] multiResolveFromAlias(@NotNull GrAnnotation alias, @NotNull String name, @NotNull GrAnnotation annotationCollector) {
+  private static GroovyResolveResult[] multiResolveFromAlias(@NotNull GrAnnotation alias, @NotNull String name, @NotNull PsiAnnotation annotationCollector) {
     List<GroovyResolveResult> result = ContainerUtilRt.newArrayList();
 
     List<GrAnnotation> annotations = ContainerUtilRt.newArrayList();

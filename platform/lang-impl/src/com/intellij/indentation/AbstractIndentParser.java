@@ -6,6 +6,7 @@ import com.intellij.lang.PsiParser;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,27 +15,43 @@ import org.jetbrains.annotations.Nullable;
  * Date: 3/20/12
  */
 public abstract class AbstractIndentParser implements PsiParser {
-  private PsiBuilder myBuilder;
+  protected PsiBuilder myBuilder;
 
-  private int myCurrentIndent;
+  protected int myCurrentIndent;
 
-  private boolean myNewLine = true;
+  protected HashMap<PsiBuilder.Marker, Integer> myIndents;
+  protected HashMap<PsiBuilder.Marker, Boolean> myNewLines;
+
+  protected boolean myNewLine = true;
 
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
+    myNewLines = new HashMap<PsiBuilder.Marker, Boolean>();
+    myIndents = new HashMap<PsiBuilder.Marker, Integer>();
     myBuilder = builder;
-    myBuilder.setDebugMode(true);
     parseRoot(root);
     return myBuilder.getTreeBuilt();
   }
 
   protected abstract void parseRoot(IElementType root);
 
+  public PsiBuilder.Marker mark(boolean couldBeRolledBack) {
+    final PsiBuilder.Marker marker = myBuilder.mark();
+    if (couldBeRolledBack) {
+      myIndents.put(marker, myCurrentIndent);
+      myNewLines.put(marker, myNewLine);
+    }
+    return marker;
+  }
+
   public PsiBuilder.Marker mark() {
-    return myBuilder.mark();
+    return mark(false);
   }
 
   public void done(@NotNull final PsiBuilder.Marker marker, @NotNull final IElementType elementType) {
+    myIndents.remove(marker);
+    myNewLines.remove(marker);
+
     marker.done(elementType);
   }
 
@@ -47,24 +64,15 @@ public abstract class AbstractIndentParser implements PsiParser {
   }
 
   protected void rollbackTo(@NotNull final PsiBuilder.Marker marker) {
+    if (myIndents.get(marker) == null) {
+      throw new RuntimeException("Parser can't rollback marker that was created by mark() method, use mark(true) instead");
+    }
+    myCurrentIndent = myIndents.get(marker);
+    myNewLine = myNewLines.get(marker);
+
+    myIndents.remove(marker);
+    myNewLines.remove(marker);
     marker.rollbackTo();
-
-    myNewLine = rawLookup(-1) == null || tokenIn(rawLookup(-1), getIndentElementType(), getEolElementType());
-
-    //recount indent
-    //duty hack for current indent calculation. it's not me started all this crap.
-    int step = 0;
-    while (rawLookup(step) != null && !tokenIn(rawLookup(step), getEolElementType())) {
-      step--;
-    }
-    step++;
-    int indentStartOffset = myBuilder.rawTokenTypeStart(step);
-    int indentStopOffset = indentStartOffset;
-    while (tokenIn(rawLookup(step), getIndentElementType(), TokenType.WHITE_SPACE)) {
-      step++;
-      indentStopOffset = myBuilder.rawTokenTypeStart(step);
-    }
-    myCurrentIndent = indentStopOffset - indentStartOffset;
   }
 
   protected boolean eof() {
@@ -161,6 +169,34 @@ public abstract class AbstractIndentParser implements PsiParser {
     }
     else {
       myNewLine = false;
+    }
+  }
+
+  protected void advanceUntil(TokenSet tokenSet) {
+    while (getTokenType() != null && !isNewLine() && !tokenSet.contains(getTokenType())) {
+      advance();
+    }
+  }
+
+  protected void advanceUntilEol() {
+    advanceUntil(TokenSet.EMPTY);
+  }
+
+  protected void errorUntil(TokenSet tokenSet, String message) {
+    PsiBuilder.Marker errorMarker = mark();
+    advanceUntil(tokenSet);
+    errorMarker.error(message);
+  }
+
+  protected void errorUntilEol(String message) {
+    PsiBuilder.Marker errorMarker = mark();
+    advanceUntilEol();
+    errorMarker.error(message);
+  }
+
+  protected void expectEolOrEof() {
+    if (!isNewLine() && !eof()) {
+      errorUntilEol("End of line expected");
     }
   }
 

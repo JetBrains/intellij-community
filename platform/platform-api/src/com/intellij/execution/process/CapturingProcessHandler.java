@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
@@ -26,8 +29,12 @@ import java.nio.charset.Charset;
  */
 public class CapturingProcessHandler extends OSProcessHandler {
   private static final Logger LOG = Logger.getInstance(CapturingProcessHandler.class);
-  private final Charset myCharset;
   private final ProcessOutput myOutput = new ProcessOutput();
+
+  public CapturingProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    super(commandLine);
+    addProcessListener(new CapturingProcessAdapter(myOutput));
+  }
 
   public CapturingProcessHandler(final Process process) {
     this(process, null, "");
@@ -39,7 +46,6 @@ public class CapturingProcessHandler extends OSProcessHandler {
 
   public CapturingProcessHandler(final Process process, final Charset charset, final String commandLine) {
     super(process, commandLine, charset);
-    myCharset = charset;
     addProcessListener(new CapturingProcessAdapter(myOutput));
   }
 
@@ -58,7 +64,6 @@ public class CapturingProcessHandler extends OSProcessHandler {
    * Starts process with specified timeout
    *
    * @param timeoutInMilliseconds non-positive means infinity
-   * @return
    */
   public ProcessOutput runProcess(int timeoutInMilliseconds) {
     if (timeoutInMilliseconds <= 0) {

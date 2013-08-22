@@ -270,9 +270,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     myProperties = myKind.createDefaultProperties();
     final Element propertiesElement = element.getChild(PROPERTIES_ELEMENT);
     if (propertiesElement != null) {
-      final Class<?> stateClass = ComponentSerializationUtil.getStateClass(myProperties.getClass());
-      //noinspection unchecked
-      myProperties.loadState(XmlSerializer.deserialize(propertiesElement, stateClass));
+      ComponentSerializationUtil.loadComponentState(myProperties, propertiesElement);
     }
   }
 

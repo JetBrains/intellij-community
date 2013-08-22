@@ -214,6 +214,11 @@ public class Utils{
                                               String place,
                                               boolean checkVisible,
                                               boolean checkEnabled) {
+    //noinspection InstanceofIncompatibleInterface
+    if (group instanceof AlwaysVisibleActionGroup) {
+      return true;
+    }
+
     AnActionEvent event = new AnActionEvent(null, context, place, factory.getPresentation(group), ActionManager.getInstance(), 0);
     event.setInjectedContext(group.isInInjectedContext());
     for (AnAction anAction : group.getChildren(event)) {

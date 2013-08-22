@@ -67,6 +67,12 @@ public class StringConcatenationInMessageFormatCallInspection extends BaseInspec
       return InspectionGadgetsBundle.message("string.concatenation.in.format.call.quickfix", variableName);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace concatenation with argument";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();

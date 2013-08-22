@@ -34,7 +34,6 @@ class Test {
       expected: '''\
 class Test {
     /**
-     * <caret>
      * @param i
      * @return
      */

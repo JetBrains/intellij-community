@@ -55,6 +55,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
+  public static final Key<Boolean> NO_ANNOTATIONS_FOUND = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
+
   @Nls
   @NotNull
   @Override
@@ -152,8 +154,19 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     };
   }
 
+  @Override
+  public void cleanup(Project project) {
+    super.cleanup(project);
+    project.putUserData(NO_ANNOTATIONS_FOUND, null);
+  }
+
   private static void checkAnnotationsJarAttached(@NotNull PsiFile file, @NotNull ProblemsHolder holder) {
     final Project project = file.getProject();
+    if (!holder.isOnTheFly()) {
+      final Boolean found = project.getUserData(NO_ANNOTATIONS_FOUND);
+      if (found != null) return;
+    }
+
     PsiClass event = JavaPsiFacade.getInstance(project).findClass("java.awt.event.InputEvent", GlobalSearchScope.allScope(project));
     if (event == null) return; // no jdk to attach
     PsiMethod[] methods = event.findMethodsByName("getModifiers", false);
@@ -172,6 +185,11 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
       }
     }
     if (jdk == null) return; // no jdk to attach
+
+    if (!holder.isOnTheFly()) {
+      project.putUserData(NO_ANNOTATIONS_FOUND, Boolean.TRUE);
+    }
+
     final Sdk finalJdk = jdk;
 
     String path = finalJdk.getHomePath();

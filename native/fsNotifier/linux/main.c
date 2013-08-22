@@ -36,7 +36,7 @@
 #define LOG_ENV_ERROR "error"
 #define LOG_ENV_OFF "off"
 
-#define VERSION "20130617.1935"
+#define VERSION "20130715.1353"
 #define VERSION_MSG "fsnotifier " VERSION "\n"
 
 #define USAGE_MSG \
@@ -79,11 +79,11 @@ static bool update_roots(array* new_roots);
 static void unregister_roots();
 static bool register_roots(array* new_roots, array* unwatchable, array* mounts);
 static array* unwatchable_mounts();
-static void inotify_callback(char* path, int event);
-static void report_event(char* event, char* path);
+static void inotify_callback(const char* path, int event);
+static void report_event(const char* event, const char* path);
 static void output(const char* format, ...);
 static void check_missing_roots();
-static void check_root_removal(char*);
+static void check_root_removal(const char*);
 
 
 int main(int argc, char** argv) {
@@ -434,7 +434,7 @@ static array* unwatchable_mounts() {
 }
 
 
-static void inotify_callback(char* path, int event) {
+static void inotify_callback(const char* path, int event) {
   if (event & (IN_CREATE | IN_MOVED_TO)) {
     report_event("CREATE", path);
     report_event("CHANGE", path);
@@ -457,20 +457,31 @@ static void inotify_callback(char* path, int event) {
   }
 }
 
-static void report_event(char* event, char* path) {
+static void report_event(const char* event, const char* path) {
   userlog(LOG_DEBUG, "%s: %s", event, path);
 
-  int len = strlen(path);
-  for (char* p = path; *p != '\0'; p++) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
+  char* copy = path, *p;
+  for (p = copy; *p != '\0'; ++p) {
     if (*p == '\n') {
+      if (copy == path) {
+        copy = strdup(path);
+        p = copy + (p - path);
+      }
       *p = '\0';
     }
   }
+#pragma clang diagnostic pop
 
   fputs(event, stdout);
   fputc('\n', stdout);
-  fwrite(path, len, 1, stdout);
+  fwrite(copy, (p - copy), 1, stdout);
   fputc('\n', stdout);
+
+  if (copy != path) {
+    free(copy);
+  }
 
   fflush(stdout);
 }
@@ -506,7 +517,7 @@ static void check_missing_roots() {
   }
 }
 
-static void check_root_removal(char* path) {
+static void check_root_removal(const char* path) {
   for (int i=0; i<array_size(roots); i++) {
     watch_root* root = array_get(roots, i);
     if (root->id >= 0 && strcmp(path, UNFLATTEN(root->path)) == 0) {

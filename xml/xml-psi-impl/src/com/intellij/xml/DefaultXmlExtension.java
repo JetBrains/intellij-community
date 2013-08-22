@@ -16,8 +16,8 @@
 package com.intellij.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.TagNameVariantCollector;
@@ -28,6 +28,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -41,21 +42,28 @@ public class DefaultXmlExtension extends XmlExtension {
   }
 
   @NotNull
-  public List<Pair<String,String>> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context) {
+  public List<TagInfo> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context) {
 
     final Set<String> namespaces = new HashSet<String>(Arrays.asList(context.knownNamespaces()));
     final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(file);
     for (XmlSchemaProvider provider : providers) {
       namespaces.addAll(provider.getAvailableNamespaces(file, null));
     }
-    final ArrayList<String> nsInfo = new ArrayList<String>();
-    final String[] names = TagNameVariantCollector.getTagNameVariants(context, namespaces, nsInfo);
-    final List<Pair<String, String>> set = new ArrayList<Pair<String,String>>(names.length);
-    final Iterator<String> iterator = nsInfo.iterator();
-    for (String name : names) {
-      final int pos = name.indexOf(':');
-      final String s = pos >= 0 ? name.substring(pos + 1) : name;
-      set.add(Pair.create(s, iterator.next()));
+    List<String> nsInfo = new ArrayList<String>();
+    List<XmlElementDescriptor> descriptors = TagNameVariantCollector.getTagDescriptors(context, namespaces, nsInfo);
+    final List<TagInfo> set = new ArrayList<TagInfo>();
+    for (int i = 0; i < descriptors.size(); i++) {
+      final XmlElementDescriptor descriptor = descriptors.get(i);
+      String qualifiedName = descriptor.getName(context);
+      final int pos = qualifiedName.indexOf(':');
+      final String name = pos >= 0 ? qualifiedName.substring(pos + 1) : qualifiedName;
+      set.add(new TagInfo(name, nsInfo.get(i)) {
+        @Nullable
+        @Override
+        public PsiElement getDeclaration() {
+          return descriptor.getDeclaration();
+        }
+      });
     }
     return set;
   }

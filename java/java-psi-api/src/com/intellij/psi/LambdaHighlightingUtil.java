@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,8 +59,13 @@ public class LambdaHighlightingUtil {
       }
     } else if (functionalInterfaceReturnType != null) {
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
-      for (PsiExpression expression : returnExpressions) {
-        final PsiType expressionType = expression.getType();
+      for (final PsiExpression expression : returnExpressions) {
+        final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
+          @Override
+          public PsiType compute() {
+            return expression.getType();
+          }
+        });
         if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
           return "Incompatible return type " + expressionType.getPresentableText() + " in lambda expression";
         }
@@ -87,7 +93,12 @@ public class LambdaHighlightingUtil {
 
   @Nullable
   public static String checkInterfaceFunctional(PsiType functionalInterfaceType) {
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    if (functionalInterfaceType instanceof PsiIntersectionType) {
+      for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
+        if (checkInterfaceFunctional(type) == null) return null;
+      }
+    }
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(functionalInterfaceType));
     final PsiClass aClass = resolveResult.getElement();
     if (aClass != null) {
       if (checkReturnTypeApplicable(resolveResult, aClass)) {
@@ -95,7 +106,7 @@ public class LambdaHighlightingUtil {
       }
       return checkInterfaceFunctional(aClass);
     }
-    return null;
+    return functionalInterfaceType.getPresentableText() + " is not a functional interface";
   }
 
   private static boolean checkReturnTypeApplicable(PsiClassType.ClassResolveResult resolveResult, final PsiClass aClass) {

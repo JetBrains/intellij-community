@@ -74,7 +74,7 @@ class BeanBinding implements Binding {
   }
 
   @Override
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, Object context, SerializationFilter filter) {
     Element element = new Element(myTagName);
 
     serializeInto(o, element, filter);
@@ -82,7 +82,7 @@ class BeanBinding implements Binding {
     return element;
   }
 
-  public void serializeInto(final Object o, final Element element, SerializationFilter filter) {
+  public void serializeInto(@NotNull final Object o, final Element element, SerializationFilter filter) {
     for (Binding binding : myPropertyBindingsList) {
       Accessor accessor = myPropertyBindings.get(binding);
       if (!filter.accepts(accessor, o)) continue;

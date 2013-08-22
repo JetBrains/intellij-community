@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -227,8 +226,8 @@ class FormatProcessor {
       myCurrentState.setNext(adjustState);
     }
     else {
-      formatWithoutRealModifications(sequentially);
-      performModifications(model, sequentially);
+      formatWithoutRealModifications(false);
+      performModifications(model, false);
     }
   }
 
@@ -898,7 +897,7 @@ class FormatProcessor {
   }
 
   @Nullable
-  private LeafBlockWrapper getPrevBlock(final LeafBlockWrapper result) {
+  private LeafBlockWrapper getPrevBlock(@Nullable final LeafBlockWrapper result) {
     if (result != null) {
       return result.getPreviousBlock();
     }
@@ -1015,7 +1014,7 @@ class FormatProcessor {
     }
   }
 
-  private static int getAlignOffsetBefore(final Alignment alignment, @Nullable final LeafBlockWrapper blockAfter) {
+  private static int getAlignOffsetBefore(@Nullable final Alignment alignment, @Nullable final LeafBlockWrapper blockAfter) {
     if (alignment == null) return -1;
     final LeafBlockWrapper alignRespBlock = ((AlignmentImpl)alignment).getOffsetRespBlockBefore(blockAfter);
     if (alignRespBlock != null) {

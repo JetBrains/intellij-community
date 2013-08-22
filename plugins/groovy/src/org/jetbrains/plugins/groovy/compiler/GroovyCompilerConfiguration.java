@@ -29,8 +29,8 @@ import org.jetbrains.jps.incremental.groovy.JpsGroovySettings;
 @State(
   name = "GroovyCompilerProjectConfiguration",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE),
-    @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/groovyc.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/groovyc.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
 public class GroovyCompilerConfiguration implements PersistentStateComponent<JpsGroovySettings>, Disposable {

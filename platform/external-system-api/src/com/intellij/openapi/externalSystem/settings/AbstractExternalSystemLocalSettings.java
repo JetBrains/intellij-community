@@ -20,7 +20,10 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -46,38 +49,44 @@ public abstract class AbstractExternalSystemLocalSettings {
   private static final boolean PRESERVE_EXPAND_STATE
     = !SystemProperties.getBooleanProperty("external.system.forget.expand.nodes.state", false);
 
-  private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>>             myExpandStates
-                                                                                                                              =
+  private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>>                               myExpandStates
+                                                                                                                                                =
     new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
-  private final AtomicReference<List<ExternalTaskExecutionInfo>>                           myRecentTasks                      =
+  private final AtomicReference<List<ExternalTaskExecutionInfo>>                                             myRecentTasks                      =
     new AtomicReference<List<ExternalTaskExecutionInfo>>(
       ContainerUtilRt.<ExternalTaskExecutionInfo>newArrayList()
     );
-  private final AtomicReference<Map<ExternalProjectPojo, Collection<ExternalProjectPojo>>> myAvailableProjects                =
+  private final AtomicReference<Map<ExternalProjectPojo, Collection<ExternalProjectPojo>>>                   myAvailableProjects                =
     new AtomicReference<Map<ExternalProjectPojo, Collection<ExternalProjectPojo>>>(
       ContainerUtilRt.<ExternalProjectPojo, Collection<ExternalProjectPojo>>newHashMap()
     );
-  private final AtomicReference<Map<String/* external project config path */, Collection<ExternalTaskPojo>>> myAvailableTasks =
+  private final AtomicReference<Map<String/* external project config path */, Collection<ExternalTaskPojo>>> myAvailableTasks                   =
     new AtomicReference<Map<String, Collection<ExternalTaskPojo>>>(
       ContainerUtilRt.<String, Collection<ExternalTaskPojo>>newHashMap()
     );
-  private final AtomicReference<Map<String/* external project config path */, Long>>       myExternalConfigModificationStamps =
+  private final AtomicReference<Map<String/* external project config path */, Long>>
+                                                                                                             myExternalConfigModificationStamps =
     new AtomicReference<Map<String, Long>>(ContainerUtilRt.<String, Long>newHashMap());
 
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private final Project         myProject;
+  @NotNull private final PlatformFacade  myPlatformFacade;
 
-  protected AbstractExternalSystemLocalSettings(@NotNull ProjectSystemId externalSystemId, @NotNull Project project) {
+  protected AbstractExternalSystemLocalSettings(@NotNull ProjectSystemId externalSystemId,
+                                                @NotNull Project project,
+                                                @NotNull PlatformFacade facade)
+  {
     myExternalSystemId = externalSystemId;
     myProject = project;
+    myPlatformFacade = facade;
   }
 
   /**
-   * Asks current settings to drop all information related to external project which root config is located at the given path.
+   * Asks current settings to drop all information related to external projects which root configs are located at the given paths.
    *
-   * @param linkedProjectPathsToForget  target root external project's path
+   * @param linkedProjectPathsToForget  target root external project paths
    */
-  public void forgetExternalProject(@NotNull Set<String> linkedProjectPathsToForget) {
+  public void forgetExternalProjects(@NotNull Set<String> linkedProjectPathsToForget) {
     Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> projects = myAvailableProjects.get();
     for (Iterator<Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>>> it = projects.entrySet().iterator(); it.hasNext(); ) {
       Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry = it.next();
@@ -175,8 +184,10 @@ public abstract class AbstractExternalSystemLocalSettings {
     setIfNotNull(myExternalConfigModificationStamps, state.modificationStamps);
     if (state.recentTasks != null) {
       List<ExternalTaskExecutionInfo> recentTasks = myRecentTasks.get();
-      recentTasks.clear();
-      recentTasks.addAll(state.recentTasks);
+      if (recentTasks != state.recentTasks) {
+        recentTasks.clear();
+        recentTasks.addAll(state.recentTasks);
+      }
     }
     pruneOutdatedEntries();
   }
@@ -184,30 +195,40 @@ public abstract class AbstractExternalSystemLocalSettings {
   private void pruneOutdatedEntries() {
     ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
     assert manager != null;
-    Set<String> toForget = ContainerUtilRt.newHashSet();
+    Set<String> pathsToForget = ContainerUtilRt.newHashSet();
     for (ExternalProjectPojo pojo : myAvailableProjects.get().keySet()) {
-      toForget.add(pojo.getPath());
+      pathsToForget.add(pojo.getPath());
     }
     for (String path : myAvailableTasks.get().keySet()) {
-      toForget.add(path);
+      pathsToForget.add(path);
     }
     for (ExternalTaskExecutionInfo taskInfo : myRecentTasks.get()) {
-      toForget.add(taskInfo.getSettings().getExternalProjectPath());
+      pathsToForget.add(taskInfo.getSettings().getExternalProjectPath());
     }
     
     AbstractExternalSystemSettings<?, ?, ?> settings = manager.getSettingsProvider().fun(myProject);
     for (ExternalProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
-      toForget.remove(projectSettings.getExternalProjectPath());
+      pathsToForget.remove(projectSettings.getExternalProjectPath());
+    }
+    for (Module module : myPlatformFacade.getModules(myProject)) {
+      String id = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+      if (!myExternalSystemId.toString().equals(id)) {
+        continue;
+      }
+      pathsToForget.remove(module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY));
     }
 
-    if (!toForget.isEmpty()) {
-      forgetExternalProject(toForget);
+    if (!pathsToForget.isEmpty()) {
+      forgetExternalProjects(pathsToForget);
     }
   }
 
   private static <K, V> void setIfNotNull(@NotNull AtomicReference<Map<K, V>> ref, @Nullable Map<K, V> candidate) {
-    if (candidate != null) {
-      Map<K, V> map = ref.get();
+    if (candidate == null) {
+      return;
+    }
+    Map<K, V> map = ref.get();
+    if (candidate != map) {
       map.clear();
       map.putAll(candidate);
     }

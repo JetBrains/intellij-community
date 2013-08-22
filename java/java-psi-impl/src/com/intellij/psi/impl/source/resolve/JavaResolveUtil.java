@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
@@ -129,7 +130,7 @@ public class JavaResolveUtil {
         PsiClass topAccessClass = getTopLevelClass(accessObjectClass, memberClass);
         if (!manager.areElementsEquivalent(topMemberClass, topAccessClass)) return false;
         if (accessObjectClass instanceof PsiAnonymousClass && accessObjectClass.isInheritor(memberClass, true)) {
-          if (place instanceof PsiMethodCallExpression && 
+          if (place instanceof PsiMethodCallExpression &&
               ((PsiMethodCallExpression)place).getMethodExpression().getQualifierExpression() instanceof PsiThisExpression) {
             return false;
           }
@@ -148,7 +149,7 @@ public class JavaResolveUtil {
     }
 
     if (!facade.arePackagesTheSame(member, place)) return false;
-    if (modifierList.hasModifierProperty(PsiModifier.STATIC)) return true;
+    //if (modifierList.hasModifierProperty(PsiModifier.STATIC)) return true;
     // maybe inheritance lead through package local class in other package ?
     final PsiClass placeClass = getContextClass(place);
     if (memberClass == null || placeClass == null) return true;
@@ -192,13 +193,13 @@ public class JavaResolveUtil {
       if (placeParent instanceof PsiClass && !(placeParent instanceof PsiAnonymousClass)) {
         final boolean isTypeParameter = placeParent instanceof PsiTypeParameter;
         if (isTypeParameter && isAtLeast17 == null) {
-          isAtLeast17 = JavaVersionService.getInstance().isAtLeast(place, JavaSdkVersion.JDK_1_7);
+          isAtLeast17 = JavaVersionService.getInstance().isAtLeast(placeParent, JavaSdkVersion.JDK_1_7);
         }
-        if (!isTypeParameter || (isAtLeast17 != null && isAtLeast17)) {
+        if (!isTypeParameter || isAtLeast17) {
           PsiClass aClass = (PsiClass)placeParent;
-  
+
           if (memberClass != null && aClass.isInheritor(memberClass, true)) return aClass;
-  
+
           lastClass = aClass;
         }
       }
@@ -235,5 +236,21 @@ public class JavaResolveUtil {
         }
       }
     }
+  }
+
+  @NotNull
+  public static <T extends PsiPolyVariantReference> JavaResolveResult[] resolveWithContainingFile(@NotNull T ref,
+                                                                                  @NotNull ResolveCache.PolyVariantResolver<T> resolver,
+                                                                                  boolean needToPreventRecursion,
+                                                                                  boolean incompleteCode,
+                                                                                  @NotNull PsiFile containingFile) {
+    boolean valid = containingFile.isValid();
+    if (!valid) {
+      return JavaResolveResult.EMPTY_ARRAY;
+    }
+    Project project = containingFile.getProject();
+    ResolveResult[] results = ResolveCache.getInstance(project).resolveWithCaching(ref, resolver, needToPreventRecursion, incompleteCode,
+                                                                                   containingFile);
+    return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 }

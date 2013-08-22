@@ -43,6 +43,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.FilteredQuery;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +109,7 @@ public class CodeInsightUtil {
         break;
       }
       if (parent instanceof PsiCodeBlock) break;
-      if (JspPsiUtil.isInJspFile(parent) && parent instanceof PsiFile) break;
+      if (FileTypeUtils.isInServerPageFile(parent) && parent instanceof PsiFile) break;
       if (parent instanceof PsiCodeFragment) break;
       if (parent == null || parent instanceof PsiFile) return PsiElement.EMPTY_ARRAY;
       parent = parent.getParent();

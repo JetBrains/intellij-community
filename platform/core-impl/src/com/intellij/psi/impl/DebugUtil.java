@@ -562,12 +562,7 @@ public class DebugUtil {
   }
 
   public static void sleep(long millis) {
-    try {
-      Thread.sleep(millis);
-    }
-    catch (InterruptedException e) {
-      LOG.error(e);
-    }
+    TimeoutUtil.sleep(millis);
   }
   public static void checkTreeStructure(ASTNode element) {
     if (CHECK){

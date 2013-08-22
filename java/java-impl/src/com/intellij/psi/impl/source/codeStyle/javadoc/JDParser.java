@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.codeStyle.javadoc;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,22 +40,34 @@ public class JDParser {
   private static final String SELF_CLOSED_P_TAG = "<p/>";
 
   private final CodeStyleSettings mySettings;
+  private final LanguageLevel myLanguageLevel;
 
-  public JDParser(@NotNull CodeStyleSettings settings) {
+  public JDParser(@NotNull CodeStyleSettings settings, @NotNull LanguageLevel languageLevel) {
     mySettings = settings;
+    myLanguageLevel = languageLevel;
   }
 
   private static final char lineSeparator = '\n';
 
   @NotNull
-  public JDComment parse(@Nullable String text, @NotNull JDComment c) {
-    if (text == null) return c;
+  public JDComment parse(@Nullable String text, @NotNull JDComment comment) {
+    if (text == null) return comment;
 
     List<Boolean> markers = new ArrayList<Boolean>();
     List<String> l = toArray(text, "\n", markers);
-    if (l == null) return c;
+
+    //if it is - we are dealing with multiline comment:
+    // /**
+    //  * comment
+    //  */
+    //which shouldn't be wrapped into one line comment like /** comment */
+    if (text.indexOf('\n') >= 0) {
+      comment.setMultiLine(true);
+    }
+
+    if (l == null) return comment;
     int size = l.size();
-    if (size == 0) return c;
+    if (size == 0) return comment;
 
     // preprocess strings - removes first '*'
     for (int i = 0; i < size; i++) {
@@ -85,17 +98,17 @@ public class JDParser {
       if (i == size || line.length() > 0) {
         if (i == size || line.charAt(0) == '@') {
           if (tag == null) {
-            c.setDescription(sb.toString());
+            comment.setDescription(sb.toString());
           }
           else {
             int j = 0;
             String myline = sb.toString();
             for (; j < tagParsers.length; j++) {
               TagParser parser = tagParsers[j];
-              if (parser.parse(tag, myline, c)) break;
+              if (parser.parse(tag, myline, comment)) break;
             }
             if (j == tagParsers.length) {
-              c.addUnknownTag("@" + tag + " " + myline);
+              comment.addUnknownTag("@" + tag + " " + myline);
             }
           }
 
@@ -127,7 +140,7 @@ public class JDParser {
       }
     }
 
-    return c;
+    return comment;
   }
 
   /**
@@ -504,7 +517,13 @@ public class JDParser {
         if (line.length() == 0 && !mySettings.JD_KEEP_EMPTY_LINES) continue;
         if (i != 0) sb.append(prefix);
         if (line.length() == 0 && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag) {
-          sb.append(SELF_CLOSED_P_TAG);
+          if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+            //Self-closing elements are not allowed for javadoc tool from JDK8
+            sb.append(P_START_TAG);
+          }
+          else {
+            sb.append(SELF_CLOSED_P_TAG);
+          }
         }
         else {
           sb.append(line);

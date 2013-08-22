@@ -140,10 +140,7 @@ public class TestsPattern extends TestPackage {
 
   @Override
   public String suggestActionName() {
-    final String configurationName = myConfiguration.getName();
-    if (!myConfiguration.isGeneratedName()) {
-    }
-    return "'" + configurationName + "'"; //todo
+    return null;
   }
 
   @Nullable

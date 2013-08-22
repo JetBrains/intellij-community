@@ -292,6 +292,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (value instanceof DfaVariableValue) {
         myVariableStates.put(var, getVariableState((DfaVariableValue)value).clone());
       }
+      else if (value instanceof DfaBoxedValue) {
+        getVariableState(var).setNullable(false);
+      }
     }
 
     if (getVariableState(var).isNotNull()) {
@@ -711,7 +714,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaRight instanceof DfaConstValue) {
       Object constVal = ((DfaConstValue)dfaRight).getValue();
       if (constVal instanceof Boolean) {
-        DfaConstValue negVal = myFactory.getConstFactory().createFromValue(!((Boolean)constVal).booleanValue(), PsiType.BOOLEAN);
+        DfaConstValue negVal = myFactory.getConstFactory().createFromValue(!((Boolean)constVal).booleanValue(), PsiType.BOOLEAN, null);
         if (!applyRelation(dfaLeft, negVal, !negated)) {
           return false;
         }

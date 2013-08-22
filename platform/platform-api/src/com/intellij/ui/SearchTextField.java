@@ -101,7 +101,7 @@ public class SearchTextField extends JPanel {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-          if (hasNativeLeopardSearchControl()) {
+          if (hasNativeLeopardSearchControl() && myNativeSearchPopup != null) {
             myNativeSearchPopup.show(myTextField, 5, myTextField.getHeight());
           } else if (myPopup == null || !myPopup.isVisible()) {
             showPopup();
@@ -114,12 +114,12 @@ public class SearchTextField extends JPanel {
       myTextField.putClientProperty("JTextField.variant", "search");
     }
     if (hasNativeLeopardSearchControl()) {
-      myNativeSearchPopup = new JBPopupMenu();
-      myNoItems = new JBMenuItem("No recent searches");
-      myNoItems.setEnabled(false);
-
-      updateMenu();
       if (historyEnabled) {
+        myNativeSearchPopup = new JBPopupMenu();
+        myNoItems = new JBMenuItem("No recent searches");
+        myNoItems.setEnabled(false);
+
+        updateMenu();
         myTextField.putClientProperty("JTextField.Search.FindPopup", myNativeSearchPopup);
       }
     }

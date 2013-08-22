@@ -51,6 +51,11 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
   }
 
   private static class UnclearBinaryExpressionFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @NotNull
     @Override

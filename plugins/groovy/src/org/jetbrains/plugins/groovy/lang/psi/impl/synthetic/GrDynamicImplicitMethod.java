@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,12 +57,14 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
 
   private final String myContainingClassName;
   private final List<ParamInfo> myParamInfos;
+  private final String myReturnType;
 
   public GrDynamicImplicitMethod(PsiManager manager,
                                  String name,
                                  String containingClassName,
                                  boolean isStatic,
-                                 List<ParamInfo> paramInfos) {
+                                 List<ParamInfo> paramInfos,
+                                 String returnType) {
     super(manager, name);
     myContainingClassName = containingClassName;
     myParamInfos = paramInfos;
@@ -75,6 +77,9 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
     for (ParamInfo pair : paramInfos) {
       addParameter(pair.name, pair.type, false);
     }
+
+    setReturnType(returnType, getResolveScope());
+    myReturnType = returnType;
   }
 
   public String getContainingClassName() {
@@ -95,7 +100,7 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
   }
 
   public GrDynamicImplicitMethod copy() {
-    return new GrDynamicImplicitMethod(myManager, getName(), getContainingClassName(), hasModifierProperty(PsiModifier.STATIC), ContainerUtil.newArrayList(myParamInfos));
+    return new GrDynamicImplicitMethod(myManager, getName(), getContainingClassName(), hasModifierProperty(PsiModifier.STATIC), ContainerUtil.newArrayList(myParamInfos), myReturnType);
   }
 
   public boolean isValid() {

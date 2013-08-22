@@ -16,7 +16,7 @@
 package com.intellij.execution.testframework.export;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printable;
@@ -27,13 +27,11 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -52,16 +50,16 @@ public class TestResultsXmlFormatter {
   private static final String TOTAL_STATUS = "total";
   private static final String ATTR_FOORTER_TEXT = "footerText";
 
-  private final RuntimeConfiguration myRuntimeConfiguration;
+  private final RunConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
   private final AbstractTestProxy myTestRoot;
 
-  public static void execute(AbstractTestProxy root, RuntimeConfiguration runtimeConfiguration, ContentHandler resultHandler)
+  public static void execute(AbstractTestProxy root, RunConfiguration runtimeConfiguration, ContentHandler resultHandler)
     throws SAXException {
     new TestResultsXmlFormatter(root, runtimeConfiguration, resultHandler).execute();
   }
 
-  private TestResultsXmlFormatter(AbstractTestProxy root, RuntimeConfiguration runtimeConfiguration, ContentHandler resultHandler) {
+  private TestResultsXmlFormatter(AbstractTestProxy root, RunConfiguration runtimeConfiguration, ContentHandler resultHandler) {
     myRuntimeConfiguration = runtimeConfiguration;
     myTestRoot = root;
     myResultHandler = resultHandler;

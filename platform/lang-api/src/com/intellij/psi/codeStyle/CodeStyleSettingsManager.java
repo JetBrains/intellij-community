@@ -32,6 +32,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
 
   public volatile CodeStyleSettings PER_PROJECT_SETTINGS = null;
   public volatile boolean USE_PER_PROJECT_SETTINGS = false;
+  public volatile String PREFERRED_PROJECT_CODE_STYLE = null;
   private volatile CodeStyleSettings myTemporarySettings;
   private volatile boolean myIsLoaded = false;
 
@@ -72,7 +73,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     if (temporarySettings != null) return temporarySettings;
     CodeStyleSettings projectSettings = PER_PROJECT_SETTINGS;
     if (USE_PER_PROJECT_SETTINGS && projectSettings != null) return projectSettings;
-    return CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    return CodeStyleSchemes.getInstance().findPreferredScheme(PREFERRED_PROJECT_CODE_STYLE).getCodeStyleSettings();
   }
 
   private void readExternal(Element element) throws InvalidDataException {

@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.preview;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -54,17 +55,22 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
   @NotNull
   private final BufferedImage myImage;
 
-  private ImagePreviewComponent(@NotNull final BufferedImage image) {
+  /**
+   * @param image buffered image
+   * @param imageFileSize File length in bytes.
+   */
+  private ImagePreviewComponent(@NotNull final BufferedImage image, final long imageFileSize) {
     setLayout(new BorderLayout());
 
     myImage = image;
     add(new ImageComp(), BorderLayout.CENTER);
-    add(createLabel(image), BorderLayout.SOUTH);
+    add(createLabel(image, imageFileSize), BorderLayout.SOUTH);
 
     setBackground(UIUtil.getToolTipBackground());
     setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
   }
 
+  @Override
   @TestOnly
   public boolean isEqualTo(@Nullable PreviewHintComponent other) {
     if (!(other instanceof ImagePreviewComponent)) {
@@ -85,12 +91,12 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
   }
 
   @NotNull
-  private static JLabel createLabel(@NotNull final BufferedImage image) {
+  private static JLabel createLabel(@NotNull final BufferedImage image, long imageFileSize) {
     final int width = image.getWidth();
     final int height = image.getHeight();
     final ColorModel colorModel = image.getColorModel();
     final int i = colorModel.getPixelSize();
-    return new JLabel(width + "x" + height + ", " + i + "bpp");
+    return new JLabel(String.format("%dx%d, %dbpp, %s", width, height, i, StringUtil.formatFileSize(imageFileSize)));
   }
 
   @SuppressWarnings({"AutoUnboxing"})
@@ -132,12 +138,15 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
     return false;
   }
 
-  public static JComponent getPreviewComponent(final PsiElement parent) {
+  public static JComponent getPreviewComponent(@Nullable final PsiElement parent) {
+    if (parent == null) {
+      return null;
+    }
     final PsiReference[] references = parent.getReferences();
     for (final PsiReference reference : references) {
       final PsiElement fileItem = reference.resolve();
       if (fileItem instanceof PsiFileSystemItem) {
-        final PsiFileSystemItem item = (PsiFileSystemItem) fileItem;
+        final PsiFileSystemItem item = (PsiFileSystemItem)fileItem;
         if (!item.isDirectory()) {
           final VirtualFile file = item.getVirtualFile();
           if (file != null && supportedExtensions.contains(file.getExtension())) {
@@ -147,11 +156,11 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
               if (imageRef != null) {
                 final BufferedImage image = imageRef.get();
                 if (image != null) {
-                  return new ImagePreviewComponent(image);
+                  return new ImagePreviewComponent(image, file.getLength());
                 }
               }
             }
-            catch (IOException e) {
+            catch (IOException ignored) {
               // nothing
             }
           }
@@ -165,8 +174,8 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
   /**
    * This method doesn't use caching, so if you want to use it then you should consider implementing external cache.
    */
-  public static ImagePreviewComponent getPreviewComponent(@NotNull final BufferedImage image) {
-    return new ImagePreviewComponent(image);
+  public static ImagePreviewComponent getPreviewComponent(@NotNull final BufferedImage image, final long imageFileSize) {
+    return new ImagePreviewComponent(image, imageFileSize);
   }
 
   private class ImageComp extends JComponent {

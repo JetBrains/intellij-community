@@ -812,8 +812,8 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
   }
 
   @Override
-  public void cleanup() {
-    super.cleanup();
+  public void cleanup(Project project) {
+    super.cleanup(project);
     myContext = null;
   }
 

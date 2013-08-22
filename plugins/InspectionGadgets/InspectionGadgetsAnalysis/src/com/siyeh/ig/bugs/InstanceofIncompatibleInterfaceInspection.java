@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,21 +22,18 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class InstanceofIncompatibleInterfaceInspection
-  extends BaseInspection {
+public class InstanceofIncompatibleInterfaceInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "instanceof.with.incompatible.interface.display.name");
+    return InspectionGadgetsBundle.message("instanceof.with.incompatible.interface.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "instanceof.with.incompatible.interface.problem.descriptor");
+    return InspectionGadgetsBundle.message("instanceof.with.incompatible.interface.problem.descriptor");
   }
 
   @Override
@@ -44,12 +41,10 @@ public class InstanceofIncompatibleInterfaceInspection
     return new InstanceofIncompatibleInterfaceVisitor();
   }
 
-  private static class InstanceofIncompatibleInterfaceVisitor
-    extends BaseInspectionVisitor {
+  private static class InstanceofIncompatibleInterfaceVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitInstanceOfExpression(
-      @NotNull PsiInstanceOfExpression expression) {
+    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
       super.visitInstanceOfExpression(expression);
       final PsiTypeElement castTypeElement = expression.getCheckType();
       if (castTypeElement == null) {
@@ -67,20 +62,14 @@ public class InstanceofIncompatibleInterfaceInspection
       }
       final PsiClassType operandClassType = (PsiClassType)operandType;
       final PsiClass castClass = castClassType.resolve();
-      if (castClass == null) {
-        return;
-      }
-      if (!castClass.isInterface()) {
+      if (castClass == null || !castClass.isInterface()) {
         return;
       }
       final PsiClass operandClass = operandClassType.resolve();
-      if (operandClass == null) {
+      if (operandClass == null || operandClass.isInterface()) {
         return;
       }
-      if (operandClass.isInterface()) {
-        return;
-      }
-      if (InheritanceUtil.existsMutualSubclass(operandClass, castClass)) {
+      if (InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly())) {
         return;
       }
       registerError(castTypeElement);

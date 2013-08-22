@@ -78,6 +78,11 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
   }
 
   private static class CharUsedInArithmeticContentFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull
@@ -113,6 +118,12 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.cast.quickfix", typeText);
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Insert cast";
     }
 
     @Override

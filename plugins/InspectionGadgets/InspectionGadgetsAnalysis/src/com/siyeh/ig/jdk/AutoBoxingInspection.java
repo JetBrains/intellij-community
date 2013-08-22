@@ -108,10 +108,16 @@ public class AutoBoxingInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("auto.boxing.make.boxing.explicit.quickfix");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
-      final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
+      final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
       if (expectedType == null) {
         return;
       }
@@ -146,7 +152,13 @@ public class AutoBoxingInspection extends BaseInspection {
       else {
         newExpression = classToConstruct + ".valueOf(" + expressionText + ')';
       }
-      replaceExpression(expression, newExpression);
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiTypeCastExpression) {
+        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
+        replaceExpression(typeCastExpression, newExpression);
+      } else {
+        replaceExpression(expression, newExpression);
+      }
     }
 
     private static boolean shortcutReplace(PsiExpression expression, String classToConstruct) {
@@ -303,7 +315,7 @@ public class AutoBoxingInspection extends BaseInspection {
       if (boxedType == null) {
         return;
       }
-      final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
+      final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
       if (expectedType == null || ClassUtils.isPrimitive(expectedType)) {
         return;
       }

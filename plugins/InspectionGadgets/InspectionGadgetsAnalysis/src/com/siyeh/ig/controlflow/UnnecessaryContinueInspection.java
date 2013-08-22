@@ -70,7 +70,7 @@ public class UnnecessaryContinueInspection extends BaseInspection {
 
     @Override
     public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
-      if (FileTypeUtils.isInJsp(statement.getContainingFile())) {
+      if (FileTypeUtils.isInServerPageFile(statement.getContainingFile())) {
         return;
       }
       final PsiStatement continuedStatement = statement.findContinuedStatement();

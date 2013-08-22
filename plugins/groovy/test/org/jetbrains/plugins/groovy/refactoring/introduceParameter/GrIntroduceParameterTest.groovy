@@ -335,4 +335,26 @@ def foo(String anObject) {
 foo('b')
 ''')
   }
+
+  void testIntroduceToConstructorUsedByAnonymousClass() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false, '''\
+class X {
+  def X() {
+    print <selection>2</selection>
+  }
+}
+
+print new X() {
+}
+''', '''\
+class X {
+  def X(int anObject) {
+    print anObject
+  }
+}
+
+print new X(2) {
+}
+''')
+  }
 }

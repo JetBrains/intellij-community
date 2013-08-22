@@ -19,7 +19,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.options.OptionsBundle;

@@ -59,9 +59,9 @@ public final class SpeedSearchUtil {
     simpleColoredComponent.append(text, attributes);
   }
 
-  public static void appendColoredFragmentForMatcher(final String text,
+  public static void appendColoredFragmentForMatcher(@NotNull final String text,
                                                      final SimpleColoredComponent component,
-                                                     final SimpleTextAttributes attributes,
+                                                     @NotNull final SimpleTextAttributes attributes,
                                                      final Matcher matcher,
                                                      final Color selectedBg,
                                                      final boolean selected) {

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.Query;
@@ -52,8 +53,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "type.may.be.weakened.display.name");
+    return InspectionGadgetsBundle.message("type.may.be.weakened.display.name");
   }
 
   @Override
@@ -128,6 +128,12 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("type.may.be.weakened.quickfix", fqClassName);
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Weaken type";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
@@ -180,7 +186,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         type = factory.createTypeByFQClassName(fqClassName, scope);
       }
       final PsiJavaCodeReferenceElement referenceElement = factory.createReferenceElementByType(type);
-      componentReferenceElement.replace(referenceElement);
+      final PsiElement replacement = componentReferenceElement.replace(referenceElement);
+      final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+      javaCodeStyleManager.shortenClassReferences(replacement);
     }
   }
 
@@ -199,6 +207,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         final PsiElement declarationScope = parameter.getDeclarationScope();
         if (declarationScope instanceof PsiCatchSection) {
           // do not weaken catch block parameters
+          return;
+        } else if (declarationScope instanceof PsiLambdaExpression && parameter.getTypeElement() == null) {
+          //no need to check inferred lambda params
           return;
         }
         else if (declarationScope instanceof PsiMethod) {
@@ -222,7 +233,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         }
       }
       if (isOnTheFly() && variable instanceof PsiField) {
-        // checking variables with greater visibiltiy is too expensive
+        // checking variables with greater visibility is too expensive
         // for error checking in the editor
         if (!variable.hasModifierProperty(PsiModifier.PRIVATE)) {
           return;

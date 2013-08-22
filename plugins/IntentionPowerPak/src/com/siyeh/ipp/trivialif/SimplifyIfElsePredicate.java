@@ -20,7 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
-import com.siyeh.ipp.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class SimplifyIfElsePredicate implements PsiElementPredicate {

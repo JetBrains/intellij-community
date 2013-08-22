@@ -183,8 +183,9 @@ public class MinusculeMatcher implements Matcher {
     boolean afterSeparator = StringUtil.indexOfAny(name, HARD_SEPARATORS, 0, startIndex) >= 0;
     boolean wordStart = startIndex == 0 || isWordStart(name, startIndex) && !isWordStart(name, startIndex - 1);
     boolean finalMatch = iterable.get(iterable.size() - 1).getEndOffset() == name.length();
+    boolean startMatch = iterable.get(0).getStartOffset() == 0;
 
-    return (wordStart ? 1000 : 0) - integral * 10 + matchingCase + (afterSeparator ? 0 : 2) + (finalMatch ? 1 : 0);
+    return (wordStart ? 1000 : 0) - integral * 10 + matchingCase + (afterSeparator ? 0 : 2) + (startMatch ? 1 : 0) + (finalMatch ? 1 : 0);
   }
 
   public boolean isStartMatch(@NotNull String name) {
@@ -277,7 +278,7 @@ public class MinusculeMatcher implements Matcher {
     while (true) {
       int nextOccurrence = star ?
                            indexOfIgnoreCase(name, nameIndex + 1, p, patternIndex, matchingState.isAsciiName) :
-                           indexOfWordStart(name, patternIndex, nameIndex, matchingState.isAsciiName);
+                           indexOfWordStart(name, patternIndex, nameIndex);
       if (nextOccurrence < 0) {
         return null;
       }
@@ -350,7 +351,7 @@ public class MinusculeMatcher implements Matcher {
         }
         // when an uppercase pattern letter matches lowercase name letter, try to find an uppercase (better) match further in the name
         if (myPattern[patternIndex + i] != name.charAt(nameIndex + i)) {
-          int nextWordStart = indexOfWordStart(name, patternIndex + i, nameIndex + i, matchingState.isAsciiName);
+          int nextWordStart = indexOfWordStart(name, patternIndex + i, nameIndex + i);
           FList<TextRange> ranges = matchWildcards(name, patternIndex + i, nextWordStart, matchingState);
           if (ranges != null) {
             return prependRange(ranges, nameIndex, i);
@@ -395,24 +396,18 @@ public class MinusculeMatcher implements Matcher {
   }
 
   private boolean isWildcard(int patternIndex) {
-    return isPatternChar(patternIndex, ' ', '*');
+    if (patternIndex >= 0 && patternIndex < myPattern.length) {
+      char pc = myPattern[patternIndex];
+      return pc == ' ' || pc == '*';
+    }
+    return false;
   }
   private boolean isPatternChar(int patternIndex, char c) {
     return patternIndex >= 0 && patternIndex < myPattern.length && myPattern[patternIndex] == c;
   }
-  private boolean isPatternChar(int patternIndex, char c1, char c2) {
-    if (patternIndex >= 0 && patternIndex < myPattern.length) {
-      char pc = myPattern[patternIndex];
-      return pc == c1 || pc == c2;
-    }
-    return false;
-  }
 
-  private int indexOfWordStart(@NotNull String name, int patternIndex, int startFrom, boolean isAsciiName) {
+  private int indexOfWordStart(@NotNull String name, int patternIndex, int startFrom) {
     final char p = myPattern[patternIndex];
-    if (p == '.' || isWordSeparator[patternIndex]) {
-      return indexOfIgnoreCase(name, startFrom + 1, p, patternIndex, isAsciiName);
-    }
     if (startFrom >= name.length() ||
         myHasHumps && isLowerCase[patternIndex] && !(patternIndex > 0 && isWordSeparator[patternIndex - 1])) {
       return -1;

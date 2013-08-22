@@ -366,5 +366,15 @@ class A extends spock.lang.Specification {
 }
 ''')
   }
+
+  void testCommentAtFileEnd() {
+    doTest('''\
+print 2
+/*<caret>''', '''\
+print 2
+/*
+<caret>
+ */''')
+  }
 }
 

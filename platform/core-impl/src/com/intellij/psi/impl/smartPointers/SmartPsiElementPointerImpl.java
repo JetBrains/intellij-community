@@ -18,7 +18,6 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.Extensions;
@@ -37,8 +36,6 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 
 class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPsiElementPointerImpl");
-
   private Reference<E> myElement;
   private final SmartPointerElementInfo myElementInfo;
   private final Class<? extends PsiElement> myElementClass;
@@ -101,16 +98,16 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   @Override
   public PsiFile getContainingFile() {
-    VirtualFile virtualFile = myElementInfo.getVirtualFile();
-    if (virtualFile != null && virtualFile.isValid()) {
-      PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(virtualFile);
-      if (psiFile != null) return psiFile;
+    PsiFile file = getElementInfo().restoreFile();
+
+    if (file != null) {
+      return file;
     }
 
     final Document doc = myElementInfo.getDocumentToSynchronize();
     if (doc == null) {
       final E resolved = getElement();
-      return resolved != null ? resolved.getContainingFile() : null;
+      return resolved == null ? null : resolved.getContainingFile();
     }
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(doc);
   }
@@ -126,7 +123,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   @NotNull
-  private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project, @NotNull E element, PsiFile containingFile) {
+  static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project, @NotNull E element, PsiFile containingFile) {
     if (element instanceof PsiCompiledElement || containingFile == null || !containingFile.isPhysical() || !element.isPhysical()) {
       if (element instanceof StubBasedPsiElement && element instanceof PsiCompiledElement) {
         if (element instanceof PsiFile) {
@@ -151,7 +148,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     FileViewProvider viewProvider = containingFile.getViewProvider();
     if (viewProvider instanceof FreeThreadedFileViewProvider) {
       PsiElement hostContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
-      if (hostContext != null) return new InjectedSelfElementInfo(project, element, hostContext);
+      if (hostContext != null) return new InjectedSelfElementInfo(project, element, element.getTextRange(), containingFile, hostContext);
     }
 
     if (element instanceof PsiFile) {
@@ -164,15 +161,6 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
     ProperTextRange proper = ProperTextRange.create(elementRange);
 
-    LOG.assertTrue(element.isPhysical());
-    LOG.assertTrue(element.isValid());
-
-    boolean isMultiRoot = viewProvider.getAllFiles().size() > 1;
-    VirtualFile virtualFile = containingFile.getVirtualFile();
-    boolean isElementInMainRoot = virtualFile == null || containingFile.getManager().findFile(virtualFile) == containingFile;
-    if (isMultiRoot && !isElementInMainRoot) {
-      return new MultiRootSelfElementInfo(project, proper, element.getClass(), containingFile, containingFile.getLanguage());
-    }
     return new SelfElementInfo(project, proper, element.getClass(), containingFile, containingFile.getLanguage());
   }
 

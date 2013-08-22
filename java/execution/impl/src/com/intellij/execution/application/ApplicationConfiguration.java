@@ -32,7 +32,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -86,25 +85,13 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return state;
   }
 
+  @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<ApplicationConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ApplicationConfigurable(getProject()));
     JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<ApplicationConfiguration>());
     return group;
-  }
-
-  @Override
-  @Nullable
-  public String getGeneratedName() {
-    if (MAIN_CLASS_NAME == null) {
-      return null;
-    }
-    return JavaExecutionUtil.getPresentableClassName(MAIN_CLASS_NAME, getConfigurationModule());
-  }
-
-  public void setGeneratedName() {
-    setName(getGeneratedName());
   }
 
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
@@ -118,24 +105,25 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return getConfigurationModule().findClass(MAIN_CLASS_NAME);
   }
 
-  public boolean isGeneratedName() {
-    if (MAIN_CLASS_NAME == null || MAIN_CLASS_NAME.length() == 0) {
-      return JavaExecutionUtil.isNewName(getName());
+  @Override
+  @Nullable
+  public String suggestedName() {
+    if (MAIN_CLASS_NAME == null) {
+      return null;
     }
-    return Comparing.equal(getName(), getGeneratedName());
+    return JavaExecutionUtil.getPresentableClassName(MAIN_CLASS_NAME, getConfigurationModule());
   }
 
-  public String suggestedName() {
+  @Override
+  public String getActionName() {
     if (MAIN_CLASS_NAME == null || MAIN_CLASS_NAME.length() == 0) {
-      return getName();
+      return null;
     }
     return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 6) + ".main()";
   }
 
   public void setMainClassName(final String qualifiedName) {
-    final boolean generatedName = isGeneratedName();
     MAIN_CLASS_NAME = qualifiedName;
-    if (generatedName) setGeneratedName();
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
@@ -219,10 +207,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   public Collection<Module> getValidModules() {
     return JavaRunConfigurationModule.getModulesForClass(getProject(), MAIN_CLASS_NAME);
-  }
-
-  protected ModuleBasedConfiguration createInstance() {
-    return new ApplicationConfiguration(getName(), getProject(), ApplicationConfigurationType.getInstance());
   }
 
   public void readExternal(final Element element) throws InvalidDataException {

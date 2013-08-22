@@ -18,9 +18,12 @@ package com.intellij.codeInspection.testOnly;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.*;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightModifierList;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,16 +58,41 @@ public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   private static void validate(PsiCallExpression e, ProblemsHolder h) {
-    if (!isTestOnlyMethodCalled(e)) return;
+    PsiMethod method = e.resolveMethod();
+
+    if (method == null || !isAnnotatedAsTestOnly(method)) return;
     if (isInsideTestOnlyMethod(e)) return;
     if (isInsideTestClass(e)) return;
     if (isUnderTestSources(e)) return;
 
+    PsiAnnotation anno = findVisibleForTestingAnnotation(method);
+    if (anno != null) {
+      LightModifierList modList = new LightModifierList(method.getManager(), JavaLanguage.INSTANCE, getAccessModifierWithoutTesting(anno));
+      if (JavaResolveUtil.isAccessible(method, method.getContainingClass(), modList, e, null, null)) {
+        return;
+      }
+    }
+
     reportProblem(e, h);
   }
 
-  private static boolean isTestOnlyMethodCalled(PsiCallExpression e) {
-    return isAnnotatedAsTestOnly(e.resolveMethod());
+  private static String getAccessModifierWithoutTesting(PsiAnnotation anno) {
+    String modifier = PsiModifier.PRIVATE;
+    PsiAnnotationMemberValue ref = anno.findDeclaredAttributeValue("visibility");
+    if (ref instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)ref).resolve();
+      if (target instanceof PsiEnumConstant) {
+        String name = ((PsiEnumConstant)target).getName();
+        modifier = "PRIVATE".equals(name) ? PsiModifier.PRIVATE : "PROTECTED".equals(name) ? PsiModifier.PROTECTED : PsiModifier.PACKAGE_LOCAL;
+      }
+    }
+    return modifier;
+  }
+
+  @Nullable
+  private static PsiAnnotation findVisibleForTestingAnnotation(@NotNull PsiMethod method) {
+    PsiAnnotation anno = AnnotationUtil.findAnnotation(method, "com.google.common.annotations.VisibleForTesting");
+    return anno != null ? anno : AnnotationUtil.findAnnotation(method, "com.android.annotations.VisibleForTesting");
   }
 
   private static boolean isInsideTestOnlyMethod(PsiCallExpression e) {
@@ -73,9 +101,7 @@ public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   private static boolean isAnnotatedAsTestOnly(@Nullable PsiMethod m) {
-    return m != null &&
-           (AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, false, false) ||
-            AnnotationUtil.isAnnotated(m, "com.google.common.annotations.VisibleForTesting", false, false));
+    return m != null && (AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, false, false) || findVisibleForTestingAnnotation(m) != null);
   }
 
   private static boolean isInsideTestClass(PsiCallExpression e) {

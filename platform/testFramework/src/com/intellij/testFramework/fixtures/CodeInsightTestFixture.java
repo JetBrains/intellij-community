@@ -31,7 +31,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -405,24 +405,24 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return gutter renderer at the caret position.
    */
   @Nullable
-  GutterIconRenderer findGutter(@TestDataFile @NonNls String filePath);
+  GutterMark findGutter(@TestDataFile @NonNls String filePath);
 
   PsiManager getPsiManager();
 
   /**
    * @return null if the only item was auto-completed
    */
-  @Nullable LookupElement[] completeBasic();
+  LookupElement[] completeBasic();
 
   /**
    * @return null if the only item was auto-completed
    */
-  @Nullable LookupElement[] complete(CompletionType type);
+  LookupElement[] complete(CompletionType type);
 
   /**
    * @return null if the only item was auto-completed
    */
-  @Nullable LookupElement[] complete(CompletionType type, int invocationCount);
+  LookupElement[] complete(CompletionType type, int invocationCount);
 
   void checkResult(final String text);
 
@@ -431,7 +431,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   Document getDocument(PsiFile file);
 
   @NotNull
-  Collection<GutterIconRenderer> findAllGutters(String filePath);
+  Collection<GutterMark> findAllGutters(String filePath);
 
   void type(final char c);
 
@@ -493,4 +493,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param consumer the callback in which the actual testing of the structure view is performed.
    */
   void testStructureView(Consumer<StructureViewComponent> consumer);
+
+  /**
+   * By default, if the caret in the text passed to {@link #configureByFile(String)} or {@link #configureByText} has an injected fragment
+   * at the caret, the test fixture puts the caret into the injected editor. This method allows to turn off this behavior.
+   *
+   * @param caresAboutInjection true if the fixture should look for an injection at caret, false otherwise.
+   */
+  void setCaresAboutInjection(boolean caresAboutInjection);
 }

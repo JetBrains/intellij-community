@@ -19,7 +19,6 @@ package com.intellij.execution.junit;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -49,7 +48,11 @@ class TestClass extends TestObject {
   }
 
   public String suggestActionName() {
-    return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(myConfiguration.getPersistentData().MAIN_CLASS_NAME), 0);
+    String name = myConfiguration.getPersistentData().MAIN_CLASS_NAME;
+    if (name != null && name.endsWith(".")) {
+      return name;
+    }
+    return JavaExecutionUtil.getShortClassName(name);
   }
 
   public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {

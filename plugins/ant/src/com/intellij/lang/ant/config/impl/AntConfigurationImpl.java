@@ -69,8 +69,8 @@ import java.util.*;
 @State(
     name = "AntConfiguration",
     storages = {
-      @Storage( file = StoragePathMacros.PROJECT_FILE),
-      @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/ant.xml", scheme = StorageScheme.DIRECTORY_BASED)
+      @Storage(file = StoragePathMacros.PROJECT_FILE),
+      @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/ant.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element>, ModificationTracker {
@@ -830,7 +830,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       return;
     }
     if (configName != null) {
-      for (RunConfiguration configuration : runManager.getConfigurations(type)) {
+      for (RunConfiguration configuration : runManager.getConfigurationsList(type)) {
         if (configName.equals(configuration.getName())) {
           final List<AntBeforeRunTask> tasks = runManager.getBeforeRunTasks(configuration, AntBeforeRunTaskProvider.ID);
           if (!tasks.isEmpty()) {

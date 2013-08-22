@@ -18,6 +18,8 @@ package org.jetbrains.ide;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 public abstract class CustomPortServerManager {
   public static final ExtensionPointName<CustomPortServerManager> EP_NAME = ExtensionPointName.create("com.intellij.customPortServerManager");
 
@@ -34,4 +36,11 @@ public abstract class CustomPortServerManager {
   public abstract boolean isAvailableExternally();
 
   public abstract void setManager(@Nullable CustomPortService manager);
+
+  /**
+   * This server will accept only XML-RPC requests if this method returns not-null map of XMl-RPC handlers
+   */
+  public Map<String, Object> createXmlRpcHandlers() {
+    return null;
+  }
 }

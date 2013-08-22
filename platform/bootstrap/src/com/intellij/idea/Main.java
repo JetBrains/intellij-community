@@ -59,12 +59,14 @@ public class Main {
         throw new HeadlessException("Unable to detect graphics environment");
       }
 
-      try {
-        installPatch();
-      }
-      catch (Throwable t) {
-        showMessage("Update Failed", t);
-        System.exit(UPDATE_FAILED);
+      if (args.length == 0) {
+        try {
+          installPatch();
+        }
+        catch (Throwable t) {
+          showMessage("Update Failed", t);
+          System.exit(UPDATE_FAILED);
+        }
       }
     }
 
@@ -163,7 +165,7 @@ public class Main {
   }
 
   public static void showMessage(String title, Throwable t) {
-    String message = "Internal exception, please report to http://youtrack.jetbrains.com\n\n" + ExceptionUtil.getThrowableText(t);
+    String message = "Internal error. Please report to http://youtrack.jetbrains.com\n\n" + ExceptionUtil.getThrowableText(t);
     showMessage(title, message, true);
   }
 

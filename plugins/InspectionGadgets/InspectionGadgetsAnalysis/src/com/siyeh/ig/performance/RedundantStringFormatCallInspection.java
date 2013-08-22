@@ -23,7 +23,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.FormatUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +54,11 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
     public String getName() {
       return InspectionGadgetsBundle.message(
         "redundant.string.format.call.quickfix");
+    }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
     }
 
     @Override

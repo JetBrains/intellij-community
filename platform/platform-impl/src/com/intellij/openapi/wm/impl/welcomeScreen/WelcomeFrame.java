@@ -32,6 +32,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -41,6 +42,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.util.ui.UIUtil;
+import org.java.ayatana.ApplicationMenu;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -159,6 +161,9 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     if (ourInstance == null) {
       IdeFrame frame = EP.getExtensions().length == 0
                            ? new WelcomeFrame() : EP.getExtensions()[0].createFrame();
+      if (SystemInfo.isLinux) {
+        ApplicationMenu.tryInstall(((JFrame)frame));
+      }
       ((JFrame)frame).setVisible(true);
       ourInstance = frame;
     }

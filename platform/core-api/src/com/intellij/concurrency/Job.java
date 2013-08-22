@@ -19,6 +19,8 @@
  */
 package com.intellij.concurrency;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -28,11 +30,11 @@ public interface Job<T> {
 
   String getTitle();
 
-  void addTask(Callable<T> task);
+  void addTask(@NotNull Callable<T> task);
 
-  void addTask(Runnable task, T result);
+  void addTask(@NotNull Runnable task, T result);
 
-  void addTask(Runnable task);
+  void addTask(@NotNull Runnable task);
 
   List<T> scheduleAndWaitForResults() throws Throwable;
 
@@ -43,4 +45,53 @@ public interface Job<T> {
   void schedule();
 
   boolean isDone();
+
+
+  @NotNull
+  Job NULL_JOB = new Job() {
+    @Override
+    public boolean isDone() {
+      return true;
+    }
+
+    @Override
+    public void cancel() {
+    }
+
+    @Override
+    public String getTitle() {
+      return null;
+    }
+
+    @Override
+    public void addTask(@NotNull Callable task) {
+
+    }
+
+    @Override
+    public void addTask(@NotNull Runnable task, Object result) {
+
+    }
+
+    @Override
+    public void addTask(@NotNull Runnable task) {
+
+    }
+
+    @Override
+    public List scheduleAndWaitForResults() throws Throwable {
+      return null;
+    }
+
+    @Override
+    public boolean isCanceled() {
+      return false;
+    }
+
+    @Override
+    public void schedule() {
+
+    }
+  };
+
 }

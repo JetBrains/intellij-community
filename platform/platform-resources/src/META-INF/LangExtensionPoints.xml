@@ -103,6 +103,7 @@
     <extensionPoint name="multiHostInjector"
                     interface="com.intellij.lang.injection.MultiHostInjector"
                     area="IDEA_PROJECT"/>
+    <extensionPoint name="referenceInjector" interface="com.intellij.psi.injection.ReferenceInjector"/>
 
     <extensionPoint name="annotator"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -142,11 +143,6 @@
     <extensionPoint name="lang.commenter"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.Commenter"/>
-    </extensionPoint>
-
-    <extensionPoint name="lang.literalEscaper"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.lang.LiteralEscaper"/>
     </extensionPoint>
 
     <extensionPoint name="lang.braceMatcher"
@@ -404,6 +400,8 @@
 
     <extensionPoint name="configurationProducer"
                     interface="com.intellij.execution.junit.RuntimeConfigurationProducer"/>
+    <extensionPoint name="runConfigurationProducer"
+                    interface="com.intellij.execution.actions.RunConfigurationProducer"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
                     area="IDEA_PROJECT"/>
@@ -785,6 +783,8 @@
 
     <extensionPoint name="defaultHighlightingSettingProvider"
                     interface="com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider"/>
+
+    <extensionPoint name="sdkResolveScopeProvider" interface="com.intellij.psi.SdkResolveScopeProvider"/>
   </extensionPoints>
 </idea-plugin>
 

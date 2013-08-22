@@ -15,7 +15,7 @@
  */
 package org.intellij.lang.xpath;
 
-import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler;
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -30,7 +30,7 @@ import java.util.List;
  * Date: 08.10.2009
  * Time: 21:06:04
  */
-public class XPathStringLiteralSelectioner implements ExtendWordSelectionHandler {
+public class XPathStringLiteralSelectioner extends ExtendWordSelectionHandlerBase {
   public boolean canSelect(PsiElement e) {
     ASTNode astNode = e.getNode();
     return astNode != null &&

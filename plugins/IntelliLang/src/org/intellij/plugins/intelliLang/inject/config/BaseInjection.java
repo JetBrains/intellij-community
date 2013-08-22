@@ -65,7 +65,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   private Pattern myCompiledValuePattern;
   private boolean mySingleFile;
 
-  public BaseInjection(final String id) {
+  public BaseInjection(@NotNull final String id) {
     mySupportId = id;
   }
 
@@ -244,7 +244,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       setValuePattern(element.getChildText("value-pattern"));
       mySingleFile = element.getChild("single-file") != null;
       readExternalImpl(element);
-      final List<Element> placeElements = (List<Element>)element.getChildren("place");
+      final List<Element> placeElements = element.getChildren("place");
       myPlaces = InjectionPlace.ARRAY_FACTORY.create(placeElements.size());
       for (int i = 0, placeElementsSize = placeElements.size(); i < placeElementsSize; i++) {
         Element placeElement = placeElements.get(i);
@@ -382,6 +382,10 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
         }
       }
     }
+  }
+
+  public boolean acceptForReference(PsiElement element) {
+    return acceptsPsiElement(element);
   }
 
   @Override

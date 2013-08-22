@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.reference.SoftReference
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -96,5 +97,35 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
     ApplicationManager.application.runWriteAction { VfsUtil.saveText(file.virtualFile, "import java.util.*; class A {}; class B {}") }
     assert pointer.element == oldClass
     assert ((PsiFileImpl)file).treeElement
+  }
+
+  public void "test do not parse when resolving references inside an anonymous class"() {
+    PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("A.java", """
+class A {
+    Object field = new B() {
+      void foo(Object o) {
+      }
+    };
+}
+
+class B {
+  void foo(Object o) {}
+}
+""")
+    assert !file.contentsLoaded
+    PsiClass bClass = ((PsiJavaFile) file).classes[1]
+    assert !file.contentsLoaded
+
+    def fooMethod = bClass.methods[0]
+    assert !file.contentsLoaded
+
+    def override = OverridingMethodsSearch.search(fooMethod).findAll().first()
+    assert override
+    assert !file.contentsLoaded
+
+    assert override.containingClass instanceof PsiAnonymousClass
+    assert !file.contentsLoaded
+
+    assert bClass == override.containingClass.superClass
   }
 }

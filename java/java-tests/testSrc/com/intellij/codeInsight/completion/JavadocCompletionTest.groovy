@@ -216,6 +216,41 @@ class Foo {
     myFixture.assertPreferredCompletionItems 0, 'param', 'param param2'
   }
 
+  public void "test suggest same param descriptions"() {
+    myFixture.configureByText "a.java", '''
+class Foo {
+  /**
+  * @param intParam so<caret> xxx
+  * @throws Foo
+  */
+  void foo2(int intParam, Object param2) { }
+
+  /**
+  * @param intParam some integer param
+  */
+  void foo(int intParam, Object param2) { }
+}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'some', 'some integer param'
+    myFixture.lookup.currentItem = myFixture.lookupElements[1]
+    myFixture.type('\t')
+    myFixture.checkResult '''
+class Foo {
+  /**
+  * @param intParam some integer param<caret>
+  * @throws Foo
+  */
+  void foo2(int intParam, Object param2) { }
+
+  /**
+  * @param intParam some integer param
+  */
+  void foo(int intParam, Object param2) { }
+}
+'''
+  }
+
   public void "test see super class"() {
     myFixture.addClass("package foo; public interface Foo {}")
     myFixture.addClass("package bar; public class Bar {} ")
@@ -230,6 +265,27 @@ class Impl extends Bar implements Foo {}
 '''
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, 'see', 'see bar.Bar', 'see foo.Foo'
+  }
+
+  public void testShortenMethodParameterTypes() {
+    CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = false
+    try {
+      myFixture.addClass("package foo; public class Foo {}")
+      myFixture.configureByText "a.java", '''
+import foo.*;
+
+/**
+ * {@link #go<caret>
+ */
+class Goo { void goo(Foo foo {} }
+'''
+      myFixture.completeBasic()
+      assert myFixture.editor.document.text.contains('@link #goo(Foo)')
+    }
+    finally {
+      CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = true
+    }
+    
   }
 
   public void testCustomReferenceProvider() throws Exception {

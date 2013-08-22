@@ -19,15 +19,16 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 public interface QuickFixActionRegistrar {
-  void register(IntentionAction action);
-  void register(TextRange fixRange, IntentionAction action, HighlightDisplayKey key);
+  void register(@NotNull IntentionAction action);
+  void register(@NotNull TextRange fixRange, @NotNull IntentionAction action, HighlightDisplayKey key);
 
   /**
    * Allows to replace some of the built-in quickfixes.
    * @param condition condition for quickfixes to remove
    * @since 9.0
    */
-  void unregister(Condition<IntentionAction> condition);
+  void unregister(@NotNull Condition<IntentionAction> condition);
 }

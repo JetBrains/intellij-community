@@ -73,6 +73,11 @@ public class ListIndexOfReplaceableByContainsInspection
 
   private static class IndexOfReplaceableByContainsFix
     extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)

@@ -17,7 +17,6 @@ package com.intellij.execution.applet;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
@@ -70,8 +69,8 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @NonNls
   protected static final String PARAMETER_ELEMENT_NAME = "parameter";
 
-  public AppletConfiguration(final String name, final Project project, ConfigurationFactory factory) {
-    super(name, new JavaRunConfigurationModule(project, false), factory);
+  public AppletConfiguration(final Project project, ConfigurationFactory factory) {
+    super(new JavaRunConfigurationModule(project, false), factory);
   }
 
   public void setMainClass(final PsiClass psiClass) {
@@ -82,7 +81,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    final JavaCommandLineState state = new JavaCommandLineState(env) {
+    return new JavaCommandLineState(env) {
       private AppletHtmlFile myHtmlURL = null;
 
       protected JavaParameters createJavaParameters() throws ExecutionException {
@@ -117,10 +116,9 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         return handler;
       }
     };
-    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
-    return state;
   }
 
+  @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new AppletConfigurable(getProject());
   }
@@ -207,15 +205,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     }
   }
 
-  protected ModuleBasedConfiguration createInstance() {
-    return new AppletConfiguration(getName(), getProject(), AppletConfigurationType.getInstance().getConfigurationFactories()[0]);
-  }
-
-  public String getGeneratedName() {
-    if (MAIN_CLASS_NAME == null) return null;
-    return JavaExecutionUtil.getPresentableClassName(MAIN_CLASS_NAME, getConfigurationModule());
-  }
-
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
     if (HTML_USED) return null;
     return RefactoringListeners.getClassOrPackageListener(element, new RefactoringListeners.SingleClassConfigurationAccessor(this));
@@ -225,22 +214,13 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return getConfigurationModule().findClass(MAIN_CLASS_NAME);
   }
 
-  public void setGeneratedName() {
-    setName(getGeneratedName());
-  }
-
-  public boolean isGeneratedName() {
-    return Comparing.equal(getName(), getGeneratedName());
-  }
-
   public String suggestedName() {
+    if (MAIN_CLASS_NAME == null) return null;
     return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 0);
   }
 
   public void setMainClassName(final String qualifiedName) {
-    final boolean generatedName = isGeneratedName();
     MAIN_CLASS_NAME = qualifiedName;
-    if (generatedName) setGeneratedName();
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {

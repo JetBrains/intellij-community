@@ -28,6 +28,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,7 +42,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   public static final String MODULE_NAME = ProjectBundle.message("module.type.java.name");
   public static final String JAVA_GROUP = "Java";
-  private static final String JAVA_MODULE = "JAVA_MODULE";
+  private static final String JAVA_MODULE = ModuleTypeId.JAVA_MODULE;
 
   public JavaModuleType() {
     this(JAVA_MODULE);
@@ -51,16 +52,19 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     super(id);
   }
 
+  @NotNull
   @Override
   public JavaModuleBuilder createModuleBuilder() {
     return new JavaModuleBuilder();
   }
 
+  @NotNull
   @Override
   public String getName() {
     return MODULE_NAME;
   }
 
+  @NotNull
   @Override
   public String getDescription() {
     return ProjectBundle.message("module.type.java.description");
@@ -76,9 +80,10 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     return getJavaModuleNodeIconClosed();
   }
 
+  @NotNull
   @Override
-  public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext, final JavaModuleBuilder moduleBuilder,
-                                              final ModulesProvider modulesProvider) {
+  public ModuleWizardStep[] createWizardSteps(@NotNull final WizardContext wizardContext, @NotNull final JavaModuleBuilder moduleBuilder,
+                                              @NotNull final ModulesProvider modulesProvider) {
     final ProjectWizardStepFactory wizardFactory = ProjectWizardStepFactory.getInstance();
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     final ModuleWizardStep supportForFrameworksStep = wizardFactory.createSupportForFrameworksStep(wizardContext, moduleBuilder, modulesProvider);
@@ -91,7 +96,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep, final ModuleBuilder moduleBuilder) {
+  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep, @NotNull final ModuleBuilder moduleBuilder) {
     return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder, new Condition<SdkTypeId>() {
       @Override
       public boolean value(SdkTypeId sdkType) {
@@ -118,13 +123,13 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   @Override
-  public boolean isValidSdk(final Module module, final Sdk projectSdk) {
+  public boolean isValidSdk(@NotNull final Module module, final Sdk projectSdk) {
     return isValidJavaSdk(module);
   }
 
-  public static boolean isValidJavaSdk(final Module module) {
+  public static boolean isValidJavaSdk(@NotNull Module module) {
     if (ModuleRootManager.getInstance(module).getSourceRoots().length == 0) return true;
-    return JavaPsiFacade.getInstance(module.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, 
+    return JavaPsiFacade.getInstance(module.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT,
                                                                     module.getModuleWithLibrariesScope()) != null;
   }
 }

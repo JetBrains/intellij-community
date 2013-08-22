@@ -10,19 +10,20 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <checkoutProvider implementation="org.jetbrains.plugins.github.GithubCheckoutProvider"/>
-    <applicationService serviceInterface="org.jetbrains.plugins.github.GithubSettings"
-                        serviceImplementation="org.jetbrains.plugins.github.GithubSettings"/>
-    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.ui.GithubAnnotationGutterActionProvider" />
-    <checkoutCompletedListener implementation="org.jetbrains.plugins.github.GithubCheckoutListener" order="after PlatformProjectCheckoutListener"/>
-    <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GitHubSettingsConfigurable"/>
+    <checkoutProvider implementation="org.jetbrains.plugins.github.extensions.GithubCheckoutProvider"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.github.util.GithubSettings"
+                        serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
+    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider" />
+    <checkoutCompletedListener implementation="org.jetbrains.plugins.github.extensions.GithubCheckoutListener" order="after PlatformProjectCheckoutListener"/>
+    <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
 
-    <applicationService serviceInterface="org.jetbrains.plugins.github.GithubSslSupport"
-                        serviceImplementation="org.jetbrains.plugins.github.GithubSslSupport"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.github.util.GithubSslSupport"
+                        serviceImplementation="org.jetbrains.plugins.github.util.GithubSslSupport"/>
+    <webBrowserUrlProvider implementation="org.jetbrains.plugins.github.extensions.GithubWebBrowserUrlProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
-    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.GithubHttpAuthDataProvider" />
+    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GithubHttpAuthDataProvider" />
   </extensions>
 
   <actions>
@@ -30,6 +31,9 @@
       <add-to-group group-id="Vcs.Import"/>
     </action>
     <action id="Github.Rebase" class="org.jetbrains.plugins.github.GithubRebaseAction">
+      <add-to-group group-id="Git.Menu"/>
+    </action>
+    <action id="Github.Create.Pull.Request" class="org.jetbrains.plugins.github.GithubCreatePullRequestAction">
       <add-to-group group-id="Git.Menu"/>
     </action>
     <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserAction">
@@ -46,6 +50,5 @@
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="ConsoleEditorPopupMenu"/>
     </action>
-    <action id="Github.Rebase.Internal" class="org.jetbrains.plugins.github.GithubRebase"/>
   </actions>
 </idea-plugin>

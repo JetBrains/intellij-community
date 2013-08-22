@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DefaultModulesProvider implements ModulesProvider {
 
+  @NotNull
   public static ModulesProvider createForProject(@Nullable Project project) {
     return project == null ? EMPTY_MODULES_PROVIDER : new DefaultModulesProvider(project);
   }

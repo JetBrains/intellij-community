@@ -90,12 +90,11 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     fireStateChanged();
   }
 
-
-  public boolean isApplicable(@NotNull String text, String prevType, boolean checkStandartFilters) {
+  public boolean isApplicable(@NotNull String text, String prevType, boolean checkStandardFilters) {
     for (LogFilter filter : myRegisteredLogFilters.keySet()) {
       if (myRegisteredLogFilters.get(filter).booleanValue() && !filter.isAcceptable(text)) return false;
     }
-    if (checkStandartFilters) {
+    if (checkStandardFilters) {
       final String type = getType(text);
       boolean selfTyped = false;
       if (type != null) {

@@ -86,9 +86,7 @@ public class RunContentExecutor {
 
   private ConsoleView createConsole(@NotNull Project project, @NotNull ProcessHandler processHandler) {
     TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-    for (Filter filter : myFilterList) {
-      consoleBuilder.addFilter(filter);
-    }
+    consoleBuilder.filters(myFilterList);
     ConsoleView console = consoleBuilder.getConsole();
     console.attachToProcess(processHandler);
     return console;
@@ -101,7 +99,7 @@ public class RunContentExecutor {
     if (myHelpId != null) {
       view.setHelpId(myHelpId);
     }
-    Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+    Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     DefaultActionGroup actions = new DefaultActionGroup();
 
     final JComponent consolePanel = createConsolePanel(view, actions);

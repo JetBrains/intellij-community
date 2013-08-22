@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -135,6 +136,10 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
 
   public boolean isModified(CustomActionsSchema schema) {
     final ArrayList<ActionUrl> storedActions = schema.getActions();
+    if (ApplicationManager.getApplication().isUnitTestMode() && !storedActions.isEmpty()) {
+      System.err.println("stored: " + storedActions.toString());
+      System.err.println("actual: " + getActions().toString());
+    }
     if (storedActions.size() != getActions().size()) {
       return true;
     }
@@ -169,6 +174,9 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
       ActionUrl url = new ActionUrl();
       url.readExternal((Element)groupElement);
       myActions.add(url);
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      System.err.println("read custom actions: " + myActions.toString());
     }
     readIcons(element);
   }

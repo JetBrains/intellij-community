@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -295,7 +296,7 @@ public class AnnotationsHighlightUtil {
   );
 
   @Nullable
-  public static HighlightInfo checkApplicability(@NotNull PsiAnnotation annotation) {
+  public static HighlightInfo checkApplicability(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
     if (ANY_ANNOTATION_ALLOWED.accepts(annotation)) {
       return null;
     }
@@ -311,7 +312,7 @@ public class AnnotationsHighlightUtil {
     }
 
     if (!(owner instanceof PsiModifierList)) {
-      HighlightInfo info = HighlightUtil.checkTypeAnnotationFeature(annotation);
+      HighlightInfo info = HighlightUtil.checkTypeAnnotationFeature(annotation, languageLevel,containingFile);
       if (info != null) return info;
     }
 
@@ -465,23 +466,23 @@ public class AnnotationsHighlightUtil {
     LOG.assertTrue(aClass.isAnnotationType());
     PsiType type = typeElement.getType();
     final Set<PsiClass> checked = new HashSet<PsiClass>();
-    if (cyclicDependencies(aClass, type, checked)) {
+    if (cyclicDependencies(aClass, type, checked, aClass.getManager())) {
       String description = JavaErrorMessages.message("annotation.cyclic.element.type");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
     }
     return null;
   }
 
-  private static boolean cyclicDependencies(PsiClass aClass, PsiType type, Set<PsiClass> checked) {
+  private static boolean cyclicDependencies(PsiClass aClass, PsiType type, @NotNull Set<PsiClass> checked,@NotNull PsiManager manager) {
     final PsiClass resolvedClass = PsiUtil.resolveClassInType(type);
     if (resolvedClass != null && resolvedClass.isAnnotationType()) {
       if (aClass == resolvedClass) {
         return true;
       }
-      if (!checked.add(resolvedClass) || !resolvedClass.getManager().isInProject(resolvedClass)) return false;
+      if (!checked.add(resolvedClass) || !manager.isInProject(resolvedClass)) return false;
       final PsiMethod[] methods = resolvedClass.getMethods();
       for (PsiMethod method : methods) {
-        if (cyclicDependencies(aClass, method.getReturnType(), checked)) return true;
+        if (cyclicDependencies(aClass, method.getReturnType(), checked,manager)) return true;
       }
     }
     return false;
@@ -572,10 +573,10 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkFunctionalInterface(PsiAnnotation annotation) {
-    final String errorMessage = LambdaUtil.checkFunctionalInterface(annotation);
+  public static HighlightInfo checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
+    final String errorMessage = LambdaUtil.checkFunctionalInterface(annotation, languageLevel);
     if (errorMessage != null) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage).create();
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(annotation).descriptionAndTooltip(errorMessage).create();
     }
     return null;
   }

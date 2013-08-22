@@ -96,15 +96,6 @@ public class FindInProjectUtil {
     if (psiElement instanceof PsiDirectory) {
       directoryName = ((PsiDirectory)psiElement).getVirtualFile().getPresentableUrl();
     }
-    else {
-      final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
-      if (psiFile != null) {
-        PsiDirectory psiDirectory = psiFile.getContainingDirectory();
-        if (psiDirectory != null) {
-          directoryName = psiDirectory.getVirtualFile().getPresentableUrl();
-        }
-      }
-    }
 
     if (directoryName == null && psiElement instanceof PsiDirectoryContainer) {
       final PsiDirectory[] directories = ((PsiDirectoryContainer)psiElement).getDirectories();
@@ -554,7 +545,7 @@ public class FindInProjectUtil {
         final TextRange range = new TextRange(result.getStartOffset(), result.getEndOffset());
         if (!((LocalSearchScope)customScope).containsRange(psiFile, range)) break;
       }
-      UsageInfo info = new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset());
+      UsageInfo info = new FindResultUsageInfo(findManager, psiFile, offset, findModel, result);
       if (!consumer.process(info)){
         throw new ProcessCanceledException();
       }

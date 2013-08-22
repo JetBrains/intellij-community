@@ -26,10 +26,10 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -39,14 +39,13 @@ public class DfaConstValue extends DfaValue {
     private final DfaConstValue dfaFalse;
     private final DfaConstValue dfaTrue;
     private final DfaValueFactory myFactory;
-    private final Map<Object, DfaConstValue> myValues;
+    private final Map<Object, DfaConstValue> myValues = ContainerUtil.newHashMap();
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
-      myValues = new HashMap<Object, DfaConstValue>();
-      dfaNull = new DfaConstValue(null, factory);
-      dfaFalse = new DfaConstValue(Boolean.FALSE, factory);
-      dfaTrue = new DfaConstValue(Boolean.TRUE, factory);
+      dfaNull = new DfaConstValue(null, factory, null);
+      dfaFalse = new DfaConstValue(Boolean.FALSE, factory, null);
+      dfaTrue = new DfaConstValue(Boolean.TRUE, factory, null);
     }
 
     @Nullable
@@ -55,7 +54,7 @@ public class DfaConstValue extends DfaValue {
       if (PsiType.NULL.equals(type)) return dfaNull;
       Object value = expr.getValue();
       if (value == null) return null;
-      return createFromValue(value, type);
+      return createFromValue(value, type, null);
     }
 
     @Nullable
@@ -65,12 +64,12 @@ public class DfaConstValue extends DfaValue {
       if (value == null) {
         Boolean boo = computeJavaLangBooleanFieldReference(variable);
         if (boo != null) {
-          DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN);
+          DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN, variable);
           return myFactory.getBoxedFactory().createBoxed(unboxed);
         }
         return null;
       }
-      return createFromValue(value, type);
+      return createFromValue(value, type, variable);
     }
 
     @Nullable
@@ -83,17 +82,18 @@ public class DfaConstValue extends DfaValue {
     }
 
     @NotNull
-    public DfaConstValue createFromValue(Object value, final PsiType type) {
+    public DfaConstValue createFromValue(Object value, final PsiType type, @Nullable PsiVariable constant) {
       if (value == Boolean.TRUE) return dfaTrue;
       if (value == Boolean.FALSE) return dfaFalse;
 
       if (TypeConversionUtil.isNumericType(type) && !TypeConversionUtil.isFloatOrDoubleType(type)) {
         value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);
       }
-      DfaConstValue instance = myValues.get(value);
+      Object key = constant != null ? constant : value;
+      DfaConstValue instance = myValues.get(key);
       if (instance == null) {
-        instance = new DfaConstValue(value, myFactory);
-        myValues.put(value, instance);
+        instance = new DfaConstValue(value, myFactory, constant);
+        myValues.put(key, instance);
       }
 
       return instance;
@@ -113,10 +113,12 @@ public class DfaConstValue extends DfaValue {
   }
 
   private final Object myValue;
+  @Nullable private final PsiVariable myConstant;
 
-  DfaConstValue(Object value, DfaValueFactory factory) {
+  private DfaConstValue(Object value, DfaValueFactory factory, @Nullable PsiVariable constant) {
     super(factory);
     myValue = value;
+    myConstant = constant;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -127,6 +129,11 @@ public class DfaConstValue extends DfaValue {
 
   public Object getValue() {
     return myValue;
+  }
+
+  @Nullable
+  public PsiVariable getConstant() {
+    return myConstant;
   }
 
   @Override

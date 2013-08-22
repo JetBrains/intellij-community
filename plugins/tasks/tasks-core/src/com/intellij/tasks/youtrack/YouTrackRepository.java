@@ -6,11 +6,11 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
+import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import icons.TasksIcons;
 import org.apache.axis.utils.XMLChar;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
@@ -157,7 +157,14 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     String uri = getUrl() + request;
     HttpMethod method = post ? new PostMethod(uri) : new GetMethod(uri);
     configureHttpMethod(method);
-    client.executeMethod(method);
+    int status = client.executeMethod(method);
+    if (status == 400) {
+      InputStream string = method.getResponseBodyAsStream();
+      Element element = new SAXBuilder(false).build(string).getRootElement();
+      if ("error".equals(element.getName())) {
+        throw new Exception(element.getText());
+      }
+    }
     return method;
   }
 
@@ -167,6 +174,9 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     switch (state) {
       case IN_PROGRESS:
         s = "In+Progress";
+        break;
+      case RESOLVED:
+        s = "fixed";
         break;
       default:
         s = state.name();
@@ -233,7 +243,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public Icon getIcon() {
-        return TasksIcons.Youtrack;
+        return LocalTaskImpl.getIconFromType(getType(), isIssue());
       }
 
       @NotNull
@@ -307,6 +317,6 @@ public class YouTrackRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return TIME_MANAGEMENT;
+    return super.getFeatures() | TIME_MANAGEMENT;
   }
 }

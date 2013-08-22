@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1327,11 +1327,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
       if (myImage != null && myAlpha != -1) {
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
 
-        g2d.drawImage(myImage, 0, 0, null);
+        UIUtil.drawImage(g2d, myImage, 0, 0, null);
       }
       else {
         if (myShadow != null) {
-          g.drawImage(myShadow.getImage(), myShadow.getX(), myShadow.getY(), null);
+          UIUtil.drawImage(g, myShadow.getImage(), myShadow.getX(), myShadow.getY(), null);
         }
         myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, (Graphics2D)g, pointTarget);
       }

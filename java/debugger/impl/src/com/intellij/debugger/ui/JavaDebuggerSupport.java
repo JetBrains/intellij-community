@@ -252,7 +252,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
       if (breakpoint instanceof BreakpointWithHighlighter) {
         final RangeHighlighter highlighter = ((BreakpointWithHighlighter)breakpoint).getHighlighter();
         if (highlighter != null) {
-          return highlighter.getGutterIconRenderer();
+          return (GutterIconRenderer)highlighter.getGutterIconRenderer();
         }
       }
       return null;

@@ -81,7 +81,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  public void setTextAttributes(TextAttributes textAttributes) {
+  public void setTextAttributes(@NotNull TextAttributes textAttributes) {
     getData().setTextAttributes(textAttributes);
   }
 

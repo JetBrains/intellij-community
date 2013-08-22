@@ -130,16 +130,21 @@ class RecursionWeigher extends LookupElementWeigher {
 
     if (myExpectedInfos != null) {
       final PsiType itemType = JavaCompletionUtil.getLookupElementType(element);
-      for (final ExpectedTypeInfo expectedInfo : myExpectedInfos) {
-        PsiMethod calledMethod = expectedInfo.getCalledMethod();
-        if (itemType != null &&
-            calledMethod != null &&
-            calledMethod.equals(myPositionMethod) &&
-            expectedInfo.getType().isAssignableFrom(itemType)) {
-          return myDelegate ? Result.delegation : Result.recursive;
+      if (itemType != null) {
+        boolean hasRecursiveInvocations = false;
+        boolean hasOtherInvocations = false;
+
+        for (final ExpectedTypeInfo expectedInfo : myExpectedInfos) {
+          PsiMethod calledMethod = expectedInfo.getCalledMethod();
+          if (!expectedInfo.getType().isAssignableFrom(itemType)) continue;
+
+          if (calledMethod != null && calledMethod.equals(myPositionMethod) || isGetterSetterAssignment(object, calledMethod)) {
+            hasRecursiveInvocations = true;
+          } else if (calledMethod != null) {
+            hasOtherInvocations = true;
+          }
         }
-        String propertyName = getSetterPropertyName(calledMethod);
-        if (propertyName != null && isGetterSetterAssignment(object, propertyName)) {
+        if (hasRecursiveInvocations && !hasOtherInvocations) {
           return myDelegate ? Result.delegation : Result.recursive;
         }
       }
@@ -178,7 +183,10 @@ class RecursionWeigher extends LookupElementWeigher {
     return null;
   }
 
-  private static boolean isGetterSetterAssignment(Object lookupObject, String prop) {
+  private boolean isGetterSetterAssignment(Object lookupObject, @Nullable PsiMethod calledMethod) {
+    String prop = getSetterPropertyName(calledMethod);
+    if (prop == null) return false;
+
     if (lookupObject instanceof PsiField &&
         prop.equals(PropertyUtil.suggestPropertyName((PsiField)lookupObject))) {
       return true;

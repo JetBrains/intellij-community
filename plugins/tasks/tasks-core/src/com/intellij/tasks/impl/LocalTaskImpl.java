@@ -62,6 +62,7 @@ public class LocalTaskImpl extends LocalTask {
   private boolean myRunning = false;
   private List<WorkItem> myWorkItems = new ArrayList<WorkItem>();
   private Date myLastPost;
+  private List<BranchInfo> myBranches = new ArrayList<BranchInfo>();
 
 
   /** for serialization */
@@ -83,6 +84,7 @@ public class LocalTaskImpl extends LocalTask {
 
     if (origin instanceof LocalTaskImpl) {
       myChangeLists = ((LocalTaskImpl)origin).getChangeLists();
+      myBranches = ((LocalTaskImpl)origin).getBranches();
       myActive = ((LocalTaskImpl)origin).isActive();
       myWorkItems = ((LocalTaskImpl)origin).getWorkItems();
       myRunning = ((LocalTaskImpl)origin).isRunning();
@@ -215,6 +217,28 @@ public class LocalTaskImpl extends LocalTask {
     myChangeLists.remove(info);
   }
 
+  @NotNull
+  @Override
+  @Property(surroundWithTag = false)
+  @AbstractCollection(surroundWithTag = false, elementTag="branch")
+  public List<BranchInfo> getBranches() {
+    return myBranches;
+  }
+
+  public void setBranches(List<BranchInfo> branches) {
+    myBranches = branches;
+  }
+
+  @Override
+  public void addBranch(BranchInfo info) {
+    myBranches.add(info);
+  }
+
+  @Override
+  public void removeBranch(BranchInfo info) {
+    myBranches.add(info);
+  }
+
   public boolean isClosed() {
     return myClosed;
   }
@@ -230,7 +254,11 @@ public class LocalTaskImpl extends LocalTask {
     if (customIcon != null) {
       return IconLoader.getIcon(customIcon, LocalTask.class);
     }
-    switch (myType) {
+    return getIconFromType(myType, isIssue());
+  }
+
+  public static Icon getIconFromType(TaskType type, boolean issue) {
+    switch (type) {
       case BUG:
         return TasksIcons.Bug;
       case EXCEPTION:
@@ -239,7 +267,7 @@ public class LocalTaskImpl extends LocalTask {
         return TasksIcons.Feature;
       default:
       case OTHER:
-        return isIssue() ? TasksIcons.Other : TasksIcons.Unknown;
+        return issue ? TasksIcons.Other : TasksIcons.Unknown;
     }
   }
 

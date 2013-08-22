@@ -17,10 +17,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
-import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
@@ -48,7 +45,7 @@ public class JavaIndexPatternBuilder implements IndexPatternBuilder {
   @Override
   @Nullable
   public TokenSet getCommentTokenSet(final PsiFile file) {
-    if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
+    if (file instanceof PsiJavaFile && !(file instanceof ServerPageFile)) {
       return TokenSet.orSet(StdTokenSets.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
     }
     return null;

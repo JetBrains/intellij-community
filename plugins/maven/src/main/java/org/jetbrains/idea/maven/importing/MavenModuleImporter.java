@@ -185,6 +185,7 @@ public class MavenModuleImporter {
         }
 
         if (artifact.getClassifier() != null
+            && !isTestJar
             && !"system".equals(artifact.getScope())
             && !"false".equals(System.getProperty("idea.maven.classifier.dep"))) {
           MavenArtifact a = new MavenArtifact(

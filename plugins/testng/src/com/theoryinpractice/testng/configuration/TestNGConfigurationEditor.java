@@ -505,10 +505,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
   }
 
-  @Override
-  protected void disposeEditor() {
-  }
-
   public void onTypeChanged(TestType type) {
     //LOGGER.info("onTypeChanged with " + type);
     if (type != TestType.PACKAGE && type != TestType.SUITE) {

@@ -1,15 +1,18 @@
 package com.intellij.tasks.actions;
 
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiManager;
 import com.intellij.tasks.LocalTask;
@@ -149,7 +152,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
           Task task = ((TaskPsiElement)element).getTask();
           LocalTask localTask = taskManager.findTask(task.getId());
           if (localTask != null) {
-            taskManager.activateTask(localTask, !shiftPressed.get(), false);
+            taskManager.activateTask(localTask, !shiftPressed.get());
           }
           else {
             showOpenTaskDialog(project, task);
@@ -163,11 +166,13 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
     }, null, popup);
   }
 
-  public static void showOpenTaskDialog(final Project project, final Task task) {
-    SwingUtilities.invokeLater(new Runnable() {
+  private static void showOpenTaskDialog(final Project project, final Task task) {
+    JBPopup hint = DocumentationManager.getInstance(project).getDocInfoHint();
+    if (hint != null) hint.cancel();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        new SimpleOpenTaskDialog(project, task).show();
+        new OpenTaskDialog(project, task).show();
       }
     });
   }

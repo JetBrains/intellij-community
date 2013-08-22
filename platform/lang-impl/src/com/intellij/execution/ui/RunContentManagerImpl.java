@@ -392,11 +392,17 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   @Nullable
   @Override
   public RunContentDescriptor getReuseContent(Executor requestor, @NotNull ExecutionEnvironment executionEnvironment) {
+    return getReuseContent(executionEnvironment);
+  }
+
+  @Nullable
+  @Override
+  public RunContentDescriptor getReuseContent(@NotNull ExecutionEnvironment executionEnvironment) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     RunContentDescriptor contentToReuse = executionEnvironment.getContentToReuse();
     if (contentToReuse != null) return contentToReuse;
 
-    final ContentManager contentManager = getContentManagerForRunner(requestor);
+    final ContentManager contentManager = getContentManagerForRunner(executionEnvironment.getExecutor());
     return chooseReuseContentForDescriptor(contentManager, contentToReuse, executionEnvironment.getExecutionId(),
                                            executionEnvironment.toString());
   }

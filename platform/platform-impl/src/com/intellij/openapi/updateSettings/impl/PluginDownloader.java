@@ -134,6 +134,7 @@ public class PluginDownloader {
       }
 
       if (PluginManagerCore.isIncompatible(actualDescriptor)) {
+        LOG.info("Plugin " + myPluginId + " is incompatible with current installation (since: " + actualDescriptor.getSinceBuild() + ", until: " + actualDescriptor.getUntilBuild()+ ")");
         return false; //shouldn't happen
       }
 

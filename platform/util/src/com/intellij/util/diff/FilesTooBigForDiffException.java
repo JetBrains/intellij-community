@@ -6,6 +6,8 @@ package com.intellij.util.diff;
  *         Time: 10:30 PM
  */
 public class FilesTooBigForDiffException extends Exception {
+  public static int MAX_BUFFER_LEN = 10000000;
+
   private final int myNumLines;
 
   public FilesTooBigForDiffException(int numLines) {

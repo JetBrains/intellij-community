@@ -44,6 +44,7 @@ import java.util.Collection;
 public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements
                                                                                               RunConfigurationWithSuppressedDefaultRunAction {
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
     final Module module = getConfigurationModule().getModule();
@@ -53,6 +54,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  @Override
   public void readExternal(final Element element) throws InvalidDataException {
     super.readExternal(element);
     readModule(element);
@@ -65,22 +67,25 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   public String HOST;
   public String PORT;
 
-  public RemoteConfiguration(final String name, final Project project, ConfigurationFactory configurationFactory) {
-    super(name, new JavaRunConfigurationModule(project, true), configurationFactory);
+  public RemoteConfiguration(final Project project, ConfigurationFactory configurationFactory) {
+    super(new JavaRunConfigurationModule(project, true), configurationFactory);
   }
 
   public RemoteConnection createRemoteConnection() {
     return new RemoteConnection(USE_SOCKET_TRANSPORT, HOST, USE_SOCKET_TRANSPORT ? PORT : SHMEM_ADDRESS, SERVER_MODE);
   }
 
+  @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)env.getRunnerSettings().getData());
+    GenericDebuggerRunnerSettings debuggerSettings = (GenericDebuggerRunnerSettings)env.getRunnerSettings();
     debuggerSettings.LOCAL = false;
     debuggerSettings.setDebugPort(USE_SOCKET_TRANSPORT ? PORT : SHMEM_ADDRESS);
     debuggerSettings.setTransport(USE_SOCKET_TRANSPORT ? DebuggerSettings.SOCKET_TRANSPORT : DebuggerSettings.SHMEM_TRANSPORT);
-    return new RemoteStateState(getProject(), createRemoteConnection(), env.getRunnerSettings(), env.getConfigurationSettings());
+    return new RemoteStateState(getProject(), createRemoteConnection());
   }
 
+  @Override
+  @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<RemoteConfiguration> group = new SettingsEditorGroup<RemoteConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new RemoteConfigurable(getProject()));
@@ -88,10 +93,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return group;
   }
 
-  protected ModuleBasedConfiguration createInstance() {
-    return new RemoteConfiguration(getName(), getProject(), RemoteConfigurationType.getInstance().getConfigurationFactories()[0]);
-  }
-
+  @Override
   public Collection<Module> getValidModules() {
     return getAllModules();
   }

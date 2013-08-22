@@ -19,6 +19,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.icons.AllIcons;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -88,7 +89,7 @@ class EventLogConsole {
 
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
 
-    final ClearLog clearLog = new ClearLog();
+    final ClearLogAction clearLog = new ClearLogAction(this);
     clearLog.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.CONSOLE_CLEAR_ALL).getShortcutSet(), editor.getContentComponent());
 
     editor.addEditorMouseListener(new EditorPopupHandler() {
@@ -102,7 +103,7 @@ class EventLogConsole {
     return editor;
   }
 
-  private DefaultActionGroup createPopupActions(ActionManager actionManager, ClearLog action) {
+  private DefaultActionGroup createPopupActions(ActionManager actionManager, ClearLogAction action) {
     AnAction[] children = ((ActionGroup)actionManager.getAction(IdeActions.GROUP_CONSOLE_EDITOR_POPUP)).getChildren(null);
     DefaultActionGroup group = new DefaultActionGroup(children);
     group.addSeparator();
@@ -223,24 +224,27 @@ class EventLogConsole {
     document.insertString(document.getTextLength(), s);
   }
 
-  private class ClearLog extends DumbAwareAction {
-    public ClearLog() {
-      super("Clear All");
+  public static class ClearLogAction extends DumbAwareAction {
+    private EventLogConsole myConsole;
+
+    public ClearLogAction(EventLogConsole console) {
+      super("Clear All", "Clear the contents of the Event Log", AllIcons.Actions.GC);
+      myConsole = console;
     }
 
     @Override
     public void update(AnActionEvent e) {
-      final boolean enabled = e.getData(PlatformDataKeys.EDITOR) != null;
-      e.getPresentation().setEnabled(enabled);
-      e.getPresentation().setVisible(enabled);
+      Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      e.getPresentation().setEnabled(editor != null && editor.getDocument().getTextLength() > 0);
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      for (Notification notification : myProjectModel.getNotifications()) {
+      LogModel model = myConsole.myProjectModel;
+      for (Notification notification : model.getNotifications()) {
         notification.expire();
-        myProjectModel.removeNotification(notification);
+        model.removeNotification(notification);
       }
-      myProjectModel.setStatusMessage(null, 0);
+      model.setStatusMessage(null, 0);
       final Editor editor = e.getData(PlatformDataKeys.EDITOR);
       if (editor != null) {
         editor.getDocument().deleteString(0, editor.getDocument().getTextLength());

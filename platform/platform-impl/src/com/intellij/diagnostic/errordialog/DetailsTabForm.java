@@ -19,7 +19,7 @@ import java.util.Collection;
  * @author ksafonov
  */
 public class DetailsTabForm {
-  private JTextPane myDetailsPane;
+  private JTextArea myDetailsPane;
   private JPanel myContentPane;
   private LabeledTextComponent myCommentsArea;
   private JPanel myDetailsHolder;

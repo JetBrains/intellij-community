@@ -1,14 +1,14 @@
 package org.jetbrains.plugins.gradle.config;
 
-import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.annotator.DefaultGroovyFrameworkConfigNotification;
 
 /**
@@ -17,27 +17,21 @@ import org.jetbrains.plugins.groovy.annotator.DefaultGroovyFrameworkConfigNotifi
  */
 public class GradleGroovyConfigNotification extends DefaultGroovyFrameworkConfigNotification {
 
-  @NotNull private final PlatformFacade            myPlatformFacade;
   @NotNull private final GradleInstallationManager myLibraryManager;
 
-  public GradleGroovyConfigNotification(@NotNull PlatformFacade facade, @NotNull GradleInstallationManager libraryManager) {
-    myPlatformFacade = facade;
+  public GradleGroovyConfigNotification(@NotNull GradleInstallationManager libraryManager) {
     myLibraryManager = libraryManager;
   }
 
   @Override
   public boolean hasFrameworkStructure(@NotNull Module module) {
-    for (ModuleAwareContentRoot root : myPlatformFacade.getContentRoots(module)) {
-      final VirtualFile file = root.getFile();
-      if (!file.isDirectory()) {
-        continue;
-      }
-      final VirtualFile child = file.findChild(GradleConstants.DEFAULT_SCRIPT_NAME);
-      if (child != null) {
-        return true;
-      }
+    String path = getConfigPath(module);
+    if (path == null) {
+      return false;
     }
-    return false;
+
+    VirtualFile configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+    return configDir != null && configDir.isDirectory();
   }
 
   @Override
@@ -47,11 +41,22 @@ public class GradleGroovyConfigNotification extends DefaultGroovyFrameworkConfig
     if (super.hasFrameworkLibrary(module)) {
       return true;
     }
-    String linkedProjectPath = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+    String linkedProjectPath = getConfigPath(module);
     if (StringUtil.isEmpty(linkedProjectPath)) {
       return false;
     }
     assert linkedProjectPath != null;
     return myLibraryManager.getAllLibraries(module.getProject(), linkedProjectPath) != null;
+  }
+
+  @Nullable
+  private static String getConfigPath(@NotNull Module module) {
+    String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+    if (externalSystemId == null || !GradleConstants.SYSTEM_ID.toString().equals(externalSystemId)) {
+      return null;
+    }
+
+    String path = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+    return StringUtil.isEmpty(path) ? null : path;
   }
 }

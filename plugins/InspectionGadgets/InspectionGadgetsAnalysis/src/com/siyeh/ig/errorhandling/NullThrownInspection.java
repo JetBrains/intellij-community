@@ -49,6 +49,11 @@ public class NullThrownInspection extends BaseInspection {
   }
 
   private static class ThrowNullFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @NotNull
     @Override

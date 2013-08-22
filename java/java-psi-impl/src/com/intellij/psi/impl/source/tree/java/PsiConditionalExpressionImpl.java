@@ -97,6 +97,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
       if (type2 == null) return null;
     }
 
+    if (type1 instanceof PsiLambdaParameterType || type2 instanceof PsiLambdaParameterType) return null;
     final PsiType leastUpperBound = GenericsUtil.getLeastUpperBound(type1, type2, getManager());
     return leastUpperBound != null ? PsiUtil.captureToplevelWildcards(leastUpperBound, this) : null;
   }

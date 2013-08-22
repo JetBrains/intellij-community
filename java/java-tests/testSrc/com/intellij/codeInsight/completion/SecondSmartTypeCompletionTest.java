@@ -38,6 +38,10 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     configure();
     assertStringItems("b.getGoo", "getBar().getGoo");
   }
+  public void testFirstMethodWithParams() throws Throwable {
+    configure();
+    assertStringItems("getBar().getGoo", "getBar().getGoo2");
+  }
 
   public void testSuggestArraysAsList() throws Throwable { doTest(); }
   public void testSuggestArraysAsListWildcard() throws Throwable { doTest(); }

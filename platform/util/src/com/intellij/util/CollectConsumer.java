@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 
 /**
@@ -23,7 +25,7 @@ import java.util.Collection;
 public class CollectConsumer<T> implements Consumer<T> {
   private final Collection<T> myResult;
 
-  public CollectConsumer(Collection<T> result) {
+  public CollectConsumer(@NotNull Collection<T> result) {
     myResult = result;
   }
 
@@ -31,10 +33,12 @@ public class CollectConsumer<T> implements Consumer<T> {
     this(new SmartList<T>());
   }
 
+  @Override
   public void consume(T t) {
     myResult.add(t);
   }
 
+  @NotNull
   public Collection<T> getResult() {
     return myResult;
   }

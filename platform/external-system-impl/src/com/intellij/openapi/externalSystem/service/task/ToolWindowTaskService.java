@@ -32,8 +32,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -54,8 +56,9 @@ public class ToolWindowTaskService extends AbstractToolWindowService<TaskData> {
     }
   };
 
-  public static final Function<DataNode<TaskData>, ExternalConfigPathAware> TASK_HOLDER_RETRIEVAL_STRATEGY =
-    new Function<DataNode<TaskData>, ExternalConfigPathAware>() {
+  public static final NullableFunction<DataNode<TaskData>, ExternalConfigPathAware> TASK_HOLDER_RETRIEVAL_STRATEGY =
+    new NullableFunction<DataNode<TaskData>, ExternalConfigPathAware>() {
+      @Nullable
       @Override
       public ExternalConfigPathAware fun(DataNode<TaskData> node) {
         ModuleData moduleData = node.getData(ProjectKeys.MODULE);
@@ -72,7 +75,7 @@ public class ToolWindowTaskService extends AbstractToolWindowService<TaskData> {
   @Override
   protected void processData(@NotNull Collection<DataNode<TaskData>> nodes,
                              @NotNull Project project,
-                             @NotNull final ExternalSystemTasksTreeModel model)
+                             @Nullable final ExternalSystemTasksTreeModel model)
   {
     if (nodes.isEmpty()) {
       return;
@@ -92,6 +95,8 @@ public class ToolWindowTaskService extends AbstractToolWindowService<TaskData> {
     availableTasks.putAll(data);
     settings.setAvailableTasks(availableTasks);
 
-    ExternalSystemUiUtil.apply(settings, model);
+    if (model != null) {
+      ExternalSystemUiUtil.apply(settings, model);
+    }
   }
 }

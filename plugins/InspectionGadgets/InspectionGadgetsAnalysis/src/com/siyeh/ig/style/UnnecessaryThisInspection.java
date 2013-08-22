@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -71,12 +70,16 @@ public class UnnecessaryThisInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("unnecessary.this.remove.quickfix");
     }
 
+    @NotNull
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement thisToken = descriptor.getPsiElement();
-      final PsiReferenceExpression thisExpression =
-        (PsiReferenceExpression)thisToken.getParent();
+      final PsiReferenceExpression thisExpression = (PsiReferenceExpression)thisToken.getParent();
       assert thisExpression != null;
       final String newExpression = thisExpression.getReferenceName();
       if (newExpression == null) {
@@ -156,7 +159,7 @@ public class UnnecessaryThisInspection extends BaseInspection {
             final PsiMethod[] methods = parentClass.findMethodsByName(methodName, true);
             for (PsiMethod method : methods) {
               final PsiClass containingClass = method.getContainingClass();
-              if (resolveHelper.isAccessible(method, expression, containingClass)) {
+              if (resolveHelper.isAccessible(method, expression, null)) {
                 if (method.hasModifierProperty(PsiModifier.PRIVATE) && !PsiTreeUtil.isAncestor(containingClass, expression, true)) {
                   continue;
                 }

@@ -205,8 +205,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     @Nullable
     public PsiElement getElement() {
       if (myPointer.getProject().isDisposed()) return null;
-
-      return myPointer.getElement();
+      PsiElement element = myPointer.getElement();
+      SmartPointerManager.getInstance(myPointer.getProject()).removePointer(myPointer);
+      return element;
     }
 
     @Iconable.IconFlags

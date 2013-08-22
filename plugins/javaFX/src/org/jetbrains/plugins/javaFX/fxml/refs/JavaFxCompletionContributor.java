@@ -7,14 +7,12 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.xml.TagNameVariantCollector;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -45,8 +43,7 @@ public class JavaFxCompletionContributor extends CompletionContributor {
       final XmlTag xmlTag = (XmlTag)reference.getElement();
 
       List<String> namespaces = Arrays.asList(xmlTag.knownNamespaces());
-      final List<XmlElementDescriptor> variants =
-        TagNameVariantCollector.<XmlElementDescriptor>getTagNameVariants(xmlTag, namespaces, new ArrayList<String>(), Function.ID);
+      final List<XmlElementDescriptor> variants = TagNameVariantCollector.getTagDescriptors(xmlTag, namespaces, null);
       for (XmlElementDescriptor descriptor : variants) {
         final String descriptorName = descriptor.getName(reference.getElement());
         if (descriptorName != null) {

@@ -26,7 +26,8 @@ import java.io.File;
 public class LocatorTest extends PlatformLangTestCase {
   public void test() throws Exception {
     File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
-    assertTrue(locatorFile.getPath(), locatorFile.canRead());
+    assertTrue("doesn't exist: " + locatorFile.getPath(), locatorFile.exists());
+    assertTrue("can't read: " + locatorFile.getPath(), locatorFile.canRead());
 
     String home = FileUtil.loadFile(locatorFile, "UTF-8");
     assertTrue(home, StringUtil.isNotEmpty(home));

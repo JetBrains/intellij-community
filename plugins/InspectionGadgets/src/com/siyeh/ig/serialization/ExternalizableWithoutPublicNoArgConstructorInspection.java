@@ -84,6 +84,12 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
       return InspectionGadgetsBundle.message("make.constructor.public");
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {

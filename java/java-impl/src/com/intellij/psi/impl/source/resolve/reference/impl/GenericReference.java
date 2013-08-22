@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 17:33:24
  * To change this template use Options | File Templates.
  */
-public abstract class GenericReference extends CachingReference {
+public abstract class GenericReference extends CachingReference implements EmptyResolveMessageProvider {
   public static final GenericReference[] EMPTY_ARRAY = new GenericReference[0];
 
   @Nullable

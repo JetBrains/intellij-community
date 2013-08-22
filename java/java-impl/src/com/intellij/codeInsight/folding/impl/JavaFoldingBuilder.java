@@ -19,13 +19,9 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNewExpression;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
@@ -38,7 +34,8 @@ public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
 
   @Override
   protected boolean shouldShowExplicitLambdaType(PsiAnonymousClass anonymousClass, PsiNewExpression expression) {
-    if (expression.getParent() instanceof PsiReferenceExpression) {
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiReferenceExpression || parent instanceof PsiAssignmentExpression) {
       return true;
     }
 
@@ -49,8 +46,9 @@ public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
   @Nullable
   @Override
   public TextRange getRangeToFold(PsiElement element) {
-    if (element instanceof JspHolderMethod)
+    if (element instanceof SyntheticElement) {
       return null;
+    }
     return super.getRangeToFold(element);    //To change body of overridden methods use File | Settings | File Templates.
   }
 }

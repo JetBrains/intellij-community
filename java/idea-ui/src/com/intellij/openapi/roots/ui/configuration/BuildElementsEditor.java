@@ -146,7 +146,11 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
   private void updateOutputPathPresentation() {
     if (getCompilerExtension().isCompilerOutputPathInherited()) {
-      final String baseUrl = ProjectStructureConfigurable.getInstance(myProject).getProjectConfig().getCompilerOutputUrl();
+      ProjectConfigurable projectConfig = ProjectStructureConfigurable.getInstance(myProject).getProjectConfig();
+      if (projectConfig == null) {
+        return;
+      }
+      final String baseUrl = projectConfig.getCompilerOutputUrl();
       moduleCompileOutputChanged(baseUrl, getModel().getModule().getName());
     } else {
       final VirtualFile compilerOutputPath = getCompilerExtension().getCompilerOutputPath();

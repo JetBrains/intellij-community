@@ -52,7 +52,6 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   void amnesty(RefEntity refEntity);
   void cleanup();
   void finalCleanup();
-  void initialize(@NotNull GlobalInspectionContextImpl context);
   boolean isGraphNeeded();
   boolean isElementIgnored(final RefEntity element);
   @NotNull
@@ -72,7 +71,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   Collection<CommonProblemDescriptor> getProblemDescriptors();
   @NotNull
-  FileStatus getProblemStatus(final CommonProblemDescriptor descriptor);
+  FileStatus getProblemStatus(@NotNull CommonProblemDescriptor descriptor);
   boolean isOldProblemsIncluded();
   @Nullable
   Map<RefEntity, CommonProblemDescriptor[]> getOldProblemElements();
@@ -81,6 +80,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   void addProblemElement(RefEntity refElement, boolean filterSuppressed, @NotNull CommonProblemDescriptor... descriptions);
   void ignoreProblem(@NotNull CommonProblemDescriptor descriptor, @NotNull QuickFix fix);
 
+  @NotNull
   GlobalInspectionContextImpl getContext();
   void ignoreProblem(RefEntity refEntity, CommonProblemDescriptor problem, int idx);
   @Nullable

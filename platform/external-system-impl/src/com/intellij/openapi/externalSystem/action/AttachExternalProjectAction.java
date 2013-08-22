@@ -39,12 +39,19 @@ import com.intellij.projectImport.ProjectImportProvider;
 public class AttachExternalProjectAction extends AnAction implements DumbAware {
 
   public AttachExternalProjectAction() {
-    getTemplatePresentation().setText(ExternalSystemBundle.message("action.attach.external.project.text"));
-    getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.attach.external.project.description"));
+    getTemplatePresentation().setText(ExternalSystemBundle.message("action.attach.external.project.text", "external"));
+    getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.attach.external.project.description", "external"));
   }
 
   @Override
   public void update(AnActionEvent e) {
+    ProjectSystemId externalSystemId = ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());
+    if (externalSystemId != null) {
+      String name = externalSystemId.getReadableName();
+      e.getPresentation().setText(ExternalSystemBundle.message("action.attach.external.project.text", name));
+      e.getPresentation().setDescription(ExternalSystemBundle.message("action.attach.external.project.description", name));
+    }
+    
     e.getPresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Add : AllIcons.ToolbarDecorator.Add);
   }
 

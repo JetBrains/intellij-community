@@ -382,4 +382,6 @@ public interface Application extends ComponentManager {
   AccessToken acquireWriteActionLock(@Nullable Class marker);
 
   boolean isInternal();
+
+  boolean isEAP();
 }

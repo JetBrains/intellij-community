@@ -16,11 +16,12 @@
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 
 import java.util.List;
 
@@ -34,25 +35,28 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   private static final long serialVersionUID = 1L;
 
-  @NotNull private final List<String> myResolverExtensions = ContainerUtilRt.newArrayList();
+  @NotNull private final List<ClassHolder<? extends GradleProjectResolverExtension>> myResolverExtensions = ContainerUtilRt.newArrayList();
   @Nullable private final String myGradleHome;
   @Nullable private final String myServiceDirectory;
 
-  private final int myDaemonXmx;
+  @Nullable private final String myDaemonVmOptions;
 
   private final boolean myUseWrapper;
 
   @Nullable private String myJavaHome;
 
-  public GradleExecutionSettings(@Nullable String gradleHome, @Nullable String serviceDirectory, boolean wrapper) {
-    this(gradleHome, serviceDirectory, wrapper, SystemProperties.getIntProperty("gradle.daemon.xmx.mb", SystemInfo.is32Bit ? 512 : 1024));
-  }
-  
-  public GradleExecutionSettings(@Nullable String gradleHome, @Nullable String serviceDirectory, boolean wrapper, int daemonXmx) {
+  public GradleExecutionSettings(@Nullable String gradleHome,
+                                 @Nullable String serviceDirectory,
+                                 boolean wrapper,
+                                 @Nullable String daemonVmOptions)
+  {
     myGradleHome = gradleHome;
     myServiceDirectory = serviceDirectory;
     myUseWrapper = wrapper;
-    myDaemonXmx = daemonXmx;
+    if (daemonVmOptions != null && !daemonVmOptions.contains("-Xmx")) {
+      daemonVmOptions += String.format(" -Xmx%dm", SystemInfo.is32Bit ? 512 : 1024);
+    }
+    myDaemonVmOptions = daemonVmOptions;
     setVerboseProcessing(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
   }
 
@@ -80,20 +84,20 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   }
 
   @NotNull
-  public List<String> getResolverExtensions() {
+  public List<ClassHolder<? extends GradleProjectResolverExtension>> getResolverExtensions() {
     return myResolverExtensions;
   }
 
-  public void addResolverExtensionClass(@NotNull String className) {
-    myResolverExtensions.add(className);
+  public void addResolverExtensionClass(@NotNull ClassHolder<? extends GradleProjectResolverExtension> holder) {
+    myResolverExtensions.add(holder);
   }
 
   /**
-   * @return    max heap memory limit (in MB) to use for gradle daemon (if any);
-   *            non-positive value as an indication that default gradle value (1024) should be used instead
+   * @return  VM options to use for the gradle daemon process (if any)
    */
-  public int getDaemonXmx() {
-    return myDaemonXmx;
+  @Nullable
+  public String getDaemonVmOptions() {
+    return myDaemonVmOptions;
   }
 
   @Override
@@ -103,7 +107,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     result = 31 * result + (myServiceDirectory != null ? myServiceDirectory.hashCode() : 0);
     result = 31 * result + (myUseWrapper ? 1 : 0);
     result = 31 * result + (myJavaHome != null ? myJavaHome.hashCode() : 0);
-    result = 31 * result + myDaemonXmx;
+    result = 31 * result + (myDaemonVmOptions == null ? 0 : myDaemonVmOptions.hashCode());
     return result;
   }
 
@@ -114,7 +118,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     GradleExecutionSettings that = (GradleExecutionSettings)o;
 
     if (myUseWrapper != that.myUseWrapper) return false;
-    if (myDaemonXmx != that.myDaemonXmx) return false;
+    if (!Comparing.equal(myDaemonVmOptions, that.myDaemonVmOptions)) return false;
     if (myGradleHome != null ? !myGradleHome.equals(that.myGradleHome) : that.myGradleHome != null) return false;
     if (myJavaHome != null ? !myJavaHome.equals(that.myJavaHome) : that.myJavaHome != null) return false;
     if (myServiceDirectory != null ? !myServiceDirectory.equals(that.myServiceDirectory) : that.myServiceDirectory != null) {

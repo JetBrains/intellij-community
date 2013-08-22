@@ -6,11 +6,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +55,7 @@ public class GradleInstallationManager {
   }
   
   @NotNull private final PlatformFacade myPlatformFacade;
+  @Nullable private Ref<File> myCachedGradleHomeFromPath;
 
   public GradleInstallationManager(@NotNull PlatformFacade facade) {
     myPlatformFacade = facade;
@@ -75,18 +78,29 @@ public class GradleInstallationManager {
       return null;
     }
 
+    List<File> result = ContainerUtilRt.newArrayList();
+    
     File libs = new File(gradleHome, "lib");
     File[] files = libs.listFiles();
-    if (files == null) {
-      return null;
-    }
-    List<File> result = new ArrayList<File>();
-    for (File file : files) {
-      if (file.getName().endsWith(".jar")) {
-        result.add(file);
+    if (files != null) {
+      for (File file : files) {
+        if (file.getName().endsWith(".jar")) {
+          result.add(file);
+        }
       }
     }
-    return result;
+
+    File plugins = new File(libs, "plugins");
+    files = plugins.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        if (file.getName().endsWith(".jar")) {
+          result.add(file);
+        }
+      }
+    }
+    
+    return result.isEmpty() ? null : result;
   }
 
   /**
@@ -246,6 +260,10 @@ public class GradleInstallationManager {
    */
   @Nullable
   public File getGradleHomeFromPath() {
+    Ref<File> ref = myCachedGradleHomeFromPath;
+    if (ref != null) {
+      return ref.get();
+    }
     String path = System.getenv("PATH");
     if (path == null) {
       return null;
@@ -260,6 +278,7 @@ public class GradleInstallationManager {
         if (startFile.isFile()) {
           File candidate = dir.getParentFile();
           if (isGradleSdkHome(candidate)) {
+            myCachedGradleHomeFromPath = new Ref<File>(candidate);
             return candidate;
           }
         }

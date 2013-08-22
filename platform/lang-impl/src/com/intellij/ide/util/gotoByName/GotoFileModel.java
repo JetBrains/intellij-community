@@ -29,6 +29,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,13 +101,13 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
   @Override
   public boolean loadInitialCheckBoxState() {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    return propertiesComponent.isTrueValue("GoToClass.includeJavaFiles");
+    return propertiesComponent.isTrueValue("GoToFile.includeJavaFiles");
   }
 
   @Override
   public void saveInitialCheckBoxState(boolean state) {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    propertiesComponent.setValue("GoToClass.includeJavaFiles", Boolean.toString(state));
+    propertiesComponent.setValue("GoToFile.includeJavaFiles", Boolean.toString(state));
   }
 
   @Override
@@ -114,10 +116,15 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
   }
 
   @Override
+  public boolean sameNamesForProjectAndLibraries() {
+    return !FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
+  }
+
+  @Override
   @Nullable
   public String getFullName(final Object element) {
-    if (element instanceof PsiFile) {
-      final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
+    if (element instanceof PsiFileSystemItem) {
+      final VirtualFile virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
       return virtualFile != null ? virtualFile.getPath() : null;
     }
 
@@ -138,5 +145,14 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
   @Override
   public boolean willOpenEditor() {
     return true;
+  }
+
+  @NotNull
+  @Override
+  public String removeModelSpecificMarkup(@NotNull String pattern) {
+    if ((pattern.endsWith("/") || pattern.endsWith("\\"))) {
+      return pattern.substring(0, pattern.length() - 1);
+    }
+    return pattern;
   }
 }

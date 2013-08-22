@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.Alarm;
@@ -26,9 +27,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<Settings> {
+  public static final Logger LOG = Logger.getInstance(CompositeSettingsEditor.class);
+
   private Collection<SettingsEditor<Settings>> myEditors;
   private SettingsEditorListener<Settings> myChildSettingsListener;
-  private SynchronizationConroller mySyncConroller;
+  private SynchronizationController mySyncController;
   private boolean myIsDisposed = false;
 
   public CompositeSettingsEditor() {}
@@ -36,7 +39,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
   public CompositeSettingsEditor(Factory<Settings> factory) {
     super(factory);
     if (factory != null) {
-      mySyncConroller = new SynchronizationConroller();
+      mySyncController = new SynchronizationController();
     }
   }
 
@@ -44,13 +47,26 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
 
   public void resetEditorFrom(Settings settings) {
     for (final SettingsEditor<Settings> myEditor : myEditors) {
-      myEditor.resetEditorFrom(settings);
+      try {
+        myEditor.resetEditorFrom(settings);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
   }
 
   public void applyEditorTo(Settings settings) throws ConfigurationException {
     for (final SettingsEditor<Settings> myEditor : myEditors) {
-      myEditor.applyTo(settings);
+      try {
+        myEditor.applyTo(settings);
+      }
+      catch (ConfigurationException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
   }
 
@@ -64,7 +80,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
     myChildSettingsListener = new SettingsEditorListener<Settings>() {
       public void stateChanged(SettingsEditor<Settings> editor) {
         fireEditorStateChanged();
-        if (mySyncConroller != null) mySyncConroller.handleStateChange(editor);
+        if (mySyncController != null) mySyncController.handleStateChange(editor);
       }
     };
 
@@ -85,11 +101,10 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
   }
 
   public void disposeEditor() {
-    Disposer.dispose(this);
     myIsDisposed = true;
   }
 
-  private class SynchronizationConroller {
+  private class SynchronizationController {
     private final Set<SettingsEditor> myChangedEditors = new HashSet<SettingsEditor>();
     private final Alarm mySyncAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     private boolean myIsInSync = false;
@@ -117,7 +132,7 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
           }
         }
       }
-      catch (ConfigurationException e) {
+      catch (ConfigurationException ignored) {
       }
       finally{
         myChangedEditors.clear();

@@ -13,12 +13,15 @@
 package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.command.HgVersionCommand;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
 
@@ -30,9 +33,11 @@ public class HgConfigurationProjectPanel {
   private JCheckBox myCheckIncomingOutgoingCbx;
   private TextFieldWithBrowseButton myPathSelector;
   private JCheckBox myRunHgAsBashCheckBox;
+  private final HgVcs myVcs;
 
-  public HgConfigurationProjectPanel(@NotNull HgProjectSettings projectSettings) {
+  public HgConfigurationProjectPanel(@NotNull HgProjectSettings projectSettings, @Nullable Project project) {
     myProjectSettings = projectSettings;
+    myVcs = HgVcs.getInstance(project);
     loadSettings();
   }
 
@@ -46,6 +51,7 @@ public class HgConfigurationProjectPanel {
     myProjectSettings.setCheckIncomingOutgoing(myCheckIncomingOutgoingCbx.isSelected());
     myProjectSettings.setRunViaBash(myRunHgAsBashCheckBox.isSelected());
     myProjectSettings.setHgExecutable(getCurrentPath());
+    myVcs.checkVersion();
   }
 
   private String getCurrentPath() {
@@ -65,8 +71,7 @@ public class HgConfigurationProjectPanel {
   public void validate() throws ConfigurationException {
     String hgExecutable;
     hgExecutable = getCurrentPath();
-    HgVersionCommand command = new HgVersionCommand();
-    if (!command.isValid(hgExecutable, myRunHgAsBashCheckBox.isSelected())) {
+    if (!HgUtil.isValid(hgExecutable)) {
       throw new ConfigurationException(
         HgVcsMessages.message("hg4idea.configuration.executable.error", hgExecutable)
       );

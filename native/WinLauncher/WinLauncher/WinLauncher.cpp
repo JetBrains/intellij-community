@@ -372,17 +372,20 @@ bool LoadVMOptions()
 bool LoadJVMLibrary()
 {
 	std::string dllName(jvmPath);
-	std::string serverDllName = dllName + "\\bin\\server\\jvm.dll";
-	std::string clientDllName = dllName + "\\bin\\client\\jvm.dll";
+	std::string binDir = dllName + "\\bin";
+	std::string serverDllName = binDir + "\\server\\jvm.dll";
+	std::string clientDllName = binDir + "\\client\\jvm.dll";
 	if ((bServerJVM && FileExists(serverDllName)) || !FileExists(clientDllName))
 	{
-		hJVM = LoadLibraryA(serverDllName.c_str());
+		dllName = serverDllName;
 	}
 	else
 	{
-		hJVM = LoadLibraryA(clientDllName.c_str());
+		dllName = clientDllName;
 	}
 
+	SetCurrentDirectoryA(binDir.c_str());   // ensure that we can find msvcr100.dll which is located in jre/bin directory
+	hJVM = LoadLibraryA(dllName.c_str());
 	if (hJVM)
 	{
 		pCreateJavaVM = (JNI_createJavaVM) GetProcAddress(hJVM, "JNI_CreateJavaVM");

@@ -80,6 +80,11 @@ public class EmptyCatchBlockInspection extends BaseInspection {
   }
 
   private static class EmptyCatchBlockFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull
@@ -119,7 +124,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
     @Override
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
-      if (FileTypeUtils.isInJsp(statement.getContainingFile())) {
+      if (FileTypeUtils.isInServerPageFile(statement.getContainingFile())) {
         return;
       }
       if (m_ignoreTestCases && TestUtils.isInTestCode(statement)) {
@@ -175,15 +180,16 @@ public class EmptyCatchBlockInspection extends BaseInspection {
         return isEmpty(block.getCodeBlock());
       } else if (element instanceof PsiCodeBlock) {
         final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
-        final PsiElement[] children = codeBlock.getChildren();
-        if (children.length == 2) {
-          return true;
-        }
-        for (int i = 1; i < children.length - 1; i++) {
-          final PsiElement child = children[i];
-          if (!isEmpty(child)) {
+        PsiElement bodyElement = codeBlock.getFirstBodyElement();
+        final PsiElement lastBodyElement = codeBlock.getLastBodyElement();
+        while (bodyElement != null) {
+          if (!isEmpty(bodyElement)) {
             return false;
           }
+          if (bodyElement == lastBodyElement) {
+            break;
+          }
+          bodyElement = bodyElement.getNextSibling();
         }
         return true;
       }

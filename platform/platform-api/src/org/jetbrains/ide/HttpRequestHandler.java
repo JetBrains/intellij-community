@@ -15,18 +15,18 @@
  */
 package org.jetbrains.ide;
 
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.QueryStringDecoder;
 
 import java.io.IOException;
 
 public abstract class HttpRequestHandler {
-  public boolean isSupported(HttpRequest request) {
+  public boolean isSupported(FullHttpRequest request) {
     return request.getMethod() == HttpMethod.GET || request.getMethod() == HttpMethod.HEAD;
   }
 
-  public abstract boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context)
+  public abstract boolean process(QueryStringDecoder urlDecoder, FullHttpRequest request, ChannelHandlerContext context)
     throws IOException;
 }

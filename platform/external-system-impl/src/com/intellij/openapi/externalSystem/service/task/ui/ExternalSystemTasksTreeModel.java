@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.task.ui;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -23,7 +23,6 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecution
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +38,6 @@ import java.util.*;
  * @since 5/12/13 10:28 PM
  */
 public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
-
-  private static final Logger LOG = Logger.getInstance("#" + ExternalSystemTasksTreeModel.class.getName());
 
   @NotNull private static final Comparator<TreeNode> NODE_COMPARATOR = new Comparator<TreeNode>() {
     @Override
@@ -95,11 +92,18 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     // Remove outdated projects.
     for (int i = root.getChildCount() - 1; i >= 0; i--) {
       ExternalSystemNode<?> child = root.getChildAt(i);
-      Object element = child.getDescriptor().getElement();
-      if (element instanceof ExternalProjectPojo
-          && ((ExternalProjectPojo)element).getPath().equals(project.getPath()))
-      {
-        return (ExternalSystemNode<ExternalProjectPojo>)child;
+      ExternalSystemNodeDescriptor<?> descriptor = child.getDescriptor();
+      Object element = descriptor.getElement();
+      if (element instanceof ExternalProjectPojo) {
+        ExternalProjectPojo pojo = (ExternalProjectPojo)element;
+        if (pojo.getPath().equals(project.getPath())) {
+          if (!pojo.getName().equals(project.getName())) {
+            pojo.setName(project.getName());
+            descriptor.setName(project.getName());
+            nodeChanged(child);
+          }
+          return (ExternalSystemNode<ExternalProjectPojo>)child;
+        }
       }
     }
     ExternalProjectPojo element = new ExternalProjectPojo(project.getName(), project.getPath());
@@ -179,10 +183,10 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     }
     ExternalSystemNode<ExternalProjectPojo> moduleNode = findProjectNode(externalProjectConfigPath);
     if (moduleNode == null) {
-      LOG.warn(String.format(
-        "Can't proceed tasks for module which external config path is '%s'. Reason: no such module node is found. Tasks: %s",
-        externalProjectConfigPath, tasks
-      ));
+//      LOG.warn(String.format(
+//        "Can't proceed tasks for module which external config path is '%s'. Reason: no such module node is found. Tasks: %s",
+//        externalProjectConfigPath, tasks
+//      ));
       return;
     }
     Set<ExternalTaskExecutionInfo> toAdd = ContainerUtilRt.newHashSet();
@@ -198,6 +202,8 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
           myIndexHolder[0] = i;
           myNodeHolder[0] = childNode;
           nodesWereRemoved(moduleNode, myIndexHolder, myNodeHolder);
+          //noinspection AssignmentToForLoopParameter
+          i--;
         }
       }
     }
@@ -218,7 +224,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     settings.setExternalProjectPath(task.getLinkedExternalProjectPath());
     settings.setTaskNames(Collections.singletonList(task.getName()));
     settings.setExternalSystemIdString(myExternalSystemId.toString());
-    return new ExternalTaskExecutionInfo(settings, ToolWindowId.RUN);
+    return new ExternalTaskExecutionInfo(settings, DefaultRunExecutor.EXECUTOR_ID);
   }
 
   @SuppressWarnings("unchecked")

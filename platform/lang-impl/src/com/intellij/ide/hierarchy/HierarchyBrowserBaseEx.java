@@ -27,7 +27,7 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
-import com.intellij.ide.projectView.impl.TransferableWrapper;
+import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;

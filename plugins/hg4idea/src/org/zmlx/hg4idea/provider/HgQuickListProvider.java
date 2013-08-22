@@ -47,6 +47,7 @@ public class HgQuickListProvider implements VcsQuickListContentProvider {
     add("hg4idea.branches", manager, actions);
     add("hg4idea.pull", manager, actions);
     add("hg4idea.push", manager, actions);
+    add("hg4idea.updateTo", manager, actions);
 
     return actions;
   }

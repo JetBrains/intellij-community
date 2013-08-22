@@ -61,7 +61,9 @@ public class MethodCallFixer implements Fixer {
       }
 
       final PsiExpression[] params = args.getExpressions();
-      if (params.length > 0 && startLine(editor, args) != startLine(editor, params[0])) {
+      if (params.length > 0 && 
+          startLine(editor, args) != startLine(editor, params[0]) && 
+          editor.getCaretModel().getOffset() < params[0].getTextRange().getStartOffset()) {
         endOffset = args.getTextRange().getStartOffset() + 1;
       }
 

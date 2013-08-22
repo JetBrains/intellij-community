@@ -99,7 +99,8 @@ public class RollbackChangesDialog extends DialogWrapper {
       @Override
       public void run() {
         if (myBrowser != null) {
-          myInfoCalculator.update(changes, new ArrayList<Change>(myBrowser.getChangesIncludedInAllLists()));
+          myInfoCalculator.update(new ArrayList<Change>(myBrowser.getAllChanges()),
+                                  new ArrayList<Change>(myBrowser.getChangesIncludedInAllLists()));
           myCommitLegendPanel.update();
         }
       }

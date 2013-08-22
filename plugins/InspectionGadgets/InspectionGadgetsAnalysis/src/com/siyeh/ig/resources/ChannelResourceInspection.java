@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,14 @@
  */
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class ChannelResourceInspection extends ResourceInspection {
-
-  @SuppressWarnings({"PublicField"})
-  public boolean insideTryAllowed = false;
 
   @Override
   @NotNull
@@ -40,115 +33,58 @@ public class ChannelResourceInspection extends ResourceInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "channel.opened.not.closed.display.name");
+    return InspectionGadgetsBundle.message("channel.opened.not.closed.display.name");
   }
 
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final PsiExpression expression = (PsiExpression)infos[0];
-    final PsiType type = expression.getType();
-    assert type != null;
-    final String text = type.getPresentableText();
-    return InspectionGadgetsBundle.message(
-      "channel.opened.not.closed.problem.descriptor", text);
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "allow.resource.to.be.opened.inside.a.try.block"),
-                                          this, "insideTryAllowed");
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new ChannelResourceVisitor();
-  }
-
-  private class ChannelResourceVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      if (!isChannelFactoryMethod(expression)) {
-        return;
-      }
-      final PsiElement parent = getExpressionParent(expression);
-      if (parent instanceof PsiReturnStatement ||
-          parent instanceof PsiResourceVariable) {
-        return;
-      }
-      final PsiVariable boundVariable = getVariable(parent);
-      if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
-        return;
-      }
-      if (isChannelFactoryClosedInFinally(expression)) {
-        return;
-      }
-      if (isResourceEscapedFromMethod(boundVariable, expression)) {
-        return;
-      }
-      registerError(expression, expression);
+  protected boolean isResourceCreation(PsiExpression expression) {
+    if (!(expression instanceof PsiMethodCallExpression)) {
+      return false;
     }
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+    final String methodName = methodExpression.getReferenceName();
+    if (!HardcodedMethodConstants.GET_CHANNEL.equals(methodName)) {
+      return false;
+    }
+    final PsiExpression qualifier = methodExpression.getQualifierExpression();
+    if (qualifier == null ||
+        TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                                             "java.net.Socket", "java.net.DatagramSocket", "java.net.ServerSocket",
+                                             "java.net.SocketInputStream", "java.net.SocketOutputStream", "java.io.FileInputStream",
+                                             "java.io.FileOutputStream", "java.io.RandomAccessFile",
+                                             "com.sun.corba.se.pept.transport.EventHandler", "sun.nio.ch.InheritedChannel") == null) {
+      return false;
+    }
+    return TypeUtils.expressionHasTypeOrSubtype(expression, "java.nio.channels.Channel");
+  }
 
-    private boolean isChannelFactoryClosedInFinally(
-      PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (!(qualifier instanceof PsiReferenceExpression)) {
-        return false;
-      }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)qualifier;
-      final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiVariable)) {
-        return false;
-      }
-      final PsiVariable variable = (PsiVariable)target;
-      PsiTryStatement tryStatement =
-        PsiTreeUtil.getParentOfType(expression,
-                                    PsiTryStatement.class, true, PsiMember.class);
+  @Override
+  protected boolean isResourceFactoryClosed(PsiExpression expression, boolean insideTryAllowed) {
+    if (!(expression instanceof PsiMethodCallExpression)) {
+      return false;
+    }
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+    final PsiExpression qualifier = methodExpression.getQualifierExpression();
+    if (!(qualifier instanceof PsiReferenceExpression)) {
+      return false;
+    }
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
+    final PsiElement target = referenceExpression.resolve();
+    if (!(target instanceof PsiVariable)) {
+      return false;
+    }
+    final PsiVariable variable = (PsiVariable)target;
+    PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(expression, PsiTryStatement.class, true, PsiMember.class);
+    if (tryStatement == null) {
+      return false;
+    }
+    while (!isResourceClosedInFinally(tryStatement, variable)) {
+      tryStatement = PsiTreeUtil.getParentOfType(tryStatement, PsiTryStatement.class, true, PsiMember.class);
       if (tryStatement == null) {
         return false;
       }
-      while (!isResourceClosedInFinally(tryStatement, variable)) {
-        tryStatement =
-          PsiTreeUtil.getParentOfType(tryStatement,
-                                      PsiTryStatement.class, true, PsiMember.class);
-        if (tryStatement == null) {
-          return false;
-        }
-      }
-      return true;
     }
-
-    private boolean isChannelFactoryMethod(
-      PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.GET_CHANNEL.equals(methodName)) {
-        return false;
-      }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        return false;
-      }
-      return TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                                                  "java.net.Socket",
-                                                  "java.net.DatagramSocket",
-                                                  "java.net.ServerSocket",
-                                                  "java.io.FileInputStream",
-                                                  "java.io.FileOutputStream",
-                                                  "java.io.RandomAccessFile",
-                                                  "com.sun.corba.se.pept.transport.EventHandler",
-                                                  "sun.nio.ch.InheritedChannel") != null;
-    }
+    return true;
   }
 }

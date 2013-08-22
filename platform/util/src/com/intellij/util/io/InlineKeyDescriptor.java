@@ -24,6 +24,12 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public abstract class InlineKeyDescriptor<T> implements KeyDescriptor<T> {
+  private final boolean myCompactFormat = isCompactFormat();
+
+  protected boolean isCompactFormat() {
+    return false;
+  }
+
   public final int getHashCode(T value) {
     return toInt(value);
   }
@@ -33,11 +39,16 @@ public abstract class InlineKeyDescriptor<T> implements KeyDescriptor<T> {
   }
 
   public final void save(DataOutput out, T value) throws IOException {
-    out.writeInt(toInt(value));
+    int v = toInt(value);
+    if (myCompactFormat) DataInputOutputUtil.writeINT(out, v);
+    else out.writeInt(v);
   }
 
   public final T read(DataInput in) throws IOException {
-    return fromInt(in.readInt());
+    int n;
+    if (myCompactFormat) n = DataInputOutputUtil.readINT(in);
+    else n = in.readInt();
+    return fromInt(n);
   }
 
   public abstract T fromInt(int n);

@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -78,7 +79,7 @@ public class HgAnnotateCommand {
         String user = matcher.group(USER_GROUP);
         HgRevisionNumber rev = HgRevisionNumber.getInstance(matcher.group(REVISION_GROUP), matcher.group(CHANGESET_GROUP));
         String dateGroup = matcher.group(DATE_GROUP).trim();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy", Locale.US);
         String date = "";
         try {
           date = DateFormatUtil.formatPrettyDate(dateFormat.parse(dateGroup));

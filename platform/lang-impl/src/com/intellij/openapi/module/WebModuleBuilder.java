@@ -94,7 +94,7 @@ public class WebModuleBuilder extends ModuleBuilder {
 
   @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
+  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     if (myTemplate == null) {
       return super.modifySettingsStep(settingsStep);
     }

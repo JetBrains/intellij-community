@@ -57,10 +57,10 @@ public class GotoLineNumberDialog extends DialogWrapper {
       }
     }
 
-    if (lineNumber <= 0) return;
+    if (lineNumber < 0) return;
 
     int columnNumber = getColumnNumber(currentPosition.column);
-    myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber - 1, Math.max(0, columnNumber - 1)));
+    myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(Math.max(0, lineNumber - 1), Math.max(0, columnNumber - 1)));
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     myEditor.getSelectionModel().removeSelection();
     super.doOKAction();

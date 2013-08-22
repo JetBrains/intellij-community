@@ -90,9 +90,6 @@
         <XML>
           <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
         </XML>
-        <ADDITIONAL_INDENT_OPTIONS fileType="rb">
-          <option name="INDENT_SIZE" value="2" />
-        </ADDITIONAL_INDENT_OPTIONS>
         <codeStyleSettings language="CFML">
           <option name="KEEP_LINE_BREAKS" value="false" />
           <option name="ELSE_ON_NEW_LINE" value="true" />
@@ -263,6 +260,15 @@
             <option name="INDENT_SIZE" value="2" />
             <option name="CONTINUATION_INDENT_SIZE" value="4" />
             <option name="TAB_SIZE" value="8" />
+          </indentOptions>
+        </codeStyleSettings>
+        <codeStyleSettings language="ruby">
+          <option name="KEEP_LINE_BREAKS" value="false" />
+          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+          <indentOptions>
+            <option name="CONTINUATION_INDENT_SIZE" value="8" />
+            <option name="TAB_SIZE" value="4" />
+            <option name="USE_RELATIVE_INDENTS" value="false" />
           </indentOptions>
         </codeStyleSettings>
       </value>

@@ -71,11 +71,14 @@ public class XmlCompletionData extends CompletionData {
     }
 
     {
-      final CompletionVariant variant = new CompletionVariant(createAttributeValueCompletionFilter());
-      variant.includeScopeClass(XmlAttributeValue.class);
-      variant.addCompletion(getAttributeValueGetter(), TailType.NONE);
-      variant.addCompletionFilter(TrueFilter.INSTANCE, TailType.NONE);
-      registerVariant(variant);
+      XmlAttributeValueGetter getter = getAttributeValueGetter();
+      if (getter != null) {
+        final CompletionVariant variant = new CompletionVariant(createAttributeValueCompletionFilter());
+        variant.includeScopeClass(XmlAttributeValue.class);
+        variant.addCompletion(getter, TailType.NONE);
+        variant.addCompletionFilter(TrueFilter.INSTANCE, TailType.NONE);
+        registerVariant(variant);
+      }
     }
 
     final ElementFilter entityCompletionFilter = createXmlEntityCompletionFilter();

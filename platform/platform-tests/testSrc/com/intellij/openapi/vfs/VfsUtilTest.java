@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,8 +167,8 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
   public void testAsyncRefresh() throws Throwable {
     final Throwable[] ex = {null};
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      Arrays.asList(new Object[8]), ProgressManager.getInstance().getProgressIndicator(), false, new Processor<Object>() {
+    boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+      Arrays.asList(new Object[8]), ProgressManager.getInstance().getProgressIndicator(), true, new Processor<Object>() {
       @Override
       public boolean process(Object o) {
         try {
@@ -181,6 +181,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
       }
     });
     if (ex[0] != null) throw ex[0];
+    if (!success) System.out.println("!success");
   }
 
   private void doAsyncRefreshTest() throws Exception {
@@ -382,6 +383,16 @@ public class VfsUtilTest extends PlatformLangTestCase {
         }
       }
     }).assertTiming();
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        for (VirtualFile file : vDir.getChildren()) {
+          file.delete(this);
+        }
+      }
+    }.execute().throwException();
+
   }
 
   public void testFindRootWithDenormalizedPath() {

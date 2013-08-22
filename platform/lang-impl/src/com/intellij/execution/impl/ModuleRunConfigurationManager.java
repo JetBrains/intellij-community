@@ -27,8 +27,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -51,24 +51,19 @@ import java.util.Set;
 public final class ModuleRunConfigurationManager extends ModuleAdapter implements ModuleComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ModuleRunConfigurationManager.class);
   @NonNls static final String COMPONENT_NAME = "ModuleRunConfigurationManager";
-  @NotNull
-  private final Condition<RunnerAndConfigurationSettings> myModuleConfigCondition = new Condition<RunnerAndConfigurationSettings>() {
-    @Override
-    public boolean value(@Nullable RunnerAndConfigurationSettings settings) {
-      return settings != null && usesMyModule(settings.getConfiguration());
-    }
-  };
 
+  final Object myRemoverKey;
   @NotNull
   private final Module myModule;
   @NotNull
-  private final RunManagerImpl myManager;
+  final RunManagerImpl myManager;
   @Nullable
   private List<Element> myUnloadedElements = null;
 
   public ModuleRunConfigurationManager(@NotNull final Module module, @NotNull final RunManagerImpl runManager) {
     myModule = module;
     myManager = runManager;
+    myRemoverKey = new Object();
   }
 
   @Override
@@ -123,11 +118,6 @@ public final class ModuleRunConfigurationManager extends ModuleAdapter implement
     }
   }
 
-  @NotNull
-  private Collection<? extends RunnerAndConfigurationSettings> getModuleRunConfigurationSettings() {
-    return ContainerUtil.filter(myManager.getConfigurationSettings(), myModuleConfigCondition);
-  }
-
   private boolean usesMyModule(RunConfiguration config) {
     return config instanceof ModuleBasedConfiguration
            && myModule.equals(((ModuleBasedConfiguration)config).getConfigurationModule().getModule());
@@ -135,7 +125,7 @@ public final class ModuleRunConfigurationManager extends ModuleAdapter implement
 
   public void writeExternal(@NotNull final Element element) throws WriteExternalException {
     LOG.debug("writeExternal(" + myModule + ")");
-    for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
+    for (final RunnerAndConfigurationSettings settings : myManager.getExternalSettings(myRemoverKey)) {
       myManager.addConfigurationElement(element, settings);
     }
     if (myUnloadedElements != null) {
@@ -152,20 +142,22 @@ public final class ModuleRunConfigurationManager extends ModuleAdapter implement
 
     final List children = element.getChildren();
     for (final Object child : children) {
-      final RunnerAndConfigurationSettings configuration = myManager.loadConfiguration((Element)child, true);
+      final RunnerAndConfigurationSettings configuration = myManager.loadConfiguration(myRemoverKey, (Element)child, true);
       if (configuration == null && Comparing.strEqual(element.getName(), RunManagerImpl.CONFIGURATION)) {
         if (myUnloadedElements == null) myUnloadedElements = new ArrayList<Element>(2);
         myUnloadedElements.add(element);
       }
 
       if (configuration != null) {
-        existing.add(RunManagerImpl.getUniqueName(configuration.getConfiguration()));
+        existing.add(configuration.getUniqueID());
       }
     }
 
-    for (final RunConfiguration configuration : myManager.getAllConfigurations()) {
+    for (final RunConfiguration configuration : myManager.getAllConfigurationsList()) {
       if (!usesMyModule(configuration)) {
-        existing.add(RunManagerImpl.getUniqueName(configuration));
+        RunnerAndConfigurationSettings settings = myManager.getSettings(configuration);
+        if (settings != null)
+          existing.add(settings.getUniqueID());
       }
     }
     myManager.removeNotExistingSharedConfigurations(existing);
@@ -176,13 +168,9 @@ public final class ModuleRunConfigurationManager extends ModuleAdapter implement
   }
 
   @Override
-  public void beforeModuleRemoved(Project project, Module module) {
-    if (!myModule.equals(module)) {
-      return;
-    }
-    LOG.debug("time to remove something from project (" + project + ")");
-    for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
-      myManager.removeConfiguration(settings);
+  public void moduleRemoved(Project project, Module module) {
+    if (myModule.equals(module)) {
+      myManager.removeExternalSettings(myRemoverKey);
     }
   }
 }

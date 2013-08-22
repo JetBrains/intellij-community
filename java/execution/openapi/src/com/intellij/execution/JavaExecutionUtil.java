@@ -25,7 +25,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -59,7 +58,8 @@ public class JavaExecutionUtil {
     final DefaultRunProfile profile = new DefaultRunProfile(project, cmdLine, contentName, icon, filters);
     final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
     if (runner != null) {
-      runner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, project, null, null, null));
+      Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+      runner.execute(new ExecutionEnvironment(profile, executor, project, null));
       return true;
     }
 
@@ -108,32 +108,31 @@ public class JavaExecutionUtil {
       myIcon = icon;
     }
 
+    @Override
     public Icon getIcon() {
       return myIcon;
     }
 
+    @Override
     public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
       final JavaCommandLineState state = new JavaCommandLineState(env) {
+        @Override
         protected JavaParameters createJavaParameters() {
           return myParameters;
         }
       };
       final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(myProject);
       if (myFilters != null) {
-        for (final Filter myFilter : myFilters) {
-          builder.addFilter(myFilter);
-        }
+        builder.filters(myFilters);
       }
       state.setConsoleBuilder(builder);
       return state;
     }
 
+    @Override
     public String getName() {
       return myContentName;
     }
-
-    public void checkConfiguration() {}
-
   }
 
   @Nullable
@@ -143,6 +142,7 @@ public class JavaExecutionUtil {
 
   @Nullable
   public static String getPresentableClassName(final String rtClassName, final JavaRunConfigurationModule configurationModule) {
+    if (StringUtil.isEmpty(rtClassName)) return null;
     final PsiClass psiClass = configurationModule.findClass(rtClassName);
     if (psiClass != null) {
       return psiClass.getName();
@@ -155,7 +155,7 @@ public class JavaExecutionUtil {
   }
 
   public static Module findModule(@NotNull final PsiClass psiClass) {
-    return ModuleUtil.findModuleForPsiElement(psiClass);
+    return ModuleUtilCore.findModuleForPsiElement(psiClass);
   }
 
   @Nullable

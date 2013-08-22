@@ -59,6 +59,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
   private Map<String, Boolean> myAvailableFrameworks;
 
+  @NotNull
   public static List<ModuleBuilder> getAllBuilders() {
     final ArrayList<ModuleBuilder> result = new ArrayList<ModuleBuilder>();
     for (final ModuleType moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {
@@ -87,7 +88,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   @Override
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     ModuleType moduleType = getModuleType();
     return moduleType == null ? ModuleWizardStep.EMPTY_ARRAY : moduleType.createWizardSteps(wizardContext, this, modulesProvider);
   }
@@ -102,7 +103,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
    */
   @Override
   @Nullable
-  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
+  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     ModuleType type = getModuleType();
     if (type == null) {
       return null;

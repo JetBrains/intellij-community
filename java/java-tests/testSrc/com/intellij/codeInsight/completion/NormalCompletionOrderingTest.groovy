@@ -36,6 +36,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "return", "register");
   }
 
+  public void testDelegatingConstructorCall() {
+    checkPreferredItems 0, 'element', 'equals'
+  }
+
   public void testPreferAnnotationMethods() throws Throwable {
     checkPreferredItems(0, "name", "value", "Foo", "Anno");
   }
@@ -257,7 +261,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferInterfacesInImplements() {
-    checkPreferredItems(0, "FooIntf", "FooClass");
+    checkPreferredItems(0, "FooIntf", "Foo", "FooClass");
   }
 
   public void testPreferClassesInExtends() {

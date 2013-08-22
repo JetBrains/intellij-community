@@ -59,16 +59,14 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
     if (empty) {
       delegate(parameters, result);
-    } else if (Registry.is("ide.completion.show.all.classes") || Registry.is("ide.completion.show.better.matching.classes")) {
-      if (parameters.getInvocationCount() <= 1 &&
+    } else if (Registry.is("ide.completion.show.better.matching.classes")) {
+      if (parameters.getCompletionType() == CompletionType.BASIC &&
+          parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result) &&
           GroovyCompletionContributor.isClassNamePossible(parameters.getPosition()) &&
           !MapArgumentCompletionProvider.isMapKeyCompletion(parameters) &&
           !GroovySmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition())) {
-        if (Registry.is("ide.completion.show.better.matching.classes")) {
-          result = result.withPrefixMatcher(new BetterPrefixMatcher(result.getPrefixMatcher(), BetterPrefixMatcher.getBestMatchingDegree(plainResults)));
-        }
-
+        result = result.withPrefixMatcher(new BetterPrefixMatcher(result.getPrefixMatcher(), BetterPrefixMatcher.getBestMatchingDegree(plainResults)));
         suggestNonImportedClasses(parameters, result);
       }
     }

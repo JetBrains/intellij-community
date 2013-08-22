@@ -65,9 +65,9 @@ public class XsltDocumentationProvider implements DocumentationProvider {
 
         final String category;
         final String name;
-        final XmlTag tag = getTag(psiElement1);
-        if (tag != null) {
-            name = tag.getLocalName();
+        final String tagName = getTagName(psiElement);
+        if (tagName != null) {
+            name = tagName;
             category = "element";
         } else if (psiElement instanceof XPathFunction) {
             name = ((XPathFunction)psiElement).getName();
@@ -114,9 +114,9 @@ public class XsltDocumentationProvider implements DocumentationProvider {
             }
         }
 
-        final XmlTag tag = getTag(psiElement1);
-        if (tag != null) {
-            return getDocumentation(tag.getLocalName(), "element");
+        final String name = getTagName(psiElement);
+        if (name != null) {
+            return getDocumentation(name, "element");
         } else if (psiElement instanceof XPathFunction) {
             return getDocumentation(((XPathFunction)psiElement).getName(), "function");
         }
@@ -149,22 +149,23 @@ public class XsltDocumentationProvider implements DocumentationProvider {
     }
 
     @Nullable
-    private static XmlTag getTag(PsiElement psiElement1) {
-        if (psiElement1 == null) return null;
-        final PsiElement element;
-        if (psiElement1.getParent() instanceof XmlAttribute) {
-            final XmlAttribute xmlAttribute = ((XmlAttribute)psiElement1.getParent());
-            element = xmlAttribute.getParent();
-        } else {
-            element = psiElement1.getParent();
+    private static String getTagName(@Nullable PsiElement psiElement1) {
+      XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement1, XmlTag.class, false);
+      if (xmlTag != null) {
+        if (XsltSupport.isXsltTag(xmlTag)) {
+          return xmlTag.getLocalName();
         }
-        if (element instanceof XmlTag) {
-            final XmlTag tag = (XmlTag)element;
-            if (XsltSupport.isXsltTag(tag)) {
-                return tag;
+        else if (XmlUtil.ourSchemaUrisList.contains(xmlTag.getNamespace())) {
+          PsiFile file = xmlTag.getContainingFile();
+          if (file instanceof XmlFile) {
+            XmlTag tag = ((XmlFile)file).getRootTag();
+            if (tag != null && XsltSupport.XSLT_NS.equals(tag.getAttributeValue("targetNamespace"))) {
+              return xmlTag.getAttributeValue("name");
             }
+          }
         }
-        return null;
+      }
+      return null;
     }
 
     private Document getDocumentationDocument() throws IOException, JDOMException {

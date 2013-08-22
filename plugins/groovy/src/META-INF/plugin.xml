@@ -97,6 +97,7 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebModuleMemberContributor"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebJUnitTestMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebTestNGTestMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebBrowserMemberContributor"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
@@ -150,8 +151,12 @@
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrStringTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrBooleanTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrGenericTypeConverter"/>
-
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureToSamConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrStringConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrNumberConverter"/>
+
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
     <classSubstitutor implementation="org.jetbrains.plugins.groovy.gpp.GppClassSubstitutor"/>
@@ -370,6 +375,8 @@
 
     <psi.referenceContributor  language="Properties" implementation="org.jetbrains.plugins.groovy.dgm.DGMReferenceContributor"/>
 
+    <psi.referenceContributor language="Groovy" implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyMethodArgumentReferenceContributor"/>
+
     <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrWithWeigher"
              id="groovyWithWeigher" order="after prefix"/>
     <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrKindWeigher"
@@ -425,6 +432,7 @@
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyMembersWithDocSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyBlockStatementsSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyTypeDefinitionBodySelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyTypeCastSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyDocParamsSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyArgListSelectioner"/>
@@ -1414,6 +1422,7 @@
     <debugger.positionManagerFactory order="after groovyPositionManager"
                                      implementation="org.jetbrains.plugins.groovy.springloaded.SpringLoadedPositionManagerFactory"/>
     <codeStyle.ReferenceAdjuster language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.groovy.jarFinder.GroovyFindJarQuickFixProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

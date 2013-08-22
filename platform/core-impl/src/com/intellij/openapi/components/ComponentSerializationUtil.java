@@ -16,6 +16,10 @@
 package com.intellij.openapi.components;
 
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xmlb.XmlSerializer;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.TypeVariable;
 
@@ -26,5 +30,12 @@ public class ComponentSerializationUtil {
   public static Class getStateClass(final Class<? extends PersistentStateComponent> aClass) {
     TypeVariable<Class<PersistentStateComponent>> variable = PersistentStateComponent.class.getTypeParameters()[0];
     return ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(variable, aClass));
+  }
+
+  public static <S> void loadComponentState(@NotNull PersistentStateComponent<S> configuration, @Nullable Element element) {
+    if (element != null) {
+      Class<S> stateClass = getStateClass(configuration.getClass());
+      configuration.loadState(XmlSerializer.deserialize(element, stateClass));
+    }
   }
 }

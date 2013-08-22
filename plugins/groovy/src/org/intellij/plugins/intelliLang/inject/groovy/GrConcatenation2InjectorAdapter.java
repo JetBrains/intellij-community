@@ -44,7 +44,7 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
     return LITERALS;
   }
 
-  protected Pair<PsiElement,PsiElement[]> computeAnchorAndOperands(PsiElement context) {
+  protected Pair<PsiElement,PsiElement[]> computeAnchorAndOperands(@NotNull PsiElement context) {
     PsiElement element = context;
     PsiElement parent = context.getParent();
     while (parent instanceof GrBinaryExpression && ((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mPLUS

@@ -33,7 +33,7 @@ import java.util.LinkedHashSet;
  */
 public abstract class LibraryScopeBase extends GlobalSearchScope {
   private final LinkedHashSet<VirtualFile> myEntries;
-  private final ProjectFileIndex myIndex;
+  protected final ProjectFileIndex myIndex;
 
   public LibraryScopeBase(Project project, VirtualFile[] classes, VirtualFile[] sources) {
     super(project);
@@ -48,7 +48,7 @@ public abstract class LibraryScopeBase extends GlobalSearchScope {
   }
 
   @Nullable
-  private VirtualFile getFileRoot(VirtualFile file) {
+  protected VirtualFile getFileRoot(VirtualFile file) {
     if (myIndex.isInLibraryClasses(file)) {
       return myIndex.getClassRootForFile(file);
     }

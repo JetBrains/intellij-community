@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +30,9 @@ import org.jetbrains.annotations.NotNull;
 * User: cdr
 */
 class HardElementInfo implements SmartPointerElementInfo {
+  @NotNull
   private final PsiElement myElement;
+  @NotNull
   private final Project myProject;
 
   public HardElementInfo(@NotNull Project project, @NotNull PsiElement element) {
@@ -56,6 +59,11 @@ class HardElementInfo implements SmartPointerElementInfo {
   }
 
   @Override
+  public PsiFile restoreFile() {
+    return myElement.getContainingFile();
+  }
+
+  @Override
   public int elementHashCode() {
     return myElement.hashCode();
   }
@@ -79,5 +87,10 @@ class HardElementInfo implements SmartPointerElementInfo {
   @Override
   public Project getProject() {
     return myProject;
+  }
+
+  @Override
+  public void cleanup() {
+
   }
 }

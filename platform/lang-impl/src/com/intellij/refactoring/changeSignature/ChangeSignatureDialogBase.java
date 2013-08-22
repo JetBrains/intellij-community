@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,14 +72,13 @@ import java.util.Set;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class ChangeSignatureDialogBase<
-    ParamInfo extends ParameterInfo,
-    Method extends PsiElement,
-    Visibility,
-    Descriptor extends MethodDescriptor<ParamInfo, Visibility>,
-    ParameterTableModelItem extends ParameterTableModelItemBase<ParamInfo>,
-    ParameterTableModel extends ParameterTableModelBase<ParamInfo, ParameterTableModelItem>
-  > extends RefactoringDialog {
+public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
+                                                Method extends PsiElement,
+                                                Visibility,
+                                                Descriptor extends MethodDescriptor<ParamInfo, Visibility>,
+                                                ParameterTableModelItem extends ParameterTableModelItemBase<ParamInfo>,
+                                                ParameterTableModel extends ParameterTableModelBase<ParamInfo, ParameterTableModelItem>>
+  extends RefactoringDialog {
 
   private static final Logger LOG = Logger.getInstance(ChangeSignatureDialogBase.class);
 
@@ -214,9 +213,13 @@ public abstract class ChangeSignatureDialogBase<
   @Override
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,0,1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0);
+    GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 0, 1,
+                                                    GridBagConstraints.WEST,
+                                                    GridBagConstraints.HORIZONTAL,
+                                                    new Insets(0, 0, 0, 0),
+                                                    0, 0);
 
-    myNamePanel = new JPanel(new BorderLayout(0,2));
+    myNamePanel = new JPanel(new BorderLayout(0, 2));
     myNameField = new EditorTextField(myMethod.getName());
     final JLabel nameLabel = new JLabel(RefactoringBundle.message("changeSignature.name.prompt"));
     nameLabel.setLabelFor(myNameField);
@@ -233,7 +236,7 @@ public abstract class ChangeSignatureDialogBase<
 
     if (myMethod.canChangeVisibility() && myVisibilityPanel instanceof ComboBoxVisibilityPanel) {
       ((ComboBoxVisibilityPanel)myVisibilityPanel).registerUpDownActionsFor(myNameField);
-      myVisibilityPanel.setBorder(new EmptyBorder(0,0,0,8));
+      myVisibilityPanel.setBorder(new EmptyBorder(0, 0, 0, 8));
       panel.add(myVisibilityPanel, gbc);
       gbc.gridx++;
     }
@@ -241,8 +244,8 @@ public abstract class ChangeSignatureDialogBase<
     gbc.weightx = 1;
 
     if (myMethod.canChangeReturnType() != MethodDescriptor.ReadWriteOption.None) {
-      JPanel typePanel = new JPanel(new BorderLayout(0,2));
-      typePanel.setBorder(new EmptyBorder(0,0,0,8));
+      JPanel typePanel = new JPanel(new BorderLayout(0, 2));
+      typePanel.setBorder(new EmptyBorder(0, 0, 0, 8));
       final JLabel typeLabel = new JLabel(RefactoringBundle.message("changeSignature.return.type.prompt"));
       myReturnTypeCodeFragment = createReturnTypeCodeFragment();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
@@ -296,7 +299,7 @@ public abstract class ChangeSignatureDialogBase<
     if (myMethod.canChangeParameters()) {
       final JPanel parametersPanel = createParametersPanel(!panels.isEmpty());
       if (!panels.isEmpty()) {
-        parametersPanel.setBorder(IdeBorderFactory.createEmptyBorder(0));
+        parametersPanel.setBorder(IdeBorderFactory.createEmptyBorder());
       }
       subPanel.add(parametersPanel, BorderLayout.CENTER);
     }
@@ -426,8 +429,7 @@ public abstract class ChangeSignatureDialogBase<
             final TableCellEditor ed = myParametersTable.getCellEditor();
             if (ed != null) {
               Object editorValue = ed.getCellEditorValue();
-              myParametersTableModel
-                .setValueAtWithoutUpdate(editorValue, row, column);
+              myParametersTableModel.setValueAtWithoutUpdate(editorValue, row, column);
               updateSignature();
             }
           }
@@ -441,6 +443,11 @@ public abstract class ChangeSignatureDialogBase<
           ((CodeFragmentTableCellEditorBase)editor).addDocumentListener(listener);
         }
         return super.prepareEditor(editor, row, column);
+      }
+
+      @Override
+      public void editingCanceled(ChangeEvent e) {
+        super.editingCanceled(e);
       }
     };
 
@@ -586,6 +593,7 @@ public abstract class ChangeSignatureDialogBase<
         }, 100);
       }
     };
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(updateRunnable);
   }
 

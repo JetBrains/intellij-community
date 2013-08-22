@@ -18,10 +18,12 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.openapi.project.DumbService;
 
 import java.util.HashMap;
 
@@ -38,8 +40,9 @@ public class VariableParameterizedTypeFix {
     PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(parameterList.getProject());
     PsiClass[] classes = shortNamesCache.getClassesByName(shortName, GlobalSearchScope.allScope(manager.getProject()));
     PsiElementFactory factory = facade.getElementFactory();
+    JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(parameterList);
     for (PsiClass aClass : classes) {
-      if (GenericsHighlightUtil.checkReferenceTypeArgumentList(aClass, parameterList, PsiSubstitutor.EMPTY, false) == null) {
+      if (GenericsHighlightUtil.checkReferenceTypeArgumentList(aClass, parameterList, PsiSubstitutor.EMPTY, false, version) == null) {
         PsiType[] actualTypeParameters = parameterList.getTypeArguments();
         PsiTypeParameter[] classTypeParameters = aClass.getTypeParameters();
         HashMap<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();

@@ -101,12 +101,12 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   @Override
   public Collection<Key> getKeys() throws StorageException {
     final Set<Key> keys = new HashSet<Key>();
-    processKeys(new CommonProcessors.CollectProcessor<Key>(keys));
+    processKeys(new CommonProcessors.CollectProcessor<Key>(keys), null);
     return keys;
   }
 
   @Override
-  public boolean processKeys(final Processor<Key> processor) throws StorageException {
+  public boolean processKeys(final Processor<Key> processor, IdFilter idFilter) throws StorageException {
     final Set<Key> stopList = new HashSet<Key>();
 
     Processor<Key> decoratingProcessor = new Processor<Key>() {
@@ -128,7 +128,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       }
       stopList.add(key);
     }
-    return myBackendStorage.processKeys(decoratingProcessor);
+    return myBackendStorage.processKeys(stopList.size() == 0 && myMap.size() == 0 ? processor : decoratingProcessor, idFilter);
   }
 
   @Override

@@ -57,15 +57,12 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Alarm;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -145,14 +142,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     assert !myInitialized : "Double Initializing";
     Disposer.register(myProject, new StatusBarUpdater(myProject));
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        reloadScopes(dependencyValidationManager, namedScopeManager);
-      }
-    }, project.getDisposed());
-
 
     myInitialized = true;
     myDisposed = false;
@@ -261,7 +250,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           if (callbackWhileWaiting != null) {
             callbackWhileWaiting.run();
           }
-          progress.waitFor(50);
+          myPassExecutorService.waitFor(50);
           UIUtil.dispatchAllInvocationEvents();
           Throwable savedException = PassExecutorService.getSavedException(progress);
           if (savedException != null) throw savedException;
@@ -270,11 +259,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           throw e;
         }
         catch (Error e) {
-          e.printStackTrace();
           throw e;
         }
         catch (Throwable e) {
-          e.printStackTrace();
           throw new RuntimeException(e);
         }
       }
@@ -299,16 +286,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   @TestOnly
-  public void cleanupAfterTest(boolean dispose) {
+  public void cleanupAfterTest() {
     if (!myProject.isOpen()) return;
-    //stopProcess(false);
-    //if (dispose) {
-    //  projectClosed();
-    //  Disposer.dispose(myStatusBarUpdater);
-    //  myStatusBarUpdater = null;
-    //  Disposer.dispose(myDaemonListeners);
-    //  myDaemonListeners = null;
-    //}
     setUpdateByTimerEnabled(false);
     waitForTermination();
   }
@@ -332,31 +311,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(myProject));
     markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
     TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markup, myProject, document, psiFile);
-  }
-
-  private final List<Pair<NamedScope, NamedScopesHolder>> myScopes = ContainerUtil.createLockFreeCopyOnWriteList();
-
-  void reloadScopes(@NotNull DependencyValidationManager dependencyValidationManager, @NotNull NamedScopeManager namedScopeManager) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
-    addScopesToList(scopeList, namedScopeManager);
-    addScopesToList(scopeList, dependencyValidationManager);
-    myScopes.clear();
-    myScopes.addAll(scopeList);
-    dependencyValidationManager.reloadRules();
-  }
-
-  private static void addScopesToList(@NotNull final List<Pair<NamedScope, NamedScopesHolder>> scopeList,
-                                      @NotNull final NamedScopesHolder holder) {
-    NamedScope[] scopes = holder.getScopes();
-    for (NamedScope scope : scopes) {
-      scopeList.add(Pair.create(scope, holder));
-    }
-  }
-
-  @NotNull
-  public List<Pair<NamedScope, NamedScopesHolder>> getScopeBasedHighlightingCachedScopes() {
-    return myScopes;
   }
 
   @Override
@@ -539,7 +493,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                                           @NotNull final Processor<HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
 
-    final SeverityRegistrar severityRegistrar = SeverityUtil.getSeverityRegistrar(project);
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override
@@ -562,7 +516,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                                                      @NotNull final Processor<HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
 
-    final SeverityRegistrar severityRegistrar = SeverityUtil.getSeverityRegistrar(project);
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOutside(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override

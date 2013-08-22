@@ -38,7 +38,7 @@ public class ElementPreviewHintProvider implements ElementPreviewProvider {
   }
 
   @Override
-  public void show(@NotNull PsiElement element, @NotNull Editor editor, @NotNull Point point) {
+  public void show(@NotNull PsiElement element, @NotNull Editor editor, @NotNull Point point, boolean keyTriggered) {
     LightweightHint newHint = getHint(element);
     hideCurrentHintIfAny();
     if (newHint == null) {

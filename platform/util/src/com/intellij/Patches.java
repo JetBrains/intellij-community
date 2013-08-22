@@ -28,6 +28,7 @@ public class Patches {
 
   /**
    * Debugger hangs on any attempt to attach/listen Connector when attach hanged once.
+   * @deprecated to remove in IDEA 13 (IDEA support JRE only >= 1.6)
    */
   public static final boolean SUN_JDI_CONNECTOR_HANGUP_BUG = !SystemInfo.isJavaVersionAtLeast("1.5");
 
@@ -129,4 +130,10 @@ public class Patches {
    * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7179799
    */
   public static final boolean SUN_BUG_ID_7179799 = true;
+
+  /**
+   * Marker field to find all usages of the reflective access to JDK 7-specific methods
+   * which need to be changed when migrated to JDK 7
+   */
+  public static final boolean USE_REFLECTION_TO_ACCESS_JDK7 = true;
 }

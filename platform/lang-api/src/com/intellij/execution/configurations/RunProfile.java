@@ -24,7 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * Base interface for run configurations.
+ * Base interface for things that can be executed (run configurations explicitly managed by user, or custom run profile implementations
+ * created from code).
  *
  * @see RunConfiguration
  * @see ConfigurationFactory#createTemplateConfiguration(com.intellij.openapi.project.Project)
@@ -48,20 +49,11 @@ public interface RunProfile {
   String getName();
 
   /**
-   * Returns the icon for the run configuration.
+   * Returns the icon for the run configuration. This icon is displayed in the tab showing the results of executing the run profile,
+   * and for persistent run configurations is also used in the run configuration management UI.
    *
-   * @return the icon for the run configuration.
+   * @return the icon for the run configuration, or null if the default executor icon should be used.
    */
   @Nullable
   Icon getIcon();
-
-  /**
-   * Checks whether the run configuration settings are valid.
-   *
-   * @throws RuntimeConfigurationException if the configuration settings contain a non-fatal problem which the user should be warned about
-   * but the execution should still be allowed
-   * @throws RuntimeConfigurationError if the configuration settings contain a fatal problem which makes it impossible to execute the run
-   * configuration.
-   */
-  void checkConfiguration() throws RuntimeConfigurationException;
 }

@@ -19,10 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.ListPopupStep;
-import com.intellij.openapi.ui.popup.MultiSelectionListPopupStep;
-import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -34,6 +31,7 @@ import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -327,7 +325,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     _handleSelect(handleFinalChoices, e);
   }
 
-  private boolean _handleSelect(final boolean handleFinalChoices, InputEvent e) {
+  private boolean _handleSelect(final boolean handleFinalChoices, @Nullable InputEvent e) {
     if (myList.getSelectedIndex() == -1) return false;
 
     if (getSpeedSearch().isHoldingFilter() && myList.getModel().getSize() == 0) return false;
@@ -356,8 +354,16 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     valuesSelected(selectedValues);
 
-    final PopupStep nextStep = listStep instanceof MultiSelectionListPopupStep<?> ? ((MultiSelectionListPopupStep<Object>)listStep).onChosen(Arrays.asList(selectedValues), handleFinalChoices)
-                               : listStep.onChosen(selectedValues[0], handleFinalChoices);
+    final PopupStep nextStep;
+    if (listStep instanceof MultiSelectionListPopupStep<?>) {
+      nextStep = ((MultiSelectionListPopupStep<Object>)listStep).onChosen(Arrays.asList(selectedValues), handleFinalChoices);
+    }
+    else if (e != null && listStep instanceof ListPopupStepEx<?>) {
+      nextStep = ((ListPopupStepEx<Object>)listStep).onChosen(selectedValues[0], handleFinalChoices, e.getModifiers());
+    }
+    else {
+      nextStep = listStep.onChosen(selectedValues[0], handleFinalChoices);
+    }
     return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValues[0] : null, e);
   }
 

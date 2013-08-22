@@ -49,6 +49,19 @@ public class CopyReferenceTest extends LightCodeInsightFixtureTestCase {
 class Goo { Foo }"""
 
   }
+
+  public void "test paste correct signature to javadoc"() {
+    myFixture.configureByText "a.java", """
+class Foo {
+  void foo(int a) {}
+  void foo<caret>(byte a) {}
+}
+"""
+    performCopy()
+    myFixture.configureByText "b.java", "/** <caret> */"
+    performPaste()
+    myFixture.checkResult "/** Foo#foo(byte)<caret> */"
+  }
   
   public void testFqnInImport() {
     myFixture.addClass("package foo; public class Foo {}")

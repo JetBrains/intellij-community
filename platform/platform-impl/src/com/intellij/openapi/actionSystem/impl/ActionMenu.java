@@ -244,7 +244,11 @@ public final class ActionMenu extends JMenu {
           }
         }
         else if (menuComponent instanceof ActionMenuItem) {
-          ((ActionMenuItem)menuComponent).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F24, 0));
+          // Looks like an old-fashioned ugly workaround
+          // JDK 1.7 on Mac works wrong with such functional keys
+          if (!(SystemInfo.isJavaVersionAtLeast("1.7") && SystemInfo.isMac)) {
+            ((ActionMenuItem)menuComponent).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F24, 0));
+          }
         }
       }
     }

@@ -32,6 +32,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class XmlSlashTypedHandler extends TypedHandlerDelegate {
   public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile, final FileType fileType) {
@@ -67,7 +68,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  public Result charTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile) {
+  public Result charTyped(final char c, final Project project, @NotNull final Editor editor, @NotNull final PsiFile editedFile) {
     if ((editedFile.getLanguage() instanceof XMLLanguage || editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage) && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 

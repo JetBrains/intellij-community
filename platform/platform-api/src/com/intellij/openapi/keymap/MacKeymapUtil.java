@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class MacKeymapUtil {
       case KeyEvent.VK_ESCAPE:         return ESCAPE;
       case KeyEvent.VK_CAPS_LOCK:      return CAPS_LOCK;
       case KeyEvent.VK_TAB:            return TAB;
-      case KeyEvent.VK_SPACE:          return SPACE;
+      case KeyEvent.VK_SPACE:          return "Space";
       case KeyEvent.VK_DELETE:         return DELETE;
       case KeyEvent.VK_HOME:           return HOME;
       case KeyEvent.VK_END:            return END;

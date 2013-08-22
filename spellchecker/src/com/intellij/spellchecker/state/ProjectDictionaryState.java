@@ -30,10 +30,12 @@ import java.util.Set;
 
 @State(
   name = "ProjectDictionaryState",
-  storages = {@Storage(file = StoragePathMacros.PROJECT_FILE),
+  storages = {
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
     @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/dictionaries/",
-    scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectDictionarySplitter.class)})
-
+             scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectDictionarySplitter.class)
+  }
+)
 public class ProjectDictionaryState implements PersistentStateComponent<ProjectDictionaryState>{
 
   @Property(surroundWithTag = false) @AbstractCollection(surroundWithTag = false, elementTypes = DictionaryState.class)

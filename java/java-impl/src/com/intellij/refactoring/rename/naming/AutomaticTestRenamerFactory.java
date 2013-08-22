@@ -15,16 +15,20 @@
  */
 package com.intellij.refactoring.rename.naming;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.HashSet;
 
 import java.util.Collection;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -59,18 +63,33 @@ public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
   private static class TestsRenamer extends AutomaticRenamer {
     public TestsRenamer(PsiClass aClass, String newClassName) {
 
-      appendTestClass(aClass, "Test");
-      appendTestClass(aClass, "TestCase");
+      final Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
+      if (module != null) {
+        final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependentsScope(module);
 
-      suggestAllNames(aClass.getName(), newClassName);
+        appendTestClass(aClass, "Test", moduleScope);
+        appendTestClass(aClass, "TestCase", moduleScope);
+
+        suggestAllNames(aClass.getName(), newClassName);
+      }
     }
 
-    private void appendTestClass(PsiClass aClass, String testSuffix) {
-      final Project project = aClass.getProject();
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-      final PsiClass psiClassTest = facade.findClass(aClass.getQualifiedName() + testSuffix, GlobalSearchScope.projectScope(project));
-      if (psiClassTest != null) {
-        myElements.add(psiClassTest);
+    private void appendTestClass(PsiClass aClass, String testSuffix, final GlobalSearchScope moduleScope) {
+      PsiShortNamesCache cache = PsiShortNamesCache.getInstance(aClass.getProject());
+
+      String klassName = aClass.getName();
+      Pattern pattern = Pattern.compile(".*" + klassName + ".*" + testSuffix);
+
+      HashSet<String> names = new HashSet<String>();
+      cache.getAllClassNames(names);
+      for (String eachName : names) {
+        if (pattern.matcher(eachName).matches()) {
+          for (PsiClass eachClass : cache.getClassesByName(eachName, moduleScope)) {
+            if (TestFrameworks.getInstance().isTestClass(eachClass)) {
+              myElements.add(eachClass);
+            }
+          }
+        }
       }
     }
 

@@ -69,8 +69,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.intellij.execution.impl.RunConfigurable.NodeKind.*;
 import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
@@ -179,26 +177,26 @@ class RunConfigurable extends BaseConfigurable {
           }
           else {
             final RunManagerImpl runManager = getRunManager();
-            RunConfiguration configuration = null;
+            RunnerAndConfigurationSettings configuration = null;
             String name = null;
             if (userObject instanceof SingleConfigurationConfigurable) {
               final SingleConfigurationConfigurable<?> settings = (SingleConfigurationConfigurable)userObject;
-              RunnerAndConfigurationSettings snapshot;
-              snapshot = settings.getSettings();
-              configuration = settings.getConfiguration();
+              RunnerAndConfigurationSettings configurationSettings;
+              configurationSettings = settings.getSettings();
+              configuration = configurationSettings;
               name = settings.getNameText();
               shared = settings.isStoreProjectConfiguration();
-              setIcon(ProgramRunnerUtil.getConfigurationIcon(snapshot, !settings.isValid(), runManager.isTemporary(configuration)));
+              setIcon(ProgramRunnerUtil.getConfigurationIcon(configurationSettings, !settings.isValid()));
             }
             else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
               RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)userObject;
               shared = runManager.isConfigurationShared(settings);
               setIcon(RunManagerEx.getInstanceEx(myProject).getConfigurationIcon(settings));
-              configuration = settings.getConfiguration();
+              configuration = settings;
               name = configuration.getName();
             }
             if (configuration != null) {
-              append(name, runManager.isTemporary(configuration)
+              append(name, configuration.isTemporary()
                            ? SimpleTextAttributes.GRAY_ATTRIBUTES
                            : SimpleTextAttributes.REGULAR_ATTRIBUTES);
             }
@@ -219,8 +217,8 @@ class RunConfigurable extends BaseConfigurable {
     final RunManagerEx manager = getRunManager();
     final ConfigurationType[] factories = manager.getConfigurationFactories();
     for (ConfigurationType type : factories) {
-      final RunnerAndConfigurationSettings[] configurations = manager.getConfigurationSettings(type);
-      if (configurations.length > 0) {
+      final List<RunnerAndConfigurationSettings> configurations = manager.getConfigurationSettingsList(type);
+      if (!configurations.isEmpty()) {
         final DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(type);
         myRoot.add(typeNode);
         Map<String, DefaultMutableTreeNode> folderMapping = new HashMap<String, DefaultMutableTreeNode>();
@@ -447,7 +445,7 @@ class RunConfigurable extends BaseConfigurable {
           if (runtimeConfiguration.isGeneratedName() && !changed[0]) {
             try {
               final LocatableConfiguration snapshot = (LocatableConfiguration)editor.getSnapshot().getConfiguration();
-              final String generatedName = snapshot instanceof RuntimeConfiguration? ((RuntimeConfiguration)snapshot).getGeneratedName() : snapshot.suggestedName();
+              final String generatedName = snapshot.suggestedName();
               if (generatedName != null && generatedName.length() > 0) {
                 info.setNameText(generatedName);
                 changed[0] = false;
@@ -690,7 +688,7 @@ class RunConfigurable extends BaseConfigurable {
         if (userObject instanceof SingleConfigurationConfigurable) {
           final SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
           settings = (RunnerAndConfigurationSettings)configurable.getSettings();
-          if (manager.isTemporary(settings)) {
+          if (settings.isTemporary()) {
             applyConfiguration(typeNode, configurable);
           }
           configurationBean = new RunConfigurationBean(configurable);
@@ -740,7 +738,7 @@ class RunConfigurable extends BaseConfigurable {
 
     // if apply succeeded, update the list of configurations in RunManager
     Set<RunnerAndConfigurationSettings> toDeleteSettings = new THashSet<RunnerAndConfigurationSettings>();
-    for (RunConfiguration each : manager.getConfigurations(type)) {
+    for (RunConfiguration each : manager.getConfigurationsList(type)) {
       ContainerUtil.addIfNotNull(toDeleteSettings, manager.getSettings(each));
     }
 
@@ -804,22 +802,23 @@ class RunConfigurable extends BaseConfigurable {
   public boolean isModified() {
     if (super.isModified()) return true;
     final RunManagerImpl runManager = getRunManager();
-    final List<RunConfiguration> allConfigurations = Arrays.asList(runManager.getAllConfigurations());
+    final List<RunConfiguration> allConfigurations = runManager.getAllConfigurationsList();
     final List<RunConfiguration> currentConfigurations = new ArrayList<RunConfiguration>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       DefaultMutableTreeNode typeNode = (DefaultMutableTreeNode)myRoot.getChildAt(i);
       final Object object = typeNode.getUserObject();
       if (object instanceof ConfigurationType) {
-        final RunnerAndConfigurationSettings[] configurationSettings = runManager.getConfigurationSettings((ConfigurationType)object);
+        final List<RunnerAndConfigurationSettings> configurationSettings = runManager.getConfigurationSettingsList(
+          (ConfigurationType)object);
         List<DefaultMutableTreeNode> configurationNodes = new ArrayList<DefaultMutableTreeNode>();
         collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
-        if (configurationSettings.length != configurationNodes.size()) return true;
+        if (configurationSettings.size() != configurationNodes.size()) return true;
         for (int j = 0; j < configurationNodes.size(); j++) {
           DefaultMutableTreeNode configurationNode = configurationNodes.get(j);
           final Object userObject = configurationNode.getUserObject();
           if (userObject instanceof SingleConfigurationConfigurable) {
             SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
-            if (!Comparing.strEqual(configurationSettings[j].getConfiguration().getName(), configurable.getConfiguration().getName())) {
+            if (!Comparing.strEqual(configurationSettings.get(j).getConfiguration().getName(), configurable.getConfiguration().getName())) {
               return true;
             }
             if (configurable.isModified()) return true;
@@ -1027,16 +1026,7 @@ class RunConfigurable extends BaseConfigurable {
         currentNames.add((String)userObject);
       }
     }
-    if (!currentNames.contains(str)) return str;
-
-    final Matcher matcher = Pattern.compile("(.*?)\\s*\\(\\d+\\)").matcher(str);
-    final String originalName = (matcher.matches()) ? matcher.group(1) : str;
-    int i = 1;
-    while (true) {
-      final String newName = String.format("%s (%d)", originalName, i);
-      if (!currentNames.contains(newName)) return newName;
-      i++;
-    }
+    return RunManager.suggestUniqueName(str, currentNames);
   }
 
   private SingleConfigurationConfigurable<RunConfiguration> createNewConfiguration(final RunnerAndConfigurationSettings settings, final DefaultMutableTreeNode node) {
@@ -1383,8 +1373,8 @@ class RunConfigurable extends BaseConfigurable {
         //do nothing
       }
       final RunnerAndConfigurationSettings originalConfiguration = configurationConfigurable.getSettings();
-      if (getRunManager().isTemporary(originalConfiguration)) {
-        getRunManager().makeStable(originalConfiguration.getConfiguration());
+      if (originalConfiguration.isTemporary()) {
+        getRunManager().makeStable(originalConfiguration);
         adjustOrder();
       }
       myTree.repaint();
@@ -1394,7 +1384,13 @@ class RunConfigurable extends BaseConfigurable {
     public void update(final AnActionEvent e) {
       final SingleConfigurationConfigurable<RunConfiguration> configuration = getSelectedConfiguration();
       final Presentation presentation = e.getPresentation();
-      final boolean enabled = configuration != null && getRunManager().isTemporary(configuration.getSettings());
+      final boolean enabled;
+      if (configuration == null) {
+        enabled = false;
+      } else {
+        RunnerAndConfigurationSettings settings = configuration.getSettings();
+        enabled = settings != null && settings.isTemporary();
+      }
       presentation.setEnabled(enabled);
       presentation.setVisible(enabled);
     }

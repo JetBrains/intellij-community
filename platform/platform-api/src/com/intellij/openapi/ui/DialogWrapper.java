@@ -18,6 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -85,7 +86,7 @@ public abstract class DialogWrapper {
    */
   public static final int CLOSE_EXIT_CODE = CANCEL_EXIT_CODE;
   /**
-   * If you use your custom exit codes you have have to start them with
+   * If you use your own custom exit codes you have to start them with
    * this constant.
    */
   public static final int NEXT_USER_EXIT_CODE = 2;
@@ -1503,12 +1504,14 @@ public abstract class DialogWrapper {
       Disposer.register(uiParent, myDisposable); // ensure everything is disposed on app quit
     }
 
-    myPeer.show().doWhenProcessed(new Runnable() {
+    Disposer.register(myDisposable, new Disposable() {
       @Override
-      public void run() {
+      public void dispose() {
         result.setDone(isOK());
       }
     });
+
+    myPeer.show();
 
     return result;
   }
@@ -1700,6 +1703,7 @@ public abstract class DialogWrapper {
         if (info.component != null && info.component.isVisible()) {
           IdeFocusManager.getInstance(null).requestFocus(info.component, true);
         }
+        DialogEarthquakeShaker.shake((JDialog)getPeer().getWindow());
         startTrackingValidation();
         return;
       }
@@ -1858,7 +1862,7 @@ public abstract class DialogWrapper {
       setLayout(new BorderLayout());
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-      pane.setBorder(IdeBorderFactory.createEmptyBorder(0));
+      pane.setBorder(IdeBorderFactory.createEmptyBorder());
       pane.setBackground(null);
       pane.getViewport().setBackground(null);
       pane.setOpaque(false);
@@ -1921,6 +1925,9 @@ public abstract class DialogWrapper {
     return myDisposable;
   }
 
+  /**
+   * @see PropertyDoNotAskOption
+   */
   public interface DoNotAskOption {
 
     boolean isToBeShown();
@@ -1935,6 +1942,40 @@ public abstract class DialogWrapper {
     boolean shouldSaveOptionsOnCancel();
 
     String getDoNotShowMessage();
+  }
+
+  public static class PropertyDoNotAskOption implements DoNotAskOption {
+
+    private final String myProperty;
+
+    public PropertyDoNotAskOption(String property) {
+      myProperty = property;
+    }
+
+    @Override
+    public boolean isToBeShown() {
+      return PropertiesComponent.getInstance().getBoolean(myProperty, false);
+    }
+
+    @Override
+    public void setToBeShown(boolean value, int exitCode) {
+      PropertiesComponent.getInstance().setValue(myProperty, Boolean.toString(value));
+    }
+
+    @Override
+    public boolean canBeHidden() {
+      return false;
+    }
+
+    @Override
+    public boolean shouldSaveOptionsOnCancel() {
+      return false;
+    }
+
+    @Override
+    public String getDoNotShowMessage() {
+      return CommonBundle.message("dialog.options.do.not.ask");
+    }
   }
 
   private ErrorPaintingType getErrorPaintingType() {

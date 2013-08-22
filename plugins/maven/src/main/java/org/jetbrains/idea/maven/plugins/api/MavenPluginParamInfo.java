@@ -17,6 +17,7 @@ import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.*;
 
@@ -49,18 +50,21 @@ public class MavenPluginParamInfo {
           Map pluginsMap = res;
 
           for (int i = paramPath.length - 1; i >= 0; i--) {
-            pluginsMap = getOrCreate(pluginsMap, paramPath[i]);
+            pluginsMap = MavenUtil.getOrCreate(pluginsMap, paramPath[i]);
           }
 
           ParamInfo paramInfo = new ParamInfo(pluginDescriptor.getPluginDescriptor().getPluginClassLoader(), param);
 
-          Map<String, ParamInfo> goalsMap = getOrCreate(pluginsMap, pluginId);
+          Map<String, ParamInfo> goalsMap = MavenUtil.getOrCreate(pluginsMap, pluginId);
 
-          ParamInfo oldValue = goalsMap.put(param.goal, paramInfo);
+          String goal = pluginDescriptor.goal;
+          assert goal == null || !goal.isEmpty();
+
+          ParamInfo oldValue = goalsMap.put(goal, paramInfo);
           if (oldValue != null) {
             LOG.error("Duplicated maven plugin parameter descriptor: "
                       + pluginId.first + ':' + pluginId.second + " -> "
-                      + (param.goal != null ? "[" + param.goal + ']' : "") + param.name);
+                      + (goal != null ? "[" + goal + ']' : "") + param.name);
           }
         }
       }
@@ -69,17 +73,6 @@ public class MavenPluginParamInfo {
     }
 
     return res;
-  }
-
-  @NotNull
-  private static <K, V extends Map> V getOrCreate(Map map, K key) {
-    Map res = (Map)map.get(key);
-    if (res == null) {
-      res = new HashMap();
-      map.put(key, res);
-    }
-
-    return (V)res;
   }
 
   public static boolean isSimpleText(@NotNull XmlText paramValue) {

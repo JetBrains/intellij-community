@@ -92,6 +92,15 @@ public interface ParserDefinition {
    * tree of AST nodes which is built during the PsiBuilder parsing pass. The PSI tree is built
    * over the AST tree and includes elements of different types for different language constructs.
    *
+   * !!!WARNING!!! PSI element types should be unambiguously determined by AST node element types.
+   * You can not produce different PSI elements from AST nodes of the same types (e.g. based on AST node content).
+   * Typically, your code should be as simple as that:
+   * <code>
+   *   if (node.getElementType == MY_ELEMENT_TYPE) {
+   *     return new MyPsiElement(node);
+   *   }
+   * </code>
+   *
    * @param node the node for which the PSI element should be returned.
    * @return the PSI element matching the element type of the AST node.
    */

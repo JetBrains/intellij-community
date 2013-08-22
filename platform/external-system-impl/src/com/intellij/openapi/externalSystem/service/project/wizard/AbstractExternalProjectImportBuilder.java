@@ -13,7 +13,6 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataMan
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -57,19 +56,16 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
   private static final Logger LOG = Logger.getInstance("#" + AbstractExternalProjectImportBuilder.class.getName());
 
-  @NotNull private final ExternalSystemSettingsManager mySettingsManager;
   @NotNull private final ProjectDataManager            myProjectDataManager;
   @NotNull private final C                             myControl;
   @NotNull private final ProjectSystemId               myExternalSystemId;
 
-  private DataNode<ProjectData>               myExternalProjectNode;
+  private DataNode<ProjectData> myExternalProjectNode;
 
-  public AbstractExternalProjectImportBuilder(@NotNull ExternalSystemSettingsManager settingsManager,
-                                              @NotNull ProjectDataManager projectDataManager,
+  public AbstractExternalProjectImportBuilder(@NotNull ProjectDataManager projectDataManager,
                                               @NotNull C control,
                                               @NotNull ProjectSystemId externalSystemId)
   {
-    mySettingsManager = settingsManager;
     myProjectDataManager = projectDataManager;
     myControl = control;
     myExternalSystemId = externalSystemId;
@@ -123,14 +119,18 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       @SuppressWarnings("unchecked")
       @Override
       public void run() {
-        AbstractExternalSystemSettings systemSettings = mySettingsManager.getSettings(project, myExternalSystemId);
+        AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
         final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
         Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
+        // add current importing project settings to linked projects settings or replace if similar already exist
+        projects.remove(projectSettings);
         projects.add(projectSettings);
+
         systemSettings.copyFrom(myControl.getSystemSettings());
         systemSettings.setLinkedProjectsSettings(projects);
 
         if (externalProjectNode != null) {
+          ExternalSystemUtil.ensureToolWindowInitialized(project, myExternalSystemId);
           ExternalSystemApiUtil.executeProjectChangeAction(new Runnable() {
             @Override
             public void run() {
@@ -272,7 +272,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       @Override
       public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
         if (!StringUtil.isEmpty(errorDetails)) {
-          assert errorDetails != null;
           LOG.warn(errorDetails);
         }
         error.set(new ConfigurationException(ExternalSystemBundle.message("error.resolve.with.reason", errorMessage),
@@ -282,6 +281,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
     final Project project = getProject(wizardContext);
     final File finalProjectFile = projectFile;
+    final String externalProjectPath = FileUtil.toCanonicalPath(finalProjectFile.getAbsolutePath());
     final Ref<ConfigurationException> exRef = new Ref<ConfigurationException>();
     executeAndRestoreDefaultProjectSettings(project, new Runnable() {
       @Override
@@ -290,7 +290,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
           ExternalSystemUtil.refreshProject(
             project,
             myExternalSystemId,
-            finalProjectFile.getAbsolutePath(),
+            externalProjectPath,
             callback,
             false,
             true
@@ -324,7 +324,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       return;
     }
 
-    AbstractExternalSystemSettings systemSettings = mySettingsManager.getSettings(project, myExternalSystemId);
+    AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
     Object systemStateToRestore = null;
     if (systemSettings instanceof PersistentStateComponent) {
       systemStateToRestore = ((PersistentStateComponent)systemSettings).getState();

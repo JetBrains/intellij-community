@@ -28,7 +28,7 @@ import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.projectView.impl.TransferableWrapper;
+import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
@@ -521,7 +521,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return myNodePopup != null && myNodePopup.isVisible();
   }
 
-  void navigateInsideBar(final Object object) {
+  protected void navigateInsideBar(final Object object) {
     final Object obj = optimizeTarget(object);
     myContextObject = null;
 

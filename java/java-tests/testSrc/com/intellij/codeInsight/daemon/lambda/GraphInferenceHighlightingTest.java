@@ -17,8 +17,7 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -27,7 +26,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testNestedCalls() throws Exception {
     doTest();
   }
-  
+
   public void testNestedCallsSameMethod() throws Exception {
     doTest();
   }
@@ -85,7 +84,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   private void doTest(final boolean checkWarnings) throws Exception {
-    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_8, getTestRootDisposable());
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 }

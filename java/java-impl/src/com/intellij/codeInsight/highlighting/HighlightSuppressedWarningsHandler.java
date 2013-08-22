@@ -31,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -131,11 +130,11 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
       Runnable inspect = new Runnable() {
         @Override
         public void run() {
-          pass.doInspectInBatch(managerEx, Collections.<LocalInspectionToolWrapper>singletonList(toolWrapper));
+          pass.doInspectInBatch(context, managerEx, Collections.<LocalInspectionToolWrapper>singletonList(toolWrapper));
         }
       };
       if (indicator == null) {
-        ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(inspect, new ProgressIndicatorBase());
+        ProgressManager.getInstance().executeProcessUnderProgress(inspect, new ProgressIndicatorBase());
       }
       else {
         inspect.run();

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -63,8 +64,7 @@ public class ClsElementInfo implements SmartPointerElementInfo {
   @Override
   public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
     if (other instanceof ClsElementInfo) {
-      return myStubIndexReference.equals(((ClsElementInfo)other).myStubIndexReference)
-        ;
+      return myStubIndexReference.equals(((ClsElementInfo)other).myStubIndexReference);
     }
     return Comparing.equal(restoreElement(), other.restoreElement());
   }
@@ -83,5 +83,15 @@ public class ClsElementInfo implements SmartPointerElementInfo {
   @Override
   public Project getProject() {
     return myStubIndexReference.getProject();
+  }
+
+  @Override
+  public void cleanup() {
+
+  }
+
+  @Override
+  public PsiFile restoreFile() {
+    return myStubIndexReference.getFile();
   }
 }

@@ -36,43 +36,55 @@ import javax.swing.*;
 import java.util.Collection;
 
 /**
+ * <p/>
+ * It is text field with autocompletion from list of values.
+ * <p/>
+ * Autocompletion is implemented via {@code TextFieldWithAutoCompletionContributor}.
+ * Use {@code setVariants} set list of values for autocompletion.
+ *
  * @author Roman Chernyatchik
- *         <p/>
- *         It is text field with autocompletion from list of values.
- *         <p/>
- *         Autocompletion is implemented via LookupManager.
- *         Use setVariants(..) set list of values for autocompletion.
- *         For variants you can use not only instances of PresentableLookupValue, but
- *         also instances of LookupValueWithPriority and LookupValueWithUIHint
  */
 public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
 
   public static final TextFieldWithAutoCompletionListProvider EMPTY_COMPLETION = new StringsCompletionProvider(null, null);
   private final boolean myShowAutocompletionIsAvailableHint;
+  private final TextFieldWithAutoCompletionListProvider<T> myProvider;
 
+  @SuppressWarnings("unchecked")
   public TextFieldWithAutoCompletion() {
-    // For UI designer
-    this(null, null, false, null);
+    this(null, EMPTY_COMPLETION, false, null);
   }
 
+
   public TextFieldWithAutoCompletion(final Project project,
-                                     @Nullable final TextFieldWithAutoCompletionListProvider<T> provider,
+                                     @NotNull final TextFieldWithAutoCompletionListProvider<T> provider,
                                      final boolean showAutocompletionIsAvailableHint, @Nullable final String text) {
     super(PlainTextLanguage.INSTANCE, project, text == null ? "" : text);
 
     myShowAutocompletionIsAvailableHint = showAutocompletionIsAvailableHint;
+    myProvider = provider;
 
-    if (provider != null) {
-      TextFieldWithAutoCompletionContributor.installCompletion(getDocument(), project, provider, true);
-    }
+    TextFieldWithAutoCompletionContributor.installCompletion(getDocument(), project, provider, true);
+  }
+
+  public static TextFieldWithAutoCompletion<String> create(final Project project,
+                                                           @NotNull final Collection<String> items,
+                                                           final boolean showAutocompletionIsAvailableHint,
+                                                           @Nullable final String text) {
+    return create(project, items, null, showAutocompletionIsAvailableHint, text);
   }
 
   public static TextFieldWithAutoCompletion<String> create(final Project project,
                                                            @NotNull final Collection<String> items,
                                                            @Nullable final Icon icon,
-                                                           final boolean showAutocompletionIsAvailableHint, @Nullable final String text) {
+                                                           final boolean showAutocompletionIsAvailableHint,
+                                                           @Nullable final String text) {
     return new TextFieldWithAutoCompletion<String>(project, new StringsCompletionProvider(items, icon), showAutocompletionIsAvailableHint,
                                                    text);
+  }
+
+  public void setVariants(@NotNull Collection<T> variants) {
+    myProvider.setItems(variants);
   }
 
   @Override
@@ -83,8 +95,9 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
       return editor;
     }
 
-    final String completionShortcutText = getCompletionShortcutText();
-    if (completionShortcutText == null) {
+    final String completionShortcutText =
+      KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
+    if (StringUtil.isEmpty(completionShortcutText)) {
       return editor;
     }
 
@@ -124,7 +137,7 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
       final ShortcutSet shortcutSet = action.getShortcutSet();
       if (shortcutSet != null) {
         final Shortcut[] shortcuts = shortcutSet.getShortcuts();
-        if (shortcuts != null && shortcuts.length > 0) {
+        if (shortcuts.length > 0) {
           return KeymapUtil.getShortcutText(shortcuts[0]);
         }
       }

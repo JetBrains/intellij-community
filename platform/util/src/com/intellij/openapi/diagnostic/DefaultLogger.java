@@ -46,7 +46,7 @@ public class DefaultLogger extends Logger {
   public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     System.err.println("ERROR: " + message);
     if (t != null) t.printStackTrace();
-    if (details != null && details.length > 0) {
+    if (details.length > 0) {
       System.out.println("details: ");
       for (String detail : details) {
         System.out.println(detail);

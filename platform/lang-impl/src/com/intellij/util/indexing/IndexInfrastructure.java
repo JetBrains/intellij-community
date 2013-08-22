@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -82,7 +83,19 @@ public class IndexInfrastructure {
       FileUtil.delete(file);
     }
     file.getParentFile().mkdirs();
-    final DataOutputStream os = new DataOutputStream(new FileOutputStream(file));
+    final DataOutputStream os = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, FileNotFoundException>() {
+      @Nullable
+      @Override
+      public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
+        try {
+          return new DataOutputStream(new FileOutputStream(file));
+        } catch (FileNotFoundException ex) {
+          if (lastAttempt) throw ex;
+          return null;
+        }
+      }
+    });
+    assert os != null;
     try {
       os.writeInt(version);
       os.writeInt(VERSION);

@@ -182,11 +182,12 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiTypeParameter createTypeParameter(String name, PsiClassType[] superTypes) {
     @NonNls StringBuilder builder = new StringBuilder();
     builder.append("public <").append(name);
-    if (superTypes.length > 1) {
+    if (superTypes.length > 1 ||
+        superTypes.length == 1 && !superTypes[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
       builder.append(" extends ");
       for (PsiClassType type : superTypes) {
         if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) continue;
-        builder.append(type.getCanonicalText()).append(',');
+        builder.append(type.getCanonicalText()).append('&');
       }
 
       builder.delete(builder.length() - 1, builder.length());
@@ -754,5 +755,34 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
     GeneratedMarkerVisitor.markGenerated(catchSection);
     return catchSection;
+  }
+
+  @Override
+  public boolean isValidClassName(@NotNull String name) {
+    return isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidMethodName(@NotNull String name) {
+    return isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidParameterName(@NotNull String name) {
+    return isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidFieldName(@NotNull String name) {
+    return isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidLocalVariableName(@NotNull String name) {
+    return isIdentifier(name);
+  }
+
+  private boolean isIdentifier(@NotNull String name) {
+    return JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isIdentifier(name);
   }
 }

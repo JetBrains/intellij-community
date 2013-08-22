@@ -1,6 +1,7 @@
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 public class ToggleInCommentsAction extends EditorHeaderToggleAction implements SecondaryHeaderAction {
@@ -17,6 +18,8 @@ public class ToggleInCommentsAction extends EditorHeaderToggleAction implements 
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    getEditorSearchComponent().getFindModel().setInCommentsOnly(state);
+    FindModel findModel = getEditorSearchComponent().getFindModel();
+    findModel.setInCommentsOnly(state);
+    if (state) findModel.setInStringLiteralsOnly(false);
   }
 }

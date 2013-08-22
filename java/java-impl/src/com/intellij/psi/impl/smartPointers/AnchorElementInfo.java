@@ -39,6 +39,7 @@ class AnchorElementInfo extends SelfElementInfo {
   AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile) {
     super(containingFile.getProject(), ProperTextRange.create(anchor.getTextRange()), anchor.getClass(), containingFile,
           containingFile.getLanguage());
+    assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
   }
   // will restore by stub index until file tree get loaded
   AnchorElementInfo(@NotNull PsiElement anchor,
@@ -50,18 +51,19 @@ class AnchorElementInfo extends SelfElementInfo {
     myStubElementType = stubElementType;
     IElementType contentElementType = ((PsiFileImpl)containingFile).getContentElementType();
     assert contentElementType instanceof IStubFileElementType : contentElementType;
+    assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
   }
 
   @Override
   @Nullable
   public PsiElement restoreElement() {
     if (stubId != -1) {
-      PsiFile file = SelfElementInfo.restoreFileFromVirtual(getVirtualFile(), myProject);
+      PsiFile file = restoreFile();
       if (!(file instanceof PsiFileWithStubSupport)) return null;
       return PsiAnchor.restoreFromStubIndex((PsiFileWithStubSupport)file, stubId, myStubElementType, false);
     }
     if (!mySyncMarkerIsValid) return null;
-    PsiFile file = SelfElementInfo.restoreFileFromVirtual(getVirtualFile(), myProject);
+    PsiFile file = restoreFile();
     if (file == null) return null;
     PsiElement anchor = file.findElementAt(getSyncStartOffset());
     if (anchor == null) return null;

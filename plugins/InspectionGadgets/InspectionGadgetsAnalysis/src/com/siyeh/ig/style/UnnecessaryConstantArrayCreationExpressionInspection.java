@@ -51,6 +51,11 @@ public class UnnecessaryConstantArrayCreationExpressionInspection
 
   private static class UnnecessaryConstantArrayCreationExpressionFix
     extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -47,7 +46,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (final AbstractTreeNode child : children) {
       Object o = child.getValue();
-      if (o instanceof PsiClassOwner && !(o instanceof JspFile)) {
+      if (o instanceof PsiClassOwner && !(o instanceof ServerPageFile)) {
         final ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
         final PsiClassOwner classOwner = (PsiClassOwner)o;
         final VirtualFile file = classOwner.getVirtualFile();
@@ -125,7 +124,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     return current != null ? current : baseRootFile;
   }
 
-  private boolean isSelectable(PsiElement element) {
+  private static boolean isSelectable(PsiElement element) {
     if (element instanceof PsiFileSystemItem) return true;
 
     if (element instanceof PsiField || element instanceof PsiClass || element instanceof PsiMethod) {
@@ -181,6 +180,6 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
       }
       return result;
     }
-    
+
   }
 }

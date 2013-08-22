@@ -25,6 +25,7 @@ import com.intellij.ui.SpeedSearchComparator
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.Matcher
+import junit.framework.AssertionFailedError
 import org.jetbrains.annotations.NonNls
 /**
  * @author max
@@ -510,7 +511,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertPreference("*fo", "barfoo", "foo");
     assertPreference("*fo", "asdfo", "Foo", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference(" sto", "StackOverflowError", "ArrayStoreException", NameUtil.MatchingCaseSensitivity.NONE);
-    assertNoPreference(" EUC-", "x-EUC-TW", "EUC-JP", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
+    assertPreference(" EUC-", "x-EUC-TW", "EUC-JP", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
     assertPreference(" boo", "Boolean", "boolean", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference(" Boo", "boolean", "Boolean", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("ob", "oci_bind_array_by_name", "obj");
@@ -613,22 +614,31 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     }
 
     System.out.println("measuring start: " + System.currentTimeMillis());
-    PlatformTestUtil.startPerformanceTest("Matcher is slow", 4500, new ThrowableRunnable() {
-      @Override
-      public void run() {
-        System.out.println("attempt start: " + System.currentTimeMillis());
-        for (int i = 0; i < 100000; i++) {
-          for (MinusculeMatcher matcher : matching) {
-            assertTrue(matcher.toString(), matcher.matches(longName));
-            matcher.matchingDegree(longName);
+    try {
+      PlatformTestUtil.startPerformanceTest("Matcher is slow", 4500, new ThrowableRunnable() {
+        @Override
+        public void run() {
+          System.out.println("attempt start: " + System.currentTimeMillis());
+          for (int i = 0; i < 100000; i++) {
+            for (MinusculeMatcher matcher : matching) {
+              assertTrue(matcher.toString(), matcher.matches(longName));
+              matcher.matchingDegree(longName);
+            }
+            for (MinusculeMatcher matcher : nonMatching) {
+              assertFalse(matcher.toString(), matcher.matches(longName));
+            }
           }
-          for (MinusculeMatcher matcher : nonMatching) {
-            assertFalse(matcher.toString(), matcher.matches(longName));
-          }
+          System.out.println("attempt end: " + System.currentTimeMillis());
         }
-        System.out.println("attempt end: " + System.currentTimeMillis());
-      }
-    }).cpuBound().assertTiming();
+      }).cpuBound().assertTiming()
+    }
+    catch (AssertionFailedError e) {
+      println "free " + Runtime.runtime.freeMemory()
+      println "total " + Runtime.runtime.totalMemory()
+      println "max " + Runtime.runtime.maxMemory()
+      printThreadDump();
+      throw e
+    }
   }
 
   public void testOnlyUnderscoresPerformance() {

@@ -30,13 +30,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public class GrIntroduceContextImpl implements GrIntroduceContext {
   private static final Logger LOG = Logger.getInstance(GrIntroduceContextImpl.class);
 
-  private final Project project;
-  private final Editor editor;
-  @Nullable private final GrExpression expression;
-  private final PsiElement[] occurrences;
-  private final PsiElement scope;
-  @Nullable private final GrVariable var;
-  @NotNull private final PsiElement place;
+  private final Project myProject;
+  private final Editor myEditor;
+  @Nullable private final GrExpression myExpression;
+  private final PsiElement[] myOccurrences;
+  private final PsiElement myScope;
+  @Nullable private final GrVariable myVar;
+  @NotNull private final PsiElement myPlace;
   private final StringPartInfo myStringPart;
 
   public GrIntroduceContextImpl(@NotNull Project project,
@@ -49,41 +49,41 @@ public class GrIntroduceContextImpl implements GrIntroduceContext {
     myStringPart = stringPart;
     LOG.assertTrue(expression != null || var != null || stringPart != null);
 
-    this.project = project;
-    this.editor = editor;
-    this.expression = expression;
-    this.occurrences = occurrences;
-    this.scope = scope;
-    this.var = var;
-    this.place = GrIntroduceHandlerBase.getCurrentPlace(expression, var, stringPart);
+    myProject = project;
+    myEditor = editor;
+    myExpression = expression;
+    myOccurrences = occurrences;
+    myScope = scope;
+    myVar = var;
+    myPlace = GrIntroduceHandlerBase.getCurrentPlace(expression, var, stringPart);
   }
 
   @NotNull
   public Project getProject() {
-    return project;
+    return myProject;
   }
 
   public Editor getEditor() {
-    return editor;
+    return myEditor;
   }
 
   @Nullable
   public GrExpression getExpression() {
-    return expression;
+    return myExpression;
   }
 
   @NotNull
   public PsiElement[] getOccurrences() {
-    return occurrences;
+    return myOccurrences;
   }
 
   public PsiElement getScope() {
-    return scope;
+    return myScope;
   }
 
   @Nullable
   public GrVariable getVar() {
-    return var;
+    return myVar;
   }
 
   @Nullable
@@ -94,6 +94,6 @@ public class GrIntroduceContextImpl implements GrIntroduceContext {
 
   @NotNull
   public PsiElement getPlace() {
-    return place;
+    return myPlace;
   }
 }

@@ -124,7 +124,7 @@ public class ImportUtils {
         return false;
       }
       field = containingClass.findFieldByName(shortName, true);
-      if (field != null && PsiUtil.isAccessible(field, containingClass, null)) {
+      if (field != null && PsiUtil.isAccessible(containingClass.getProject(), field, containingClass, null)) {
         return false;
       }
     }
@@ -254,12 +254,8 @@ public class ImportUtils {
         continue;
       }
       final PsiPackage aPackage = (PsiPackage)element;
-      final PsiClass[] classes = aPackage.getClasses();
+      final PsiClass[] classes = aPackage.findClassByShortName(shortName, file.getResolveScope());
       for (final PsiClass aClass : classes) {
-        final String className = aClass.getName();
-        if (!shortName.equals(className)) {
-          continue;
-        }
         if (!strict) {
           return true;
         }
@@ -325,14 +321,7 @@ public class ImportUtils {
     if (filePackage == null) {
       return false;
     }
-    final PsiClass[] classes = filePackage.getClasses();
-    for (PsiClass aClass : classes) {
-      final String className = aClass.getName();
-      if (shortName.equals(className)) {
-        return true;
-      }
-    }
-    return false;
+    return filePackage.containsClassNamed(shortName);
   }
 
   public static boolean hasJavaLangImportConflict(String fqName, PsiJavaFile file) {
@@ -347,14 +336,7 @@ public class ImportUtils {
     if (javaLangPackage == null) {
       return false;
     }
-    final PsiClass[] classes = javaLangPackage.getClasses();
-    for (final PsiClass aClass : classes) {
-      final String className = aClass.getName();
-      if (shortName.equals(className)) {
-        return true;
-      }
-    }
-    return false;
+    return javaLangPackage.containsClassNamed(shortName);
   }
 
   private static boolean containsConflictingClass(String fqName, PsiJavaFile file) {

@@ -22,12 +22,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
+public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicatorStacked {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
 
   private volatile String myText;
@@ -36,13 +37,14 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   private volatile boolean myCanceled;
   private volatile boolean myRunning;
+  private volatile boolean myFinished;
 
   private volatile boolean myIndeterminate;
 
-  protected Stack<String> myTextStack;
-  protected DoubleArrayList myFractionStack;
-  protected Stack<String> myText2Stack;
-  protected volatile int myNonCancelableCount;
+  private Stack<String> myTextStack;
+  private DoubleArrayList myFractionStack;
+  private Stack<String> myText2Stack;
+  private volatile int myNonCancelableCount;
 
   protected ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
@@ -50,17 +52,33 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public synchronized void start() {
     LOG.assertTrue(!isRunning(), "Attempt to start ProgressIndicator which is already running");
+    if (myFinished) {
+      if (myCanceled && !isReuseable()) {
+        if (ourReportedReuseExceptions.add(getClass())) {
+          LOG.error("Attempt to start ProgressIndicator which is cancelled and already stopped:" + this + "," + getClass());
+        }
+      }
+      myCanceled = false;
+      myFinished = false;
+    }
+
     myText = "";
     myFraction = 0;
     myText2 = "";
-    myCanceled = false;
     myRunning = true;
   }
 
+  private static final ConcurrentHashSet<Class> ourReportedReuseExceptions = new ConcurrentHashSet<Class>(2);
+
+  protected boolean isReuseable() {
+    return false;
+  }
+
   @Override
-  public void stop() {
+  public synchronized void stop() {
     LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
     myRunning = false;
+    myFinished = true;
   }
 
   @Override
@@ -196,6 +214,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     return isModal();
   }
 
+  @Override
   public synchronized void initStateFrom(@NotNull final ProgressIndicator indicator) {
     myRunning = indicator.isRunning();
     myCanceled = indicator.isCanceled();
@@ -206,26 +225,42 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     myText2 = indicator.getText2();
 
     myFraction = indicator.getFraction();
+
+    if (indicator instanceof ProgressIndicatorStacked) {
+      ProgressIndicatorStacked stacked = (ProgressIndicatorStacked)indicator;
+
+      myNonCancelableCount = stacked.getNonCancelableCount();
+
+      myTextStack = new Stack<String>(stacked.getTextStack());
+
+      myText2Stack = new Stack<String>(stacked.getText2Stack());
+
+      myFractionStack = new DoubleArrayList(stacked.getFractionStack());
+    }
   }
 
+  @Override
   @NotNull
-  public Stack<String> getTextStack() {
+  public synchronized Stack<String> getTextStack() {
     if (myTextStack == null) myTextStack = new Stack<String>(2);
     return myTextStack;
   }
 
+  @Override
   @NotNull
-  public DoubleArrayList getFractionStack() {
+  public synchronized DoubleArrayList getFractionStack() {
     if (myFractionStack == null) myFractionStack = new DoubleArrayList(2);
     return myFractionStack;
   }
 
+  @Override
   @NotNull
-  public Stack<String> getText2Stack() {
+  public synchronized Stack<String> getText2Stack() {
     if (myText2Stack == null) myText2Stack = new Stack<String>(2);
     return myText2Stack;
   }
 
+  @Override
   public int getNonCancelableCount() {
     return myNonCancelableCount;
   }

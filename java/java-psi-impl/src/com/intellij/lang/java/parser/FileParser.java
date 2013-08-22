@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,19 +55,14 @@ public class FileParser {
                         @NotNull final String errorMessageKey) {
     parsePackageStatement(builder);
 
-    final Pair<PsiBuilder.Marker, Boolean> impListInfo = parseImportList(builder, importListStoppers);
+    Pair<PsiBuilder.Marker, Boolean> impListInfo = parseImportList(builder, importListStoppers);
 
     Boolean firstDeclarationOk = null;
     PsiBuilder.Marker firstDeclaration = null;
     PsiBuilder.Marker invalidElements = null;
     while (!builder.eof()) {
       if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
-        if (invalidElements != null) {
-          invalidElements.error(error(bundle, errorMessageKey));
-          invalidElements = null;
-        }
         builder.advanceLexer();
-        if (firstDeclarationOk == null) firstDeclarationOk = false;
         continue;
       }
 
@@ -124,7 +119,7 @@ public class FileParser {
 
     final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);
     if (ref == null) {
-      statement.rollbackTo();
+      statement.error(JavaErrorMessages.message("expected.class.or.interface"));
       return null;
     }
 
@@ -136,13 +131,21 @@ public class FileParser {
 
   @NotNull
   public Pair<PsiBuilder.Marker, Boolean> parseImportList(final PsiBuilder builder, final TokenSet stoppers) {
-    final PsiBuilder.Marker list = builder.mark();
+    PsiBuilder.Marker list = builder.mark();
 
-    final boolean isEmpty = builder.getTokenType() != JavaTokenType.IMPORT_KEYWORD;
+    IElementType tokenType = builder.getTokenType();
+    boolean isEmpty = tokenType != JavaTokenType.IMPORT_KEYWORD && tokenType != JavaTokenType.SEMICOLON;
     if (!isEmpty) {
       PsiBuilder.Marker invalidElements = null;
       while (!builder.eof()) {
-        if (stoppers.contains(builder.getTokenType())) break;
+        tokenType = builder.getTokenType();
+        if (stoppers.contains(tokenType)) {
+          break;
+        }
+        else if (tokenType == JavaTokenType.SEMICOLON) {
+          builder.advanceLexer();
+          continue;
+        }
 
         final PsiBuilder.Marker statement = parseImportStatement(builder);
         if (statement != null) {

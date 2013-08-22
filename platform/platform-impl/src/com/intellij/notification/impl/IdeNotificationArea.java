@@ -117,6 +117,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
   private void applyIconToStatusAndToolWindow(Project project, LayeredIcon icon) {
     if (UISettings.getInstance().HIDE_TOOL_STRIPES || UISettings.getInstance().PRESENTATION_MODE) {
+      setVisible(true);
       setIcon(icon);
     }
     else {
@@ -124,7 +125,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
       if (eventLog != null) {
         eventLog.setIcon(icon);
       }
-      setIcon(null);
+      setVisible(false);
     }
   }
 

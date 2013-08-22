@@ -3,6 +3,7 @@ package com.intellij.execution.configuration;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.openapi.project.Project;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -16,6 +17,10 @@ public abstract class AbstractRunConfiguration extends ModuleBasedConfiguration<
 
   public AbstractRunConfiguration(String name, RunConfigurationModule configurationModule, ConfigurationFactory factory) {
     super(name, configurationModule, factory);
+  }
+
+  public AbstractRunConfiguration(Project project, ConfigurationFactory factory) {
+    super(new RunConfigurationModule(project), factory);
   }
 
   public Map<String, String> getEnvs() {

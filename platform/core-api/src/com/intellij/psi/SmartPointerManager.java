@@ -60,4 +60,5 @@ public abstract class SmartPointerManager {
    * @return true if both pointers point to the same PSI element.
    */
   public abstract boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2);
+  public abstract boolean removePointer(@NotNull SmartPsiElementPointer pointer);
 }

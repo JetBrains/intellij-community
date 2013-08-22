@@ -107,7 +107,7 @@ public abstract class DebuggerUtils {
             toStringMethod = findMethod(refType, "toString", "()Ljava/lang/String;");
             debugProcess.putUserData(TO_STRING_METHOD_KEY, toStringMethod);
           }
-          catch (Exception e) {
+          catch (Exception ignored) {
             throw EvaluateExceptionUtil.createEvaluateException(
               DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
           }
@@ -125,7 +125,7 @@ public abstract class DebuggerUtils {
       }
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.unsupported.expression.type"));
     }
-    catch (ObjectCollectedException e) {
+    catch (ObjectCollectedException ignored) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
     }
   }
@@ -291,8 +291,8 @@ public abstract class DebuggerUtils {
       }
 
       List ifaces = ((ClassType)subType).allInterfaces();
-      for (Iterator iterator = ifaces.iterator(); iterator.hasNext();) {
-        InterfaceType interfaceType = (InterfaceType)iterator.next();
+      for (Object iface : ifaces) {
+        InterfaceType interfaceType = (InterfaceType)iface;
         if (interfaceType.name().equals(superType)) {
           return interfaceType;
         }
@@ -302,8 +302,8 @@ public abstract class DebuggerUtils {
 
     if (subType instanceof InterfaceType) {
       List ifaces = ((InterfaceType)subType).superinterfaces();
-      for (Iterator iterator = ifaces.iterator(); iterator.hasNext();) {
-        InterfaceType interfaceType = (InterfaceType)iterator.next();
+      for (Object iface : ifaces) {
+        InterfaceType interfaceType = (InterfaceType)iface;
         result = getSuperType(interfaceType, superType);
         if (result != null) {
           return result;
@@ -402,9 +402,8 @@ public abstract class DebuggerUtils {
     PsiElement[] children = codeFragment.getChildren();
 
     if(children.length == 0) throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.empty.code.fragment"));
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
-      if(child instanceof PsiErrorElement) {
+    for (PsiElement child : children) {
+      if (child instanceof PsiErrorElement) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", child.getText()));
       }
     }

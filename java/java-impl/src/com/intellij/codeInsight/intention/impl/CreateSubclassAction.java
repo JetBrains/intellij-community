@@ -245,13 +245,13 @@ public class CreateSubclassAction extends BaseIntentionAction {
       }
       if (psiClass.hasTypeParameters() || includeClassName) {
         final Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
-        final TemplateBuilderImpl templateBuilder = editor != null 
+        final TemplateBuilderImpl templateBuilder = editor != null
                    ? (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(targetClass) : null;
-        
+
         if (includeClassName && templateBuilder != null) {
           templateBuilder.replaceElement(targetClass.getNameIdentifier(), targetClass.getName());
         }
-        
+
         if (oldTypeParameterList != null) {
           for (PsiTypeParameter parameter : oldTypeParameterList.getTypeParameters()) {
             final PsiElement param = ref.getParameterList().add(elementFactory.createTypeElement(elementFactory.createType(parameter)));
@@ -318,7 +318,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(psiClass, targetClass, PsiSubstitutor.EMPTY);
       final List<PsiMethodMember> baseConstructors = new ArrayList<PsiMethodMember>();
       for (PsiMethod baseConstr : constructors) {
-        if (PsiUtil.isAccessible(baseConstr, targetClass, targetClass)) {
+        if (PsiUtil.isAccessible(project, baseConstr, targetClass, targetClass)) {
           baseConstructors.add(new PsiMethodMember(baseConstr, substitutor));
         }
       }

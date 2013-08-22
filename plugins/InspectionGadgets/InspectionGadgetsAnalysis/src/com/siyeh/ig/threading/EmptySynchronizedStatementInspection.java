@@ -52,7 +52,7 @@ public class EmptySynchronizedStatementInspection extends BaseInspection {
     public void visitSynchronizedStatement(
       @NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
-      if (FileTypeUtils.isInJsp(statement.getContainingFile())) {
+      if (FileTypeUtils.isInServerPageFile(statement.getContainingFile())) {
         return;
       }
       final PsiCodeBlock body = statement.getBody();

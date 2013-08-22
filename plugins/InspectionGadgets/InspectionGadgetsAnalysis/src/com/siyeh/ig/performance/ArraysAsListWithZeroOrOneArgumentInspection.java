@@ -77,6 +77,12 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
       }
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify";
+    }
+
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement().getParent().getParent();

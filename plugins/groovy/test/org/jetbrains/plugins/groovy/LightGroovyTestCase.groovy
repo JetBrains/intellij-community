@@ -28,7 +28,7 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
   @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.INSTANCE;
+    return GroovyLightProjectDescriptor.GROOVY_2_1;
   }
 
   /**

@@ -104,7 +104,7 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
     return method.hasModifierProperty(PsiModifier.STATIC);
   }
 
-  private boolean isVisible(PsiMember element, PsiClass psiClass) {
+  private boolean isVisible(@NotNull PsiMember element, PsiClass psiClass) {
     return !isInheritedConstructor(element, psiClass) && PsiUtil.isAccessible(element, psiClass, null);
   }
 

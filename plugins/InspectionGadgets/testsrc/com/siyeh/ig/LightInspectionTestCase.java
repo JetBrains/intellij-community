@@ -21,9 +21,6 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
  * @author Bas Leijdekkers
  */
@@ -44,6 +41,18 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
   @NonNls
   protected String[] getEnvironmentClasses() {
     return new String[]{};
+  }
+
+  protected void addEnvironmentClass(@Language("JAVA") @NotNull @NonNls String classText) {
+    myFixture.addClass(classText);
+  }
+
+  protected final void doStatementTest(@Language(value="JAVA", prefix="class X { void m() {", suffix="}}") @NotNull @NonNls String statementText) {
+    doTest("class X { void m() {" + statementText + "}}");
+  }
+
+  protected final void doMemberTest(@Language(value="JAVA", prefix="class X {", suffix="}") @NotNull @NonNls String memberText) {
+    doTest("class X {" + memberText + "}");
   }
 
   protected final void doTest(@Language("JAVA") @NotNull @NonNls String classText) {

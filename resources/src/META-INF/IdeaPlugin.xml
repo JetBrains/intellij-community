@@ -39,6 +39,10 @@
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.compilerOutputIndex.api.indexer.CompilerOutputIndexer</implementation-class>
+    </component>
   </project-components>
 
   <extensionPoints>
@@ -214,7 +218,12 @@
                     interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
     <extensionPoint name="psi.clsDecompiledFileProvider"
                     interface="com.intellij.psi.ClsFileDecompiledPsiFileProvider"/>
+
+    <extensionPoint name="java.compilerOutputIndex" area="IDEA_PROJECT"
+                    interface="com.intellij.compilerOutputIndex.api.indexer.CompilerOutputBaseIndex"/>
     <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
+
+    <extensionPoint name="manifest.parser.provider" interface="org.jetbrains.lang.manifest.header.HeaderParserProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -391,6 +400,9 @@
 
     <applicationService serviceInterface="com.intellij.refactoring.JavaRefactoringSettings"
                         serviceImplementation="com.intellij.refactoring.JavaRefactoringSettings"/>
+
+    <applicationService serviceInterface="com.intellij.codeInsight.generation.OverrideImplementExploreUtil$MemberImplementorExplorersProvider"
+                        serviceImplementation="com.intellij.codeInsight.generation.MemberImplementorExplorersProviderImpl"/>
 
     <projectService serviceInterface="com.intellij.refactoring.RefactoringManager"
                     serviceImplementation="com.intellij.refactoring.RefactoringManager"/>
@@ -927,8 +939,6 @@
 
     <lang.ast.factory language="JAVA" implementationClass="com.intellij.psi.impl.source.tree.JavaASTFactory"/>
 
-    <lang.literalEscaper language="JAVA" implementationClass="com.intellij.lang.java.JavaLiteralEscaper"/>
-
     <lang.smartEnterProcessor language="JAVA"
                               implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor"/>
     <lang.smartEnterProcessor language="JSPX" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
@@ -1147,7 +1157,7 @@
     <configurationType implementation="com.intellij.execution.applet.AppletConfigurationType"/>
     <configurationProducer implementation="com.intellij.execution.applet.AppletConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
-    <configurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
 
     <javaExpressionSurrounder implementation="com.intellij.debugger.codeinsight.JavaWithRuntimeCastSurrounder"/>
@@ -1368,6 +1378,9 @@
     <debugger.breakpointFactory implementation="com.intellij.debugger.ui.breakpoints.MethodBreakpointFactory"/>
     <debugger.jvmSmartStepIntoHandler implementation="com.intellij.debugger.actions.JavaSmartStepIntoHandler"/>
 
+    <applicationService serviceInterface="com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher"
+                        serviceImplementation="com.intellij.remoteServer.impl.runtime.deployment.debug.JavaDebuggerLauncherImpl"/>
+
     <dom.uiControlsProvider implementation="com.intellij.util.xml.impl.JavaDomApplicationComponent"/>
 
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
@@ -1419,11 +1432,55 @@
     <writingAccessProvider implementation="com.intellij.refactoring.util.ClsElementWritingAccessProvider"/>
 
     <welcomeScreen implementation="com.intellij.ide.ui.laf.darcula.DarculaWelcomeScreenProvider"/>
+
     <fileTypeFactory implementation="com.intellij.spi.SPIFileTypeFactory"/>
     <lang.parserDefinition language="SPI" implementationClass="com.intellij.spi.parsing.SPIParserDefinition"/>
     <lang.commenter language="SPI" implementationClass="com.intellij.spi.SPICommenter"/>
     <annotator language="SPI" implementationClass="com.intellij.spi.SPIAnnotator"/>
+
+    <fileTypeFactory implementation="org.jetbrains.lang.manifest.ManifestFileTypeFactory"/>
+    <lang.parserDefinition language="Manifest" implementationClass="org.jetbrains.lang.manifest.parser.ManifestParserDefinition"/>
+    <lang.syntaxHighlighterFactory key="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.ManifestSyntaxHighlighterFactory"/>
+    <annotator language="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.HeaderAnnotator"/>
+    <lang.elementManipulator forClass="org.jetbrains.lang.manifest.psi.HeaderValuePart"
+                             implementationClass="org.jetbrains.lang.manifest.psi.impl.HeaderValuePartManipulator"/>
+    <completion.contributor language="Manifest" implementationClass="org.jetbrains.lang.manifest.completion.ManifestCompletionContributor"/>
+    <manifest.parser.provider implementation="org.jetbrains.lang.manifest.header.impl.StandardManifestHeaderParsers"/>
+
+    <applicationService serviceImplementation="org.jetbrains.lang.manifest.header.HeaderParserRepository"/>
+
+    <localInspection language="Manifest" displayName="Missing Final New Line" groupName="Manifest"
+                     enabledByDefault="true" level="ERROR" implementationClass="org.jetbrains.lang.manifest.highlighting.MissingFinalNewlineInspection"/>
+    <localInspection language="Manifest" displayName="Unknown or Misspelled Header Name" groupName="Manifest"
+                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.lang.manifest.highlighting.MisspelledHeaderInspection"/>
+
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoLambdaParameterHandler"/>
+
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.MethodsUsageIndex"/>
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.bigram.BigramMethodsUsageIndex"/>
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.singleton.TwinVariablesIndex"/>
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.singleton.ParamsInMethodOccurrencesIndex"/>
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.quickInheritance.QuickMethodsIndex"/>
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.quickInheritance.QuickInheritanceIndex"/>
+    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.callingLocation.MethodCallingLocationIndex"/>
+    <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
+                            implementationClass="com.intellij.codeInsight.completion.methodChains.completion.MethodsChainsCompletionContributor"/>
+    <weigher order="first" key="completion" id="methodsChains"
+             implementationClass="com.intellij.codeInsight.completion.methodChains.completion.MethodsChainsWeigher"/>
+
+    <applicationService serviceInterface="org.jetbrains.generate.tostring.template.TemplatesManager"
+                        serviceImplementation="org.jetbrains.generate.tostring.template.TemplatesManager"/>
+    <applicationService serviceInterface="org.jetbrains.generate.tostring.GenerateToStringContext"
+                        serviceImplementation="org.jetbrains.generate.tostring.GenerateToStringContext"/>
+
+    <localInspection language="JAVA" shortName="ClassHasNoToStringMethod" displayName="Class does not override 'toString()' method"
+                     groupName="toString() issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.generate.tostring.inspection.ClassHasNoToStringMethodInspection"/>
+    <localInspection language="JAVA" shortName="FieldNotUsedInToString" displayName="Field not used in 'toString()' method" groupName="toString() issues"
+                     enabledByDefault="false" level="WARNING" runForWholeFile="true"
+                     implementationClass="org.jetbrains.generate.tostring.inspection.FieldNotUsedInToStringInspection"/>
+
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.jarFinder.FindJarQuickFixProvider"/>
   </extensions>
 
   <actions>

@@ -37,6 +37,11 @@ public class ReplaceInheritanceWithDelegationFix extends InspectionGadgetsFix {
     return InspectionGadgetsBundle.message(
       "replace.inheritance.with.delegation.quickfix");
   }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
   @Override
   public void doFix(@NotNull final Project project, ProblemDescriptor descriptor) {

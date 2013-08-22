@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ class EnumSwitchPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiSwitchStatement switchStatement = (PsiSwitchStatement)element;
-    final PsiCodeBlock body = switchStatement.getBody();
     final PsiExpression expression = switchStatement.getExpression();
     if (expression == null) {
       return false;
@@ -49,31 +48,35 @@ class EnumSwitchPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiField[] fields = enumClass.getFields();
+    if (fields.length == 0) {
+      return false;
+    }
+    final PsiCodeBlock body = switchStatement.getBody();
+    if (body == null) {
+      return true;
+    }
     final Set<String> enumElements = new HashSet<String>(fields.length);
     for (final PsiField field : fields) {
       final PsiType fieldType = field.getType();
-      if (fieldType.equals(type)) {
-        final String fieldName = field.getName();
-        enumElements.add(fieldName);
+      if (!fieldType.equals(type)) {
+        continue;
       }
+      final String fieldName = field.getName();
+      enumElements.add(fieldName);
     }
-    if (body != null) {
-      final PsiStatement[] statements = body.getStatements();
-      for (PsiStatement statement : statements) {
-        if (statement instanceof PsiSwitchLabelStatement) {
-          final PsiSwitchLabelStatement labelStatement =
-            (PsiSwitchLabelStatement)statement;
-          final PsiExpression value = labelStatement.getCaseValue();
-          if (value != null) {
-            final String valueText = value.getText();
-            enumElements.remove(valueText);
-          }
-        }
+    final PsiStatement[] statements = body.getStatements();
+    for (PsiStatement statement : statements) {
+      if (!(statement instanceof PsiSwitchLabelStatement)) {
+        continue;
       }
+      final PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)statement;
+      final PsiExpression value = labelStatement.getCaseValue();
+      if (value == null) {
+        continue;
+      }
+      final String valueText = value.getText();
+      enumElements.remove(valueText);
     }
-    if (enumElements.isEmpty()) {
-      return false;
-    }
-    return true;
+    return !enumElements.isEmpty();
   }
 }

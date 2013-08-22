@@ -8,6 +8,8 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.compiler.options.ValidationConfiguration;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.StdLanguages;
@@ -74,6 +76,13 @@ public class InspectionValidatorWrapper implements Validator {
 
   public static boolean isCompilationThread() {
     return ourCompilationThreads.get().booleanValue();
+  }
+
+  private static List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file,
+                                                            @NotNull LocalInspectionTool inspectionTool) {
+    InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(file.getProject());
+    GlobalInspectionContext context = inspectionManager.createNewGlobalContext(false);
+    return InspectionEngine.runInspectionOnFile(file, new LocalInspectionToolWrapper(inspectionTool), context);
   }
 
   private class MyValidatorProcessingItem implements ProcessingItem {
@@ -281,7 +290,7 @@ public class InspectionValidatorWrapper implements Validator {
                                                                                  final LocalInspectionTool inspectionTool,
                                                                                  final HighlightDisplayLevel level) {
     Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<ProblemDescriptor, HighlightDisplayLevel>();
-    for (ProblemDescriptor descriptor : InspectionRunningUtil.runInspectionOnFile(file, inspectionTool)) {
+    for (ProblemDescriptor descriptor : runInspectionOnFile(file, inspectionTool)) {
       problemsMap.put(descriptor, level);
     }
     return problemsMap;

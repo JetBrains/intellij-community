@@ -330,11 +330,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   @Override
   public void saveDocument(@NotNull final Document document) {
+    saveDocument(document, true);
+  }
+
+  public void saveDocument(@NotNull final Document document, final boolean explicit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myUnsavedDocuments.contains(document)) return;
 
     try {
-      doSaveDocument(document, true);
+      doSaveDocument(document, explicit);
     }
     catch (IOException e) {
       handleErrorsOnSave(Collections.singletonMap(document, e));

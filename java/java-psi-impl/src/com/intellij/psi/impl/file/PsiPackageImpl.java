@@ -29,6 +29,7 @@ import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.reference.SoftReference;
@@ -47,6 +48,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   public static boolean DEBUG = false;
   private volatile CachedValue<PsiModifierList> myAnnotationList;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
+  private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
   private volatile SoftReference<Set<String>> myPublicClassNamesCache;
 
   public PsiPackageImpl(PsiManager manager, String qualifiedName) {
@@ -54,19 +56,31 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  protected Collection<PsiDirectory> getAllDirectories() {
-    if (myDirectories == null) {
-      myDirectories = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new CachedValueProvider<Collection<PsiDirectory>>() {
-        @Override
-        public Result<Collection<PsiDirectory>> compute() {
-          final CommonProcessors.CollectProcessor<PsiDirectory> processor = new CommonProcessors.CollectProcessor<PsiDirectory>();
-          getFacade().processPackageDirectories(PsiPackageImpl.this, allScope(), processor);
-          return Result.create(processor.getResults(), PsiPackageImplementationHelper.getInstance().getDirectoryCachedValueDependencies(
-            PsiPackageImpl.this));
-        }
-      }, false);
+  protected Collection<PsiDirectory> getAllDirectories(boolean includeLibrarySources) {
+    if (includeLibrarySources) {
+      if (myDirectoriesWithLibSources == null) {
+        myDirectoriesWithLibSources = createCachedDirectories(true);
+      }
+      return myDirectoriesWithLibSources.getValue();
     }
-    return myDirectories.getValue();
+    else {
+      if (myDirectories == null) {
+        myDirectories = createCachedDirectories(false);
+      }
+      return myDirectories.getValue();
+    }
+  }
+
+  private CachedValue<Collection<PsiDirectory>> createCachedDirectories(final boolean includeLibrarySources) {
+    return CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new CachedValueProvider<Collection<PsiDirectory>>() {
+      @Override
+      public Result<Collection<PsiDirectory>> compute() {
+        final CommonProcessors.CollectProcessor<PsiDirectory> processor = new CommonProcessors.CollectProcessor<PsiDirectory>();
+        getFacade().processPackageDirectories(PsiPackageImpl.this, allScope(), processor, includeLibrarySources);
+        return Result.create(processor.getResults(), PsiPackageImplementationHelper.getInstance().getDirectoryCachedValueDependencies(
+          PsiPackageImpl.this));
+      }
+    }, false);
   }
 
   @Override
@@ -103,7 +117,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   public boolean isValid() {
-    return PsiPackageImplementationHelper.getInstance().packagePrefixExists(this) || !getAllDirectories().isEmpty();
+    return PsiPackageImplementationHelper.getInstance().packagePrefixExists(this) || !getAllDirectories(true).isEmpty();
   }
 
   @Override
@@ -165,7 +179,17 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     SoftReference<Set<String>> ref = myPublicClassNamesCache;
     Set<String> cache = ref == null ? null : ref.get();
     if (cache == null) {
-      cache = getFacade().getClassNames(this, allScope());
+      GlobalSearchScope scope = allScope();
+
+      if (!scope.isForceSearchingInLibrarySources()) {
+        scope = new DelegatingGlobalSearchScope(scope) {
+          @Override
+          public boolean isForceSearchingInLibrarySources() {
+            return true;
+          }
+        };
+      }
+      cache = getFacade().getClassNames(this, scope);
       myPublicClassNamesCache = new SoftReference<Set<String>>(cache);
     }
 

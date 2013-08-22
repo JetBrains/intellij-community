@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -27,7 +25,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -36,15 +33,22 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ThrowableConvertor;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.ui.GitHubCreateGistDialog;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubGist;
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
+import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
+import org.jetbrains.plugins.github.util.GithubAuthData;
+import org.jetbrains.plugins.github.util.GithubNotifications;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
 
 /**
  * @author oleg
@@ -100,24 +104,33 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                @Nullable final VirtualFile[] files) {
 
     // Ask for description and other params
-    final GitHubCreateGistDialog dialog = new GitHubCreateGistDialog(project, editor, file);
+    final GithubCreateGistDialog dialog = new GithubCreateGistDialog(project, editor, files, file);
     dialog.show();
     if (!dialog.isOK()) {
       return;
     }
 
-    final GithubAuthData auth = dialog.isAnonymous() ? null : getValidAuthData(project);
-    if (!dialog.isAnonymous() && auth == null) {
-      GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "You have to login to GitHub to create non-anonymous Gists.");
-      return;
+    GithubAuthData auth = GithubAuthData.createAnonymous();
+    if (!dialog.isAnonymous()) {
+      try {
+        auth = getValidAuthData(project);
+      }
+      catch (GithubAuthenticationCanceledException e) {
+        return;
+      }
+      catch (IOException e) {
+        GithubNotifications.showError(project, "Can't create gist", e);
+        return;
+      }
     }
 
     final Ref<String> url = new Ref<String>();
+    final GithubAuthData finalAuth = auth;
     new Task.Backgroundable(project, "Creating Gist...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        List<NamedContent> contents = collectContents(project, editor, file, files);
-        String gistUrl = createGist(project, auth, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
+        List<FileContent> contents = collectContents(project, editor, file, files);
+        String gistUrl = createGist(project, finalAuth, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
         url.set(gistUrl);
       }
 
@@ -136,28 +149,36 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }.queue();
   }
 
-  @Nullable
-  private static GithubAuthData getValidAuthData(@NotNull final Project project) {
-    final Ref<GithubAuthData> authDataRef = new Ref<GithubAuthData>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        authDataRef.set(GithubUtil.getValidAuthDataFromConfig(project, indicator));
-      }
-    });
-    return authDataRef.get();
+  @NotNull
+  private static GithubAuthData getValidAuthData(@NotNull final Project project) throws IOException {
+    return GithubUtil.computeValueInModal(project, "Access to GitHub",
+                                          new ThrowableConvertor<ProgressIndicator, GithubAuthData, IOException>() {
+                                            @Override
+                                            public GithubAuthData convert(ProgressIndicator indicator) throws IOException {
+                                              return GithubUtil.getValidAuthDataFromConfig(project, indicator);
+                                            }
+                                          });
   }
 
   @NotNull
-  static List<NamedContent> collectContents(@NotNull Project project,
-                                            @Nullable Editor editor,
-                                            @Nullable VirtualFile file,
-                                            @Nullable VirtualFile[] files) {
+  static List<FileContent> collectContents(@NotNull Project project,
+                                           @Nullable Editor editor,
+                                           @Nullable VirtualFile file,
+                                           @Nullable VirtualFile[] files) {
     if (editor != null) {
-      NamedContent content = getContentFromEditor(editor, file);
-      return content == null ? Collections.<NamedContent>emptyList() : Collections.singletonList(content);
+      String content = getContentFromEditor(editor);
+      if (content == null) {
+        return Collections.emptyList();
+      }
+      if (file != null) {
+        return Collections.singletonList(new FileContent(file.getName(), content));
+      }
+      else {
+        return Collections.singletonList(new FileContent("", content));
+      }
     }
     if (files != null) {
-      List<NamedContent> contents = new ArrayList<NamedContent>();
+      List<FileContent> contents = new ArrayList<FileContent>();
       for (VirtualFile vf : files) {
         contents.addAll(getContentFromFile(vf, project, null));
       }
@@ -174,8 +195,8 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @Nullable
   static String createGist(@NotNull Project project,
-                           @Nullable GithubAuthData auth,
-                           @NotNull List<NamedContent> contents,
+                           @NotNull GithubAuthData auth,
+                           @NotNull List<FileContent> contents,
                            boolean isPrivate,
                            @NotNull String description,
                            @Nullable String filename) {
@@ -183,16 +204,13 @@ public class GithubCreateGistAction extends DumbAwareAction {
       GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Can't create empty gist");
       return null;
     }
-    String requestBody = prepareCreateJsonRequest(description, isPrivate, contents, filename);
+    if (contents.size() == 1 && filename != null) {
+      FileContent entry = contents.iterator().next();
+      contents = Collections.singletonList(new FileContent(filename, entry.getContent()));
+    }
     try {
-      JsonElement jsonElement;
-      if (auth == null) {
-        jsonElement = GithubApiUtil.postRequest(GithubUrlUtil.getApiUrl(), "/gists", requestBody);
-      }
-      else {
-        jsonElement = GithubApiUtil.postRequest(GithubUrlUtil.getApiUrl(), auth, "/gists", requestBody);
-      }
-      return getUrlFromJson(project, jsonElement);
+      GithubGist gist = GithubApiUtil.createGist(auth, contents, description, isPrivate);
+      return gist.getHtmlUrl();
     }
     catch (IOException e) {
       GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, e);
@@ -200,52 +218,8 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
   }
 
-  @NotNull
-  private static String prepareCreateJsonRequest(@NotNull String description,
-                                                 boolean isPrivate,
-                                                 @NotNull List<NamedContent> contents,
-                                                 @Nullable String filename) {
-    JsonObject json = new JsonObject();
-    json.addProperty("description", description);
-    json.addProperty("public", Boolean.toString(!isPrivate));
-
-    JsonObject files = new JsonObject();
-
-    for (NamedContent content : contents) {
-      JsonObject file = new JsonObject();
-      file.addProperty("content", content.getText());
-      if (contents.size() > 1 || filename == null) {
-        files.add(content.getName(), file);
-      }
-      else {
-        files.add(filename, file);
-      }
-    }
-
-    json.add("files", files);
-    return json.toString();
-  }
-
   @Nullable
-  private static String getUrlFromJson(@NotNull Project project, @Nullable JsonElement jsonElement) {
-    if (jsonElement == null) {
-      GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, "Empty JSON response returned by GitHub");
-      return null;
-    }
-    if (!jsonElement.isJsonObject()) {
-      GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, "Invalid GitHub response: " + jsonElement.toString());
-      return null;
-    }
-    JsonElement htmlUrl = jsonElement.getAsJsonObject().get("html_url");
-    if (htmlUrl == null) {
-      GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, "Invalid GitHub response: " + jsonElement.toString());
-      return null;
-    }
-    return htmlUrl.getAsString();
-  }
-
-  @Nullable
-  private static NamedContent getContentFromEditor(@NotNull final Editor editor, @Nullable VirtualFile selectedFile) {
+  private static String getContentFromEditor(@NotNull final Editor editor) {
     String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Nullable
       @Override
@@ -261,19 +235,11 @@ public class GithubCreateGistAction extends DumbAwareAction {
     if (StringUtil.isEmptyOrSpaces(text)) {
       return null;
     }
-
-    String name;
-    if (selectedFile == null) {
-      name = "";
-    }
-    else {
-      name = selectedFile.getName();
-    }
-    return new NamedContent(name, text);
+    return text;
   }
 
   @NotNull
-  private static List<NamedContent> getContentFromFile(@NotNull VirtualFile file, @NotNull Project project, @Nullable String prefix) {
+  private static List<FileContent> getContentFromFile(@NotNull VirtualFile file, @NotNull Project project, @Nullable String prefix) {
     if (file.isDirectory()) {
       return getContentFromDirectory(file, project, prefix);
     }
@@ -292,12 +258,13 @@ public class GithubCreateGistAction extends DumbAwareAction {
     if (StringUtil.isEmptyOrSpaces(content)) {
       return Collections.emptyList();
     }
-    return Collections.singletonList(new NamedContent(addPrefix(file.getName(), prefix, false), content));
+    String filename = addPrefix(file.getName(), prefix, false);
+    return Collections.singletonList(new FileContent(filename, content));
   }
 
   @NotNull
-  private static List<NamedContent> getContentFromDirectory(@NotNull VirtualFile dir, @NotNull Project project, @Nullable String prefix) {
-    List<NamedContent> contents = new ArrayList<NamedContent>();
+  private static List<FileContent> getContentFromDirectory(@NotNull VirtualFile dir, @NotNull Project project, @Nullable String prefix) {
+    List<FileContent> contents = new ArrayList<FileContent>();
     for (VirtualFile file : dir.getChildren()) {
       if (!isFileIgnored(file, project)) {
         String pref = addPrefix(dir.getName(), prefix, true);
@@ -337,50 +304,4 @@ public class GithubCreateGistAction extends DumbAwareAction {
     ChangeListManager manager = ChangeListManager.getInstance(project);
     return manager.isIgnoredFile(file) || FileTypeManager.getInstance().isFileIgnored(file);
   }
-
-  static class NamedContent {
-    @NotNull private final String myName;
-    @NotNull private final String myText;
-
-    public NamedContent(@NotNull String name, @NotNull String text) {
-      myName = name;
-      myText = text;
-    }
-
-    @NotNull
-    public String getName() {
-      return myName;
-    }
-
-    @NotNull
-    public String getText() {
-      return myText;
-    }
-
-    @Override
-    public String toString() {
-      return myName;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      NamedContent content = (NamedContent)o;
-
-      if (!myName.equals(content.myName)) return false;
-      if (!myText.equals(content.myText)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myName.hashCode();
-      result = 31 * result + myText.hashCode();
-      return result;
-    }
-  }
-
 }

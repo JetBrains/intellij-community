@@ -32,15 +32,19 @@ public class MakeInitializerExplicitFix extends InspectionGadgetsFix {
     return InspectionGadgetsBundle.message(
       "make.initialization.explicit.quickfix");
   }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor)
     throws IncorrectOperationException {
     final PsiElement fieldName = descriptor.getPsiElement();
-    final PsiField field = (PsiField)fieldName.getParent();
-    if (field == null) {
-      return;
-    }
+    final PsiElement parent = fieldName.getParent();
+    if (!(parent instanceof PsiField)) return;
+    final PsiField field = (PsiField)parent;
     if (field.getInitializer() != null) {
       return;
     }

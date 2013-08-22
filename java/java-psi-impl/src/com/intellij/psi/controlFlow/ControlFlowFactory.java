@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -163,10 +162,7 @@ public class ControlFlowFactory {
     CopyOnWriteArrayList<ControlFlowContext> cached = cachedRef == null ? null : cachedRef.get();
     if (cached == null) {
       cached = ContainerUtil.createEmptyCOWList();
-      Reference<CopyOnWriteArrayList<ControlFlowContext>> reference = new SoftReference<CopyOnWriteArrayList<ControlFlowContext>>(cached);
-      cachedRef = ConcurrencyUtil.cacheOrGet(cachedFlows, element, reference);
-      CopyOnWriteArrayList<ControlFlowContext> existing = cachedRef.get();
-      if (existing != null) cached = existing;
+      cachedFlows.put(element, new SoftReference<CopyOnWriteArrayList<ControlFlowContext>>(cached));
     }
     return cached;
   }

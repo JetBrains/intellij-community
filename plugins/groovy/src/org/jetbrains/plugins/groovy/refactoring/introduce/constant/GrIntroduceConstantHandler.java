@@ -15,10 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -31,10 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+import org.jetbrains.plugins.groovy.refactoring.introduce.*;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -110,6 +112,31 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   @Override
   public GrField runRefactoring(@NotNull GrIntroduceContext context, @NotNull GrIntroduceConstantSettings settings) {
     return new GrIntroduceConstantProcessor(context, settings).run();
+  }
+
+  @Override
+  protected GrInplaceIntroducer getIntroducer(@NotNull GrVariable var,
+                                              @NotNull GrIntroduceContext context,
+                                              @NotNull GrIntroduceConstantSettings settings,
+                                              @NotNull List<RangeMarker> occurrenceMarkers,
+                                              RangeMarker varRangeMarker, RangeMarker expressionRangeMarker,
+                                              RangeMarker stringPartRangeMarker) {
+    return null;
+  }
+
+  @Override
+  protected GrIntroduceConstantSettings getSettingsForInplace(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
+    return null;
+  }
+
+  @Override
+  protected Map<OccurrencesChooser.ReplaceChoice, List<Object>> fillChoice(GrIntroduceContext context) {
+    return null;
+  }
+
+  @Override
+  protected boolean isInplace(GrIntroduceContext context) {
+    return false;
   }
 
   private static class ConstantChecker extends GroovyRecursiveElementVisitor {

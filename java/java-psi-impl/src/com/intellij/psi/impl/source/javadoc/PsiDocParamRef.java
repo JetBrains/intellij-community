@@ -157,7 +157,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
       }
 
       @Override
-      public void processVariants(PsiScopeProcessor processor) {
+      public void processVariants(@NotNull PsiScopeProcessor processor) {
         for (final PsiElement element : getVariants()) {
           if (!processor.execute(element, ResolveState.initial())) {
             return;

@@ -71,12 +71,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     myBreakpointManager = breakpointManager;
     myProperties = type.createProperties();
     if (myProperties != null) {
-      //noinspection unchecked
-      Element element = myState.getPropertiesElement();
-      if (element != null) {
-        //noinspection unchecked
-        myProperties.loadState(XmlSerializer.deserialize(element, ComponentSerializationUtil.getStateClass(myProperties.getClass())));
-      }
+      ComponentSerializationUtil.loadComponentState(myProperties, myState.getPropertiesElement());
     }
   }
 
@@ -350,7 +345,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   @Override
-  public int compareTo(Self self) {
+  public int compareTo(@NotNull Self self) {
     return myType.getBreakpointComparator().compare((Self)this, self);
   }
 

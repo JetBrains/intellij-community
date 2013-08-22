@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -100,6 +101,8 @@ import java.util.List;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
   private static final AbstractDocumentationTooltipAction[] ourTooltipActions = {new ShowQuickDocAtPinnedWindowFromTooltipAction()};
+  private static Key<Boolean> ourDebuggerHighlighterKey;
+  private static Key<Boolean> ourXDebuggerHighlighterKey;
   private final EditorColorsManager myEditorColorsManager;
 
   private       HighlightersSet myHighlighter;
@@ -425,7 +428,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
       catch (IndexNotReadyException e) {
         showDumbModeNotification(myTargetElement.getProject());
-        return null;
+        return DocInfo.EMPTY;
       }
       finally {
         token.finish();
@@ -894,14 +897,53 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     TextAttributes attributes = myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
     for (TextRange range : info.getRanges()) {
+      TextAttributes attr = patchAttributesColor(attributes, range, editor, getOrInitDebuggerHighlighterKey());
+      attr = patchAttributesColor(attributes, range, editor, getOrInitXDebuggerHighlighterKey());
       final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
                                                                                        HighlighterLayer.SELECTION + 1,
-                                                                                       attributes,
+                                                                                       attr,
                                                                                        HighlighterTargetArea.EXACT_RANGE);
       highlighters.add(highlighter);
     }
 
     return new HighlightersSet(highlighters, editor, cursor, info);
+  }
+
+
+  /**
+   * Patches attributes to be visible under debugger active line
+   */
+  @SuppressWarnings("UseJBColor")
+  private static TextAttributes patchAttributesColor(TextAttributes attributes, TextRange range, Editor editor, Key<Boolean> key) {
+    if (key != null) {
+      int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
+      for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
+
+        Boolean hasKey = highlighter.getUserData(key);
+        if (hasKey != null && hasKey) {
+          if (editor.offsetToLogicalPosition(highlighter.getStartOffset()).line == line) {
+            TextAttributes clone = attributes.clone();
+            clone.setForegroundColor(Color.orange);
+            clone.setEffectColor(Color.orange);
+            return clone;
+          }
+        }
+      }
+    }
+    return attributes;
+  }
+
+  private static Key<Boolean> getOrInitDebuggerHighlighterKey() {
+    if (ourDebuggerHighlighterKey == null) {
+      ourDebuggerHighlighterKey = Key.findKeyByName("HIGHLIGHTER_USERDATA_KEY");
+    }
+    return ourDebuggerHighlighterKey;
+  }
+  private static Key<Boolean> getOrInitXDebuggerHighlighterKey() {
+    if (ourXDebuggerHighlighterKey == null) {
+      ourXDebuggerHighlighterKey = Key.findKeyByName("EXECUTION_POINT_HIGHLIGHTER_KEY");
+    }
+    return ourXDebuggerHighlighterKey;
   }
 
   private class HighlightersSet {

@@ -47,7 +47,7 @@ import java.util.Locale;
  * @author Vladimir Kondratyev
  */
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized", "UnusedDeclaration"})
-public class SimpleColoredComponent extends JComponent implements Accessible {
+public class SimpleColoredComponent extends JComponent implements Accessible, ColoredTextContainer {
   private static final boolean isOracleRetina = UIUtil.isRetina() && SystemInfo.isOracleJvm;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
@@ -99,7 +99,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
   private boolean myAutoInvalidate = !(this instanceof TreeCellRenderer);
 
-  private AccessibleContext myContext = new MyAccessibleContext();
+  private final AccessibleContext myContext = new MyAccessibleContext();
 
   private boolean myIconOnTheRight = false;
   private boolean myTransparentIconBackground;
@@ -132,6 +132,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
    * @param fragment text fragment
    * @param attributes text attributes
    */
+  @Override
   public final void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes) {
     append(fragment, attributes, myMainTextLastIndex < 0);
   }
@@ -220,6 +221,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
    * Sets a new component icon
    * @param icon icon
    */
+  @Override
   public final void setIcon(final @Nullable Icon icon) {
     myIcon = icon;
     revalidateAndRepaint();
@@ -524,6 +526,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     }
   }
 
+  @Override
   protected void paintComponent(final Graphics g) {
     try {
       _doPaint(g);
@@ -822,15 +825,18 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       myInsets = insets;
     }
 
+    @Override
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       g.setColor(Color.BLACK);
       UIUtil.drawDottedRectangle(g, x, y, x + width - 1, y + height - 1);
     }
 
+    @Override
     public Insets getBorderInsets(final Component c) {
       return myInsets;
     }
 
+    @Override
     public boolean isBorderOpaque() {
       return true;
     }
@@ -902,6 +908,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       myUrl = url;
     }
 
+    @Override
     public void run() {
       BrowserUtil.launchBrowser(myUrl);
     }

@@ -49,8 +49,9 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
 
   @SuppressWarnings({"PublicField"})
   public String loggerClassName = "java.util.logging.Logger";
-  @SuppressWarnings({"PublicField"})
+
   @NonNls
+  @SuppressWarnings({"PublicField"})
   public String loggerMethodAndconditionMethodNames =
     "fine,isLoggable(java.util.logging.Level.FINE)," +
     "finer,isLoggable(java.util.logging.Level.FINER)," +
@@ -101,6 +102,12 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
 
   private class LogStatementGuardedByLogConditionFix extends InspectionGadgetsFix {
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
     @Override
     @NotNull
     public String getName() {
@@ -111,8 +118,7 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element.getParent().getParent();
-      final PsiStatement statement = PsiTreeUtil.getParentOfType(
-        methodCallExpression, PsiStatement.class);
+      final PsiStatement statement = PsiTreeUtil.getParentOfType(methodCallExpression, PsiStatement.class);
       if (statement == null) {
         return;
       }
@@ -138,16 +144,10 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       if (qualifier == null) {
         return;
       }
-      @NonNls
-      final StringBuilder ifStatementText = new StringBuilder("if (");
-      ifStatementText.append(qualifier.getText());
-      ifStatementText.append('.');
       final int index = logMethodNameList.indexOf(referenceName);
       final String conditionMethodText = logConditionMethodNameList.get(index);
-      ifStatementText.append(conditionMethodText);
-      ifStatementText.append(") {}");
-      final PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText(
-          ifStatementText.toString(), statement);
+      @NonNls final String ifStatementText = "if (" + qualifier.getText() + '.' + conditionMethodText + ") {}";
+      final PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText(ifStatementText, statement);
       final PsiBlockStatement blockStatement = (PsiBlockStatement)ifStatement.getThenBranch();
       if (blockStatement == null) {
         return;
@@ -158,8 +158,15 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       }
       final PsiStatement firstStatement = logStatements.get(0);
       final PsiElement parent = firstStatement.getParent();
-      final PsiElement result = parent.addBefore(ifStatement, firstStatement);
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+      if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getElseBranch() != null) {
+        final PsiBlockStatement newBlockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", statement);
+        newBlockStatement.getCodeBlock().add(ifStatement);
+        final PsiElement result = firstStatement.replace(newBlockStatement);
+        codeStyleManager.shortenClassReferences(result);
+        return;
+      }
+      final PsiElement result = parent.addBefore(ifStatement, firstStatement);
       codeStyleManager.shortenClassReferences(result);
       for (PsiStatement logStatement : logStatements) {
         logStatement.delete();
@@ -185,10 +192,7 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
         return false;
       }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        return false;
-      }
-      return TypeUtils.expressionHasTypeOrSubtype(qualifier, loggerClassName);
+      return qualifier != null && TypeUtils.expressionHasTypeOrSubtype(qualifier, loggerClassName);
     }
   }
 
@@ -263,6 +267,9 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
           return false;
         }
         final String referenceName = methodExpression.getReferenceName();
+        if (referenceName == null) {
+          return false;
+        }
         final int index = logMethodNameList.indexOf(logMethodName);
         final String conditionName = logConditionMethodNameList.get(index);
         return conditionName.startsWith(referenceName);

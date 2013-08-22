@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
@@ -33,6 +32,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
+import com.siyeh.ig.psiutils.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,9 +48,11 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
     final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
     final PsiFile containingFile = psiElement.getContainingFile();
+    if (containingFile == null) return null;
+
     PsiFile topLevelFile = InjectedLanguageManager.getInstance(containingFile.getProject()).getTopLevelFile(containingFile);
 
-    if (!(topLevelFile instanceof PsiJavaFile) || topLevelFile instanceof JspFile) {
+    if (!(topLevelFile instanceof PsiJavaFile) || topLevelFile instanceof ServerPageFile) {
       return null;
     }
     PsiElement containingClass = topLevelFile == containingFile ? psiElement : InjectedLanguageManager
@@ -77,7 +79,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
     else {
       // skip JspClass synthetic classes.
-      if (containingClass.getParent() instanceof PsiFile && JspPsiUtil.isInJspFile(containingClass)) {
+      if (containingClass.getParent() instanceof PsiFile && FileTypeUtils.isInServerPageFile(containingClass)) {
         containingClass = null;
       }
     }

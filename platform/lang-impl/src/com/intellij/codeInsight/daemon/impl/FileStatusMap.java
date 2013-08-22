@@ -34,6 +34,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
+import gnu.trove.TObjectFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,16 +99,16 @@ public class FileStatusMap implements Disposable {
     private boolean errorFound;
 
     private FileStatus(@NotNull Project project) {
-      markWholeFile(project);
+      markWholeFileDirty(project);
     }
 
-    private void markWholeFile(@NotNull Project project) {
-      dirtyScopes.put(Pass.UPDATE_ALL, WHOLE_FILE_MARKER);
-      dirtyScopes.put(Pass.EXTERNAL_TOOLS, WHOLE_FILE_MARKER);
-      dirtyScopes.put(Pass.LOCAL_INSPECTIONS, WHOLE_FILE_MARKER);
+    private void markWholeFileDirty(@NotNull Project project) {
+      dirtyScopes.put(Pass.UPDATE_ALL, WHOLE_FILE_DIRTY_MARKER);
+      dirtyScopes.put(Pass.EXTERNAL_TOOLS, WHOLE_FILE_DIRTY_MARKER);
+      dirtyScopes.put(Pass.LOCAL_INSPECTIONS, WHOLE_FILE_DIRTY_MARKER);
       TextEditorHighlightingPassRegistrarImpl registrar = (TextEditorHighlightingPassRegistrarImpl) TextEditorHighlightingPassRegistrar.getInstance(project);
       for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
-        dirtyScopes.put(factory.getPassId(), WHOLE_FILE_MARKER);
+        dirtyScopes.put(factory.getPassId(), WHOLE_FILE_DIRTY_MARKER);
       }
     }
 
@@ -118,15 +119,13 @@ public class FileStatusMap implements Disposable {
       return true;
     }
 
-    public void combineScopesWith(final TextRange scope, final int fileLength, final Document document) {
-      dirtyScopes.forEachEntry(new TIntObjectProcedure<RangeMarker>() {
+    public void combineScopesWith(@NotNull final TextRange scope, final int fileLength, @NotNull final Document document) {
+      dirtyScopes.transformValues(new TObjectFunction<RangeMarker, RangeMarker>() {
         @Override
-        public boolean execute(int id, RangeMarker oldScope) {
+        public RangeMarker execute(RangeMarker oldScope) {
           RangeMarker newScope = combineScopes(oldScope, scope, fileLength, document);
-          if (newScope != oldScope) {
-            dirtyScopes.put(id, newScope);
-          }
-          return true;
+          if (newScope != oldScope && oldScope != null) oldScope.dispose();
+          return newScope;
         }
       });
     }
@@ -141,7 +140,7 @@ public class FileStatusMap implements Disposable {
       dirtyScopes.forEachEntry(new TIntObjectProcedure<RangeMarker>() {
         @Override
         public boolean execute(int passId, RangeMarker rangeMarker) {
-          s.append(" pass: " + passId + " -> " + (rangeMarker ==  WHOLE_FILE_MARKER ? "Whole file" : rangeMarker)+ ";");
+          s.append(" pass: ").append(passId).append(" -> ").append(rangeMarker == WHOLE_FILE_DIRTY_MARKER ? "Whole file" : rangeMarker).append(";");
           return true;
         }
       });
@@ -181,7 +180,7 @@ public class FileStatusMap implements Disposable {
       else if (status.dirtyScopes.containsKey(passId)) {
         RangeMarker marker = status.dirtyScopes.get(passId);
         if (marker != null) {
-          if (marker != WHOLE_FILE_MARKER) marker.dispose();
+          marker.dispose();
           status.dirtyScopes.put(passId, null);
         }
       }
@@ -189,8 +188,6 @@ public class FileStatusMap implements Disposable {
   }
 
   /**
-   * @param document
-   * @param passId
    * @return null for processed file, whole file for untouched or entirely dirty file, range(usually code block) for dirty region (optimization)
    */
   @Nullable
@@ -203,15 +200,15 @@ public class FileStatusMap implements Disposable {
         return file == null ? null : file.getTextRange();
       }
       if (status.defensivelyMarked) {
-        status.markWholeFile(myProject);
+        status.markWholeFileDirty(myProject);
         status.defensivelyMarked = false;
       }
       LOG.assertTrue(status.dirtyScopes.containsKey(passId), "Unknown pass " + passId);
       RangeMarker marker = status.dirtyScopes.get(passId);
-      return marker == null ? null : marker != WHOLE_FILE_MARKER && marker.isValid() ? TextRange.create(marker) : new TextRange(0, document.getTextLength());
+      return marker == null ? null : marker.isValid() ? TextRange.create(marker) : new TextRange(0, document.getTextLength());
     }
   }
-  
+
   public void markFileScopeDirty(@NotNull Document document, int passId) {
     assertAllowModifications();
     synchronized(myDocumentToStatusMap) {
@@ -225,10 +222,10 @@ public class FileStatusMap implements Disposable {
       else {
         LOG.assertTrue(status.dirtyScopes.containsKey(passId));
         RangeMarker marker = status.dirtyScopes.get(passId);
-        if (marker != null && marker != WHOLE_FILE_MARKER) {
+        if (marker != null) {
           marker.dispose();
         }
-        status.dirtyScopes.put(passId, WHOLE_FILE_MARKER);
+        status.dirtyScopes.put(passId, WHOLE_FILE_DIRTY_MARKER);
       }
     }
   }
@@ -260,17 +257,17 @@ public class FileStatusMap implements Disposable {
       if (status.defensivelyMarked) {
         status.defensivelyMarked = false;
       }
-      status.combineScopesWith(scope, fileLength,document);
+      status.combineScopesWith(scope, fileLength, document);
     }
   }
 
-  private static RangeMarker combineScopes(RangeMarker old, TextRange scope, int textLength, @NotNull Document document) {
-    if (scope == null) return old;
+  @NotNull
+  private static RangeMarker combineScopes(RangeMarker old, @NotNull TextRange scope, int textLength, @NotNull Document document) {
     if (old == null) {
-      if (scope.equalsToRange(0, textLength)) return WHOLE_FILE_MARKER;
+      if (scope.equalsToRange(0, textLength)) return WHOLE_FILE_DIRTY_MARKER;
       return document.createRangeMarker(scope);
     }
-    if (old == WHOLE_FILE_MARKER) return old;
+    if (old == WHOLE_FILE_DIRTY_MARKER) return old;
     TextRange oldRange = TextRange.create(old);
     TextRange union = scope.union(oldRange);
     if (old.isValid() && union.equals(oldRange)) {
@@ -279,7 +276,6 @@ public class FileStatusMap implements Disposable {
     if (union.getEndOffset() > textLength) {
       union = union.intersection(new TextRange(0, textLength));
     }
-    old.dispose();
     assert union != null;
     return document.createRangeMarker(union);
   }
@@ -307,7 +303,7 @@ public class FileStatusMap implements Disposable {
     myAllowDirt = allow;
   }
 
-  private static final RangeMarker WHOLE_FILE_MARKER = new RangeMarker(){
+  private static final RangeMarker WHOLE_FILE_DIRTY_MARKER = new RangeMarker(){
     @NotNull
     @Override
     public Document getDocument() {
@@ -326,7 +322,7 @@ public class FileStatusMap implements Disposable {
 
     @Override
     public boolean isValid() {
-      throw new UnsupportedOperationException();
+      return false;
     }
 
     @Override
@@ -351,7 +347,7 @@ public class FileStatusMap implements Disposable {
 
     @Override
     public void dispose() {
-      throw new UnsupportedOperationException();
+      // ignore
     }
 
     @Override

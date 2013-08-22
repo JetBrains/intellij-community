@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -115,7 +116,8 @@ public class ExecUtil {
   public static File createTempExecutableScript(@NotNull final String prefix,
                                                 @NotNull final String suffix,
                                                 @NotNull final String source) throws IOException, ExecutionException {
-    final File tempFile = FileUtil.createTempFile(prefix, suffix);
+    File tempDir = new File(PathManager.getTempPath());
+    File tempFile = FileUtil.createTempFile(tempDir, prefix, suffix);
     FileUtil.writeToFile(tempFile, source);
     if (!tempFile.setExecutable(true, true)) {
       throw new ExecutionException("Failed to make temp file executable: " + tempFile);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,9 @@ import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-import java.util.Arrays;
-import java.util.Collection;
+import javax.swing.*;
 
-public class StaticVariableNamingConventionInspection
-  extends ConventionInspection {
+public class StaticVariableNamingConventionInspection extends ConventionInspection {
 
   private static final int DEFAULT_MIN_LENGTH = 5;
   private static final int DEFAULT_MAX_LENGTH = 32;
@@ -42,8 +39,7 @@ public class StaticVariableNamingConventionInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "static.variable.naming.convention.display.name");
+    return InspectionGadgetsBundle.message("static.variable.naming.convention.display.name");
   }
 
   @Override
@@ -61,16 +57,12 @@ public class StaticVariableNamingConventionInspection
   public String buildErrorString(Object... infos) {
     final String fieldName = (String)infos[0];
     if (fieldName.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message(
-        "static.variable.naming.convention.problem.descriptor.short");
+      return InspectionGadgetsBundle.message("static.variable.naming.convention.problem.descriptor.short");
     }
     else if (fieldName.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message(
-        "static.variable.naming.convention.problem.descriptor.long");
+      return InspectionGadgetsBundle.message("static.variable.naming.convention.problem.descriptor.long");
     }
-    return InspectionGadgetsBundle.message(
-      "static.variable.naming.convention.problem.descriptor.regex.mismatch",
-      getRegex());
+    return InspectionGadgetsBundle.message("static.variable.naming.convention.problem.descriptor.regex.mismatch", getRegex());
   }
 
   @Override
@@ -89,11 +81,10 @@ public class StaticVariableNamingConventionInspection
   }
 
   @Override
-  public Collection<? extends JComponent> createExtraOptions() {
-    return Arrays.asList(
-      new CheckBox(InspectionGadgetsBundle.message(
-        "static.variable.naming.convention.mutable.option"),
-                   this, "checkMutableFinals"));
+  public JComponent[] createExtraOptions() {
+    return new JComponent[]{
+      new CheckBox(InspectionGadgetsBundle.message("static.variable.naming.convention.mutable.option"), this, "checkMutableFinals")
+    };
   }
 
   @Override

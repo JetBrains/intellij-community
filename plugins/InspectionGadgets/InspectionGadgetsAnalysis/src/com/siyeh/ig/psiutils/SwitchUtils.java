@@ -24,17 +24,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.*;
+
 public class SwitchUtils {
 
   private SwitchUtils() {}
 
   public static int calculateBranchCount(@NotNull PsiSwitchStatement statement) {
     final PsiCodeBlock body = statement.getBody();
-    int branches = 0;
     if (body == null) {
-      return branches;
+      return 0;
     }
     final PsiStatement[] statements = body.getStatements();
+    int branches = 0;
     for (final PsiStatement child : statements) {
       if (child instanceof PsiSwitchLabelStatement) {
         branches++;
@@ -264,6 +266,91 @@ public class SwitchUtils {
 
     public boolean isUsed() {
       return m_used;
+    }
+  }
+
+  public static class IfStatementBranch {
+
+    private final Set<String> topLevelVariables = new HashSet<String>(3);
+    private final LinkedList<String> comments = new LinkedList<String>();
+    private final LinkedList<String> statementComments = new LinkedList<String>();
+    private final List<PsiExpression> caseExpressions = new ArrayList<PsiExpression>(3);
+    private final PsiStatement statement;
+    private final boolean elseBranch;
+
+    public IfStatementBranch(PsiStatement branch, boolean elseBranch) {
+      statement = branch;
+      this.elseBranch = elseBranch;
+      calculateVariablesDeclared(statement);
+    }
+
+    public void addComment(String comment) {
+      comments.addFirst(comment);
+    }
+
+    public void addStatementComment(String comment) {
+      statementComments.addFirst(comment);
+    }
+
+    public void addCaseExpression(PsiExpression expression) {
+      caseExpressions.add(expression);
+    }
+
+    public PsiStatement getStatement() {
+      return statement;
+    }
+
+    public List<PsiExpression> getCaseExpressions() {
+      return Collections.unmodifiableList(caseExpressions);
+    }
+
+    public boolean isElse() {
+      return elseBranch;
+    }
+
+    public boolean topLevelDeclarationsConflictWith(IfStatementBranch testBranch) {
+      final Set<String> topLevel = testBranch.topLevelVariables;
+      return intersects(topLevelVariables, topLevel);
+    }
+
+    private static boolean intersects(Set<String> set1, Set<String> set2) {
+      for (final String s : set1) {
+        if (set2.contains(s)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    public List<String> getComments() {
+      return comments;
+    }
+
+    public List<String> getStatementComments() {
+      return statementComments;
+    }
+
+    public void calculateVariablesDeclared(PsiStatement statement) {
+      if (statement == null) {
+        return;
+      }
+      if (statement instanceof PsiDeclarationStatement) {
+        final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
+        final PsiElement[] elements = declarationStatement.getDeclaredElements();
+        for (PsiElement element : elements) {
+          final PsiVariable variable = (PsiVariable)element;
+          final String varName = variable.getName();
+          topLevelVariables.add(varName);
+        }
+      }
+      else if (statement instanceof PsiBlockStatement) {
+        final PsiBlockStatement block = (PsiBlockStatement)statement;
+        final PsiCodeBlock codeBlock = block.getCodeBlock();
+        final PsiStatement[] statements = codeBlock.getStatements();
+        for (PsiStatement statement1 : statements) {
+          calculateVariablesDeclared(statement1);
+        }
+      }
     }
   }
 }

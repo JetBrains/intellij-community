@@ -3,7 +3,7 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -28,9 +28,9 @@ class MakePublicStaticFix extends InspectionGadgetsFix {
     final PsiElement element = descriptor.getPsiElement();
     if (element != null) {
       final PsiElement parent = element.getParent();
-      if (parent instanceof PsiField) {
-        PsiUtil.setModifierProperty((PsiField)parent, PsiModifier.PUBLIC, true);
-        PsiUtil.setModifierProperty((PsiField)parent, PsiModifier.STATIC, myMakeStatic);
+      if (parent instanceof PsiMember) {
+        PsiUtil.setModifierProperty((PsiMember)parent, PsiModifier.PUBLIC, true);
+        PsiUtil.setModifierProperty((PsiMember)parent, PsiModifier.STATIC, myMakeStatic);
       }
     }
   }
@@ -39,5 +39,11 @@ class MakePublicStaticFix extends InspectionGadgetsFix {
   @Override
   public String getName() {
     return myName;
+  }
+
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Make public/static";
   }
 }

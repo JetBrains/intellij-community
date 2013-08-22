@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
@@ -66,6 +67,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -194,9 +196,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public PsiTypeParameter createTypeParameter(String name, PsiClassType[] superTypes) {
     StringBuilder builder = new StringBuilder();
     builder.append("def <").append(name);
-    if (superTypes.length > 0) {
+    if (superTypes.length > 1 ||
+        superTypes.length == 1 && !superTypes[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
       builder.append(" extends ");
       for (PsiClassType type : superTypes) {
+        if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) continue;
         builder.append(type.getCanonicalText()).append(',');
       }
 
@@ -832,7 +836,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createMethodFromText(text.toString(), context);
   }
 
-  public GrDocComment createDocCommentFromText(String text) {
+  @NotNull
+  public GrDocComment createDocCommentFromText(@NotNull String text) {
     return (GrDocComment)createGroovyFileChecked(text).getFirstChild();
   }
 
@@ -961,14 +966,30 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrMethod createMethod(@NotNull @NonNls String name, @Nullable PsiType returnType) throws IncorrectOperationException {
     StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
+      builder.append("def <T>");
       if (returnType != null) {
         builder.append(returnType.getCanonicalText());
       }
-      else {
-        builder.append("def");
+      builder.append(' ');
+      if (GroovyNamesUtil.isIdentifier(name)) {
+        builder.append(name);
       }
-      builder.append(' ').append(name).append("(){}");
-      return createMethodFromText(builder);
+      else {
+        builder.append('"');
+        builder.append(GrStringUtil.escapeSymbolsForGString(name, true, false));
+        builder.append('"');
+      }
+      builder.append("(){}");
+      GrMethod method = createMethodFromText(builder);
+      if (returnType != null) {
+        method.getModifierList().setModifierProperty(GrModifier.DEF, false);
+      }
+      PsiTypeParameterList typeParameterList = method.getTypeParameterList();
+      assert typeParameterList != null;
+      typeParameterList.getFirstChild().delete();
+      typeParameterList.getFirstChild().delete();
+      typeParameterList.getFirstChild().delete();
+      return method;
     }
     finally {
       StringBuilderSpinAllocator.dispose(builder);
@@ -1100,5 +1121,30 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName, @NotNull GlobalSearchScope resolveScope) {
     return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(qName, resolveScope);
+  }
+
+  @Override
+  public boolean isValidClassName(@NotNull String name) {
+    return GroovyNamesUtil.isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidMethodName(@NotNull String name) {
+    return true;
+  }
+
+  @Override
+  public boolean isValidParameterName(@NotNull String name) {
+    return GroovyNamesUtil.isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidFieldName(@NotNull String name) {
+    return GroovyNamesUtil.isIdentifier(name);
+  }
+
+  @Override
+  public boolean isValidLocalVariableName(@NotNull String name) {
+    return GroovyNamesUtil.isIdentifier(name);
   }
 }

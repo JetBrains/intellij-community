@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.Patches;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.WeakHashMap;
@@ -165,10 +164,6 @@ public class ScreenUtil {
   }
 
   private static Insets calcInsets(GraphicsConfiguration gc) {
-    if (Patches.SUN_BUG_ID_9000030 && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
-      return new Insets(0, 0, 0, 0);
-    }
-
     return Toolkit.getDefaultToolkit().getScreenInsets(gc);
   }
 

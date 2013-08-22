@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.containers.ConcurrentWeakValueIntObjectHashMap;
+import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
   private final int myIndex = ourKeysCounter.getAndIncrement();
-  private final String myName; // for debug purposes only
+  private final String myName;
   private static final ConcurrentWeakValueIntObjectHashMap<Key> allKeys = new ConcurrentWeakValueIntObjectHashMap<Key>();
 
   public Key(@NotNull @NonNls String name) {
@@ -101,5 +102,16 @@ public class Key<T> {
   public static <T> Key<T> getKeyByIndex(int index) {
     //noinspection unchecked
     return (Key<T>)allKeys.get(index);
+  }
+
+  @Nullable
+  public static <T> Key<T> findKeyByName(String name) {
+    for (StripedLockIntObjectConcurrentHashMap.IntEntry<Key> key : allKeys.entries()) {
+      if (name.equals(key.getValue().myName)) {
+        //noinspection unchecked
+        return key.getValue();
+      }
+    }
+    return null;
   }
 }

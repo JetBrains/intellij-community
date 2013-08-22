@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -59,6 +60,12 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
     String scope =
       myReplaceInWholeProject ? InspectionGadgetsBundle.message("the.whole.project") : InspectionGadgetsBundle.message("this.class");
     return InspectionGadgetsBundle.message("static.inheritance.replace.quickfix", scope);
+  }
+
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Replace inheritance with qualified reference";
   }
 
   @Override
@@ -106,7 +113,7 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
             final Runnable runnable = new Runnable() {
               @Override
               public void run() {
-                if (isQuickFixOnReadOnlyFile(referenceExpression)) {
+                if (!FileModificationService.getInstance().preparePsiElementsForWrite(referenceExpression)) {
                   return;
                 }
                 final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();

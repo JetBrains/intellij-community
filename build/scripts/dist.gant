@@ -28,7 +28,6 @@ class Paths {
   final distMac
   final artifacts
   final artifacts_core
-  final artifacts_core_upsource
   final artifacts_jps
 
   def Paths(String out) {
@@ -39,7 +38,6 @@ class Paths {
     distMac = "$sandbox/dist.mac.ce"
     artifacts = "$sandbox/artifacts"
     artifacts_core = "$artifacts/core"
-    artifacts_core_upsource = "$artifacts/core-upsource"
     artifacts_jps = "$artifacts/jps"
   }
 }
@@ -103,8 +101,6 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   layouts.layoutFull(home, paths.distAll, null)
   layouts.layout_core(home, paths.artifacts_core)
   notifyArtifactBuilt(paths.artifacts_core)
-  layouts.layout_core_upsource(home, paths.artifacts_core_upsource)
-  notifyArtifactBuilt(paths.artifacts_core_upsource)
   if (buildJps) {
     layouts.layoutCommunityJps(home, paths.artifacts_jps)
     notifyArtifactBuilt(paths.artifacts_jps)

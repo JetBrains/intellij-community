@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,4 +35,10 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
   public Icon getFileIcon(@Iconable.IconFlags int flags) {
     return AllIcons.Nodes.Plugin;
   }
+
+  @Override
+  public boolean hasStubs() {
+    return true;
+  }
+
 }

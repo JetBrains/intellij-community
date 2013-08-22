@@ -56,6 +56,11 @@ public class UnnecessarySuperConstructorInspection
 
   private static class UnnecessarySuperConstructorFix
     extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull

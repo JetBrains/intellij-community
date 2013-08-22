@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
@@ -64,8 +63,24 @@ public abstract class XmlExtension {
 
   public abstract boolean isAvailable(PsiFile file);
 
+  public static class TagInfo {
+
+    public final String name;
+    public final String namespace;
+
+    public TagInfo(String name, String namespace) {
+      this.name = name;
+      this.namespace = namespace;
+    }
+
+    @Nullable
+    public PsiElement getDeclaration() {
+      return null;
+    }
+  }
+
   @NotNull
-  public abstract List<Pair<String,String>> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context);
+  public abstract List<TagInfo> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context);
 
   @Nullable
   public TagNameReference createTagNameReference(final ASTNode nameElement, final boolean startTagFlag) {

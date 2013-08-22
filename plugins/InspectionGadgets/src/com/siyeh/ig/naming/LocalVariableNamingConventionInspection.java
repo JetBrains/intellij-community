@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-import java.util.Arrays;
-import java.util.Collection;
+import javax.swing.*;
 
-public class LocalVariableNamingConventionInspection
-  extends ConventionInspection {
+public class LocalVariableNamingConventionInspection extends ConventionInspection {
 
   /**
    * @noinspection PublicField
@@ -45,8 +42,7 @@ public class LocalVariableNamingConventionInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "local.variable.naming.convention.display.name");
+    return InspectionGadgetsBundle.message("local.variable.naming.convention.display.name");
   }
 
   @Override
@@ -54,17 +50,13 @@ public class LocalVariableNamingConventionInspection
   public String buildErrorString(Object... infos) {
     final String varName = (String)infos[0];
     if (varName.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message(
-        "local.variable.naming.convention.problem.descriptor.short");
+      return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.short");
     }
     else if (varName.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message(
-        "local.variable.naming.convention.problem.descriptor.long");
+      return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.long");
     }
     else {
-      return InspectionGadgetsBundle.message(
-        "local.variable.naming.convention.problem.descriptor.regex.mismatch",
-        getRegex());
+      return InspectionGadgetsBundle.message("local.variable.naming.convention.problem.descriptor.regex.mismatch", getRegex());
     }
   }
 
@@ -101,18 +93,15 @@ public class LocalVariableNamingConventionInspection
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLocalVariable(
-      @NotNull PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
       if (m_ignoreForLoopParameters) {
         final PsiElement parent = variable.getParent();
         if (parent != null) {
           final PsiElement grandparent = parent.getParent();
           if (grandparent instanceof PsiForStatement) {
-            final PsiForStatement forLoop =
-              (PsiForStatement)grandparent;
-            final PsiStatement initialization =
-              forLoop.getInitialization();
+            final PsiForStatement forLoop = (PsiForStatement)grandparent;
+            final PsiStatement initialization = forLoop.getInitialization();
             if (parent.equals(initialization)) {
               return;
             }
@@ -132,10 +121,8 @@ public class LocalVariableNamingConventionInspection
     @Override
     public void visitParameter(@NotNull PsiParameter variable) {
       final PsiElement scope = variable.getDeclarationScope();
-      final boolean isCatchParameter =
-        scope instanceof PsiCatchSection;
-      final boolean isForeachParameter =
-        scope instanceof PsiForeachStatement;
+      final boolean isCatchParameter = scope instanceof PsiCatchSection;
+      final boolean isForeachParameter = scope instanceof PsiForeachStatement;
       if (!isCatchParameter && !isForeachParameter) {
         return;
       }
@@ -157,13 +144,10 @@ public class LocalVariableNamingConventionInspection
   }
 
   @Override
-  public Collection<? extends JComponent> createExtraOptions() {
-    return Arrays.asList(
-      new CheckBox(InspectionGadgetsBundle.message(
-        "local.variable.naming.convention.ignore.option"),
-                   this, "m_ignoreForLoopParameters"),
-      new CheckBox(InspectionGadgetsBundle.message(
-        "local.variable.naming.convention.ignore.catch.option"),
-                   this, "m_ignoreCatchParameters"));
+  public JComponent[] createExtraOptions() {
+    return new JComponent[] {
+      new CheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.option"), this, "m_ignoreForLoopParameters"),
+      new CheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.catch.option"), this, "m_ignoreCatchParameters")
+    };
   }
 }

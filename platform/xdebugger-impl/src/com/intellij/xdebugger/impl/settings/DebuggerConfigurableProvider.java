@@ -64,7 +64,7 @@ public class DebuggerConfigurableProvider extends ConfigurableProvider {
     //Perhaps we always should have a root node 'Debugger' with separate nodes for language-specific settings under it.
     //However for AppCode there is only one language which is clearly associated with the product
     //This code should removed when we extract the common debugger settings to the root node.
-    if (PlatformUtils.isAppCode() && rootConfigurable == null && configurables.size() == 1) {
+    if (PlatformUtils.isCidr() && rootConfigurable == null && configurables.size() == 1) {
       rootConfigurable = configurables.get(0);
       configurables = Collections.emptyList();
     }

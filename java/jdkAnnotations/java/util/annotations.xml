@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
+  <item name='java.util.AbstractCollection T[] toArray(T[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.util.ArrayList ArrayList(java.util.Collection&lt;? extends E&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -844,6 +847,30 @@
   </item>
   <item name="java.util.NavigableSet java.util.NavigableSet&lt;E&gt; tailSet(E, boolean)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Set T[] toArray(T[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set T[] toArray(T[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set boolean addAll(java.util.Collection&lt;? extends E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set boolean containsAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set boolean removeAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set boolean retainAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set java.lang.Object[] toArray()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set java.util.Iterator&lt;E&gt; iterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.util.SortedMap java.util.Comparator&lt;? super K&gt; comparator()">
     <annotation name="org.jetbrains.annotations.NotNull" />

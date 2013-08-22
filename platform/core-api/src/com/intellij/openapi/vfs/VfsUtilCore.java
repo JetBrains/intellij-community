@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
@@ -37,6 +38,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.VisitorException;
@@ -482,6 +484,29 @@ public class VfsUtilCore {
     }
 
     return file;
+  }
+
+  public static boolean processFilesRecursively(@NotNull VirtualFile root, @NotNull Processor<VirtualFile> processor) {
+    if (!processor.process(root)) return false;
+
+    if (root.isDirectory()) {
+      final LinkedList<VirtualFile[]> queue = new LinkedList<VirtualFile[]>();
+
+      queue.add(root.getChildren());
+
+      do {
+        final VirtualFile[] files = queue.removeFirst();
+
+        for (VirtualFile file : files) {
+          if (!processor.process(file)) return false;
+          if (file.isDirectory()) {
+            queue.add(file.getChildren());
+          }
+        }
+      } while (!queue.isEmpty());
+    }
+
+    return true;
   }
 
   /**

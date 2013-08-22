@@ -50,10 +50,12 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
     super(process, commandLine, charset);
   }
 
+  @Override
   public final void notifyTextAvailable(final String text, final Key outputType) {
     myAnsiEscapeDecoder.escapeText(text, outputType, this);
   }
 
+  @Override
   public void coloredTextAvailable(String text, Key attributes) {
     super.notifyTextAvailable(text, attributes);
   }
