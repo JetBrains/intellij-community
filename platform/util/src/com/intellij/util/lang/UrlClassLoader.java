@@ -36,41 +36,76 @@ import java.util.List;
 public class UrlClassLoader extends ClassLoader {
   @NonNls static final String CLASS_EXTENSION = ".class";
 
-  private final ClassPath myClassPath;
+  public static final class Builder {
+    private List<URL> myURLs = ContainerUtil.emptyList();
+    private ClassLoader myParent = null;
+    private boolean myLockJars = false;
+    private boolean myUseCache = false;
+    private boolean myAcceptUnescaped = false;
+    private boolean myPreload = true;
+
+    private Builder() { }
+
+    public Builder urls(List<URL> urls) { myURLs = urls; return this; }
+    public Builder urls(URL... urls) { myURLs = Arrays.asList(urls); return this; }
+    public Builder parent(ClassLoader parent) { myParent = parent; return this; }
+    public Builder allowLock() { myLockJars = true; return this; }
+    public Builder allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
+    public Builder useCache() { myUseCache = true; return this; }
+    public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
+    public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
+    public Builder noPreload() { myPreload = false; return this; }
+    public UrlClassLoader get() { return new UrlClassLoader(this); }
+  }
+
+  public static Builder build() {
+    return new Builder();
+  }
+
   private final List<URL> myURLs;
+  private final ClassPath myClassPath;
 
+  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
   public UrlClassLoader(@NotNull ClassLoader parent) {
-    this(Arrays.asList(((URLClassLoader)parent).getURLs()), parent.getParent(), true, true);
+    this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache());
   }
 
+  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
   public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent) {
-    this(urls, parent, false, false);
+    this(build().urls(urls).parent(parent));
   }
 
+  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
   public UrlClassLoader(URL[] urls, @Nullable ClassLoader parent) {
-    this(Arrays.asList(urls), parent, false, false);
+    this(build().urls(urls).parent(parent));
   }
 
-  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean canLockJars, boolean canUseCache) {
-    this(urls, parent, canLockJars, canUseCache, false, true);
+  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
+  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean lockJars, boolean useCache) {
+    this(build().urls(urls).parent(parent).allowLock(lockJars).useCache(useCache));
   }
 
-  public UrlClassLoader(List<URL> urls,
-                        @Nullable ClassLoader parent,
-                        boolean canLockJars,
-                        boolean canUseCache,
-                        boolean acceptUnescapedUrls,
-                        boolean preloadJarContents) {
+  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
+  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean lockJars, boolean useCache, boolean allowUnescaped, boolean preload) {
     super(parent);
-
-    List<URL> list = ContainerUtil.map(urls, new Function<URL, URL>() {
+    myURLs = ContainerUtil.map(urls, new Function<URL, URL>() {
       @Override
       public URL fun(URL url) {
         return internProtocol(url);
       }
     });
-    myClassPath = new ClassPath(list.toArray(new URL[list.size()]), canLockJars, canUseCache, acceptUnescapedUrls, preloadJarContents);
-    myURLs = list;
+    myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload);
+  }
+
+  protected UrlClassLoader(@NotNull Builder builder) {
+    super(builder.myParent);
+    myURLs = ContainerUtil.map(builder.myURLs, new Function<URL, URL>() {
+      @Override
+      public URL fun(URL url) {
+        return internProtocol(url);
+      }
+    });
+    myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload);
   }
 
   public static URL internProtocol(@NotNull URL url) {

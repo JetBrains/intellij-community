@@ -32,8 +32,7 @@ public class RecentTasks {
 
   static {
     final String libraryName = (System.getProperty("sun.arch.data.model").contains("64"))?
-                               "jumplistbridge64.dll":
-                               "jumplistbridge.dll";
+                               "jumpListBridge64.dll": "jumpListBridge.dll";
 
     final String binPath = PathManager.getBinPath();
     final String communityBinPath = PathManager.getHomePath() + File.separatorChar + "community" + File.separatorChar + "bin";

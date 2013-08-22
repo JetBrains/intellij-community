@@ -270,7 +270,7 @@ public class ExternalSystemApiUtil {
     }
     return result;
   }
-  
+
   @SuppressWarnings("unchecked")
   @NotNull
   public static <T> Collection<DataNode<T>> getChildren(@NotNull DataNode<?> node, @NotNull Key<T> key) {
@@ -341,7 +341,7 @@ public class ExternalSystemApiUtil {
       }
     });
   }
-  
+
   public static void executeOnEdt(boolean synchronous, @NotNull Runnable task) {
     if (synchronous) {
       if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -393,7 +393,7 @@ public class ExternalSystemApiUtil {
    * </pre>
    * This method allows to differentiate between them (e.g. we don't want to change language level when new module is imported to
    * an existing project).
-   * 
+   *
    * @return    <code>true</code> if new project is being imported; <code>false</code> if new module is being imported
    */
   public static boolean isNewProjectConstruction() {
@@ -441,7 +441,7 @@ public class ExternalSystemApiUtil {
    * module.
    * <p/>
    * This method tries to find root project's config path assuming that given path points to a sub-project's config path.
-   * 
+   *
    * @param externalProjectPath  external sub-project's config path
    * @param externalSystemId     target external system
    * @param project              target ide project
@@ -554,17 +554,17 @@ public class ExternalSystemApiUtil {
 
   /**
    * There is a possible case that methods of particular object should be executed with classpath different from the one implied
-   * by the current class' classloader. External system offers {@link ParametersEnhancer#enhanceLocalProcessing(List)} method
+   * by the current class' class loader. External system offers {@link ParametersEnhancer#enhanceLocalProcessing(List)} method
    * for defining that custom classpath.
    * <p/>
    * It's also possible that particular implementation of {@link ParametersEnhancer} is compiled using dependency to classes
    * which are provided by the {@link ParametersEnhancer#enhanceLocalProcessing(List) expanded classpath}. E.g. a class
    * <code>'A'</code> might use method of class <code>'B'</code> and 'A' is located at the current (system/plugin) classpath but
-   * <code>'B'</code> is not. We need to reload <code>'A'</code> using its expanded classpath then, i.e. create new classloaded
+   * <code>'B'</code> is not. We need to reload <code>'A'</code> using its expanded classpath then, i.e. create new class loaded
    * with that expanded classpath and load <code>'A'</code> by it.
    * <p/>
    * This method allows to do that.
-   * 
+   *
    * @param clazz  custom classpath-aware class which instance should be created (is assumed to have a no-args constructor)
    * @param <T>    target type
    * @return       newly created instance of the given class loaded by custom classpath-aware loader
@@ -591,7 +591,7 @@ public class ExternalSystemApiUtil {
       //noinspection unchecked
       urls.addAll((Collection<? extends URL>)method.invoke(baseLoader));
     }
-    UrlClassLoader loader = new UrlClassLoader(urls, baseLoader.getParent()) {
+    UrlClassLoader loader = new UrlClassLoader(UrlClassLoader.build().urls(urls).parent(baseLoader.getParent())) {
       @Override
       protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         if (name.equals(clazz.getName())) {

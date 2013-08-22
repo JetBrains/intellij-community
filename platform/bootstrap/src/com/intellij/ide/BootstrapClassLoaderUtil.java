@@ -56,11 +56,11 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
   public static UrlClassLoader initClassLoader(boolean updatePlugins) throws Exception {
     PathManager.loadProperties();
 
-    List<URL> classpathElements = new ArrayList<URL>();
-    addParentClasspath(classpathElements);
-    addIDEALibraries(classpathElements);
-    addAdditionalClassPath(classpathElements);
-    UrlClassLoader newClassLoader = new UrlClassLoader(filterClassPath(classpathElements), null, true, true);
+    List<URL> classpath = new ArrayList<URL>();
+    addParentClasspath(classpath);
+    addIDEALibraries(classpath);
+    addAdditionalClassPath(classpath);
+    UrlClassLoader newClassLoader = UrlClassLoader.build().urls(filterClassPath(classpath)).allowLock().useCache().get();
 
     // prepare plugins
     if (updatePlugins && !isLoadingOfExternalPluginsDisabled()) {

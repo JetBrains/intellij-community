@@ -47,7 +47,7 @@ public class PluginClassLoader extends UrlClassLoader {
                            final PluginId pluginId,
                            final String version,
                            final File pluginRoot) {
-    super(urls, null, true, true);
+    super(build().urls(urls).allowLock().useCache());
     myParents = parents;
     myPluginId = pluginId;
     myPluginVersion = version;
