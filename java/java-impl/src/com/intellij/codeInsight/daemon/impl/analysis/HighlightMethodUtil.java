@@ -294,9 +294,10 @@ public class HighlightMethodUtil {
                                           List<PsiClassType> checkedExceptions, PsiSubstitutor substitutorForDerivedClass) {
     PsiMethod superMethod = superSignature.getMethod();
     PsiSubstitutor substitutorForMethod = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature, superSignature);
-    if (substitutorForMethod == null) return -1;
     for (int i = 0; i < checkedExceptions.size(); i++) {
-      PsiType exception = substitutorForDerivedClass.substitute(substitutorForMethod.substitute(checkedExceptions.get(i)));
+      final PsiClassType checkedEx = checkedExceptions.get(i);
+      final PsiType substituted = substitutorForMethod != null ? substitutorForMethod.substitute(checkedEx) : TypeConversionUtil.erasure(checkedEx);
+      PsiType exception = substitutorForDerivedClass.substitute(substituted);
       if (!isMethodThrows(superMethod, substitutorForMethod, exception, substitutorForDerivedClass)) {
         return i;
       }
@@ -304,10 +305,10 @@ public class HighlightMethodUtil {
     return -1;
   }
 
-  private static boolean isMethodThrows(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiType exception, PsiSubstitutor substitutorForDerivedClass) {
+  private static boolean isMethodThrows(PsiMethod method, @Nullable PsiSubstitutor substitutorForMethod, PsiType exception, PsiSubstitutor substitutorForDerivedClass) {
     PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();
     for (PsiClassType thrownException1 : thrownExceptions) {
-      PsiType thrownException = substitutorForMethod.substitute(thrownException1);
+      PsiType thrownException = substitutorForMethod != null ? substitutorForMethod.substitute(thrownException1) : TypeConversionUtil.erasure(thrownException1);
       thrownException = substitutorForDerivedClass.substitute(thrownException);
       if (TypeConversionUtil.isAssignable(thrownException, exception)) return true;
     }
