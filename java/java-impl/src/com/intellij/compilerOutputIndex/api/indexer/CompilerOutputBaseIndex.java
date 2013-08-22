@@ -92,7 +92,7 @@ public abstract class CompilerOutputBaseIndex<K, V> {
       }
     }
     catch (IOException e) {
-      LOG.error("couldn't initialize index");
+      LOG.error("couldn't initialize index", e);
       throw new RuntimeException(e);
     }
     myIndex = index;

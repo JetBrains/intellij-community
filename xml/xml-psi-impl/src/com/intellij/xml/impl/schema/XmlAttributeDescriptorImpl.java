@@ -248,7 +248,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
   }
 
   @Override
-  protected PsiElement getEnumeratedValueDeclaration(XmlAttributeValue attributeValue, final String value) {
+  public PsiElement getEnumeratedValueDeclaration(XmlAttributeValue attributeValue, final String value) {
     final Ref<PsiElement> result = new Ref<PsiElement>();
     processEnumeration(myTag, new PairProcessor<PsiElement, String>() {
       @Override

@@ -30,7 +30,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.xml.util.XmlAttributeValueReference;
+import com.intellij.xml.util.XmlEnumeratedValueReference;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,6 +76,6 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
   }
 
   public PsiReference[] getValueReferences(XmlAttributeValue value) {
-    return new PsiReference[] { new XmlAttributeValueReference(value, this)};
+    return new PsiReference[] { new XmlEnumeratedValueReference(value, this)};
   }
 }

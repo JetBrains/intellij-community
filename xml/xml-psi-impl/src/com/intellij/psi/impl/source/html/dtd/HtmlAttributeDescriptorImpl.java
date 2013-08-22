@@ -94,7 +94,10 @@ public class HtmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   }
 
   @Override
-  protected PsiElement getEnumeratedValueDeclaration(XmlAttributeValue attributeValue, String value) {
-    return super.getEnumeratedValueDeclaration(attributeValue, myCaseSensitive ? value : value.toLowerCase());
+  public PsiElement getValueDeclaration(XmlAttributeValue attributeValue, String value) {
+    String s = myCaseSensitive ? value : value.toLowerCase();
+    return delegate instanceof BasicXmlAttributeDescriptor ?
+           ((BasicXmlAttributeDescriptor)delegate).getValueDeclaration(attributeValue, s) :
+           super.getValueDeclaration(attributeValue, value);
   }
 }

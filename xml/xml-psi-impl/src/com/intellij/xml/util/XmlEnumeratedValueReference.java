@@ -31,17 +31,17 @@ import org.jetbrains.annotations.Nullable;
 * @author Dmitry Avdeev
 *         Date: 16.08.13
 */
-public class XmlAttributeValueReference extends PsiReferenceBase<XmlAttributeValue> implements EmptyResolveMessageProvider {
+public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlAttributeValue> implements EmptyResolveMessageProvider {
   private final XmlAttributeDescriptor myDescriptor;
 
-  public XmlAttributeValueReference(XmlAttributeValue value, XmlAttributeDescriptor descriptor) {
+  public XmlEnumeratedValueReference(XmlAttributeValue value, XmlAttributeDescriptor descriptor) {
     super(value);
     myDescriptor = descriptor;
   }
 
-  public XmlAttributeValueReference(XmlAttributeValue element,
-                                    TextRange range,
-                                    XmlAttributeDescriptor descriptor) {
+  public XmlEnumeratedValueReference(XmlAttributeValue element,
+                                     TextRange range,
+                                     XmlAttributeDescriptor descriptor) {
     super(element, range);
     myDescriptor = descriptor;
   }

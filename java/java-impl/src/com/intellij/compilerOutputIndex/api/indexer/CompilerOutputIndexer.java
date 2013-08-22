@@ -54,7 +54,7 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
 
   private final Lock myLock = new ReentrantLock();
   private final AtomicBoolean myInProgress = new AtomicBoolean(false);
-  private AtomicBoolean myEnabled = new AtomicBoolean(false);
+  private volatile boolean myEnabled = false;
 
   public static CompilerOutputIndexer getInstance(final Project project) {
     return project.getComponent(CompilerOutputIndexer.class);
@@ -65,7 +65,7 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
   }
 
   public boolean isEnabled() {
-    return myEnabled.get();
+    return myEnabled;
   }
 
   private ID<String, Long> getFileTimestampsIndexId() {
@@ -77,15 +77,16 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
     Registry.get(REGISTRY_KEY).addListener(new RegistryValueListener.Adapter() {
       @Override
       public void afterValueChanged(final RegistryValue value) {
-        myEnabled.set(value.asBoolean());
-        if (myEnabled.get()) {
+        final boolean asBoolean = value.asBoolean();
+        myEnabled = asBoolean;
+        if (asBoolean) {
           doEnable();
         }
       }
     }, myProject);
 
-    myEnabled = new AtomicBoolean(Registry.is(REGISTRY_KEY) || ApplicationManager.getApplication().isUnitTestMode());
-    if (myEnabled.get()) {
+    myEnabled = Registry.is(REGISTRY_KEY);
+    if (myEnabled) {
       doEnable();
     }
   }
@@ -113,7 +114,7 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
       CompilerManager.getInstance(myProject).addCompilationStatusListener(new CompilationStatusAdapter() {
         @Override
         public void fileGenerated(final String outputRoot, final String relativePath) {
-          if (myEnabled.get() && StringUtil.endsWith(relativePath, CompilerOutputFilesUtil.CLASS_FILES_SUFFIX)) {
+          if (StringUtil.endsWith(relativePath, CompilerOutputFilesUtil.CLASS_FILES_SUFFIX) && myEnabled) {
             try {
               doIndexing(new File(outputRoot, relativePath), null);
             }
