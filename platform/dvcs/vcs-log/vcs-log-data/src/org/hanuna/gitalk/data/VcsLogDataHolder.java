@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -152,13 +151,7 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
         }
         else {
           assert myAllLog != null : "The whole log can't become null once loaded";
-          refreshedLog = myLogJoiner.addCommits(myAllLog, firstBlock, refs, new Computable<List<CommitParents>>() {
-            @Override
-            public List<CommitParents> compute() {
-              // TODO save the whole log in a file; keep only a part of it in memory; read from the file here
-              return readLogFromStorage();
-            }
-          });
+          refreshedLog = myLogJoiner.addCommits(myAllLog, firstBlock, refs);
         }
 
         myDataPack = DataPack.build(refreshedLog, refs, indicator);

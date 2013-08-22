@@ -15,7 +15,6 @@
  */
 package org.hanuna.gitalk.data;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.vcs.log.CommitParents;
@@ -34,21 +33,16 @@ public class VcsLogJoiner {
 
   /**
    *
+   *
    * @param savedLog       currently available part of the log.
    * @param firstBlock     the first n commits read from the VCS.
    * @param refs           all references (branches) of the repository.
-   * @param wholeLogGetter the function which will read the whole log from the file, if the part stored in {@code savedLog} is not enough.
    * @return New commits attached to the existing log structure.
    */
   @NotNull
   public List<? extends CommitParents> addCommits(@NotNull List<CommitParents> savedLog,
-                                                  @NotNull List<? extends CommitParents> firstBlock, @NotNull Collection<Ref> refs,
-                                                  @NotNull Computable<List<CommitParents>> wholeLogGetter) {
+                                                  @NotNull List<? extends CommitParents> firstBlock, @NotNull Collection<Ref> refs) {
     int unsafeBlockSize = getFirstSafeIndex(savedLog, firstBlock, refs);
-    if (unsafeBlockSize == -1) {
-      savedLog = wholeLogGetter.compute();
-      unsafeBlockSize = getFirstSafeIndex(savedLog, firstBlock, refs);
-    }
     if (unsafeBlockSize == -1) { // firstBlock not enough
       //TODO
       throw new IllegalStateException();
