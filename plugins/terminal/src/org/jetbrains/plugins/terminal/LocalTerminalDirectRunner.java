@@ -4,8 +4,8 @@ import com.intellij.execution.TaskExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,14 +16,12 @@ import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import com.pty4j.util.PtyUtil;
-import com.pty4j.windows.WinPty;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.security.CodeSource;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -32,6 +30,7 @@ import java.util.concurrent.Future;
  * @author traff
  */
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
+  private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
 
   private final Charset myDefaultCharset;
   private final String[] myCommand;
@@ -56,12 +55,17 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   private static File findRCFile() {
-    String folder = PtyUtil.getJarFolder();
-    if (folder != null) {
-      File rcFile = new File(folder, "jediterm.in");
-      if (rcFile.exists()) {
-        return rcFile;
+    try {
+      final String folder = PtyUtil.getJarFolder();
+      if (folder != null) {
+        File rcFile = new File(folder, "jediterm.in");
+        if (rcFile.exists()) {
+          return rcFile;
+        }
       }
+    }
+    catch (Exception e) {
+      LOG.warn("Unable to get jar folder", e);
     }
     return null;
   }

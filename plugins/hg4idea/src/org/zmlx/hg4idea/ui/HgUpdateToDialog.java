@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.util.HgBranchesAndTags;
+import org.zmlx.hg4idea.util.HgUiUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -130,25 +131,10 @@ public class HgUpdateToDialog extends DialogWrapper {
 
   private void updateRepository() {
     VirtualFile repo = hgRepositorySelectorComponent.getRepository();
-    loadBranches(repo);
-    loadTags(repo);
-    loadBookmarks(repo);
+    HgUiUtil.loadContentToDialog(repo, branchesForRepos, branchSelector);
+    HgUiUtil.loadContentToDialog(repo, tagsForRepos, tagSelector);
+    HgUiUtil.loadContentToDialog(repo, bookmarksForRepos, bookmarkSelector);
     update();
-  }
-
-  private void loadBranches(VirtualFile root) {
-    assert branchesForRepos.get(root) != null : "No inforamtion about root " + root;
-    branchSelector.setModel(new DefaultComboBoxModel(branchesForRepos.get(root).toArray()));
-  }
-
-  private void loadTags(VirtualFile root) {
-    assert tagsForRepos.get(root) != null : "No inforamtion about root " + root;
-    tagSelector.setModel(new DefaultComboBoxModel(tagsForRepos.get(root).toArray()));
-  }
-
-  private void loadBookmarks(VirtualFile root) {
-    assert tagsForRepos.get(root) != null : "No inforamtion about root " + root;
-    bookmarkSelector.setModel(new DefaultComboBoxModel(bookmarksForRepos.get(root).toArray()));
   }
 
   protected JComponent createCenterPanel() {

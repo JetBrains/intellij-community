@@ -26,6 +26,7 @@ import java.util.List;
  */
 public class RerunTestsAction extends DumbAwareAction implements AnAction.TransparentUpdate {
 
+  public static final String ID = "RerunTests";
   private static final List<RerunInfo> REGISTRY = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public static void register(@NotNull RunContentDescriptor descriptor,

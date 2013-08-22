@@ -836,8 +836,10 @@ public class PsiUtil {
   }
 
   public static boolean isAccessedForWriting(GrExpression expr) {
-    if (isLValue(expr)) return true;
+    return isLValue(expr) || isUsedInIncOrDec(expr);
+  }
 
+  public static boolean isUsedInIncOrDec(GrExpression expr) {
     PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, GrParenthesizedExpression.class);
 
     if (parent instanceof GrUnaryExpression) {

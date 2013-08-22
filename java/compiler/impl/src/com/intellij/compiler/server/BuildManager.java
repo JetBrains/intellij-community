@@ -80,20 +80,20 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import gnu.trove.THashSet;
-import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.ChannelGroupFuture;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder;
-import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
-import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
-import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.handler.codec.protobuf.ProtobufEncoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
+import org.jetbrains.io.ChannelRegistrar;
+import org.jetbrains.io.NettyUtil;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
@@ -106,7 +106,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -117,7 +116,8 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
  * @author Eugene Zhuravlev
  *         Date: 9/6/11
  */
-public class BuildManager implements ApplicationComponent{
+public class
+  BuildManager implements ApplicationComponent{
   public static final Key<Boolean> ALLOW_AUTOMAKE = Key.create("_allow_automake_when_process_is_active_");
   private static final Key<String> FORCE_MODEL_LOADING_PARAMETER = Key.create(BuildParametersKeys.FORCE_MODEL_LOADING);
 
@@ -152,8 +152,7 @@ public class BuildManager implements ApplicationComponent{
   private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
   private final Map<String, RequestFuture> myBuildsInProgress = Collections.synchronizedMap(new HashMap<String, RequestFuture>());
   private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager();
-  private final Executor myPooledThreadExecutor = new PooledThreadExecutor();
-  private final SequentialTaskExecutor myRequestsProcessor = new SequentialTaskExecutor(myPooledThreadExecutor);
+  private final SequentialTaskExecutor myRequestsProcessor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
 
   private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
@@ -206,7 +205,8 @@ public class BuildManager implements ApplicationComponent{
     }
   };
 
-  private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("build-manager");
+  private final ChannelRegistrar myChannelRegistrar = new ChannelRegistrar();
+
   private final BuildMessageDispatcher myMessageDispatcher = new BuildMessageDispatcher();
   private volatile int myListenPort = -1;
   @Nullable
@@ -354,7 +354,7 @@ public class BuildManager implements ApplicationComponent{
                 final CmdlineRemoteProto.Message.ControllerMessage message =
                   CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
                     CmdlineRemoteProto.Message.ControllerMessage.Type.FS_EVENT).setFsEvent(data.createNextEvent()).build();
-                Channels.write(channel, CmdlineProtoUtil.toMessage(sessionId, message));
+                channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, message));
               }
             }
           }
@@ -574,7 +574,7 @@ public class BuildManager implements ApplicationComponent{
           synchronized (myProjectDataMap) {
             ProjectData data = myProjectDataMap.get(projectPath);
             if (data == null) {
-              data = new ProjectData(new SequentialTaskExecutor(myPooledThreadExecutor));
+              data = new ProjectData(new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE));
               myProjectDataMap.put(projectPath, data);
             }
             if (isRebuild) {
@@ -951,46 +951,25 @@ public class BuildManager implements ApplicationComponent{
   }
 
   public void stopListening() {
-    final ChannelGroupFuture closeFuture = myAllOpenChannels.close();
-    closeFuture.awaitUninterruptibly();
+    myChannelRegistrar.close();
   }
 
   private int startListening() throws Exception {
-    final ChannelFactory channelFactory = new NioServerSocketChannelFactory(myPooledThreadExecutor, myPooledThreadExecutor, 1);
-    final SimpleChannelUpstreamHandler channelRegistrar = new SimpleChannelUpstreamHandler() {
+    final ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE));
+    bootstrap.childHandler(new ChannelInitializer() {
       @Override
-      public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        myAllOpenChannels.add(e.getChannel());
-        super.channelOpen(ctx, e);
+      protected void initChannel(Channel channel) throws Exception {
+        channel.pipeline().addLast(myChannelRegistrar,
+                                   new ProtobufVarint32FrameDecoder(),
+                                   new ProtobufDecoder(CmdlineRemoteProto.Message.getDefaultInstance()),
+                                   new ProtobufVarint32LengthFieldPrepender(),
+                                   new ProtobufEncoder(),
+                                   myMessageDispatcher);
       }
-
-      @Override
-      public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        myAllOpenChannels.remove(e.getChannel());
-        super.channelClosed(ctx, e);
-      }
-    };
-    ChannelPipelineFactory pipelineFactory = new ChannelPipelineFactory() {
-      @Override
-      public ChannelPipeline getPipeline() throws Exception {
-        return Channels.pipeline(
-          channelRegistrar,
-          new ProtobufVarint32FrameDecoder(),
-          new ProtobufDecoder(CmdlineRemoteProto.Message.getDefaultInstance()),
-          new ProtobufVarint32LengthFieldPrepender(),
-          new ProtobufEncoder(),
-          myMessageDispatcher
-        );
-      }
-    };
-    final ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
-    bootstrap.setPipelineFactory(pipelineFactory);
-    bootstrap.setOption("child.tcpNoDelay", true);
-    bootstrap.setOption("child.keepAlive", true);
-    final int listenPort = NetUtils.findAvailableSocketPort();
-    final Channel serverChannel = bootstrap.bind(new InetSocketAddress(NetUtils.getLoopbackAddress(), listenPort));
-    myAllOpenChannels.add(serverChannel);
-    return listenPort;
+    });
+    Channel serverChannel = bootstrap.bind(NetUtils.getLoopbackAddress(), 0).syncUninterruptibly().channel();
+    myChannelRegistrar.add(serverChannel);
+    return ((InetSocketAddress)serverChannel.localAddress()).getPort();
   }
 
   @TestOnly

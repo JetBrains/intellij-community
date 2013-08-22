@@ -89,7 +89,7 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
     if (success) {
       final GrVariable field = getVariable();
       assert field != null;
-      GrIntroduceFieldProcessor processor = new GrIntroduceFieldProcessor(generateContext(), generateSettings()) {
+      GrIntroduceFieldProcessor processor = new GrIntroduceFieldProcessor(generateContext(), generateSettings(), false) {
         @NotNull
         @Override
         protected GrExpression getInitializer() {

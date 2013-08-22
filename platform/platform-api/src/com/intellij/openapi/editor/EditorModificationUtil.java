@@ -200,17 +200,18 @@ public class EditorModificationUtil {
         String[] lines = LineTokenizer.tokenize(s.toCharArray(), false);
         if (lines.length > 1 || selectedLinesCount == 0) {
           int longestLineLength = 0;
-          for (String line : lines) {
+          for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
             longestLineLength = Math.max(longestLineLength, line.length());
+            editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(caretLine + i, caretToRestore.column));
             insertStringAtCaret(editor, line, false, true);
-            editor.getCaretModel().moveCaretRelatively(-line.length(), 1, false, false, true);
           }
           caretToRestore = new LogicalPosition(originalCaretLine, caretToRestore.column + longestLineLength);
         }
         else {
           for (int i = 0; i <= selectedLinesCount; i++) {
+            editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(caretLine + i, caretToRestore.column));
             insertStringAtCaret(editor, s, false, true);
-            editor.getCaretModel().moveCaretRelatively(-s.length(), 1, false, false, true);
           }
           caretToRestore = new LogicalPosition(originalCaretLine, caretToRestore.column + s.length());
         }

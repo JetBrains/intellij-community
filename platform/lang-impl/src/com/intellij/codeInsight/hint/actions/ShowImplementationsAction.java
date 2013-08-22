@@ -314,7 +314,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
                                                           final ImplementationSearcher handler,
                                                           final boolean includeSelfAlways) {
     int offset = editor == null ? 0 : editor.getCaretModel().getOffset();
-    final PsiElement[] handlerImplementations = handler.searchImplementations(element, offset, includeSelfAlways, true);
+    final PsiElement[] handlerImplementations = handler.searchImplementations(element, editor, offset, includeSelfAlways, true);
     if (handlerImplementations.length > 0) return handlerImplementations;
 
     PsiFile psiFile = element.getContainingFile();

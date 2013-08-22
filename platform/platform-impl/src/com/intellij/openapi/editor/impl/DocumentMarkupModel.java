@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.MarkupModelWindow;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
@@ -66,7 +67,7 @@ public class DocumentMarkupModel {
         synchronized (lock) {
           markupModel = document.getUserData(MARKUP_MODEL_KEY);
           if (markupModel == null) {
-            markupModel = new MarkupModelImpl((DocumentImpl)document);
+            markupModel = new MarkupModelImpl((DocumentEx)document);
             document.putUserData(MARKUP_MODEL_KEY, markupModel);
           }
         }

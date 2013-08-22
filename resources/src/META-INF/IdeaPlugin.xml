@@ -274,8 +274,8 @@
     <methodReferencesSearch implementation="com.intellij.psi.impl.search.MethodUsagesSearcher"/>
     <deepestSuperMethodsSearch implementation="com.intellij.psi.impl.search.MethodDeepestSuperSearcher"/>
 
-    <definitionsSearch implementation="com.intellij.codeInsight.navigation.MethodImplementationsSearch"/>
-    <definitionsSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
+    <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.MethodImplementationsSearch"/>
+    <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
 
     <localInspection language="JAVA" shortName="UndesirableClassUsage" displayName="Undesirable class usage"
                      groupName="IntelliJ IDEA Platform Inspections" enabledByDefault="true" level="WARNING"

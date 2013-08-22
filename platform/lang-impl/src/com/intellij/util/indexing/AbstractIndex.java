@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
@@ -27,5 +28,5 @@ public interface AbstractIndex<Key, Value> {
   @NotNull
   ValueContainer<Value> getData(Key key) throws StorageException;
 
-  boolean processAllKeys(Processor<Key> processor) throws StorageException;
+  boolean processAllKeys(Processor<Key> processor, @Nullable IdFilter idFilter) throws StorageException;
 }

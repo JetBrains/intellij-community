@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler.server;
 
-import org.jboss.netty.channel.Channel;
+import io.netty.channel.Channel;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 
 import java.util.UUID;

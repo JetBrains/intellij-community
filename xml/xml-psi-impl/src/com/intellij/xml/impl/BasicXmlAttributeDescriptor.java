@@ -58,18 +58,17 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
   }
 
   public PsiElement getValueDeclaration(XmlAttributeValue attributeValue, String value) {
-    if (isFixed()) {
-      String defaultValue = getDefaultValue();
-      return Comparing.equal(defaultValue, value) ? getDefaultValueDeclaration() : null;
+    String defaultValue = getDefaultValue();
+    if (Comparing.equal(defaultValue, value)) {
+      return getDefaultValueDeclaration();
     }
-    else {
-      return getEnumeratedValueDeclaration(attributeValue, value);
-    }
+    return isFixed() ? null : getEnumeratedValueDeclaration(attributeValue, value);
   }
 
   protected PsiElement getEnumeratedValueDeclaration(XmlAttributeValue attributeValue, String value) {
     String[] values = getEnumeratedValues();
-    return values != null && ArrayUtilRt.find(values, value) != -1 ? getDeclaration() : null;
+    if (values == null || values.length == 0) return getDeclaration();
+    return ArrayUtilRt.find(values, value) != -1 ? getDeclaration() : null;
   }
 
   protected PsiElement getDefaultValueDeclaration() {

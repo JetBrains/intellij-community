@@ -13,11 +13,10 @@ import org.jetbrains.ide.PooledThreadExecutor;
  */
 public class ServerTaskExecutorImpl implements ServerTaskExecutor {
   private static final Logger LOG = Logger.getInstance(ServerTaskExecutorImpl.class);
-  private static final PooledThreadExecutor POOLED_THREAD_EXECUTOR = new PooledThreadExecutor();
   private final SequentialTaskExecutor myTaskExecutor;
 
   public ServerTaskExecutorImpl() {
-    myTaskExecutor = new SequentialTaskExecutor(POOLED_THREAD_EXECUTOR);
+    myTaskExecutor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
   }
 
   @Override

@@ -65,7 +65,7 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   }
 
   @Override
-  public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement elementToRename, PsiElement context) {
+  public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement elementToRename, @Nullable PsiElement context) {
     return elementToRename instanceof PsiMember;
   }
 

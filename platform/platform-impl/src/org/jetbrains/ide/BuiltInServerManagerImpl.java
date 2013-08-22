@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
-import org.jboss.netty.channel.ChannelException;
+import io.netty.channel.ChannelException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +108,8 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
         }
 
         try {
-          server = new BuiltInServer(workerCount);
+          server = new BuiltInServer();
+          detectedPortNumber = server.start(workerCount, defaultPort, PORTS_COUNT, true);
         }
         catch (ChannelException e) {
           LOG.info(e);
@@ -121,6 +122,13 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
           return;
         }
 
+        if (detectedPortNumber == -1) {
+          LOG.info("built-in server cannot be started, cannot bind to port");
+          return;
+        }
+
+        LOG.info("built-in server started, port " + detectedPortNumber);
+
         Disposer.register(ApplicationManager.getApplication(), server);
         ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
           @Override
@@ -131,14 +139,6 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
             }
           }
         });
-
-        detectedPortNumber = server.start(defaultPort, PORTS_COUNT, true);
-        if (detectedPortNumber == -1) {
-          LOG.info("built-in server cannot be started, cannot bind to port");
-        }
-        else {
-          LOG.info("built-in server started, port " + detectedPortNumber);
-        }
       }
     });
   }

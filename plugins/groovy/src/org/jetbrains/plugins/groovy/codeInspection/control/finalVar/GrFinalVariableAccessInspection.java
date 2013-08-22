@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
@@ -102,14 +103,29 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         super.visitReferenceExpression(ref);
 
         final PsiElement resolved = ref.resolve();
-        if (resolved instanceof GrField && ((GrField)resolved).hasModifierProperty(FINAL) && PsiUtil.isLValue(ref)) {
+        if (resolved instanceof GrField && ((GrField)resolved).hasModifierProperty(FINAL)) {
           final GrField field = (GrField)resolved;
-
           final PsiClass containingClass = field.getContainingClass();
-          if (containingClass == null || !PsiTreeUtil.isAncestor(containingClass, ref, true)) {
-            registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.field.0", field.getName()), LocalQuickFix.EMPTY_ARRAY,
-                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+
+          if (PsiUtil.isLValue(ref)) {
+            if (containingClass == null || !PsiTreeUtil.isAncestor(containingClass, ref, true)) {
+              registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.field.0", field.getName()), LocalQuickFix.EMPTY_ARRAY,
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            }
           }
+          else if (PsiUtil.isUsedInIncOrDec(ref)) {
+            if (containingClass == null || !isInsideConstructorOrInitializer(containingClass, ref, field.hasModifierProperty(PsiModifier.STATIC))) {
+              registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.field.0", field.getName()), LocalQuickFix.EMPTY_ARRAY,
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            }
+          }
+        }
+        else if (resolved instanceof GrParameter &&
+                 ((GrParameter)resolved).getDeclarationScope() instanceof GrMethod &&
+                 ((GrParameter)resolved).hasModifierProperty(FINAL) &&
+                 PsiUtil.isUsedInIncOrDec(ref)) {
+          registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.parameter.0", ((GrParameter)resolved).getName()),
+                        LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
 
@@ -198,6 +214,19 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         }
       }
     };
+  }
+
+  private static boolean isInsideConstructorOrInitializer(@NotNull PsiClass containingClass, @NotNull GrReferenceExpression place, boolean isStatic) {
+    PsiElement container = ControlFlowUtils.findControlFlowOwner(place);
+
+    PsiClass aClass = null;
+    if (!isStatic && container instanceof GrMethod && ((GrMethod)container).isConstructor()) {
+      aClass = ((GrMethod)container).getContainingClass();
+    }
+    else if (container instanceof GrClassInitializer && ((GrClassInitializer)container).isStatic() == isStatic) {
+      aClass = ((GrClassInitializer)container).getContainingClass();
+    }
+    return aClass != null && containingClass.getManager().areElementsEquivalent(aClass, containingClass);
   }
 
   @NotNull

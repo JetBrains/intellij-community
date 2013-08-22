@@ -4,12 +4,15 @@ import com.intellij.icons.AllIcons;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.jediterm.terminal.ui.JediTermWidget;
+import com.jediterm.terminal.ui.TabbedTerminalWidget;
 import com.jediterm.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +29,7 @@ public class TerminalView {
   private JBTabbedTerminalWidget myTerminalWidget;
   private Project myProject;
 
-  public void initTerminal(Project project, ToolWindow toolWindow) {
+  public void initTerminal(Project project, final ToolWindow toolWindow) {
     myProject = project;
     LocalTerminalDirectRunner terminalRunner = OpenLocalTerminalAction.createTerminalRunner(project);
     
@@ -34,6 +37,12 @@ public class TerminalView {
     
     if (terminalRunner != null) {
       myTerminalWidget = terminalRunner.createTerminalWidget();
+      myTerminalWidget.addTabListener(new TabbedTerminalWidget.TabListener() {
+        @Override
+        public void tabClosed(JediTermWidget terminal) {
+          hideIfNoActiveSessions(toolWindow, myTerminalWidget);
+        }
+      });
     }
 
     Content content = createToolWindowContentPanel(terminalRunner, myTerminalWidget, toolWindow);
@@ -142,7 +151,20 @@ public class TerminalView {
     }, true);
   }
 
-  private static class NewSession extends AnAction {
+  private void hideIfNoActiveSessions(final ToolWindow toolWindow, JBTabbedTerminalWidget terminal) {
+    if (terminal.isNoActiveSessions()) {
+      toolWindow.getContentManager().removeAllContents(true);
+
+      toolWindow.getActivation().doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          initTerminal(myProject, toolWindow);
+        }
+      });
+    }
+  }
+
+  private static class NewSession extends DumbAwareAction {
     private final LocalTerminalDirectRunner myTerminalRunner;
     private final TerminalWidget myTerminal;
 
@@ -158,7 +180,7 @@ public class TerminalView {
     }
   }
 
-  private class CloseSession extends AnAction {
+  private class CloseSession extends DumbAwareAction {
     private final JBTabbedTerminalWidget myTerminal;
     private ToolWindow myToolWindow;
 
@@ -170,20 +192,9 @@ public class TerminalView {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      boolean singleSession = myTerminal.isSingleSession();
-      
       myTerminal.closeCurrentSession();
-      
-      if (singleSession) {
-        myToolWindow.getContentManager().removeAllContents(true);
-        
-        myToolWindow.getActivation().doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            initTerminal(myProject, myToolWindow);
-          }
-        });
-      }
+
+      hideIfNoActiveSessions(myToolWindow, myTerminal);
     }
   }
 }

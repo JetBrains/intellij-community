@@ -134,6 +134,10 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
         return true;
       }
     });
+    String defaultValue = getDefaultValue();
+    if (defaultValue != null) {
+      list.add(defaultValue);
+    }
     return ArrayUtil.toStringArray(list);
   }
 
@@ -162,6 +166,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
       XmlAttributeValue valueElement = declaration.getAttribute("name").getValueElement();
       pairProcessor.process(valueElement, "true");
       pairProcessor.process(valueElement, "false");
+      myExhaustiveEnum = true;
       return true;
     }
 

@@ -19,6 +19,7 @@ import com.intellij.formatting.FormatTextRanges;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,6 +54,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PostprocessReformattingAspect implements PomModelAspect {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PostprocessReformattingAspect");
@@ -62,8 +64,9 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private final Map<FileViewProvider, List<ASTNode>> myReformatElements = new HashMap<FileViewProvider, List<ASTNode>>();
   private volatile int myDisabledCounter = 0;
   private final Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
+  private final AtomicInteger myPostponedCounter = new AtomicInteger();
 
-  public PostprocessReformattingAspect(Project project, PsiManager psiManager, TreeAspect treeAspect) {
+  public PostprocessReformattingAspect(Project project, PsiManager psiManager, TreeAspect treeAspect,final CommandProcessor processor) {
     myProject = project;
     myPsiManager = psiManager;
     myTreeAspect = treeAspect;
@@ -73,18 +76,16 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     ApplicationListener applicationListener = new ApplicationAdapter() {
       @Override
       public void writeActionStarted(final Object action) {
-        final CommandProcessor processor = CommandProcessor.getInstance();
         if (processor != null) {
           final Project project = processor.getCurrentCommandProject();
           if (project == myProject) {
-            myPostponedCounter++;
+            incrementPostponedCounter();
           }
         }
       }
 
       @Override
       public void writeActionFinished(final Object action) {
-        final CommandProcessor processor = CommandProcessor.getInstance();
         if (processor != null) {
           final Project project = processor.getCurrentCommandProject();
           if (project == myProject) {
@@ -117,8 +118,6 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     }
   }
 
-  private int myPostponedCounter = 0;
-
   public void postponeFormattingInside(final Runnable runnable) {
     postponeFormattingInside(new NullableComputable<Object>() {
       @Override
@@ -130,9 +129,10 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   public <T> T postponeFormattingInside(Computable<T> computable) {
+    Application application = ApplicationManager.getApplication();
+    application.assertIsDispatchThread();
     try {
-      //if(myPostponedCounter == 0) myDisabled = false;
-      myPostponedCounter++;
+      incrementPostponedCounter();
       return computable.compute();
     }
     finally {
@@ -140,13 +140,19 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     }
   }
 
+  private void incrementPostponedCounter() {
+    myPostponedCounter.incrementAndGet();
+  }
+
   private void decrementPostponedCounter() {
-    if (--myPostponedCounter == 0) {
-      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    Application application = ApplicationManager.getApplication();
+    application.assertIsDispatchThread();
+    if (myPostponedCounter.decrementAndGet() == 0) {
+      if (application.isWriteAccessAllowed()) {
         doPostponedFormatting();
       }
       else {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        application.runWriteAction(new Runnable() {
           @Override
           public void run() {
             doPostponedFormatting();
@@ -156,7 +162,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     }
   }
 
-  private static void atomic(Runnable r) {
+  private static void atomic(@NotNull Runnable r) {
     ProgressManager.getInstance().executeNonCancelableSection(r);
   }
 
@@ -165,7 +171,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     atomic(new Runnable() {
       @Override
       public void run() {
-        if (isDisabled() || myPostponedCounter == 0 && !ApplicationManager.getApplication().isUnitTestMode()) return;
+        if (isDisabled() || myPostponedCounter.get() == 0 && !ApplicationManager.getApplication().isUnitTestMode()) return;
         final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
         if (changeSet == null) return;
         final PsiElement psiElement = changeSet.getRootElement().getPsi();
@@ -287,8 +293,6 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   private void doPostponedFormattingInner(final FileViewProvider key) {
-
-
     final List<ASTNode> astNodes = myReformatElements.remove(key);
     final Document document = key.getDocument();
     // Sort ranges by end offsets so that we won't need any offset adjustment after reformat or reindent
@@ -307,7 +311,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       // then we create ranges by changed nodes. One per node. There ranges can intersect. Ranges are sorted by end offset.
       if (astNodes != null) createActionsMap(astNodes, key, postProcessTasks);
 
-      if ("true".equals(System.getProperty("check.psi.is.valid")) && ApplicationManager.getApplication().isUnitTestMode()) {
+      if (Boolean.getBoolean("check.psi.is.valid") && ApplicationManager.getApplication().isUnitTestMode()) {
         checkPsiIsCorrect(key);
       }
 
@@ -316,7 +320,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         // (free reformatting -> reindent -> formatting under reindent)
         final List<PostponedAction> normalizedActions = normalizeAndReorderPostponedActions(postProcessTasks, document);
         toDispose.addAll(normalizedActions);
-  
+
         // only in following loop real changes in document are made
         for (final PostponedAction normalizedAction : normalizedActions) {
           CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myPsiManager.getProject());
@@ -649,6 +653,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       return myRange.getEndOffset();
     }
 
+    @Override
     public void dispose() {
       if (myRange.isValid()) {
         myRange.dispose();

@@ -24,6 +24,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.xml.*;
+import com.intellij.xml.util.XmlAttributeValueReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,6 +86,13 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
           LOG.error("dom reference should be soft: " + reference + " (created by " + converter + ")");
         }
       }
+    }
+    if (references.length > 0) {
+      if (converter instanceof EnumConverter && !((EnumConverter)converter).isExhaustive()) {
+        // will be handled by core XML
+        return PsiReference.EMPTY_ARRAY;
+      }
+      context.put(XmlAttributeValueReferenceProvider.SUPPRESS, Boolean.TRUE);
     }
     return references;
   }

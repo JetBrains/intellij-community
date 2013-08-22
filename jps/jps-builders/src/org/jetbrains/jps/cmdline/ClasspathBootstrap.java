@@ -26,8 +26,8 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.CellConstraints;
+import io.netty.util.NetUtil;
 import net.n3.nanoxml.IXMLBuilder;
-import org.jboss.netty.util.Version;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassVisitor;
 import org.jetbrains.asm4.ClassWriter;
@@ -57,7 +57,7 @@ public class ClasspathBootstrap {
         @SuppressWarnings("unchecked") Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
         aClass = c;
       }
-      catch (Throwable e) {
+      catch (Throwable ignored) {
         aClass = null;
       }
       managerClass = aClass;
@@ -76,7 +76,7 @@ public class ClasspathBootstrap {
         @SuppressWarnings("unchecked") Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
         aClass = c;
       }
-      catch (Throwable e) {
+      catch (Throwable ignored) {
         aClass = null;
       }
       managerClass = aClass;
@@ -96,7 +96,7 @@ public class ClasspathBootstrap {
 
     cp.addAll(PathManager.getUtilClassPath()); // util
     cp.add(getResourcePath(Message.class)); // protobuf
-    cp.add(getResourcePath(Version.class)); // netty
+    cp.add(getResourcePath(NetUtil.class)); // netty
     cp.add(getResourcePath(ClassWriter.class));  // asm
     cp.add(getResourcePath(ClassVisitor.class));  // asm-commons
     cp.add(getResourcePath(JpsModel.class));  // jps-model-api
@@ -141,7 +141,7 @@ public class ClasspathBootstrap {
     cp.add(getResourceFile(JpsModel.class));  // jps-model-api
     cp.add(getResourceFile(JpsModelImpl.class));  // jps-model-impl
     cp.add(getResourceFile(Message.class)); // protobuf
-    cp.add(getResourceFile(Version.class)); // netty
+    cp.add(getResourceFile(NetUtil.class)); // netty
 
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
     if (optimizedFileManagerClass != null) {

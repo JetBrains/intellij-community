@@ -19,6 +19,7 @@ package com.intellij.util.containers;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
@@ -56,12 +57,16 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
     V get();
   }
 
-  private void processQueue() {
+  boolean processQueue() {
+    boolean processed = false;
+
     while (true) {
       MyValueReference<K, V> ref = (MyValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
       myMap.remove(ref.getKey(), ref);
+      processed = true;
     }
+    return processed;
   }
 
   @Override
@@ -220,5 +225,10 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
     }
     s += "] ";
     return s;
+  }
+
+  @TestOnly
+  int underlyingMapSize() {
+    return myMap.size();
   }
 }

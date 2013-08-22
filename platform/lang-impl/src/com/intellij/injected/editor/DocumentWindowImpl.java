@@ -614,6 +614,16 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @Override
+  public void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker,
+                                  int start,
+                                  int end,
+                                  boolean greedyToLeft,
+                                  boolean greedyToRight,
+                                  int layer) {
+    throw new IllegalStateException();
+  }
+
+  @Override
   public boolean isInBulkUpdate() {
     return false;
   }

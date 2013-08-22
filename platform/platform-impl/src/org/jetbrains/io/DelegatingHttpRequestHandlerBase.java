@@ -15,43 +15,33 @@
  */
 package org.jetbrains.io;
 
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.QueryStringDecoder;
 
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
-
-abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelUpstreamHandler {
+abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHandler<FullHttpRequest> {
   @Override
-  public final void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
-    if (!(event.getMessage() instanceof HttpRequest)) {
-      context.sendUpstream(event);
-      return;
+  protected void channelRead0(ChannelHandlerContext context, FullHttpRequest message) throws Exception {
+    if (BuiltInServer.LOG.isDebugEnabled()) {
+      BuiltInServer.LOG.debug("IN HTTP:\n" + message);
     }
 
-    HttpRequest request = (HttpRequest)event.getMessage();
-    //if (BuiltInServer.LOG.isDebugEnabled()) {
-    //BuiltInServer.LOG.debug(request.toString());
-    //}
-
-    if (!process(context, request, new QueryStringDecoder(request.getUri()))) {
-      Responses.sendStatus(request, context.getChannel(), NOT_FOUND);
+    if (!process(context, message, new QueryStringDecoder(message.getUri()))) {
+      Responses.sendStatus(HttpResponseStatus.NOT_FOUND, context.channel(), message);
     }
   }
 
-  protected abstract boolean process(ChannelHandlerContext context, HttpRequest request, QueryStringDecoder urlDecoder) throws Exception;
+  protected abstract boolean process(ChannelHandlerContext context, FullHttpRequest request, QueryStringDecoder urlDecoder) throws Exception;
 
   @Override
-  public final void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
+  public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
     try {
-      NettyUtil.log(event.getCause(), BuiltInServer.LOG);
+      NettyUtil.log(cause, BuiltInServer.LOG);
     }
     finally {
-      context.setAttachment(null);
-      event.getChannel().close();
+      context.channel().close();
     }
   }
 }

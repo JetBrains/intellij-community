@@ -88,16 +88,6 @@ public class PersistentHashMapValueStorage {
     }
   }
 
-  private long smallWrites;
-  private int smallWritesCount;
-  private long largeWrites;
-  private int largeWritesCount;
-  private int requests;
-
-  private static final int POSITIVE_VALUE_SHIFT = 1;
-  private static final int BYTE_LENGTH_INT_ADDRESS = 1 + 4;
-  private static final int INT_LENGTH_LONG_ADDRESS = 4 + 8;
-
   public long appendBytes(ByteSequence data, long prevChunkAddress) throws IOException {
     return appendBytes(data.getBytes(), data.getOffset(), data.getLength(), prevChunkAddress);
   }
@@ -106,40 +96,28 @@ public class PersistentHashMapValueStorage {
     assert !myCompactionMode;
     long result = mySize; // volatile read
     final CacheValue<DataOutputStream> appender = ourAppendersCache.get(myPath);
-    int serviceFieldsSizeIncrease;
 
+    DataOutputStream dataOutputStream;
     try {
-      DataOutputStream dataOutputStream = appender.get();
-      ++requests;
-      
-      if (dataLength + POSITIVE_VALUE_SHIFT < 0x80 && prevChunkAddress < Integer.MAX_VALUE) {
-        ++smallWritesCount;
-        smallWrites += dataLength;
-        dataOutputStream.write(-dataLength - POSITIVE_VALUE_SHIFT);
-        dataOutputStream.writeInt((int)prevChunkAddress);
-        serviceFieldsSizeIncrease = BYTE_LENGTH_INT_ADDRESS;
-      } else {
-        ++largeWritesCount;
-        largeWrites += dataLength;
-        dataOutputStream.writeInt(dataLength);
-        dataOutputStream.writeLong(prevChunkAddress);
-        serviceFieldsSizeIncrease = INT_LENGTH_LONG_ADDRESS;
-      }
+      dataOutputStream = appender.get();
+      dataOutputStream.resetWrittenBytesCount();
+
+      DataInputOutputUtil.writeINT(dataOutputStream, dataLength);
+      writePrevChunkAddress(prevChunkAddress, result, dataOutputStream);
+
       dataOutputStream.write(data, offset, dataLength);
-      if (IOStatistics.DEBUG && (requests % IOStatistics.KEYS_FACTOR_MASK) == 0) {
-        IOStatistics.dump("Small writes:"+smallWritesCount +", bytes:"+smallWrites + ", largeWrites:"+largeWritesCount
-                          + ", bytes:"+largeWrites+", total:"+requests + "@"+myFile.getPath());
-      }
+      mySize += dataOutputStream.resetWrittenBytesCount();  // volatile write
     }
     finally {
       appender.release();
     }
-    mySize += dataLength + serviceFieldsSizeIncrease;  // volatile write
 
     return result;
   }
 
   private final byte[] myBuffer = new byte[1024];
+  private final UnsyncByteArrayInputStream myBufferStreamWrapper = new UnsyncByteArrayInputStream(myBuffer);
+  private final DataInputStream myBufferDataStreamWrapper = new DataInputStream(myBufferStreamWrapper);
 
   public int compactValues(List<PersistentHashMap.CompactionRecordInfo> infos, PersistentHashMapValueStorage storage) throws IOException {
     PriorityQueue<PersistentHashMap.CompactionRecordInfo> records = new PriorityQueue<PersistentHashMap.CompactionRecordInfo>(
@@ -155,7 +133,7 @@ public class PersistentHashMapValueStorage {
     records.addAll(infos);
 
     final int fileBufferLength = 256 * 1024;
-    final int maxRecordHeader = Math.max(BYTE_LENGTH_INT_ADDRESS, INT_LENGTH_LONG_ADDRESS);
+    final int maxRecordHeader = 5 /* max length - variable int */ + 10 /* max long offset*/;
     final byte[] buffer = new byte[fileBufferLength + maxRecordHeader];
     byte[] recordBuffer = {};
 
@@ -184,7 +162,8 @@ public class PersistentHashMapValueStorage {
           // record start is inside our buffer
 
           final int recordStartInBuffer = (int) (info.valueAddress - readStartOffset);
-          final int sizePart = buffer[recordStartInBuffer];
+          myBufferStreamWrapper.init(buffer, recordStartInBuffer, buffer.length);
+
           final long prevChunkAddress;
           int chunkSize;
           final int dataOffset;
@@ -201,15 +180,10 @@ public class PersistentHashMapValueStorage {
             }
           }
 
-          if (sizePart < 0) {
-            chunkSize = -sizePart - POSITIVE_VALUE_SHIFT;
-            prevChunkAddress = Bits.getInt(buffer, recordStartInBuffer + 1);
-            dataOffset = BYTE_LENGTH_INT_ADDRESS;
-          } else {
-            chunkSize = Bits.getInt(buffer, recordStartInBuffer);
-            prevChunkAddress = Bits.getLong(buffer, recordStartInBuffer + 4);
-            dataOffset = INT_LENGTH_LONG_ADDRESS;
-          }
+          int available = myBufferStreamWrapper.available();
+          chunkSize = DataInputOutputUtil.readINT(myBufferDataStreamWrapper);
+          prevChunkAddress = readPrevChunkAddress(info.valueAddress + (available - myBufferStreamWrapper.available()));
+          dataOffset = available - myBufferStreamWrapper.available();
 
           byte[] b;
           if (info.value != null) {
@@ -325,32 +299,21 @@ public class PersistentHashMapValueStorage {
         if (chunk < 0 || chunk > mySize) throw new PersistentEnumeratorBase.CorruptedException(myFile);
         int len = (int)Math.min(myBuffer.length, mySize - chunk);
         reader.get(chunk, myBuffer, 0, len);
+        myBufferStreamWrapper.init(myBuffer, 0, len);
 
-        final int sizePart = myBuffer[0];
-        final long prevChunkAddress;
-        final int chunkSize;
+        final int chunkSize = DataInputOutputUtil.readINT(myBufferDataStreamWrapper);
+        final long prevChunkAddress = readPrevChunkAddress(chunk);
+        final int headerOffset = len - myBufferStreamWrapper.available();
 
-        if (sizePart < 0) {
-          chunkSize = -sizePart - POSITIVE_VALUE_SHIFT;
-          prevChunkAddress = Bits.getInt(myBuffer, 1);
-          byte[] b = new byte[(result != null ? result.length:0) + chunkSize];
-          if (result != null) System.arraycopy(result, 0, b, b.length - result.length, result.length);
-          result = b;
+        byte[] b = new byte[(result != null ? result.length:0) + chunkSize];
+        if (result != null) System.arraycopy(result, 0, b, b.length - result.length, result.length);
+        result = b;
 
-          checkPreconditions(result, chunkSize, 0);
-          System.arraycopy(myBuffer, BYTE_LENGTH_INT_ADDRESS, result, 0, chunkSize);
+        checkPreconditions(result, chunkSize, 0);
+        if (chunkSize < myBuffer.length - headerOffset) {
+          System.arraycopy(myBuffer, headerOffset, result, 0, chunkSize);
         } else {
-          chunkSize = Bits.getInt(myBuffer, 0);
-          prevChunkAddress = Bits.getLong(myBuffer, 4);
-          byte[] b = new byte[(result != null ? result.length:0) + chunkSize];
-          if (result != null) System.arraycopy(result, 0, b, b.length - result.length, result.length);
-          result = b;
-
-          if (chunkSize < myBuffer.length - INT_LENGTH_LONG_ADDRESS) {
-            System.arraycopy(myBuffer, INT_LENGTH_LONG_ADDRESS, result, 0, chunkSize);
-          } else {
-            reader.get(chunk + INT_LENGTH_LONG_ADDRESS, result, 0, chunkSize);
-          }
+          reader.get(chunk + headerOffset, result, 0, chunkSize);
         }
 
         if (prevChunkAddress >= chunk) throw new PersistentEnumeratorBase.CorruptedException(myFile);
@@ -377,6 +340,26 @@ public class PersistentHashMapValueStorage {
     }
 
     return new ReadResult(tailChunkAddress, result);
+  }
+
+  private long readPrevChunkAddress(long chunk) throws IOException {
+    final int prevOffsetDiff = DataInputOutputUtil.readINT(myBufferDataStreamWrapper);
+    if (prevOffsetDiff < 0) {
+      return chunk - (-prevOffsetDiff | ((long)DataInputOutputUtil.readINT(myBufferDataStreamWrapper) << 32));
+    }
+    assert prevOffsetDiff < chunk;
+    return prevOffsetDiff != 0 ? chunk - prevOffsetDiff : 0;
+  }
+
+  private static void writePrevChunkAddress(long prevChunkAddress, long currentChunkAddress, DataOutputStream dataOutputStream) throws IOException {
+    long diff = currentChunkAddress - prevChunkAddress;
+
+    if (diff < Integer.MAX_VALUE || prevChunkAddress == 0)
+      DataInputOutputUtil.writeINT(dataOutputStream, prevChunkAddress == 0 ? 0 : (int)diff);
+    else {
+      DataInputOutputUtil.writeINT(dataOutputStream, -(int)diff);
+      DataInputOutputUtil.writeINT(dataOutputStream, (int)(diff >>> 32));
+    }
   }
 
   public long getSize() {

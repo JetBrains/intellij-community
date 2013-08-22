@@ -28,7 +28,6 @@ import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -51,11 +50,6 @@ public class ExternalSystemFacadeManager {
     = ContainerUtil.newConcurrentMap();
 
   @NotNull private final Lock          myLock                   = new ReentrantLock();
-  @NotNull private final AtomicBoolean myInProcessCommunication = new AtomicBoolean();
-
-  @NotNull private final AtomicReference<ExternalSystemCommunicationManager> myCommunicationManager =
-    new AtomicReference<ExternalSystemCommunicationManager>();
-
 
   @NotNull private final RemoteExternalSystemProgressNotificationManager myProgressManager;
   @NotNull private final RemoteExternalSystemCommunicationManager        myRemoteCommunicationManager;
@@ -68,9 +62,6 @@ public class ExternalSystemFacadeManager {
     myProgressManager = (RemoteExternalSystemProgressNotificationManager)notificationManager;
     myRemoteCommunicationManager = remoteCommunicationManager;
     myInProcessCommunicationManager = inProcessCommunicationManager;
-    boolean inProcessCommunication = ExternalSystemApiUtil.isInProcessMode();
-    myInProcessCommunication.set(inProcessCommunication);
-    myCommunicationManager.set(inProcessCommunication ? myInProcessCommunicationManager : myRemoteCommunicationManager);
   }
 
   @NotNull
@@ -157,33 +148,29 @@ public class ExternalSystemFacadeManager {
   @SuppressWarnings("ConstantConditions")
   @NotNull
   private RemoteExternalSystemFacade doGetFacade(@NotNull IntegrationKey key, @NotNull Project project) throws Exception {
-    boolean currentInProcess = ExternalSystemApiUtil.isInProcessMode();
-    if (myInProcessCommunication.getAndSet(currentInProcess) != currentInProcess) {
-      myCommunicationManager.get().clear();
-      myCommunicationManager.set(currentInProcess ? myInProcessCommunicationManager : myRemoteCommunicationManager);
-    }
+    final boolean currentInProcess = ExternalSystemApiUtil.isInProcessMode(key.getExternalSystemId());
+    final ExternalSystemCommunicationManager myCommunicationManager = currentInProcess ? myInProcessCommunicationManager : myRemoteCommunicationManager;
     
     ExternalSystemManager manager = ExternalSystemApiUtil.getManager(key.getExternalSystemId());
     if (project.isDisposed() || manager == null) {
       return RemoteExternalSystemFacade.NULL_OBJECT;
     }
     Pair<RemoteExternalSystemFacade, ExternalSystemExecutionSettings> pair = myRemoteFacades.get(key);
-    if (pair != null && prepare(project, key, pair)) {
+    if (pair != null && prepare(myCommunicationManager, project, key, pair)) {
       return pair.first;
     }
     
     myLock.lock();
     try {
       pair = myRemoteFacades.get(key);
-      if (pair != null && prepare(project, key, pair)) {
+      if (pair != null && prepare(myCommunicationManager, project, key, pair)) {
         return pair.first;
       }
       if (pair != null) {
-        myCommunicationManager.get().clear();
         myFacadeWrappers.clear();
         myRemoteFacades.clear();
       }
-      return doCreateFacade(key, project);
+      return doCreateFacade(key, project, myCommunicationManager);
     }
     finally {
       myLock.unlock();
@@ -192,15 +179,15 @@ public class ExternalSystemFacadeManager {
 
   @SuppressWarnings("unchecked")
   @NotNull
-  private RemoteExternalSystemFacade doCreateFacade(@NotNull IntegrationKey key, @NotNull Project project) throws Exception {
-    final RemoteExternalSystemFacade facade = myCommunicationManager.get().acquire(project.getName(), key.getExternalSystemId());
+  private RemoteExternalSystemFacade doCreateFacade(@NotNull IntegrationKey key, @NotNull Project project,
+                                                    @NotNull ExternalSystemCommunicationManager communicationManager) throws Exception {
+    final RemoteExternalSystemFacade facade = communicationManager.acquire(project.getName(), key.getExternalSystemId());
     if (facade == null) {
       throw new IllegalStateException("Can't obtain facade to working with external api at the remote process. Project: " + project);
     }
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
-        myCommunicationManager.get().clear();
         myFacadeWrappers.clear();
         myRemoteFacades.clear();
       }
@@ -215,11 +202,11 @@ public class ExternalSystemFacadeManager {
   }
 
   @SuppressWarnings("unchecked")
-  private boolean prepare(@NotNull Project project,
-                          @NotNull IntegrationKey key,
+  private boolean prepare(@NotNull ExternalSystemCommunicationManager communicationManager,
+                          @NotNull Project project, @NotNull IntegrationKey key,
                           @NotNull Pair<RemoteExternalSystemFacade, ExternalSystemExecutionSettings> pair)
   {
-     if (!myCommunicationManager.get().isAlive(pair.first)) {
+     if (!communicationManager.isAlive(pair.first)) {
       return false;
     }
     try {

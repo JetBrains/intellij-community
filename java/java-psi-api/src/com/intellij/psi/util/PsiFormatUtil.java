@@ -355,7 +355,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     return buffer.toString();
   }
 
-  public static String formatType(PsiType type, int options, @NotNull PsiSubstitutor substitutor){
+  public static String formatType(@Nullable PsiType type, int options, @NotNull PsiSubstitutor substitutor){
     type = substitutor.substitute(type);
     if ((options & SHOW_RAW_TYPE) != 0) {
       type = TypeConversionUtil.erasure(type);
@@ -368,6 +368,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         }
       }
     }
+    if (type == null) return "null";
     return (options & SHOW_FQ_CLASS_NAMES) == 0 ? type.getPresentableText() : type.getInternalCanonicalText();
   }
 

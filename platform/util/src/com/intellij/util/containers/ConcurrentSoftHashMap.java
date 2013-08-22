@@ -34,10 +34,10 @@ public final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V
     private final int myHash; // Hashcode of key, stored here since the key may be tossed by the GC
     private final V value;
 
-    private SoftKey(@NotNull K k, V v, @NotNull ReferenceQueue<K> q) {
+    private SoftKey(@NotNull K k, final int hash, V v, @NotNull ReferenceQueue<K> q) {
       super(k, q);
       value = v;
-      myHash = k.hashCode();
+      myHash = hash;
     }
 
     @Override
@@ -61,8 +61,8 @@ public final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V
   }
 
   @Override
-  protected ConcurrentRefHashMap.Key<K, V> createKey(@NotNull K key, V value) {
-    return new SoftKey<K, V>(key, value, myReferenceQueue);
+  protected ConcurrentRefHashMap.Key<K, V> createKey(@NotNull K key, V value, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    return new SoftKey<K, V>(key, hashingStrategy.computeHashCode(key), value, myReferenceQueue);
   }
 
   public ConcurrentSoftHashMap(int initialCapacity, float loadFactor) {

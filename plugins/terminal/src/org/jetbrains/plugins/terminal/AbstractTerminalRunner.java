@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
+import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.emulator.ColorPalette;
 import com.jediterm.terminal.ui.AbstractSystemSettingsProvider;
@@ -30,6 +31,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -191,7 +193,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     }
 
     private KeyStroke[] getKeyStrokesByActionId(String actionId) {
-      java.util.List<KeyStroke> keyStrokes = new ArrayList<KeyStroke>();
+      List<KeyStroke> keyStrokes = new ArrayList<KeyStroke>();
       Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
       for (Shortcut sc : shortcuts) {
         if (sc instanceof KeyboardShortcut) {
@@ -201,6 +203,11 @@ public abstract class AbstractTerminalRunner<T extends Process> {
       }
 
       return keyStrokes.toArray(new KeyStroke[keyStrokes.size()]);
+    }
+
+    @Override
+    public boolean shouldCloseTabOnLogout(TtyConnector ttyConnector) {
+      return ttyConnector instanceof PtyProcessTtyConnector; //close tab only on logout of local pty, not remote
     }
   }
 

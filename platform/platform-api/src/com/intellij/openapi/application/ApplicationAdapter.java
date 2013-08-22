@@ -15,22 +15,25 @@
  */
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.wm.IdeFrame;
-
 public abstract class ApplicationAdapter implements ApplicationListener {
+  @Override
   public boolean canExitApplication() {
     return true;
   }
 
+  @Override
   public void applicationExiting() {
   }
 
+  @Override
   public void beforeWriteActionStart(Object action) {
   }
 
+  @Override
   public void writeActionStarted(Object action) {
   }
 
+  @Override
   public void writeActionFinished(Object action) {
   }
 }

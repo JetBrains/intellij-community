@@ -541,13 +541,15 @@ public class ExternalSystemApiUtil {
    * <p/>
    * However, we do allow to explicitly configure the ide to work with third-party external system api from the ide process.
    * <p/>
-   * This method allows to check whether the ide is configured to use 'out of process' or 'in process' mode.
-   * 
+   * This method allows to check whether the ide is configured to use 'out of process' or 'in process' mode for the system.
+   *
+   * @param externalSystemId     target external system
+   *
    * @return   <code>true</code> if the ide is configured to work with external system api from the ide process;
-   *           <code>false</code> otherwise 
+   *           <code>false</code> otherwise
    */
-  public static boolean isInProcessMode() {
-    return Registry.is(ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY, false);
+  public static boolean isInProcessMode(ProjectSystemId externalSystemId) {
+    return Registry.is(externalSystemId.getId() + ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX, false);
   }
 
   /**

@@ -580,7 +580,7 @@ public class EditorActionUtil {
 
     int offset = caretModel.getOffset();
     CharSequence text = document.getCharsSequence();
-    if (offset == document.getTextLength() - 1) {
+    if (offset == document.getTextLength()) {
       return;
     }
     int newOffset = offset + 1;

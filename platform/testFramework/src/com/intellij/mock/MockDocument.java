@@ -274,6 +274,16 @@ public class MockDocument implements DocumentEx {
   }
 
   @Override
+  public void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker,
+                                  int start,
+                                  int end,
+                                  boolean greedyToLeft,
+                                  boolean greedyToRight,
+                                  int layer) {
+
+  }
+
+  @Override
   public boolean isInBulkUpdate() {
     return false;
   }

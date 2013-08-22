@@ -44,6 +44,7 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +92,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   public int getKind() {
-    LOG.assertTrue(isValid());
+    PsiUtilCore.ensureValid(this);
     CompositeElement treeParent = getTreeParent();
     IElementType i = treeParent.getElementType();
     if (isDummy(i)) {
