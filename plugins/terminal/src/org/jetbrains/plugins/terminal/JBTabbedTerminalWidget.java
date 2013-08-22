@@ -2,6 +2,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.jediterm.terminal.ui.JediTermWidget;
 import com.jediterm.terminal.ui.SystemSettingsProvider;
 import com.jediterm.terminal.ui.TabbedTerminalWidget;
@@ -23,7 +24,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
 
   public static void convertActions(JComponent component, List<TerminalAction> actions) {
     for (final TerminalAction action : actions) {
-      AnAction a = new AnAction() {
+      AnAction a = new DumbAwareAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
           action.perform();
