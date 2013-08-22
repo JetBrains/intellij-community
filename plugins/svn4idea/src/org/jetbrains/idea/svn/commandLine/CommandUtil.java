@@ -11,6 +11,7 @@ import org.jetbrains.idea.svn.api.FileStatusResultParser;
 import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
@@ -71,6 +72,17 @@ public class CommandUtil {
     parameters.add(path.getAbsolutePath());
   }
 
+  public static void put(@NotNull List<String> parameters, @NotNull File path, @Nullable SVNRevision pegRevision) {
+    StringBuilder builder = new StringBuilder(path.getAbsolutePath());
+
+    if (pegRevision != null && !SVNRevision.UNDEFINED.equals(pegRevision)) {
+      builder.append("@");
+      builder.append(pegRevision);
+    }
+
+    parameters.add(builder.toString());
+  }
+
   public static void put(@NotNull List<String> parameters, @NotNull File... paths) {
     for (File path : paths) {
       put(parameters, path);
@@ -95,10 +107,10 @@ public class CommandUtil {
    * @param parser
    * @throws VcsException
    */
-  public static void execute(@NotNull SvnVcs vcs,
-                             @NotNull SvnCommandName name,
-                             @NotNull List<String> parameters,
-                             @Nullable FileStatusResultParser parser)
+  public static SvnCommand execute(@NotNull SvnVcs vcs,
+                                   @NotNull SvnCommandName name,
+                                   @NotNull List<String> parameters,
+                                   @Nullable FileStatusResultParser parser)
   throws VcsException {
     try {
       SvnLineCommand command = runSimple(name, vcs, null, null, parameters);
@@ -106,6 +118,8 @@ public class CommandUtil {
       if (parser != null) {
         parser.parse(command.getOutput());
       }
+
+      return command;
     }
     catch (SVNException e) {
       throw new VcsException(e);

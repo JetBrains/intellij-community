@@ -37,7 +37,8 @@ public enum SvnCommandName {
   delete("delete", true),
   copy("copy", true),
   move("move", true),
-  resolve("resolve", true);
+  resolve("resolve", true),
+  propget("propget", false);
 
   private final String myName;
   private final boolean myWriteable;

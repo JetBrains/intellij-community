@@ -77,7 +77,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
                                              boolean stopOnCopy, boolean discoverChangedPaths, boolean includeMergedRevisions, long limit) {
     List<String> parameters = new ArrayList<String>();
 
-    parameters.add(path.getAbsolutePath() + (pegRevision != null ? "@" + pegRevision : ""));
+    CommandUtil.put(parameters, path, pegRevision);
     parameters.add("--revision");
     parameters.add(startRevision + ":" + endRevision);
 

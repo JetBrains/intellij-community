@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.*;
@@ -153,17 +153,20 @@ public class SvnMergeProvider implements MergeProvider {
 
   public boolean isBinary(@NotNull final VirtualFile file) {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
+
     try {
-      SVNWCClient client = vcs.createWCClient();
       File ioFile = new File(file.getPath());
-      SVNPropertyData svnPropertyData = client.doGetProperty(ioFile, SVNProperty.MIME_TYPE, SVNRevision.UNDEFINED, SVNRevision.WORKING);
+      PropertyClient client = vcs.getFactory(ioFile).createPropertyClient();
+
+      SVNPropertyData svnPropertyData = client.getProperty(ioFile, SVNProperty.MIME_TYPE, SVNRevision.UNDEFINED, SVNRevision.WORKING);
       if (svnPropertyData != null && SVNProperty.isBinaryMimeType(SVNPropertyValue.getPropertyAsString(svnPropertyData.getValue()))) {
         return true;
       }
     }
-    catch (SVNException e) {
-      //
+    catch (VcsException e) {
+      LOG.warn(e);
     }
+
     return false;
   }
 }
