@@ -45,11 +45,17 @@ public class BooleanParameterInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    if (((Integer)infos[0]).intValue() == 1) {
-      return InspectionGadgetsBundle.message("boolean.parameter.problem.descriptor");
+    final PsiMethod method = (PsiMethod)infos[0];
+    final int booleanParameterCount = ((Integer)infos[1]).intValue();
+    if (booleanParameterCount == 1) {
+      return method.isConstructor()
+             ? InspectionGadgetsBundle.message("boolean.parameter.constructor.problem.descriptor")
+             : InspectionGadgetsBundle.message("boolean.parameter.problem.descriptor");
     }
     else {
-      return InspectionGadgetsBundle.message("boolean.parameters.problem.descriptor");
+      return method.isConstructor()
+             ? InspectionGadgetsBundle.message("boolean.parameters.constructor.problem.descriptor")
+             : InspectionGadgetsBundle.message("boolean.parameters.problem.descriptor");
     }
   }
 
@@ -96,7 +102,7 @@ public class BooleanParameterInspection extends BaseInspection {
       if (count == 0 || onlyReportMultiple && count == 1) {
         return;
       }
-      registerMethodError(method, Integer.valueOf(count));
+      registerMethodError(method, method, Integer.valueOf(count));
     }
   }
 }
