@@ -24,7 +24,7 @@ class HgSetExecutablePathPanel extends TextFieldWithBrowseButton {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
         String path = files[0].getPath();
-        if (!HgUtil.isValid(path)) {
+        if (!HgUtil.isExecutableValid(path)) {
           throw new ConfigurationException(HgVcsMessages.message("hg4idea.configuration.executable.error", path));
         }
         for (ActionListener okListener : myOkListeners) {

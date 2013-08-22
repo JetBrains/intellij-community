@@ -21,13 +21,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.ShellCommand;
 import org.zmlx.hg4idea.execution.ShellCommandException;
 
-import java.nio.charset.Charset;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,10 +42,10 @@ public final class HgVersion implements Comparable<HgVersion> {
    * The minimal supported version
    */
   public static final HgVersion MIN = new HgVersion(1, 9, 1);
-  public static final HgVersion AMENDSUPPORTED = new HgVersion(2, 2, 0);
+  public static final HgVersion AMEND_SUPPORTED = new HgVersion(2, 2, 0);
 
   /**
-   * Special version with a special Type which indicates, that Hg version information is unavailable.
+   * Special version which indicates, that Hg version information is unavailable.
    */
   public static final HgVersion NULL = new HgVersion(0, 0, 0);
 
@@ -57,13 +53,10 @@ public final class HgVersion implements Comparable<HgVersion> {
   private final int myMiddle;
   private final int myMinor;
 
-  private final int myHashCode;
-
   public HgVersion(int major, int middle, int minor) {
     myMajor = major;
     myMiddle = middle;
     myMinor = minor;
-    myHashCode = Objects.hashCode(myMajor, myMiddle, myMinor);
   }
 
   /**
@@ -100,14 +93,7 @@ public final class HgVersion implements Comparable<HgVersion> {
   @NotNull
   public static HgVersion identifyVersion(@NotNull String executable)
     throws ShellCommandException, InterruptedException, ParseException {
-    String hgExecutable = executable.trim();
-    ShellCommand shellCommand = new ShellCommand(false);
-    List<String> cmdArgs = new ArrayList<String>();
-    cmdArgs.add(hgExecutable);
-    cmdArgs.add("version");
-    cmdArgs.add("-q");
-    HgCommandResult versionResult = shellCommand
-      .execute(cmdArgs, null, Charset.defaultCharset());
+    HgCommandResult versionResult = HgUtil.getVersionOutput(executable);
     return parseVersion(versionResult.getRawOutput());
   }
 
@@ -119,33 +105,24 @@ public final class HgVersion implements Comparable<HgVersion> {
   }
 
   public boolean isAmendSupported() {
-    return !isNull() && compareTo(AMENDSUPPORTED) >= 0;
+    return !isNull() && compareTo(AMEND_SUPPORTED) >= 0;
   }
 
   /**
    * Note: this class has a natural ordering that is inconsistent with equals.
-   * Two HgVersions are equal if their number versions are equal and if their types are equal.
-   * Types are considered equal also if one of them is undefined. Otherwise they are compared.
+   * Two HgVersions are equal if their number versions are equal.
    */
   @Override
   public boolean equals(final Object obj) {
     if (!(obj instanceof HgVersion)) {
       return false;
     }
-    HgVersion other = (HgVersion)obj;
-    if (compareTo(other) != 0) {
-      return false;
-    }
-    return true;
+    return compareTo((HgVersion)obj) == 0;
   }
 
-  /**
-   * Hashcode is computed from numbered components of the version. Thus HgVersions with the same numbered components will be compared
-   * by equals, and there the type will be taken into consideration).
-   */
   @Override
   public int hashCode() {
-    return myHashCode;
+    return Objects.hashCode(myMajor, myMiddle, myMinor);
   }
 
   /**
@@ -156,9 +133,6 @@ public final class HgVersion implements Comparable<HgVersion> {
    * {@link HgVersion#NULL} is less than any other not-NULL version.
    */
   public int compareTo(@NotNull HgVersion o) {
-    if (o.isNull()) {
-      return isNull() ? 0 : 1;
-    }
     int d = myMajor - o.myMajor;
     if (d != 0) {
       return d;
