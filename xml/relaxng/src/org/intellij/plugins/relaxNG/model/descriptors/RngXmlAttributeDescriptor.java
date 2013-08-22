@@ -30,7 +30,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.util.XmlAttributeValueReference;
+import com.intellij.xml.util.XmlEnumeratedValueReference;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -222,7 +222,7 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
 
       @Override
       protected void processToken(int start, int end, boolean delimitersOnly) {
-        list.add(new XmlAttributeValueReference(value, TextRange.create(offset + start, offset + end), RngXmlAttributeDescriptor.this));
+        list.add(new XmlEnumeratedValueReference(value, TextRange.create(offset + start, offset + end), RngXmlAttributeDescriptor.this));
       }
     }.processText(text);
     return list.toArray(new PsiReference[list.size()]);

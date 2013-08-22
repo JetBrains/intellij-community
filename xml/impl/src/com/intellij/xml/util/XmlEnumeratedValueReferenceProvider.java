@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  *         Date: 15.08.13
  */
-public class XmlAttributeValueReferenceProvider extends PsiReferenceProvider {
+public class XmlEnumeratedValueReferenceProvider extends PsiReferenceProvider {
 
   public final static Key<Boolean> SUPPRESS = Key.create("suppress attribute value references");
 
