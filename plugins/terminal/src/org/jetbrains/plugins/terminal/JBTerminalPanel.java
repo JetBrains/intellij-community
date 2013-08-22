@@ -62,6 +62,8 @@ public class JBTerminalPanel extends TerminalPanel {
                                     TerminalColor.awt(myColorScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR))));
 
     setLineSpace(myColorScheme.getConsoleLineSpacing());
+    
+    JBTabbedTerminalWidget.convertActions(this, getActions());
   }
 
   protected Font createFont() {

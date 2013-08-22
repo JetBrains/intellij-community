@@ -31,6 +31,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -192,7 +193,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     }
 
     private KeyStroke[] getKeyStrokesByActionId(String actionId) {
-      java.util.List<KeyStroke> keyStrokes = new ArrayList<KeyStroke>();
+      List<KeyStroke> keyStrokes = new ArrayList<KeyStroke>();
       Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
       for (Shortcut sc : shortcuts) {
         if (sc instanceof KeyboardShortcut) {
