@@ -271,21 +271,23 @@ class Impl extends Bar implements Foo {}
     CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = false
     try {
       myFixture.addClass("package foo; public class Foo {}")
+      myFixture.addClass("package bar; public class Bar {}")
       myFixture.configureByText "a.java", '''
 import foo.*;
+import bar.*;
 
 /**
- * {@link #go<caret>
- */
-class Goo { void goo(Foo foo {} }
+* {@link #go<caret>
+*/
+class Goo { void goo(Foo foo, Bar bar) {} }
 '''
       myFixture.completeBasic()
-      assert myFixture.editor.document.text.contains('@link #goo(Foo)')
+      assert myFixture.editor.document.text.contains('@link #goo(Foo, Bar)')
     }
     finally {
       CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = true
     }
-    
+
   }
 
   public void testCustomReferenceProvider() throws Exception {

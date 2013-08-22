@@ -18,8 +18,10 @@ package com.intellij.xml.util;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
@@ -44,6 +46,9 @@ public class XmlEnumeratedValueReferenceProvider extends PsiReferenceProvider {
       return PsiReference.EMPTY_ARRAY;
     }
     XmlAttributeValue value = (XmlAttributeValue)element;
+    if (value instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)value)) {
+      return PsiReference.EMPTY_ARRAY;
+    }
     String unquotedValue = value.getValue();
     if (unquotedValue == null || XmlHighlightVisitor.skipValidation(value) || !XmlUtil.isSimpleXmlAttributeValue(unquotedValue, value)) {
       return PsiReference.EMPTY_ARRAY;

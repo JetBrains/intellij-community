@@ -18,6 +18,7 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.navigation.EfficientChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -76,6 +77,7 @@ public class DefaultFileNavigationContributor implements EfficientChooseByNameCo
         idSet.set(
           ((VirtualFileWithId)fileOrDir).getId()
         );
+        ProgressManager.checkCanceled();
         return true;
       }
     };
