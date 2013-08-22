@@ -1,5 +1,6 @@
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,5 +27,30 @@ public class SimpleCommitParents implements CommitParents {
   @Override
   public List<Hash> getParents() {
     return parentHashes;
+  }
+
+  @Override
+  public String toString() {
+    return commitHash + "|-" + StringUtil.join(parentHashes, ",");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    SimpleCommitParents parents = (SimpleCommitParents)o;
+
+    if (commitHash != null ? !commitHash.equals(parents.commitHash) : parents.commitHash != null) return false;
+    if (parentHashes != null ? !parentHashes.equals(parents.parentHashes) : parents.parentHashes != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = commitHash != null ? commitHash.hashCode() : 0;
+    result = 31 * result + (parentHashes != null ? parentHashes.hashCode() : 0);
+    return result;
   }
 }
