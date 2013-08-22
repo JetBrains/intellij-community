@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -117,11 +118,23 @@ public class ChooseTypeExpression extends Expression {
       type = TypesUtil.unboxPrimitiveTypeWrapper(type);
       if (type == null) return null;
 
-      return new PsiTypeResult(type, context.getProject()) {
+      final PsiType finalType = type;
+      return new PsiTypeResult(finalType, context.getProject()) {
         @Override
         public void handleRecalc(PsiFile psiFile, Document document, int segmentStart, int segmentEnd) {
-          if (myItems.length <= 1) super.handleRecalc(psiFile, document, segmentStart, segmentEnd);
+          if (myItems.length <= 1) {
+            super.handleRecalc(psiFile, document, segmentStart, segmentEnd);
+          }
+          else {
+            JavaTemplateUtil.updateTypeBindings(getType(), psiFile, document, segmentStart, segmentEnd, true);
+          }
         }
+
+        @Override
+        public String toString() {
+          return myItems.length == 1 ? super.toString() : finalType.getPresentableText();
+        }
+
       };
     }
 
