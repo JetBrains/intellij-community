@@ -5,7 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.util.classFinder.ClassFinder;
 import com.intellij.rt.coverage.util.classFinder.ClassPathEntry;
@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 */
 class IdeaClassFinder extends ClassFinder {
   private static final Logger LOG = Logger.getInstance("#" + IdeaClassFinder.class.getName());
-  
+
   private final Project myProject;
   private final CoverageSuitesBundle myCurrentSuite;
 
@@ -57,14 +57,14 @@ class IdeaClassFinder extends ClassFinder {
         final VirtualFile outputFile = extension.getCompilerOutputPath();
         try {
           if (outputFile != null) {
-            final URL outputURL = VfsUtil.virtualToIoFile(outputFile).toURI().toURL();
-            entries.add(new ClassPathEntry(outputFile.getPath(), new UrlClassLoader(new URL[]{outputURL}, null)));
+            final URL outputURL = VfsUtilCore.virtualToIoFile(outputFile).toURI().toURL();
+            entries.add(new ClassPathEntry(outputFile.getPath(), UrlClassLoader.build().urls(outputURL).get()));
           }
           if (myCurrentSuite.isTrackTestFolders()) {
             final VirtualFile testOutput = extension.getCompilerOutputPathForTests();
             if (testOutput != null) {
-              final URL testOutputURL = VfsUtil.virtualToIoFile(testOutput).toURI().toURL();
-              entries.add(new ClassPathEntry(testOutput.getPath(), new UrlClassLoader(new URL[]{testOutputURL}, null)));
+              final URL testOutputURL = VfsUtilCore.virtualToIoFile(testOutput).toURI().toURL();
+              entries.add(new ClassPathEntry(testOutput.getPath(), UrlClassLoader.build().urls(testOutputURL).get()));
             }
           }
         }
