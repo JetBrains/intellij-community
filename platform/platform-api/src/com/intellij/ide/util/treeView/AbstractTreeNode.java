@@ -141,7 +141,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return myParentDescriptor;
   }
 
-  public final T getValue() {
+  public T getValue() {
     if (myValue == null) {
       return null;
     }
