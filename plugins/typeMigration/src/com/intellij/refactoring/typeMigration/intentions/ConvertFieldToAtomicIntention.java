@@ -58,8 +58,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    PsiVariable psiVariable = PsiTreeUtil.getParentOfType(element, PsiField.class);
-    if (psiVariable == null) psiVariable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
+    PsiVariable psiVariable = getVariable(element);
     if (psiVariable == null || psiVariable instanceof PsiResourceVariable) return false;
     if (psiVariable.getLanguage() != JavaLanguage.INSTANCE) return false;
     if (psiVariable.getTypeElement() == null) return false;
@@ -81,9 +80,19 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     return AllowedApiFilterExtension.isClassAllowed(AtomicReference.class.getName(), element);
   }
 
+  private static PsiVariable getVariable(PsiElement element) {
+    if (element instanceof PsiIdentifier) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiLocalVariable || parent instanceof PsiField) {
+        return (PsiVariable)parent;
+      }
+    }
+    return null;
+  }
+
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiVariable psiVariable = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
+    final PsiVariable psiVariable = getVariable(element);
     LOG.assertTrue(psiVariable != null);
 
     final Query<PsiReference> refs = ReferencesSearch.search(psiVariable);

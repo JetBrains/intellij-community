@@ -50,6 +50,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (!(element instanceof PsiIdentifier)) return false;
     final PsiField psiField = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (psiField == null) return false;
     if (psiField.getLanguage() != JavaLanguage.INSTANCE) return false;
