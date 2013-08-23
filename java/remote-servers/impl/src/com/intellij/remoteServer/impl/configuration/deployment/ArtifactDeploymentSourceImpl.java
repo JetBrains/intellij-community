@@ -6,6 +6,7 @@ import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.remoteServer.configuration.deployment.ArtifactDeploymentSource;
+import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -89,5 +90,11 @@ public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource {
   @Override
   public int hashCode() {
     return myPointer.hashCode();
+  }
+
+  @NotNull
+  @Override
+  public DeploymentSourceType<?> getType() {
+    return DeploymentSourceType.EP_NAME.findExtension(ArtifactDeploymentSourceType.class);
   }
 }

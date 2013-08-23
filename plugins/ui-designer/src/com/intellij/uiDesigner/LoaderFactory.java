@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public final class LoaderFactory {
   public static LoaderFactory getInstance(final Project project) {
     return ServiceManager.getService(project, LoaderFactory.class);
   }
-  
+
   public LoaderFactory(final Project project) {
     myProject = project;
     myModule2ClassLoader = new ConcurrentWeakHashMap<Module, ClassLoader>();
@@ -155,7 +155,7 @@ public final class LoaderFactory {
     private final String myModuleName;
 
     public DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent, final String moduleName) {
-      super(urls, parent);
+      super(build().urls(urls).parent(parent));
       myModuleName = moduleName;
     }
 

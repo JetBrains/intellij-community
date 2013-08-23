@@ -17,13 +17,11 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
+import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,24 +30,17 @@ import org.jetbrains.annotations.Nullable;
 *         Date: 16.08.13
 */
 public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlAttributeValue> implements EmptyResolveMessageProvider {
-  private final XmlAttributeDescriptor myDescriptor;
+  private final XmlEnumerationDescriptor myDescriptor;
 
-  public XmlEnumeratedValueReference(XmlAttributeValue value, XmlAttributeDescriptor descriptor) {
+  public XmlEnumeratedValueReference(XmlAttributeValue value, XmlEnumerationDescriptor descriptor) {
     super(value);
-    myDescriptor = descriptor;
-  }
-
-  public XmlEnumeratedValueReference(XmlAttributeValue element,
-                                     TextRange range,
-                                     XmlAttributeDescriptor descriptor) {
-    super(element, range);
     myDescriptor = descriptor;
   }
 
   @Nullable
   @Override
   public PsiElement resolve() {
-    return ((BasicXmlAttributeDescriptor)myDescriptor).getValueDeclaration(getElement(), getValue());
+    return myDescriptor.getValueDeclaration(getElement(), getValue());
   }
 
   @NotNull

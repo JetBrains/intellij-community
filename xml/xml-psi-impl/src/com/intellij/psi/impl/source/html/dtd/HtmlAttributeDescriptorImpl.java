@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.html.dtd;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -94,7 +93,7 @@ public class HtmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   }
 
   @Override
-  public PsiElement getValueDeclaration(XmlAttributeValue attributeValue, String value) {
+  public PsiElement getValueDeclaration(XmlElement attributeValue, String value) {
     String s = myCaseSensitive ? value : value.toLowerCase();
     return delegate instanceof BasicXmlAttributeDescriptor ?
            ((BasicXmlAttributeDescriptor)delegate).getValueDeclaration(attributeValue, s) :

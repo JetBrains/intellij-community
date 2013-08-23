@@ -22,7 +22,6 @@ import com.intellij.tasks.TaskRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -33,9 +32,10 @@ import java.util.regex.Pattern;
  * @author Dmitry Avdeev
  */
 public class TaskUtil {
-
-  private static final Pattern DATE_PATTERN = Pattern.compile("(\\d\\d\\d\\d[/-]\\d\\d[/-]\\d\\d).*(\\d\\d:\\d\\d:\\d\\d).*");
-  private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+  private static SimpleDateFormat ISO8601_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+  // Almost ISO-8601 strict except date parts may be separated by '/' as well
+  private static Pattern ISO8601_DATE_PATTERN = Pattern.compile(
+    "(\\d{4}[/-]\\d{2}[/-]\\d{2})[ T](\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)?");
 
   public static String formatTask(@NotNull Task task, String format) {
     return format.replace("{id}", task.getId()).replace("{number}", task.getNumber())
@@ -62,11 +62,34 @@ public class TaskUtil {
   }
 
   @Nullable
-  public static Date parseDate(String date) throws ParseException {
-    final Matcher m = DATE_PATTERN.matcher(date);
-    if (m.find()) {
-      return DATE_FORMAT.parse(m.group(1).replace('-', '/') + " " + m.group(2));
+  public static Date parseDate(@NotNull String s) {
+    // SimpleDateFormat prior JDK7 doesn't support 'X' specifier for ISO 8601 timezone format.
+    // Because some bug trackers and task servers e.g. send dates ending with 'Z' (that stands for UTC),
+    // dates should be preprocessed before parsing.
+    Matcher m = ISO8601_DATE_PATTERN.matcher(s);
+    if (!m.matches()) {
+      return null;
     }
-    return null;
+    String datePart = m.group(1).replace('/', '-');
+    String timePart = m.group(2);
+    String milliseconds = m.group(3);
+    milliseconds = milliseconds == null? "000" : milliseconds.substring(1, 4);
+    String timezone = m.group(4);
+    if (timezone == null || timezone.equals("Z")) {
+      timezone = "+0000";
+    } else if (timezone.length() == 3) {
+      // [+-]HH
+      timezone += "00";
+    } else if (timezone.length() == 6) {
+      // [+-]HH:MM
+      timezone = timezone.substring(0, 3) + timezone.substring(4, 6);
+    }
+    String canonicalForm = String.format("%sT%s.%s%s", datePart, timePart, milliseconds, timezone);
+    try {
+      return ISO8601_DATE_FORMAT.parse(canonicalForm);
+    }
+    catch (ParseException e) {
+      return null;
+    }
   }
 }

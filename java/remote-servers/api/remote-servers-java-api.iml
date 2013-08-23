@@ -7,14 +7,14 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="remote-servers-api" />
+    <orderEntry type="module" module-name="remote-servers-api" exported="" />
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="core-api" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="remote-servers-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="compiler-impl" />
   </component>
 </module>
 

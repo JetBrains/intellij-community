@@ -26,7 +26,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
+import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import com.intellij.xml.impl.schema.XmlSchemaTagsProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,9 +56,9 @@ public class XmlEnumeratedValueReferenceProvider extends PsiReferenceProvider {
     PsiElement parent = value.getParent();
     if (parent instanceof XmlAttribute) {
       final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-      if (descriptor instanceof BasicXmlAttributeDescriptor &&
+      if (descriptor instanceof XmlEnumerationDescriptor &&
           (descriptor.isFixed() || descriptor.isEnumerated() || unquotedValue.equals(descriptor.getDefaultValue()))) { // todo case insensitive
-        return ((BasicXmlAttributeDescriptor)descriptor).getValueReferences(value);
+        return ((XmlEnumerationDescriptor)descriptor).getValueReferences(value);
       }
     }
     return PsiReference.EMPTY_ARRAY;

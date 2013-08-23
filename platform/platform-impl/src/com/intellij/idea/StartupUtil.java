@@ -165,7 +165,7 @@ public class StartupUtil {
                            new ProcessBuilder(ideTempFile.getAbsolutePath()).start().waitFor() == 0;
         }
 
-        tempAccessible = tempExecutable && FileUtil.delete(ideTempFile);
+        tempAccessible = tempExecutable && ideTempFile.delete();
       }
       catch (Exception ignored) { }
     }
@@ -246,7 +246,7 @@ public class StartupUtil {
 
     if (SystemInfo.isWin2kOrNewer && !Main.isHeadless()) {
       try {
-        System.loadLibrary(SystemInfo.isAMD64 ? "focusKiller64" : "focusKiller");
+        System.loadLibrary("focusKiller");
         log.info("Using \"FocusKiller\" library to prevent focus stealing.");
       }
       catch (Throwable t) {

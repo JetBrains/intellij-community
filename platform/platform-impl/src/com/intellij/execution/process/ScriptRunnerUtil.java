@@ -19,13 +19,17 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,17 +102,55 @@ public final class ScriptRunnerUtil {
     return outputBuilder.toString();
   }
 
-  @Nullable
-  private static File getShell() {
-    final String shell = System.getenv("SHELL");
-    if (shell != null && (shell.contains("bash") || shell.contains("zsh"))) {
-      File file = new File(shell);
-      if (file.isAbsolute() && file.isFile() && file.canExecute()) {
-        return file;
-      }
+  /**
+   * Executes a process with given parameters.
+   * This method tries to work around the following error:
+   * <pre>Cannot run program ...: error=2, No such file or directory</pre>
+   * that occurs when {@code exePath} isn't absolute path, so {@code exePath} is searched in
+   * PATH environment variable from {@code System.getenv()}. <p/>
+   *
+   * There is an OSX specific issue that environment variables aren't passed to IDE, if the IDE isn't launched from Terminal.
+   * As a result, System.getenv() contains wrong PATH environment variable value on OSX, and correct absolute executable file
+   * can not be found.
+   *
+   * The implemented workaround is to find absolute executable path and execute once again.
+   *
+   * @param exePath  path to executable (absolute or not)
+   * @param workingDirectory working directory
+   * @param scriptFile script file
+   * @param parameters custom parameters
+   * @return an instance of {@link OSProcessHandler}
+   * @throws ExecutionException
+   */
+  @NotNull
+  public static OSProcessHandler executeSafelyOnMac(@NotNull String exePath,
+                                                    @Nullable String workingDirectory,
+                                                    @Nullable VirtualFile scriptFile,
+                                                    @NotNull String[] parameters,
+                                                    @Nullable Charset charset) throws ExecutionException {
+    if (!SystemInfo.isMac) {
+      return execute(exePath, workingDirectory, scriptFile, parameters, charset);
     }
-    return null;
+    ExecutionException firstException;
+    try {
+      return execute(exePath, workingDirectory, scriptFile, parameters, charset);
+    }
+    catch (ExecutionException e) {
+      firstException = e;
+      LOG.info("Can't execute " + exePath);
+    }
+    File file = PathEnvironmentVariableUtil.findInPath(exePath);
+    if (file == null) {
+      throw firstException;
+    }
+    try {
+      return execute(file.getAbsolutePath(), workingDirectory, scriptFile, parameters, charset);
+    } catch (ExecutionException e) {
+      LOG.info("Standby command failed too", e);
+      throw firstException;
+    }
   }
+
 
   @NotNull
   public static OSProcessHandler execute(@NotNull String exePath,
@@ -139,10 +181,12 @@ public final class ScriptRunnerUtil {
     LOG.debug("Command line: " + commandLine.getCommandLineString());
     LOG.debug("Command line env: " + commandLine.getEnvironment());
 
-    final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(),
-                                                                      charset == null
-                                                                      ? EncodingManager.getInstance().getDefaultCharset()
-                                                                      : charset);
+    if (charset == null) {
+      charset = ObjectUtils.notNull(EncodingManager.getInstance().getDefaultCharset(), CharsetToolkit.UTF8_CHARSET);
+    }
+    final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine.createProcess(),
+                                                                      commandLine.getCommandLineString(),
+                                                                      charset);
     if (LOG.isDebugEnabled()) {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
@@ -152,7 +196,6 @@ public final class ScriptRunnerUtil {
       });
     }
 
-    //ProcessTerminatedListener.attach(processHandler, project);
     return processHandler;
   }
 
