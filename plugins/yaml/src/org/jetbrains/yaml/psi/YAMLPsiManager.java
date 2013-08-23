@@ -57,7 +57,7 @@ public class YAMLPsiManager implements ProjectComponent, PsiTreeChangePreprocess
         }
 
       case CHILDREN_CHANGED:
-        if (event.isGenericChildrenChange()) return;
+        if (event.isGenericChange()) return;
         changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
         break;
 
