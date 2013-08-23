@@ -517,27 +517,9 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   }
 
   @Override
-  public VirtualFile getExplodedDirectory() {
-    return null;
-  }
-
-  @Override
-  public void setExplodedDirectory(@Nullable VirtualFile file) {
-  }
-
-  @Override
-  public void setExplodedDirectory(@Nullable String url) {
-  }
-
-  @Override
   @NotNull
   public Module getModule() {
     return myModuleRootManager.getModule();
-  }
-
-  @Override
-  public String getExplodedDirectoryUrl() {
-    return null;
   }
 
   @Override
@@ -635,15 +617,6 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     myExtensions.clear();
     myWritable = false;
     myDisposed = true;
-  }
-
-  @Override
-  public boolean isExcludeExplodedDirectory() {
-    return false;
-  }
-
-  @Override
-  public void setExcludeExplodedDirectory(boolean excludeExplodedDir) {
   }
 
   private class Order extends ArrayList<OrderEntry> {
@@ -745,33 +718,9 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     }
   }
 
-  @Override
-  @NotNull
-  public VirtualFile[] getRootPaths(final OrderRootType rootType) {
-    for (ModuleExtension extension : myExtensions) {
-      final VirtualFile[] files = extension.getRootPaths(rootType);
-      if (files != null) return files;
-    }
-    return VirtualFile.EMPTY_ARRAY;
-  }
-
-  @Override
-  @NotNull
-  public String[] getRootUrls(final OrderRootType rootType) {
-    for (ModuleExtension extension : myExtensions) {
-      final String[] urls = extension.getRootUrls(rootType);
-      if (urls != null) return urls;
-    }
-    return ArrayUtil.EMPTY_STRING_ARRAY;
-  }
-
   private RootModelImpl getSourceModel() {
     assertWritable();
     return myModuleRootManager.getRootModel();
-  }
-
-  @Override
-  public void setRootUrls(final OrderRootType orderRootType, @NotNull final String[] urls) {
   }
 
   @Nullable

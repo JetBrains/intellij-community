@@ -110,17 +110,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
 
-
-  @Override
-  public VirtualFile getExplodedDirectory() {
-    return null;
-  }
-
-  @Override
-  public String getExplodedDirectoryUrl() {
-    return null;
-  }
-
   @Override
   @NotNull
   public ModifiableRootModel getModifiableModel() {
@@ -228,18 +217,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   @NotNull
   public String[] getDependencyModuleNames() {
     return myRootModel.getDependencyModuleNames();
-  }
-
-  @Override
-  @NotNull
-  public VirtualFile[] getRootPaths(final OrderRootType rootType) {
-    return myRootModel.getRootPaths(rootType);
-  }
-
-  @Override
-  @NotNull
-  public String[] getRootUrls(final OrderRootType rootType) {
-    return myRootModel.getRootUrls(rootType);
   }
 
   @Override
