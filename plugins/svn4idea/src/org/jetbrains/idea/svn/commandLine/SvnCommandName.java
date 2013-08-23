@@ -38,7 +38,8 @@ public enum SvnCommandName {
   copy("copy", true),
   move("move", true),
   resolve("resolve", true),
-  propget("propget", false);
+  propget("propget", false),
+  blame("blame", false);
 
   private final String myName;
   private final boolean myWriteable;

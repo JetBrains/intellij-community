@@ -47,7 +47,10 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
                     @Nullable ISVNLogEntryHandler handler) throws VcsException {
     // TODO: add revision properties parameter if necessary
     // TODO: svn log command supports --xml option - could update parsing to use xml format
-    // TODO: Check parsing when merge is supported and includeMergedRevisions=true is used
+
+    // TODO: after merge remove setting includeMergedRevisions to false and update parsing
+    includeMergedRevisions = false;
+
     List<String> parameters =
       prepareCommand(path, startRevision, endRevision, pegRevision, stopOnCopy, discoverChangedPaths, includeMergedRevisions, limit);
 
@@ -84,8 +87,10 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     CommandUtil.put(parameters, stopOnCopy, "--stop-on-copy");
     CommandUtil.put(parameters, discoverChangedPaths, "--verbose");
     CommandUtil.put(parameters, includeMergedRevisions, "--use-merge-history");
-    parameters.add("--limit");
-    parameters.add(String.valueOf(limit));
+    if (limit > 0) {
+      parameters.add("--limit");
+      parameters.add(String.valueOf(limit));
+    }
 
     return parameters;
   }

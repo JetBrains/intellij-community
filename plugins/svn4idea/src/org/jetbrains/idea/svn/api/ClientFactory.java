@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.AddClient;
+import org.jetbrains.idea.svn.annotate.AnnotateClient;
 import org.jetbrains.idea.svn.conflict.ConflictClient;
 import org.jetbrains.idea.svn.copy.CopyMoveClient;
 import org.jetbrains.idea.svn.delete.DeleteClient;
@@ -20,6 +21,7 @@ public abstract class ClientFactory {
   protected SvnVcs myVcs;
 
   protected AddClient addClient;
+  protected AnnotateClient annotateClient;
   protected HistoryClient historyClient;
   protected RevertClient revertClient;
   protected DeleteClient deleteClient;
@@ -38,6 +40,11 @@ public abstract class ClientFactory {
   @NotNull
   public AddClient createAddClient() {
     return prepare(addClient);
+  }
+
+  @NotNull
+  public AnnotateClient createAnnotateClient() {
+    return prepare(annotateClient);
   }
 
   @NotNull

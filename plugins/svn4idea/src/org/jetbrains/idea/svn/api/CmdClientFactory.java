@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.CmdAddClient;
+import org.jetbrains.idea.svn.annotate.CmdAnnotateClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.conflict.CmdConflictClient;
 import org.jetbrains.idea.svn.copy.CmdCopyMoveClient;
@@ -23,6 +24,7 @@ public class CmdClientFactory extends ClientFactory {
   @Override
   protected void setup() {
     addClient = new CmdAddClient();
+    annotateClient = new CmdAnnotateClient();
     historyClient = new CmdHistoryClient();
     revertClient = new CmdRevertClient();
     deleteClient = new CmdDeleteClient();

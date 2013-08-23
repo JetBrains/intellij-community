@@ -14,8 +14,10 @@ import java.io.File;
  */
 public interface PropertyClient extends SvnClient {
 
+  @Nullable
   SVNPropertyData getProperty(@NotNull final File path,
                               @NotNull final String property,
+                              boolean revisionProperty,
                               @Nullable SVNRevision pegRevision,
                               @Nullable SVNRevision revision) throws VcsException;
 }

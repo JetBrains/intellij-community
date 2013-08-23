@@ -10,6 +10,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.FileStatusResultParser;
 import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -73,9 +74,13 @@ public class CommandUtil {
   }
 
   public static void put(@NotNull List<String> parameters, @NotNull File path, @Nullable SVNRevision pegRevision) {
-    StringBuilder builder = new StringBuilder(path.getAbsolutePath());
+    put(parameters, path.getAbsolutePath(), pegRevision);
+  }
 
-    if (pegRevision != null && !SVNRevision.UNDEFINED.equals(pegRevision)) {
+  public static void put(@NotNull List<String> parameters, @NotNull String path, @Nullable SVNRevision pegRevision) {
+    StringBuilder builder = new StringBuilder(path);
+
+    if (pegRevision != null && !SVNRevision.UNDEFINED.equals(pegRevision) && pegRevision.getNumber() > 0) {
       builder.append("@");
       builder.append(pegRevision);
     }
@@ -96,6 +101,28 @@ public class CommandUtil {
     }
   }
 
+  public static void put(@NotNull List<String> parameters, @Nullable SVNDiffOptions diffOptions) {
+    if (diffOptions != null) {
+      StringBuilder builder = new StringBuilder();
+
+      if (diffOptions.isIgnoreAllWhitespace()) {
+        builder.append(" --ignore-space-change");
+      }
+      if (diffOptions.isIgnoreAmountOfWhitespace()) {
+        builder.append(" --ignore-all-space");
+      }
+      if (diffOptions.isIgnoreEOLStyle()) {
+        builder.append(" --ignore-eol-style");
+      }
+
+      String value = builder.toString().trim();
+
+      if (!StringUtil.isEmpty(value)) {
+        parameters.add("--extensions");
+        parameters.add(value);
+      }
+    }
+  }
 
   /**
    * Utility method for running commands changing certain file status information.

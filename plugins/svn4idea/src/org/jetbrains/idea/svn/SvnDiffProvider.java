@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffMixin;
@@ -29,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.history.LatestExistentSearcher;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -74,43 +76,21 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
     }
 
     try {
-      final String message = getProperties(path);
+      final String message = getCommitMessage(path);
       return new VcsRevisionDescriptionImpl(new SvnRevisionNumber(svnInfo.getCommittedRevision()), svnInfo.getCommittedDate(),
                                             svnInfo.getAuthor(), message);
     }
-    catch (SVNException e) {
+    catch (VcsException e) {
       LOG.debug(e);    // most likely the file is unversioned
       return null;
     }
   }
 
-  private String getProperties(File path) throws SVNException {
-    final SVNWCClient client = myVcs.createWCClient();
-    final String[] message = new String[1];
+  private String getCommitMessage(File path) throws VcsException {
+    SVNPropertyData property =
+      myVcs.getFactory(path).createPropertyClient().getProperty(path, COMMIT_MESSAGE, true, null, SVNRevision.BASE);
 
-    client.doGetRevisionProperty(path, null, SVNRevision.BASE, new ISVNPropertyHandler() {
-      @Override
-      public void handleProperty(File path, SVNPropertyData property) throws SVNException {
-        handle(property);
-      }
-
-      @Override
-      public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
-        handle(property);
-      }
-
-      @Override
-      public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
-        handle(property);
-      }
-
-      private void handle(SVNPropertyData data) {
-        if (COMMIT_MESSAGE.equals(data.getName())) {
-          message[0] = data.getValue().getString();
-        }
-      }
-    });
-    return message[0];
+    return property != null ? SVNPropertyValue.getPropertyAsString(property.getValue()) : null;
   }
 
   private static ItemLatestState defaultResult() {

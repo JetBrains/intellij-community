@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.SvnKitAddClient;
+import org.jetbrains.idea.svn.annotate.SvnKitAnnotateClient;
 import org.jetbrains.idea.svn.conflict.SvnKitConflictClient;
 import org.jetbrains.idea.svn.copy.SvnKitCopyMoveClient;
 import org.jetbrains.idea.svn.delete.SvnKitDeleteClient;
@@ -23,6 +24,7 @@ public class SvnKitClientFactory extends ClientFactory {
   @Override
   protected void setup() {
     addClient = new SvnKitAddClient();
+    annotateClient = new SvnKitAnnotateClient();
     historyClient = new SvnKitHistoryClient();
     revertClient = new SvnKitRevertClient();
     deleteClient = new SvnKitDeleteClient();
