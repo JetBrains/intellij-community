@@ -15,7 +15,9 @@
  */
 package com.intellij.util.lang;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -23,15 +25,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 public class UrlClassLoader extends ClassLoader {
   @NonNls static final String CLASS_EXTENSION = ".class";
@@ -43,6 +43,7 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myUseCache = false;
     private boolean myAcceptUnescaped = false;
     private boolean myPreload = true;
+    private String[] myNativeLibs = null;
 
     private Builder() { }
 
@@ -55,6 +56,7 @@ public class UrlClassLoader extends ClassLoader {
     public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
     public Builder noPreload() { myPreload = false; return this; }
+    public Builder nativeLibs(String... libNames) { myNativeLibs = libNames; return this; }
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
 
@@ -64,6 +66,7 @@ public class UrlClassLoader extends ClassLoader {
 
   private final List<URL> myURLs;
   private final ClassPath myClassPath;
+  private final Set<String> myNativeLibs;
 
   /** @deprecated use {@link #build()} (to remove in IDEA 14) */
   public UrlClassLoader(@NotNull ClassLoader parent) {
@@ -95,6 +98,7 @@ public class UrlClassLoader extends ClassLoader {
       }
     });
     myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload);
+    myNativeLibs = Collections.emptySet();
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {
@@ -106,6 +110,7 @@ public class UrlClassLoader extends ClassLoader {
       }
     });
     myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload);
+    myNativeLibs = builder.myNativeLibs != null ? ContainerUtil.newHashSet(builder.myNativeLibs) : Collections.<String>emptySet();
   }
 
   public static URL internProtocol(@NotNull URL url) {
@@ -226,5 +231,51 @@ public class UrlClassLoader extends ClassLoader {
   @Override
   protected Enumeration<URL> findResources(String name) throws IOException {
     return myClassPath.getResources(name, true);
+  }
+
+  @Override
+  protected String findLibrary(String libname) {
+    if (BinPathHolder.path != null && myNativeLibs.contains(libname)) {
+      String fileName = mapLibraryName(libname);
+      return BinPathHolder.path + File.separator + fileName;
+    }
+
+    return super.findLibrary(libname);
+  }
+
+  private static class BinPathHolder {
+    private static final String path;
+
+    static {
+      String homePath = PathManager.getHomePath();
+      if (new File(homePath, ".idea").exists()) {
+        if (new File(homePath, "community").exists()) {
+          homePath += File.separator + "community";
+        }
+
+        String libDir = null;
+        String prefix = homePath + File.separator + "bin" + File.separator;
+        if (SystemInfo.isWindows) libDir = prefix + "win";
+        else if (SystemInfo.isMac) libDir = prefix + "mac";
+        else if (SystemInfo.isLinux) libDir = prefix + "linux";
+
+        path = libDir;
+      }
+      else {
+        path = PathManager.getBinPath();
+      }
+    }
+  }
+
+  private static String mapLibraryName(String libname) {
+    String baseName = libname;
+    if (SystemInfo.is64Bit) {
+      baseName = baseName.replace("32", "") + "64";
+    }
+    String fileName = System.mapLibraryName(baseName);
+    if (SystemInfo.isMac) {
+      fileName = fileName.replace(".jnilib", ".dylib");
+    }
+    return fileName;
   }
 }

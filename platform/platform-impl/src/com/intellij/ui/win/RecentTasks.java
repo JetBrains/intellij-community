@@ -16,9 +16,7 @@
 package com.intellij.ui.win;
 
 import com.intellij.idea.StartupUtil;
-import com.intellij.openapi.application.PathManager;
 
-import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -31,26 +29,7 @@ public class RecentTasks {
     new WeakReference<Thread>(Thread.currentThread());
 
   static {
-    final String libraryName = (System.getProperty("sun.arch.data.model").contains("64"))?
-                               "jumpListBridge64.dll": "jumpListBridge.dll";
-
-    final String binPath = PathManager.getBinPath();
-    final String communityBinPath = PathManager.getHomePath() + File.separatorChar + "community" + File.separatorChar + "bin";
-
-    final String [] libraryPaths = {
-      binPath,
-      binPath + File.separatorChar + "win",
-      communityBinPath,
-      communityBinPath + File.separatorChar + "win",
-    };
-
-    for (String path : libraryPaths) {
-      final File candidate = new File(path + File.separatorChar + libraryName);
-      if (candidate.exists()) {
-        System.load(candidate.getAbsolutePath());
-        break;
-      }
-    }
+    System.loadLibrary("jumpListBridge");
   }
 
   private synchronized static void init() {
@@ -98,4 +77,3 @@ public class RecentTasks {
     }
   }
 }
-
