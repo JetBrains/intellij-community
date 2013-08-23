@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps
+package org.intellij.util
 
 import org.jetbrains.jps.LayoutInfo
+import org.jetbrains.jps.gant.JpsGantProjectBuilder
+import org.jetbrains.jps.gant.JpsGantTool
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 
@@ -32,8 +34,10 @@ class Paths {
   final distMac
   final distDev
   final artifacts
+  final artifacts_core_upsource
   final ideaSystem
   final ideaConfig
+  def jdkHome
 
   def Paths(String home) {
     projectHome = new File(home).getCanonicalPath()
@@ -49,6 +53,8 @@ class Paths {
     distMac = "$sandbox/dist.mac"
     distDev = "$sandbox/dist.dev"
     artifacts = "$sandbox/artifacts"
+
+    artifacts_core_upsource = "$artifacts/core-upsource"
 
     ideaSystem = "$sandbox/system"
     ideaConfig = "$sandbox/config"
@@ -66,65 +72,251 @@ class Steps {
   def targz = true
   def dmg = true
   def sit = true
-  Steps(Map params){
-    clear = params.clear
-    zipSources = params.zipSources
-    compile = params.compile
-    scramble = params.scramble
-    layout = params.layout
-    build_searchable_options = params.build_searchable_options
-    zipwin = params.zipwin
-    targz = params.targz
-    dmg = params.dmg
-    sit = params.sit
-  }
 }
 
 class Build {
+  def buildName
   def product
   def productCode  
   def modules
-  Map steps_value = [
-	clear: false,
-	zipSources: false,
-	compile: false,
-	scramble: false,
-	layout: false,
-	build_searchable_options: false,
-	zipwin: false,
-	targz: false,
-	dmg: false,
-	sit: false
-  ]
   def steps
-  Paths paths
+  def paths
   def home
-  ProjectBuilder projectBuilder
+  def projectBuilder
   def buildNumber
+  def ant = new AntBuilder()
+  Script utils
+  Script ultimate_utils
+  Script layouts
+  Script libLicenses
 
-  Build(String arg_home, ProjectBuilder prjBuilder){
+  Build(String arg_home, JpsGantProjectBuilder prjBuilder,
+        Script script_utils, Script script_ultimate_utils,
+        Script script_layouts, Script script_libLicenses){
     home = arg_home
-	projectBuilder = prjBuilder
+    projectBuilder = prjBuilder
     paths = new Paths(home)
+    steps = new Steps()
+    utils = script_utils
+    ultimate_utils = script_ultimate_utils
+    layouts = script_layouts
+    libLicenses = script_libLicenses
   }
 
-  def compile() {
-    projectBuilder.stage("Compilation")
-    if (steps.compile) {
-	  projectBuilder.setTargetFolder(paths.classesTarget)
-      println "targetFolder: " + paths.classesTarget
-	  projectBuilder.cleanOutput()
-	  projectBuilder.buildModules(modules, false)
+  def init () {
+    projectBuilder.stage("Cleaning, creating folders, initializing timestamps")
+    utils.loadProject()
+
+    if (steps.clear) {
+      projectBuilder.stage("Cleaning up sandbox folder")
+      utils.forceDelete(paths.sandbox)
+      projectBuilder.stage("Creating folders")
+      [paths.sandbox, paths.classesTarget, paths.distWin, paths.distWinZip, paths.distAll,
+       paths.distJars, paths.distUnix, paths.distMac, paths.distDev, paths.artifacts].each {
+        ant.mkdir(dir: it)
+      }
     }
-    projectBuilder.stage("Compilation finished")
+    ant.tstamp() {
+      format(property: "today.year", pattern: "yyyy")
+    }
+    projectBuilder.stage("Init done")
   }
-  
-  def scramble() {}
+
+  def zip() {
+    if (steps.zipSources) {
+      projectBuilder.stage("zip: $home $paths.artifacts")
+      utils.zipSources(home, paths.artifacts)
+    }
+  }
+
+  def compile(String jdk) {
+    paths.jdkHome = jdk
+    projectBuilder.stage("Compilation")
+    projectBuilder.stage("step paths - " + paths.jdkHome + "/lib/tools.jar")
+    projectBuilder.stage("step home - " + home + "/community/lib/junit.jar")
+
+    if (steps.compile) {
+      projectBuilder.arrangeModuleCyclesOutputs = true
+      projectBuilder.targetFolder = paths.classesTarget
+      println "targetFolder: " + paths.classesTarget
+      projectBuilder.cleanOutput()
+      projectBuilder.buildProduction()
+    }	
+
+/*    projectBuilder.stage("step - additionalCompilationStep")
+    if (utils.isDefined("additionalCompilationStep")) {
+      projectBuilder.info("Using additional compilation step: " + additionalCompilationStep)
+      def script = includeFile(additionalCompilationStep)
+      script.doCustomCompile();
+    }
+
+    projectBuilder.stage("step - wireBuildDate")
+    utils.wireBuildDate(buildName, appInfoFile())
+
+    projectBuilder.stage("step - steps.build_searchable_options - finished")*/
+  }
+
+  def layout(){
+    projectBuilder.stage("step - layout")
+    if (steps.layout) {
+      LayoutInfo layoutInfo = layouts.layoutFull(paths.distJars)
+
+      ultimate_utils.layoutUpdater(paths.artifacts)
+
+      ultimate_utils.layoutInternalUtilities(paths.artifacts)
+      layouts.layout_duplicates(paths.artifacts, "duplicates.jar")
+
+      layouts.layout_core_upsource(home, paths.artifacts_core_upsource)
+      utils.notifyArtifactBuilt(paths.artifacts_core_upsource)
+
+      libLicenses.generateLicensesTable("${paths.artifacts}/third-party-libraries.txt", layoutInfo.usedModules)
+
+      def jpsArtifactsPath = "$paths.artifacts/jps"
+      ant.mkdir(dir: jpsArtifactsPath)
+      layouts.layoutJps(home, jpsArtifactsPath)
+      utils.notifyArtifactBuilt(jpsArtifactsPath)
+    }
+    projectBuilder.stage("layout - Finished")
+  }
+
+  def scramble (Map args) {
+    projectBuilder.stage("scramble - ")
+    if (utils.isUnderTeamCity()) {
+      projectBuilder.stage("Scrambling - getPreviousLogs")
+      getPreviousLogs()
+      projectBuilder.stage("Scrambling - prevBuildLog ")
+      def prevBuildLog = "$paths.sandbox/prevBuild/logs/ChangeLog.txt"
+      if (!new File(prevBuildLog).exists()) prevBuildLog = null
+
+      projectBuilder.stage("Scrambling - inc ")
+      def inc = prevBuildLog != null ? "looseChangeLogFileIn=\"${prevBuildLog}\"" : ""
+      utils.copyAndPatchFile("$home/build/conf/script.zkm.stub", "$paths.sandbox/script.zkm",
+                       ["CLASSES": "\"$paths.distJars/lib/${args.jarName}\"", "SCRAMBLED_CLASSES": "$paths.distJars/lib", "INCREMENTAL": inc])
+
+      ant.mkdir(dir: "$paths.artifacts/${args.jarName}.unscrambled")
+      def unscrambledPath = "$paths.artifacts/${args.jarName}.unscramble"
+      ant.copy(file: "$paths.distJars/lib/${args.jarName}", todir: unscrambledPath)
+      utils.notifyArtifactBuilt("$unscrambledPath/${args.jar}")
+
+      ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", paths.distJars/lib, args.jarName)
+
+      ant.zip(destfile: "$paths.artifacts/logs.zip") {
+        fileset(file: "ChangeLog.txt")
+
+        fileset(file: "ZKM_log.txt")
+        fileset(file: "$paths.sandbox/script.zkm")
+      }
+
+      ant.delete(file: "ChangeLog.txt")
+      ant.delete(file: "ZKM_log.txt")
+    }
+    else {
+      projectBuilder.info("teamcity.buildType.id is not defined. Incremental scrambling is disabled")
+    }
+    projectBuilder.stage("Scrambling - finished")
+  }
+
+  private lastPinnedBuild() {
+    "http://buildserver/httpAuth/repository/download/${this."teamcity.buildType.id"}/.lastPinned"
+  }
+
+  private getPreviousLogs() {
+    def removeZip = "${lastPinnedBuild()}/logs.zip"
+    def localZip = "${paths.sandbox}/prevBuild/logs.zip"
+    ant.mkdir(dir: "${paths.sandbox}/prevBuild")
+    ant.get(src: removeZip,
+            dest: localZip,
+            username: "builduser",
+            password: "qpcv4623nmdu",
+            ignoreerrors: "true"
+    )
+
+    if (new File(localZip).exists()) {
+      ant.unzip(src: localZip, dest: "${paths.sandbox}.prevBuild/logs") {
+        patternset {
+          include(name: "ChangeLog.txt")
+        }
+      }
+    }
+  }
+
   def install() {}
- 
+
+  // think: should be relocated in utils.gant script
   def includeFile(String filename) {
-	Script s = groovyShell.parse(new File("this.home/build/scripts/$filename"))
-	s.setBinding(binding)
-	s
+    Script s = groovyShell.parse(new File("$home/build/scripts/$filename"))
+    s.setBinding(binding)
+    s
   }
+
+  // think: to be implement for each product
+/*  String appInfoFile() {
+    projectBuilder.stage("step - wireBuildDate")
+    //return projectBuilder.moduleOutput(utils.findModule("ultimate-resources")) + "/idea/ApplicationInfo.xml"
+    return "${projectBuilder.moduleOutput(utils.findModule("ultimate-resources"))}/idea/ApplicationInfo.xml"
+  }*/
+
+  // rewrite to create one unspecified launcher
+/*
+  def buildLaunchers() {
+    Map args = ["tools_jar": "true"]
+    ultimate_utils.buildExe("$home/build/conf/idea.exe4j", system_selector, args)
+    ultimate_utils.buildExe("$home/build/conf/idea64.exe4j", system_selector, args + ["output.file": "idea64.exe"])
+
+    List ceResourcePaths = ["$ch/community-resources/src", "$ch/platform/icons/src"]
+    utils.buildWinLauncher(ch, "$ch/bin/WinLauncher/WinLauncher.exe", "$paths.sandbox/dist.win.ce/bin/idea.exe", appInfoFileCE(),
+                     "$home/build/conf/ideaCE-launcher.properties", system_selector_CE, ceResourcePaths)
+    utils.buildWinLauncher(ch, "$ch/bin/WinLauncher/WinLauncher64.exe", "$paths.sandbox/dist.win.ce/bin/idea64.exe", appInfoFileCE(),
+                     "$home/build/conf/ideaCE64-launcher.properties", system_selector_CE, ceResourcePaths)
+  }*/
+
+  // rewrite to create one unspecified installation
+  def buildNSISs() {
+    ultimate_utils.buildNSIS([paths.distAll, paths.distJars, paths.distWin],
+              "$home/build/conf/nsis/strings.nsi", "$home/build/conf/nsis/paths.nsi",
+              "ideaIU-", true, true, system_selector)
+    ultimate_utils.buildNSIS(["$paths.sandbox/dist.all.ce", "$paths.sandbox/dist.win.ce"],
+              "$home/build/conf/nsis/stringsCE.nsi", "$home/build/conf/nsis/pathsCE.nsi",
+              "ideaIC-", true, true, system_selector_CE)
+  }
+
+
+/*
+  private buildAll(Map args) {
+    communityEdition(args)
+    buildLaunchers()
+    scramble(args)
+
+    layoutShared(args, paths.distAll)
+    layoutWin(args, paths.distWin)
+    layoutUnix(args, paths.distUnix)
+    layoutMac(args, paths.distMac)
+
+    if (steps.zipwin) {
+      layout(paths.distWinZip) {
+        fileset(file: "$home/build/Install-Windows-zip.txt")
+        fileset(file: "$home/build/exe/ipr.reg")
+      }
+      buildWinZip("$paths.artifacts/idea${buildName}.zip", [paths.distAll, paths.distWin, paths.distJars, paths.distWinZip])
+    }
+    buildNSISs()
+
+    projectBuilder.stage("--- targz --- ${buildName}")
+    if (steps.targz) {
+      buildTarGz("idea-${buildName}", "$paths.artifacts/idea${buildName}.tar", [paths.distAll, paths.distUnix, paths.distJars])
+    }
+
+    projectBuilder.stage("--- sit ---")
+    if (steps.sit) {
+      String macAppRoot = isEap() ? "${p("component.version.codename")}-${buildName}.app" : "IntelliJ IDEA ${p("component.version.major")}.app"
+      buildMacZip(macAppRoot, "$paths.artifacts/idea${buildName}.sit", [paths.distAll, paths.distJars], paths.distMac)
+      signMacZip("idea")
+
+      if (steps.dmg) {
+        buildDmg("idea", getDmgImage(false))
+      }
+    }
+    projectBuilder.stage("--- targz ---")
+    buildTeamServer()
+  } */
 }

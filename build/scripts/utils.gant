@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import org.jetbrains.jps.Jps
-import org.jetbrains.jps.Module
-import org.jetbrains.jps.idea.IdeaProjectLoader
+import org.jetbrains.jps.gant.JpsGantTool
+import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.module.JpsModule
 
-includeTool << Jps
+includeTool << JpsGantTool
 
 binding.setVariable("p", {String key ->
   return getProperty(key) as String
@@ -72,11 +73,15 @@ binding.setVariable("vmOptions64yjp", { String systemSelector ->
 })
 
 binding.setVariable("isDefined", {String key ->
+  projectBuilder.stage("isDefined - $key")
   try {
+    projectBuilder.stage("isDefined - try")
     this[key]
+    projectBuilder.stage("isDefined - try finished")
     return true
   }
   catch (MissingPropertyException ignored) {
+    projectBuilder.stage("isDefined - catch")
     return false
   }
 })
@@ -122,23 +127,24 @@ binding.setVariable("loadProject", {
       classpath "$jdkHome/lib/tools.jar"
     }
   }
-  IdeaProjectLoader.loadFromPath(project, "${home}")
+  projectBuilder.dataStorageRoot = new File("$home/.jps-build-data")
+  loadProjectFromPath(home)
 })
 
-boolean hasSourceRoots(Module module) {
-  return !module.sourceRoots.isEmpty()
+boolean hasSourceRoots(JpsModule module) {
+  return module.getSourceRoots(JavaSourceRootType.SOURCE).iterator().hasNext()
 }
 
 binding.setVariable("findModule", {String name ->
-  project.modules[name]
+  project.modules.find { it.name == name }
 })
 
 binding.setVariable("allModules", {
-  return project.modules.values()
+  return project.modules
 })
 
 binding.setVariable("printUnusedModules", {Set<String> usedModules ->
-  allModules().each {Module m ->
+  allModules().each {JpsModule m ->
     if (!usedModules.contains(m.name) && hasSourceRoots(m)) {
       projectBuilder.warning("Module $m.name is not used in project layout")
     }
@@ -158,7 +164,7 @@ String readSnapshotBuild() {
 
 binding.setVariable("snapshot", readSnapshotBuild())
 
-projectBuilder.buildInfoPrinter = new org.jetbrains.jps.teamcity.TeamcityBuildInfoPrinter()
+projectBuilder.buildInfoPrinter = new TeamCityBuildInfoPrinter()
 projectBuilder.compressJars = false
 
 binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
@@ -732,6 +738,10 @@ private void fixIdeaPropertiesEol(List paths, String eol) {
   }
 }
 
+private boolean isUnderTeamCity() {
+  return isDefined("teamcity.buildType.id")
+}
+
 binding.setVariable("buildWinLauncher", { String ch, String inputPath, String outputPath, String appInfo,
                                           String launcherProperties, String pathsSelector, List resourcePaths ->
   projectBuilder.stage("winLauncher")
@@ -770,3 +780,36 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
     launcherPropertiesTempFile.delete()
   }
 })
+
+binding.setVariable("additionalCompilation", { ->
+  projectBuilder.stage("step - additionalCompilationStep")
+  if (isDefined("additionalCompilationStep")) {
+    projectBuilder.stage("step - additionalCompilationStep - do it")
+    projectBuilder.info("Using additional compilation step: " + additionalCompilationStep)
+    def script = includeFile(additionalCompilationStep)
+    script.doCustomCompile();
+  }
+  projectBuilder.stage("step - additionalCompilationStep - finished")
+})
+
+binding.setVariable("searchableOptions", { ->
+  projectBuilder.stage("step - steps.build_searchable_options")
+  if (steps.build_searchable_options) {
+    println "steps.build_searchable_options: $jdkHome/lib/tools.jar"
+    buildSearchableOptions("${projectBuilder.moduleOutput(findModule("resources-en"))}/search", ["$home/build/idea.license"], {
+      ant.pathelement(location: "$jdkHome/lib/tools.jar")
+      ant.pathelement(location: "$home/community/lib/junit.jar")
+      projectBuilder.moduleRuntimeClasspath(findModule("main"), false).each {
+        ant.pathelement(location: it)
+      }
+    })
+  }
+})
+
+def buildTeamServer() {
+  executeExternalAnt(["dist.jars": paths.distJars,
+                       "dist.teamserver": "$paths.sandbox/dist.teamserver"],
+                     "$home/build/release_teamcity.xml")
+}
+
+
