@@ -62,6 +62,7 @@ public class ConcurrentMapsTest extends TestCase {
     ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>();
     map.put(new Object(), new Object());
 
+    tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
     do {
       System.gc();
     }
@@ -97,6 +98,7 @@ public class ConcurrentMapsTest extends TestCase {
     ConcurrentWeakValueHashMap<Object, Object> map = new ConcurrentWeakValueHashMap<Object, Object>();
     map.put(new Object(), new Object());
 
+    tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
     do {
       System.gc();
     }
