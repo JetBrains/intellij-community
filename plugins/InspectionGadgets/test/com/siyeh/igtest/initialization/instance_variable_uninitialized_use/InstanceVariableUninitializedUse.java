@@ -24,5 +24,12 @@ class InstanceFieldVsDoWhile {
       object = new Object();
     } while (object.hashCode() < 1000); // Instance field used before initialization
   }
+}
+class FinalField {
+  private final Object object;
 
+  FinalField() {
+    System.out.println(object);
+    object = null;
+  }
 }

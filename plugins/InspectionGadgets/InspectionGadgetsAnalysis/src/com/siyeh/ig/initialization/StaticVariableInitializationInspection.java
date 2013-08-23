@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,22 +44,18 @@ public class StaticVariableInitializationInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "static.variable.may.not.be.initialized.display.name");
+    return InspectionGadgetsBundle.message("static.variable.may.not.be.initialized.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "static.variable.may.not.be.initialized.problem.descriptor");
+    return InspectionGadgetsBundle.message("static.variable.may.not.be.initialized.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "primitive.fields.ignore.option"),
-                                          this, "m_ignorePrimitives");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("primitive.fields.ignore.option"), this, "m_ignorePrimitives");
   }
 
   @Override
@@ -77,17 +73,14 @@ public class StaticVariableInitializationInspection extends BaseInspection {
 
     @Override
     public void visitField(@NotNull PsiField field) {
-      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC) || field.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       if (field.getInitializer() != null) {
         return;
       }
       final PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (containingClass.isEnum()) {
+      if (containingClass == null || containingClass.isEnum()) {
         return;
       }
       if (m_ignorePrimitives) {
@@ -96,15 +89,14 @@ public class StaticVariableInitializationInspection extends BaseInspection {
           return;
         }
       }
-      final PsiClassInitializer[] initializers =
-        containingClass.getInitializers();
+      final PsiClassInitializer[] initializers = containingClass.getInitializers();
       for (final PsiClassInitializer initializer : initializers) {
-        if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
-          final PsiCodeBlock body = initializer.getBody();
-          if (InitializationUtils.blockAssignsVariableOrFails(body,
-                                                              field)) {
-            return;
-          }
+        if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
+          continue;
+        }
+        final PsiCodeBlock body = initializer.getBody();
+        if (InitializationUtils.blockAssignsVariableOrFails(body, field)) {
+          return;
         }
       }
       registerFieldError(field);
