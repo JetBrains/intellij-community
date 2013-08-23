@@ -1,11 +1,9 @@
 package com.intellij.tasks.jira.jql.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.tasks.jira.jql.psi.JqlClause;
-import com.intellij.tasks.jira.jql.psi.JqlElementVisitor;
-import com.intellij.tasks.jira.jql.psi.JqlSortKey;
-import com.intellij.tasks.jira.jql.psi.JqlQuery;
+import com.intellij.tasks.jira.jql.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
@@ -25,13 +23,9 @@ public class JqlQueryImpl extends JqlElementImpl implements JqlQuery {
     return findChildByClass(JqlClause.class);
   }
 
+  @Nullable
   @Override
-  public boolean isOrdered() {
-    return getOrderKeys().length != 0;
-  }
-
-  @Override
-  public JqlSortKey[] getOrderKeys() {
-    return findChildrenByClass(JqlSortKey.class);
+  public JqlOrderBy getOrderBy() {
+    return findChildByClass(JqlOrderBy.class);
   }
 }

@@ -10,7 +10,7 @@ import java.util.IdentityHashMap;
 /**
  * @author Mikhail Golubev
  */
-public interface JqlTerminalClause extends JqlElement {
+public interface JqlTerminalClause extends JqlClause {
   enum Type {
     EQ(false),
     NE(false),
