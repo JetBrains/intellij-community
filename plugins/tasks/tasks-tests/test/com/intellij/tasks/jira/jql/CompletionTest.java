@@ -104,8 +104,12 @@ public class CompletionTest extends CodeInsightFixtureTestCase {
     checkCompletionVariants(JqlStandardFunction.allOfType(JqlFieldType.DATE, false));
   }
 
-  public void testAfterParenthesisInSubClause() throws Exception {
+  public void testAfterLeftParenthesisInSubClause() throws Exception {
     checkCompletionVariants(ALL_FIELD_NAMES, "not");
+  }
+
+  public void testAfterSubClause() throws Exception {
+    checkCompletionVariants("and", "or", "order by");
   }
 
   public void testFunctionArguments() throws Exception {

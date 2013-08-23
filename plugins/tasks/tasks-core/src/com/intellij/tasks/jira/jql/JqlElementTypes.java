@@ -14,8 +14,9 @@ import com.intellij.psi.tree.TokenSet;
  * or_clause ::= and_clause {or_op and_clause}
  * and_clause ::= not_expr {and_op not_expr}
  * not_expr ::= not_op not_expr
- *            | "(" or_clause ")"
+ *            | subclause
  *            | terminal_clause
+ * subclause ::= "(" or_clause ")"
  * terminal_clause ::= simple_clause
  *                   | was_clause
  *                   | changed_clause
@@ -70,6 +71,8 @@ public interface JqlElementTypes {
   IElementType OR_CLAUSE = new JqlElementType("OR_CLAUSE");
   IElementType AND_CLAUSE = new JqlElementType("AND_CLAUSE");
   IElementType NOT_CLAUSE = new JqlElementType("NOT_CLAUSE");
+  // actually parenthesized clause, named so to be consistent with official grammar
+  IElementType SUB_CLAUSE = new JqlElementType("SUB_CLAUSE");
   //IElementType TERMINAL_CLAUSE = new JqlElementType("TERMINAL_CLAUSE");
   // field (= | != | ~ | !~ | < | > | <= | >= | is [not] | [not] in) value
   IElementType SIMPLE_CLAUSE = new JqlElementType("SIMPLE_CLAUSE");

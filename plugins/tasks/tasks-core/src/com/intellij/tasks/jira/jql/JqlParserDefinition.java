@@ -72,6 +72,9 @@ public class JqlParserDefinition implements ParserDefinition {
     if (type == JqlElementTypes.NOT_CLAUSE) {
       return new JqlNotClauseImpl(node);
     }
+    if (type == JqlElementTypes.SUB_CLAUSE) {
+      return new JqlSubClauseImpl(node);
+    }
     if (type == JqlElementTypes.SIMPLE_CLAUSE) {
       return new JqlSimpleClauseImpl(node);
     }

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Mikhail Golubev
  */
 public class JqlParser implements PsiParser {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.jira.jql.JqlParser");
+  private static final Logger LOG = Logger.getInstance(JqlParser.class);
 
   @NotNull
   @Override
@@ -92,16 +92,17 @@ public class JqlParser implements PsiParser {
   }
 
   private boolean parseSubClause(PsiBuilder builder) {
+    LOG.assertTrue(builder.getTokenType() == JqlTokenTypes.LPAR);
+    PsiBuilder.Marker marker = builder.mark();
     if (!advanceIfMatches(builder, JqlTokenTypes.LPAR)) {
+      marker.drop();
       return false;
     }
-    if (!parseORClause(builder)) {
-      return false;
-    }
+    parseORClause(builder);
     if (!advanceIfMatches(builder, JqlTokenTypes.RPAR)) {
       builder.error("Expecting ')'");
-      return false;
     }
+    marker.done(JqlElementTypes.SUB_CLAUSE);
     return true;
   }
 
@@ -142,6 +143,7 @@ public class JqlParser implements PsiParser {
   }
 
   private void parseCHANGEDClause(PsiBuilder builder) {
+    LOG.assertTrue(builder.getTokenType() == JqlTokenTypes.CHANGED_KEYWORD);
     if (!advanceIfMatches(builder, JqlTokenTypes.CHANGED_KEYWORD)) {
       return;
     }
@@ -151,6 +153,7 @@ public class JqlParser implements PsiParser {
   }
 
   private void parseWASClause(PsiBuilder builder) {
+    LOG.assertTrue(builder.getTokenType() == JqlTokenTypes.WAS_KEYWORD);
     if (!advanceIfMatches(builder, JqlTokenTypes.WAS_KEYWORD)) {
       return;
     }
@@ -163,6 +166,7 @@ public class JqlParser implements PsiParser {
   }
 
   private void parseHistoryPredicate(PsiBuilder builder) {
+    LOG.assertTrue(JqlTokenTypes.HISTORY_PREDICATES.contains(builder.getTokenType()));
     PsiBuilder.Marker marker = builder.mark();
     if (!advanceIfMatches(builder, JqlTokenTypes.HISTORY_PREDICATES)) {
       marker.drop();
@@ -204,6 +208,7 @@ public class JqlParser implements PsiParser {
   }
 
   private boolean parseList(PsiBuilder builder) {
+    LOG.assertTrue(builder.getTokenType() == JqlTokenTypes.LPAR);
     PsiBuilder.Marker marker = builder.mark();
     if (!advanceIfMatches(builder, JqlTokenTypes.LPAR)) {
       marker.drop();
@@ -235,6 +240,7 @@ public class JqlParser implements PsiParser {
   }
 
   private void parseArgumentList(PsiBuilder builder) {
+    LOG.assertTrue(builder.getTokenType() == JqlTokenTypes.LPAR);
     PsiBuilder.Marker marker = builder.mark();
     if (!advanceIfMatches(builder, JqlTokenTypes.LPAR)) {
       marker.drop();
