@@ -5,10 +5,16 @@
   <description>Viewing java bytecode inside IntelliJ IDEA.</description>
   <vendor>JetBrains</vendor>
 
+  <extensionPoints>
+    <extensionPoint name="classSearcher" interface="com.intellij.byteCodeViewer.ClassSearcher"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectService serviceInterface="com.intellij.byteCodeViewer.ByteCodeViewerManager"
                     serviceImplementation="com.intellij.byteCodeViewer.ByteCodeViewerManager"/>
+  </extensions>
+  <extensions>
+    <ByteCodeViewer.classSearcher implementation="com.intellij.byteCodeViewer.DefaultClassSearcher"/>
   </extensions>
   <actions>
     <group>
