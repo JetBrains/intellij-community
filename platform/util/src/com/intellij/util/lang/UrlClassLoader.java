@@ -234,13 +234,13 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @Override
-  protected String findLibrary(String libname) {
-    if (BinPathHolder.path != null && myNativeLibs.contains(libname)) {
-      String fileName = mapLibraryName(libname);
+  protected String findLibrary(String libName) {
+    if (BinPathHolder.path != null && myNativeLibs.contains(libName)) {
+      String fileName = mapLibraryName(libName);
       return BinPathHolder.path + File.separator + fileName;
     }
 
-    return super.findLibrary(libname);
+    return super.findLibrary(libName);
   }
 
   private static class BinPathHolder {
@@ -267,8 +267,8 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
-  private static String mapLibraryName(String libname) {
-    String baseName = libname;
+  private static String mapLibraryName(String libName) {
+    String baseName = libName;
     if (SystemInfo.is64Bit) {
       baseName = baseName.replace("32", "") + "64";
     }
