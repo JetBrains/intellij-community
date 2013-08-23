@@ -438,6 +438,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     element.setAttribute(ATT_SHOW_IGNORED, String.valueOf(SHOW_IGNORED_MODE));
   }
 
+  @Override
   public void setShowFlattenMode(boolean state) {
     SHOW_FLATTEN_MODE = state;
     myView.setShowFlatten(SHOW_FLATTEN_MODE);
