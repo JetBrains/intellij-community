@@ -299,6 +299,16 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   }
 
   @Override
+  public JComponent getPermanentHeaderComponent() {
+    return myDelegate.getPermanentHeaderComponent();
+  }
+
+  @Override
+  public void setPermanentHeaderComponent(JComponent component) {
+    myDelegate.setPermanentHeaderComponent(component);
+  }
+
+  @Override
   @NotNull
   public JComponent getContentComponent() {
     return myDelegate.getContentComponent();
