@@ -12,9 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.util;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,6 +45,9 @@ import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.ShellCommand;
+import org.zmlx.hg4idea.execution.ShellCommandException;
 import org.zmlx.hg4idea.provider.HgChangeProvider;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
@@ -593,22 +593,29 @@ public abstract class HgUtil {
     return hgRepository.getRepositoryConfig().getPaths();
   }
 
-  public static boolean isValid(@Nullable String executable) {
+  public static boolean isExecutableValid(@Nullable String executable) {
     try {
       if (StringUtil.isEmptyOrSpaces(executable)) {
         return false;
       }
-      GeneralCommandLine commandLine = new GeneralCommandLine();
-      //noinspection ConstantConditions
-      commandLine.setExePath(executable);
-      commandLine.addParameter("--version");
-      commandLine.addParameter("-q");
-      CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
-      ProcessOutput result = handler.runProcess(30 * 1000);
-      return !result.isTimeout() && result.getStderr().isEmpty();
+      HgCommandResult result = getVersionOutput(executable);
+      return result.getRawError().isEmpty();
     }
     catch (Throwable e) {
+      LOG.info("Error during hg executable validation: ", e);
       return false;
     }
+  }
+
+  @NotNull
+  public static HgCommandResult getVersionOutput(@NotNull String executable) throws ShellCommandException, InterruptedException {
+    String hgExecutable = executable.trim();
+    ShellCommand shellCommand = new ShellCommand(false);
+    List<String> cmdArgs = new ArrayList<String>();
+    cmdArgs.add(hgExecutable);
+    cmdArgs.add("version");
+    cmdArgs.add("-q");
+    return shellCommand
+      .execute(cmdArgs, null, CharsetToolkit.getDefaultSystemCharset());
   }
 }

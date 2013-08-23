@@ -22,6 +22,12 @@ import org.jetbrains.annotations.NotNull
 public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   @Override
+  protected void tearDown() throws Exception {
+    CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = true
+    super.tearDown()
+  }
+
+  @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/javadoc/";
   }
@@ -155,12 +161,7 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testShortenClassName() throws Throwable {
     CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = false;
-    try {
-      doTest();
-    }
-    finally {
-      CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
-    }
+    doTest();
   }
 
   public void testMethodBeforeSharp() throws Throwable {
@@ -171,12 +172,18 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
-  public void testShortenClassReference() throws Throwable { doTest(); }
+  public void testShortenClassReference() throws Throwable {
+    CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = false
+    doTest()
+  }
   public void testQualifiedClassReference() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC, 2);
     checkResultByFile(getTestName(false) + "_after.java");
   }
+
+  public void testQualifiedImportedClassReference() throws Throwable { doTest() }
+
   public void testThrowsNonImported() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC, 2);
@@ -269,23 +276,19 @@ class Impl extends Bar implements Foo {}
 
   public void testShortenMethodParameterTypes() {
     CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = false
-    try {
-      myFixture.addClass("package foo; public class Foo {}")
-      myFixture.configureByText "a.java", '''
+    myFixture.addClass("package foo; public class Foo {}")
+    myFixture.addClass("package bar; public class Bar {}")
+    myFixture.configureByText "a.java", '''
 import foo.*;
+import bar.*;
 
 /**
- * {@link #go<caret>
- */
-class Goo { void goo(Foo foo {} }
+* {@link #go<caret>
+*/
+class Goo { void goo(Foo foo, Bar bar) {} }
 '''
-      myFixture.completeBasic()
-      assert myFixture.editor.document.text.contains('@link #goo(Foo)')
-    }
-    finally {
-      CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = true
-    }
-    
+    myFixture.completeBasic()
+    assert myFixture.editor.document.text.contains('@link #goo(Foo, Bar)')
   }
 
   public void testCustomReferenceProvider() throws Exception {

@@ -70,7 +70,7 @@ public class HgVersionTest extends HgPlatformTest {
     assertEquals(middle, expected.middle);
     assertEquals(minor, expected.minor);
     HgVersion versionFromTest = new HgVersion(expected.major, expected.middle, expected.minor);
-    assertEquals(versionFromTest, actual); //test equals meth
+    assertEquals(versionFromTest, actual); //test equals method
   }
 
   private static class TestHgVersion {

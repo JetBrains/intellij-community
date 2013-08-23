@@ -101,13 +101,13 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   }
 
   @Override
-  protected PsiElement getEnumeratedValueDeclaration(XmlAttributeValue attributeValue, String value) {
+  public PsiElement getEnumeratedValueDeclaration(XmlElement xmlElement, String value) {
     final PsiClass aClass = getEnum();
     if (aClass != null) {
       final PsiField fieldByName = aClass.findFieldByName(value, false);
       return fieldByName != null ? fieldByName : aClass.findFieldByName(value.toUpperCase(), false);
     }
-    return attributeValue;
+    return xmlElement;
   }
 
   @Nullable

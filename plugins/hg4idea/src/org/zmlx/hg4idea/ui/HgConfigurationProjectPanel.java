@@ -71,7 +71,7 @@ public class HgConfigurationProjectPanel {
   public void validate() throws ConfigurationException {
     String hgExecutable;
     hgExecutable = getCurrentPath();
-    if (!HgUtil.isValid(hgExecutable)) {
+    if (!HgUtil.isExecutableValid(hgExecutable)) {
       throw new ConfigurationException(
         HgVcsMessages.message("hg4idea.configuration.executable.error", hgExecutable)
       );

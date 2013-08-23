@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.win;
 
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.PathManager;
 
 import java.io.File;
@@ -23,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RecentTasks {
 
-  private static AtomicBoolean initialiazed =
+  private static AtomicBoolean initialized =
     new AtomicBoolean(false);
 
   private final static WeakReference<Thread> openerThread =
@@ -54,10 +55,10 @@ public class RecentTasks {
   }
 
   private synchronized static void init() {
-    if (initialiazed.get()) return;
+    if (initialized.get()) return;
 
-    initialize("JetBrains.JetBrainsNativeAppID");
-    initialiazed.set(true);
+    initialize("JetBrains.JetBrainsNativeAppID." + StartupUtil.getAcquiredPort());
+    initialized.set(true);
   }
 
   /**
@@ -66,7 +67,7 @@ public class RecentTasks {
    * @param applicationId
    */
   native private static void initialize (String applicationId);
-  native private static void addTaskNative (String location, String args, String description);
+  native private static void addTasksNativeForCategory (String category, Task [] tasks);
   native private static void clearNative();
 
   public synchronized static void clear() {
@@ -75,17 +76,27 @@ public class RecentTasks {
     clearNative();
   }
 
-  public synchronized static void addTask(File location, String args, String description) {
+  public synchronized static void addTasks(final Task[] tasks) {
     init();
     checkThread();
-    if (!location.exists()) throw new IllegalArgumentException("Task should be a valid path");
-    addTaskNative(location.getAbsolutePath(), args, description);
+    addTasksNativeForCategory("Recent", tasks);
   }
 
   private static void checkThread() {
     Thread t = openerThread.get();
     if (t == null || !t.equals(Thread.currentThread()))
       throw new RuntimeException("This class has to be used from the same thread");
+  }
+
+  public static class Task {
+    private final String path;
+    private final String args;
+    private final String description;
+    public Task(String path, String args, String description) {
+      this.path = path;
+      this.args = args;
+      this.description = description;
+    }
   }
 }
 

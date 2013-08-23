@@ -10,6 +10,7 @@ import com.jediterm.terminal.ui.TerminalAction;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.KeyEvent;
 import java.util.List;
 
 /**
@@ -27,7 +28,12 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
       AnAction a = new DumbAwareAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          action.perform();
+          if (e.getInputEvent() instanceof KeyEvent) {
+            action.perform((KeyEvent)e.getInputEvent());
+          }
+          else {
+            action.perform(null);
+          }
         }
       };
       a.registerCustomShortcutSet(action.getKeyCode(), action.getModifiers(), component);

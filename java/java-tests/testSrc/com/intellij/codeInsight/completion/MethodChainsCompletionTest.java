@@ -10,6 +10,7 @@ import com.intellij.compilerOutputIndex.api.fs.FileVisitorService;
 import com.intellij.compilerOutputIndex.api.indexer.CompilerOutputIndexer;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.mock.MockProgressIndicator;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SmartList;
 
 import java.io.File;
@@ -27,12 +28,14 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
 
   @Override
   protected void setUp() throws Exception {
+    Registry.get(CompilerOutputIndexer.REGISTRY_KEY).setValue(true);
     super.setUp();
   }
 
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
+    Registry.get(CompilerOutputIndexer.REGISTRY_KEY).setValue(false);
   }
 
   protected String getTestDataPath() {

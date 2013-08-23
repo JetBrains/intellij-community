@@ -24,17 +24,13 @@
  */
 package com.intellij.xml.impl;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.xml.util.XmlAttributeValueReference;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescriptor {
+public abstract class BasicXmlAttributeDescriptor extends XmlEnumerationDescriptor implements XmlAttributeDescriptor {
   public String validateValue(XmlElement context, String value) {
     return null;
   }
@@ -48,24 +44,12 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
     return getEnumeratedValues();
   }
 
-  public boolean isEnumerated(@Nullable XmlElement context) {
-    return isEnumerated();
-  }
-
   @Override
   public String toString() {
     return getName();
   }
 
-  public PsiElement getValueDeclaration(XmlAttributeValue attributeValue, String value) {
-    String defaultValue = getDefaultValue();
-    if (Comparing.equal(defaultValue, value)) {
-      return getDefaultValueDeclaration();
-    }
-    return isFixed() ? null : getEnumeratedValueDeclaration(attributeValue, value);
-  }
-
-  protected PsiElement getEnumeratedValueDeclaration(XmlAttributeValue attributeValue, String value) {
+  protected PsiElement getEnumeratedValueDeclaration(XmlElement xmlElement, String value) {
     String[] values = getEnumeratedValues();
     if (values == null || values.length == 0) return getDeclaration();
     return ArrayUtilRt.find(values, value) != -1 ? getDeclaration() : null;
@@ -73,9 +57,5 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
 
   protected PsiElement getDefaultValueDeclaration() {
     return getDeclaration();
-  }
-
-  public PsiReference[] getValueReferences(XmlAttributeValue value) {
-    return new PsiReference[] { new XmlAttributeValueReference(value, this)};
   }
 }

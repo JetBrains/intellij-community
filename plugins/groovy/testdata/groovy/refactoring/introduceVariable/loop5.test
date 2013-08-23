@@ -3,5 +3,5 @@ foo <begin>foo<end>
 -----
 while (true) {
     def preved = foo
-    foo preved<caret>
-}
+    foo preved
+}<caret>

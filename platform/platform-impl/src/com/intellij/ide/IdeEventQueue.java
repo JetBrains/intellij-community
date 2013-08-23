@@ -321,6 +321,9 @@ public class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(AWTEvent e) {
+
+    fixNonEnglishKeyboardLayouts(e);
+
     e = mapEvent(e);
 
     boolean wasInputEvent = myIsInInputEvent;
@@ -346,6 +349,20 @@ public class IdeEventQueue extends EventQueue {
 
       if (e instanceof KeyEvent) {
         maybeReady();
+      }
+    }
+  }
+
+  private static void fixNonEnglishKeyboardLayouts(AWTEvent e) {
+    if (!Registry.is("ide.non.english.keyboard.layout.fix")) return;
+    if (e instanceof KeyEvent) {
+      KeyEvent ke = (KeyEvent)e;
+      Integer keyCodeFromChar = CharToVKeyMap.get(ke.getKeyChar());
+      if (keyCodeFromChar != null) {
+        if (keyCodeFromChar != ke.getKeyCode()) {
+          // non-english layout
+          ke.setKeyCode(keyCodeFromChar);
+        }
       }
     }
   }
@@ -631,9 +648,9 @@ public class IdeEventQueue extends EventQueue {
   public static boolean isMouseEventAhead(@Nullable AWTEvent e) {
     IdeEventQueue queue = getInstance();
     return e instanceof MouseEvent ||
-                               queue.peekEvent(MouseEvent.MOUSE_PRESSED) != null ||
-                               queue.peekEvent(MouseEvent.MOUSE_RELEASED) != null ||
-                               queue.peekEvent(MouseEvent.MOUSE_CLICKED) != null;
+           queue.peekEvent(MouseEvent.MOUSE_PRESSED) != null ||
+           queue.peekEvent(MouseEvent.MOUSE_RELEASED) != null ||
+           queue.peekEvent(MouseEvent.MOUSE_CLICKED) != null;
   }
 
   private void enterSuspendModeIfNeeded(AWTEvent e) {

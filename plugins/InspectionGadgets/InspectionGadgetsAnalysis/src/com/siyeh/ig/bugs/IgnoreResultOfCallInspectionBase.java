@@ -47,17 +47,28 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  @NonNls public String callCheckString = "java.io.InputStream,read," +
-                                          "java.io.InputStream,skip," +
-                                          "java.lang.StringBuffer,toString," +
-                                          "java.lang.StringBuilder,toString," +
+  @NonNls public String callCheckString = "java.io.File,.*," +
+                                          "java.io.InputStream,read|skip|available|markSupported," +
+                                          "java.io.Writer,read|skip|ready|markSupported," +
+                                          "java.lang.Boolean,.*," +
+                                          "java.lang.Byte,.*," +
+                                          "java.lang.Character,.*," +
+                                          "java.lang.Double,.*," +
+                                          "java.lang.Float,.*," +
+                                          "java.lang.Integer,.*," +
+                                          "java.lang.Long,.*," +
+                                          "java.lang.Math,.*," +
+                                          "java.lang.Object,equals|hashCode|toString," +
+                                          "java.lang.Short,.*," +
+                                          "java.lang.StrictMath,.*," +
                                           "java.lang.String,.*," +
                                           "java.math.BigInteger,.*," +
                                           "java.math.BigDecimal,.*," +
                                           "java.net.InetAddress,.*," +
-                                          "java.io.File,.*," +
-                                          "java.lang.Object,equals|hashCode," +
-                                          "java.util.regex.Matcher,.*";
+                                          "java.net.URI,.*," +
+                                          "java.util.UUID,.*," +
+                                          "java.util.regex.Matcher,pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparantBounds|hasAnchoringBounds|hitEnd|requireEnd," +
+                                          "java.util.regex.Pattern,.*";
   Map<String, Pattern> patternCache = null;
 
   public IgnoreResultOfCallInspectionBase() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -842,8 +842,11 @@ public class JavaCompletionUtil {
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
     manager.commitDocument(manager.getDocument(file));
     final PsiReference ref = file.findReferenceAt(offset);
-    if (ref instanceof PsiJavaCodeReferenceElement) {
-      JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences((PsiJavaCodeReferenceElement)ref);
+    if (ref != null) {
+      PsiElement element = ref.getElement();
+      if (element != null) {
+        JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences(element);
+      }
     }
   }
 

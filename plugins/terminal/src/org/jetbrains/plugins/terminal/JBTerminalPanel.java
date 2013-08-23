@@ -118,6 +118,11 @@ public class JBTerminalPanel extends TerminalPanel {
   protected BufferedImage createBufferedImage(int width, int height) {
     return UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
   }
+  
+  @Override
+  protected void drawImage(Graphics2D g, BufferedImage image) {
+    UIUtil.drawImage(g, image, null, 0, 0);
+  } 
 
   public String getFontName() {
     List<String> fonts = myColorScheme.getConsoleFontPreferences().getEffectiveFontFamilies();
@@ -127,7 +132,7 @@ public class JBTerminalPanel extends TerminalPanel {
         return font;
       }
     }
-    return "Monospaced-14";
+    return super.getFontName();
   }
 
   private static boolean isApplicable(String font) {
