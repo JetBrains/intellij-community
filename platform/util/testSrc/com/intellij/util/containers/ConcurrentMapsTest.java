@@ -28,6 +28,7 @@ public class ConcurrentMapsTest extends TestCase {
     ConcurrentWeakHashMap<Object, Object> map = new ConcurrentWeakHashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
     map.put(new Object(), new Object());
 
+    tryGcSoftlyReachableObjects(); // sometimes weak references are not collected under linux, try to stress gc to force them
     do {
       System.gc();
     }
