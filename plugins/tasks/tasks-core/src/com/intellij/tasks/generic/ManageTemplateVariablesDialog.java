@@ -60,7 +60,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
 
         @Override
         public boolean isCellEditable(TemplateVariable templateVariable) {
-          return !templateVariable.getIsPredefined();
+          return !templateVariable.isReadOnly();
         }
 
         @Override
@@ -82,7 +82,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
 
         @Override
         public boolean isCellEditable(TemplateVariable templateVariable) {
-          return !templateVariable.getIsPredefined();
+          return !templateVariable.isReadOnly();
         }
 
         @Override
@@ -93,7 +93,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
 
         @Override
         public TableCellRenderer getRenderer(TemplateVariable variable) {
-          if (variable.getIsHidden()) {
+          if (variable.isHidden()) {
             return new TableCellRenderer() {
               @Override
               public Component getTableCellRendererComponent(JTable table,
@@ -112,7 +112,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
         @Nullable
         @Override
         public TableCellEditor getEditor(final TemplateVariable variable) {
-          if (variable.getIsHidden()) {
+          if (variable.isHidden()) {
             return new AbstractTableCellEditor() {
               private JPasswordField myPasswordField;
               @Override
@@ -141,12 +141,12 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
         @Nullable
         @Override
         public Boolean valueOf(TemplateVariable o) {
-          return o.getIsShownOnFirstTab();
+          return o.isShownOnFirstTab();
         }
 
         @Override
         public void setValue(TemplateVariable variable, Boolean value) {
-          variable.setIsShownOnFirstTab(value);
+          variable.setShownOnFirstTab(value);
           setModified();
         }
 
@@ -157,7 +157,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
 
         @Override
         public boolean isCellEditable(TemplateVariable variable) {
-          return !variable.getIsPredefined();
+          return !variable.isReadOnly();
         }
 
         @Nullable
@@ -171,12 +171,12 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
         @Nullable
         @Override
         public Boolean valueOf(TemplateVariable o) {
-          return o.getIsHidden();
+          return o.isHidden();
         }
 
         @Override
         public void setValue(TemplateVariable variable, Boolean value) {
-          variable.setIsHidden(value);
+          variable.setHidden(value);
           setModified();
           // value column editor may be changed
           TemplateVariablesTable.this.refreshValues();
@@ -189,7 +189,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
 
         @Override
         public boolean isCellEditable(TemplateVariable variable) {
-          return !variable.getIsPredefined();
+          return !variable.isReadOnly();
         }
 
         @Nullable
@@ -203,7 +203,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
 
     @Override
     protected TemplateVariable createElement() {
-      return new TemplateVariable("", "", false, null);
+      return new TemplateVariable("", "");
     }
 
     @Override

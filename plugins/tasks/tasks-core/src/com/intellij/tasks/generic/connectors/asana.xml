@@ -55,8 +55,8 @@
   <option name="tasksListUrl" value="{serverUrl}/projects/{project_ID}/tasks?assignee=me"/>
   <option name="templateVariables">
     <list>
-      <TemplateVariable isHidden="false" isPredefined="false" shownOnFirstTab="true">
-        <option name="description"/>
+      <TemplateVariable hidden="false" readOnly="false" shownOnFirstTab="true">
+        <option name="description" value=""/>
         <option name="name" value="project_ID"/>
         <option name="value" value=""/>
       </TemplateVariable>

@@ -131,7 +131,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
           myRepository.setTemplateVariables(ContainerUtil.filter(dialog.getTemplateVariables(), new Condition<TemplateVariable>() {
             @Override
             public boolean value(TemplateVariable variable) {
-              return !variable.getIsPredefined();
+              return !variable.isReadOnly();
             }
           }));
           myCustomPanel.removeAll();
@@ -186,8 +186,8 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     myField2Variable = new IdentityHashMap<JTextField, TemplateVariable>();
     FormBuilder builder = FormBuilder.createFormBuilder();
     for (final TemplateVariable variable : myRepository.getTemplateVariables()) {
-      if (variable.getIsShownOnFirstTab()) {
-        JTextField field = variable.getIsHidden() ? new JPasswordField(variable.getValue()) : new JTextField(variable.getValue());
+      if (variable.isShownOnFirstTab()) {
+        JTextField field = variable.isHidden() ? new JPasswordField(variable.getValue()) : new JTextField(variable.getValue());
         myField2Variable.put(field, variable);
         installListener(field);
         JBLabel label = new JBLabel(prettifyVariableName(variable.getName()) + ":", SwingConstants.RIGHT);
