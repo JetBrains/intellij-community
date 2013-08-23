@@ -61,7 +61,7 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
   @NotNull private final VcsLogJoiner myLogJoiner;
 
   @NotNull private volatile DataPack myDataPack;
-  @Nullable private volatile List<CommitParents> myAllLog; // null means the whole log was not yet read from the VCS
+  @Nullable private volatile List<TimeCommitParents> myAllLog; // null means the whole log was not yet read from the VCS
 
   public VcsLogDataHolder(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
     myProject = project;
@@ -168,7 +168,7 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
 
   @SuppressWarnings("ConstantConditions")
   @NotNull
-  private List<CommitParents> readLogFromStorage() {
+  private List<TimeCommitParents> readLogFromStorage() {
     return myAllLog;
   }
 

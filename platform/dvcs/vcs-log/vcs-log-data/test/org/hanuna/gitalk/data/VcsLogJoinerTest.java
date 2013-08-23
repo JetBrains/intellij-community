@@ -1,10 +1,11 @@
 package org.hanuna.gitalk.data;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.TimeCommitParents;
 import org.hanuna.gitalk.log.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -22,13 +23,14 @@ public class VcsLogJoinerTest {
 
   @Test
   public void simpleTest() {
-    List<CommitParents> fullLog = log("1|-3", "2|-4", "3|-4", "4|-5");
-    List<? extends CommitParents> firstBlock = log("a|-1", "b|-2");
-    Collection<Ref> refs = Arrays.asList(ref("master", "a"), ref("release", "b"));
+    String[] INITIAL = {"4|-a2|-a1", "3|-b1|-a", "2|-a1|-a", "1|-a|-"};
+    List<TimeCommitParents> fullLog = log(INITIAL);
+      List<? extends TimeCommitParents> firstBlock = log("5|-f|-b1", "6|-e|-a2");
+    Collection<Ref> refs = Arrays.asList(ref("master", "e"), ref("release", "f"));
 
-    List<CommitParents> expected = log("a|-1", "b|-2", "1|-3", "2|-4", "3|-4", "4|-5");
+    List<TimeCommitParents> expected = log(ArrayUtil.mergeArrays(new String[]{"6|-e|-a2", "5|-f|-b1"}, INITIAL));
 
-    List<? extends CommitParents> result = new VcsLogJoiner().addCommits(fullLog, firstBlock, refs);
+    List<? extends TimeCommitParents> result = new VcsLogJoiner().addCommits(fullLog, firstBlock, refs);
 
     assertEquals(expected, result);
   }
@@ -38,11 +40,11 @@ public class VcsLogJoinerTest {
   }
 
   @NotNull
-  private static List<CommitParents> log(@NotNull String... commits) {
-    return ContainerUtil.map(Arrays.asList(commits), new Function<String, CommitParents>() {
+  private static List<TimeCommitParents> log(@NotNull String... commits) {
+    return ContainerUtil.map(Arrays.asList(commits), new Function<String, TimeCommitParents>() {
       @Override
-      public CommitParents fun(String commit) {
-        return CommitParser.parseCommitParents(commit);
+      public TimeCommitParents fun(String commit) {
+        return CommitParser.parseTimestampParentHashes(commit);
       }
     });
   }

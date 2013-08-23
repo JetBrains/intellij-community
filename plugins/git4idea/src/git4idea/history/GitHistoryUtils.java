@@ -532,7 +532,7 @@ public class GitHistoryUtils {
   }
 
   @NotNull
-  public static List<CommitParents> readAllHashes(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+  public static List<TimeCommitParents> readAllHashes(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS);
     h.setStdoutSuppressed(true);
@@ -546,14 +546,14 @@ public class GitHistoryUtils {
 
     List<GitLogRecord> records = parser.parse(output);
 
-    return ContainerUtil.map(records, new Function<GitLogRecord, CommitParents>() {
+    return ContainerUtil.map(records, new Function<GitLogRecord, TimeCommitParents>() {
       @Override
-      public CommitParents fun(GitLogRecord record) {
+      public TimeCommitParents fun(GitLogRecord record) {
         List<Hash> parents = new SmartList<Hash>();
         for (String parent : record.getParentsHashes()) {
           parents.add(Hash.build(parent));
         }
-        return new SimpleCommitParents(Hash.build(record.getHash()), parents);
+        return new TimeCommitParentsImpl(Hash.build(record.getHash()), parents, record.getAuthorTimeStamp());
       }
     });
   }

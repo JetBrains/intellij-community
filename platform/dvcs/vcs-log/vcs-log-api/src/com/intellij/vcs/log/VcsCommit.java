@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Kirill Likhodedov
  */
-public interface VcsCommit extends CommitParents {
+public interface VcsCommit extends TimeCommitParents {
 
   @Override
   @NotNull
@@ -17,7 +17,5 @@ public interface VcsCommit extends CommitParents {
 
   @NotNull
   String getAuthorName();
-
-  long getAuthorTime();
 
 }

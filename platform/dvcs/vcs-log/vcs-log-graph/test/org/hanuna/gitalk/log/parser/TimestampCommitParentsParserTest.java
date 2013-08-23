@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.log.parser;
 
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.TimeCommitParentsImpl;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
@@ -10,9 +11,9 @@ import static junit.framework.Assert.assertEquals;
  */
 public class TimestampCommitParentsParserTest {
 
-  private String toStr(TimestampCommitParents commitParents) {
+  private String toStr(TimeCommitParentsImpl commitParents) {
     StringBuilder s = new StringBuilder();
-    s.append(commitParents.getTimestamp()).append("|-");
+    s.append(commitParents.getAuthorTime()).append("|-");
     s.append(commitParents.getHash().toStrHash()).append("|-");
     for (int i = 0; i < commitParents.getParents().size(); i++) {
       Hash hash = commitParents.getParents().get(i);
@@ -26,7 +27,7 @@ public class TimestampCommitParentsParserTest {
 
 
   private void runTest(String inputStr) {
-    TimestampCommitParents commitParents = CommitParser.parseTimestampParentHashes(inputStr);
+    TimeCommitParentsImpl commitParents = CommitParser.parseTimestampParentHashes(inputStr);
     assertEquals(inputStr, toStr(commitParents));
   }
 

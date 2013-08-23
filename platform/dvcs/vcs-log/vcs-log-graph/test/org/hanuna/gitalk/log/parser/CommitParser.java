@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.log.parser;
 
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.TimeCommitParentsImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -48,7 +49,7 @@ public class CommitParser {
    *             timestamp|-hash commit|-parent hashes
    */
   @NotNull
-  public static TimestampCommitParents parseTimestampParentHashes(@NotNull String line) {
+  public static TimeCommitParentsImpl parseTimestampParentHashes(@NotNull String line) {
     int firstSeparatorIndex = nextSeparatorIndex(line, 0);
     String timestampStr = line.substring(0, firstSeparatorIndex);
     long timestamp;
@@ -65,7 +66,7 @@ public class CommitParser {
     }
     CommitParents commitParents = parseCommitParents(line.substring(firstSeparatorIndex + 2));
 
-    return new TimestampCommitParents(commitParents, timestamp);
+    return new TimeCommitParentsImpl(commitParents.getHash(), commitParents.getParents(), timestamp);
   }
 
   /**
