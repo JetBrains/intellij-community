@@ -16,12 +16,9 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiWritableMetaData;
-import com.intellij.psi.util.ParameterizedCachedValue;
-import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -39,7 +36,8 @@ import java.util.List;
 /**
  * @author Mike
  */
-public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData, Validator<XmlTag>,
+public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor
+  implements XmlElementDescriptor, PsiWritableMetaData, Validator<XmlTag>,
                                                  XmlElementDescriptorAwareAboutChildren {
   protected XmlTag myDescriptorTag;
   protected volatile XmlNSDescriptor NSDescriptor;
@@ -51,8 +49,6 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   public static final String NONQUALIFIED_ATTR_VALUE = "unqualified";
   @NonNls
   private static final String ELEMENT_FORM_DEFAULT = "elementFormDefault";
-  private static final Key<ParameterizedCachedValue<XmlAttributeDescriptor[], XmlTag>> ATTRS_KEY = Key.create("attributes");
-  private ParameterizedCachedValueProvider<XmlAttributeDescriptor[],XmlTag> myCachedValueProvider;
 
   public XmlElementDescriptorImpl(@Nullable XmlTag descriptorTag) {
     myDescriptorTag = descriptorTag;
@@ -60,7 +56,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
   public XmlElementDescriptorImpl() {}
 
-  public PsiElement getDeclaration(){
+  public XmlTag getDeclaration(){
     return myDescriptorTag;
   }
 
@@ -393,11 +389,6 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     }
 
     return CONTENT_TYPE_MIXED;
-  }
-
-  @Override
-  public String getDefaultValue() {
-    return myDescriptorTag.getAttributeValue("default");
   }
 
   @Nullable
