@@ -80,7 +80,8 @@ public class CommandUtil {
   public static void put(@NotNull List<String> parameters, @NotNull String path, @Nullable SVNRevision pegRevision) {
     StringBuilder builder = new StringBuilder(path);
 
-    if (pegRevision != null && !SVNRevision.UNDEFINED.equals(pegRevision) && pegRevision.getNumber() > 0) {
+    if (pegRevision != null && !SVNRevision.UNDEFINED.equals(pegRevision) && !SVNRevision.WORKING.equals(pegRevision) &&
+        pegRevision.getNumber() > 0) {
       builder.append("@");
       builder.append(pegRevision);
     }

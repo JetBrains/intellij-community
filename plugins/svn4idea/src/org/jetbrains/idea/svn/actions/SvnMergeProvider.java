@@ -33,6 +33,7 @@ import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -110,10 +111,10 @@ public class SvnMergeProvider implements MergeProvider {
     return data;
   }
 
-  private ByteArrayOutputStream getBaseRevisionContents(SvnVcs vcs, VirtualFile file) {
+  private ByteArrayOutputStream getBaseRevisionContents(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try {
-      byte[] contents = SvnUtil.getFileContents(vcs, file.getPath(), false, SVNRevision.BASE, SVNRevision.UNDEFINED);
+      byte[] contents = SvnUtil.getFileContents(vcs, SvnTarget.fromFile(new File(file.getPath())), SVNRevision.BASE, SVNRevision.UNDEFINED);
       bos.write(contents);
     }
     catch (VcsException e) {

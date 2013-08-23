@@ -5,6 +5,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.AddClient;
 import org.jetbrains.idea.svn.annotate.AnnotateClient;
 import org.jetbrains.idea.svn.conflict.ConflictClient;
+import org.jetbrains.idea.svn.content.ContentClient;
 import org.jetbrains.idea.svn.copy.CopyMoveClient;
 import org.jetbrains.idea.svn.delete.DeleteClient;
 import org.jetbrains.idea.svn.history.HistoryClient;
@@ -22,6 +23,7 @@ public abstract class ClientFactory {
 
   protected AddClient addClient;
   protected AnnotateClient annotateClient;
+  protected ContentClient contentClient;
   protected HistoryClient historyClient;
   protected RevertClient revertClient;
   protected DeleteClient deleteClient;
@@ -45,6 +47,11 @@ public abstract class ClientFactory {
   @NotNull
   public AnnotateClient createAnnotateClient() {
     return prepare(annotateClient);
+  }
+
+  @NotNull
+  public ContentClient createContentClient() {
+    return prepare(contentClient);
   }
 
   @NotNull

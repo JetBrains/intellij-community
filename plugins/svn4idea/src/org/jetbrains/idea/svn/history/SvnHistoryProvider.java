@@ -285,7 +285,7 @@ public class SvnHistoryProvider
     protected void preliminary() throws SVNException {
       myInfo = myVcs.getInfo(myFile.getIOFile());
       if (myInfo == null || myInfo.getRepositoryRootURL() == null) {
-        myException = new VcsException("File ''{0}'' is not under version control" + myFile.getIOFile());
+        myException = new VcsException("File " + myFile.getPath() + " is not under version control");
         return;
       }
       if (myInfo.getURL() == null) {

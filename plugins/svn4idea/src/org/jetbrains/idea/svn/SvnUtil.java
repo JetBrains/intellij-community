@@ -30,18 +30,16 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
-import org.jetbrains.idea.svn.commandLine.SvnCatClient;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -53,11 +51,9 @@ import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.*;
 
 public class SvnUtil {
@@ -736,62 +732,24 @@ public class SvnUtil {
     return result;
   }
 
-  public static byte[] getFileContents(final SvnVcs vcs, final String path, final boolean isUrl, final SVNRevision revision,
-                                       final SVNRevision pegRevision)
+  public static byte[] getFileContents(@NotNull final SvnVcs vcs,
+                                       @NotNull final SvnTarget target,
+                                       @Nullable final SVNRevision revision,
+                                       @Nullable final SVNRevision pegRevision)
     throws VcsException {
+    ClientFactory factory = target.isFile() ? vcs.getFactory(target.getFile()) : vcs.getFactory();
 
-    File file = new File(path);
-    WorkingCopyFormat format = vcs.getWorkingCopyFormat(file);
-
-    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)
-           ? getFileContentsCommandLine(vcs, path, revision, pegRevision)
-           : getFileContentWithSvnKit(vcs, path, isUrl, revision, pegRevision);
+    return factory.createContentClient().getContent(target, revision, pegRevision);
   }
 
-  private static byte[] getFileContentsCommandLine(SvnVcs vcs, String path, SVNRevision revision, SVNRevision pegRevision) throws VcsException {
-    SvnCatClient client = new SvnCatClient(vcs.getProject());
-    String content = client.getFileContents(path, pegRevision, revision);
-
-    return CharsetToolkit.getUtf8Bytes(content);
-  }
-
-  private static byte[] getFileContentWithSvnKit(SvnVcs vcs, String path, boolean isUrl, SVNRevision revision, SVNRevision pegRevision)
-    throws VcsException {
-    final int maxSize = VcsUtil.getMaxVcsLoadedFileSize();
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream() {
-      @Override
-      public synchronized void write(int b) {
-        if (size() > maxSize) throw new FileTooBigRuntimeException();
-        super.write(b);
-      }
-
-      @Override
-      public synchronized void write(byte[] b, int off, int len) {
-        if (size() > maxSize) throw new FileTooBigRuntimeException();
-        super.write(b, off, len);
-      }
-
-      @Override
-      public synchronized void writeTo(OutputStream out) throws IOException {
-        if (size() > maxSize) throw new FileTooBigRuntimeException();
-        super.writeTo(out);
-      }
-    };
-    SVNWCClient wcClient = vcs.createWCClient();
+  public static SVNURL parseUrl(@NotNull String url) {
     try {
-      if (isUrl) {
-        wcClient.doGetFileContents(SVNURL.parseURIEncoded(path), pegRevision, revision, true, buffer);
-      } else {
-        wcClient.doGetFileContents(new File(path), pegRevision, revision, true, buffer);
-      }
-      ContentRevisionCache.checkContentsSize(path, buffer.size());
-    } catch (FileTooBigRuntimeException e) {
-      ContentRevisionCache.checkContentsSize(path, buffer.size());
-    } catch (SVNException e) {
-      throw new VcsException(e);
+      return SVNURL.parseURIEncoded(url);
     }
-    return buffer.toByteArray();
+    catch (SVNException e) {
+      IllegalArgumentException runtimeException = new IllegalArgumentException();
+      runtimeException.initCause(e);
+      throw runtimeException;
+    }
   }
-
-  private static class FileTooBigRuntimeException extends RuntimeException {}
 }

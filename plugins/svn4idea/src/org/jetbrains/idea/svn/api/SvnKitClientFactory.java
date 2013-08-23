@@ -5,6 +5,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.SvnKitAddClient;
 import org.jetbrains.idea.svn.annotate.SvnKitAnnotateClient;
 import org.jetbrains.idea.svn.conflict.SvnKitConflictClient;
+import org.jetbrains.idea.svn.content.SvnKitContentClient;
 import org.jetbrains.idea.svn.copy.SvnKitCopyMoveClient;
 import org.jetbrains.idea.svn.delete.SvnKitDeleteClient;
 import org.jetbrains.idea.svn.history.SvnKitHistoryClient;
@@ -25,6 +26,7 @@ public class SvnKitClientFactory extends ClientFactory {
   protected void setup() {
     addClient = new SvnKitAddClient();
     annotateClient = new SvnKitAnnotateClient();
+    contentClient = new SvnKitContentClient();
     historyClient = new SvnKitHistoryClient();
     revertClient = new SvnKitRevertClient();
     deleteClient = new SvnKitDeleteClient();

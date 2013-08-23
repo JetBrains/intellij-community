@@ -91,7 +91,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
           final String contents;
           if (loadExternally) {
-            byte[] data = SvnUtil.getFileContents(myVcs, ioFile.getAbsolutePath(), false, SVNRevision.BASE, SVNRevision.UNDEFINED);
+            byte[] data = SvnUtil.getFileContents(myVcs, SvnTarget.fromFile(ioFile), SVNRevision.BASE, SVNRevision.UNDEFINED);
             contents = LoadTextUtil.getTextByBinaryPresentation(data, file, false, false).toString();
           } else {
             final byte[] bytes = VcsHistoryUtil.loadRevisionContent(revision);
@@ -243,7 +243,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     }
 
     final SVNRevision svnRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
-    byte[] data = SvnUtil.getFileContents(myVcs, wasUrl.toString(), true, svnRevision, svnRevision);
+    byte[] data = SvnUtil.getFileContents(myVcs, SvnTarget.fromURL(wasUrl), svnRevision, svnRevision);
     final String contents = LoadTextUtil.getTextByBinaryPresentation(data, charset == null ? CharsetToolkit.UTF8_CHARSET : charset).toString();
     final SvnRemoteFileAnnotation result = new SvnRemoteFileAnnotation(myVcs, contents, revision.getRevisionNumber(), pair.getFirst(),
                                                                        pair.getSecond().getPath(), current);

@@ -40,11 +40,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -164,39 +163,16 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
         progress.setText(SvnBundle.message("progress.text.loading.contents", myPath));
         progress.setText2(SvnBundle.message("progress.text2.revision.information", myRevision));
       }
-      WorkingCopyFormat format = myVcs.getWorkingCopyFormat(new File(getFullPath()));
-      if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)) {
-        loadContentCommandLine();
-      }
-      else {
-        loadContentWithSvnKit();
-      }
-    }
 
-    private void loadContentCommandLine() {
       try {
-        byte[] contents = SvnUtil.getFileContents(myVcs, getFullPath(), true, SVNRevision.create(myRevision), SVNRevision.UNDEFINED);
+        byte[] contents = SvnUtil.getFileContents(myVcs, SvnTarget.fromURL(SvnUtil.parseUrl(getFullPath())), SVNRevision.create(myRevision),
+                                                  SVNRevision.UNDEFINED);
         myDst.write(contents);
       }
       catch (VcsException e) {
         myException = e;
       }
       catch (IOException e) {
-        myException = e;
-      }
-    }
-
-    private void loadContentWithSvnKit() {
-      try {
-        SVNRepository repository = myVcs.createRepository(getFullPath());
-        try {
-          repository.getFile("", myRevision, null, myDst);
-        }
-        finally {
-          repository.closeSession();
-        }
-      }
-      catch (SVNException e) {
         myException = e;
       }
     }
