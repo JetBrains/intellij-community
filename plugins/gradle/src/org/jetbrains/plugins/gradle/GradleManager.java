@@ -167,10 +167,10 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
         }
 
         GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(pair.second);
-        boolean useWrapper = projectLevelSettings != null && !projectLevelSettings.isPreferLocalInstallationToWrapper();
+        DistributionType distributionType = projectLevelSettings == null ? DistributionType.BUNDLED : projectLevelSettings.getDistributionType();
         GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
                                                                      settings.getServiceDirectoryPath(),
-                                                                     useWrapper,
+                                                                     distributionType,
                                                                      settings.getGradleVmOptions());
 
         for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
