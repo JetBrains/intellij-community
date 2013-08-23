@@ -124,6 +124,11 @@ public class ExtractEnumTest extends MultiFileTestCase {
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
+  public void testNormalize() throws Exception {
+    doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
+           new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
+  }
+
   public void testUnknownSwitchLabel() throws Exception {
     doTest("Unable to migrate statement to enum constant. 8 can not be replaced with enum", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
