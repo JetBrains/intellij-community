@@ -102,56 +102,6 @@ public final class ScriptRunnerUtil {
     return outputBuilder.toString();
   }
 
-  /**
-   * Executes a process with given parameters.
-   * This method tries to work around the following error:
-   * <pre>Cannot run program ...: error=2, No such file or directory</pre>
-   * that occurs when {@code exePath} isn't absolute path, so {@code exePath} is searched in
-   * PATH environment variable from {@code System.getenv()}. <p/>
-   *
-   * There is an OSX specific issue that environment variables aren't passed to IDE, if the IDE isn't launched from Terminal.
-   * As a result, System.getenv() contains wrong PATH environment variable value on OSX, and correct absolute executable file
-   * can not be found.
-   *
-   * The implemented workaround is to find absolute executable path and execute once again.
-   *
-   * @param exePath  path to executable (absolute or not)
-   * @param workingDirectory working directory
-   * @param scriptFile script file
-   * @param parameters custom parameters
-   * @return an instance of {@link OSProcessHandler}
-   * @throws ExecutionException
-   */
-  @NotNull
-  public static OSProcessHandler executeSafelyOnMac(@NotNull String exePath,
-                                                    @Nullable String workingDirectory,
-                                                    @Nullable VirtualFile scriptFile,
-                                                    @NotNull String[] parameters,
-                                                    @Nullable Charset charset) throws ExecutionException {
-    if (!SystemInfo.isMac) {
-      return execute(exePath, workingDirectory, scriptFile, parameters, charset);
-    }
-    ExecutionException firstException;
-    try {
-      return execute(exePath, workingDirectory, scriptFile, parameters, charset);
-    }
-    catch (ExecutionException e) {
-      firstException = e;
-      LOG.info("Can't execute " + exePath);
-    }
-    File file = PathEnvironmentVariableUtil.findInPath(exePath);
-    if (file == null) {
-      throw firstException;
-    }
-    try {
-      return execute(file.getAbsolutePath(), workingDirectory, scriptFile, parameters, charset);
-    } catch (ExecutionException e) {
-      LOG.info("Standby command failed too", e);
-      throw firstException;
-    }
-  }
-
-
   @NotNull
   public static OSProcessHandler execute(@NotNull String exePath,
                                          @Nullable String workingDirectory,
@@ -166,6 +116,42 @@ public final class ScriptRunnerUtil {
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters,
                                          @Nullable Charset charset) throws ExecutionException {
+    ExecutionException ex;
+    try {
+      return doExecute(exePath, workingDirectory, scriptFile, parameters, charset);
+    }
+    catch (ExecutionException e) {
+      ex = e;
+    }
+    boolean rerun = SystemInfo.isMac;
+    if (rerun) {
+      File exeFile = new File(exePath);
+      rerun = !exeFile.isAbsolute();
+    }
+    if (rerun) {
+      File originalExeFile = PathEnvironmentVariableUtil.findInOriginalPath(exePath);
+      rerun = originalExeFile == null;
+    }
+    if (rerun) {
+      File exeFile = PathEnvironmentVariableUtil.findInPath(exePath);
+      if (exeFile != null) {
+        try {
+          return doExecute(exeFile.getAbsolutePath(), workingDirectory, scriptFile, parameters, charset);
+        } catch (ExecutionException e) {
+          LOG.info("Standby command failed too", e);
+          throw ex;
+        }
+      }
+    }
+    throw ex;
+  }
+
+  @NotNull
+  private static OSProcessHandler doExecute(@NotNull String exePath,
+                                            @Nullable String workingDirectory,
+                                            @Nullable VirtualFile scriptFile,
+                                            String[] parameters,
+                                            @Nullable Charset charset) throws ExecutionException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(exePath);
     commandLine.setPassParentEnvironment(true);
