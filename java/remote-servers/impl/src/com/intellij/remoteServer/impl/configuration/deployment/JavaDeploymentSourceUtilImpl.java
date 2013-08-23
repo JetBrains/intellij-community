@@ -15,17 +15,13 @@
  */
 package com.intellij.remoteServer.impl.configuration.deployment;
 
-import com.intellij.openapi.module.ModulePointer;
-import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.remoteServer.configuration.deployment.ArtifactDeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
-import com.intellij.remoteServer.configuration.deployment.DeploymentSourceUtil;
-import com.intellij.remoteServer.configuration.deployment.ModuleDeploymentSource;
-import org.jdom.Element;
+import com.intellij.remoteServer.configuration.deployment.JavaDeploymentSourceUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -35,7 +31,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class DeploymentSourceUtilImpl extends DeploymentSourceUtil {
+public class JavaDeploymentSourceUtilImpl extends JavaDeploymentSourceUtil {
   @NotNull
   @Override
   public ArtifactDeploymentSource createArtifactDeploymentSource(@NotNull ArtifactPointer artifactPointer) {
@@ -52,35 +48,5 @@ public class DeploymentSourceUtilImpl extends DeploymentSourceUtil {
       sources.add(createArtifactDeploymentSource(pointerManager.createPointer(artifact)));
     }
     return sources;
-  }
-
-  @Override
-  @NotNull
-  public ModuleDeploymentSource createModuleDeploymentSource(@NotNull ModulePointer modulePointer) {
-    return new ModuleDeploymentSourceImpl(modulePointer);
-  }
-
-  @Override
-  public DeploymentSource loadDeploymentSource(@NotNull Element element, @NotNull Project project) {
-    ArtifactPointerManager artifactPointerManager = ArtifactPointerManager.getInstance(project);
-    Element artifact = element.getChild("artifact");
-    if (artifact != null) {
-      return createArtifactDeploymentSource(artifactPointerManager.createPointer(artifact.getAttributeValue("name")));
-    }
-    Element module = element.getChild("module");
-    ModulePointerManager modulePointerManager = ModulePointerManager.getInstance(project);
-    return createModuleDeploymentSource(modulePointerManager.create(module.getAttributeValue("name")));
-  }
-
-  @Override
-  public void saveDeploymentSource(@NotNull DeploymentSource source, @NotNull Element element, @NotNull Project project) {
-    if (source instanceof ArtifactDeploymentSource) {
-      String artifactName = ((ArtifactDeploymentSource)source).getArtifactPointer().getArtifactName();
-      element.addContent(new Element("artifact").setAttribute("name", artifactName));
-    }
-    else if (source instanceof ModuleDeploymentSource) {
-      String moduleName = ((ModuleDeploymentSource)source).getModulePointer().getModuleName();
-      element.addContent(new Element("module").setAttribute("name", moduleName));
-    }
   }
 }

@@ -1,0 +1,7 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.remoteServer.configuration.deployment.JavaDeploymentSourceUtil"
+                        serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.JavaDeploymentSourceUtilImpl"/>
+    <remoteServer.deploymentSource.type implementation="com.intellij.remoteServer.impl.configuration.deployment.ArtifactDeploymentSourceType"/>
+  </extensions>
+</idea-plugin>

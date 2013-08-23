@@ -130,7 +130,7 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
     @Override
     public List<DeploymentSource> getAvailableDeploymentSources() {
       List<Artifact> artifacts = AppEngineUtil.collectWebArtifacts(myProject, true);
-      return DeploymentSourceUtil.getInstance().createArtifactDeploymentSources(myProject, artifacts);
+      return JavaDeploymentSourceUtil.getInstance().createArtifactDeploymentSources(myProject, artifacts);
     }
 
     @NotNull
