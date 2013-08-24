@@ -629,7 +629,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
     LOG.info("Loaded mappings:"+(System.currentTimeMillis() - started) + "ms, keys:"+infos.size());
     started = System.currentTimeMillis();
-    int fragments = 0;
+    long fragments = 0;
     if (infos.size() > 0) {
       try {
         fragments = myValueStorage.compactValues(infos, newStorage);
@@ -639,7 +639,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
     }
 
-    LOG.info("Compacted values for:"+(System.currentTimeMillis() - started) + "ms fragments:"+fragments);
+    LOG.info("Compacted values for:"+(System.currentTimeMillis() - started) + "ms fragments:"+((int)fragments) + ", newfragments:"+(fragments >> 32));
 
     started = System.currentTimeMillis();
     try {

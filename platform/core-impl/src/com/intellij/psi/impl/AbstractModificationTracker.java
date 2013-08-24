@@ -53,7 +53,7 @@ public abstract class AbstractModificationTracker implements PsiTreeChangePrepro
         }
 
       case CHILDREN_CHANGED :
-        if (event.isGenericChildrenChange()) return;
+        if (event.isGenericChange()) return;
         changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
       break;
 

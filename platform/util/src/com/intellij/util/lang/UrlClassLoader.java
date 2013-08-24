@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.lang;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -24,53 +25,94 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 public class UrlClassLoader extends ClassLoader {
-  private final ClassPath myClassPath;
-  private final List<URL> myURLs;
   @NonNls static final String CLASS_EXTENSION = ".class";
-  protected static final boolean myDebugTime = false;
-  protected static final long NS_THRESHOLD = 10000000;
 
+  public static final class Builder {
+    private List<URL> myURLs = ContainerUtil.emptyList();
+    private ClassLoader myParent = null;
+    private boolean myLockJars = false;
+    private boolean myUseCache = false;
+    private boolean myAcceptUnescaped = false;
+    private boolean myPreload = true;
+    private String[] myNativeLibs = null;
+
+    private Builder() { }
+
+    public Builder urls(List<URL> urls) { myURLs = urls; return this; }
+    public Builder urls(URL... urls) { myURLs = Arrays.asList(urls); return this; }
+    public Builder parent(ClassLoader parent) { myParent = parent; return this; }
+    public Builder allowLock() { myLockJars = true; return this; }
+    public Builder allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
+    public Builder useCache() { myUseCache = true; return this; }
+    public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
+    public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
+    public Builder noPreload() { myPreload = false; return this; }
+    public Builder nativeLibs(String... libNames) { myNativeLibs = libNames; return this; }
+    public UrlClassLoader get() { return new UrlClassLoader(this); }
+  }
+
+  public static Builder build() {
+    return new Builder();
+  }
+
+  private final List<URL> myURLs;
+  private final ClassPath myClassPath;
+  private final Set<String> myNativeLibs;
+
+  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
   public UrlClassLoader(@NotNull ClassLoader parent) {
-    this(Arrays.asList(((URLClassLoader)parent).getURLs()), parent.getParent(), true, true);
+    this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache());
   }
 
+  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
   public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent) {
-    this(urls, parent, false, false);
+    this(build().urls(urls).parent(parent));
   }
 
+  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
   public UrlClassLoader(URL[] urls, @Nullable ClassLoader parent) {
-    this(Arrays.asList(urls), parent, false, false);
+    this(build().urls(urls).parent(parent));
   }
 
-  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean canLockJars, boolean canUseCache) {
-    this(urls, parent, canLockJars, canUseCache, false, true);
+  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
+  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean lockJars, boolean useCache) {
+    this(build().urls(urls).parent(parent).allowLock(lockJars).useCache(useCache));
   }
 
-  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls, final boolean preloadJarContents) {
+  /** @deprecated use {@link #build()} (to remove in IDEA 14) */
+  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean lockJars, boolean useCache, boolean allowUnescaped, boolean preload) {
     super(parent);
-
-    List<URL> list = ContainerUtil.map(urls, new Function<URL, URL>() {
+    myURLs = ContainerUtil.map(urls, new Function<URL, URL>() {
       @Override
       public URL fun(URL url) {
         return internProtocol(url);
       }
     });
-    myClassPath = new ClassPath(list.toArray(new URL[list.size()]), canLockJars, canUseCache, acceptUnescapedUrls, preloadJarContents);
-    myURLs = list;
+    myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload);
+    myNativeLibs = Collections.emptySet();
   }
 
-  @NotNull
+  protected UrlClassLoader(@NotNull Builder builder) {
+    super(builder.myParent);
+    myURLs = ContainerUtil.map(builder.myURLs, new Function<URL, URL>() {
+      @Override
+      public URL fun(URL url) {
+        return internProtocol(url);
+      }
+    });
+    myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload);
+    myNativeLibs = builder.myNativeLibs != null ? ContainerUtil.newHashSet(builder.myNativeLibs) : Collections.<String>emptySet();
+  }
+
   public static URL internProtocol(@NotNull URL url) {
     try {
       final String protocol = url.getProtocol();
@@ -80,7 +122,7 @@ public class UrlClassLoader extends ClassLoader {
       return url;
     }
     catch (MalformedURLException e) {
-      LOG.error(e);
+      Logger.getInstance(UrlClassLoader.class).error(e);
       return null;
     }
   }
@@ -133,12 +175,12 @@ public class UrlClassLoader extends ClassLoader {
   private Class defineClass(String name, Resource res) throws IOException {
     int i = name.lastIndexOf('.');
     if (i != -1) {
-      String pkgname = name.substring(0, i);
+      String pkgName = name.substring(0, i);
       // Check if package already loaded.
-      Package pkg = getPackage(pkgname);
+      Package pkg = getPackage(pkgName);
       if (pkg == null) {
         try {
-          definePackage(pkgname, null, null, null, null, null, null, null);
+          definePackage(pkgName, null, null, null, null, null, null, null);
         }
         catch (IllegalArgumentException e) {
           // do nothing, package already defined by some other thread
@@ -157,28 +199,17 @@ public class UrlClassLoader extends ClassLoader {
   @Override
   @Nullable  // Accessed from PluginClassLoader via reflection // TODO do we need it?
   public URL findResource(final String name) {
-    final long started = myDebugTime ? System.nanoTime():0;
-
-    try {
-      return findResourceImpl(name);
-    } finally {
-      long doneFor = myDebugTime ? (System.nanoTime() - started):0;
-      if (doneFor > NS_THRESHOLD) {
-        System.out.println((doneFor / 1000000) + " ms for UrlClassLoader.getResource, resource:"+name);
-      }
-    }
+    return findResourceImpl(name);
   }
 
   protected URL findResourceImpl(final String name) {
     Resource res = _getResource(name);
-    if (res == null) return null;
-    return res.getURL();
+    return res != null ? res.getURL() : null;
   }
 
   @Nullable
   private Resource _getResource(final String name) {
     String n = name;
-
     if (n.startsWith("/")) n = n.substring(1);
     return myClassPath.getResource(n, true);
   }
@@ -201,12 +232,50 @@ public class UrlClassLoader extends ClassLoader {
   protected Enumeration<URL> findResources(String name) throws IOException {
     return myClassPath.getResources(name, true);
   }
-  
-  static final boolean doDebug = System.getProperty("idea.classloading.debug") != null;
-  private static final Logger LOG = Logger.getInstance("idea.UrlClassLoader");
 
-  static void debug(String s) {
-    System.out.println(s); // TODO: remove
-    LOG.debug(s);
+  @Override
+  protected String findLibrary(String libName) {
+    if (BinPathHolder.path != null && myNativeLibs.contains(libName)) {
+      String fileName = mapLibraryName(libName);
+      return BinPathHolder.path + File.separator + fileName;
+    }
+
+    return super.findLibrary(libName);
+  }
+
+  private static class BinPathHolder {
+    private static final String path;
+
+    static {
+      String homePath = PathManager.getHomePath();
+      if (new File(homePath, ".idea").exists()) {
+        if (new File(homePath, "community").exists()) {
+          homePath += File.separator + "community";
+        }
+
+        String libDir = null;
+        String prefix = homePath + File.separator + "bin" + File.separator;
+        if (SystemInfo.isWindows) libDir = prefix + "win";
+        else if (SystemInfo.isMac) libDir = prefix + "mac";
+        else if (SystemInfo.isLinux) libDir = prefix + "linux";
+
+        path = libDir;
+      }
+      else {
+        path = PathManager.getBinPath();
+      }
+    }
+  }
+
+  private static String mapLibraryName(String libName) {
+    String baseName = libName;
+    if (SystemInfo.is64Bit) {
+      baseName = baseName.replace("32", "") + "64";
+    }
+    String fileName = System.mapLibraryName(baseName);
+    if (SystemInfo.isMac) {
+      fileName = fileName.replace(".jnilib", ".dylib");
+    }
+    return fileName;
   }
 }

@@ -25,14 +25,10 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChangeEvent;
-import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -49,22 +45,6 @@ public class ChangeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.ChangeUtil");
 
   private ChangeUtil() { }
-
-  public static void changeElementInPlace(final ASTNode element, final ChangeAction action){
-    prepareAndRunChangeAction(new ChangeAction() {
-      @Override
-      public void makeChange(TreeChangeEvent destinationTreeChange) {
-        destinationTreeChange.addElementaryChange(element, ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, element));
-        action.makeChange(destinationTreeChange);
-        ASTNode node = element;
-        while (node != null) {
-          ASTNode parent = node.getTreeParent();
-          ((TreeElement)node).clearCaches();
-          node = parent;
-        }
-      }
-    }, (TreeElement)element);
-  }
 
   public static void encodeInformation(TreeElement element) {
     encodeInformation(element, element);
@@ -180,13 +160,6 @@ public class ChangeUtil {
           final PomModelEvent event = new PomModelEvent(model);
           final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
           event.registerChangeSet(treeAspect, destinationTreeChange);
-          final PsiManagerEx psiManager = (PsiManagerEx) manager;
-          final PsiFile file = (PsiFile)changedFile.getPsi();
-
-          //if (file.isPhysical()) {
-          //  SmartPointerManagerImpl.fastenBelts(file, changedElement.getStartOffset());
-          //}
-
           action.makeChange(destinationTreeChange);
 
           TreeUtil.clearCaches(changedElement);

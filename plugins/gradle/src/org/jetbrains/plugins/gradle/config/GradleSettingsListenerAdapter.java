@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.config;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 
@@ -19,7 +20,7 @@ public abstract class GradleSettingsListenerAdapter extends ExternalSystemSettin
   }
 
   @Override
-  public void onPreferLocalGradleDistributionToWrapperChange(boolean currentValue, @NotNull String linkedProjectPath) {
+  public void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath) {
   }
 
   @Override

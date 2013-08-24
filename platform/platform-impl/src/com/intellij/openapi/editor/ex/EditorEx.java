@@ -57,6 +57,10 @@ public interface EditorEx extends Editor {
 
   EditorHighlighter getHighlighter();
 
+  JComponent getPermanentHeaderComponent();
+
+  void setPermanentHeaderComponent(JComponent component);
+
   void setHighlighter(@NotNull EditorHighlighter highlighter);
 
   void setColorsScheme(@NotNull EditorColorsScheme scheme);

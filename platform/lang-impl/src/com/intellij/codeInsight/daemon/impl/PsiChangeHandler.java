@@ -143,7 +143,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
 
   @Override
   public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-    if (((PsiTreeChangeEventImpl)event).isGenericChildrenChange()) {
+    if (((PsiTreeChangeEventImpl)event).isGenericChange()) {
       return;
     }
     queueElement(event.getParent(), true, event);

@@ -21,17 +21,21 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.JpsUrlList;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
 import org.jetbrains.jps.model.serialization.java.compiler.*;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryRootTypeSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -76,6 +80,12 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
                          new JpsJavaCompilerOptionsSerializer("JavacSettings", "Javac"),
                          new JpsEclipseCompilerOptionsSerializer("EclipseCompilerSettings", "Eclipse"),
                          new RmicCompilerOptionsSerializer("RmicSettings", "Rmic"));
+  }
+
+  @Override
+  public List<? extends JpsModuleSourceRootPropertiesSerializer<?>> getModuleSourceRootPropertiesSerializers() {
+    return Arrays.asList(new JavaSourceRootPropertiesSerializer(JavaSourceRootType.SOURCE, JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID),
+                         new JavaSourceRootPropertiesSerializer(JavaSourceRootType.TEST_SOURCE, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID));
   }
 
   @Override
@@ -285,6 +295,28 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       componentTag.setAttribute(LANGUAGE_LEVEL_ATTRIBUTE, level.name());
       componentTag.setAttribute("assert-keyword", Boolean.toString(level.compareTo(LanguageLevel.JDK_1_4) >= 0));
       componentTag.setAttribute("jdk-15", Boolean.toString(level.compareTo(LanguageLevel.JDK_1_5) >= 0));
+    }
+  }
+
+  private static class JavaSourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JpsSimpleElement<JavaSourceRootProperties>> {
+    private JavaSourceRootPropertiesSerializer(JpsModuleSourceRootType<JpsSimpleElement<JavaSourceRootProperties>> type, String typeId) {
+      super(type, typeId);
+    }
+
+    @Override
+    public JpsSimpleElement<JavaSourceRootProperties> loadProperties(@NotNull Element sourceRootTag) {
+      String packagePrefix = StringUtil.notNullize(sourceRootTag.getAttributeValue(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE));
+      return JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties(packagePrefix));
+    }
+
+    @Override
+    public void saveProperties(@NotNull JpsSimpleElement<JavaSourceRootProperties> properties, @NotNull Element sourceRootTag) {
+      String isTestSource = Boolean.toString(getType().equals(JavaSourceRootType.TEST_SOURCE));
+      sourceRootTag.setAttribute(JpsModuleRootModelSerializer.IS_TEST_SOURCE_ATTRIBUTE, isTestSource);
+      String packagePrefix = properties.getData().getPackagePrefix();
+      if (!packagePrefix.isEmpty()) {
+        sourceRootTag.setAttribute(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE, packagePrefix);
+      }
     }
   }
 }

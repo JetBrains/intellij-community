@@ -147,20 +147,6 @@ public interface ModuleRootModel {
   @NotNull String[] getSourceRootUrls(boolean includingTests);
 
   /**
-   * @deprecated moved to J2ME plugin
-   */
-  @Deprecated
-  @Nullable
-  VirtualFile getExplodedDirectory();
-
-  /**
-   * @deprecated moved to J2ME plugin
-   */
-  @Deprecated
-  @Nullable
-  String getExplodedDirectoryUrl();
-
-  /**
    * Passes all order entries in the module to the specified visitor.
    *
    * @param policy       the visitor to accept.
@@ -186,18 +172,6 @@ public interface ModuleRootModel {
    * @return the list of module names this module depends on.
    */
   @NotNull String[] getDependencyModuleNames();
-
-  /**
-   * @deprecated use {@code JavaModuleExternalPaths} instead
-   */
-  @Deprecated
-  @NotNull VirtualFile[] getRootPaths(OrderRootType rootType);
-
-  /**
-   * @deprecated use {@code JavaModuleExternalPaths} instead
-   */
-  @Deprecated
-  @NotNull String[] getRootUrls(OrderRootType rootType);
 
   <T> T getModuleExtension(Class<T> klass);
 

@@ -20,8 +20,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
-import org.gradle.tooling.ModelBuilder;
-import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.*;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.idea.*;
@@ -30,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
 import org.jetbrains.plugins.gradle.settings.ClassHolder;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -62,6 +62,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException
   {
     if (settings != null) {
+      if(settings.getDistributionType() == DistributionType.WRAPPED) {
+        myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
+      }
       List<ClassHolder<? extends GradleProjectResolverExtension>> extensionClasses = settings.getResolverExtensions();
       if (myCachedExtensions == null || !myCachedExtensions.first.equals(extensionClasses)) {
         List<GradleProjectResolverExtension> extensions = ContainerUtilRt.newArrayList();

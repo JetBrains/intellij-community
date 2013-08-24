@@ -107,7 +107,7 @@ public class PsiEventWrapperAspect implements PomModelAspect{
             psiEvent.setOffset(treeElement.getStartOffset());
             psiEvent.setParent(psiChild);
             psiEvent.setOldLength(changeByChild.getOldLength());
-            psiEvent.setGeneric(treeElement instanceof CompositeElement);
+            psiEvent.setGenericChange(treeElement instanceof CompositeElement);
             manager.childrenChanged(psiEvent);
             break;
           case ChangeInfo.REMOVED:

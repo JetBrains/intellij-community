@@ -1930,7 +1930,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setHeaderComponent(JComponent header) {
     myHeaderPanel.removeAll();
-    header = header == null ? getUserData(PERMANENT_HEADER) : header;
+    header = header == null ? getPermanentHeaderComponent() : header;
     if (header != null) {
       myHeaderPanel.add(header);
     }
@@ -1940,13 +1940,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean hasHeaderComponent() {
-    return myHeaderPanel.getComponentCount() > 0;
+    JComponent header = getHeaderComponent();
+    return header != null && header != getPermanentHeaderComponent();
+  }
+
+  @Nullable
+  public JComponent getPermanentHeaderComponent() {
+    return getUserData(PERMANENT_HEADER);
+  }
+
+  public void setPermanentHeaderComponent(@Nullable JComponent component) {
+    putUserData(PERMANENT_HEADER, component);
   }
 
   @Override
   @Nullable
   public JComponent getHeaderComponent() {
-    if (hasHeaderComponent()) {
+    if (myHeaderPanel.getComponentCount() > 0) {
       return (JComponent)myHeaderPanel.getComponent(0);
     }
     return null;

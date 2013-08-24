@@ -23,9 +23,7 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
-import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.module.JpsModuleReference;
-import org.jetbrains.jps.model.module.JpsModuleType;
+import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 /**
@@ -44,6 +42,9 @@ public abstract class JpsElementFactory {
 
   public abstract <P extends JpsElement> JpsTypedLibrary<JpsSdk<P>> createSdk(@NotNull String name, @Nullable String homePath, @Nullable String versionString,
                                                                               @NotNull JpsSdkType<P> type, @NotNull P properties);
+
+  @NotNull
+  public abstract <P extends JpsElement> JpsModuleSourceRoot createModuleSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties);
 
   @NotNull
   public abstract JpsModuleReference createModuleReference(@NotNull String moduleName);
