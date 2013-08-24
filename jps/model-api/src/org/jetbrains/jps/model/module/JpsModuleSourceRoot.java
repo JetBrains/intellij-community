@@ -35,6 +35,9 @@ public interface JpsModuleSourceRoot extends JpsElement {
   <P extends JpsElement> JpsTypedModuleSourceRoot<P> asTyped(@NotNull JpsModuleSourceRootType<P> type);
 
   @NotNull
+  JpsTypedModuleSourceRoot<?> asTyped();
+
+  @NotNull
   JpsElement getProperties();
 
   @NotNull
