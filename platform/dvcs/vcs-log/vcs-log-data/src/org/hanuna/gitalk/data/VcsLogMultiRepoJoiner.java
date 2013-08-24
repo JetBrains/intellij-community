@@ -12,16 +12,16 @@ import java.util.*;
 class VcsLogMultiRepoJoiner {
 
   @NotNull
-  public List<TimeCommitParents> join(@NotNull Collection<List<TimeCommitParents>> logsFromRepos) {
+  public List<TimeCommitParents> join(@NotNull Collection<List<? extends TimeCommitParents>> logsFromRepos) {
     int size = 0;
-    for (List<TimeCommitParents> repo : logsFromRepos) {
+    for (List<? extends TimeCommitParents> repo : logsFromRepos) {
       size += repo.size();
     }
     List<TimeCommitParents> result = new ArrayList<TimeCommitParents>(size);
 
-    Map<TimeCommitParents, Iterator<TimeCommitParents>> nextCommits = ContainerUtil.newHashMap();
-    for (List<TimeCommitParents> log : logsFromRepos) {
-      Iterator<TimeCommitParents> iterator = log.iterator();
+    Map<TimeCommitParents, Iterator<? extends TimeCommitParents>> nextCommits = ContainerUtil.newHashMap();
+    for (List<? extends TimeCommitParents> log : logsFromRepos) {
+      Iterator<? extends TimeCommitParents> iterator = log.iterator();
       if (iterator.hasNext()) {
         nextCommits.put(iterator.next(), iterator);
       }
@@ -29,7 +29,7 @@ class VcsLogMultiRepoJoiner {
 
     while (!nextCommits.isEmpty()) {
       TimeCommitParents lastCommit = findLatestCommit(nextCommits.keySet());
-      Iterator<TimeCommitParents> iterator = nextCommits.get(lastCommit);
+      Iterator<? extends TimeCommitParents> iterator = nextCommits.get(lastCommit);
       result.add(lastCommit);
       nextCommits.remove(lastCommit);
 

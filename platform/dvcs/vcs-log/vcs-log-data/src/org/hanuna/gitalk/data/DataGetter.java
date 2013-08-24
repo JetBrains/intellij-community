@@ -6,9 +6,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.concurrency.QueueProcessor;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
@@ -24,6 +23,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The DataGetter realizes the following pattern of getting some data (parametrized by {@code T}) from the VCS:
@@ -43,18 +43,16 @@ public abstract class DataGetter<T extends CommitParents> implements Disposable 
   private static final int DOWN_PRELOAD_COUNT = 40;
 
   @NotNull protected final VcsLogDataHolder myDataHolder;
-  @NotNull protected final VcsLogProvider myLogProvider;
-  @NotNull protected final VirtualFile myRoot;
+  @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final VcsCommitCache<T> myCache;
 
   @NotNull private final QueueProcessor<TaskDescriptor> myLoader = new QueueProcessor<TaskDescriptor>(new DetailsLoadingTask());
   @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<Runnable>();
 
-  DataGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root,
+  DataGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
              @NotNull VcsCommitCache<T> cache) {
     myDataHolder = dataHolder;
-    myLogProvider = logProvider;
-    myRoot = root;
+    myLogProviders = logProviders;
     myCache = cache;
     Disposer.register(dataHolder, this);
   }
@@ -114,15 +112,16 @@ public abstract class DataGetter<T extends CommitParents> implements Disposable 
   }
 
   private void preLoadCommitData(@NotNull List<Node> nodes) throws VcsException {
-    List<String> hashes = ContainerUtil.map(nodes, new Function<Node, String>() {
-      @Override
-      public String fun(Node node) {
-        return node.getCommitHash().toStrHash();
-      }
-    });
+    MultiMap<VirtualFile, String> hashesByRoots = new MultiMap<VirtualFile, String>();
+    for (Node node : nodes) {
+      VirtualFile first = myLogProviders.keySet().iterator().next(); // TODO!
+      hashesByRoots.putValue(first, node.getCommitHash().toStrHash());
+    }
 
-    List<? extends T> details = readDetails(hashes);
-    saveInCache(details);
+    for (Map.Entry<VirtualFile, Collection<String>> entry : hashesByRoots.entrySet()) {
+      List<? extends T> details = readDetails(myLogProviders.get(entry.getKey()), entry.getKey(), new ArrayList<String>(entry.getValue()));
+      saveInCache(details);
+    }
   }
 
   public void saveInCache(final List<? extends T> details) {
@@ -136,7 +135,9 @@ public abstract class DataGetter<T extends CommitParents> implements Disposable 
     });
   }
 
-  protected abstract List<? extends T> readDetails(List<String> hashes) throws VcsException;
+  @NotNull
+  protected abstract List<? extends T> readDetails(@NotNull VcsLogProvider logProvider, @NotNull VirtualFile root,
+                                                   @NotNull List<String> hashes) throws VcsException;
 
   /**
    * This listener will be notified when any details loading process finishes.

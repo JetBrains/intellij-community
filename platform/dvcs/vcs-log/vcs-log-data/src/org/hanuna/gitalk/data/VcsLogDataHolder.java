@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
@@ -32,8 +33,10 @@ import org.hanuna.gitalk.common.compressedlist.VcsLogLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>Holds the commit data loaded from the VCS, and is capable to {@link #refresh(Runnable) refresh} this data by request.</p>
@@ -53,24 +56,24 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
   private static final Logger LOG = VcsLogLogger.LOG;
 
   @NotNull private final Project myProject;
-  @NotNull private final VcsLogProvider myLogProvider;
-  @NotNull private final VirtualFile myRoot;
+  @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final BackgroundTaskQueue myDataLoaderQueue;
   @NotNull private final MiniDetailsGetter myMiniDetailsGetter;
   @NotNull private final CommitDetailsGetter myDetailsGetter;
   @NotNull private final VcsLogJoiner myLogJoiner;
+  @NotNull private final VcsLogMultiRepoJoiner myMultiRepoJoiner;
 
   @NotNull private volatile DataPack myDataPack;
   @Nullable private volatile List<TimeCommitParents> myAllLog; // null means the whole log was not yet read from the VCS
 
-  public VcsLogDataHolder(@NotNull Project project, @NotNull VcsLogProvider logProvider, @NotNull VirtualFile root) {
+  public VcsLogDataHolder(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
     myProject = project;
-    myLogProvider = logProvider;
-    myRoot = root;
+    myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
-    myMiniDetailsGetter = new MiniDetailsGetter(this, logProvider, root);
-    myDetailsGetter = new CommitDetailsGetter(this, logProvider, root);
+    myMiniDetailsGetter = new MiniDetailsGetter(this, logProviders);
+    myDetailsGetter = new CommitDetailsGetter(this, logProviders);
     myLogJoiner = new VcsLogJoiner();
+    myMultiRepoJoiner = new VcsLogMultiRepoJoiner();
   }
 
   /**
@@ -84,9 +87,9 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
    * @param onInitialized This is called when the holder is initialized with the initial data received from the VCS.
    *                      The consumer is called on the EDT.
    */
-  public static void init(@NotNull final Project project, @NotNull final VcsLogProvider logProvider, @NotNull final VirtualFile root,
+  public static void init(@NotNull final Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                           @NotNull final Consumer<VcsLogDataHolder> onInitialized) {
-    final VcsLogDataHolder dataHolder = new VcsLogDataHolder(project, logProvider, root);
+    final VcsLogDataHolder dataHolder = new VcsLogDataHolder(project, logProviders);
     dataHolder.initialize(onInitialized);
   }
 
@@ -105,7 +108,12 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
-        myAllLog = myLogProvider.readAllHashes(myRoot);
+        Collection<List<? extends TimeCommitParents>> logs = ContainerUtil.newArrayList();
+        for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
+          List<TimeCommitParents> log = entry.getValue().readAllHashes(entry.getKey());
+          logs.add(log);
+        }
+        myAllLog = myMultiRepoJoiner.join(logs);
       }
     });
   }
@@ -115,7 +123,7 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
         if (myAllLog != null) {
-          Collection<Ref> refs = myLogProvider.readAllRefs(myRoot);
+          Collection<Ref> refs = readAllRefs();
           myDataPack = DataPack.build(myAllLog, refs, indicator);
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override
@@ -130,6 +138,15 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
     });
   }
 
+  @NotNull
+  private Collection<Ref> readAllRefs() throws VcsException {
+    Collection<Ref> refs = ContainerUtil.newHashSet();
+    for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
+      refs.addAll(entry.getValue().readAllRefs(entry.getKey()));
+    }
+    return refs;
+  }
+
   /**
    * @param onSuccess this task is called on the EDT after loading and graph building completes.
    * @param ordered   passed to the {@link VcsLogProvider} to tell it is it is necessary to get commits from the VCS topologically ordered.
@@ -138,23 +155,34 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
-        List<? extends VcsCommitDetails> firstBlock = myLogProvider.readFirstBlock(myRoot, ordered);
-        Collection<Ref> refs = myLogProvider.readAllRefs(myRoot);
+        Collection<List<? extends TimeCommitParents>> logs = new ArrayList<List<? extends TimeCommitParents>>(myLogProviders.size());
+        Collection<Ref> allRefs = ContainerUtil.newHashSet();
+        for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
+          VcsLogProvider logProvider = entry.getValue();
+          VirtualFile root = entry.getKey();
+          List<? extends VcsCommitDetails> firstBlock = logProvider.readFirstBlock(root, ordered);
+          Collection<Ref> refs = logProvider.readAllRefs(root);
 
-        myDetailsGetter.saveInCache(firstBlock);
-        myMiniDetailsGetter.saveInCache(firstBlock);
+          myDetailsGetter.saveInCache(firstBlock);
+          myMiniDetailsGetter.saveInCache(firstBlock);
 
-        List<? extends CommitParents> refreshedLog;
-        if (myAllLog == null) {
-          // the whole log is not loaded before the first refresh
-          refreshedLog = firstBlock;
+          List<? extends TimeCommitParents> refreshedLog;
+          if (myAllLog == null) {
+            // the whole log is not loaded before the first refresh
+            refreshedLog = firstBlock;
+          }
+          else {
+            // The whole log can't become null once loaded
+            // noinspection ConstantConditions
+            refreshedLog = myLogJoiner.addCommits(myAllLog, firstBlock, refs);
+          }
+
+          logs.add(refreshedLog);
+          allRefs.addAll(refs);
         }
-        else {
-          assert myAllLog != null : "The whole log can't become null once loaded";
-          refreshedLog = myLogJoiner.addCommits(myAllLog, firstBlock, refs);
-        }
 
-        myDataPack = DataPack.build(refreshedLog, refs, indicator);
+        List<TimeCommitParents> combinedLog = myMultiRepoJoiner.join(logs);
+        myDataPack = DataPack.build(combinedLog, allRefs, indicator);
 
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override

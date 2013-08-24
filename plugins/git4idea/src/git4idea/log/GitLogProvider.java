@@ -18,11 +18,13 @@ package git4idea.log;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.*;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
+import git4idea.GitVcs;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -102,4 +104,11 @@ public class GitLogProvider implements VcsLogProvider {
     }
     return refs;
   }
+
+  @NotNull
+  @Override
+  public VcsKey getSupportedVcs() {
+    return GitVcs.getKey();
+  }
+
 }

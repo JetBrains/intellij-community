@@ -1,6 +1,7 @@
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,5 +45,11 @@ public interface VcsLogProvider {
    * Read all references (branches, tags, etc.) for the given roots.
    */
   Collection<Ref> readAllRefs(@NotNull VirtualFile root) throws VcsException;
+
+  /**
+   * Returns the VCS which is supported by this provider.
+   */
+  @NotNull
+  VcsKey getSupportedVcs();
 
 }
