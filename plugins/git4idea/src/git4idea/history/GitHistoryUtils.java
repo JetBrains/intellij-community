@@ -534,7 +534,7 @@ public class GitHistoryUtils {
   @NotNull
   public static List<TimeCommitParents> readAllHashes(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS);
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_TIME);
     h.setStdoutSuppressed(true);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
     h.addParameters("HEAD", "--branches", "--remotes", "--tags");
