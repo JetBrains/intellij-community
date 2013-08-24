@@ -1,4 +1,5 @@
 test2()
 def foo():
-    test()
+    pass
+test()
 test1()    

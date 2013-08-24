@@ -4,4 +4,5 @@ def test(a, b=1):
     else:
         for n in range(10):
 
-            print(b)
+            pass
+        print(b)

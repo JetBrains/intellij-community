@@ -7,4 +7,4 @@ class A:
         pass
 
     <selection>def<caret> bar(self):
-        pass</selection>
+      pass</selection>

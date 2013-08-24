@@ -4,4 +4,5 @@ try:
     except:
         print(zoo(0).foo(2))
 except:
-    zoo<caret>(3)
+    pass
+zoo(3)

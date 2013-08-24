@@ -3,4 +3,5 @@ def f():
         a = 1
     else:
         a = 2
-    #comment
+        #comment   <caret>
+

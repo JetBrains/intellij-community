@@ -1167,7 +1167,7 @@ public class PyUtil {
   @Nullable
   public static PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, Class ... toSkip) {
     PsiElement element = psiFile.findElementAt(caretOffset);
-    if (element == null) {
+    if (element == null || caretOffset < 0) {
       return null;
     }
     int lineStartOffset = 0;
@@ -1187,7 +1187,7 @@ public class PyUtil {
   public static PsiElement findNonWhitespaceAtOffset(PsiFile psiFile, int caretOffset) {
     PsiElement element = findNextAtOffset(psiFile, caretOffset, PsiWhiteSpace.class);
     if (element == null)
-      element = findPrevAtOffset(psiFile, caretOffset, PsiWhiteSpace.class);
+      element = findPrevAtOffset(psiFile, caretOffset-1, PsiWhiteSpace.class);
     return element;
   }
 
@@ -1212,7 +1212,7 @@ public class PyUtil {
       int lineNumber = document.getLineNumber(caretOffset);
       lineEndOffset = document.getLineEndOffset(lineNumber);
     }
-    while (caretOffset <= lineEndOffset && instanceOf(element, toSkip)) {
+    while (caretOffset < lineEndOffset && instanceOf(element, toSkip)) {
       caretOffset++;
       element = psiFile.findElementAt(caretOffset);
     }

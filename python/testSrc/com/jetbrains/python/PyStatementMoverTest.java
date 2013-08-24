@@ -6,7 +6,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
- * @author Alexey.Ivanov
+ * User : ktisha
  */
 public class PyStatementMoverTest extends PyTestCase {
   private void doTest() {
@@ -174,6 +174,21 @@ public class PyStatementMoverTest extends PyTestCase {
   }
 
   public void testRemovePass() { // PY-6282
+    doTest();
+  }
+
+  public void testSameLevelInIf() {
+    doTest();
+  }
+
+  public void testLastComment() { // PY-6408
+    doTest();
+  }
+
+  public void testLastComment1() {   //PY-6408
+    doTest();
+  }
+  public void testMultiCompound() {   //PY-7658
     doTest();
   }
 
