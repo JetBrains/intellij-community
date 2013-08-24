@@ -43,7 +43,7 @@ public class PyDuplocatorTest extends PyTestCase {
   public void testIgnoreStringLiteral() throws Exception {
     myDuplocatorSettings.DISTINGUISH_LITERALS = false;
     try {
-      doTest(2);
+      doTest(1);
     }
     finally {
       myDuplocatorSettings.DISTINGUISH_LITERALS = true;
