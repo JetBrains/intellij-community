@@ -57,6 +57,9 @@ public class MutableGraph implements Graph {
   @Nullable
   @Override
   public Node getCommitNodeInRow(int rowIndex) {
+    if (rowIndex >= visibleRows.size()) {
+      return null;
+    }
     NodeRow nodeRow = visibleRows.get(rowIndex);
     for (Node node : nodeRow.getNodes()) {
       if (node.getType() == Node.NodeType.COMMIT_NODE) {
