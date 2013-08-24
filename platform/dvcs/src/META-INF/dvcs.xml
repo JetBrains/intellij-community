@@ -1,7 +1,4 @@
 <idea-plugin>
-  <name>DVCS Extensions</name>
-  <id>dvcs</id>
-
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings" serviceImplementation="com.intellij.vcs.log.VcsLogSettings"/>
   </extensions>
