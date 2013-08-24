@@ -81,6 +81,7 @@ public class VcsLogGraphTable extends JBTable {
     private final Cursor DEFAULT_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
     private final Cursor HAND_CURSOR = new Cursor(Cursor.HAND_CURSOR);
 
+    @Nullable
     private GraphPrintCell getGraphPrintCell(MouseEvent e) {
       return PositionUtil.getGraphPrintCell(e, getModel());
     }
@@ -90,7 +91,7 @@ public class VcsLogGraphTable extends JBTable {
       int y = PositionUtil.getYInsideRow(e);
       int x = e.getX();
       GraphPrintCell row = getGraphPrintCell(e);
-      return myGraphPainter.mouseOver(row, x, y);
+      return row != null ? myGraphPainter.mouseOver(row, x, y) : null;
     }
 
     @Nullable
@@ -98,15 +99,18 @@ public class VcsLogGraphTable extends JBTable {
       int y = PositionUtil.getYInsideRow(e);
       int x = e.getX();
       GraphPrintCell row = getGraphPrintCell(e);
-      SpecialPrintElement printElement = myGraphPainter.mouseOverArrow(row, x, y);
-      if (printElement != null) {
-        Edge edge = printElement.getGraphElement().getEdge();
-        if (edge == null) {
-          return null;
-        }
-        return printElement.getType() == SpecialPrintElement.Type.DOWN_ARROW ? edge.getDownNode() : edge.getUpNode();
+      if (row == null) {
+        return null;
       }
-      return null;
+      SpecialPrintElement printElement = myGraphPainter.mouseOverArrow(row, x, y);
+      if (printElement == null) {
+        return null;
+      }
+      Edge edge = printElement.getGraphElement().getEdge();
+      if (edge == null) {
+        return null;
+      }
+      return printElement.getType() == SpecialPrintElement.Type.DOWN_ARROW ? edge.getDownNode() : edge.getUpNode();
     }
 
     @Override

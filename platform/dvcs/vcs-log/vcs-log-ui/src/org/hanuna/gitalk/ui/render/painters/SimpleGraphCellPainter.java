@@ -8,6 +8,7 @@ import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.printmodel.ShortEdge;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.hanuna.gitalk.ui.render.PositionUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -134,7 +135,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
 
   @Override
-  public void draw(Graphics2D g2, GraphPrintCell row) {
+  public void draw(@NotNull Graphics2D g2, @NotNull GraphPrintCell row) {
     this.g2 = g2;
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     for (final ShortEdge edge : row.getUpEdges()) {
@@ -209,7 +210,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
   @Nullable
   @Override
-  public GraphElement mouseOver(GraphPrintCell row, int x, int y) {
+  public GraphElement mouseOver(@NotNull GraphPrintCell row, int x, int y) {
     for (SpecialPrintElement printElement : row.getSpecialPrintElements()) {
       if (printElement.getType() == SpecialPrintElement.Type.COMMIT_NODE) {
         if (PositionUtil.overNode(printElement.getPosition(), x, y)) {
@@ -233,7 +234,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
   @Nullable
   @Override
-  public SpecialPrintElement mouseOverArrow(GraphPrintCell row, int x, int y) {
+  public SpecialPrintElement mouseOverArrow(@NotNull GraphPrintCell row, int x, int y) {
     for (SpecialPrintElement printElement : row.getSpecialPrintElements()) {
       if (printElement.getType() != SpecialPrintElement.Type.COMMIT_NODE) {
         if (PositionUtil.overNode(printElement.getPosition(), x, y)) {
