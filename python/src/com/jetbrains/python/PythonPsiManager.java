@@ -43,7 +43,7 @@ public class PythonPsiManager extends AbstractProjectComponent implements PsiTre
         }
 
       case CHILDREN_CHANGED :
-        if (event.isGenericChildrenChange()) return;
+        if (event.isGenericChange()) return;
         changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
       break;
 
