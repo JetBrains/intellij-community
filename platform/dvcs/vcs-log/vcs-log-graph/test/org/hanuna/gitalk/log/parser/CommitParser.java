@@ -1,10 +1,13 @@
 package org.hanuna.gitalk.log.parser;
 
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.TimeCommitParentsImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -106,4 +109,13 @@ public class CommitParser {
   }
 
 
+  @NotNull
+  public static List<TimeCommitParents> log(@NotNull String... commits) {
+    return ContainerUtil.map(Arrays.asList(commits), new Function<String, TimeCommitParents>() {
+      @Override
+      public TimeCommitParents fun(String commit) {
+        return parseTimestampParentHashes(commit);
+      }
+    });
+  }
 }
