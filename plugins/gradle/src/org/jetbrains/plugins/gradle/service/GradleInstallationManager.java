@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleEnvironment;
@@ -112,11 +113,7 @@ public class GradleInstallationManager {
    */
   @Nullable
   public File getGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
-    File result = getWrapperHome(project, linkedProjectPath);
-    if (result != null) {
-      return result;
-    }
-    result = getManuallyDefinedGradleHome(project, linkedProjectPath);
+    File result = getManuallyDefinedGradleHome(project, linkedProjectPath);
     if (result != null) {
       return result;
     }
@@ -173,60 +170,6 @@ public class GradleInstallationManager {
 
     final File home = getGradleHome(project, linkedProjectPath);
     return home == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(home);
-  }
-
-  @Nullable
-  public File getWrapperHome(@Nullable Project project, @NotNull String linkedProjectPath) {
-    if (project == null) {
-      return null;
-    }
-
-    GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath);
-    if (settings == null) {
-      return null;
-    }
-    
-    if (settings.isPreferLocalInstallationToWrapper()) {
-      return null;
-    }
-
-    String distribution = GradleUtil.getWrapperDistribution(linkedProjectPath);
-    if (distribution == null) {
-      return null;
-    }
-    File gradleSystemDir = new File(System.getProperty("user.home"), ".gradle");
-    if (!gradleSystemDir.isDirectory()) {
-      return null;
-    }
-
-    File gradleWrapperDistributionsHome = new File(gradleSystemDir, "wrapper/dists");
-    if (!gradleWrapperDistributionsHome.isDirectory()) {
-      return null;
-    }
-
-    File targetDistributionHome = new File(gradleWrapperDistributionsHome, distribution);
-    if (!targetDistributionHome.isDirectory()) {
-      return null;
-    }
-
-    File[] files = targetDistributionHome.listFiles();
-    if (files == null || files.length != 1) {
-      // Gradle keeps wrapper at a directory which name is a hash value like '35oej0jnbfh6of4dd05531edaj'
-      return null;
-    }
-
-    File[] distFiles = files[0].listFiles(new FileFilter() {
-      @Override
-      public boolean accept(File f) {
-        return f.isDirectory();
-      }
-    });
-    if (distFiles == null || distFiles.length != 1) {
-      // There should exist only the gradle directory in the distribution directory
-      return null;
-    }
-
-    return distFiles[0].isDirectory() ? distFiles[0] : null;
   }
 
   /**
@@ -344,6 +287,17 @@ public class GradleInstallationManager {
   }
 
   /**
+   * Allows to answer if given virtual file points to the gradle installation root.
+   *
+   * @param file  gradle installation root candidate
+   * @return      <code>true</code> if we consider that given file actually points to the gradle installation root;
+   *              <code>false</code> otherwise
+   */
+  public boolean isGradleSdkHome(String gradleHomePath) {
+    return isGradleSdkHome(new File(gradleHomePath));
+  }
+
+  /**
    * Allows to answer if given files contain the one from gradle installation.
    *
    * @param files  files to process
@@ -411,7 +365,6 @@ public class GradleInstallationManager {
       if (StringUtil.isEmpty(path)) {
         continue;
       }
-      assert path != null;
       final Collection<File> libraries = getAllLibraries(project, path);
       if (libraries == null) {
         continue;

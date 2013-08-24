@@ -23,12 +23,11 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.ComponentSerializationUtil;
-import com.intellij.openapi.module.ModulePointerManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
@@ -37,22 +36,19 @@ import com.intellij.remoteServer.configuration.deployment.*;
 import com.intellij.remoteServer.impl.runtime.DeployToServerState;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author nik
  */
 public class DeployToServerRunConfiguration<S extends ServerConfiguration, D extends DeploymentConfiguration> extends RunConfigurationBase {
+  private static final Logger LOG = Logger.getInstance(DeployToServerRunConfiguration.class);
+  private static final String DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE = "type";
   @NonNls public static final String SETTINGS_ELEMENT = "settings";
   public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private final ServerType<S> myServerType;
@@ -139,15 +135,30 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     myDeploymentSource = null;
     if (state != null) {
       myServerName = state.myServerName;
-      if (!state.myDeploymentItemState.isEmpty()) {
-        DeploymentItemState itemState = state.myDeploymentItemState.get(0);
-        myDeploymentSource = itemState.createSource(getProject());
-        myDeploymentConfiguration = myDeploymentConfigurator.createDefaultConfiguration(myDeploymentSource);
-        if (itemState.mySettings != null) {
-          ComponentSerializationUtil.loadComponentState(myDeploymentConfiguration.getSerializer(), itemState.mySettings);
+      Element deploymentTag = state.myDeploymentTag;
+      if (deploymentTag != null) {
+        String typeId = deploymentTag.getAttributeValue(DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE);
+        DeploymentSourceType<?> type = findDeploymentSourceType(typeId);
+        if (type != null) {
+          myDeploymentSource = type.load(deploymentTag, getProject());
+          myDeploymentConfiguration = myDeploymentConfigurator.createDefaultConfiguration(myDeploymentSource);
+          ComponentSerializationUtil.loadComponentState(myDeploymentConfiguration.getSerializer(), deploymentTag.getChild(SETTINGS_ELEMENT));
+        }
+        else {
+          LOG.warn("Cannot load deployment source for '" + getName() + "' run configuration: unknown deployment type '" + typeId + "'");
         }
       }
     }
+  }
+
+  @Nullable
+  private static DeploymentSourceType<?> findDeploymentSourceType(@Nullable String id) {
+    for (DeploymentSourceType<?> type : DeploymentSourceType.EP_NAME.getExtensions()) {
+      if (type.getId().equals(id)) {
+        return type;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -155,23 +166,18 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     ConfigurationState state = new ConfigurationState();
     state.myServerName = myServerName;
     if (myDeploymentSource != null) {
-      DeploymentItemState itemState;
-      if (myDeploymentSource instanceof ArtifactDeploymentSource) {
-        itemState = new ArtifactDeploymentSettingsState(((ArtifactDeploymentSource)myDeploymentSource).getArtifactPointer().getArtifactName());
-      }
-      else if (myDeploymentSource instanceof ModuleDeploymentSource) {
-        itemState = new ModuleDeploymentSettingsState(((ModuleDeploymentSource)myDeploymentSource).getModulePointer().getModuleName());
-      }
-      else {
-        throw new WriteExternalException("Unknown source " + myDeploymentSource);
-      }
+      DeploymentSourceType type = myDeploymentSource.getType();
+      Element deploymentTag = new Element("deployment").setAttribute(DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE, type.getId());
+      type.save(myDeploymentSource, deploymentTag);
       if (myDeploymentConfiguration != null) {
         Object configurationState = myDeploymentConfiguration.getSerializer().getState();
         if (configurationState != null) {
-          itemState.setSettings(XmlSerializer.serialize(configurationState, SERIALIZATION_FILTERS));
+          Element settingsTag = new Element(SETTINGS_ELEMENT);
+          XmlSerializer.serializeInto(configurationState, settingsTag, SERIALIZATION_FILTERS);
+          deploymentTag.addContent(settingsTag);
         }
       }
-      state.myDeploymentItemState.add(itemState);
+      state.myDeploymentTag = deploymentTag;
     }
     XmlSerializer.serializeInto(state, element, SERIALIZATION_FILTERS);
     super.writeExternal(element);
@@ -181,83 +187,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     @Attribute("server-name")
     public String myServerName;
 
-    //in fact this collection has no more than one element
-    @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false,
-                        elementTypes = {ExternalFileDeploymentSettingsState.class, ArtifactDeploymentSettingsState.class, ModuleDeploymentSettingsState.class})
-    public List<DeploymentItemState> myDeploymentItemState = new ArrayList<DeploymentItemState>();
-  }
-
-  public static abstract class DeploymentItemState {
-    private Element mySettings;
-
-    @Tag(SETTINGS_ELEMENT)
-    public Element getSettings() {
-      return mySettings;
-    }
-
-    public void setSettings(Element settings) {
-      mySettings = settings;
-    }
-
-    @NotNull
-    public abstract DeploymentSource createSource(Project project);
-  }
-
-  @Tag("file")
-  public static class ExternalFileDeploymentSettingsState extends DeploymentItemState {
-    @Attribute("path")
-    public String myFilePath;
-
-    public ExternalFileDeploymentSettingsState() {
-    }
-
-    public ExternalFileDeploymentSettingsState(String filePath) {
-      myFilePath = filePath;
-    }
-
-    @NotNull
-    @Override
-    public DeploymentSource createSource(Project project) {
-      throw new UnsupportedOperationException("'createSource' not implemented in " + getClass().getName());
-    }
-  }
-
-  @Tag("artifact")
-  public static class ArtifactDeploymentSettingsState extends DeploymentItemState {
-    @Attribute("name")
-    public String myArtifactName;
-
-    public ArtifactDeploymentSettingsState() {
-    }
-
-    public ArtifactDeploymentSettingsState(String artifactName) {
-      myArtifactName = artifactName;
-    }
-
-    @NotNull
-    @Override
-    public DeploymentSource createSource(Project project) {
-      return new ArtifactDeploymentSourceImpl(ArtifactPointerManager.getInstance(project).createPointer(myArtifactName));
-    }
-  }
-
-  @Tag("module")
-  public static class ModuleDeploymentSettingsState extends DeploymentItemState {
-    @Attribute("name")
-    public String myModuleName;
-
-    public ModuleDeploymentSettingsState() {
-    }
-
-    public ModuleDeploymentSettingsState(String artifactName) {
-      myModuleName = artifactName;
-    }
-
-    @NotNull
-    @Override
-    public DeploymentSource createSource(Project project) {
-      return new ModuleDeploymentSourceImpl(ModulePointerManager.getInstance(project).create(myModuleName));
-    }
+    @Tag("deployment")
+    public Element myDeploymentTag;
   }
 }

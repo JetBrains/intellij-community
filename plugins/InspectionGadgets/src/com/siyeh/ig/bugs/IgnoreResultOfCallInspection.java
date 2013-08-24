@@ -26,8 +26,8 @@ import java.awt.*;
 import java.util.Arrays;
 
 public class IgnoreResultOfCallInspection extends IgnoreResultOfCallInspectionBase {
-  public IgnoreResultOfCallInspection() {
-  }
+
+  public IgnoreResultOfCallInspection() {}
 
   @Override
   public JComponent createOptionsPanel() {
@@ -35,7 +35,7 @@ public class IgnoreResultOfCallInspection extends IgnoreResultOfCallInspectionBa
     final ListTable table = new ListTable(new ListWrappingTableModel(
       Arrays.asList(classNames, methodNamePatterns), InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
       InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
-    final JPanel tablePanel = UiUtils.createAddRemovePanel(table);
+    final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose class");
     final CheckBox checkBox =
       new CheckBox(InspectionGadgetsBundle.message("result.of.method.call.ignored.non.library.option"), this, "m_reportAllNonLibraryCalls");
     panel.add(tablePanel, BorderLayout.CENTER);

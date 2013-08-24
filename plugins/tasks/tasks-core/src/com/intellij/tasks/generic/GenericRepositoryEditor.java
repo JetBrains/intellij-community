@@ -1,5 +1,6 @@
 package com.intellij.tasks.generic;
 
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
@@ -14,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,6 +29,7 @@ import java.util.Map;
 import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
 import static com.intellij.tasks.generic.GenericRepositoryUtil.createPlaceholdersList;
 import static com.intellij.tasks.generic.GenericRepositoryUtil.prettifyVariableName;
+import static com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
 
 /**
  * @author Evgeny.Zakrevsky
@@ -249,14 +252,24 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
   private void createUIComponents() {
     List<String> placeholders = createPlaceholdersList(myRepository);
     myLoginURLText = createTextFieldWithCompletion(myRepository.getLoginUrl(), placeholders);
-    myTasksListURLText = createTextFieldWithCompletion(myRepository.getTasksListUrl(),
-                                                       concat(placeholders, "{max}", "{since}"));
-    mySingleTaskURLText = createTextFieldWithCompletion(myRepository.getSingleTaskUrl(),
-                                                        concat(placeholders, "{id}"));
+    myTasksListURLText = createTextFieldWithCompletion(myRepository.getTasksListUrl(), concat(placeholders, "{max}", "{since}"));
+    mySingleTaskURLText = createTextFieldWithCompletion(myRepository.getSingleTaskUrl(), concat(placeholders, "{id}"));
   }
 
-  private TextFieldWithAutoCompletion<String> createTextFieldWithCompletion(String text, List<String> variants) {
-    return TextFieldWithAutoCompletion.create(myProject, variants, true, text);
+  private TextFieldWithAutoCompletion<String> createTextFieldWithCompletion(String text, final List<String> variants) {
+    final StringsCompletionProvider provider = new StringsCompletionProvider(variants, null) {
+        @Nullable
+        @Override
+        public String getPrefix(@NotNull CompletionParameters parameters) {
+          final String text = parameters.getOriginalFile().getText();
+          final int i = text.lastIndexOf('{', parameters.getOffset() - 1);
+          if (i < 0) {
+            return "";
+          }
+          return text.substring(i, parameters.getOffset());
+        }
+      };
+    return new TextFieldWithAutoCompletion<String>(myProject, provider, true, text);
   }
 
   @Override

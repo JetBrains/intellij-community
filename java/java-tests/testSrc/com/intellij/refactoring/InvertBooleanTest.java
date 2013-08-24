@@ -30,6 +30,15 @@ public class InvertBooleanTest extends LightRefactoringTestCase {
 
   public void testInnerClasses() throws Exception {doTest();}
   public void testAnonymousClasses() throws Exception {doTest();}
+  public void testMethodRefs() throws Exception {
+    try {
+      doTest();
+      fail("Conflict expected.");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Method is used in method reference expression", e.getMessage());
+    }
+  }
 
   private void doTest() throws Exception {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");

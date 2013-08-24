@@ -10,6 +10,9 @@
   <xi:include href="/componentSets/Debugger.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/META-INF/IntentionPowerPack.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/InspectionGadgets.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/ManifestSupport.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
   <application-components>
     <component>
@@ -222,8 +225,6 @@
     <extensionPoint name="java.compilerOutputIndex" area="IDEA_PROJECT"
                     interface="com.intellij.compilerOutputIndex.api.indexer.CompilerOutputBaseIndex"/>
     <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
-
-    <extensionPoint name="manifest.parser.provider" interface="org.jetbrains.lang.manifest.header.HeaderParserProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -1437,22 +1438,6 @@
     <lang.parserDefinition language="SPI" implementationClass="com.intellij.spi.parsing.SPIParserDefinition"/>
     <lang.commenter language="SPI" implementationClass="com.intellij.spi.SPICommenter"/>
     <annotator language="SPI" implementationClass="com.intellij.spi.SPIAnnotator"/>
-
-    <fileTypeFactory implementation="org.jetbrains.lang.manifest.ManifestFileTypeFactory"/>
-    <lang.parserDefinition language="Manifest" implementationClass="org.jetbrains.lang.manifest.parser.ManifestParserDefinition"/>
-    <lang.syntaxHighlighterFactory key="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.ManifestSyntaxHighlighterFactory"/>
-    <annotator language="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.HeaderAnnotator"/>
-    <lang.elementManipulator forClass="org.jetbrains.lang.manifest.psi.HeaderValuePart"
-                             implementationClass="org.jetbrains.lang.manifest.psi.impl.HeaderValuePartManipulator"/>
-    <completion.contributor language="Manifest" implementationClass="org.jetbrains.lang.manifest.completion.ManifestCompletionContributor"/>
-    <manifest.parser.provider implementation="org.jetbrains.lang.manifest.header.impl.StandardManifestHeaderParsers"/>
-
-    <applicationService serviceImplementation="org.jetbrains.lang.manifest.header.HeaderParserRepository"/>
-
-    <localInspection language="Manifest" displayName="Missing Final New Line" groupName="Manifest"
-                     enabledByDefault="true" level="ERROR" implementationClass="org.jetbrains.lang.manifest.highlighting.MissingFinalNewlineInspection"/>
-    <localInspection language="Manifest" displayName="Unknown or Misspelled Header Name" groupName="Manifest"
-                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.lang.manifest.highlighting.MisspelledHeaderInspection"/>
 
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoLambdaParameterHandler"/>
 

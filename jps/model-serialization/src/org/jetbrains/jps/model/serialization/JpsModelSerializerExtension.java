@@ -31,6 +31,7 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryRootTypeSerialize
 import org.jetbrains.jps.model.serialization.library.JpsSdkPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.runConfigurations.JpsRunConfigurationPropertiesSerializer;
 import org.jetbrains.jps.service.JpsServiceManager;
 
@@ -94,6 +95,10 @@ public abstract class JpsModelSerializerExtension {
 
   @NotNull
   public List<? extends JpsModulePropertiesSerializer<?>> getModulePropertiesSerializers() {
+    return Collections.emptyList();
+  }
+
+  public List<? extends JpsModuleSourceRootPropertiesSerializer<?>> getModuleSourceRootPropertiesSerializers() {
     return Collections.emptyList();
   }
 

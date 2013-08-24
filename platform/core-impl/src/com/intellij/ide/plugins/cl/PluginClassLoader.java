@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
@@ -48,7 +47,7 @@ public class PluginClassLoader extends UrlClassLoader {
                            final PluginId pluginId,
                            final String version,
                            final File pluginRoot) {
-    super(urls, null, true, true);
+    super(build().urls(urls).allowLock().useCache());
     myParents = parents;
     myPluginId = pluginId;
     myPluginVersion = version;
@@ -120,73 +119,44 @@ public class PluginClassLoader extends UrlClassLoader {
     return aClass != null && aClass.getClassLoader() == this;
   }
 
+  @Override
   public URL findResource(final String name) {
-    final long started = myDebugTime ? System.nanoTime():0;
+    final URL resource = findResourceImpl(name);
+    if (resource != null) return resource;
 
-    try {
-      final URL resource = findResourceImpl(name);
-      if (resource != null) {
-        return resource;
-      }
+    for (ClassLoader parent : myParents) {
+      final URL parentResource = fetchResource(parent, name);
+      if (parentResource != null) return parentResource;
+    }
 
-      for (ClassLoader parent : myParents) {
-        final URL parentResource = fetchResource(parent, name);
-        if (parentResource != null) {
-          return parentResource;
-        }
-      }
-      return null;
-    }
-    finally {
-      long doneFor = myDebugTime ? (System.nanoTime() - started):0;
-      if (doneFor > NS_THRESHOLD) {
-        System.out.println((doneFor / 1000000) + " ms for " + (myPluginId != null?myPluginId.getIdString():null)+ ", resource:"+name);
-      }
-    }
+    return null;
   }
 
   @Nullable
   @Override
   public InputStream getResourceAsStream(final String name) {
-    final long started = myDebugTime ? System.nanoTime():0;
+    final InputStream stream = super.getResourceAsStream(name);
+    if (stream != null) return stream;
 
-    try {
-      final InputStream stream = super.getResourceAsStream(name);
-      if (stream != null) return stream;
-
-      for (ClassLoader parent : myParents) {
-        final InputStream inputStream = parent.getResourceAsStream(name);
-        if (inputStream != null) return inputStream;
-      }
-
-      return null;
+    for (ClassLoader parent : myParents) {
+      final InputStream inputStream = parent.getResourceAsStream(name);
+      if (inputStream != null) return inputStream;
     }
-    finally {
-      long doneFor = myDebugTime ? System.nanoTime() - started:0;
-      if (doneFor > NS_THRESHOLD) {
-        System.out.println((doneFor/1000000) + " ms for " + (myPluginId != null?myPluginId.getIdString():null)+ ", resource as stream:"+name);
-      }
-    }
+
+    return null;
   }
 
+  @Override
   public Enumeration<URL> findResources(final String name) throws IOException {
-    final long started = myDebugTime ? System.nanoTime() : 0;
-    try {
-      final Enumeration[] resources = new Enumeration[myParents.length + 1];
-      resources[0] = super.findResources(name);
-      for (int idx = 0; idx < myParents.length; idx++) {
-        resources[idx + 1] = fetchResources(myParents[idx], name);
-      }
-      return new CompoundEnumeration<URL>(resources);
+    final Enumeration[] resources = new Enumeration[myParents.length + 1];
+    resources[0] = super.findResources(name);
+    for (int idx = 0; idx < myParents.length; idx++) {
+      resources[idx + 1] = fetchResources(myParents[idx], name);
     }
-    finally {
-      long doneFor = myDebugTime ? System.nanoTime() - started:0;
-      if (doneFor > NS_THRESHOLD) {
-        System.out.println((doneFor / 1000000) + " ms for " + (myPluginId != null?myPluginId.getIdString():null)+ ", find resources:"+name);
-      }
-    }
+    return new CompoundEnumeration<URL>(resources);
   }
 
+  @Override
   protected String findLibrary(String libName) {
     if (myLibDirectory == null) {
       return null;

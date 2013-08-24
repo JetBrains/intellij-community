@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Bas Leijdekkers
+ * Copyright 2008-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
       new ListWrappingTableModel(Arrays.asList(loggerFactoryClassNames, loggerFactoryMethodNames),
                                  InspectionGadgetsBundle.message("logger.factory.class.name"),
                                  InspectionGadgetsBundle.message("logger.factory.method.name")));
-    return UiUtils.createAddRemovePanel(table);
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose logger factory class");
   }
 
   @Override
@@ -92,9 +92,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "logger.initialized.with.foreign.class.quickfix",
-        newClassName);
+      return InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.quickfix", newClassName);
     }
 
     @NotNull
@@ -130,7 +128,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
         if (!expression.equals(referenceExpression.getQualifierExpression())) {
           return;
         }
-        final String name = referenceExpression.getReferenceName();
+        @NonNls final String name = referenceExpression.getReferenceName();
         if (!"getName".equals(name)) {
           return;
         }

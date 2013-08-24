@@ -18,13 +18,15 @@ package com.intellij.xml.util;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
+import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import com.intellij.xml.impl.schema.XmlSchemaTagsProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +46,9 @@ public class XmlEnumeratedValueReferenceProvider extends PsiReferenceProvider {
       return PsiReference.EMPTY_ARRAY;
     }
     XmlAttributeValue value = (XmlAttributeValue)element;
+    if (value instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)value)) {
+      return PsiReference.EMPTY_ARRAY;
+    }
     String unquotedValue = value.getValue();
     if (unquotedValue == null || XmlHighlightVisitor.skipValidation(value) || !XmlUtil.isSimpleXmlAttributeValue(unquotedValue, value)) {
       return PsiReference.EMPTY_ARRAY;
@@ -51,9 +56,9 @@ public class XmlEnumeratedValueReferenceProvider extends PsiReferenceProvider {
     PsiElement parent = value.getParent();
     if (parent instanceof XmlAttribute) {
       final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-      if (descriptor instanceof BasicXmlAttributeDescriptor &&
+      if (descriptor instanceof XmlEnumerationDescriptor &&
           (descriptor.isFixed() || descriptor.isEnumerated() || unquotedValue.equals(descriptor.getDefaultValue()))) { // todo case insensitive
-        return ((BasicXmlAttributeDescriptor)descriptor).getValueReferences(value);
+        return ((XmlEnumerationDescriptor)descriptor).getValueReferences(value);
       }
     }
     return PsiReference.EMPTY_ARRAY;

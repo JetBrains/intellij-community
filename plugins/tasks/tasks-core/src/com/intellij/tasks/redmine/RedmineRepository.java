@@ -9,6 +9,7 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -172,6 +173,7 @@ public class RedmineRepository extends BaseRepositoryImpl {
     };
   }
 
+  @Nullable
   private static Date parseDate(Element element, String name) throws ParseException {
     final String date = element.getChildText(name);
     if (date.matches(".*\\+\\d\\d:\\d\\d")) {
@@ -180,7 +182,16 @@ public class RedmineRepository extends BaseRepositoryImpl {
       format.setTimeZone(TimeZone.getTimeZone("GMT" + date.substring(timeZoneIndex)));
       return format.parse(date.substring(0, timeZoneIndex));
     }
-    return (new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.US)).parse(date);
+    // Ad-hoc fix for IDEA-110012
+    Date parsed;
+    try {
+      parsed = (new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.US)).parse(date);
+    }
+    catch (ParseException e) {
+      LOG.warn("Unparseable date: " + date, e);
+      parsed = TaskUtil.parseDate(date);
+    }
+    return parsed;
   }
 
   @Override

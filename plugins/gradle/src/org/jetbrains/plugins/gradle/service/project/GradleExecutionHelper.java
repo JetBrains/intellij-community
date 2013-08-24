@@ -20,12 +20,16 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
+import org.gradle.StartParameter;
 import org.gradle.tooling.*;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
+import org.gradle.tooling.internal.consumer.Distribution;
 import org.gradle.tooling.model.idea.BasicIdeaProject;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +38,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -127,9 +132,67 @@ public class GradleExecutionHelper {
   }
 
   public <T> T execute(@NotNull String projectPath, @Nullable GradleExecutionSettings settings, @NotNull Function<ProjectConnection, T> f) {
+
+    String userDir = null;
+    try {
+      // This is a workaround to get right base dir in case of 'PROJECT' setting used
+      // see org.gradle.wrapper.PathAssembler#getBaseDir for details
+      userDir = System.getProperty("user.dir");
+      System.setProperty("user.dir", projectPath);
+    }
+    catch (Exception e) {
+      // ignore
+    }
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
       return f.fun(connection);
+    }
+    catch (Throwable e) {
+      throw new ExternalSystemException(e);
+    }
+    finally {
+      try {
+        connection.close();
+        if (userDir != null) {
+          // restore original user.dir property
+          System.setProperty("user.dir", userDir);
+        }
+      }
+      catch (Throwable e) {
+        // ignore
+      }
+    }
+  }
+
+  public void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
+                                     @NotNull String projectPath,
+                                     @NotNull GradleExecutionSettings settings,
+                                     @NotNull ExternalSystemTaskNotificationListener listener) {
+    ProjectConnection connection = getConnection(projectPath, settings);
+    try {
+      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
+      try {
+        final File tempFile = FileUtil.createTempFile("wrap", ".gradle");
+        tempFile.deleteOnExit();
+        final File wrapperPropertyFileLocation = FileUtil.createTempFile("wrap", "loc");
+        wrapperPropertyFileLocation.deleteOnExit();
+        final String[] lines = {
+          "gradle.taskGraph.afterTask { Task task ->",
+          "    if (task instanceof Wrapper) {",
+          "        def wrapperPropertyFileLocation = task.jarFile.getCanonicalPath() - '.jar' + '.properties'",
+          "        new File('" + StringUtil.escapeBackSlashes(wrapperPropertyFileLocation.getCanonicalPath()) + "').write wrapperPropertyFileLocation",
+          "}}",
+        };
+        FileUtil.writeToFile(tempFile, StringUtil.join(lines, SystemProperties.getLineSeparator()));
+        launcher.withArguments("--init-script", tempFile.getAbsolutePath());
+        launcher.forTasks("wrapper");
+        launcher.run();
+        String wrapperPropertyFile = FileUtil.loadFile(wrapperPropertyFileLocation);
+        settings.setWrapperPropertyFile(wrapperPropertyFile);
+      }
+      catch (IOException e) {
+        throw new ExternalSystemException(e);
+      }
     }
     catch (Throwable e) {
       throw new ExternalSystemException(e);
@@ -147,31 +210,48 @@ public class GradleExecutionHelper {
   /**
    * Allows to retrieve gradle api connection to use for the given project.
    *
-   * @param projectPath     target project path
-   * @param settings        execution settings to use
-   * @return                connection to use
-   * @throws IllegalStateException    if it's not possible to create the connection
+   * @param projectPath            target project path
+   * @param settings               execution settings to use
+   * @return connection to use
+   * @throws IllegalStateException if it's not possible to create the connection
    */
   @NotNull
-  private static ProjectConnection getConnection(@NotNull String projectPath, @Nullable GradleExecutionSettings settings)
+  private static ProjectConnection getConnection(@NotNull String projectPath,
+                                                 @Nullable GradleExecutionSettings settings)
     throws IllegalStateException
   {
     File projectDir = new File(projectPath);
     GradleConnector connector = GradleConnector.newConnector();
-    if (settings != null) {
+    int ttl = -1;
 
-      // Setup wrapper/local installation usage.
-      if (!settings.isUseWrapper()) {
-        String gradleHome = settings.getGradleHome();
-        if (gradleHome != null) {
-          try {
-            // There were problems with symbolic links processing at the gradle side.
-            connector.useInstallation(new File(gradleHome).getCanonicalFile());
+    if(settings != null) {
+      //noinspection EnumSwitchStatementWhichMissesCases
+      switch (settings.getDistributionType()) {
+        case LOCAL:
+          String gradleHome = settings.getGradleHome();
+          if (gradleHome != null) {
+            try {
+              // There were problems with symbolic links processing at the gradle side.
+              connector.useInstallation(new File(gradleHome).getCanonicalFile());
+            }
+            catch (IOException e) {
+              connector.useInstallation(new File(settings.getGradleHome()));
+            }
           }
-          catch (IOException e) {
-            connector.useInstallation(new File(settings.getGradleHome()));
+          break;
+        case WRAPPED:
+          if(settings.getWrapperPropertyFile() != null) {
+            File propertiesFile = new File(settings.getWrapperPropertyFile());
+            Distribution distribution =
+              new DistributionFactoryExt(StartParameter.DEFAULT_GRADLE_USER_HOME).getWrappedDistribution(propertiesFile);
+            try {
+              setField(connector, "distribution", distribution);
+            }
+            catch (Exception e) {
+              throw new ExternalSystemException(e);
+            }
           }
-        }
+          break;
       }
 
       // Setup service directory if necessary.
@@ -184,12 +264,11 @@ public class GradleExecutionHelper {
       if (settings.isVerboseProcessing() && connector instanceof DefaultGradleConnector) {
         ((DefaultGradleConnector)connector).setVerboseLogging(true);
       }
+      ttl = (int)settings.getRemoteProcessIdleTtlInMs();
+    }
 
-      // Setup daemon ttl if necessary.
-      long ttl = settings.getRemoteProcessIdleTtlInMs();
-      if (ttl > 0 && connector instanceof DefaultGradleConnector) {
-        ((DefaultGradleConnector)connector).daemonMaxIdleTime((int)ttl, TimeUnit.MILLISECONDS);
-      }
+    if (ttl > 0 && connector instanceof DefaultGradleConnector) {
+      ((DefaultGradleConnector)connector).daemonMaxIdleTime(ttl, TimeUnit.MILLISECONDS);
     }
     connector.forProjectDirectory(projectDir);
     ProjectConnection connection = connector.connect();
@@ -199,5 +278,28 @@ public class GradleExecutionHelper {
       ));
     }
     return connection;
+  }
+
+  /**
+   * Utility to set field in object if there is no public setter for it.
+   * It's not recommended to use this method.
+   * FIXME: remove this workaround after gradle API changed
+   *
+   * @param obj        Object to be modified
+   * @param fieldName  name of object's field
+   * @param fieldValue value to be set for field
+   * @throws SecurityException
+   * @throws NoSuchFieldException
+   * @throws IllegalArgumentException
+   * @throws IllegalAccessException
+   */
+  public static void setField(Object obj, String fieldName, Object fieldValue)
+    throws SecurityException, NoSuchFieldException,
+           IllegalArgumentException, IllegalAccessException {
+    final Field field = obj.getClass().getDeclaredField(fieldName);
+    final boolean isAccessible = field.isAccessible();
+    field.setAccessible(true);
+    field.set(obj, fieldValue);
+    field.setAccessible(isAccessible);
   }
 }

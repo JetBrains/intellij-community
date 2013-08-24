@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -88,14 +87,14 @@ class FileLoader extends Loader {
       if (!check || file.exists()) {     // check means we load or process resource so we check its existence via old way
         if (check) {
           ++misses;
-          if (misses % 1000 == 0 && UrlClassLoader.doDebug) {
-            UrlClassLoader.debug("[Sample of] missed resource " + name + " from " + myRootDir);
+          if (misses % 1000 == 0 && ClasspathCache.doDebug) {
+            ClasspathCache.LOG.debug("[Sample of] missed resource " + name + " from " + myRootDir);
           }
         }
 
         ++hits;
-        if (hits % 1000 == 0 && UrlClassLoader.doDebug) {
-          UrlClassLoader.debug("Exists file loader: misses:" + misses + ", hits:" + hits);
+        if (hits % 1000 == 0 && ClasspathCache.doDebug) {
+          ClasspathCache.LOG.debug("Exists file loader: misses:" + misses + ", hits:" + hits);
         }
 
         return new MyResource(name, url, file, !check);
@@ -103,8 +102,8 @@ class FileLoader extends Loader {
     }
     catch (Exception exception) {
       ++misses;
-      if (misses % 1000 == 0 && UrlClassLoader.doDebug) {
-        UrlClassLoader.debug("Missed " + name + " from " + myRootDir);
+      if (misses % 1000 == 0 && ClasspathCache.doDebug) {
+        ClasspathCache.LOG.debug("Missed " + name + " from " + myRootDir);
       }
       if (!check && file != null && file.exists()) {
         try {   // we can not open the file if it is directory, Resource still can be created
