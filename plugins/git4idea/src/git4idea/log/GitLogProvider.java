@@ -93,14 +93,14 @@ public class GitLogProvider implements VcsLogProvider {
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
     Collection<Ref> refs = new ArrayList<Ref>(localBranches.size() + remoteBranches.size());
     for (GitLocalBranch localBranch : localBranches) {
-      refs.add(new Ref(Hash.build(localBranch.getHash()), localBranch.getName(), Ref.RefType.LOCAL_BRANCH));
+      refs.add(new Ref(Hash.build(localBranch.getHash()), localBranch.getName(), Ref.RefType.LOCAL_BRANCH, root));
     }
     for (GitRemoteBranch remoteBranch : remoteBranches) {
-      refs.add(new Ref(Hash.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(), Ref.RefType.REMOTE_BRANCH));
+      refs.add(new Ref(Hash.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(), Ref.RefType.REMOTE_BRANCH, root));
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(new Ref(Hash.build(currentRevision), "HEAD", Ref.RefType.HEAD));
+      refs.add(new Ref(Hash.build(currentRevision), "HEAD", Ref.RefType.HEAD, root));
     }
     return refs;
   }

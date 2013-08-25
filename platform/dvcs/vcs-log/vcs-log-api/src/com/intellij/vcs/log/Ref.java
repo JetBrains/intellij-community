@@ -1,5 +1,6 @@
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -9,12 +10,13 @@ public final class Ref {
   private final Hash commitHash;
   private final String name;
   private final RefType type;
+  private final VirtualFile myRoot;
 
-  public Ref(@NotNull Hash commitHash, @NotNull String name, @NotNull RefType type) {
+  public Ref(@NotNull Hash commitHash, @NotNull String name, @NotNull RefType type, @NotNull VirtualFile root) {
     this.commitHash = commitHash;
     this.name = name;
     this.type = type;
-
+    myRoot = root;
   }
 
   @NotNull
@@ -67,6 +69,11 @@ public final class Ref {
     result = 31 * result + (name != null ? name.hashCode() : 0);
     result = 31 * result + (type != null ? type.hashCode() : 0);
     return result;
+  }
+
+  @NotNull
+  public VirtualFile getRoot() {
+    return myRoot;
   }
 
   public enum RefType {

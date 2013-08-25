@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.data;
 
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.Ref;
@@ -33,6 +34,6 @@ public class VcsLogJoinerTest {
   }
 
   private static Ref ref(String name, String hash) {
-    return new Ref(Hash.build(hash), name, Ref.RefType.LOCAL_BRANCH);
+    return new Ref(Hash.build(hash), name, Ref.RefType.LOCAL_BRANCH, new StubVirtualFile());
   }
 }

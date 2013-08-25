@@ -11,9 +11,11 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.Ref;
 import com.intellij.vcs.log.VcsLogProvider;
 import org.hanuna.gitalk.common.compressedlist.VcsLogLogger;
 import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.jetbrains.annotations.NotNull;
@@ -111,11 +113,33 @@ public abstract class DataGetter<T extends CommitParents> implements Disposable 
     myLoader.addFirst(new TaskDescriptor(nodes));
   }
 
+  @Nullable
+  private Ref findRefByNode(@NotNull Node node) {
+    DataPack dataPack = myDataHolder.getDataPack();
+    Ref ref = null;
+    while (ref == null) {
+      ref = dataPack.findRefOfNode(node);
+      List<Edge> edges = node.getUpEdges();
+      if (edges.isEmpty()) { // got to the top of the branch
+        return ref;
+      }
+      // every graph branch ends with a reference;
+      // we need ANY reference on the current branch => walking on the first edge each time is ok.
+      node = edges.get(0).getUpNode();
+    }
+    return ref;
+  }
+
   private void preLoadCommitData(@NotNull List<Node> nodes) throws VcsException {
     MultiMap<VirtualFile, String> hashesByRoots = new MultiMap<VirtualFile, String>();
     for (Node node : nodes) {
-      VirtualFile first = myLogProviders.keySet().iterator().next(); // TODO!
-      hashesByRoots.putValue(first, node.getCommitHash().toStrHash());
+      Ref ref = findRefByNode(node);
+      if (ref == null) {
+        LOG.info("Couldn't find ref for hash " + node.getCommitHash());
+        continue;
+      }
+      VirtualFile root = ref.getRoot();
+      hashesByRoots.putValue(root, node.getCommitHash().toStrHash());
     }
 
     for (Map.Entry<VirtualFile, Collection<String>> entry : hashesByRoots.entrySet()) {
