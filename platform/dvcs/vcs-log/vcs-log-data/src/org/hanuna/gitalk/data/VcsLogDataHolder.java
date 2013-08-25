@@ -97,8 +97,8 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
     loadFirstPart(new Consumer<DataPack>() {
       @Override
       public void consume(DataPack dataPack) {
-        myDataPack = dataPack;
         onInitialized.consume(VcsLogDataHolder.this);
+        // after first part is loaded and shown to the user, load the whole log in background
         loadAllLog();
       }
     }, true);
@@ -225,7 +225,12 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
 
   @Override
   public void refreshCompletely() {
-    initialize(Consumer.EMPTY_CONSUMER);
+    initialize(new Consumer<VcsLogDataHolder>() {
+      @Override
+      public void consume(VcsLogDataHolder holder) {
+        notifyAboutDataRefresh();
+      }
+    });
   }
 
   @Override

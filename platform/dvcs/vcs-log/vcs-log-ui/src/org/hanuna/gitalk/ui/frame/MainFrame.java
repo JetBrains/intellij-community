@@ -65,12 +65,7 @@ public class MainFrame {
     RefreshAction refreshAction = new RefreshAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        myLogDataHolder.refresh(new Runnable() {
-          @Override
-          public void run() {
-            myProject.getMessageBus().syncPublisher(VcsLogRefresher.TOPIC).refreshCompletely();
-          }
-        });
+        myProject.getMessageBus().syncPublisher(VcsLogRefresher.TOPIC).refreshCompletely();
       }
 
       @Override
