@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.ui.tables;
 
-import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsRef;
 
 import java.util.List;
 
@@ -10,9 +10,9 @@ import java.util.List;
 public class CommitCell {
 
   private final String text;
-  private final List<Ref> refsToThisCommit;
+  private final List<VcsRef> refsToThisCommit;
 
-  public CommitCell(String text, List<Ref> refsToThisCommit) {
+  public CommitCell(String text, List<VcsRef> refsToThisCommit) {
     this.text = text;
     this.refsToThisCommit = refsToThisCommit;
   }
@@ -21,7 +21,7 @@ public class CommitCell {
     return text;
   }
 
-  public List<Ref> getRefsToThisCommit() {
+  public List<VcsRef> getRefsToThisCommit() {
     return refsToThisCommit;
   }
 

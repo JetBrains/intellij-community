@@ -123,7 +123,7 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
         if (myAllLog != null) {
-          Collection<Ref> refs = readAllRefs();
+          Collection<VcsRef> refs = readAllRefs();
           myDataPack = DataPack.build(myAllLog, refs, indicator);
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override
@@ -139,8 +139,8 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
   }
 
   @NotNull
-  private Collection<Ref> readAllRefs() throws VcsException {
-    Collection<Ref> refs = ContainerUtil.newHashSet();
+  private Collection<VcsRef> readAllRefs() throws VcsException {
+    Collection<VcsRef> refs = ContainerUtil.newHashSet();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
       refs.addAll(entry.getValue().readAllRefs(entry.getKey()));
     }
@@ -156,12 +156,12 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
         Collection<List<? extends TimeCommitParents>> logs = new ArrayList<List<? extends TimeCommitParents>>(myLogProviders.size());
-        Collection<Ref> allRefs = ContainerUtil.newHashSet();
+        Collection<VcsRef> allRefs = ContainerUtil.newHashSet();
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
           VcsLogProvider logProvider = entry.getValue();
           VirtualFile root = entry.getKey();
           List<? extends VcsCommitDetails> firstBlock = logProvider.readFirstBlock(root, ordered);
-          Collection<Ref> refs = logProvider.readAllRefs(root);
+          Collection<VcsRef> refs = logProvider.readAllRefs(root);
 
           myDetailsGetter.saveInCache(firstBlock);
           myMiniDetailsGetter.saveInCache(firstBlock);

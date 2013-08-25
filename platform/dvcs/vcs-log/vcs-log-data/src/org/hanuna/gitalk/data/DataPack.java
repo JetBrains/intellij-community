@@ -6,7 +6,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.Predicate;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsRef;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.rebase.FakeCommitParents;
@@ -35,7 +35,7 @@ public class DataPack {
   @NotNull private final GraphPrintCellModel myPrintCellModel;
 
   @NotNull
-  public static DataPack build(@NotNull List<? extends CommitParents> commits, @NotNull Collection<Ref> allRefs,
+  public static DataPack build(@NotNull List<? extends CommitParents> commits, @NotNull Collection<VcsRef> allRefs,
                                @NotNull ProgressIndicator indicator) {
     indicator.setText("Building graph...");
 
@@ -207,8 +207,8 @@ public class DataPack {
   }
 
   @Nullable
-  public Ref findRefOfNode(Node node) {
-    for (Ref ref : getRefsModel().getAllRefs()) {
+  public VcsRef findRefOfNode(Node node) {
+    for (VcsRef ref : getRefsModel().getAllRefs()) {
       if (ref.getCommitHash().equals(node.getCommitHash())) {
         return ref;
       }

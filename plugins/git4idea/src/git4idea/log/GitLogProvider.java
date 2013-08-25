@@ -80,7 +80,7 @@ public class GitLogProvider implements VcsLogProvider {
   }
 
   @Override
-  public Collection<Ref> readAllRefs(@NotNull VirtualFile root) throws VcsException {
+  public Collection<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException {
     myRepositoryManager.waitUntilInitialized();
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
@@ -91,16 +91,16 @@ public class GitLogProvider implements VcsLogProvider {
     // TODO tags
     Collection<GitLocalBranch> localBranches = repository.getBranches().getLocalBranches();
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
-    Collection<Ref> refs = new ArrayList<Ref>(localBranches.size() + remoteBranches.size());
+    Collection<VcsRef> refs = new ArrayList<VcsRef>(localBranches.size() + remoteBranches.size());
     for (GitLocalBranch localBranch : localBranches) {
-      refs.add(new Ref(Hash.build(localBranch.getHash()), localBranch.getName(), Ref.RefType.LOCAL_BRANCH, root));
+      refs.add(new VcsRef(Hash.build(localBranch.getHash()), localBranch.getName(), VcsRef.RefType.LOCAL_BRANCH, root));
     }
     for (GitRemoteBranch remoteBranch : remoteBranches) {
-      refs.add(new Ref(Hash.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(), Ref.RefType.REMOTE_BRANCH, root));
+      refs.add(new VcsRef(Hash.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(), VcsRef.RefType.REMOTE_BRANCH, root));
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(new Ref(Hash.build(currentRevision), "HEAD", Ref.RefType.HEAD, root));
+      refs.add(new VcsRef(Hash.build(currentRevision), "HEAD", VcsRef.RefType.HEAD, root));
     }
     return refs;
   }

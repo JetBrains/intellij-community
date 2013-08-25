@@ -3,7 +3,7 @@ package org.hanuna.gitalk.graphmodel.impl;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.vcs.log.CommitParents;
-import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsRef;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -24,7 +24,7 @@ import java.util.Set;
  */
 public class GraphModelImpl implements GraphModel {
   private final MutableGraph graph;
-  private final Collection<Ref> myRefs;
+  private final Collection<VcsRef> myRefs;
   private final FragmentManagerImpl fragmentManager;
   private final BranchVisibleNodes visibleNodes;
   private final List<Consumer<UpdateRequest>> listeners = new ArrayList<Consumer<UpdateRequest>>();
@@ -38,7 +38,7 @@ public class GraphModelImpl implements GraphModel {
     }
   };
 
-  public GraphModelImpl(MutableGraph graph, Collection<Ref> allRefs) {
+  public GraphModelImpl(MutableGraph graph, Collection<VcsRef> allRefs) {
     this.graph = graph;
     myRefs = allRefs;
     this.fragmentManager = new FragmentManagerImpl(graph, new FragmentManagerImpl.CallBackFunction() {

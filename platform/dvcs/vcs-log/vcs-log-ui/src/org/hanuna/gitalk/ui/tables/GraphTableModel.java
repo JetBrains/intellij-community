@@ -2,7 +2,7 @@ package org.hanuna.gitalk.ui.tables;
 
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsCommit;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
@@ -60,7 +60,7 @@ public class GraphTableModel extends AbstractTableModel {
         GraphPrintCell graphPrintCell = dataPack.getPrintCellModel().getGraphPrintCell(rowIndex);
         GraphCommitCell.Kind cellKind = getCellKind(PositionUtil.getNode(graphPrintCell));
         String message = "";
-        List<Ref> refs = Collections.emptyList();
+        List<VcsRef> refs = Collections.emptyList();
         if (data != null) {
           if (cellKind == GraphCommitCell.Kind.REWORD) {
             message = reworded.get(commitNode.getCommitHash());

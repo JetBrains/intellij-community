@@ -10,7 +10,7 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsCommitDetails;
 import org.hanuna.gitalk.data.LoadingDetails;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
@@ -94,7 +94,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       if (commitData instanceof LoadingDetails) {
         myLoadingPanel.startLoading();
         myDataPanel.setData(null);
-        myRefsPanel.setRefs(Collections.<Ref>emptyList());
+        myRefsPanel.setRefs(Collections.<VcsRef>emptyList());
       }
       else {
         myLoadingPanel.stopLoading();
@@ -163,7 +163,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   private static class RefsPanel extends JPanel {
 
     @NotNull private final RefPainter myRefPainter;
-    @NotNull private List<Ref> myRefs;
+    @NotNull private List<VcsRef> myRefs;
 
     RefsPanel() {
       myRefPainter = new RefPainter();
@@ -177,7 +177,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       myRefPainter.draw((Graphics2D)g, myRefs, 0);
     }
 
-    void setRefs(@NotNull List<Ref> refs) {
+    void setRefs(@NotNull List<VcsRef> refs) {
       myRefs = refs;
       repaint();
     }

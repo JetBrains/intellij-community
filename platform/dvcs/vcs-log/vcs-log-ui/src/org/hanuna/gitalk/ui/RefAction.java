@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.ui;
 
 
-import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsRef;
 
 public interface RefAction {
-  void perform(Ref ref);
+  void perform(VcsRef ref);
 }

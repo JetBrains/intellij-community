@@ -2,11 +2,11 @@ package org.hanuna.gitalk.graph.mutable;
 
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsRef;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;
 import org.hanuna.gitalk.graph.mutable.elements.UsualEdge;
-import com.intellij.vcs.log.Ref;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -18,7 +18,7 @@ import static org.hanuna.gitalk.graph.elements.Node.NodeType.*;
  */
 public class GraphBuilder {
 
-  public static MutableGraph build(@NotNull List<? extends CommitParents> commitParentses, Collection<Ref> allRefs) {
+  public static MutableGraph build(@NotNull List<? extends CommitParents> commitParentses, Collection<VcsRef> allRefs) {
     Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commitParentses.size());
     for (int i = 0; i < commitParentses.size(); i++) {
       commitLogIndexes.put(commitParentses.get(i).getHash(), i);
@@ -28,7 +28,7 @@ public class GraphBuilder {
   }
 
   public static void addCommitsToGraph(@NotNull MutableGraph graph, @NotNull List<? extends CommitParents> commitParentses,
-                                       @NotNull Collection<Ref> allRefs) {
+                                       @NotNull Collection<VcsRef> allRefs) {
     new GraphAppendBuilder(graph, allRefs).appendToGraph(commitParentses);
   }
 
@@ -43,7 +43,7 @@ public class GraphBuilder {
   private final MutableGraph graph;
   private final Map<Hash, MutableNode> underdoneNodes;
   private Map<Hash, Integer> commitHashLogIndexes;
-  private Collection<Ref> myRefs;
+  private Collection<VcsRef> myRefs;
 
   private MutableNodeRow nextRow;
 
@@ -51,7 +51,7 @@ public class GraphBuilder {
                       Map<Hash, Integer> commitHashLogIndexes,
                       MutableGraph graph,
                       Map<Hash, MutableNode> underdoneNodes,
-                      MutableNodeRow nextRow, Collection<Ref> refs) {
+                      MutableNodeRow nextRow, Collection<VcsRef> refs) {
     this.lastLogIndex = lastLogIndex;
     this.commitHashLogIndexes = commitHashLogIndexes;
     this.graph = graph;
@@ -60,11 +60,11 @@ public class GraphBuilder {
     myRefs = refs;
   }
 
-  public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes, MutableGraph graph, Collection<Ref> refs) {
+  public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes, MutableGraph graph, Collection<VcsRef> refs) {
     this(lastLogIndex, commitHashLogIndexes, graph, new HashMap<Hash, MutableNode>(), new MutableNodeRow(graph, 0), refs);
   }
 
-  public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes, Collection<Ref> refs) {
+  public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes, Collection<VcsRef> refs) {
     this(lastLogIndex, commitHashLogIndexes, new MutableGraph(), refs);
   }
 

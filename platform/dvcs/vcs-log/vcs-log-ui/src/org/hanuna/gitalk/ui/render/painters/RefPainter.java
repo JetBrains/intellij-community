@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.ui.render.painters;
 
-import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -37,7 +37,7 @@ public class RefPainter {
     g2.drawString(str, x, y);
   }
 
-  private Color refBackgroundColor(@NotNull Ref ref) {
+  private Color refBackgroundColor(@NotNull VcsRef ref) {
     switch (ref.getType()) {
       case HEAD:
         return Color.GREEN;
@@ -56,7 +56,7 @@ public class RefPainter {
     }
   }
 
-  private int draw(@NotNull Graphics2D g2, @NotNull Ref ref, int padding) {
+  private int draw(@NotNull Graphics2D g2, @NotNull VcsRef ref, int padding) {
     FontMetrics metrics = g2.getFontMetrics();
     int x = padding + REF_PADDING / 2 - RECTANGLE_X_PADDING;
     int y = RECTANGLE_Y_PADDING;
@@ -74,22 +74,22 @@ public class RefPainter {
     return x;
   }
 
-  public int padding(@NotNull List<Ref> refs, @NotNull FontRenderContext renderContext) {
+  public int padding(@NotNull List<VcsRef> refs, @NotNull FontRenderContext renderContext) {
     float p = 0;
-    for (Ref ref : refs) {
+    for (VcsRef ref : refs) {
       p += paddingStr(ref.getName(), renderContext);
     }
     return Math.round(p);
   }
 
-  public Map<Integer, Ref> draw(@NotNull Graphics2D g2, @NotNull List<Ref> refs, int startPadding) {
+  public Map<Integer, VcsRef> draw(@NotNull Graphics2D g2, @NotNull List<VcsRef> refs, int startPadding) {
     float currentPadding = startPadding;
     g2.setFont(DEFAULT_FONT);
     g2.setStroke(new BasicStroke(1.5f));
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     FontRenderContext renderContext = g2.getFontRenderContext();
-    Map<Integer, Ref> positions = new HashMap<Integer, Ref>();
-    for (Ref ref : refs) {
+    Map<Integer, VcsRef> positions = new HashMap<Integer, VcsRef>();
+    for (VcsRef ref : refs) {
       int x = draw(g2, ref, (int)currentPadding);
       positions.put(x, ref);
       currentPadding += paddingStr(ref.getName(), renderContext);

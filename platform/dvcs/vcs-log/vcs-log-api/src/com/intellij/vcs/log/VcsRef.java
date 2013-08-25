@@ -6,13 +6,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public final class Ref {
+public final class VcsRef {
   private final Hash commitHash;
   private final String name;
   private final RefType type;
   private final VirtualFile myRoot;
 
-  public Ref(@NotNull Hash commitHash, @NotNull String name, @NotNull RefType type, @NotNull VirtualFile root) {
+  public VcsRef(@NotNull Hash commitHash, @NotNull String name, @NotNull RefType type, @NotNull VirtualFile root) {
     this.commitHash = commitHash;
     this.name = name;
     this.type = type;
@@ -54,7 +54,7 @@ public final class Ref {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    Ref ref = (Ref)o;
+    VcsRef ref = (VcsRef)o;
 
     if (commitHash != null ? !commitHash.equals(ref.commitHash) : ref.commitHash != null) return false;
     if (name != null ? !name.equals(ref.name) : ref.name != null) return false;

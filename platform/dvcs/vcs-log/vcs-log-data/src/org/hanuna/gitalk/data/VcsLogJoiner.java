@@ -19,7 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.TimeCommitParents;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +42,7 @@ public class VcsLogJoiner {
    */
   @NotNull
   public List<? extends TimeCommitParents> addCommits(@NotNull List<TimeCommitParents> savedLog,
-                                                      @NotNull List<? extends TimeCommitParents> firstBlock, @NotNull Collection<Ref> refs) {
+                                                      @NotNull List<? extends TimeCommitParents> firstBlock, @NotNull Collection<VcsRef> refs) {
     int unsafeBlockSize = getFirstSafeIndex(savedLog, firstBlock, refs);
     if (unsafeBlockSize == -1) { // firstBlock not enough
       //TODO
@@ -65,9 +65,9 @@ public class VcsLogJoiner {
    */
   private static int getFirstSafeIndex(@NotNull List<TimeCommitParents> savedLog,
                                        @NotNull List<? extends TimeCommitParents> firstBlock,
-                                       @NotNull Collection<Ref> refs) {
+                                       @NotNull Collection<VcsRef> refs) {
     Set<Hash> allUnresolvedLinkedHashes = new HashSet<Hash>();
-    for (Ref ref: refs) {
+    for (VcsRef ref: refs) {
       allUnresolvedLinkedHashes.add(ref.getCommitHash());
     }
     for (CommitParents commit : firstBlock) {

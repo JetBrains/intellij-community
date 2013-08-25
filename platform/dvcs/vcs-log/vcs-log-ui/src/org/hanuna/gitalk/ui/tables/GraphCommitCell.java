@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.ui.tables;
 
+import com.intellij.vcs.log.VcsRef;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
-import com.intellij.vcs.log.Ref;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class GraphCommitCell extends CommitCell {
   private final GraphPrintCell row;
   private final Kind kind;
 
-  public GraphCommitCell(GraphPrintCell row, Kind kind, String text, List<Ref> refsToThisCommit) {
+  public GraphCommitCell(GraphPrintCell row, Kind kind, String text, List<VcsRef> refsToThisCommit) {
     super(text, refsToThisCommit);
     this.kind = kind;
     this.row = row;

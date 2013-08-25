@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.data;
 
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -10,22 +10,22 @@ import java.util.*;
  * @author erokhins
  */
 public class RefsModel {
-  private final Collection<Ref> allRefs;
+  private final Collection<VcsRef> allRefs;
   private final Set<Hash> trackedCommitHashes = new HashSet<Hash>();
 
-  public RefsModel(Collection<Ref> allRefs) {
+  public RefsModel(Collection<VcsRef> allRefs) {
     this.allRefs = allRefs;
     computeTrackedCommitHash();
   }
 
   private void computeTrackedCommitHash() {
-    for (Ref ref : allRefs) {
+    for (VcsRef ref : allRefs) {
       trackedCommitHashes.add(ref.getCommitHash());
     }
   }
 
   public boolean isBranchRef(@NotNull Hash commitHash) {
-    for (Ref ref : refsToCommit(commitHash)) {
+    for (VcsRef ref : refsToCommit(commitHash)) {
       if (ref.getType().isBranch()) {
         return true;
       }
@@ -34,10 +34,10 @@ public class RefsModel {
   }
 
   @NotNull
-  public List<Ref> refsToCommit(@NotNull Hash hash) {
-    List<Ref> refs = new ArrayList<Ref>();
+  public List<VcsRef> refsToCommit(@NotNull Hash hash) {
+    List<VcsRef> refs = new ArrayList<VcsRef>();
     if (trackedCommitHashes.contains(hash)) {
-      for (Ref ref : allRefs) {
+      for (VcsRef ref : allRefs) {
         if (ref.getCommitHash().equals(hash)) {
           refs.add(ref);
         }
@@ -52,7 +52,7 @@ public class RefsModel {
   }
 
   @NotNull
-  public Collection<Ref> getAllRefs() {
+  public Collection<VcsRef> getAllRefs() {
     return Collections.unmodifiableCollection(allRefs);
   }
 

@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.graph.elements;
 
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,22 +13,22 @@ import java.util.Collection;
 public final class Branch {
   private final Hash upCommitHash;
   private final Hash downCommitHash;
-  @Nullable private final Ref myRef;
+  @Nullable private final VcsRef myRef;
 
-  public Branch(@NotNull Hash upCommitHash, @NotNull Hash downCommitHash, Collection<Ref> refs) {
+  public Branch(@NotNull Hash upCommitHash, @NotNull Hash downCommitHash, Collection<VcsRef> refs) {
     this.upCommitHash = upCommitHash;
     this.downCommitHash = downCommitHash;
     myRef = findUpRef(upCommitHash, refs);
   }
 
-  public Branch(Hash commit, Collection<Ref> refs) {
+  public Branch(Hash commit, Collection<VcsRef> refs) {
     this(commit, commit, refs);
   }
 
   @Nullable
-  private static Ref findUpRef(Hash upCommitHash, Collection<Ref> refs) {
-    for (Ref ref : refs) {
-      if (ref.getType() != Ref.RefType.TAG && ref.getCommitHash().equals(upCommitHash)) {
+  private static VcsRef findUpRef(Hash upCommitHash, Collection<VcsRef> refs) {
+    for (VcsRef ref : refs) {
+      if (ref.getType() != VcsRef.RefType.TAG && ref.getCommitHash().equals(upCommitHash)) {
         return ref;
       }
     }

@@ -1,12 +1,12 @@
 package org.hanuna.gitalk.graph;
 
 import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.VcsRef;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.log.parser.SimpleCommitListParser;
-import com.intellij.vcs.log.Ref;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -43,7 +43,7 @@ public class GraphTestUtils {
     catch (IOException e) {
       throw new IllegalStateException();
     }
-    return GraphBuilder.build(commitParentses, Collections.<Ref>emptyList());
+    return GraphBuilder.build(commitParentses, Collections.<VcsRef>emptyList());
   }
 
   // "1 20 3" -> {1,20,3}

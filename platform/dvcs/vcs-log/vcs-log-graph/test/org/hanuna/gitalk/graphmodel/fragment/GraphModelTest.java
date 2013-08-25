@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
 import com.intellij.util.Function;
-import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsRef;
 import org.hanuna.gitalk.graph.GraphTestUtils;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
@@ -35,7 +35,7 @@ public class GraphModelTest {
     @NotNull
     public GraphModel buildGraphModel(@NotNull String inputGraph) {
         MutableGraph graph = GraphTestUtils.getNewMutableGraph(inputGraph);
-        return new GraphModelImpl(graph, Collections.<Ref>emptyList());
+        return new GraphModelImpl(graph, Collections.<VcsRef>emptyList());
     }
 
 

@@ -2,9 +2,9 @@ package org.hanuna.gitalk.graph.mutable;
 
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsRef;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;
-import com.intellij.vcs.log.Ref;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -19,9 +19,9 @@ class GraphAppendBuilder {
 
 
   private final MutableGraph graph;
-  private final Collection<Ref> myRefs;
+  private final Collection<VcsRef> myRefs;
 
-  public GraphAppendBuilder(MutableGraph graph, Collection<Ref> allRefs) {
+  public GraphAppendBuilder(MutableGraph graph, Collection<VcsRef> allRefs) {
     this.graph = graph;
     myRefs = allRefs;
   }

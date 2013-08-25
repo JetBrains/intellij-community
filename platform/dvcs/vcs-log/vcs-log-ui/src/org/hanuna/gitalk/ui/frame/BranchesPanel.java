@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsRef;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.ui.VcsLogUI;
 import org.hanuna.gitalk.ui.render.PrintParameters;
@@ -32,10 +32,10 @@ public class BranchesPanel extends JPanel {
   private final VcsLogDataHolder myUiController;
   private final VcsLogUI myUI;
 
-  private List<Ref> myRefs;
+  private List<VcsRef> myRefs;
   private final RefPainter myRefPainter;
 
-  private Map<Integer, Ref> myRefPositions = new HashMap<Integer, Ref>();
+  private Map<Integer, VcsRef> myRefPositions = new HashMap<Integer, VcsRef>();
 
   public BranchesPanel(@NotNull VcsLogDataHolder logController, @NotNull VcsLogUI UI) {
     myUiController = logController;
@@ -48,7 +48,7 @@ public class BranchesPanel extends JPanel {
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        Ref ref = findRef(e);
+        VcsRef ref = findRef(e);
         if (ref != null) {
           myUI.jumpToCommit(ref.getCommitHash());
         }
@@ -58,7 +58,7 @@ public class BranchesPanel extends JPanel {
   }
 
   @Nullable
-  private Ref findRef(MouseEvent e) {
+  private VcsRef findRef(MouseEvent e) {
     List<Integer> sortedPositions = Ordering.natural().sortedCopy(myRefPositions.keySet());
     int index = Ordering.natural().binarySearch(sortedPositions, e.getX());
     if (index < 0) {
@@ -80,19 +80,19 @@ public class BranchesPanel extends JPanel {
     getParent().repaint();
   }
 
-  private List<Ref> getRefsToDisplayOnPanel() {
-    Collection<Ref> allRefs = myUiController.getDataPack().getRefsModel().getAllRefs();
-    final List<Ref> localRefs = ContainerUtil.filter(allRefs, new Condition<Ref>() {
+  private List<VcsRef> getRefsToDisplayOnPanel() {
+    Collection<VcsRef> allRefs = myUiController.getDataPack().getRefsModel().getAllRefs();
+    final List<VcsRef> localRefs = ContainerUtil.filter(allRefs, new Condition<VcsRef>() {
       @Override
-      public boolean value(Ref ref) {
+      public boolean value(VcsRef ref) {
         return ref.getType().isLocalOrHead();
       }
     });
 
-    return ContainerUtil.filter(allRefs, new Condition<Ref>() {
+    return ContainerUtil.filter(allRefs, new Condition<VcsRef>() {
       @Override
-      public boolean value(Ref ref) {
-        if (ref.getType() == Ref.RefType.REMOTE_BRANCH) {
+      public boolean value(VcsRef ref) {
+        if (ref.getType() == VcsRef.RefType.REMOTE_BRANCH) {
           return !thereIsLocalRefOfHash(ref.getCommitHash(), localRefs);
         }
         if (ref.getType().isBranch()) {
@@ -103,8 +103,8 @@ public class BranchesPanel extends JPanel {
     });
   }
 
-  private static boolean thereIsLocalRefOfHash(Hash commitHash, List<Ref> localRefs) {
-    for (Ref localRef : localRefs) {
+  private static boolean thereIsLocalRefOfHash(Hash commitHash, List<VcsRef> localRefs) {
+    for (VcsRef localRef : localRefs) {
       if (localRef.getCommitHash().equals(commitHash)) {
         return true;
       }

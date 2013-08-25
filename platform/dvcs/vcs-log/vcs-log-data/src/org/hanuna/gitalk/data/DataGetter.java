@@ -11,7 +11,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.Ref;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsLogProvider;
 import org.hanuna.gitalk.common.compressedlist.VcsLogLogger;
 import org.hanuna.gitalk.graph.Graph;
@@ -114,9 +114,9 @@ public abstract class DataGetter<T extends CommitParents> implements Disposable 
   }
 
   @Nullable
-  private Ref findRefByNode(@NotNull Node node) {
+  private VcsRef findRefByNode(@NotNull Node node) {
     DataPack dataPack = myDataHolder.getDataPack();
-    Ref ref = null;
+    VcsRef ref = null;
     while (ref == null) {
       ref = dataPack.findRefOfNode(node);
       List<Edge> edges = node.getUpEdges();
@@ -133,7 +133,7 @@ public abstract class DataGetter<T extends CommitParents> implements Disposable 
   private void preLoadCommitData(@NotNull List<Node> nodes) throws VcsException {
     MultiMap<VirtualFile, String> hashesByRoots = new MultiMap<VirtualFile, String>();
     for (Node node : nodes) {
-      Ref ref = findRefByNode(node);
+      VcsRef ref = findRefByNode(node);
       if (ref == null) {
         LOG.info("Couldn't find ref for hash " + node.getCommitHash());
         continue;

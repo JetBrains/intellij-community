@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.data.rebase;
 
+import com.intellij.vcs.log.VcsRef;
 import org.hanuna.gitalk.graph.elements.Node;
 import com.intellij.vcs.log.RebaseCommand;
-import com.intellij.vcs.log.Ref;
 
 import java.util.Collections;
 import java.util.List;
@@ -10,23 +10,23 @@ import java.util.List;
 public class InteractiveRebaseBuilder {
   public static final InteractiveRebaseBuilder EMPTY = new InteractiveRebaseBuilder();
 
-  public void startRebase(Ref subjectRef, Node onto) {
+  public void startRebase(VcsRef subjectRef, Node onto) {
 
   }
 
-  public void startRebaseOnto(Ref subjectRef, Node base, List<Node> nodesToRebase) {
+  public void startRebaseOnto(VcsRef subjectRef, Node base, List<Node> nodesToRebase) {
 
   }
 
-  public void moveCommits(Ref subjectRef, Node base, InsertPosition position, List<Node> nodesToInsert) {
+  public void moveCommits(VcsRef subjectRef, Node base, InsertPosition position, List<Node> nodesToInsert) {
 
   }
 
-  public void fixUp(Ref subjectRef, Node target, List<Node> nodesToFixUp) {
+  public void fixUp(VcsRef subjectRef, Node target, List<Node> nodesToFixUp) {
 
   }
 
-  public void reword(Ref subjectRef, Node commitToReword, String newMessage) {
+  public void reword(VcsRef subjectRef, Node commitToReword, String newMessage) {
 
   }
 

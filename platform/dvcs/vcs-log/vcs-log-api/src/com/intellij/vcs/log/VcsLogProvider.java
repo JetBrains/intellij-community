@@ -44,7 +44,7 @@ public interface VcsLogProvider {
   /**
    * Read all references (branches, tags, etc.) for the given roots.
    */
-  Collection<Ref> readAllRefs(@NotNull VirtualFile root) throws VcsException;
+  Collection<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException;
 
   /**
    * Returns the VCS which is supported by this provider.
