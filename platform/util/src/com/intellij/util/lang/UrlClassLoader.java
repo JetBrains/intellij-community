@@ -18,6 +18,7 @@ package com.intellij.util.lang;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -31,7 +32,10 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 
 public class UrlClassLoader extends ClassLoader {
   @NonNls static final String CLASS_EXTENSION = ".class";
@@ -43,7 +47,6 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myUseCache = false;
     private boolean myAcceptUnescaped = false;
     private boolean myPreload = true;
-    private String[] myNativeLibs = null;
 
     private Builder() { }
 
@@ -56,7 +59,6 @@ public class UrlClassLoader extends ClassLoader {
     public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
     public Builder noPreload() { myPreload = false; return this; }
-    public Builder nativeLibs(String... libNames) { myNativeLibs = libNames; return this; }
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
 
@@ -66,7 +68,6 @@ public class UrlClassLoader extends ClassLoader {
 
   private final List<URL> myURLs;
   private final ClassPath myClassPath;
-  private final Set<String> myNativeLibs;
 
   /** @deprecated use {@link #build()} (to remove in IDEA 14) */
   public UrlClassLoader(@NotNull ClassLoader parent) {
@@ -98,7 +99,6 @@ public class UrlClassLoader extends ClassLoader {
       }
     });
     myClassPath = new ClassPath(myURLs, lockJars, useCache, allowUnescaped, preload);
-    myNativeLibs = Collections.emptySet();
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {
@@ -110,7 +110,6 @@ public class UrlClassLoader extends ClassLoader {
       }
     });
     myClassPath = new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload);
-    myNativeLibs = builder.myNativeLibs != null ? ContainerUtil.newHashSet(builder.myNativeLibs) : Collections.<String>emptySet();
   }
 
   public static URL internProtocol(@NotNull URL url) {
@@ -149,12 +148,6 @@ public class UrlClassLoader extends ClassLoader {
     catch (IOException e) {
       throw new ClassNotFoundException(name, e);
     }
-  }
-
-
-  @Override
-  protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
-    return super.loadClass(name, resolve);
   }
 
   @Nullable
@@ -233,38 +226,22 @@ public class UrlClassLoader extends ClassLoader {
     return myClassPath.getResources(name, true);
   }
 
-  @Override
-  protected String findLibrary(String libName) {
-    if (BinPathHolder.path != null && myNativeLibs.contains(libName)) {
-      String fileName = mapLibraryName(libName);
-      return BinPathHolder.path + File.separator + fileName;
-    }
+  public static void loadPlatformLibrary(@NotNull String libName) {
+    String libFileName = mapLibraryName(libName);
+    String libPath = PathManager.getBinPath() + "/" + libFileName;
 
-    return super.findLibrary(libName);
-  }
-
-  private static class BinPathHolder {
-    private static final String path;
-
-    static {
-      String homePath = PathManager.getHomePath();
-      if (new File(homePath, ".idea").exists()) {
-        if (new File(homePath, "community").exists()) {
-          homePath += File.separator + "community";
+    if (!new File(libPath).exists()) {
+      String platform = getPlatformName();
+      if (!new File(libPath = PathManager.getHomePath() + "/community/bin/" + platform + libFileName).exists()) {
+        if (!new File(libPath = PathManager.getHomePath() + "/bin/" + platform + libFileName).exists()) {
+          if (!new File(libPath = PathManager.getHomePathFor(IdeaWin32.class) + "/bin/" + libFileName).exists()) {
+            throw new UnsatisfiedLinkError("'" + libFileName + "' not found among " + Arrays.toString(new File(PathManager.getBinPath()).listFiles()));
+          }
         }
-
-        String libDir = null;
-        String prefix = homePath + File.separator + "bin" + File.separator;
-        if (SystemInfo.isWindows) libDir = prefix + "win";
-        else if (SystemInfo.isMac) libDir = prefix + "mac";
-        else if (SystemInfo.isLinux) libDir = prefix + "linux";
-
-        path = libDir;
-      }
-      else {
-        path = PathManager.getBinPath();
       }
     }
+
+    System.load(libPath);
   }
 
   private static String mapLibraryName(String libName) {
@@ -277,5 +254,12 @@ public class UrlClassLoader extends ClassLoader {
       fileName = fileName.replace(".jnilib", ".dylib");
     }
     return fileName;
+  }
+
+  private static String getPlatformName() {
+    if (SystemInfo.isWindows) return "win/";
+    else if (SystemInfo.isMac) return "mac/";
+    else if (SystemInfo.isLinux) return "linux/";
+    else return "";
   }
 }
