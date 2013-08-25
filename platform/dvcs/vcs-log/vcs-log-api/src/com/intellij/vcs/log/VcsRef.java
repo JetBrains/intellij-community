@@ -7,46 +7,37 @@ import org.jetbrains.annotations.NotNull;
  * @author erokhins
  */
 public final class VcsRef {
-  private final Hash commitHash;
-  private final String name;
-  private final RefType type;
-  private final VirtualFile myRoot;
+
+  @NotNull private final Hash myCommitHash;
+  @NotNull private final String myName;
+  @NotNull private final RefType myType;
+  @NotNull private final VirtualFile myRoot;
 
   public VcsRef(@NotNull Hash commitHash, @NotNull String name, @NotNull RefType type, @NotNull VirtualFile root) {
-    this.commitHash = commitHash;
-    this.name = name;
-    this.type = type;
+    myCommitHash = commitHash;
+    myName = name;
+    myType = type;
     myRoot = root;
   }
 
   @NotNull
   public RefType getType() {
-    return type;
+    return myType;
   }
 
   @NotNull
   public Hash getCommitHash() {
-    return commitHash;
+    return myCommitHash;
   }
 
   @NotNull
   public String getName() {
-    return name;
-  }
-
-  @NotNull
-  public String getShortName() {
-    int ind = name.lastIndexOf("/");
-    return name.substring(ind + 1);
+    return myName;
   }
 
   @Override
   public String toString() {
-    return "Ref{" +
-           "commitHash=" + commitHash +
-           ", name='" + name + '\'' +
-           ", type=" + type +
-           '}';
+    return String.format("%s:%s(%s|%s)", myRoot.getName(), myName, myCommitHash, myType);
   }
 
   @Override
@@ -56,18 +47,20 @@ public final class VcsRef {
 
     VcsRef ref = (VcsRef)o;
 
-    if (commitHash != null ? !commitHash.equals(ref.commitHash) : ref.commitHash != null) return false;
-    if (name != null ? !name.equals(ref.name) : ref.name != null) return false;
-    if (type != ref.type) return false;
+    if (!myCommitHash.equals(ref.myCommitHash)) return false;
+    if (!myName.equals(ref.myName)) return false;
+    if (!myRoot.equals(ref.myRoot)) return false;
+    if (myType != ref.myType) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = commitHash != null ? commitHash.hashCode() : 0;
-    result = 31 * result + (name != null ? name.hashCode() : 0);
-    result = 31 * result + (type != null ? type.hashCode() : 0);
+    int result = myCommitHash.hashCode();
+    result = 31 * result + (myName.hashCode());
+    result = 31 * result + (myRoot.hashCode());
+    result = 31 * result + (myType.hashCode());
     return result;
   }
 
