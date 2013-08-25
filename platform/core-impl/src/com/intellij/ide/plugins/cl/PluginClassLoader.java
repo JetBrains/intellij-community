@@ -17,6 +17,7 @@ package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
@@ -38,7 +39,6 @@ import java.util.ListIterator;
  * @author Eugene Zhuravlev
  * @since 6.03.2003
  */
-@SuppressWarnings({"UseOfSystemOutOrSystemErr"})
 public class PluginClassLoader extends UrlClassLoader {
   private final ClassLoader[] myParents;
   private final PluginId myPluginId;
@@ -63,6 +63,7 @@ public class PluginClassLoader extends UrlClassLoader {
 
   // Changed sequence in which classes are searched, this is essential if plugin uses library,
   // a different version of which is used in IDEA.
+  @Override
   public Class loadClass(@NotNull String name, final boolean resolve) throws ClassNotFoundException {
     Class c = loadClassInsideSelf(name);
 
@@ -187,7 +188,7 @@ public class PluginClassLoader extends UrlClassLoader {
       return (URL)findResourceMethod.invoke(cl, resourceName);
     }
     catch (Exception e) {
-      e.printStackTrace();
+      Logger.getInstance(PluginClassLoader.class).error(e);
       return null;
     }
   }
@@ -198,7 +199,7 @@ public class PluginClassLoader extends UrlClassLoader {
       return findResourceMethod == null ? null : (Enumeration)findResourceMethod.invoke(cl, resourceName);
     }
     catch (Exception e) {
-      e.printStackTrace();
+      Logger.getInstance(PluginClassLoader.class).error(e);
       return null;
     }
   }
@@ -222,6 +223,7 @@ public class PluginClassLoader extends UrlClassLoader {
     return myPluginId;
   }
 
+  @Override
   public String toString() {
     return "PluginClassLoader[" + myPluginId + ", " + myPluginVersion + "]";
   }
