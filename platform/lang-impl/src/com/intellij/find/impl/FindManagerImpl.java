@@ -507,7 +507,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
 
     final Lexer lexer = data.highlighter.getHighlightingLexer();
-    lexer.start(text, model.isForward() ? data.startOffset : 0, text.length(), 0);
+    lexer.start(text, model.isForward() && data.startOffset < offset ? data.startOffset : 0, text.length(), 0);
 
     IElementType tokenType;
     TokenSet tokens = data.tokensOfInterest;
