@@ -16,6 +16,8 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.Opcodes;
@@ -235,7 +237,7 @@ public class ClassRepr extends Proto {
     this.myContext = context;
     myFileName = fn;
     mySuperClass = TypeRepr.createClassType(context, sup);
-    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, i, new HashSet<TypeRepr.AbstractType>());
+    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, i, new THashSet<TypeRepr.AbstractType>(1));
     myFields = f;
     myMethods = m;
     this.myAnnotationTargets = targets;
@@ -250,41 +252,45 @@ public class ClassRepr extends Proto {
     super(in);
     try {
       this.myContext = context;
-      myFileName = in.readInt();
+      myFileName = DataInputOutputUtil.readINT(in);
       mySuperClass = (TypeRepr.ClassType)TypeRepr.externalizer(context).read(in);
-      myInterfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
-      myFields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new HashSet<FieldRepr>(), in);
-      myMethods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new HashSet<MethodRepr>(), in);
+      myInterfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new THashSet<TypeRepr.AbstractType>(1), in);
+      myFields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new THashSet<FieldRepr>(), in);
+      myMethods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new THashSet<MethodRepr>(), in);
       myAnnotationTargets = (Set<ElemType>)RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
 
-      final String s = in.readUTF();
+      final String s = RW.readUTF(in);
 
       myRetentionPolicy = s.length() == 0 ? null : RetentionPolicy.valueOf(s);
 
-      myOuterClassName = in.readInt();
-      myIsLocal = in.readBoolean();
-      myIsAnonymous = in.readBoolean();
-      myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new HashSet<UsageRepr.Usage>(), in);
+      myOuterClassName = DataInputOutputUtil.readINT(in);
+      int flags = DataInputOutputUtil.readINT(in);
+      myIsLocal = (flags & LOCAL_MASK) != 0;
+      myIsAnonymous = (flags & ANONYMOUS_MASK) != 0;
+      myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new THashSet<UsageRepr.Usage>(), in);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
+  private static final int LOCAL_MASK = 1;
+  private static final int ANONYMOUS_MASK = 2;
+
   @Override
   public void save(final DataOutput out) {
     try {
       super.save(out);
-      out.writeInt(myFileName);
+      DataInputOutputUtil.writeINT(out, myFileName);
       mySuperClass.save(out);
       RW.save(myInterfaces, out);
       RW.save(myFields, out);
       RW.save(myMethods, out);
       RW.save(myAnnotationTargets, UsageRepr.AnnotationUsage.elementTypeExternalizer, out);
-      out.writeUTF(myRetentionPolicy == null ? "" : myRetentionPolicy.toString());
-      out.writeInt(myOuterClassName);
-      out.writeBoolean(myIsLocal);
-      out.writeBoolean(myIsAnonymous);
+      RW.writeUTF(out, myRetentionPolicy == null ? "" : myRetentionPolicy.toString());
+      DataInputOutputUtil.writeINT(out, myOuterClassName);
+      DataInputOutputUtil.writeINT(out, (myIsLocal ? LOCAL_MASK:0) | (myIsAnonymous ? ANONYMOUS_MASK : 0));
+
       RW.save(myUsages, UsageRepr.externalizer(myContext), out);
     }
     catch (IOException e) {

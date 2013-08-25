@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders.java.dependencyView;
 
+import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.asm4.Opcodes;
 
 import java.io.DataInput;
@@ -39,9 +40,9 @@ class Proto implements RW.Savable, Streamable {
 
   protected Proto(final DataInput in) {
     try {
-      access = in.readInt();
-      signature = in.readInt();
-      name = in.readInt();
+      access = DataInputOutputUtil.readINT(in);
+      signature = DataInputOutputUtil.readINT(in);
+      name = DataInputOutputUtil.readINT(in);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -51,9 +52,9 @@ class Proto implements RW.Savable, Streamable {
   @Override
   public void save(final DataOutput out) {
     try {
-      out.writeInt(access);
-      out.writeInt(signature);
-      out.writeInt(name);
+      DataInputOutputUtil.writeINT(out, access);
+      DataInputOutputUtil.writeINT(out, signature);
+      DataInputOutputUtil.writeINT(out, name);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

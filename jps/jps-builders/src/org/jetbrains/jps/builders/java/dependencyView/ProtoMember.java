@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders.java.dependencyView;
 
+import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.asm4.Type;
 
 import java.io.DataInput;
@@ -52,11 +53,11 @@ abstract class ProtoMember extends Proto {
     try {
       switch (in.readByte()) {
         case STRING:
-          return in.readUTF();
+          return RW.readUTF(in);
         case NONE:
           return null;
         case INTEGER:
-          return in.readInt();
+          return DataInputOutputUtil.readINT(in);
         case LONG:
           return in.readLong();
         case FLOAT:
@@ -64,7 +65,7 @@ abstract class ProtoMember extends Proto {
         case DOUBLE:
           return in.readDouble();
         case TYPE :
-          return Type.getType(in.readUTF());
+          return Type.getType(RW.readUTF(in));
       }
     }
     catch (IOException e) {
@@ -94,11 +95,12 @@ abstract class ProtoMember extends Proto {
     try {
       if (myValue instanceof String) {
         out.writeByte(STRING);
-        out.writeUTF((String)myValue);
+        String value = (String)myValue;
+        RW.writeUTF(out, value);
       }
       else if (myValue instanceof Integer) {
         out.writeByte(INTEGER);
-        out.writeInt(((Integer)myValue).intValue());
+        DataInputOutputUtil.writeINT(out, ((Integer)myValue).intValue());
       }
       else if (myValue instanceof Long) {
         out.writeByte(LONG);
@@ -114,7 +116,7 @@ abstract class ProtoMember extends Proto {
       }
       else if (myValue instanceof Type) {
         out.writeByte(TYPE);
-        out.writeUTF(((Type)myValue).getDescriptor());
+        RW.writeUTF(out, ((Type)myValue).getDescriptor());
       }
       else {
         out.writeByte(NONE);
