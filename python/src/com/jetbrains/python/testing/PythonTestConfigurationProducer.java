@@ -40,7 +40,8 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     if (location == null || !isAvailable(location)) return false;
     final PsiElement element = location.getPsiElement();
     final PsiFileSystemItem file = element.getContainingFile();
-    final VirtualFile virtualFile = file.getVirtualFile();
+    final VirtualFile virtualFile = element instanceof PsiDirectory ? ((PsiDirectory)element).getVirtualFile()
+                                                                    : file.getVirtualFile();
     if (virtualFile == null) return false;
     final PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
     final PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
