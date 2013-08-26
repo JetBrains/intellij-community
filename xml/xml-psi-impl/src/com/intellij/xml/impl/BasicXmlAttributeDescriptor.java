@@ -45,6 +45,11 @@ public abstract class BasicXmlAttributeDescriptor extends XmlEnumerationDescript
   }
 
   @Override
+  public boolean isEnumerated(XmlElement context) {
+    return isEnumerated();
+  }
+
+  @Override
   public String toString() {
     return getName();
   }

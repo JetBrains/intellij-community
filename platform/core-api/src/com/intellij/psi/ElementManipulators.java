@@ -60,6 +60,7 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
     return manipulator == null ? TextRange.from(0, element.getTextLength()) : manipulator.getRangeInElement(element);
   }
 
+  @NotNull
   public static String getValueText(final PsiElement element) {
     final TextRange valueTextRange = getValueTextRange(element);
     if (valueTextRange.isEmpty()) return "";

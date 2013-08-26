@@ -90,5 +90,6 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
 
     registrar.registerReferenceProvider(xmlAttributeValue(), new XmlPrefixReferenceProvider());
     registrar.registerReferenceProvider(xmlAttributeValue(), new XmlEnumeratedValueReferenceProvider(), PsiReferenceRegistrar.LOWER_PRIORITY);
+    registrar.registerReferenceProvider(xmlTag(), XmlEnumeratedValueReferenceProvider.forTags(), PsiReferenceRegistrar.LOWER_PRIORITY);
   }
 }
