@@ -180,7 +180,7 @@ public final class ModuleRunConfigurationManager extends ModuleAdapter implement
   }
 
   @Override
-  public void moduleRemoved(Project project, Module module) {
+  public void beforeModuleRemoved(Project project, Module module) {
     if (myModule.equals(module)) {
       LOG.debug("time to remove something from project (" + project + ")");
       for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
