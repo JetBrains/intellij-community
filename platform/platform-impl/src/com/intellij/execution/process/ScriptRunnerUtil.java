@@ -137,7 +137,6 @@ public final class ScriptRunnerUtil {
           return doExecute(exeFile.getAbsolutePath(), workingDirectory, scriptFile, parameters, charset);
         } catch (ExecutionException e) {
           LOG.info("Standby command failed too", e);
-          throw ex;
         }
       }
     }
