@@ -111,8 +111,8 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
     initControls();
     content.add(myUseWrapperButton, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
-    content.add(myUseLocalDistributionButton, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     content.add(myUseBundledDistributionButton, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    content.add(myUseLocalDistributionButton, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
 
     content.add(myGradleHomeLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
     content.add(myGradleHomePathField, ExternalSystemUiUtil.getFillLineConstraints(0));
