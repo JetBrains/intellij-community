@@ -21,6 +21,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.ui.DarculaColors;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
@@ -54,6 +55,12 @@ public class JavaModuleSourceRootEditHandler extends JavaSourceRootEditHandlerBa
   @Override
   public Icon getRootIcon() {
     return AllIcons.Modules.SourceRoot;
+  }
+
+  @Nullable
+  @Override
+  public Icon getFolderUnderRootIcon() {
+    return AllIcons.Modules.SourceFolder;
   }
 
   @Override

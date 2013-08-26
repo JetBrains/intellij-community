@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.ProjectBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
@@ -53,6 +54,12 @@ public class JavaTestSourceRootEditHandler extends JavaSourceRootEditHandlerBase
   @Override
   public Icon getRootIcon() {
     return AllIcons.Modules.TestRoot;
+  }
+
+  @Nullable
+  @Override
+  public Icon getFolderUnderRootIcon() {
+    return AllIcons.Modules.TestSourceFolder;
   }
 
   @Override
