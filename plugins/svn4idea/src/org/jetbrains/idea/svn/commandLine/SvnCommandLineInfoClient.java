@@ -80,7 +80,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     base = SvnBindUtil.correctUpToExistingParent(base);
     if (base == null) {
       // very unrealistic
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), new RuntimeException("Can not find existing parent file"));
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not find existing parent file"));
     }
     issueCommand(path.getAbsolutePath(), pegRevision, revision, depth, changeLists, handler, base);
   }
@@ -120,10 +120,10 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
           // but the requested info is still in the output except root closing tag
           return command.getOutput() + "</info>";
         } else {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY), e);
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, e), e);
         }
       }
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
   }
 
@@ -155,15 +155,15 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       throw (SVNException) e.getCause();
     } catch (IOException e) {
       LOG.info("info output " + result);
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
     catch (ParserConfigurationException e) {
       LOG.info("info output " + result);
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
     catch (SAXException e) {
       LOG.info("info output " + result);
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
   }
 

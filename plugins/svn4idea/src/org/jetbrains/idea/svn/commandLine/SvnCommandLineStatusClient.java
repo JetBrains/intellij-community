@@ -167,13 +167,13 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
     catch (SvnExceptionWrapper e) {
       throw (SVNException) e.getCause();
     } catch (IOException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
     catch (ParserConfigurationException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
     catch (SAXException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
   }
 

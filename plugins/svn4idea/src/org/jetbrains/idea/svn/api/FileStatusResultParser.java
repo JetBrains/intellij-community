@@ -36,7 +36,7 @@ public class FileStatusResultParser {
     myConvertor = convertor;
   }
 
-  public void parse(@NotNull String output) throws VcsException, SVNException {
+  public void parse(@NotNull String output) throws VcsException {
     if (StringUtil.isEmpty(output)) {
       return;
     }
@@ -46,7 +46,7 @@ public class FileStatusResultParser {
     }
   }
 
-  public void onLine(@NotNull String line) throws VcsException, SVNException {
+  public void onLine(@NotNull String line) throws VcsException {
     Matcher matcher = myLinePattern.matcher(line);
     if (matcher.matches()) {
       process(matcher);
@@ -56,9 +56,13 @@ public class FileStatusResultParser {
     }
   }
 
-  public void process(@NotNull Matcher matcher) throws VcsException, SVNException {
+  public void process(@NotNull Matcher matcher) throws VcsException {
     if (handler != null) {
-      handler.handleEvent(myConvertor.convert(matcher), DEFAULT_PROGRESS);
+      try {
+        handler.handleEvent(myConvertor.convert(matcher), DEFAULT_PROGRESS);
+      } catch (SVNException e) {
+        throw new VcsException(e);
+      }
     }
   }
 }

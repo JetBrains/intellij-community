@@ -30,15 +30,9 @@ public class CommandUtil {
                                          @Nullable SVNURL url,
                                          List<String> parameters)
     throws SVNException {
-    String exe = SvnApplicationSettings.getInstance().getCommandLinePath();
-    base = base == null ? new File(exe) : base;
-
-    if (url == null) {
-      // TODO: or take it from RootUrlInfo
-      SVNInfo info = vcs.getInfo(vcs.getProject().getBaseDir());
-
-      url = info != null ? info.getURL() : null;
-    }
+    String exe = resolveExePath();
+    base = resolveBaseDirectory(base, exe);
+    url = resolveRepositoryUrl(vcs, url);
 
     try {
       return SvnLineCommand
@@ -46,8 +40,29 @@ public class CommandUtil {
                                       new IdeaSvnkitBasedAuthenticationCallback(vcs), ArrayUtil.toStringArray(parameters));
     }
     catch (SvnBindException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
+  }
+
+  @Nullable
+  private static SVNURL resolveRepositoryUrl(@NotNull SvnVcs vcs, @Nullable SVNURL url) {
+    if (url == null) {
+      // TODO: or take it from RootUrlInfo
+      SVNInfo info = vcs.getInfo(vcs.getProject().getBaseDir());
+
+      url = info != null ? info.getURL() : null;
+    }
+    return url;
+  }
+
+  @NotNull
+  private static File resolveBaseDirectory(@Nullable File base, @NotNull String defaultBase) {
+    return base == null ? new File(defaultBase) : base;
+  }
+
+  @NotNull
+  private static String resolveExePath() {
+    return SvnApplicationSettings.getInstance().getCommandLinePath();
   }
 
   public static SvnLineCommand runSimple(@NotNull SvnSimpleCommand command, @NotNull SvnVcs vcs, @Nullable File base, @Nullable SVNURL url)
@@ -146,21 +161,22 @@ public class CommandUtil {
                                    @NotNull SvnCommandName name,
                                    @NotNull List<String> parameters,
                                    @Nullable FileStatusResultParser parser)
-  throws VcsException {
-    try {
-      SvnLineCommand command = runSimple(name, vcs, null, null, parameters);
+    throws VcsException {
+    String exe = resolveExePath();
+    File base = resolveBaseDirectory(null, exe);
+    SVNURL url = resolveRepositoryUrl(vcs, null);
 
-      if (parser != null) {
-        parser.parse(command.getOutput());
-      }
+    SvnLineCommand command = SvnLineCommand.runWithAuthenticationAttempt(
+      exe, base, url, name, new SvnCommitRunner.CommandListener(null),
+      new IdeaSvnkitBasedAuthenticationCallback(vcs),
+      ArrayUtil.toStringArray(parameters));
 
-      return command;
+    if (parser != null) {
+      parser.parse(command.getOutput());
     }
-    catch (SVNException e) {
-      throw new VcsException(e);
-    }
+
+    return command;
   }
-
 
   /**
    * Gets svn status represented by single character.

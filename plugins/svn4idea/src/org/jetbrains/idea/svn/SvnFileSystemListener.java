@@ -304,7 +304,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
           copyFileOrDir(src, dst);
         }
         catch (IOException e) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
         }
         createDeleteAction(vcs, src, true).execute();
         return false;
@@ -341,7 +341,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
               copyFileOrDir(src, dst);
             }
             catch (IOException e) {
-              exc[0] = new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+              exc[0] = new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
               return false;
             }
           }
@@ -535,7 +535,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
   private static void wrapAndThrow(VcsException e) throws SVNException {
     // TODO: probably we should wrap into new exception only if e.getCause is not SVNException
-    throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL), e);
+    throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, e), e);
   }
 
   private boolean isAboveSourceOfCopyOrMove(final Project p, File ioFile) {
