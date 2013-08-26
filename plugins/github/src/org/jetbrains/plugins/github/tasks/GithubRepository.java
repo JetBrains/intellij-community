@@ -85,7 +85,7 @@ public class GithubRepository extends BaseRepositoryImpl {
   @Override
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     try {
-      return getIssues(query);
+      return getIssues(query, max);
     }
     catch (GithubAuthenticationException e) {
       throw new Exception(e.getMessage(), e);
@@ -99,13 +99,13 @@ public class GithubRepository extends BaseRepositoryImpl {
   }
 
   @NotNull
-  private Task[] getIssues(@Nullable String query) throws Exception {
+  private Task[] getIssues(@Nullable String query, int max) throws Exception {
     List<GithubIssue> issues;
     if (StringUtil.isEmptyOrSpaces(query)) {
       if (StringUtil.isEmptyOrSpaces(myUser)) {
         myUser = GithubApiUtil.getCurrentUser(getAuthData()).getLogin();
       }
-      issues = GithubApiUtil.getIssuesAssigned(getAuthData(), getRepoAuthor(), getRepoName(), myUser);
+      issues = GithubApiUtil.getIssuesAssigned(getAuthData(), getRepoAuthor(), getRepoName(), myUser, max);
     }
     else {
       issues = GithubApiUtil.getIssuesQueried(getAuthData(), getRepoAuthor(), getRepoName(), query);

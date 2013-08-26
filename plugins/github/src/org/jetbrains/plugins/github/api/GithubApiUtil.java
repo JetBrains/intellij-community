@@ -539,7 +539,8 @@ public class GithubApiUtil {
   public static List<GithubIssue> getIssuesAssigned(@NotNull GithubAuthData auth,
                                                     @NotNull String user,
                                                     @NotNull String repo,
-                                                    @Nullable String assigned) throws IOException {
+                                                    @Nullable String assigned,
+                                                    int max) throws IOException {
     String path;
     if (StringUtil.isEmptyOrSpaces(assigned)) {
       path = "/repos/" + user + "/" + repo + "/issues?" + PER_PAGE;
@@ -550,7 +551,11 @@ public class GithubApiUtil {
 
     PagedRequest<GithubIssue> request = new PagedRequest<GithubIssue>(path, GithubIssue.class, GithubIssueRaw[].class);
 
-    return request.getAll(auth);
+    List<GithubIssue> result = new ArrayList<GithubIssue>();
+    while (request.hasNext() && max > result.size()) {
+      result.addAll(request.next(auth));
+    }
+    return result;
   }
 
   @NotNull
