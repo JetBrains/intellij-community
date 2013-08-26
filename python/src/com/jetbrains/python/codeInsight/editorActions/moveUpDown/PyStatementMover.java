@@ -288,11 +288,16 @@ public class PyStatementMover extends LineMover {
             offset = moveInOut(((MyLineRange)toMove).myElement, editor, info);
           }
 
-          caretModel.moveToOffset(offset + shift);
+          final int documentLength = editor.getDocument().getTextLength();
+          int newCaretOffset = offset + shift;
+          if (newCaretOffset >= documentLength) newCaretOffset = documentLength;
+          caretModel.moveToOffset(newCaretOffset);
           info.toMove2 = info.toMove;   //do not move further
           if (hasSelection) {
             int newSelectionStart = offset + selectionShift;
             int newSelectionEnd = newSelectionStart + selectionEnd - selectionStart;
+            if (newSelectionEnd >= documentLength)
+              newSelectionEnd = documentLength;
             selectionModel.setSelection(newSelectionStart, newSelectionEnd);
           }
         }
