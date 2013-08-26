@@ -54,13 +54,17 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   }
 
   public UserColorLookup(final Function<Color, String> colorToStringConverter) {
+    this(colorToStringConverter, LookupValueWithPriority.HIGH);
+  }
+
+  public UserColorLookup(final Function<Color, String> colorToStringConverter, int priority) {
     super(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(COLOR_STRING).withInsertHandler(
       new InsertHandler<LookupElement>() {
         @Override
         public void handleInsert(InsertionContext context, LookupElement item) {
           handleUserSelection(context, colorToStringConverter);
         }
-      }), LookupValueWithPriority.HIGH));
+      }), priority));
   }
 
   private static void handleUserSelection(InsertionContext context, @NotNull Function<Color, String> colorToStringConverter) {
