@@ -30,6 +30,8 @@ import java.awt.event.KeyEvent;
  * @author nik
  */
 public class JavaTestSourceRootEditHandler extends JavaSourceRootEditHandlerBase {
+  private static final Color TESTS_COLOR = new Color(0x008C2E);
+
   public JavaTestSourceRootEditHandler() {
     super(JavaSourceRootType.TEST_SOURCE);
   }
@@ -61,7 +63,7 @@ public class JavaTestSourceRootEditHandler extends JavaSourceRootEditHandlerBase
   @NotNull
   @Override
   public Color getRootsGroupColor() {
-    return ContentRootPanel.TESTS_COLOR;
+    return TESTS_COLOR;
   }
 
   @NotNull
