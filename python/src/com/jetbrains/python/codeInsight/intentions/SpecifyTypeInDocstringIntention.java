@@ -79,9 +79,9 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
   }
 
   @Override
-  protected boolean isParamTypeDefined(PyParameter parameter) {
+  protected boolean isParamTypeDefined(@NotNull final PyParameter parameter) {
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
-    if (pyFunction != null && parameter != null) {
+    if (pyFunction != null) {
       final StructuredDocString structuredDocString = pyFunction.getStructuredDocString();
       return structuredDocString != null && structuredDocString.getParamType(StringUtil.notNullize(parameter.getName())) != null;
     }
