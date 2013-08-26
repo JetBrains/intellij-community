@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.codeInsight.ImportFilter;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -368,6 +369,10 @@ public class ImportHelper{
 
     String className = refClass.getQualifiedName();
     if (className == null) return true;
+
+    if (!ImportFilter.shouldImport(className)) {
+      return false;
+    }
     String packageName = getPackageOrClassName(className);
     String shortName = PsiNameHelper.getShortClassName(className);
 
