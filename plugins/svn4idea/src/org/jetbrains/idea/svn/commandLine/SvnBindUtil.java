@@ -31,16 +31,7 @@ import java.util.Locale;
  * Time: 4:56 PM
  */
 public class SvnBindUtil {
-  /**
-   * SVN_ASP_DOT_NET_HACK allows use of an alternate name for Subversion working copy
-   * administrative directories on Windows (which were formerly always
-   * named ".svn"), by setting the SVN_ASP_DOT_NET_HACK environment variable.
-   * When the variable is set (to any value), the administrative directory
-   * will be "_svn" instead of ".svn".
-   *
-   * http://svn.apache.org/repos/asf/subversion/trunk/notes/asp-dot-net-hack.txt
-   */
-  public static final String ADM_NAME = System.getenv("SVN_ASP_DOT_NET_HACK") != null ? "_svn" : ".svn";
+
   private final static List<DateFormat> ourFormats = new ArrayList<DateFormat>();
 
   static {
@@ -87,18 +78,5 @@ public class SvnBindUtil {
       base = base.getParentFile();
     }
     return null;
-  }
-
-  public static File getWcRoot(File base) {
-    File current = base;
-    while (current != null) {
-      if (getWcDbUnder(current).exists()) return current;
-      current = current.getParentFile();
-    }
-    return null;
-  }
-
-  public static File getWcDbUnder(final File file) {
-    return new File(file, ADM_NAME + File.separator + "wc.db");
   }
 }

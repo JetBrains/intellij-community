@@ -28,6 +28,7 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -400,12 +401,14 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static void cleanup(String exePath, SvnCommand command, File base) throws SvnBindException {
-    File wcRoot = SvnBindUtil.getWcRoot(base);
-    if (wcRoot == null) throw new SvnBindException("Can not find working copy root for: " + base.getPath());
-
     // TODO: could be issues with fake "empty" command as it is not writable - but only read commands currently use "empty" command
     // TODO: and "empty" command will be removed shortly
     if (command.isManuallyDestroyed() && command.getCommandName().isWriteable()) {
+      File wcRoot = SvnUtil.getWorkingCopyRootNew(base);
+      if (wcRoot == null) {
+        throw new SvnBindException("Can not find working copy root for: " + base.getPath());
+      }
+
       final SvnSimpleCommand cleanupCommand = new SvnSimpleCommand(wcRoot, SvnCommandName.cleanup, exePath);
       try {
         cleanupCommand.run();
