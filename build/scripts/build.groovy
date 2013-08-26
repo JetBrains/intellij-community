@@ -85,6 +85,7 @@ class Build {
   def projectBuilder
   def buildNumber
   def ant = new AntBuilder()
+  Map layout_args
   Script utils
   Script ultimate_utils
   Script layouts
@@ -240,14 +241,35 @@ class Build {
     }
   }
 
-  def install() {}
+  def install() {
+    projectBuilder.stage("--- layoutShared ---")
+    layouts.layoutShared(layout_args, paths.distAll)
+
+    projectBuilder.stage("--- layoutWin ---")
+    layouts.layoutWin(layout_args, paths.distWin)
+
+    projectBuilder.stage("--- layoutUnix ---")
+    layouts.layoutUnix(layout_args, paths.distUnix)
+
+    projectBuilder.stage("--- layoutMac ---")
+    layouts.layoutMac(layout_args, paths.distMac)
+
+    projectBuilder.stage("--- buildNSISs ---")
+    buildNSISs()
+
+    projectBuilder.stage("--- targz ---")
+    utils.buildTeamServer()
+
+    projectBuilder.stage("--- checkLibLicenses ---")
+    libLicenses.checkLibLicenses();
+  }
 
   // think: should be relocated in utils.gant script
-  def includeFile(String filename) {
+/*  def includeFile(String filename) {
     Script s = groovyShell.parse(new File("$home/build/scripts/$filename"))
     s.setBinding(binding)
     s
-  }
+  }*/
 
   // think: to be implement for each product
 /*  String appInfoFile() {
@@ -279,44 +301,4 @@ class Build {
               "$home/build/conf/nsis/stringsCE.nsi", "$home/build/conf/nsis/pathsCE.nsi",
               "ideaIC-", true, true, system_selector_CE)
   }
-
-
-/*
-  private buildAll(Map args) {
-    communityEdition(args)
-    buildLaunchers()
-    scramble(args)
-
-    layoutShared(args, paths.distAll)
-    layoutWin(args, paths.distWin)
-    layoutUnix(args, paths.distUnix)
-    layoutMac(args, paths.distMac)
-
-    if (steps.zipwin) {
-      layout(paths.distWinZip) {
-        fileset(file: "$home/build/Install-Windows-zip.txt")
-        fileset(file: "$home/build/exe/ipr.reg")
-      }
-      buildWinZip("$paths.artifacts/idea${buildName}.zip", [paths.distAll, paths.distWin, paths.distJars, paths.distWinZip])
-    }
-    buildNSISs()
-
-    projectBuilder.stage("--- targz --- ${buildName}")
-    if (steps.targz) {
-      buildTarGz("idea-${buildName}", "$paths.artifacts/idea${buildName}.tar", [paths.distAll, paths.distUnix, paths.distJars])
-    }
-
-    projectBuilder.stage("--- sit ---")
-    if (steps.sit) {
-      String macAppRoot = isEap() ? "${p("component.version.codename")}-${buildName}.app" : "IntelliJ IDEA ${p("component.version.major")}.app"
-      buildMacZip(macAppRoot, "$paths.artifacts/idea${buildName}.sit", [paths.distAll, paths.distJars], paths.distMac)
-      signMacZip("idea")
-
-      if (steps.dmg) {
-        buildDmg("idea", getDmgImage(false))
-      }
-    }
-    projectBuilder.stage("--- targz ---")
-    buildTeamServer()
-  } */
 }
