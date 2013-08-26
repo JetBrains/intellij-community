@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubJsonException;
+import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException;
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubSslSupport;
@@ -209,7 +210,11 @@ public class GithubApiUtil {
       case HttpStatus.SC_UNAUTHORIZED:
       case HttpStatus.SC_PAYMENT_REQUIRED:
       case HttpStatus.SC_FORBIDDEN:
-        throw new GithubAuthenticationException("Request response: " + getErrorMessage(method));
+        String message = getErrorMessage(method);
+        if (message.contains("API rate limit exceeded")) {
+          throw new GithubRateLimitExceededException(message);
+        }
+        throw new GithubAuthenticationException("Request response: " + message);
       default:
         throw new GithubStatusCodeException(code + ": " + getErrorMessage(method), code);
     }

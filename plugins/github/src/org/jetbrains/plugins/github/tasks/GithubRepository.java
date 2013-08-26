@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubJsonException;
+import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException;
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubUtil;
@@ -86,6 +87,9 @@ public class GithubRepository extends BaseRepositoryImpl {
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     try {
       return getIssues(query, max);
+    }
+    catch (GithubRateLimitExceededException e) {
+      return new Task[0];
     }
     catch (GithubAuthenticationException e) {
       throw new Exception(e.getMessage(), e);
