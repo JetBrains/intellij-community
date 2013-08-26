@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.126"  # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.127"  # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1872,6 +1872,8 @@ class ModuleRedeclarator(object):
         a_setter = "lambda self, v: None"
         a_deleter = "lambda self: None"
         for item_name in sortedNoCase(properties.keys()):
+            item = properties[item_name]
+            prop_docstring = getattr(item, '__doc__', None)
             prop_key = (p_name, item_name)
             if prop_key in known_props:
                 prop_descr = known_props.get(prop_key, None)
@@ -1886,11 +1888,19 @@ class ModuleRedeclarator(object):
                     " = property(", self.formatAccessors(acc_line, getter, a_setter, a_deleter), ")"
                 )
                 if prop_type:
-                    out(indent + 1, '""":type: ', prop_type, '"""')
+                    if prop_docstring:
+                        out(indent + 1, '"""', prop_docstring)
+                        out(0, "")
+                        out(indent + 1, ':type: ', prop_type)
+                        out(indent + 1, '"""')
+                    else:
+                        out(indent + 1, '""":type: ', prop_type, '"""')
                     out(0, "")
             else:
-                out(indent + 1, item_name, " = property(lambda self: object()) # default")
-                # TODO: handle prop's docstring
+                out(indent + 1, item_name, " = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default")
+                if prop_docstring:
+                    out(indent + 1, '"""', prop_docstring, '"""')
+                out(0, "")
         if properties:
             out(0, "") # empty line after the block
             #
