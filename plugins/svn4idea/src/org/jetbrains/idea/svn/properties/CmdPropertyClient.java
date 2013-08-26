@@ -35,16 +35,10 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     parameters.add(property);
     CommandUtil.put(parameters, path, pegRevision);
     if (!revisionProperty) {
-      if (revision != null && !SVNRevision.UNDEFINED.equals(revision) && !SVNRevision.WORKING.equals(revision)) {
-        parameters.add("--revision");
-        parameters.add(revision.toString());
-      }
+      CommandUtil.put(parameters, revision);
     } else {
-      long revisionNumber = resolveRevisionNumber(path, revision);
-
       parameters.add("--revprop");
-      parameters.add("--revision");
-      parameters.add(String.valueOf(revisionNumber));
+      CommandUtil.put(parameters, resolveRevisionNumber(path, revision));
     }
 
     SvnCommand command = CommandUtil.execute(myVcs, SvnCommandName.propget, parameters, null);
@@ -52,7 +46,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     return new SVNPropertyData(property, SVNPropertyValue.create(StringUtil.nullize(command.getOutput())), null);
   }
 
-  private long resolveRevisionNumber(@NotNull File path, @Nullable SVNRevision revision) throws VcsException {
+  private SVNRevision resolveRevisionNumber(@NotNull File path, @Nullable SVNRevision revision) throws VcsException {
     long result = revision != null ? revision.getNumber() : -1;
 
     // base should be resolved manually - could not set revision to BASE to get revision property
@@ -66,6 +60,6 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
       throw new VcsException("Could not determine revision number for file " + path + " and revision " + revision);
     }
 
-    return result;
+    return SVNRevision.create(result);
   }
 }

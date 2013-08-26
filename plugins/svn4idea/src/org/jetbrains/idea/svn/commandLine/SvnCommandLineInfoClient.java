@@ -82,7 +82,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       // very unrealistic
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), new RuntimeException("Can not find existing parent file"));
     }
-    issueCommand(path.getPath(), pegRevision, revision, depth, changeLists, handler, base);
+    issueCommand(path.getAbsolutePath(), pegRevision, revision, depth, changeLists, handler, base);
   }
 
   private void issueCommand(String path, SVNRevision pegRevision,
@@ -167,21 +167,11 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     }
   }
 
-  private void fillParameters(String path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, Collection<String> parameters) {
-    if (depth != null) {
-      parameters.add("--depth");
-      parameters.add(depth.getName());
-    }
-    if (revision != null && ! SVNRevision.UNDEFINED.equals(revision) && ! SVNRevision.WORKING.equals(revision)) {
-      parameters.add("-r");
-      parameters.add(revision.toString());
-    }
+  private void fillParameters(String path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, List<String> parameters) {
+    CommandUtil.put(parameters, depth);
+    CommandUtil.put(parameters, revision);
+    CommandUtil.put(parameters, path, pegRevision);
     parameters.add("--xml");
-    if (pegRevision != null && ! SVNRevision.UNDEFINED.equals(pegRevision) && ! SVNRevision.WORKING.equals(pegRevision)) {
-      parameters.add(path + "@" + pegRevision.toString());
-    } else {
-      parameters.add(path);
-    }
   }
 
   @Override

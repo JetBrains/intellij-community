@@ -96,9 +96,16 @@ public class CommandUtil {
   }
 
   public static void put(@NotNull List<String> parameters, @Nullable SVNDepth depth) {
-    if (depth != null) {
+    if (depth != null && !SVNDepth.UNKNOWN.equals(depth)) {
       parameters.add("--depth");
       parameters.add(depth.getName());
+    }
+  }
+
+  public static void put(@NotNull List<String> parameters, @Nullable SVNRevision revision) {
+    if (revision != null && !SVNRevision.UNDEFINED.equals(revision) && !SVNRevision.WORKING.equals(revision) && revision.getNumber() >= 0) {
+      parameters.add("--revision");
+      parameters.add(revision.toString());
     }
   }
 

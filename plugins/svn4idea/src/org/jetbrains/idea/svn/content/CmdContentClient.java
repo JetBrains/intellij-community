@@ -25,12 +25,8 @@ public class CmdContentClient extends BaseSvnClient implements ContentClient {
     // TODO: rewrite without conversion from String to byte[]
     // TODO: Also implement max size constraint like in SvnKitContentClient
     List<String> parameters = new ArrayList<String>();
-
     CommandUtil.put(parameters, target.getPathOrUrlString(), pegRevision);
-    if (revision != null && ! SVNRevision.UNDEFINED.equals(revision) && ! SVNRevision.WORKING.equals(revision)) {
-      parameters.add("--revision");
-      parameters.add(revision.toString());
-    }
+    CommandUtil.put(parameters, revision);
 
     SvnCommand command = CommandUtil.execute(myVcs, SvnCommandName.cat, parameters, null);
 

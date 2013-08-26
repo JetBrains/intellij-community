@@ -87,35 +87,7 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
     File base = myCommonAncestor == null ? paths[0] : new File(myCommonAncestor.getPath());
     base = base.isDirectory() ? base : base.getParentFile();
 
-    final List<String> parameters = new ArrayList<String>();
-    if (revision != null && ! SVNRevision.UNDEFINED.equals(revision) && ! SVNRevision.WORKING.equals(revision)) {
-      parameters.add("-r");
-      parameters.add(revision.toString());
-    }
-    // unknown depth is not used any more for 1.7 -> why?
-    if (depth != null && ! SVNDepth.UNKNOWN.equals(depth)) {
-      parameters.add("--depth");
-      parameters.add(depth.toString());
-    }
-    if (allowUnversionedObstructions) {
-      parameters.add("--force");
-    }
-    if (depthIsSticky && depth != null) {// !!! not sure, but not used
-      parameters.add("--set-depth");
-      parameters.add(depth.toString());
-    }
-    if (makeParents) {
-      parameters.add("--parents");
-    }
-    if (myIgnoreExternals) {
-      parameters.add("--ignore-externals");
-    }
-    parameters.add("--accept");
-    parameters.add("postpone");
-
-    for (File path : paths) {
-      parameters.add(path.getPath());
-    }
+    final List<String> parameters = prepareParameters(paths, revision, depth, allowUnversionedObstructions, depthIsSticky, makeParents);
 
     final AtomicReference<SVNException> excRef = new AtomicReference<SVNException>();
     final ISVNEventHandler handler = getEventHandler();
@@ -177,6 +149,29 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
     }
 
     return updatedToRevision.get();
+  }
+
+  private List<String> prepareParameters(File[] paths,
+                                         SVNRevision revision,
+                                         SVNDepth depth,
+                                         boolean allowUnversionedObstructions,
+                                         boolean depthIsSticky, boolean makeParents) {
+    List<String> parameters = new ArrayList<String>();
+
+    CommandUtil.put(parameters, revision);
+    CommandUtil.put(parameters, depth);
+    CommandUtil.put(parameters, allowUnversionedObstructions, "--force");
+    if (depthIsSticky && depth != null) {// !!! not sure, but not used
+      parameters.add("--set-depth");
+      parameters.add(depth.toString());
+    }
+    CommandUtil.put(parameters, makeParents, "--parents");
+    CommandUtil.put(parameters, myIgnoreExternals, "--ignore-externals");
+    parameters.add("--accept");
+    parameters.add("postpone");
+    CommandUtil.put(parameters, paths);
+
+    return parameters;
   }
 
 

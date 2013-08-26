@@ -62,6 +62,8 @@ public class UpdateOutputLineConverter {
   }
 
   public SVNEvent convert(final String line) {
+    // TODO: Add direct processing of "Summary of conflicts" lines at the end of "svn update" output (if there are conflicts).
+    // TODO: Now it works ok because parseNormalLine could not determine necessary statuses from that and further lines
     if (StringUtil.isEmptyOrSpaces(line)) return null;
 
     if (line.startsWith(UPDATING)) {
