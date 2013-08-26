@@ -18,7 +18,10 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ui.DarculaColors;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
@@ -30,6 +33,8 @@ import java.awt.event.KeyEvent;
  * @author nik
  */
 public class JavaModuleSourceRootEditHandler extends JavaSourceRootEditHandlerBase {
+  private static final Color SOURCES_COLOR = new JBColor(new Color(0x0A50A1), DarculaColors.BLUE);
+
   public JavaModuleSourceRootEditHandler() {
     super(JavaSourceRootType.SOURCE);
   }
@@ -52,6 +57,12 @@ public class JavaModuleSourceRootEditHandler extends JavaSourceRootEditHandlerBa
     return AllIcons.Modules.SourceRoot;
   }
 
+  @Nullable
+  @Override
+  public Icon getFolderUnderRootIcon() {
+    return AllIcons.Modules.SourceFolder;
+  }
+
   @Override
   public CustomShortcutSet getMarkRootShortcutSet() {
     return new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.ALT_MASK));
@@ -60,7 +71,7 @@ public class JavaModuleSourceRootEditHandler extends JavaSourceRootEditHandlerBa
   @NotNull
   @Override
   public Color getRootsGroupColor() {
-    return ContentRootPanel.SOURCES_COLOR;
+    return SOURCES_COLOR;
   }
 
   @NotNull

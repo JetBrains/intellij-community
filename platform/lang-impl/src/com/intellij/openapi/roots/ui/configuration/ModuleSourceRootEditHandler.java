@@ -48,6 +48,9 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   public abstract Icon getRootIcon();
 
   @Nullable
+  public abstract Icon getFolderUnderRootIcon();
+
+  @Nullable
   public abstract CustomShortcutSet getMarkRootShortcutSet();
 
   @NotNull
@@ -56,9 +59,9 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   @NotNull
   public abstract Color getRootsGroupColor();
 
+
   @NotNull
   public abstract String getUnmarkRootActionName();
-
 
   @NotNull
   public abstract P createDefaultProperties();

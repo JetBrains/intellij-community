@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.ProjectBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
@@ -30,6 +31,8 @@ import java.awt.event.KeyEvent;
  * @author nik
  */
 public class JavaTestSourceRootEditHandler extends JavaSourceRootEditHandlerBase {
+  private static final Color TESTS_COLOR = new Color(0x008C2E);
+
   public JavaTestSourceRootEditHandler() {
     super(JavaSourceRootType.TEST_SOURCE);
   }
@@ -53,6 +56,12 @@ public class JavaTestSourceRootEditHandler extends JavaSourceRootEditHandlerBase
     return AllIcons.Modules.TestRoot;
   }
 
+  @Nullable
+  @Override
+  public Icon getFolderUnderRootIcon() {
+    return AllIcons.Modules.TestSourceFolder;
+  }
+
   @Override
   public CustomShortcutSet getMarkRootShortcutSet() {
     return new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.ALT_MASK));
@@ -61,7 +70,7 @@ public class JavaTestSourceRootEditHandler extends JavaSourceRootEditHandlerBase
   @NotNull
   @Override
   public Color getRootsGroupColor() {
-    return ContentRootPanel.TESTS_COLOR;
+    return TESTS_COLOR;
   }
 
   @NotNull

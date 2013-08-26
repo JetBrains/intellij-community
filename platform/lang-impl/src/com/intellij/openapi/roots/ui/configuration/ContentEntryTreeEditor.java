@@ -111,8 +111,12 @@ public class ContentEntryTreeEditor {
     setupExcludedAction();
   }
 
+  protected List<ModuleSourceRootEditHandler<?>> getEditHandlers() {
+    return myEditHandlers;
+  }
+
   protected TreeCellRenderer getContentEntryCellRenderer() {
-    return new ContentEntryTreeCellRenderer(this);
+    return new ContentEntryTreeCellRenderer(this, myEditHandlers);
   }
 
   /**

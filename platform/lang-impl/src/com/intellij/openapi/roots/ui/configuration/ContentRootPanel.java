@@ -57,9 +57,7 @@ import java.util.List;
  *         Date: Jan 19, 2004
  */
 public abstract class ContentRootPanel extends JPanel {
-  public static final Color SOURCES_COLOR = new JBColor(new Color(0x0A50A1), DarculaColors.BLUE);
-  public static final Color TESTS_COLOR = new Color(0x008C2E);
-  protected static final Color EXCLUDED_COLOR = new JBColor(new Color(0x992E00), DarculaColors.RED);
+  private static final Color EXCLUDED_COLOR = new JBColor(new Color(0x992E00), DarculaColors.RED);
   private static final Color SELECTED_HEADER_COLOR = new JBColor(new Color(0xDEF2FF), UIUtil.getPanelBackground().darker());
   private static final Color HEADER_COLOR = new JBColor(new Color(0xF5F5F5), Gray._82);
   private static final Color SELECTED_CONTENT_COLOR = new Color(0xF0F9FF);
