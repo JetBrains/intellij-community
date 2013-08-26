@@ -834,8 +834,8 @@
                             implementationClass="com.jetbrains.web2py.templates.completion.Web2PyKeywordCompletionContributor"/>
 
     <quoteHandler fileType="Web2Py" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
-    <typedHandler implementation="com.jetbrains.web2py.editor.Web2PyBracesHandler" id="Web2PyBracesHandler"/>
-    <lang.braceMatcher language="Web2Py" implementationClass="com.jetbrains.web2py.editor.Web2PyBraceMatcher"/>
+    <typedHandler implementation="com.jetbrains.web2py.templates.editor.Web2PyBracesHandler" id="Web2PyBracesHandler"/>
+    <lang.braceMatcher language="Web2Py" implementationClass="com.jetbrains.web2py.templates.editor.Web2PyBraceMatcher"/>
 
     <lang.elementManipulator forClass="com.jetbrains.web2py.templates.psi.Web2PyExtendIncludeTag"
                              implementationClass="com.jetbrains.web2py.templates.ref.Web2PyStringLiteralManipulator"/>
