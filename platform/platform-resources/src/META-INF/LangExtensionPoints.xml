@@ -780,6 +780,9 @@
 
     <extensionPoint name="moduleRendererFactory" interface="com.intellij.ide.util.ModuleRendererFactory"/>
 
+    <extensionPoint name="projectStructure.sourceRootEditHandler"
+                    interface="com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler"/>
+
     <extensionPoint name="toolsProvider" interface="com.intellij.tools.ToolsProvider"/>
 
     <extensionPoint name="defaultHighlightingSettingProvider"
