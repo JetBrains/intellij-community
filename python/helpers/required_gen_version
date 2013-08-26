@@ -4,48 +4,44 @@
 # version is two decimal numbers divided by a dot.
 # settings equally apply to all platforms (jython, cpython, ipy).
 
-(default) 1.92 # anything not explicitly marked
+(default) 1.127 # anything not explicitly marked
 
-(built-in) 1.125 # skeletons of all built-in modules are built together
+(built-in) 1.127 # skeletons of all built-in modules are built together
 # Note: modules like itertools, etc are "(built-in)" and are ignored if given separately
 
-_fileio 1.101
-_io 1.101
-sys 1.101
-thread 1.102
-_thread 1.102
-_struct 1.103
-datetime 1.124
-_collections 1.125
+_fileio 1.127
+_io 1.127
+sys 1.127
+thread 1.127
+_thread 1.127
+_struct 1.127
+datetime 1.127
+_collections 1.127
 
-PyQt4.Qsci 1.94
-PyQt4.QtAssistant 1.94
-PyQt4.QtCore 1.94
-PyQt4.QtDesigner 1.94
-PyQt4.QtGui 1.94
-PyQt4.QtHelp 1.94
-PyQt4.QtNetwork 1.94
-PyQt4.QtScriptTools 1.94
-PyQt4.QtScript 1.94
-PyQt4.QtSvg 1.94
-PyQt4.QtTest 1.94
-PyQt4.Qt 1.94
-PyQt4.QtWebKit 1.94
-PyQt4.QtXmlPatterns 1.94
-PyQt4.QtXml 1.94
+PyQt4.Qsci 1.127
+PyQt4.QtAssistant 1.127
+PyQt4.QtCore 1.127
+PyQt4.QtDesigner 1.127
+PyQt4.QtGui 1.127
+PyQt4.QtHelp 1.127
+PyQt4.QtNetwork 1.127
+PyQt4.QtScriptTools 1.127
+PyQt4.QtScript 1.127
+PyQt4.QtSvg 1.127
+PyQt4.QtTest 1.127
+PyQt4.Qt 1.127
+PyQt4.QtWebKit 1.127
+PyQt4.QtXmlPatterns 1.127
+PyQt4.QtXml 1.127
 
-pygame.fastevent 1.94
-pygame.image 1.94
+pygame.fastevent 1.127
+pygame.image 1.127
 
-sip 1.94
+sip 1.127
 
-pysqlite2._sqlite 1.94
-_bsddb 1.94
+pysqlite2._sqlite 1.127
+_bsddb 1.127
 
-h5py.h5  1.94
-h5py.h5i 1.94
-h5py.h5g 1.94
-
-#numpy 0.9 # older than default is ok
-
-
+h5py.h5  1.127
+h5py.h5i 1.127
+h5py.h5g 1.127
