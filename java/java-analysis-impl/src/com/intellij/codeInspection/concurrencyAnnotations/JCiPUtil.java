@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInspection.concurrencyAnnotations;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +104,12 @@ public class JCiPUtil {
         final PsiAnnotationMemberValue psiAnnotationMemberValue = pair.getValue();
         if (psiAnnotationMemberValue != null) {
           final String value = psiAnnotationMemberValue.getText();
-          return value.substring(1, value.length() - 1).trim();
+          final String trim = value.substring(1, value.length() - 1).trim();
+          if (trim.equals("itself")) {
+            final PsiMember member = PsiTreeUtil.getParentOfType(annotation, PsiMember.class);
+            if (member != null) return member.getName();
+          }
+          return trim;
         }
       }
     }
