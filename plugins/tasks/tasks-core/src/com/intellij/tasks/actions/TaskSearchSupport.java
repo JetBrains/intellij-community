@@ -77,12 +77,7 @@ public class TaskSearchSupport {
                                     String pattern,
                                     boolean cached,
                                     boolean autopopup) {
-    final Matcher matcher = getMatcher(pattern);
-    return ContainerUtil.mapNotNull(getTasks(pattern, cached, autopopup, myManager), new NullableFunction<Task, Task>() {
-      public Task fun(Task task) {
-        return matcher.matches(task.getId()) || matcher.matches(task.getSummary()) ? task : null;
-      }
-    });
+    return filterTasks(pattern, getTasks(pattern, cached, autopopup, myManager));
   }
 
 
