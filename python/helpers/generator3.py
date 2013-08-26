@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.125"  # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.126"  # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -986,18 +986,18 @@ class ModuleRedeclarator(object):
         "(*types, **keywords)", None) # doc assumes py3k syntax
 
     # known properties of modules
-    # {{"module": {"class", "property" : ("letters", "getter")}},
+    # {{"module": {"class", "property" : ("letters", ("getter", "type"))}},
     # where letters is any set of r,w,d (read, write, del) and "getter" is a source of typed getter.
     # if vlue is None, the property should be omitted.
     # read-only properties that return an object are not listed.
-    G_OBJECT = "lambda self: object()"
-    G_TYPE = "lambda self: type(object)"
-    G_DICT = "lambda self: {}"
-    G_STR = "lambda self: ''"
-    G_TUPLE = "lambda self: tuple()"
-    G_FLOAT = "lambda self: 0.0"
-    G_INT = "lambda self: 0"
-    G_BOOL = "lambda self: True"
+    G_OBJECT = ("lambda self: object()", None)
+    G_TYPE = ("lambda self: type(object)", "type")
+    G_DICT = ("lambda self: {}", "dict")
+    G_STR = ("lambda self: ''", "string")
+    G_TUPLE = ("lambda self: tuple()", "tuple")
+    G_FLOAT = ("lambda self: 0.0", "float")
+    G_INT = ("lambda self: 0", "int")
+    G_BOOL = ("lambda self: True", "bool")
 
     KNOWN_PROPS = {
         BUILTIN_MOD_NAME: {
@@ -1877,10 +1877,17 @@ class ModuleRedeclarator(object):
                 prop_descr = known_props.get(prop_key, None)
                 if prop_descr is None:
                     continue # explicitly omitted
-                acc_line, getter = prop_descr
+                acc_line, getter_and_type = prop_descr
+                if getter_and_type:
+                    getter, prop_type = getter_and_type
+                else:
+                    getter, prop_type = None, None
                 out(indent + 1, item_name,
                     " = property(", self.formatAccessors(acc_line, getter, a_setter, a_deleter), ")"
                 )
+                if prop_type:
+                    out(indent + 1, '""":type: ', prop_type, '"""')
+                    out(0, "")
             else:
                 out(indent + 1, item_name, " = property(lambda self: object()) # default")
                 # TODO: handle prop's docstring
