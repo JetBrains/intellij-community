@@ -17,15 +17,11 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import com.intellij.xml.impl.schema.XmlSchemaTagsProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  *         Date: 15.08.13
  */
-public class XmlEnumeratedValueReferenceProvider extends PsiReferenceProvider {
+public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends PsiReferenceProvider {
 
   public final static Key<Boolean> SUPPRESS = Key.create("suppress attribute value references");
 
@@ -45,22 +41,49 @@ public class XmlEnumeratedValueReferenceProvider extends PsiReferenceProvider {
     if (XmlSchemaTagsProcessor.PROCESSING_FLAG.get() != null || context.get(SUPPRESS) != null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    XmlAttributeValue value = (XmlAttributeValue)element;
-    if (value instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)value)) {
+    @SuppressWarnings("unchecked") PsiElement host = getHost((T)element);
+    if (host instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)host)) {
       return PsiReference.EMPTY_ARRAY;
     }
-    String unquotedValue = value.getValue();
-    if (unquotedValue == null || XmlHighlightVisitor.skipValidation(value) || !XmlUtil.isSimpleXmlAttributeValue(unquotedValue, value)) {
+    String unquotedValue = ElementManipulators.getValueText(element);
+    if (XmlHighlightVisitor.skipValidation(element) || !XmlUtil.isSimpleValue(unquotedValue, element)) {
       return PsiReference.EMPTY_ARRAY;
     }
-    PsiElement parent = value.getParent();
-    if (parent instanceof XmlAttribute) {
-      final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-      if (descriptor instanceof XmlEnumerationDescriptor &&
-          (descriptor.isFixed() || descriptor.isEnumerated() || unquotedValue.equals(descriptor.getDefaultValue()))) { // todo case insensitive
-        return ((XmlEnumerationDescriptor)descriptor).getValueReferences(value);
+    @SuppressWarnings("unchecked") final Object descriptor = getDescriptor((T)element);
+    if (descriptor instanceof XmlEnumerationDescriptor) {
+      XmlEnumerationDescriptor enumerationDescriptor = (XmlEnumerationDescriptor)descriptor;
+      if (enumerationDescriptor.isFixed() ||
+          enumerationDescriptor.isEnumerated((XmlElement)element) ||
+          unquotedValue.equals(enumerationDescriptor.getDefaultValue())) { // todo case insensitive
+        //noinspection unchecked
+        return enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue);
       }
     }
     return PsiReference.EMPTY_ARRAY;
+  }
+
+  protected PsiElement getHost(T element) {
+    return element;
+  }
+
+  protected Object getDescriptor(T element) {
+    PsiElement parent = element.getParent();
+    return parent instanceof XmlAttribute ? ((XmlAttribute)parent).getDescriptor() : null;
+  }
+
+  public static XmlEnumeratedValueReferenceProvider forTags() {
+    return new XmlEnumeratedValueReferenceProvider<XmlTag>() {
+
+      @Override
+      protected Object getDescriptor(XmlTag element) {
+        return element.getDescriptor();
+      }
+
+      @Override
+      protected PsiElement getHost(XmlTag element) {
+        XmlText[] textElements = element.getValue().getTextElements();
+        return ArrayUtil.getFirstElement(textElements);
+      }
+    };
   }
 }

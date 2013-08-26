@@ -26,6 +26,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -81,6 +82,9 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
     if (methods.size() == 1) {
       final Pair<PsiMethod, GrOpenBlock> pair = methods.get(0);
       appendClosureTextByMethod(pair.getFirst(), buffer, pair.getSecond(), newExpr);
+      if (!GroovyConfigUtils.getInstance().isVersionAtLeast(psiElement, GroovyConfigUtils.GROOVY2_2)) {
+        buffer.append(" as ").append(iface.getQualifiedName());
+      }
     }
     else {
       buffer.append("[");
@@ -97,8 +101,9 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
         buffer.append('\n');
       }
       buffer.append("]");
+      buffer.append(" as ").append(iface.getQualifiedName());
     }
-    buffer.append(" as ").append(iface.getQualifiedName());
+
     createAndAdjustNewExpression(project, newExpr, buffer);
   }
 

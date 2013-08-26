@@ -16,6 +16,8 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.IOUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 
@@ -27,8 +29,22 @@ import java.util.Collection;
  * Date: 29.01.11
  */
 public class RW {
+  private static final byte[] ourStringBuffer = IOUtil.allocReadWriteUTFBuffer();
+
   private RW() {
 
+  }
+
+  protected static String readUTF(DataInput in) throws IOException {
+    synchronized (ourStringBuffer) {
+      return IOUtil.readUTFFast(ourStringBuffer, in);
+    }
+  }
+
+  protected static void writeUTF(DataOutput out, String value) throws IOException {
+    synchronized (ourStringBuffer) {
+      IOUtil.writeUTFFast(ourStringBuffer, out, value);
+    }
   }
 
   public interface Savable {
@@ -37,7 +53,7 @@ public class RW {
 
   public static <X extends Savable> void save(final X[] x, final DataOutput out) {
     try {
-      out.writeInt(x.length);
+      DataInputOutputUtil.writeINT(out, x.length);
       for (Savable s : x) {
         s.save(out);
       }
@@ -49,12 +65,12 @@ public class RW {
 
   public static <X> void save(final TIntHashSet x, final DataOutput out) {
     try {
-      out.writeInt(x.size());
+      DataInputOutputUtil.writeINT(out, x.size());
       x.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int value) {
           try {
-            out.writeInt(value);
+            DataInputOutputUtil.writeINT(out, value);
             return true;
           }
           catch (IOException e) {
@@ -70,7 +86,7 @@ public class RW {
 
   public static <X> void save(final Collection<X> x, final DataExternalizer<X> e, final DataOutput out) {
     try {
-      out.writeInt(x.size());
+      DataInputOutputUtil.writeINT(out, x.size());
 
       for (X y : x) {
         e.save(out, y);
@@ -85,7 +101,7 @@ public class RW {
     try {
       final int size = x.size();
 
-      out.writeInt(size);
+      DataInputOutputUtil.writeINT(out, size);
 
       for (X s : x) {
         s.save(out);
@@ -111,10 +127,10 @@ public class RW {
 
   public static TIntHashSet read(final TIntHashSet acc, final DataInput in) {
     try {
-      final int size = in.readInt();
+      final int size = DataInputOutputUtil.readINT(in);
 
       for (int i = 0; i<size; i++) {
-        acc.add(in.readInt());
+        acc.add(DataInputOutputUtil.readINT(in));
       }
 
       return acc;
@@ -126,7 +142,7 @@ public class RW {
 
   public static <X> Collection<X> read(final DataExternalizer<X> e, final Collection<X> acc, final DataInput in) {
     try {
-      final int size = in.readInt();
+      final int size = DataInputOutputUtil.readINT(in);
 
       for (int i = 0; i<size; i++) {
         acc.add(e.read(in));
@@ -141,32 +157,6 @@ public class RW {
 
   public interface Writable {
     void write(BufferedWriter w);
-  }
-
-  public static <T extends Comparable> void writeln(final BufferedWriter w, final Collection<T> c, final ToWritable<T> t) {
-    if (c == null) {
-      writeln(w, "0");
-      return;
-    }
-
-    writeln(w, Integer.toString(c.size()));
-
-    for (T e : c) {
-      t.convert(e).write(w);
-    }
-  }
-
-  public static void writeln(final BufferedWriter w, final Collection<? extends Writable> c) {
-    if (c == null) {
-      writeln(w, "0");
-      return;
-    }
-
-    writeln(w, Integer.toString(c.size()));
-
-    for (Writable e : c) {
-      e.write(w);
-    }
   }
 
   public interface ToWritable<T> {
@@ -202,51 +192,6 @@ public class RW {
     }
   };
 
-  public static Reader<String> myStringReader = new Reader<String>() {
-    public String read(final BufferedReader r) {
-      try {
-        return r.readLine();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  };
-
-  public static <T> Collection<T> readMany(final BufferedReader r, final Reader<T> c, final Collection<T> acc) {
-    final int size = readInt(r);
-
-    for (int i = 0; i < size; i++) {
-      acc.add(c.read(r));
-    }
-
-    return acc;
-  }
-
-  public static String lookString(final BufferedReader r) {
-    try {
-      r.mark(256);
-      final String s = r.readLine();
-      r.reset();
-
-      return s;
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static void readTag(final BufferedReader r, final String tag) {
-    try {
-      final String s = r.readLine();
-
-      if (!s.equals(tag)) System.err.println("Parsing error: expected \"" + tag + "\", but found \"" + s + "\"");
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   public static String readString(final BufferedReader r) {
     try {
       return r.readLine();
@@ -265,33 +210,6 @@ public class RW {
     catch (Exception n) {
       System.err.println("Parsing error: expected long, but found \"" + s + "\"");
       return 0;
-    }
-  }
-
-  public static int readInt(final BufferedReader r) {
-    final String s = readString(r);
-
-    try {
-      return Integer.parseInt(s);
-    }
-    catch (Exception n) {
-      System.err.println("Parsing error: expected integer, but found \"" + s + "\"");
-      return 0;
-    }
-  }
-
-  public static String readStringAttribute(final BufferedReader r, final String tag) {
-    try {
-      final String s = r.readLine();
-
-      if (s.startsWith(tag)) return s.substring(tag.length());
-
-      System.err.println("Parsing error: expected \"" + tag + "\", but found \"" + s + "\"");
-
-      return null;
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
     }
   }
 }

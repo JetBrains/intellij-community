@@ -670,5 +670,11 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByFiles("Substitute/schema-a.xsd", "Substitute/schema-b.xsd");
     myFixture.testCompletionVariants("Substitute/test.xml", "b:instance", "instance");
   }
+
+  public void testEnumeratedTagValue() throws Exception {
+    myFixture.configureByFile("tagValue/enumerated.xsd");
+    myFixture.testCompletionVariants("tagValue/completeEnum.xml", "none", "standard");
+    myFixture.testCompletionVariants("tagValue/completeBoolean.xml", "false", "true");
+  }
 }
 

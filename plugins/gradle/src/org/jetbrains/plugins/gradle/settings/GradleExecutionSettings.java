@@ -41,18 +41,19 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   @Nullable private final String myDaemonVmOptions;
 
-  private final boolean myUseWrapper;
+  @NotNull final DistributionType myDistributionType;
+  @Nullable private String wrapperPropertyFile;
 
   @Nullable private String myJavaHome;
 
   public GradleExecutionSettings(@Nullable String gradleHome,
                                  @Nullable String serviceDirectory,
-                                 boolean wrapper,
+                                 @NotNull DistributionType distributionType,
                                  @Nullable String daemonVmOptions)
   {
     myGradleHome = gradleHome;
     myServiceDirectory = serviceDirectory;
-    myUseWrapper = wrapper;
+    myDistributionType = distributionType;
     if (daemonVmOptions != null && !daemonVmOptions.contains("-Xmx")) {
       daemonVmOptions += String.format(" -Xmx%dm", SystemInfo.is32Bit ? 512 : 1024);
     }
@@ -68,10 +69,6 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   @Nullable
   public String getServiceDirectory() {
     return myServiceDirectory;
-  }
-
-  public boolean isUseWrapper() {
-    return myUseWrapper;
   }
 
   @Nullable
@@ -100,12 +97,26 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     return myDaemonVmOptions;
   }
 
+  @Nullable
+  public String getWrapperPropertyFile() {
+    return wrapperPropertyFile;
+  }
+
+  public void setWrapperPropertyFile(@Nullable String wrapperPropertyFile) {
+    this.wrapperPropertyFile = wrapperPropertyFile;
+  }
+
+  @NotNull
+  public DistributionType getDistributionType() {
+    return myDistributionType;
+  }
+
   @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (myGradleHome != null ? myGradleHome.hashCode() : 0);
     result = 31 * result + (myServiceDirectory != null ? myServiceDirectory.hashCode() : 0);
-    result = 31 * result + (myUseWrapper ? 1 : 0);
+    result = 31 * result + myDistributionType.hashCode();
     result = 31 * result + (myJavaHome != null ? myJavaHome.hashCode() : 0);
     result = 31 * result + (myDaemonVmOptions == null ? 0 : myDaemonVmOptions.hashCode());
     return result;
@@ -117,7 +128,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
     GradleExecutionSettings that = (GradleExecutionSettings)o;
 
-    if (myUseWrapper != that.myUseWrapper) return false;
+    if (myDistributionType != that.myDistributionType) return false;
     if (!Comparing.equal(myDaemonVmOptions, that.myDaemonVmOptions)) return false;
     if (myGradleHome != null ? !myGradleHome.equals(that.myGradleHome) : that.myGradleHome != null) return false;
     if (myJavaHome != null ? !myJavaHome.equals(that.myJavaHome) : that.myJavaHome != null) return false;
@@ -130,6 +141,6 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   @Override
   public String toString() {
-    return "home: " + myGradleHome + ", use wrapper: " + myUseWrapper;
+    return "home: " + myGradleHome + ", distributionType: " + myDistributionType;
   }
 }

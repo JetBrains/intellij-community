@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
@@ -96,11 +95,17 @@ public class ClassPath {
     }
   }
 
+  /** @deprecated use {@link #ClassPath(java.util.List, boolean, boolean, boolean, boolean)} (to remove in IDEA 14) */
   public ClassPath(URL[] urls, boolean canLockJars, boolean canUseCache) {
-    this(urls, canLockJars, canUseCache, false, true);
+    this(Arrays.asList(urls), canLockJars, canUseCache, false, true);
   }
 
+  /** @deprecated use {@link #ClassPath(java.util.List, boolean, boolean, boolean, boolean)} (to remove in IDEA 14) */
   public ClassPath(URL[] urls, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls, boolean preloadJarContents) {
+    this(Arrays.asList(urls), canLockJars, canUseCache, acceptUnescapedUrls, preloadJarContents);
+  }
+
+  public ClassPath(List<URL> urls, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls, boolean preloadJarContents) {
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache;
     myAcceptUnescapedUrls = acceptUnescapedUrls;
@@ -110,7 +115,17 @@ public class ClassPath {
 
   // Accessed by reflection from PluginClassLoader // TODO: do we need it?
   void addURL(URL url) {
-    push(new URL[]{url});
+    push(Collections.singletonList(url));
+  }
+
+  private void push(List<URL> urls) {
+    if (!urls.isEmpty()) {
+      synchronized (myUrls) {
+        for (int i = urls.size() - 1; i >= 0; i--) {
+          myUrls.push(urls.get(i));
+        }
+      }
+    }
   }
 
   @Nullable
@@ -227,14 +242,6 @@ public class ClassPath {
     }
 
     return loader;
-  }
-
-  private void push(URL[] urls) {
-    if (urls.length == 0) return;
-    synchronized (myUrls) {
-      for (int i = urls.length - 1; i >= 0; i--) myUrls.push(urls[i]);
-
-    }
   }
 
   private class MyEnumeration implements Enumeration<URL> {

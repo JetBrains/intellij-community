@@ -22,6 +22,7 @@ import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
  * @author nik
@@ -67,5 +68,11 @@ public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolde
     if (properties != null) {
       properties.setData(new JavaSourceRootProperties(packagePrefix));
     }
+  }
+
+  @NotNull
+  @Override
+  public JpsModuleSourceRootType<?> getRootType() {
+    return mySourceRoot.getRootType();
   }
 }

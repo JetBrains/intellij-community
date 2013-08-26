@@ -95,7 +95,7 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     final ref = configureByText(text)
     assertNotNull(ref)
     final resolved = ref.resolve()
-    assertInstanceOf(resolved, type)
+    if (type != null) assertInstanceOf(resolved, type)
     return resolved
   }
 

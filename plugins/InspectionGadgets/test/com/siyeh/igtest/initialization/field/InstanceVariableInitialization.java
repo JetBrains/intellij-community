@@ -94,3 +94,9 @@ class C {
     boolean b = (o = "") instanceof String;
   }
 }
+class D {
+  private java.util.List l;
+  D() {
+    for (Object o : l = new java.util.ArrayList()) {}
+  }
+}

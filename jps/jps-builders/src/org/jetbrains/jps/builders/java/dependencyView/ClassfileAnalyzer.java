@@ -16,6 +16,8 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.Pair;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.asm4.*;
 import org.jetbrains.asm4.signature.SignatureReader;
@@ -302,14 +304,14 @@ class ClassfileAnalyzer {
       myAnonymousClassFlag.set(false);
     }
 
-    private final Set<MethodRepr> myMethods = new HashSet<MethodRepr>();
-    private final Set<FieldRepr> myFields = new HashSet<FieldRepr>();
-    private final Set<UsageRepr.Usage> myUsages = new HashSet<UsageRepr.Usage>();
+    private final Set<MethodRepr> myMethods = new THashSet<MethodRepr>();
+    private final Set<FieldRepr> myFields = new THashSet<FieldRepr>();
+    private final Set<UsageRepr.Usage> myUsages = new THashSet<UsageRepr.Usage>();
     private final Set<ElemType> myTargets = EnumSet.noneOf(ElemType.class);
     private RetentionPolicy myRetentionPolicy = null;
 
-    final Map<TypeRepr.ClassType, TIntHashSet> myAnnotationArguments = new HashMap<TypeRepr.ClassType, TIntHashSet>();
-    final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new HashMap<TypeRepr.ClassType, Set<ElemType>>();
+    final Map<TypeRepr.ClassType, TIntHashSet> myAnnotationArguments = new THashMap<TypeRepr.ClassType, TIntHashSet>();
+    final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new THashMap<TypeRepr.ClassType, Set<ElemType>>();
 
     public ClassCrawler(final int fn) {
       super(Opcodes.ASM4);

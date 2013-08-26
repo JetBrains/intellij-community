@@ -1431,6 +1431,30 @@ class _a {
 ''', PsiMethod)
   }
 
+  void testRuntimeMixin22() {
+    assertNull resolveByText('''\
+class ReentrantLock {}
+
+ReentrantLock.metaClass.withLock = { nestedCode -> }
+
+new ReentrantLock().withLock {
+    fo<caret>o(3)
+}
+''')
+  }
+
+  void testRuntimeMixin23() {
+    assertNotNull resolveByText('''\
+class ReentrantLock {}
+
+ReentrantLock.metaClass.withLock = { nestedCode -> }
+
+new ReentrantLock().withLock {
+    withL<caret>ock(2)
+}
+''')
+  }
+
   void testRunnableVsCallable() {
     final PsiMethod method = resolveByText('''\
 import java.util.concurrent.Callable

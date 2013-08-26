@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Properties;
 
@@ -117,11 +116,11 @@ public class AntInstallation {
   public String getVersion() {
     return VERSION.get(myProperties);
   }
-  
+
   public String getHomeDir() {
     return HOME_DIR.get(myProperties);
   }
-  
+
   public AbstractProperty.AbstractPropertyContainer getProperties() {
     return myProperties;
   }
@@ -134,7 +133,7 @@ public class AntInstallation {
   public void updateClasspath() {
     myClassLoaderHolder.updateClasspath();
   }
-  
+
   public static AntInstallation fromHome(String homePath) throws ConfigurationException {
     File antHome = new File(homePath);
     String antPath = "'" + antHome.getAbsolutePath() + "'";
@@ -166,7 +165,7 @@ public class AntInstallation {
     Properties properties = new Properties();
     InputStream stream = null;
     try {
-      stream = new UrlClassLoader(Collections.singletonList(antJar.toURL()), null, false, false, true, false).getResourceAsStream(VERSION_RESOURCE);
+      stream = UrlClassLoader.build().urls(antJar.toURI().toURL()).allowUnescaped().noPreload().get().getResourceAsStream(VERSION_RESOURCE);
       properties.load(stream);
     }
     catch (MalformedURLException e) {

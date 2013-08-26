@@ -52,7 +52,8 @@ public class Mappings {
   private static final float DEFAULT_SET_LOAD_FACTOR = 0.98f;
   private static final CollectionFactory<ClassRepr> ourClassSetConstructor = new CollectionFactory<ClassRepr>() {
     public Set<ClassRepr> create() {
-      return new HashSet<ClassRepr>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
+      // for IDEA codebase on average there is no more than 2.5 classes out of one source file, so we use smaller estimate
+      return new THashSet<ClassRepr>(5, DEFAULT_SET_LOAD_FACTOR);
     }
   };
 

@@ -83,7 +83,7 @@ public class BlockSupportImpl extends BlockSupport {
     final FileElement treeFileElement = fileImpl.getTreeElement();
     final CharTable charTable = treeFileElement.getCharTable();
 
-    
+
     final int textLength = newFileText.length();
     int lengthShift = textLength - treeFileElement.getTextLength();
 
@@ -184,7 +184,7 @@ public class BlockSupportImpl extends BlockSupport {
 
       final FileElement newFileElement = (FileElement)newFile.getNode();
       final FileElement oldFileElement = (FileElement)fileImpl.getNode();
-                                                            
+
       assert oldFileElement != null && newFileElement != null;
       DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator);
 
@@ -313,7 +313,7 @@ public class BlockSupportImpl extends BlockSupport {
     event.setOffset(scope.getTextRange().getStartOffset());
     event.setOldLength(scope.getTextLength());
       // the "generic" event is being sent on every PSI change. It does not carry any specific info except the fact that "something has changed"
-    event.setGeneric(isGenericChange);
+    event.setGenericChange(isGenericChange);
     manager.beforeChildrenChange(event);
   }
 
@@ -330,7 +330,7 @@ public class BlockSupportImpl extends BlockSupport {
     event.setFile(scope);
     event.setOffset(0);
     event.setOldLength(oldLength);
-    event.setGeneric(isGenericChange);
+    event.setGenericChange(isGenericChange);
     manager.childrenChanged(event);
   }
 }

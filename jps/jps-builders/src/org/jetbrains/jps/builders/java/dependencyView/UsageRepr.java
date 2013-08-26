@@ -16,6 +16,7 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.asm4.Type;
@@ -77,8 +78,8 @@ class UsageRepr {
 
     private FMUsage(final DataInput in) {
       try {
-        myName = in.readInt();
-        myOwner = in.readInt();
+        myName = DataInputOutputUtil.readINT(in);
+        myOwner = DataInputOutputUtil.readINT(in);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -88,8 +89,8 @@ class UsageRepr {
     protected final void save(final byte tag, final DataOutput out) {
       try {
         out.writeByte(tag);
-        out.writeInt(myName);
-        out.writeInt(myOwner);
+        DataInputOutputUtil.writeINT(out, myName);
+        DataInputOutputUtil.writeINT(out, myOwner);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -215,7 +216,8 @@ class UsageRepr {
       super(in);
       try {
         final DataExternalizer<TypeRepr.AbstractType> externalizer = TypeRepr.externalizer(context);
-        myArgumentTypes = RW.read(externalizer, in, new TypeRepr.AbstractType[in.readInt()]);
+        int argumentTypes = DataInputOutputUtil.readINT(in);
+        myArgumentTypes = RW.read(externalizer, in, argumentTypes != 0 ? new TypeRepr.AbstractType[argumentTypes]: TypeRepr.AbstractType.EMPTY_TYPE_ARRAY);
         myReturnType = externalizer.read(in);
       }
       catch (IOException e) {
@@ -284,7 +286,7 @@ class UsageRepr {
     public MetaMethodUsage(final DataInput in) {
       super(in);
       try {
-        myArity = in.readInt();
+        myArity = DataInputOutputUtil.readINT(in);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -295,7 +297,7 @@ class UsageRepr {
     public void save(final DataOutput out) {
       save(METAMETHOD_USAGE, out);
       try {
-        out.writeInt(myArity);
+        DataInputOutputUtil.writeINT(out, myArity);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -348,7 +350,7 @@ class UsageRepr {
 
     private ClassUsage(final DataInput in) {
       try {
-        myClassName = in.readInt();
+        myClassName = DataInputOutputUtil.readINT(in);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -359,7 +361,7 @@ class UsageRepr {
     public void save(final DataOutput out) {
       try {
         out.writeByte(CLASS_USAGE);
-        out.writeInt(myClassName);
+        DataInputOutputUtil.writeINT(out, myClassName);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -405,7 +407,7 @@ class UsageRepr {
     public void save(final DataOutput out) {
       try {
         out.writeByte(CLASS_AS_GENERIC_BOUND_USAGE);
-        out.writeInt(myClassName);
+        DataInputOutputUtil.writeINT(out, myClassName);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -427,7 +429,7 @@ class UsageRepr {
 
     private ClassExtendsUsage(final DataInput in) {
       try {
-        myClassName = in.readInt();
+        myClassName = DataInputOutputUtil.readINT(in);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -438,7 +440,7 @@ class UsageRepr {
     public void save(final DataOutput out) {
       try {
         out.writeByte(CLASS_EXTENDS_USAGE);
-        out.writeInt(myClassName);
+        DataInputOutputUtil.writeINT(out, myClassName);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -481,7 +483,7 @@ class UsageRepr {
     public void save(final DataOutput out) {
       try {
         out.writeByte(CLASS_NEW_USAGE);
-        out.writeInt(myClassName);
+        DataInputOutputUtil.writeINT(out, myClassName);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -503,12 +505,12 @@ class UsageRepr {
     public static final DataExternalizer<ElemType> elementTypeExternalizer = new DataExternalizer<ElemType>() {
       @Override
       public void save(final DataOutput out, final ElemType value) throws IOException {
-        out.writeInt(value.ordinal());
+        DataInputOutputUtil.writeINT(out, value.ordinal());
       }
 
       @Override
       public ElemType read(final DataInput in) throws IOException {
-        final int ordinal = in.readInt();
+        final int ordinal = DataInputOutputUtil.readINT(in);
         for (ElemType value : ElemType.values()) {
           if (value.ordinal() == ordinal) {
             return value;
@@ -680,11 +682,6 @@ class UsageRepr {
 
   public static Usage createClassAsGenericBoundUsage(final DependencyContext context, final int name) {
     return context.getUsage(new ClassAsGenericBoundUsage(name));
-  }
-
-
-  public static Usage createClassExtendsUsage(final DependencyContext context, final int name) {
-    return context.getUsage(new ClassExtendsUsage(name));
   }
 
   public static Usage createClassNewUsage(final DependencyContext context, final int name) {

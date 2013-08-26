@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrRefer
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -226,7 +227,7 @@ public class GdkMethodUtil {
 
           final DelegatingScopeProcessor delegate = new MixinMemberContributor.MixinProcessor(processor, subjectType, qualifier);
           for (GrMethod method : methods) {
-            delegate.execute(method, ResolveState.initial());
+            ResolveUtil.processElement(delegate, method, state);
           }
         }
       }

@@ -59,6 +59,17 @@ public abstract class Logger {
 
   public abstract void debug(@NonNls String message, @Nullable Throwable t);
 
+  public void debug(@NotNull String message, Object... details) {
+    if (isDebugEnabled()) {
+      StringBuilder sb = new StringBuilder();
+      sb.append(message);
+      for (Object detail : details) {
+        sb.append(String.valueOf(detail));
+      }
+      debug(sb.toString());
+    }
+  }
+
   public void info(@NotNull Throwable t) {
     info(t.getMessage(), t);
   }
@@ -102,19 +113,18 @@ public abstract class Logger {
 
   public abstract void error(@NonNls String message, @Nullable Throwable t, @NonNls @NotNull String... details);
 
-  public boolean assertTrue(boolean value, @NonNls Object message) {
+  public boolean assertTrue(boolean value, @Nullable @NonNls Object message) {
     if (!value) {
-      @NonNls StringBuilder resultMessage = new StringBuilder("Assertion failed");
-      if (message != null) resultMessage.append(": ").append(message);
-
-      error(resultMessage.toString(), new Throwable());
+      @NonNls String resultMessage = "Assertion failed";
+      if (message != null) resultMessage += ": " + message;
+      error(resultMessage, new Throwable());
     }
 
     return value;
   }
 
   public boolean assertTrue(boolean value) {
-    return value || assertTrue(value, "");
+    return value || assertTrue(false, null);
   }
 
   public abstract void setLevel(Level level);

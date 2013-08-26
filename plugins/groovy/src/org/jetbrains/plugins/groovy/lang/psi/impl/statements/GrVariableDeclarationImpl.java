@@ -96,7 +96,9 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
     final GrTypeElement typeElement = getTypeElementGroovy();
     if (type == null) {
       if (typeElement == null) return;
-      getModifierList().setModifierProperty(GrModifier.DEF, true);
+      if (getModifierList().getModifiers().length == 0) {
+        getModifierList().setModifierProperty(GrModifier.DEF, true);
+      }
       typeElement.delete();
       return;
     }

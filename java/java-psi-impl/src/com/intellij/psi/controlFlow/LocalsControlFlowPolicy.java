@@ -47,7 +47,7 @@ public class LocalsControlFlowPolicy implements ControlFlowPolicy {
     }
     if (codeFragment == null) return null;
     if (myCodeFragment.getContainingFile() == codeFragment.getContainingFile() &&  // in order for jsp includes to work
-        !myCodeFragment.equals(codeFragment)) {
+        !myCodeFragment.equals(codeFragment) && !(myCodeFragment.getParent() instanceof PsiLambdaExpression)) {
       return null;
     }
     return (PsiVariable)refElement;

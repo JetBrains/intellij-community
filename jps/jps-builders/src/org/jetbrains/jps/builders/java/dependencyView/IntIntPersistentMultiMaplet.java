@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.TIntHashSet;
@@ -98,7 +99,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
             @Override
             public boolean execute(int value) {
               try {
-                out.writeInt(value);
+                DataInputOutputUtil.writeINT(out, value);
               }
               catch (IOException e) {
                 exRef.set(e);
@@ -125,7 +126,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       myCache.remove(key);
       myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
         public void append(final DataOutput out) throws IOException {
-          out.writeInt(value);
+          DataInputOutputUtil.writeINT(out, value);
         }
       });
     }
@@ -260,7 +261,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
         @Override
         public boolean execute(int elem) {
           try {
-            out.writeInt(elem);
+            DataInputOutputUtil.writeINT(out, elem);
           }
           catch (IOException e) {
             exRef.set(e);
@@ -280,7 +281,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
       final TIntHashSet result = new TIntHashSet();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
-        result.add(in.readInt());
+        result.add(DataInputOutputUtil.readINT(in));
       }
       return result;
     }

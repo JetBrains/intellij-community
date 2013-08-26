@@ -23,8 +23,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 
 /**
  * @author Dmitry Batkovich
@@ -54,7 +56,9 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     if (candidates.isEmpty() && secondary.isEmpty()) return null;
 
     final PsiMethodMember[] onlyPrimary = convertToMethodMembers(candidates);
-    final PsiMethodMember[] all = ArrayUtil.mergeArrays(onlyPrimary, convertToMethodMembers(secondary));
+    final LinkedHashSet<CandidateInfo> allCandidates = new LinkedHashSet<CandidateInfo>(candidates);
+    allCandidates.addAll(secondary);
+    final PsiMethodMember[] all = convertToMethodMembers(allCandidates);
     final NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> lazyElementsWithPercent =
       new NotNullLazyValue<PsiMethodWithOverridingPercentMember[]>() {
         @NotNull
@@ -76,7 +80,11 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     javaOverrideImplementMemberChooser.setCopyJavadocVisible(true);
 
     if (toImplement) {
-      javaOverrideImplementMemberChooser.selectElements(onlyPrimary);
+      if (onlyPrimary.length == 0) {
+        javaOverrideImplementMemberChooser.selectElements(new ClassMember[] {all[0]});
+      } else {
+        javaOverrideImplementMemberChooser.selectElements(onlyPrimary);
+      }
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {

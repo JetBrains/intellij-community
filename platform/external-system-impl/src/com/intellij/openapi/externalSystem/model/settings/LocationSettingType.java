@@ -24,9 +24,9 @@ public enum LocationSettingType {
   UNKNOWN("setting.type.location.unknown"),
 
   /** User defined gradle location but it's incorrect. */
-  EXPLICIT_INCORRECT("setting.type.location.explicit.correct"),
+  EXPLICIT_INCORRECT("setting.type.location.explicit.incorrect"),
 
-  EXPLICIT_CORRECT("setting.type.location.explicit.incorrect");
+  EXPLICIT_CORRECT("setting.type.location.explicit.correct");
   
   @NotNull private final String myDescriptionKey;
   @NotNull private final Color myColor;

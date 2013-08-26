@@ -144,7 +144,7 @@ public class MavenExternalParameters {
       params.getClassPath().add(path);
     }
 
-    params.setEnv(Collections.unmodifiableMap(runnerSettings.getEnvironmentProperties()));
+    params.setEnv(new HashMap<String, String>(runnerSettings.getEnvironmentProperties()));
     params.setPassParentEnvs(runnerSettings.isPassParentEnv());
 
     params.setMainClass(MAVEN_LAUNCHER_CLASS);

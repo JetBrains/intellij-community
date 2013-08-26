@@ -30,6 +30,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SnappyInitializer;
+import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.DateFormatUtilRt;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
@@ -165,7 +166,7 @@ public class StartupUtil {
                            new ProcessBuilder(ideTempFile.getAbsolutePath()).start().waitFor() == 0;
         }
 
-        tempAccessible = tempExecutable && FileUtil.delete(ideTempFile);
+        tempAccessible = tempExecutable && ideTempFile.delete();
       }
       catch (Exception ignored) { }
     }
@@ -246,7 +247,7 @@ public class StartupUtil {
 
     if (SystemInfo.isWin2kOrNewer && !Main.isHeadless()) {
       try {
-        System.loadLibrary(SystemInfo.isAMD64 ? "focusKiller64" : "focusKiller");
+        UrlClassLoader.loadPlatformLibrary("focusKiller");
         log.info("Using \"FocusKiller\" library to prevent focus stealing.");
       }
       catch (Throwable t) {

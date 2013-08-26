@@ -43,7 +43,7 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
         }
 
       case CHILDREN_CHANGED :
-        if (event.isGenericChildrenChange()) {
+        if (event.isGenericChange()) {
           return;
         }
         changedInsideCodeBlock = isInsideCodeBlock(event.getParent());
