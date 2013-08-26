@@ -46,7 +46,7 @@ public class SocketControlHelper {
       DataOutputStream out = new DataOutputStream(socket.getOutputStream());
       try {
 
-        out.writeUTF(ACTIVATE_COMMAND + new File(".").getAbsolutePath() + "\0" + pathToProject);
+        out.writeUTF(ACTIVATE_COMMAND + new File(".").getAbsolutePath() + "\0" + "reopen" + "\0" + pathToProject);
         out.flush();
         String response = in.readUTF();
         if (response.equals("ok")) {
