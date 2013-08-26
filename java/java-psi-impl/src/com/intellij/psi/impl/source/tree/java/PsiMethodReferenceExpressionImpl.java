@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -427,7 +427,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
         boolean hasReceiver = false;
         final PsiType[] parameterTypes = mySignature.getParameterTypes();
-        if (parameterTypes.length > 0 && PsiMethodReferenceUtil.isReceiverType(parameterTypes[0], myContainingClass, mySubstitutor)) {
+        if (parameterTypes.length > 0 && 
+            PsiMethodReferenceUtil.isReceiverType(parameterTypes[0], myContainingClass, mySubstitutor) && 
+            PsiMethodReferenceUtil.isStaticallyReferenced(PsiMethodReferenceExpressionImpl.this)) {
           hasReceiver = true;
         }
 

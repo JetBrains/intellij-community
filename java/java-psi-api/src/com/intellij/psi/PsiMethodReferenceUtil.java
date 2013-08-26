@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,15 @@ public class PsiMethodReferenceUtil {
       }
     }
     return new QualifierResolveResult(containingClass, substitutor, false);
+  }
+  
+  public static boolean isStaticallyReferenced(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
+    final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
+    if (qualifierExpression != null) {
+      return qualifierExpression instanceof PsiReferenceExpression &&
+             ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiClass;
+    }
+    return true;
   }
 
   public static boolean isAcceptable(@Nullable final PsiMethodReferenceExpression methodReferenceExpression, PsiType left) {
