@@ -45,8 +45,6 @@ public class PyStatementMover extends LineMover {
     final Document document = file.getViewProvider().getDocument();
 
     if (document == null) return null;
-    if (elementToMove instanceof PyPassStatement || elementToMove instanceof PyContinueStatement ||
-        elementToMove instanceof PyBreakStatement) return null;
 
     final int offset = down ? elementToMove.getTextRange().getEndOffset() : elementToMove.getTextRange().getStartOffset();
     int lineNumber = down ? document.getLineNumber(offset) + 1 : document.getLineNumber(offset) - 1;
