@@ -20,12 +20,17 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
 import com.jetbrains.env.python.debug.PyTestTask;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
@@ -118,6 +123,21 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
             myFixture.checkHighlighting(true, false, false);
           }
         });
+      }
+    });
+  }
+
+  public void testKnownPropertiesTypes() {
+    runTest(new SkeletonsTask() {
+      @Override
+      protected void runTestOn(@NotNull Sdk sdk) {
+        myFixture.configureByText(PythonFileType.INSTANCE,
+                                  "expr = slice(1, 2).start\n");
+        final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+        final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getFile());
+        final PyType type = context.getType(expr);
+        final String actualType = PythonDocumentationProvider.getTypeName(type, context);
+        assertEquals("int", actualType);
       }
     });
   }
