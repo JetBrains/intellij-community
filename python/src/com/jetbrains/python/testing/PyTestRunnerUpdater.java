@@ -89,11 +89,14 @@ public class PyTestRunnerUpdater implements StartupActivity {
               //check if installed in sdk
               final Sdk sdk = PythonSdkType.findPythonSdk(module);
               if (sdk != null && sdk.getSdkType() instanceof PythonSdkType && testRunner.isEmpty()) {
-                if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.NOSE_TEST))
+                final Boolean nose = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.NOSE_TEST);
+                final Boolean pytest = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.PY_TEST);
+                final Boolean attest = VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.AT_TEST);
+                if (nose != null && nose)
                   testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-                else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.PY_TEST))
+                else if (pytest != null && pytest)
                   testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
-                else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdk, PyNames.AT_TEST))
+                else if (attest != null && attest)
                   testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
               }
             }

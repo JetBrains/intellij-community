@@ -94,7 +94,9 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
     myQueue.queue(new Update(Pair.create(sdk, testPackageName)) {
       @Override
       public void run() {
-        testInstalled(isTestFrameworkInstalled(sdk, testPackageName), sdk.getHomePath(), testPackageName);
+        final Boolean installed = isTestFrameworkInstalled(sdk, testPackageName);
+        if (installed != null)
+          testInstalled(installed, sdk.getHomePath(), testPackageName);
       }
     });
   }
@@ -113,10 +115,13 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
     return "VFSTestFrameworkListener";
   }
 
-  public static boolean isTestFrameworkInstalled(Sdk sdk, String testPackageName) {
+  /**
+   * @return null if we can't be sure
+   */
+  public static Boolean isTestFrameworkInstalled(Sdk sdk, String testPackageName) {
     if (sdk == null || StringUtil.isEmptyOrSpaces(sdk.getHomePath())) {
       LOG.info("Searching test runner in empty sdk");
-      return false;
+      return null;
     }
     final PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
     try {
@@ -125,7 +130,7 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
     catch (PyExternalProcessException e) {
       LOG.info("Can't load package list " + e.getMessage());
     }
-    return true;
+    return null;
   }
 
   public static VFSTestFrameworkListener getInstance() {
