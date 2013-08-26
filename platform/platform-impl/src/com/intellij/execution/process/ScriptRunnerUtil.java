@@ -116,14 +116,12 @@ public final class ScriptRunnerUtil {
                                          @Nullable Charset charset) throws ExecutionException {
     if (SystemInfo.isMac) {
       File exeFile = new File(exePath);
-      if (!exeFile.isAbsolute()) {
-        if (!exePath.contains(File.separator)) {
-          File originalResolvedExeFile = PathEnvironmentVariableUtil.findInOriginalPath(exePath);
-          if (originalResolvedExeFile == null) {
-            File resolvedExeFile = PathEnvironmentVariableUtil.findInPath(exePath);
-            if (resolvedExeFile != null) {
-              exePath = resolvedExeFile.getAbsolutePath();
-            }
+      if (!exeFile.isAbsolute() && !exePath.contains(File.separator)) {
+        File originalResolvedExeFile = PathEnvironmentVariableUtil.findInOriginalPath(exePath);
+        if (originalResolvedExeFile == null) {
+          File resolvedExeFile = PathEnvironmentVariableUtil.findInPath(exePath);
+          if (resolvedExeFile != null) {
+            exePath = resolvedExeFile.getAbsolutePath();
           }
         }
       }
