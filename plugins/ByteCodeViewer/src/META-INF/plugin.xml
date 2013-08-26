@@ -13,9 +13,6 @@
     <projectService serviceInterface="com.intellij.byteCodeViewer.ByteCodeViewerManager"
                     serviceImplementation="com.intellij.byteCodeViewer.ByteCodeViewerManager"/>
   </extensions>
-  <extensions>
-    <ByteCodeViewer.classSearcher implementation="com.intellij.byteCodeViewer.DefaultClassSearcher"/>
-  </extensions>
   <actions>
     <group>
       <action id="ByteCodeViewer" class="com.intellij.byteCodeViewer.ShowByteCodeAction" text="Show Byte Code"/>
