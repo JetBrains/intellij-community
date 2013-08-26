@@ -17,6 +17,7 @@ package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.asm4.Type;
 
 import java.io.DataInput;
@@ -64,7 +65,7 @@ class TypeRepr {
     public void save(final DataOutput out) {
       try {
         out.writeByte(PRIMITIVE_TYPE);
-        out.writeInt(type);
+        DataInputOutputUtil.writeINT(out, type);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -77,7 +78,7 @@ class TypeRepr {
 
     PrimitiveType(final DataInput in) {
       try {
-        type = in.readInt();
+        type = DataInputOutputUtil.readINT(in);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -175,8 +176,8 @@ class TypeRepr {
 
     ClassType(final DependencyContext context, final DataInput in) {
       try {
-        className = in.readInt();
-        final int size = in.readInt();
+        className = DataInputOutputUtil.readINT(in);
+        final int size = DataInputOutputUtil.readINT(in);
         if (size == 0) {
           typeArgs = EMPTY_TYPE_ARRAY;
         }
@@ -217,8 +218,8 @@ class TypeRepr {
     public void save(final DataOutput out) {
       try {
         out.writeByte(CLASS_TYPE);
-        out.writeInt(className);
-        out.writeInt(typeArgs.length);
+        DataInputOutputUtil.writeINT(out, className);
+        DataInputOutputUtil.writeINT(out, typeArgs.length);
         for (AbstractType t : typeArgs) {
           t.save(out);
         }
@@ -231,18 +232,6 @@ class TypeRepr {
 
   public static Collection<AbstractType> createClassType(final DependencyContext context,
                                                          final String[] args,
-                                                         final Collection<AbstractType> acc) {
-    if (args != null) {
-      for (String a : args) {
-        acc.add(createClassType(context, context.get(a)));
-      }
-    }
-
-    return acc;
-  }
-
-  public static Collection<AbstractType> createClassType(final DependencyContext context,
-                                                         final Collection<String> args,
                                                          final Collection<AbstractType> acc) {
     if (args != null) {
       for (String a : args) {
@@ -277,6 +266,7 @@ class TypeRepr {
   }
 
   public static AbstractType[] getType(final DependencyContext context, final Type[] t) {
+    if(t.length == 0) return AbstractType.EMPTY_TYPE_ARRAY;
     final AbstractType[] r = new AbstractType[t.length];
 
     for (int i = 0; i < r.length; i++) {

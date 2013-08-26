@@ -32,6 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -434,5 +435,116 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     }
   }
 
+  public void testFindInCommentsAndLiterals() throws Exception{
+    FindManager findManager = FindManager.getInstance(myProject);
 
+    FindModel findModel = new FindModel();
+    findModel.setStringToFind("done");
+    findModel.setWholeWordsOnly(false);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(false);
+    findModel.setProjectScope(true);
+
+    String text = "\"done done done\" /* done done done */";
+
+    runFindInCommentsAndLiterals(findManager, findModel, text);
+
+    findModel.setRegularExpressions(true);
+    runFindInCommentsAndLiterals(findManager, findModel, text);
+  }
+
+  private static void runFindInCommentsAndLiterals(FindManager findManager, FindModel findModel, String text) {
+    runFindInCommentsAndLiterals(findManager, findModel, text, "java");
+  }
+
+  private static void runFindInCommentsAndLiterals(FindManager findManager,
+                                                   FindModel findModel,
+                                                   String text,
+                                                   String ext) {
+    findModel.setInStringLiteralsOnly(true);
+    findModel.setInCommentsOnly(false);
+    runFindForwardAndBackward(findManager, findModel, text, ext);
+
+    findModel.setInStringLiteralsOnly(false);
+    findModel.setInCommentsOnly(true);
+    runFindForwardAndBackward(findManager, findModel, text, ext);
+  }
+
+  private static void runFindForwardAndBackward(FindManager findManager, FindModel findModel, String text) {
+    runFindForwardAndBackward(findManager, findModel, text, "java");
+  }
+
+  private static void runFindForwardAndBackward(FindManager findManager, FindModel findModel, String text, String ext) {
+    findModel.setForward(true);
+    LightVirtualFile file = new LightVirtualFile("A."+ext, text);
+    int prevousOffset;
+
+    FindResult findResult = findManager.findString(text, 0, findModel, file);
+    assertTrue(findResult.isStringFound());
+    prevousOffset = findResult.getStartOffset();
+
+    findResult = findManager.findString(text, findResult.getEndOffset(), findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertTrue(findResult.getStartOffset() > prevousOffset);
+    prevousOffset = findResult.getStartOffset();
+
+    findResult = findManager.findString(text, findResult.getEndOffset(), findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertTrue(findResult.getStartOffset() > prevousOffset);
+
+    findModel.setForward(false);
+
+    findResult = findManager.findString(text, text.length(), findModel, file);
+    assertTrue(findResult.isStringFound());
+    prevousOffset = findResult.getStartOffset();
+
+    findResult = findManager.findString(text, prevousOffset, findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertTrue(prevousOffset > findResult.getStartOffset() );
+
+    prevousOffset = findResult.getStartOffset();
+
+    findResult = findManager.findString(text, prevousOffset, findModel, file);
+    assertTrue(findResult.isStringFound());
+    assertTrue(prevousOffset > findResult.getStartOffset() );
+  }
+
+  public void testFindInJavaDocs() throws Exception{
+    FindManager findManager = FindManager.getInstance(myProject);
+
+    FindModel findModel = new FindModel();
+    findModel.setStringToFind("done");
+    findModel.setWholeWordsOnly(false);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(false);
+    findModel.setProjectScope(true);
+
+    String text = "/** done done done */";
+
+    findModel.setInCommentsOnly(true);
+    runFindForwardAndBackward(findManager, findModel, text);
+
+    findModel.setRegularExpressions(true);
+    runFindForwardAndBackward(findManager, findModel, text);
+  }
+
+  public void testFindInUserFileType() throws Exception{
+    FindManager findManager = FindManager.getInstance(myProject);
+
+    FindModel findModel = new FindModel();
+    findModel.setStringToFind("done");
+    findModel.setWholeWordsOnly(false);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(false);
+    findModel.setProjectScope(true);
+
+    String text = "\"done done\"; 'done'; // done\n" +
+                  "/* done\n" +
+                  "done */";
+
+    runFindInCommentsAndLiterals(findManager, findModel, text, "cs");
+  }
 }

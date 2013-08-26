@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
 
     @Override
     public void visitField(@NotNull PsiField field) {
-      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+      if (field.hasModifierProperty(PsiModifier.STATIC) || field.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       if (field.getInitializer() != null) {

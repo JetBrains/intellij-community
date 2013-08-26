@@ -272,6 +272,7 @@ public class BrowserUtil {
     }
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         Messages.showMessageDialog(message, title, Messages.getErrorIcon());
       }
@@ -320,6 +321,7 @@ public class BrowserUtil {
       if (!currentTimestamp.equals(previousTimestamp)) {
         final Ref<Boolean> extract = new Ref<Boolean>();
         Runnable r = new Runnable() {
+          @Override
           public void run() {
             final ConfirmExtractDialog dialog = new ConfirmExtractDialog();
             if (dialog.isToBeShown()) {
@@ -336,10 +338,10 @@ public class BrowserUtil {
         try {
           GuiUtils.runOrInvokeAndWait(r);
         }
-        catch (InvocationTargetException e) {
+        catch (InvocationTargetException ignored) {
           extract.set(false);
         }
-        catch (InterruptedException e) {
+        catch (InterruptedException ignored) {
           extract.set(false);
         }
 
@@ -359,8 +361,10 @@ public class BrowserUtil {
         }
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             new Task.Backgroundable(null, "Extracting files...", true) {
+              @Override
               public void run(@NotNull final ProgressIndicator indicator) {
                 final int size = zipFile.size();
                 final int[] counter = new int[]{0};
@@ -374,6 +378,7 @@ public class BrowserUtil {
                     myImportantOnly = importantOnly;
                   }
 
+                  @Override
                   public boolean accept(@NotNull File dir, @NotNull String name) {
                     indicator.checkCanceled();
                     boolean result = myImportantOnly == myImportantDirs.contains(dir);
@@ -426,24 +431,29 @@ public class BrowserUtil {
       init();
     }
 
+    @Override
     protected boolean isToBeShown() {
       return getGeneralSettingsInstance().isConfirmExtractFiles();
     }
 
+    @Override
     protected void setToBeShown(boolean value, boolean onOk) {
       getGeneralSettingsInstance().setConfirmExtractFiles(value);
     }
 
+    @Override
     protected boolean shouldSaveOptionsOnCancel() {
       return true;
     }
 
+    @Override
     @NotNull
     protected Action[] createActions() {
       setOKButtonText(CommonBundle.getYesButtonText());
       return new Action[]{getOKAction(), getCancelAction()};
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       JPanel panel = new JPanel(new BorderLayout());
       String message = "The files are inside an archive, do you want them to be extracted?";

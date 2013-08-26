@@ -39,7 +39,7 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
 
   public XmlElementDescriptorByType() {}
 
-  public PsiElement getDeclaration(){
+  public XmlTag getDeclaration(){
     return myDescriptorTag;
   }
 

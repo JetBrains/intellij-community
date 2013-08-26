@@ -224,8 +224,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   protected void duplicateError(@NotNull PsiFile file, @NotNull String externalName, @NotNull String text) {
-    VirtualFile virtualFile = file.getVirtualFile();
-    LOG.error(text + "; for signature: '" + externalName + "' in the file " + (virtualFile != null ? virtualFile.getPresentableUrl() : null));
+    LOG.error(text + "; for signature: '" + externalName + "' in the " + file.getVirtualFile());
   }
 
   @NotNull

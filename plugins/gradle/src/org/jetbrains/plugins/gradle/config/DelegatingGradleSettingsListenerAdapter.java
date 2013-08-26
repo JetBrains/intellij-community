@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.settings.DelegatingExternalSystemSett
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 
@@ -39,7 +40,7 @@ public class DelegatingGradleSettingsListenerAdapter extends DelegatingExternalS
   }
 
   @Override
-  public void onPreferLocalGradleDistributionToWrapperChange(boolean currentValue, @NotNull String linkedProjectPath) {
+  public void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath) {
   }
 
   @Override

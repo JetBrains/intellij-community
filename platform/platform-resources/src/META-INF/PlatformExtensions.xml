@@ -3,6 +3,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <appStarter implementation="com.intellij.openapi.diff.DiffApplication"/>
     <appStarter implementation="com.intellij.openapi.diff.MergeApplication"/>
+    <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
     <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
 
     <applicationService serviceInterface="com.intellij.ide.util.PropertiesComponent"

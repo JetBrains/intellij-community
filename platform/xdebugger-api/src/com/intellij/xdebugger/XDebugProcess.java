@@ -207,4 +207,12 @@ public abstract class XDebugProcess {
   public void setLayoutCustomizer(@Nullable XDebugLayoutCustomizer layoutCustomizer) {
     myLayoutCustomizer = layoutCustomizer;
   }
+
+  /**
+   * Add or not SortValuesAction (alphabetically sort)
+   * @todo this action should be moved to "Variables" as gear action
+   */
+  public boolean isValuesCustomSorted() {
+    return false;
+  }
 }

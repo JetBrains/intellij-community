@@ -16,14 +16,16 @@
 
 package com.intellij.openapi.roots.ui.configuration.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.impl.SourceFolderImpl;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
+import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.jps.model.JpsElement;
 
 import javax.swing.*;
 
@@ -31,25 +33,18 @@ import javax.swing.*;
  * @author Eugene Zhuravlev
  * @since Oct 14, 2003
  */
-public class ToggleSourcesStateAction extends ContentEntryEditingAction {
+public class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntryEditingAction {
   private final ContentEntryTreeEditor myEntryTreeEditor;
-  private final boolean myEditTestSources;
+  private final ModuleSourceRootEditHandler<P> myEditHandler;
 
-  public ToggleSourcesStateAction(JTree tree, ContentEntryTreeEditor entryEditor, boolean editTestSources) {
+  public ToggleSourcesStateAction(JTree tree, ContentEntryTreeEditor entryEditor, ModuleSourceRootEditHandler<P> editHandler) {
     super(tree);
     myEntryTreeEditor = entryEditor;
-    myEditTestSources = editTestSources;
+    myEditHandler = editHandler;
     final Presentation templatePresentation = getTemplatePresentation();
-    if (editTestSources) {
-      templatePresentation.setText(ProjectBundle.message("module.toggle.test.sources.action"));
-      templatePresentation.setDescription(ProjectBundle.message("module.toggle.test.sources.action.description"));
-      templatePresentation.setIcon(AllIcons.Modules.TestRoot);
-    }
-    else {
-      templatePresentation.setText(ProjectBundle.message("module.toggle.sources.action"));
-      templatePresentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description"));
-      templatePresentation.setIcon(AllIcons.Modules.SourceRoot);
-    }
+    templatePresentation.setText(editHandler.getRootTypeName());
+    templatePresentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description", editHandler.getRootType()));
+    templatePresentation.setIcon(editHandler.getRootIcon());
   }
 
   @Override
@@ -58,7 +53,7 @@ public class ToggleSourcesStateAction extends ContentEntryEditingAction {
     if (selectedFiles.length == 0) return false;
 
     final ContentEntryEditor editor = myEntryTreeEditor.getContentEntryEditor();
-    return myEditTestSources ? editor.isTestSource(selectedFiles[0]) : editor.isSource(selectedFiles[0]);
+    return myEditHandler.getRootType().equals(editor.getRootType(selectedFiles[0]));
   }
 
   @Override
@@ -71,20 +66,23 @@ public class ToggleSourcesStateAction extends ContentEntryEditingAction {
       final SourceFolder sourceFolder = contentEntryEditor.getSourceFolder(selectedFile);
       if (isSelected) {
         if (sourceFolder == null) { // not marked yet
-          contentEntryEditor.addSourceFolder(selectedFile, myEditTestSources, "");
+          P properties = myEditHandler.createDefaultProperties();
+          contentEntryEditor.addSourceFolder(selectedFile, myEditHandler.getRootType(), properties);
         }
-        else {
-          if (myEditTestSources != sourceFolder.isTestSource()) {
-            final String packagePrefix = sourceFolder.getPackagePrefix();
-            contentEntryEditor.removeSourceFolder(sourceFolder);
-            contentEntryEditor.addSourceFolder(selectedFile, myEditTestSources, packagePrefix);
+        else if (!myEditHandler.getRootType().equals(sourceFolder.getRootType())) {
+          P properties;
+          if (myEditHandler.getRootType().getClass().equals(sourceFolder.getRootType().getClass())) {
+            properties = (P)((SourceFolderImpl)sourceFolder).getJpsElement().getProperties().getBulkModificationSupport().createCopy();
           }
+          else {
+            properties = myEditHandler.createDefaultProperties();
+          }
+          contentEntryEditor.removeSourceFolder(sourceFolder);
+          contentEntryEditor.addSourceFolder(selectedFile, myEditHandler.getRootType(), properties);
         }
       }
-      else {
-        if (sourceFolder != null) { // already marked
-          contentEntryEditor.removeSourceFolder(sourceFolder);
-        }
+      else if (sourceFolder != null) { // already marked
+        contentEntryEditor.removeSourceFolder(sourceFolder);
       }
     }
   }
@@ -92,7 +90,6 @@ public class ToggleSourcesStateAction extends ContentEntryEditingAction {
   @Override
   public void update(final AnActionEvent e) {
     super.update(e);
-    final Presentation presentation = e.getPresentation();
-    presentation.setText(ProjectBundle.message(myEditTestSources ? "module.toggle.test.sources.action" : "module.toggle.sources.action"));
+    e.getPresentation().setText(myEditHandler.getRootTypeName());
   }
 }

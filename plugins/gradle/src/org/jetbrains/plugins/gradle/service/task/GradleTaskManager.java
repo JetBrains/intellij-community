@@ -29,6 +29,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
@@ -50,6 +51,11 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                            @Nullable final GradleExecutionSettings settings,
                            @Nullable final String vmOptions,
                            @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
+
+    if(settings != null && settings.getDistributionType() == DistributionType.WRAPPED) {
+      myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
+    }
+
     Function<ProjectConnection, Void> f = new Function<ProjectConnection, Void>() {
       @Override
       public Void fun(ProjectConnection connection) {

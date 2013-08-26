@@ -52,6 +52,8 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   <P extends JpsElement>
   JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType, @NotNull P properties);
 
+  void addSourceRoot(@NotNull JpsModuleSourceRoot root);
+
   void removeSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType rootType);
 
   JpsDependenciesList getDependenciesList();

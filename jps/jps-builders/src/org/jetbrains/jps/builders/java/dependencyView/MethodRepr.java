@@ -16,16 +16,15 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.asm4.Type;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author: db
@@ -127,7 +126,9 @@ class MethodRepr extends ProtoMember {
                     final String[] e,
                     final Object value) {
     super(a, s, n, TypeRepr.getType(context, Type.getReturnType(d)), value);
-    myExceptions = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, e, new HashSet<TypeRepr.AbstractType>());
+    Set<TypeRepr.AbstractType> typeCollection =
+      e != null ? new THashSet<TypeRepr.AbstractType>(e.length) : Collections.<TypeRepr.AbstractType>emptySet();
+    myExceptions = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, e, typeCollection);
     myArgumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(d));
   }
 
@@ -135,9 +136,9 @@ class MethodRepr extends ProtoMember {
     super(context, in);
     try {
       final DataExternalizer<TypeRepr.AbstractType> externalizer = TypeRepr.externalizer(context);
-      final int size = in.readInt();
+      final int size = DataInputOutputUtil.readINT(in);
       myArgumentTypes = RW.read(externalizer, in, new TypeRepr.AbstractType[size]);
-      myExceptions = (Set<TypeRepr.AbstractType>)RW.read(externalizer, new HashSet<TypeRepr.AbstractType>(), in);
+      myExceptions = (Set<TypeRepr.AbstractType>)RW.read(externalizer, new THashSet<TypeRepr.AbstractType>(0), in);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

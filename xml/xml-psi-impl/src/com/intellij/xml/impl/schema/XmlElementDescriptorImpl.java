@@ -16,17 +16,17 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.openapi.util.Key;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.meta.PsiWritableMetaData;
-import com.intellij.psi.util.ParameterizedCachedValue;
-import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.*;
+import com.intellij.xml.util.XmlEnumeratedValueReference;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,8 @@ import java.util.List;
 /**
  * @author Mike
  */
-public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData, Validator<XmlTag>,
+public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
+  implements XmlElementDescriptor, PsiWritableMetaData, Validator<XmlTag>,
                                                  XmlElementDescriptorAwareAboutChildren {
   protected XmlTag myDescriptorTag;
   protected volatile XmlNSDescriptor NSDescriptor;
@@ -51,8 +52,6 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   public static final String NONQUALIFIED_ATTR_VALUE = "unqualified";
   @NonNls
   private static final String ELEMENT_FORM_DEFAULT = "elementFormDefault";
-  private static final Key<ParameterizedCachedValue<XmlAttributeDescriptor[], XmlTag>> ATTRS_KEY = Key.create("attributes");
-  private ParameterizedCachedValueProvider<XmlAttributeDescriptor[],XmlTag> myCachedValueProvider;
 
   public XmlElementDescriptorImpl(@Nullable XmlTag descriptorTag) {
     myDescriptorTag = descriptorTag;
@@ -60,7 +59,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
   public XmlElementDescriptorImpl() {}
 
-  public PsiElement getDeclaration(){
+  public XmlTag getDeclaration(){
     return myDescriptorTag;
   }
 
@@ -395,11 +394,6 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return CONTENT_TYPE_MIXED;
   }
 
-  @Override
-  public String getDefaultValue() {
-    return myDescriptorTag.getAttributeValue("default");
-  }
-
   @Nullable
   public XmlElementDescriptor getElementDescriptor(final String name) {
       final String localName = XmlUtil.findLocalNameByQualifiedName(name);
@@ -482,8 +476,9 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public String getQualifiedName() {
-    if (!"".equals(getNS())) {
-      return getNS() + ":" + getName();
+    String ns = getNS();
+    if (ns != null && !ns.isEmpty()) {
+      return ns + ":" + getName();
     }
 
     return getName();
@@ -526,6 +521,16 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     if (validator != null) {
       validator.validate(context, host);
     }
+  }
+
+  @Override
+  public PsiReference[] getValueReferences(XmlTag xmlTag, @NotNull String text) {
+    XmlTagValue value = xmlTag.getValue();
+    XmlText[] elements = value.getTextElements();
+    if (elements.length == 0 || xmlTag.getSubTags().length > 0) return PsiReference.EMPTY_ARRAY;
+    return new PsiReference[] {
+      new XmlEnumeratedValueReference(xmlTag, this, ElementManipulators.getValueTextRange(xmlTag))
+    };
   }
 
   public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {

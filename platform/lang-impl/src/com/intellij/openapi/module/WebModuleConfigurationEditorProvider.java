@@ -26,6 +26,6 @@ public class WebModuleConfigurationEditorProvider implements ModuleConfiguration
     if (!WebModuleTypeBase.isWebModule(module)) {
       return ModuleConfigurationEditor.EMPTY;
     }
-    return new ModuleConfigurationEditor[]{new CommonContentEntriesEditor(module.getName(), state, false, false)};
+    return new ModuleConfigurationEditor[]{new CommonContentEntriesEditor(module.getName(), state)};
   }
 }

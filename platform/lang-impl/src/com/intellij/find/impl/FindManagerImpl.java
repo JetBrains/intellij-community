@@ -24,6 +24,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.*;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.livePreview.SearchResults;
+import com.intellij.ide.highlighter.custom.CustomFileHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -48,6 +49,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -437,53 +439,65 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       lang = ((LanguageFileType)ftype).getLanguage();
     }
 
-    if(lang == null) return NOT_FOUND_RESULT;
-
     CommentsLiteralsSearchData data = model.getUserData(ourCommentsLiteralsSearchDataKey);
     if (data == null || !Comparing.equal(data.lastFile, file)) {
-      SyntaxHighlighter lexer = getHighlighter(file, lang);
+      SyntaxHighlighter lexer;
 
       TokenSet tokensOfInterest = TokenSet.EMPTY;
-      final Language finalLang = lang;
-      Set<Language> relevantLanguages = ApplicationManager.getApplication().runReadAction(new Computable<Set<Language>>() {
-        @Override
-        public Set<Language> compute() {
-          THashSet<Language> result = new THashSet<Language>();
+      Set<Language> relevantLanguages = null;
+      if (lang != null) {
+        lexer = getHighlighter(file, lang);
+        final Language finalLang = lang;
+        relevantLanguages = ApplicationManager.getApplication().runReadAction(new Computable<Set<Language>>() {
+          @Override
+          public Set<Language> compute() {
+            THashSet<Language> result = new THashSet<Language>();
 
-          for(Project project:ProjectManager.getInstance().getOpenProjects()) {
-            FileViewProvider viewProvider = PsiManager.getInstance(project).findViewProvider(file);
-            if (viewProvider != null) {
-              result.addAll(viewProvider.getLanguages());
-              break;
+            for(Project project: ProjectManager.getInstance().getOpenProjects()) {
+              FileViewProvider viewProvider = PsiManager.getInstance(project).findViewProvider(file);
+              if (viewProvider != null) {
+                result.addAll(viewProvider.getLanguages());
+                break;
+              }
             }
+
+            if (result.isEmpty()) {
+              result.add(finalLang);
+            }
+            return result;
+          }
+        });
+
+        for (Language relevantLanguage:relevantLanguages) {
+          tokensOfInterest = addTokenTypesForLanguage(model, relevantLanguage, tokensOfInterest);
+        }
+
+        if(model.isInStringLiteralsOnly()) {
+          // TODO: xml does not have string literals defined so we add XmlAttributeValue element type as convenience
+          final Lexer xmlLexer = getHighlighter(null, Language.findLanguageByID("XML")).getHighlightingLexer();
+          final String marker = "xxx";
+          xmlLexer.start("<a href=\"" + marker+ "\" />");
+
+          while (!marker.equals(xmlLexer.getTokenText())) {
+            xmlLexer.advance();
+            if (xmlLexer.getTokenType() == null) break;
           }
 
-          if (result.isEmpty()) {
-            result.add(finalLang);
+          IElementType convenienceXmlAttrType = xmlLexer.getTokenType();
+          if (convenienceXmlAttrType != null) {
+            tokensOfInterest = TokenSet.orSet(tokensOfInterest, TokenSet.create(convenienceXmlAttrType));
           }
-          return result;
         }
-      });
-
-      for (Language relevantLanguage:relevantLanguages) {
-        tokensOfInterest = addTokenTypesForLanguage(model, relevantLanguage, tokensOfInterest);
-      }
-
-      if(model.isInStringLiteralsOnly()) {
-        // TODO: xml does not have string literals defined so we add XmlAttributeValue element type as convenience
-        final Lexer xmlLexer = getHighlighter(null, Language.findLanguageByID("XML")).getHighlightingLexer();
-        final String marker = "xxx";
-        xmlLexer.start("<a href=\"" + marker+ "\" />");
-
-        while (!marker.equals(xmlLexer.getTokenText())) {
-          xmlLexer.advance();
-          if (xmlLexer.getTokenType() == null) break;
+      } else if (ftype instanceof AbstractFileType) {
+        if (model.isInCommentsOnly()) {
+          tokensOfInterest = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
         }
-
-        IElementType convenienceXmlAttrType = xmlLexer.getTokenType();
-        if (convenienceXmlAttrType != null) {
-          tokensOfInterest = TokenSet.orSet(tokensOfInterest, TokenSet.create(convenienceXmlAttrType));
+        if (model.isInStringLiteralsOnly()) {
+          tokensOfInterest = TokenSet.orSet(tokensOfInterest, TokenSet.create(CustomHighlighterTokenType.STRING, CustomHighlighterTokenType.SINGLE_QUOTED_STRING));
         }
+        lexer = new CustomFileHighlighter(((AbstractFileType)ftype).getSyntaxTable());
+      } else {
+        return NOT_FOUND_RESULT;
       }
 
       Matcher matcher = model.isRegularExpressions() ? compileRegExp(model, ""):null;
@@ -493,7 +507,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
 
     final Lexer lexer = data.highlighter.getHighlightingLexer();
-    lexer.start(text, data.startOffset, text.length(), 0);
+    lexer.start(text, model.isForward() && data.startOffset < offset ? data.startOffset : 0, text.length(), 0);
 
     IElementType tokenType;
     TokenSet tokens = data.tokensOfInterest;
@@ -506,21 +520,40 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       if (lexer.getState() == 0) lastGoodOffset = lexer.getTokenStart();
 
       final TextAttributesKey[] keys = data.highlighter.getTokenHighlights(tokenType);
-      if (tokens.contains(tokenType) || (model.isInStringLiteralsOnly() && isHighlightedAsString(keys))) {
+
+      if (tokens.contains(tokenType) ||
+          (model.isInStringLiteralsOnly() && isHighlightedAsString(keys)) ||
+          (model.isInCommentsOnly() && isHighlightedAsDocComment(keys))
+        ) {
 
         int start = lexer.getTokenStart();
 
-        if (start >= offset || !scanningForward) {
+        while(true) {
           FindResultImpl findResult = null;
 
           if (data.searcher != null) {
             int i = data.searcher.scan(text, textArray, start, lexer.getTokenEnd());
-            if (i != -1) findResult = new FindResultImpl(i, i + model.getStringToFind().length());
+
+            if (i != -1 && i >= start) {
+              final int matchEnd = i + model.getStringToFind().length();
+              if (start >= offset || !scanningForward)
+                findResult = new FindResultImpl(i, matchEnd);
+              else {
+                start = matchEnd;
+                continue;
+              }
+            }
           } else {
             data.matcher.reset(text.subSequence(start, lexer.getTokenEnd()));
             if (data.matcher.find()) {
-              int matchStart = data.matcher.start();
-              findResult = new FindResultImpl(start + matchStart, start + data.matcher.end());
+              final int matchEnd = start + data.matcher.end();
+              if (start >= offset || !scanningForward) {
+                findResult = new FindResultImpl(start + data.matcher.start(), matchEnd);
+              }
+              else {
+                start = matchEnd;
+                continue;
+              }
             }
           }
 
@@ -529,10 +562,14 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
               data.startOffset = lastGoodOffset;
               return findResult;
             } else {
-              if (start >= offset) return prevFindResult;
+
+              if (findResult.getStartOffset() >= offset) return prevFindResult;
               prevFindResult = findResult;
+              start = findResult.getEndOffset();
+              continue;
             }
           }
+          break;
         }
       } else {
         Language tokenLang = tokenType.getLanguage();
@@ -547,6 +584,19 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
 
     return prevFindResult;
+  }
+
+  private static boolean isHighlightedAsDocComment(TextAttributesKey... keys) {
+    for (TextAttributesKey key : keys) {
+      if (key == DefaultLanguageHighlighterColors.DOC_COMMENT || key == SyntaxHighlighterColors.DOC_COMMENT) {
+        return true;
+      }
+      final TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
+      if (fallbackAttributeKey != null && isHighlightedAsDocComment(fallbackAttributeKey)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isHighlightedAsString(TextAttributesKey... keys) {

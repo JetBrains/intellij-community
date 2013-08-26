@@ -16,6 +16,7 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,19 +32,22 @@ import static com.intellij.tasks.generic.TemplateVariable.*;
 public class GenericRepository extends BaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance(GenericRepository.class);
 
-  public final PredefinedFactoryVariable SERVER_URL_TEMPLATE_VARIABLE = new PredefinedFactoryVariable("serverUrl") {
+  public final FactoryVariable SERVER_URL_TEMPLATE_VARIABLE = new FactoryVariable("serverUrl") {
+    @NotNull
     @Override
     public String getValue() {
       return GenericRepository.this.getUrl();
     }
   };
-  public final PredefinedFactoryVariable USERNAME_TEMPLATE_VARIABLE = new PredefinedFactoryVariable("username") {
+  public final FactoryVariable USERNAME_TEMPLATE_VARIABLE = new FactoryVariable("username") {
+    @NotNull
     @Override
     public String getValue() {
       return GenericRepository.this.getUsername();
     }
   };
-  public final PredefinedFactoryVariable PASSWORD_TEMPLATE_VARIABLE = new PredefinedFactoryVariable("password", true) {
+  public final FactoryVariable PASSWORD_TEMPLATE_VARIABLE = new FactoryVariable("password", true) {
+    @NotNull
     @Override
     public String getValue() {
       return GenericRepository.this.getPassword();
@@ -71,6 +75,7 @@ public class GenericRepository extends BaseRepositoryImpl {
   private List<TemplateVariable> myTemplateVariables = new ArrayList<TemplateVariable>();
 
   private String mySubtypeName;
+  private boolean myDownloadTasksInSeparateRequests;
 
   /**
    * Serialization constructor
@@ -100,8 +105,9 @@ public class GenericRepository extends BaseRepositoryImpl {
 
     myResponseType = other.getResponseType();
     myTemplateVariables = other.getTemplateVariables();
+    mySubtypeName = other.getSubtypeName();
+    myDownloadTasksInSeparateRequests = other.getDownloadTasksInSeparateRequests();
     myResponseHandlersMap = new EnumMap<ResponseType, ResponseHandler>(ResponseType.class);
-    mySubtypeName = other.mySubtypeName;
     for (Map.Entry<ResponseType, ResponseHandler> e : other.myResponseHandlersMap.entrySet()) {
       ResponseHandler handler = e.getValue().clone();
       handler.setRepository(this);
@@ -113,6 +119,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     myLoginURL = "";
     myTasksListUrl = "";
     mySingleTaskUrl = "";
+    myDownloadTasksInSeparateRequests = false;
     myLoginMethodType = HTTPMethod.GET;
     myTasksListMethodType = HTTPMethod.GET;
     mySingleTaskMethodType = HTTPMethod.GET;
@@ -144,6 +151,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     if (!Comparing.equal(getResponseType(), that.getResponseType())) return false;
     if (!Comparing.equal(getTemplateVariables(), that.getTemplateVariables())) return false;
     if (!Comparing.equal(getResponseHandlers(), that.getResponseHandlers())) return false;
+    if (!Comparing.equal(getDownloadTasksInSeparateRequests(), that.getDownloadTasksInSeparateRequests())) return false;
     return true;
   }
 
@@ -151,7 +159,7 @@ public class GenericRepository extends BaseRepositoryImpl {
   public boolean isConfigured() {
     if (!super.isConfigured()) return false;
     for (TemplateVariable variable : getTemplateVariables()) {
-      if (variable.getIsShownOnFirstTab() && StringUtil.isEmpty(variable.getValue())) {
+      if (variable.isShownOnFirstTab() && StringUtil.isEmpty(variable.getValue())) {
         return false;
       }
     }
@@ -160,16 +168,22 @@ public class GenericRepository extends BaseRepositoryImpl {
 
   @Override
   public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
+    if (StringUtil.isEmpty(myTasksListUrl)) {
+      throw new Exception("'Task list URL' configuration parameter is mandatory");
+    }
     if (!isLoginAnonymously() && !isUseHttpAuthentication()) {
       executeMethod(getLoginMethod());
     }
     List<TemplateVariable> variables = concat(getAllTemplateVariables(),
-                                              new TemplateVariable("max", max),
-                                              new TemplateVariable("since", since));
+                                              new TemplateVariable("max", String.valueOf(max)),
+                                              new TemplateVariable("since", String.valueOf(since)));
     String requestUrl = GenericRepositoryUtil.substituteTemplateVariables(getTasksListUrl(), variables);
     String responseBody = executeMethod(getHttpMethod(requestUrl, myTasksListMethodType));
-    Task[] tasks = getActiveResponseHandler().parseIssues(responseBody);
-    if (!StringUtil.isEmpty(mySingleTaskUrl) && !(myResponseType == ResponseType.TEXT)) {
+    Task[] tasks = getActiveResponseHandler().parseIssues(responseBody, max);
+    if (myResponseType == ResponseType.TEXT) {
+      return tasks;
+    }
+    if (StringUtil.isNotEmpty(mySingleTaskUrl) && myDownloadTasksInSeparateRequests) {
       for (int i = 0; i < tasks.length; i++) {
         tasks[i] = findTask(tasks[i].getId());
       }
@@ -379,5 +393,13 @@ public class GenericRepository extends BaseRepositoryImpl {
 
   public void setSubtypeName(String subtypeName) {
     mySubtypeName = subtypeName;
+  }
+
+  public boolean getDownloadTasksInSeparateRequests() {
+    return myDownloadTasksInSeparateRequests;
+  }
+
+  public void setDownloadTasksInSeparateRequests(boolean downloadTasksInSeparateRequests) {
+    myDownloadTasksInSeparateRequests = downloadTasksInSeparateRequests;
   }
 }

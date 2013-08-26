@@ -18,9 +18,6 @@ package com.intellij.ide;
 import com.intellij.util.lang.UrlClassLoader;
 
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author max
@@ -31,11 +28,8 @@ public class Bootstrap {
   private Bootstrap() { }
 
   public static void main(String[] args, String mainClass, String methodName) throws Exception {
-    main(args, mainClass, methodName, new ArrayList<URL>());
-  }
+    UrlClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(args.length == 0);
 
-  public static void main(String[] args, String mainClass, String methodName, List<URL> classpathElements) throws Exception {
-    UrlClassLoader newClassLoader = ClassloaderUtil.initClassloader(classpathElements, args.length == 0);
     WindowsCommandLineProcessor.ourMirrorClass = Class.forName(WindowsCommandLineProcessor.class.getName(), true, newClassLoader);
 
     Class<?> klass = Class.forName(PLUGIN_MANAGER, true, newClassLoader);

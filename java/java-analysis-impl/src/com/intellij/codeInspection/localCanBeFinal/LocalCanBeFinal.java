@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
   }
 
   @Nullable
-  private List<ProblemDescriptor> checkCodeBlock(final PsiCodeBlock body, InspectionManager manager, boolean onTheFly) {
+  private List<ProblemDescriptor> checkCodeBlock(final PsiCodeBlock body, final InspectionManager manager, final boolean onTheFly) {
     if (body == null) return null;
     final ControlFlow flow;
     try {
@@ -120,9 +120,17 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
 
     final List<PsiVariable> writtenVariables = new ArrayList<PsiVariable>(ControlFlowUtil.getWrittenVariables(flow, start, end, false));
 
+    final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     final HashSet<PsiVariable> ssaVarsSet = new HashSet<PsiVariable>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitCodeBlock(PsiCodeBlock block) {
+        if (block.getParent() instanceof PsiLambdaExpression && block != body) {
+          final List<ProblemDescriptor> descriptors = checkCodeBlock(block, manager, onTheFly);
+          if (descriptors != null) {
+            problems.addAll(descriptors);
+          }
+          return;
+        }
         super.visitCodeBlock(block);
         PsiElement anchor = block;
         if (block.getParent() instanceof PsiSwitchStatement) {
@@ -177,7 +185,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
       }
     });
 
-    ArrayList<PsiVariable> result = new ArrayList<PsiVariable>(ssaVarsSet);
+    final ArrayList<PsiVariable> result = new ArrayList<PsiVariable>(ssaVarsSet);
 
     if (body.getParent() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)body.getParent();
@@ -215,7 +223,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
         iterator.remove();
       }
     }
-    List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>(result.size());
+
     for (PsiVariable variable : result) {
       final PsiIdentifier nameIdenitier = variable.getNameIdentifier();
       PsiElement problemElement = nameIdenitier != null ? nameIdenitier : variable;

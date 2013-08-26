@@ -23,6 +23,10 @@ public class InferLambdaParameterTypeIntentionTest extends IPPTestCase {
     doTest("Expand lambda to (String o) -> {...}");
   }
 
+  public void testFile() {
+    doTest("Expand lambda to (File o) -> {...}");
+  }
+
   public void testTwoParams() {
     doTest("Expand lambda to (String o1, String o2) -> {...}");
   }

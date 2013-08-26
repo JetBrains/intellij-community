@@ -133,10 +133,8 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
       super.visitMethod(method);
       if (ignoreTestCases) {
         final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && TestFrameworks.getInstance().isTestClass(containingClass)) {
-          return;
-        }
-        if (TestUtils.isJUnitTestMethod(method)) {
+        final TestFrameworks testFrameworks = TestFrameworks.getInstance();
+        if (containingClass != null && testFrameworks.isTestOrConfig(containingClass)) {
           return;
         }
       }

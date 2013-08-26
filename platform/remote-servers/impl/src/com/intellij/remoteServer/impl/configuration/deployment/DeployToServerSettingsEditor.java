@@ -22,16 +22,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.configuration.deployment.ArtifactDeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
+import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable;
 import com.intellij.ui.*;
 import com.intellij.util.ui.FormBuilder;
@@ -146,11 +144,9 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   }
 
   private void updateBeforeRunOptions(@Nullable DeploymentSource source, boolean selected) {
-    if (source instanceof ArtifactDeploymentSource) {
-      Artifact artifact = ((ArtifactDeploymentSource)source).getArtifact();
-      if (artifact != null) {
-        BuildArtifactsBeforeRunTaskProvider.setBuildArtifactBeforeRunOption(myServerComboBox, myProject, artifact, selected);
-      }
+    if (source != null) {
+      DeploymentSourceType type = source.getType();
+      type.updateBuildBeforeRunOption(myServerComboBox, myProject, source, selected);
     }
   }
 

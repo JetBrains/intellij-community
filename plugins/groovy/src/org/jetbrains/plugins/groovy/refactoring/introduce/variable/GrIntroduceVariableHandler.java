@@ -22,6 +22,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
+import com.intellij.refactoring.util.CanonicalTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -144,6 +145,24 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   @Override
   protected GroovyIntroduceVariableSettings getSettingsForInplace(final GrIntroduceContext context, final OccurrencesChooser.ReplaceChoice choice) {
     return new GroovyIntroduceVariableSettings() {
+      private final CanonicalTypes.Type myType;
+      private final String myName;
+
+
+      {
+        GrExpression expression = context.getExpression();
+        StringPartInfo stringPart = context.getStringPart();
+        GrVariable var = context.getVar();
+        PsiType type = expression != null ? expression.getType() :
+                       var != null ? var.getType() :
+                       stringPart != null ? stringPart.getLiteral().getType() :
+                       null;
+        myType = type != null ?CanonicalTypes.createTypeWrapper(type) : null;
+
+        myName = new GrVariableNameSuggester(context, new GroovyVariableValidator(context)).suggestNames().iterator().next();
+      }
+
+
       @Override
       public boolean isDeclareFinal() {
         return false;
@@ -152,7 +171,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
       @Nullable
       @Override
       public String getName() {
-        return new GrVariableNameSuggester(context, new GroovyVariableValidator(context)).suggestNames().iterator().next();
+        return myName;
       }
 
       @Override
@@ -163,13 +182,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
       @Nullable
       @Override
       public PsiType getSelectedType() {
-        GrExpression expression = context.getExpression();
-        StringPartInfo stringPart = context.getStringPart();
-        GrVariable var = context.getVar();
-        return expression != null ? expression.getType() :
-               var != null ? var.getType() :
-               stringPart != null ? stringPart.getLiteral().getType() :
-               null;
+        return myType != null ? myType.getType(context.getPlace(), context.getPlace().getManager()) : null;
       }
     };
   }

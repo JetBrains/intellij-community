@@ -40,4 +40,7 @@ public interface DeploymentSource {
   boolean isValid();
 
   boolean isArchive();
+
+  @NotNull
+  DeploymentSourceType<?> getType();
 }

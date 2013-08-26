@@ -119,7 +119,7 @@ public class PersistentHashMapValueStorage {
   private final UnsyncByteArrayInputStream myBufferStreamWrapper = new UnsyncByteArrayInputStream(myBuffer);
   private final DataInputStream myBufferDataStreamWrapper = new DataInputStream(myBufferStreamWrapper);
 
-  public int compactValues(List<PersistentHashMap.CompactionRecordInfo> infos, PersistentHashMapValueStorage storage) throws IOException {
+  public long compactValues(List<PersistentHashMap.CompactionRecordInfo> infos, PersistentHashMapValueStorage storage) throws IOException {
     PriorityQueue<PersistentHashMap.CompactionRecordInfo> records = new PriorityQueue<PersistentHashMap.CompactionRecordInfo>(
       infos.size(), new Comparator<PersistentHashMap.CompactionRecordInfo>() {
         @Override
@@ -141,6 +141,7 @@ public class PersistentHashMapValueStorage {
     long lastConsumedOffset = lastReadOffset;
     long allRecordsStart = 0;
     int fragments = 0;
+    int newFragments = 0;
     int allRecordsLength = 0;
     byte[] stuffFromPreviousRecord = null;
     int bytesRead = (int)(mySize - (mySize / fileBufferLength) * fileBufferLength);
@@ -182,7 +183,7 @@ public class PersistentHashMapValueStorage {
 
           int available = myBufferStreamWrapper.available();
           chunkSize = DataInputOutputUtil.readINT(myBufferDataStreamWrapper);
-          prevChunkAddress = readPrevChunkAddress(info.valueAddress + (available - myBufferStreamWrapper.available()));
+          prevChunkAddress = readPrevChunkAddress(info.valueAddress);
           dataOffset = available - myBufferStreamWrapper.available();
 
           byte[] b;
@@ -236,9 +237,11 @@ public class PersistentHashMapValueStorage {
 
           if (prevChunkAddress == 0) {
             info.newValueAddress = storage.appendBytes(b, 0, chunkSize, info.newValueAddress);
+            ++newFragments;
           } else {
             if (retained > softMaxRetainedLimit && b.length > blockSizeToWriteWhenSoftMaxRetainedLimitIsHit ||
                 retained > maxRetainedLimit) {
+              ++newFragments;
               info.newValueAddress = storage.appendBytes(b, 0, chunkSize, info.newValueAddress);
               info.value = null;
               retained -= b.length;
@@ -264,7 +267,8 @@ public class PersistentHashMapValueStorage {
       lastReadOffset -= bytesRead;
       bytesRead = fileBufferLength;
     }
-    return fragments;
+
+    return fragments | ((long)newFragments << 32);
   }
 
   public static class ReadResult {

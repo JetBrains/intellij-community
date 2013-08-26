@@ -28,12 +28,13 @@ public class MavenModelPropertiesPatcher {
       Map<String, Map<String, List<MavenPluginDescriptor>>> groupMap = map.get(plugin.getArtifactId());
       if (groupMap != null) {
         Map<String, List<MavenPluginDescriptor>> goalsMap = groupMap.get(plugin.getGroupId());
+        if (goalsMap != null) {
+          patch(modelProperties, goalsMap.get(null), null, plugin.getConfigurationElement(), plugin);
 
-        patch(modelProperties, goalsMap.get(null), null, plugin.getConfigurationElement(), plugin);
-
-        for (MavenPlugin.Execution execution : plugin.getExecutions()) {
-          for (String goal : execution.getGoals()) {
-            patch(modelProperties, goalsMap.get(goal), goal, execution.getConfigurationElement(), plugin);
+          for (MavenPlugin.Execution execution : plugin.getExecutions()) {
+            for (String goal : execution.getGoals()) {
+              patch(modelProperties, goalsMap.get(goal), goal, execution.getConfigurationElement(), plugin);
+            }
           }
         }
       }

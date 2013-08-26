@@ -15,20 +15,18 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.CustomReferenceConverter;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.ResolvingConverter;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.references.MavenPathReferenceConverter;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -54,63 +52,12 @@ public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFi
 
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
-    XmlElement xmlElement = genericDomValue.getXmlElement();
-
-    if (xmlElement != null && xmlElement.getText().contains("${")) return PsiReference.EMPTY_ARRAY;
-
-    return createReferences(element, true);
-  }
-
-  @NotNull
-  public static PsiReference[] createReferences(@NotNull final PsiElement psiElement, final boolean soft) {
-    FileReferenceSet set = new MyFileReferenceSet(psiElement, soft);
-
-    return set.getAllReferences();
-  }
-
-  private static class MyFileReferenceSet extends FileReferenceSet {
-    private final boolean mySoft;
-
-    public MyFileReferenceSet(PsiElement psiElement, boolean soft) {
-      super(psiElement);
-      mySoft = soft;
-    }
-
-    @Override
-    public boolean isAbsolutePathReference() {
-      return true;
-    }
-
-    @Override
-    protected boolean isSoft() {
-      return mySoft;
-    }
-
-    @NotNull
-    @Override
-    public Collection<PsiFileSystemItem> getDefaultContexts() {
-      Collection<PsiFileSystemItem> systemItemCollection = super.getDefaultContexts();
-      if (isAbsolutePathReference()) {
-        VirtualFile vFile = LocalFileSystem.getInstance().getRoot();
-
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          assert vFile != null : ""; //
-        }
-
-        if (vFile != null) {
-          final PsiDirectory directory = getElement().getManager().findDirectory(vFile);
-
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            assert directory != null : "for element: " + getElement().getText(); //
-          }
-
-          if (directory != null) {
-            systemItemCollection = new THashSet<PsiFileSystemItem>(systemItemCollection);
-            systemItemCollection.add(directory);
-          }
-        }
+    return MavenPathReferenceConverter.createReferences(genericDomValue, element, new Condition<PsiFileSystemItem>() {
+      @Override
+      public boolean value(PsiFileSystemItem item) {
+        return (item instanceof PsiDirectory) || item.getName().endsWith(".jar");
       }
-      return systemItemCollection;
-    }
+    }, true);
   }
 }
+

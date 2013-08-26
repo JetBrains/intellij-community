@@ -81,7 +81,7 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
                   final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
                   if (classReference != null) {
                     holder.registerProblem(classReference,
-                                           "Anonymous type can be replaced with method reference", new ReplaceWithMethodRefFix());
+                                           "Anonymous #ref #loc can be replaced with method reference", new ReplaceWithMethodRefFix());
                   }
                 }
               }

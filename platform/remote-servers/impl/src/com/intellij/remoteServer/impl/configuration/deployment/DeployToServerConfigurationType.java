@@ -19,14 +19,12 @@ import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationTypeBase;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
-import com.intellij.remoteServer.configuration.deployment.ArtifactDeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
+import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,12 +63,8 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
         DeploymentSource source = ContainerUtil.getFirstItem(sources);
         if (source != null) {
           deployConfiguration.setDeploymentSource(source);
-          if (source instanceof ArtifactDeploymentSource) {
-            Artifact artifact = ((ArtifactDeploymentSource)source).getArtifact();
-            if (artifact != null) {
-              BuildArtifactsBeforeRunTaskProvider.setBuildArtifactBeforeRun(configuration.getProject(), configuration, artifact);
-            }
-          }
+          DeploymentSourceType type = source.getType();
+          type.setBuildBeforeRunTask(configuration, source);
         }
       }
     }

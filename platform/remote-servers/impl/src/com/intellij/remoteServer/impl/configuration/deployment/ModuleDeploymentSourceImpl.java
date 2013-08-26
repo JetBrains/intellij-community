@@ -21,6 +21,7 @@ import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import com.intellij.remoteServer.configuration.deployment.ModuleDeploymentSource;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -112,5 +113,11 @@ public class ModuleDeploymentSourceImpl implements ModuleDeploymentSource {
   @Override
   public int hashCode() {
     return myPointer.hashCode();
+  }
+
+  @NotNull
+  @Override
+  public DeploymentSourceType<?> getType() {
+    return DeploymentSourceType.EP_NAME.findExtension(ModuleDeploymentSourceType.class);
   }
 }

@@ -1,5 +1,6 @@
 package com.intellij.tasks.generic;
 
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
@@ -7,12 +8,14 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,6 +29,7 @@ import java.util.Map;
 import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
 import static com.intellij.tasks.generic.GenericRepositoryUtil.createPlaceholdersList;
 import static com.intellij.tasks.generic.GenericRepositoryUtil.prettifyVariableName;
+import static com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
 
 /**
  * @author Evgeny.Zakrevsky
@@ -49,6 +53,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
   private JButton myResetToDefaultsButton;
   private JPanel myCardPanel;
   private JBLabel mySingleTaskURLLabel;
+  private JBCheckBox myDownloadTasksInSeparateRequests;
 
   private Map<JTextField, TemplateVariable> myField2Variable;
   private Map<JRadioButton, ResponseType> myRadio2ResponseType;
@@ -100,6 +105,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     installListener(myLoginURLText);
     installListener(myTasksListURLText);
     installListener(mySingleTaskURLText);
+    installListener(myDownloadTasksInSeparateRequests);
     myTabbedPane.addTab("Server configuration", myPanel);
 
     // Put appropriate configuration components on the card panel
@@ -125,7 +131,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
           myRepository.setTemplateVariables(ContainerUtil.filter(dialog.getTemplateVariables(), new Condition<TemplateVariable>() {
             @Override
             public boolean value(TemplateVariable variable) {
-              return !variable.getIsPredefined();
+              return !variable.isReadOnly();
             }
           }));
           myCustomPanel.removeAll();
@@ -147,7 +153,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
       @Override
       public void actionPerformed(final ActionEvent e) {
         myRepository.resetToDefaults();
-        // XXX: Why clone() here?
+        // TODO: look closely
         reset(myRepository.clone());
       }
     });
@@ -156,6 +162,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     selectCardByResponseType();
     loginUrlEnablingChanged();
     singleTaskUrlEnablingChanged();
+    myDownloadTasksInSeparateRequests.setSelected(myRepository.getDownloadTasksInSeparateRequests());
   }
 
   private void singleTaskUrlEnablingChanged() {
@@ -179,8 +186,8 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     myField2Variable = new IdentityHashMap<JTextField, TemplateVariable>();
     FormBuilder builder = FormBuilder.createFormBuilder();
     for (final TemplateVariable variable : myRepository.getTemplateVariables()) {
-      if (variable.getIsShownOnFirstTab()) {
-        JTextField field = variable.getIsHidden() ? new JPasswordField(variable.getValue()) : new JTextField(variable.getValue());
+      if (variable.isShownOnFirstTab()) {
+        JTextField field = variable.isHidden() ? new JPasswordField(variable.getValue()) : new JTextField(variable.getValue());
         myField2Variable.put(field, variable);
         installListener(field);
         JBLabel label = new JBLabel(prettifyVariableName(variable.getName()) + ":", SwingConstants.RIGHT);
@@ -202,6 +209,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     selectRadioButtonByResponseType();
     selectCardByResponseType();
     loginUrlEnablingChanged();
+    myDownloadTasksInSeparateRequests.setSelected(myRepository.getDownloadTasksInSeparateRequests());
   }
 
   private void selectRadioButtonByResponseType() {
@@ -227,6 +235,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     myRepository.setTasksListMethodType(HTTPMethod.valueOf((String)myTasksListMethodTypeComboBox.getSelectedItem()));
     myRepository.setSingleTaskMethodType(HTTPMethod.valueOf((String)mySingleTaskMethodComboBox.getSelectedItem()));
 
+    myRepository.setDownloadTasksInSeparateRequests(myDownloadTasksInSeparateRequests.isSelected());
    for (Map.Entry<JTextField, TemplateVariable> entry : myField2Variable.entrySet()) {
       TemplateVariable variable = entry.getValue();
       JTextField field = entry.getKey();
@@ -243,14 +252,24 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
   private void createUIComponents() {
     List<String> placeholders = createPlaceholdersList(myRepository);
     myLoginURLText = createTextFieldWithCompletion(myRepository.getLoginUrl(), placeholders);
-    myTasksListURLText = createTextFieldWithCompletion(myRepository.getTasksListUrl(),
-                                                       concat(placeholders, "{max}", "{since}"));
-    mySingleTaskURLText = createTextFieldWithCompletion(myRepository.getSingleTaskUrl(),
-                                                        concat(placeholders, "{id}"));
+    myTasksListURLText = createTextFieldWithCompletion(myRepository.getTasksListUrl(), concat(placeholders, "{max}", "{since}"));
+    mySingleTaskURLText = createTextFieldWithCompletion(myRepository.getSingleTaskUrl(), concat(placeholders, "{id}"));
   }
 
-  private TextFieldWithAutoCompletion<String> createTextFieldWithCompletion(String text, List<String> variants) {
-    return TextFieldWithAutoCompletion.create(myProject, variants, true, text);
+  private TextFieldWithAutoCompletion<String> createTextFieldWithCompletion(String text, final List<String> variants) {
+    final StringsCompletionProvider provider = new StringsCompletionProvider(variants, null) {
+        @Nullable
+        @Override
+        public String getPrefix(@NotNull CompletionParameters parameters) {
+          final String text = parameters.getOriginalFile().getText();
+          final int i = text.lastIndexOf('{', parameters.getOffset() - 1);
+          if (i < 0) {
+            return "";
+          }
+          return text.substring(i, parameters.getOffset());
+        }
+      };
+    return new TextFieldWithAutoCompletion<String>(myProject, provider, true, text);
   }
 
   @Override

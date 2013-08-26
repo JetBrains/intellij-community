@@ -19,13 +19,17 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,9 +89,7 @@ public final class ScriptRunnerUtil {
         if (outputTypeFilter.value(outputType)) {
           final String text = event.getText();
           outputBuilder.append(text);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(text);
-          }
+          LOG.debug(text);
         }
       }
     });
@@ -96,18 +98,6 @@ public final class ScriptRunnerUtil {
       throw new ExecutionException(ExecutionBundle.message("script.execution.timeout", String.valueOf(timeout / 1000)));
     }
     return outputBuilder.toString();
-  }
-
-  @Nullable
-  private static File getShell() {
-    final String shell = System.getenv("SHELL");
-    if (shell != null && (shell.contains("bash") || shell.contains("zsh"))) {
-      File file = new File(shell);
-      if (file.isAbsolute() && file.isFile() && file.canExecute()) {
-        return file;
-      }
-    }
-    return null;
   }
 
   @NotNull
@@ -124,6 +114,27 @@ public final class ScriptRunnerUtil {
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters,
                                          @Nullable Charset charset) throws ExecutionException {
+    if (SystemInfo.isMac) {
+      File exeFile = new File(exePath);
+      if (!exeFile.isAbsolute() && !exePath.contains(File.separator)) {
+        File originalResolvedExeFile = PathEnvironmentVariableUtil.findInOriginalPath(exePath);
+        if (originalResolvedExeFile == null) {
+          File resolvedExeFile = PathEnvironmentVariableUtil.findInPath(exePath);
+          if (resolvedExeFile != null) {
+            exePath = resolvedExeFile.getAbsolutePath();
+          }
+        }
+      }
+    }
+    return doExecute(exePath, workingDirectory, scriptFile, parameters, charset);
+  }
+
+  @NotNull
+  private static OSProcessHandler doExecute(@NotNull String exePath,
+                                            @Nullable String workingDirectory,
+                                            @Nullable VirtualFile scriptFile,
+                                            String[] parameters,
+                                            @Nullable Charset charset) throws ExecutionException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(exePath);
     commandLine.setPassParentEnvironment(true);
@@ -136,13 +147,15 @@ public final class ScriptRunnerUtil {
       commandLine.setWorkDirectory(workingDirectory);
     }
 
-    LOG.debug("Command line: " + commandLine.getCommandLineString());
-    LOG.debug("Command line env: " + commandLine.getEnvironment());
+    LOG.debug("Command line: ", commandLine.getCommandLineString());
+    LOG.debug("Command line env: ", commandLine.getEnvironment());
 
-    final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(),
-                                                                      charset == null
-                                                                      ? EncodingManager.getInstance().getDefaultCharset()
-                                                                      : charset);
+    if (charset == null) {
+      charset = ObjectUtils.notNull(EncodingManager.getInstance().getDefaultCharset(), CharsetToolkit.UTF8_CHARSET);
+    }
+    final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine.createProcess(),
+                                                                      commandLine.getCommandLineString(),
+                                                                      charset);
     if (LOG.isDebugEnabled()) {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
@@ -152,7 +165,6 @@ public final class ScriptRunnerUtil {
       });
     }
 
-    //ProcessTerminatedListener.attach(processHandler, project);
     return processHandler;
   }
 
@@ -161,8 +173,7 @@ public final class ScriptRunnerUtil {
                                                                   @Nullable String workingDirectory,
                                                                   long timeout,
                                                                   Condition<Key> scriptOutputType,
-                                                                  @NonNls String... parameters)
-    throws ExecutionException {
+                                                                  @NonNls String... parameters) throws ExecutionException {
     final OSProcessHandler processHandler = execute(exePathString, workingDirectory, scriptFile, parameters);
 
     ScriptOutput output = new ScriptOutput(scriptOutputType);
@@ -173,7 +184,7 @@ public final class ScriptRunnerUtil {
       LOG.warn("Process did not complete in " + timeout / 1000 + "s");
       throw new ExecutionException(ExecutionBundle.message("script.execution.timeout", String.valueOf(timeout / 1000)));
     }
-    LOG.debug("script output: " + output.myFilteredOutput);
+    LOG.debug("script output: ", output.myFilteredOutput);
     return output;
   }
 

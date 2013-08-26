@@ -68,7 +68,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
   public JavaDocCompletionContributor() {
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME), new TagChooser());
 
-    extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocTagValue.class), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocComment.class), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
@@ -85,12 +85,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
           for (final CompletionElement _item : processor.getResults()) {
             final Object element = _item.getElement();
-            LookupItem item = element instanceof PsiMethod ? new JavaMethodCallElement((PsiMethod)element) {
-              @Override
-              public void handleInsert(InsertionContext context) {
-                new MethodSignatureInsertHandler().handleInsert(context, this);
-              }
-            } : (LookupItem)LookupItemUtil.objectToLookupItem(element);
+            LookupItem item = createLookupItem(element);
             if (onlyConstants) {
               Object o = item.getObject();
               if (!(o instanceof PsiField)) continue;
@@ -108,6 +103,24 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
           JavaCompletionContributor.addAllClasses(parameters, result, new InheritorsHolder(position, result));
         }
+      }
+
+      private LookupItem createLookupItem(final Object element) {
+        if (element instanceof PsiMethod) {
+          return new JavaMethodCallElement((PsiMethod)element) {
+            @Override
+            public void handleInsert(InsertionContext context) {
+              new MethodSignatureInsertHandler().handleInsert(context, this);
+            }
+          };
+        }
+        if (element instanceof PsiClass) {
+          JavaPsiClassReferenceElement classElement = new JavaPsiClassReferenceElement((PsiClass)element);
+          classElement.setInsertHandler(JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER);
+          return classElement;
+        }
+
+        return (LookupItem)LookupItemUtil.objectToLookupItem(element);
       }
     });
   }

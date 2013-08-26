@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 public class GroovyEnumerationNamingConventionInspection extends ConventionInspection {
 
@@ -32,7 +31,7 @@ public class GroovyEnumerationNamingConventionInspection extends ConventionInspe
         return "Enumeration naming convention";
     }
 
-    protected GroovyFix buildFix(PsiElement location) {
+    protected GroovyFix buildFix(@NotNull PsiElement location) {
         return new RenameFix();
     }
 
@@ -63,27 +62,24 @@ public class GroovyEnumerationNamingConventionInspection extends ConventionInspe
         return DEFAULT_MAX_LENGTH;
     }
 
+    @NotNull
     public BaseInspectionVisitor buildVisitor() {
         return new NamingConventionsVisitor();
     }
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
+      @Override
+      public void visitEnumDefinition(GrEnumTypeDefinition aClass) {
+        super.visitEnumDefinition(aClass);
 
-        public void visitTypeDefinition(GrTypeDefinition grTypeDefinition) {
-            super.visitTypeDefinition(grTypeDefinition);
-            if (!(grTypeDefinition instanceof GrEnumTypeDefinition)) {
-                return;
-            }
-            final GrEnumTypeDefinition aClass = (GrEnumTypeDefinition) grTypeDefinition;
-
-            final String name = aClass.getName();
-            if (name == null) {
-                return;
-            }
-            if (isValid(name)) {
-                return;
-            }
-            registerClassError(aClass, name);
+        final String name = aClass.getName();
+        if (name == null) {
+          return;
         }
+        if (isValid(name)) {
+          return;
+        }
+        registerClassError(aClass, name);
+      }
     }
 }

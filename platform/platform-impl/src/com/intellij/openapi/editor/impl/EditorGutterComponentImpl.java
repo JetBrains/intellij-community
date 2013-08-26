@@ -110,7 +110,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       installDnD();
     }
     setOpaque(true);
-    if (isDestructionFreeMode()) {
+    if (isDistractionFreeMode()) {
       editor.getComponent().addComponentListener(new ComponentAdapter(){
         @Override
         public void componentResized(ComponentEvent event) {
@@ -287,7 +287,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     if (w == 0) return;
 
-    final Color background = isDestructionFreeMode() ? myEditor.getBackgroundColor() : getBackground();
+    final Color background = isDistractionFreeMode() ? myEditor.getBackgroundColor() : getBackground();
     paintBackground(g, clip, getAnnotationsAreaOffset(), w, background);
 
     Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
@@ -327,7 +327,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       x += myTextAnnotationGutterSizes.get(i);
     }
 
-    if (!isDestructionFreeMode()) {
+    if (!isDistractionFreeMode()) {
       UIUtil.drawVDottedLine((Graphics2D)g, getAnnotationsAreaOffset() + w - 1, clip.y, clip.y + clip.height, null, getOutlineColor(false));
     }
   }
@@ -391,14 +391,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public Color getBackground() {
     if (myBackgroundColor == null) {
       EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
-      boolean distractionMode = isDestructionFreeMode();
+      boolean distractionMode = isDistractionFreeMode();
       Color color = distractionMode ? colorsScheme.getDefaultBackground() : colorsScheme.getColor(EditorColors.GUTTER_BACKGROUND);
       myBackgroundColor = color == null ? new Color(0xF0F0F0) : color;
     }
     return myBackgroundColor;
   }
 
-  private boolean isDestructionFreeMode() {
+  private boolean isDistractionFreeMode() {
     return Registry.is("editor.distraction.free.mode");
   }
 
@@ -571,21 +571,21 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       myTextAnnotationGuttersSize += gutterSize;
     }
 
-    if (myEditor.getComponent().isShowing() && isDestructionFreeMode() && !isMirrored()) {
+    if (myEditor.getComponent().isShowing() && isDistractionFreeMode() && !isMirrored()) {
       centerEditorByAnnotationArea();
     }
   }
 
   private void centerEditorByAnnotationArea() {
+    EditorSettings settings = myEditor.getSettings();
+    int rightMargin = settings.getRightMargin(myEditor.getProject());
+    if (rightMargin <= 0) return;
+
     IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myEditor.getProject());
 
     JComponent editorComponent = myEditor.getComponent();
     RelativePoint point = new RelativePoint(editorComponent, new Point(0, 0));
     Point editorLocationInWindow = point.getPoint(ideFrame.getComponent());
-
-    EditorSettings settings = myEditor.getSettings();
-    int rightMargin = settings.getRightMargin(myEditor.getProject());
-    if (rightMargin <= 0) return;
 
     int editorLocationX = (int)editorLocationInWindow.getX();
     int rightMarginX = rightMargin * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + editorLocationX;

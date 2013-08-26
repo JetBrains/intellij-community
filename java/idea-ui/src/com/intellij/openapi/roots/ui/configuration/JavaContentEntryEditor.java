@@ -18,27 +18,37 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ExcludeFolder;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.util.List;
+
 public abstract class JavaContentEntryEditor extends ContentEntryEditor {
   private final CompilerModuleExtension myCompilerExtension;
 
-  public JavaContentEntryEditor(final String contentEntryUrl) {
-    super(contentEntryUrl, true, true);
+  public JavaContentEntryEditor(final String contentEntryUrl, List<ModuleSourceRootEditHandler<?>> moduleSourceRootEditHandlers) {
+    super(contentEntryUrl, moduleSourceRootEditHandlers);
     myCompilerExtension = getModel().getModuleExtension(CompilerModuleExtension.class);
   }
 
   @Override
   protected ContentRootPanel createContentRootPane() {
-    return new JavaContentRootPanel(this) {
+    return new ContentRootPanel(this, getEditHandlers()) {
       @Nullable
       @Override
       protected ContentEntry getContentEntry() {
         return JavaContentEntryEditor.this.getContentEntry();
+      }
+
+      @Nullable
+      @Override
+      protected JComponent createRootPropertiesEditor(ModuleSourceRootEditHandler<?> editor, SourceFolder folder) {
+        return editor.createPropertiesEditor(folder, this, myCallback);
       }
     };
   }

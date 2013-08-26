@@ -130,21 +130,6 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
     return editor;
   }
 
-  @Nullable
-  private static String getCompletionShortcutText() {
-    final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
-    if (action != null) {
-      final ShortcutSet shortcutSet = action.getShortcutSet();
-      if (shortcutSet != null) {
-        final Shortcut[] shortcuts = shortcutSet.getShortcuts();
-        if (shortcuts.length > 0) {
-          return KeymapUtil.getShortcutText(shortcuts[0]);
-        }
-      }
-    }
-    return null;
-  }
-
   public static class StringsCompletionProvider extends TextFieldWithAutoCompletionListProvider<String> {
     @Nullable private final Icon myIcon;
 

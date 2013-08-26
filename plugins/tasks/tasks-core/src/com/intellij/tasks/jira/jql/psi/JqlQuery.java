@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 public interface JqlQuery extends JqlElement {
   @Nullable
   JqlClause getClause();
-  boolean isOrdered();
-  @NotNull
-  JqlSortKey[] getOrderKeys();
+
+  @Nullable
+  JqlOrderBy getOrderBy();
 }

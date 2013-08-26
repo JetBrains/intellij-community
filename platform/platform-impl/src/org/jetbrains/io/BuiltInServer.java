@@ -19,6 +19,7 @@ import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -34,6 +35,7 @@ import org.jetbrains.ide.PooledThreadExecutor;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.util.Map;
 
 public class BuiltInServer implements Disposable {
@@ -68,7 +70,7 @@ public class BuiltInServer implements Disposable {
       bootstrap.childHandler(new ChannelInitializer() {
         @Override
         protected void initChannel(Channel channel) throws Exception {
-          channel.pipeline().addLast(channelRegistrar, portUnificationServerHandler);
+          channel.pipeline().addLast(channelRegistrar, portUnificationServerHandler, ChannelExceptionHandler.getInstance());
         }
       });
     }
@@ -79,7 +81,7 @@ public class BuiltInServer implements Disposable {
         protected void initChannel(Channel channel) throws Exception {
           channel.pipeline().addLast(channelRegistrar);
           NettyUtil.initHttpHandlers(channel.pipeline());
-          channel.pipeline().addLast(handler);
+          channel.pipeline().addLast(handler, ChannelExceptionHandler.getInstance());
         }
       });
     }
@@ -106,6 +108,23 @@ public class BuiltInServer implements Disposable {
     InetAddress loopbackAddress = NetUtils.getLoopbackAddress();
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;
+
+      // we check if any port free too
+      if (!SystemInfo.isLinux && (!SystemInfo.isWindows || SystemInfo.isWinVistaOrNewer)) {
+        try {
+          ServerSocket serverSocket = new ServerSocket();
+          try {
+            serverSocket.bind(new InetSocketAddress(port), 1);
+          }
+          finally {
+            serverSocket.close();
+          }
+        }
+        catch (IOException ignored) {
+          continue;
+        }
+      }
+
       ChannelFuture future = bootstrap.bind(loopbackAddress, port).awaitUninterruptibly();
       if (future.isSuccess()) {
         channelRegistrar.add(future.channel());

@@ -339,7 +339,17 @@ public class ArrayUtil extends ArrayUtilRt {
     return result;
   }
 
+  @NotNull
+  public static byte[] prepend(byte element, @NotNull byte[] array) {
+    int length = array.length;
+    final byte[] result = new byte[length + 1];
+    result[0] = element;
+    System.arraycopy(array, 0, result, 1, length);
+    return result;
+  }
+
   public static <T> T[] append(@NotNull final T[] src, final T element, @NotNull ArrayFactory<T> factory) {
+
     int length = src.length;
     T[] result = factory.create(length + 1);
     System.arraycopy(src, 0, result, 0, length);

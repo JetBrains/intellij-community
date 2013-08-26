@@ -255,6 +255,26 @@ public abstract class GroovyElementVisitor {
     visitElement(typeDefinition);
   }
 
+  public void visitClassDefinition(GrClassDefinition classDefinition) {
+    visitTypeDefinition(classDefinition);
+  }
+
+  public void visitEnumDefinition(GrEnumTypeDefinition enumDefinition) {
+    visitTypeDefinition(enumDefinition);
+  }
+
+  public void visitInterfaceDefinition(GrInterfaceDefinition interfaceDefinition) {
+    visitTypeDefinition(interfaceDefinition);
+  }
+
+  public void visitAnonymousClassDefinition(GrAnonymousClassDefinition anonymousClassDefinition) {
+    visitTypeDefinition(anonymousClassDefinition);
+  }
+
+  public void visitAnnotationTypeDefinition(GrAnnotationTypeDefinition annotationTypeDefinition) {
+    visitTypeDefinition(annotationTypeDefinition);
+  }
+
   public void visitExtendsClause(GrExtendsClause extendsClause) {
     visitElement(extendsClause);
   }

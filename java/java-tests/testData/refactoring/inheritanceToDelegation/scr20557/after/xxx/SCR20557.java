@@ -15,20 +15,154 @@ public class SCR20557 {
 
     private final MyResultSet myResultSet = new MyResultSet();
 
+    protected abstract Object getObject(int columnIndex, Map<String, Class<?>> map)
+        throws SQLException;
+
+    protected abstract Object getObject(String columnLabel, Map<String, Class<?>> map)
+          throws SQLException;
+
+    protected abstract RowId getRowId(int columnIndex) throws SQLException;
+
+    protected abstract RowId getRowId(String columnLabel) throws SQLException;
+
+    protected abstract void updateRowId(int columnIndex, RowId x) throws SQLException;
+
+    protected abstract void updateRowId(String columnLabel, RowId x) throws SQLException;
+
+    protected abstract int getHoldability() throws SQLException;
+
+    protected abstract boolean isClosed() throws SQLException;
+
+    protected abstract void updateNString(int columnIndex, String nString) throws SQLException;
+
+    protected abstract void updateNString(String columnLabel, String nString) throws SQLException;
+
+    protected abstract void updateNClob(int columnIndex, NClob nClob) throws SQLException;
+
+    protected abstract void updateNClob(String columnLabel, NClob nClob) throws SQLException;
+
+    protected abstract NClob getNClob(int columnIndex) throws SQLException;
+
+    protected abstract NClob getNClob(String columnLabel) throws SQLException;
+
+    protected abstract SQLXML getSQLXML(int columnIndex) throws SQLException;
+
+    protected abstract SQLXML getSQLXML(String columnLabel) throws SQLException;
+
+    protected abstract void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException;
+
+    protected abstract void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException;
+
+    protected abstract String getNString(int columnIndex) throws SQLException;
+
+    protected abstract String getNString(String columnLabel) throws SQLException;
+
+    protected abstract Reader getNCharacterStream(int columnIndex) throws SQLException;
+
+    protected abstract Reader getNCharacterStream(String columnLabel) throws SQLException;
+
+    protected abstract void updateNCharacterStream(int columnIndex,
+                                                   Reader x,
+                                                   long length) throws SQLException;
+
+    protected abstract void updateNCharacterStream(String columnLabel,
+                                                   Reader reader,
+                                                   long length) throws SQLException;
+
+    protected abstract void updateAsciiStream(int columnIndex,
+                                              InputStream x,
+                                              long length) throws SQLException;
+
+    protected abstract void updateBinaryStream(int columnIndex,
+                                               InputStream x,
+                                               long length) throws SQLException;
+
+    protected abstract void updateCharacterStream(int columnIndex,
+                                                  Reader x,
+                                                  long length) throws SQLException;
+
+    protected abstract void updateAsciiStream(String columnLabel,
+                                              InputStream x,
+                                              long length) throws SQLException;
+
+    protected abstract void updateBinaryStream(String columnLabel,
+                                               InputStream x,
+                                               long length) throws SQLException;
+
+    protected abstract void updateCharacterStream(String columnLabel,
+                                                  Reader reader,
+                                                  long length) throws SQLException;
+
+    protected abstract void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException;
+
+    protected abstract void updateBlob(String columnLabel, InputStream inputStream, long length) throws SQLException;
+
+    protected abstract void updateClob(int columnIndex, Reader reader, long length) throws SQLException;
+
+    protected abstract void updateClob(String columnLabel, Reader reader, long length) throws SQLException;
+
+    protected abstract void updateNClob(int columnIndex, Reader reader, long length) throws SQLException;
+
+    protected abstract void updateNClob(String columnLabel, Reader reader, long length) throws SQLException;
+
+    protected abstract void updateNCharacterStream(int columnIndex,
+                                                   Reader x) throws SQLException;
+
+    protected abstract void updateNCharacterStream(String columnLabel,
+                                                   Reader reader) throws SQLException;
+
+    protected abstract void updateAsciiStream(int columnIndex,
+                                              InputStream x) throws SQLException;
+
+    protected abstract void updateBinaryStream(int columnIndex,
+                                               InputStream x) throws SQLException;
+
+    protected abstract void updateCharacterStream(int columnIndex,
+                                                  Reader x) throws SQLException;
+
+    protected abstract void updateAsciiStream(String columnLabel,
+                                              InputStream x) throws SQLException;
+
+    protected abstract void updateBinaryStream(String columnLabel,
+                                               InputStream x) throws SQLException;
+
+    protected abstract void updateCharacterStream(String columnLabel,
+                                                  Reader reader) throws SQLException;
+
+    protected abstract void updateBlob(int columnIndex, InputStream inputStream) throws SQLException;
+
+    protected abstract void updateBlob(String columnLabel, InputStream inputStream) throws SQLException;
+
+    protected abstract void updateClob(int columnIndex, Reader reader) throws SQLException;
+
+    protected abstract void updateClob(String columnLabel, Reader reader) throws SQLException;
+
+    protected abstract void updateNClob(int columnIndex, Reader reader) throws SQLException;
+
+    protected abstract void updateNClob(String columnLabel, Reader reader) throws SQLException;
+
+    protected abstract <T> T getObject(int columnIndex, Class<T> type) throws SQLException;
+
+    protected abstract <T> T getObject(String columnLabel, Class<T> type) throws SQLException;
+
+    protected abstract <T> T unwrap(Class<T> iface) throws SQLException;
+
+    protected abstract boolean isWrapperFor(Class<?> iface) throws SQLException;
+
     public Date getDate(int columnIndex) throws SQLException {
         return myResultSet.getDate(columnIndex);
     }
 
-    public Date getDate(String columnName) throws SQLException {
-        return myResultSet.getDate(columnName);
+    public Date getDate(String columnLabel) throws SQLException {
+        return myResultSet.getDate(columnLabel);
     }
 
     public Date getDate(int columnIndex, Calendar cal) throws SQLException {
         return myResultSet.getDate(columnIndex, cal);
     }
 
-    public Date getDate(String columnName, Calendar cal) throws SQLException {
-        return myResultSet.getDate(columnName, cal);
+    public Date getDate(String columnLabel, Calendar cal) throws SQLException {
+        return myResultSet.getDate(columnLabel, cal);
     }
 
     private class MyResultSet implements ResultSet {
@@ -527,6 +661,222 @@ public class SCR20557 {
 
         public boolean relative(int rows) throws SQLException {
           return false;
+        }
+
+        public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
+            return SCR20557.this.getObject(columnIndex, map);
+        }
+
+        public Object getObject(String columnLabel, Map<String, Class<?>> map) throws SQLException {
+            return SCR20557.this.getObject(columnLabel, map);
+        }
+
+        public RowId getRowId(int columnIndex) throws SQLException {
+            return SCR20557.this.getRowId(columnIndex);
+        }
+
+        public RowId getRowId(String columnLabel) throws SQLException {
+            return SCR20557.this.getRowId(columnLabel);
+        }
+
+        public void updateRowId(int columnIndex, RowId x) throws SQLException {
+            SCR20557.this.updateRowId(columnIndex, x);
+        }
+
+        public void updateRowId(String columnLabel, RowId x) throws SQLException {
+            SCR20557.this.updateRowId(columnLabel, x);
+        }
+
+        public int getHoldability() throws SQLException {
+            return SCR20557.this.getHoldability();
+        }
+
+        public boolean isClosed() throws SQLException {
+            return SCR20557.this.isClosed();
+        }
+
+        public void updateNString(int columnIndex, String nString) throws SQLException {
+            SCR20557.this.updateNString(columnIndex, nString);
+        }
+
+        public void updateNString(String columnLabel, String nString) throws SQLException {
+            SCR20557.this.updateNString(columnLabel, nString);
+        }
+
+        public void updateNClob(int columnIndex, NClob nClob) throws SQLException {
+            SCR20557.this.updateNClob(columnIndex, nClob);
+        }
+
+        public void updateNClob(String columnLabel, NClob nClob) throws SQLException {
+            SCR20557.this.updateNClob(columnLabel, nClob);
+        }
+
+        public NClob getNClob(int columnIndex) throws SQLException {
+            return SCR20557.this.getNClob(columnIndex);
+        }
+
+        public NClob getNClob(String columnLabel) throws SQLException {
+            return SCR20557.this.getNClob(columnLabel);
+        }
+
+        public SQLXML getSQLXML(int columnIndex) throws SQLException {
+            return SCR20557.this.getSQLXML(columnIndex);
+        }
+
+        public SQLXML getSQLXML(String columnLabel) throws SQLException {
+            return SCR20557.this.getSQLXML(columnLabel);
+        }
+
+        public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {
+            SCR20557.this.updateSQLXML(columnIndex, xmlObject);
+        }
+
+        public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException {
+            SCR20557.this.updateSQLXML(columnLabel, xmlObject);
+        }
+
+        public String getNString(int columnIndex) throws SQLException {
+            return SCR20557.this.getNString(columnIndex);
+        }
+
+        public String getNString(String columnLabel) throws SQLException {
+            return SCR20557.this.getNString(columnLabel);
+        }
+
+        public Reader getNCharacterStream(int columnIndex) throws SQLException {
+            return SCR20557.this.getNCharacterStream(columnIndex);
+        }
+
+        public Reader getNCharacterStream(String columnLabel) throws SQLException {
+            return SCR20557.this.getNCharacterStream(columnLabel);
+        }
+
+        public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
+            SCR20557.this.updateNCharacterStream(columnIndex, x, length);
+        }
+
+        public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
+            SCR20557.this.updateNCharacterStream(columnLabel, reader, length);
+        }
+
+        public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException {
+            SCR20557.this.updateAsciiStream(columnIndex, x, length);
+        }
+
+        public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException {
+            SCR20557.this.updateBinaryStream(columnIndex, x, length);
+        }
+
+        public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
+            SCR20557.this.updateCharacterStream(columnIndex, x, length);
+        }
+
+        public void updateAsciiStream(String columnLabel, InputStream x, long length) throws SQLException {
+            SCR20557.this.updateAsciiStream(columnLabel, x, length);
+        }
+
+        public void updateBinaryStream(String columnLabel, InputStream x, long length) throws SQLException {
+            SCR20557.this.updateBinaryStream(columnLabel, x, length);
+        }
+
+        public void updateCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
+            SCR20557.this.updateCharacterStream(columnLabel, reader, length);
+        }
+
+        public void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException {
+            SCR20557.this.updateBlob(columnIndex, inputStream, length);
+        }
+
+        public void updateBlob(String columnLabel, InputStream inputStream, long length) throws SQLException {
+            SCR20557.this.updateBlob(columnLabel, inputStream, length);
+        }
+
+        public void updateClob(int columnIndex, Reader reader, long length) throws SQLException {
+            SCR20557.this.updateClob(columnIndex, reader, length);
+        }
+
+        public void updateClob(String columnLabel, Reader reader, long length) throws SQLException {
+            SCR20557.this.updateClob(columnLabel, reader, length);
+        }
+
+        public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
+            SCR20557.this.updateNClob(columnIndex, reader, length);
+        }
+
+        public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException {
+            SCR20557.this.updateNClob(columnLabel, reader, length);
+        }
+
+        public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException {
+            SCR20557.this.updateNCharacterStream(columnIndex, x);
+        }
+
+        public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException {
+            SCR20557.this.updateNCharacterStream(columnLabel, reader);
+        }
+
+        public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException {
+            SCR20557.this.updateAsciiStream(columnIndex, x);
+        }
+
+        public void updateBinaryStream(int columnIndex, InputStream x) throws SQLException {
+            SCR20557.this.updateBinaryStream(columnIndex, x);
+        }
+
+        public void updateCharacterStream(int columnIndex, Reader x) throws SQLException {
+            SCR20557.this.updateCharacterStream(columnIndex, x);
+        }
+
+        public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException {
+            SCR20557.this.updateAsciiStream(columnLabel, x);
+        }
+
+        public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException {
+            SCR20557.this.updateBinaryStream(columnLabel, x);
+        }
+
+        public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException {
+            SCR20557.this.updateCharacterStream(columnLabel, reader);
+        }
+
+        public void updateBlob(int columnIndex, InputStream inputStream) throws SQLException {
+            SCR20557.this.updateBlob(columnIndex, inputStream);
+        }
+
+        public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException {
+            SCR20557.this.updateBlob(columnLabel, inputStream);
+        }
+
+        public void updateClob(int columnIndex, Reader reader) throws SQLException {
+            SCR20557.this.updateClob(columnIndex, reader);
+        }
+
+        public void updateClob(String columnLabel, Reader reader) throws SQLException {
+            SCR20557.this.updateClob(columnLabel, reader);
+        }
+
+        public void updateNClob(int columnIndex, Reader reader) throws SQLException {
+            SCR20557.this.updateNClob(columnIndex, reader);
+        }
+
+        public void updateNClob(String columnLabel, Reader reader) throws SQLException {
+            SCR20557.this.updateNClob(columnLabel, reader);
+        }
+
+        public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+            return SCR20557.this.getObject(columnIndex, type);
+        }
+
+        public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+            return SCR20557.this.getObject(columnLabel, type);
+        }
+
+        public <T> T unwrap(Class<T> iface) throws SQLException {
+            return SCR20557.this.unwrap(iface);
+        }
+
+        public boolean isWrapperFor(Class<?> iface) throws SQLException {
+            return SCR20557.this.isWrapperFor(iface);
         }
     }
 }

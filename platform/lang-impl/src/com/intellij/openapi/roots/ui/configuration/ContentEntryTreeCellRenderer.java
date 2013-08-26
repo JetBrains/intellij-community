@@ -28,16 +28,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
+import java.util.List;
 
 public class ContentEntryTreeCellRenderer extends NodeRenderer {
   protected final ContentEntryTreeEditor myTreeEditor;
+  private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;
 
-  public ContentEntryTreeCellRenderer(@NotNull final ContentEntryTreeEditor treeEditor) {
+  public ContentEntryTreeCellRenderer(@NotNull final ContentEntryTreeEditor treeEditor, List<ModuleSourceRootEditHandler<?>> editHandlers) {
     myTreeEditor = treeEditor;
+    myEditHandlers = editHandlers;
   }
 
   @Override
@@ -86,7 +91,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     final SourceFolder[] sourceFolders = entry.getSourceFolders();
     for (SourceFolder sourceFolder : sourceFolders) {
       if (file.equals(sourceFolder.getFile())) {
-        return IconSet.getSourceRootIcon(sourceFolder.isTestSource());
+        return IconSet.getSourceRootIcon(sourceFolder.getRootType(), myEditHandlers);
       }
     }
 
@@ -98,10 +103,20 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
         if (currentRoot != null && VfsUtilCore.isAncestor(sourcePath, currentRoot, false)) {
           continue;
         }
-        icon = IconSet.getSourceFolderIcon(sourceFolder.isTestSource());
+        icon = getSourceFolderIcon(sourceFolder.getRootType());
         currentRoot = sourcePath;
       }
     }
     return icon;
+  }
+
+  @Nullable
+  private Icon getSourceFolderIcon(JpsModuleSourceRootType<?> type) {
+    for (ModuleSourceRootEditHandler<?> handler : myEditHandlers) {
+      if (handler.getRootType().equals(type)) {
+        return handler.getFolderUnderRootIcon();
+      }
+    }
+    return null;
   }
 }

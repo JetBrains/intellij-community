@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,16 +22,14 @@ import java.util.List;
  */
 public class PlatformContentEntriesConfigurable implements Configurable {
   private final Module myModule;
-  private final boolean myCanMarkSources;
-  private final boolean myCanMarkTestSources;
+  private final JpsModuleSourceRootType<?>[] myRootTypes;
   private final JPanel myTopPanel = new JPanel(new BorderLayout());
   private ModifiableRootModel myModifiableModel;
   private CommonContentEntriesEditor myEditor;
 
-  public PlatformContentEntriesConfigurable(final Module module, boolean canMarkSources, boolean canMarkTestSources) {
+  public PlatformContentEntriesConfigurable(final Module module, JpsModuleSourceRootType<?>... rootTypes) {
     myModule = module;
-    myCanMarkSources = canMarkSources;
-    myCanMarkTestSources = canMarkTestSources;
+    myRootTypes = rootTypes;
   }
 
   @Override
@@ -69,7 +68,7 @@ public class PlatformContentEntriesConfigurable implements Configurable {
           return DefaultFacetsProvider.INSTANCE;
         }
       };
-    myEditor = new CommonContentEntriesEditor(myModule.getName(), moduleConfigurationState, myCanMarkSources, myCanMarkTestSources) {
+    myEditor = new CommonContentEntriesEditor(myModule.getName(), moduleConfigurationState, myRootTypes) {
       @Override
       protected List<ContentEntry> addContentEntries(VirtualFile[] files) {
         List<ContentEntry> entries = super.addContentEntries(files);

@@ -78,6 +78,7 @@ public class TreeChangeImpl implements TreeChange {
     if(current != null && current.getChangeType() == ChangeInfo.REMOVED){
       if(changeInfo.getChangeType() == ChangeInfo.ADD){
         if (!(child instanceof LeafElement)) {
+          // remove/add -> changed
           changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, child);
           ((ChangeInfoImpl)changeInfo).setOldLength(current.getOldLength());
           myChanges.put(child, changeInfo);

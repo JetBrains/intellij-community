@@ -5,6 +5,7 @@ import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -35,6 +36,8 @@ import java.io.StringWriter;
  * Date: 5/7/12
  */
 public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerComponent> {
+  private static final ExtensionPointName<ClassSearcher> CLASS_SEARCHER_EP = ExtensionPointName.create("ByteCodeViewer.classSearcher");
+
   private static final Logger LOG = Logger.getInstance("#" + ByteCodeViewerManager.class.getName());
 
   public static final String TOOLWINDOW_ID = "Byte Code Viewer";
@@ -232,10 +235,20 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
     return ClassUtil.getJVMClassName(containingClass);
   }
 
-  private static PsiClass getContainingClass(PsiElement psiElement) {
+  public static PsiClass getContainingClass(PsiElement psiElement) {
+    for (ClassSearcher searcher : CLASS_SEARCHER_EP.getExtensions()) {
+      PsiClass aClass = searcher.findClass(psiElement);
+      if (aClass != null) {
+        return aClass;
+      }
+    }
+    return findClass(psiElement);
+  }
+
+  public static PsiClass findClass(@NotNull PsiElement psiElement) {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class, false);
     while (containingClass instanceof PsiTypeParameter) {
-      containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class); 
+      containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
     }
     if (containingClass == null) return null;
 

@@ -17,6 +17,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
@@ -252,6 +253,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
           public boolean process(int[] key) {
             if (!idFilter.contains(key[1])) return true;
             hashMaskSet.add(key[0]);
+            ProgressManager.checkCanceled();
             return true;
           }
         });

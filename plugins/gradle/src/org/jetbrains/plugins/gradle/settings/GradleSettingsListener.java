@@ -29,15 +29,15 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
   void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath, @NotNull String linkedProjectPath);
 
   /**
-   * Is expected to be invoked when 'prefer local gradle distribution to wrapper' setting is changed (generally this
+   * Is expected to be invoked when 'gradle distribution type' setting is changed (generally this
    * switches tooling api to different gradle version).
    * <p/>
    * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
-   * 
+   *
    * @param currentValue       current value
    * @param linkedProjectPath  target linked gradle project path
    */
-  void onPreferLocalGradleDistributionToWrapperChange(boolean currentValue, @NotNull String linkedProjectPath);
+  void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath);
 
   /**
    * Is expected to be invoked when service directory path is changed.

@@ -62,6 +62,12 @@ public class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeE
     return myRootType.equals(type) ? (JpsTypedModuleSourceRoot<P>)this : null;
   }
 
+  @NotNull
+  @Override
+  public JpsTypedModuleSourceRoot<?> asTyped() {
+    return this;
+  }
+
   @Override
   public JpsElementType<?> getType() {
     return myRootType;

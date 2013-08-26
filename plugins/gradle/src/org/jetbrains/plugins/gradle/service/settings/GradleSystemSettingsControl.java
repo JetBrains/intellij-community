@@ -114,7 +114,6 @@ public class GradleSystemSettingsControl implements ExternalSystemSettingsContro
       deduceServiceDirectoryIfPossible();
     }
     else {
-      assert path != null;
       myServiceDirectoryPathField.setText(path);
     }
     
