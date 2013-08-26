@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Sergey Simonchik
  */
 public interface XDebugLayoutCustomizer {
-
   /**
    * Registers tab for the given {@code console}, that is returned by {@link com.intellij.xdebugger.XDebugProcess#createConsole()}.
    *

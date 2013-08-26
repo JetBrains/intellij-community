@@ -17,9 +17,12 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +32,16 @@ import org.jetbrains.annotations.Nullable;
 * @author Dmitry Avdeev
 *         Date: 16.08.13
 */
-public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlAttributeValue> implements EmptyResolveMessageProvider {
+public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlElement> implements EmptyResolveMessageProvider {
   private final XmlEnumerationDescriptor myDescriptor;
 
-  public XmlEnumeratedValueReference(XmlAttributeValue value, XmlEnumerationDescriptor descriptor) {
+  public XmlEnumeratedValueReference(XmlElement value, XmlEnumerationDescriptor descriptor) {
     super(value);
+    myDescriptor = descriptor;
+  }
+
+  public XmlEnumeratedValueReference(XmlElement value, XmlEnumerationDescriptor descriptor, TextRange range) {
+    super(value, range);
     myDescriptor = descriptor;
   }
 
@@ -59,8 +67,9 @@ public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlAttributeVa
   @NotNull
   @Override
   public String getUnresolvedMessagePattern() {
+    String name = getElement() instanceof XmlTag ? "tag" : "attribute";
     return myDescriptor.isFixed()
-           ? XmlErrorMessages.message("attribute.should.have.fixed.value", myDescriptor.getDefaultValue())
-           : XmlErrorMessages.message("wrong.attribute.value");
+           ? XmlErrorMessages.message("should.have.fixed.value", StringUtil.capitalize(name), myDescriptor.getDefaultValue())
+           : XmlErrorMessages.message("wrong.value", name);
   }
 }

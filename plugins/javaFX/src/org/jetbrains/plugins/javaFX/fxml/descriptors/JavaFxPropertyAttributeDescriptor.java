@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
@@ -209,9 +210,8 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   }
 
   @Override
-  public PsiReference[] getValueReferences(XmlAttributeValue value) {
-    String s = value.getValue();
-    return s != null && !s.startsWith("${") ? super.getValueReferences(value) : PsiReference.EMPTY_ARRAY;
+  public PsiReference[] getValueReferences(XmlElement element, @NotNull String text) {
+    return !text.startsWith("${") ? super.getValueReferences(element, text) : PsiReference.EMPTY_ARRAY;
   }
 
   @Override

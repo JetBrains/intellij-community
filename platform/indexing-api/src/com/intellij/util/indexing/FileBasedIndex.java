@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -150,6 +151,7 @@ public abstract class FileBasedIndex implements BaseComponent {
     void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
   }
 
-  // TODO: remove once changes becomes permamnent
-  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = ApplicationManager.getApplication().isInternal();
+  // TODO: remove once changes becomes permanent
+  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping =
+    SystemProperties.getBooleanProperty("idea.enable.tracing.keyhash2virtualfile", true);
 }

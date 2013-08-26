@@ -13,7 +13,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.tasks.jira.jql.psi.impl.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -59,54 +58,9 @@ public class JqlParserDefinition implements ParserDefinition {
   @NotNull
   @Override
   public PsiElement createElement(ASTNode node) {
-    IElementType type = node.getElementType();
-    if (type == JqlElementTypes.QUERY) {
-      return new JqlQueryImpl(node);
-    }
-    if (type == JqlElementTypes.AND_CLAUSE) {
-      return new JqlAndClauseImpl(node);
-    }
-    if (type == JqlElementTypes.OR_CLAUSE) {
-      return new JqlOrClauseImpl(node);
-    }
-    if (type == JqlElementTypes.NOT_CLAUSE) {
-      return new JqlNotClauseImpl(node);
-    }
-    if (type == JqlElementTypes.SIMPLE_CLAUSE) {
-      return new JqlSimpleClauseImpl(node);
-    }
-    if (type == JqlElementTypes.WAS_CLAUSE) {
-      return new JqlWasClauseImpl(node);
-    }
-    if (type == JqlElementTypes.CHANGED_CLAUSE) {
-      return new JqlChangedClauseImpl(node);
-    }
-    if (type == JqlElementTypes.FUNCTION_CALL) {
-      return new JqlFunctionCallImpl(node);
-    }
-    if (type == JqlElementTypes.IDENTIFIER) {
-      return new JqlIdentifierImpl(node);
-    }
-    if (type == JqlElementTypes.HISTORY_PREDICATE) {
-      return new JqlHistoryPredicateImpl(node);
-    }
-    if (type == JqlElementTypes.ARGUMENT_LIST) {
-      return new JqlArgumentListImpl(node);
-    }
-    if (type == JqlElementTypes.LITERAL) {
-      return new JqlLiteralImpl(node);
-    }
-    if (type == JqlElementTypes.EMPTY) {
-      return new JqlEmptyValueImpl(node);
-    }
-    if (type == JqlElementTypes.LIST) {
-      return new JqlListImpl(node);
-    }
-    if (type == JqlElementTypes.SORT_KEY) {
-      return new JqlSortKeyImpl(node);
-    }
-    if (type == JqlElementTypes.ORDER_BY) {
-      return new JqlOrderByImpl(node);
+    final IElementType type = node.getElementType();
+    if (type instanceof JqlElementType) {
+      return ((JqlElementType)type).createElement(node);
     }
     return new ASTWrapperPsiElement(node);
   }

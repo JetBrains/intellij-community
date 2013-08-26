@@ -40,7 +40,7 @@ public class XmlInvalidIdInspection extends XmlDuplicatedIdInspection {
       idRef = idRef.toLowerCase();
     }
 
-    if (XmlUtil.isSimpleXmlAttributeValue(idRef, value) && refHolder.isIdReferenceValue(value)) {
+    if (XmlUtil.isSimpleValue(idRef, value) && refHolder.isIdReferenceValue(value)) {
       boolean hasIdDeclaration = refHolder.hasIdDeclaration(idRef);
       if (!hasIdDeclaration && tag instanceof HtmlTag) {
         hasIdDeclaration = refHolder.hasIdDeclaration(value.getValue());

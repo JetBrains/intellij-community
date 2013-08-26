@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 public class GroovyInterfaceNamingConventionInspection extends ConventionInspection {
 
@@ -32,7 +31,7 @@ public class GroovyInterfaceNamingConventionInspection extends ConventionInspect
     return "Interface naming convention";
   }
 
-  protected GroovyFix buildFix(PsiElement location) {
+  protected GroovyFix buildFix(@NotNull PsiElement location) {
     return new RenameFix();
   }
 
@@ -63,18 +62,15 @@ public class GroovyInterfaceNamingConventionInspection extends ConventionInspect
     return DEFAULT_MAX_LENGTH;
   }
 
+  @NotNull
   public BaseInspectionVisitor buildVisitor() {
     return new NamingConventionsVisitor();
   }
 
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
-
-    public void visitTypeDefinition(GrTypeDefinition grTypeDefinition) {
-      super.visitTypeDefinition(grTypeDefinition);
-      if (!(grTypeDefinition instanceof GrInterfaceDefinition)) {
-        return;
-      }
-      final GrInterfaceDefinition aClass = (GrInterfaceDefinition) grTypeDefinition;
+    @Override
+    public void visitInterfaceDefinition(GrInterfaceDefinition aClass) {
+      super.visitInterfaceDefinition(aClass);
 
       final String name = aClass.getName();
       if (name == null) {
@@ -85,5 +81,6 @@ public class GroovyInterfaceNamingConventionInspection extends ConventionInspect
       }
       registerClassError(aClass, name);
     }
+
   }
 }

@@ -133,8 +133,7 @@ public class GitSimpleHandler extends GitTextHandler {
       return;
     }
     entire.append(text);
-    if (suppressed || myVcs == null) {
-      LOG.debug(text);
+    if (myVcs == null || (suppressed && !LOG.isDebugEnabled())) {
       return;
     }
     int last = lineRest.length() > 0 ? lineRest.charAt(lineRest.length() - 1) : -1;
@@ -158,13 +157,19 @@ public class GitSimpleHandler extends GitTextHandler {
           else {
             line = text.substring(start, savedPos);
           }
-          if (ProcessOutputTypes.STDOUT == outputType && !StringUtil.isEmptyOrSpaces(line)) {
-            myVcs.showMessages(line);
-            LOG.info(line.trim());
-          }
-          else if (ProcessOutputTypes.STDERR == outputType && !StringUtil.isEmptyOrSpaces(line)) {
-            myVcs.showErrorMessages(line);
-            LOG.info(line.trim());
+          if (!StringUtil.isEmptyOrSpaces(line)) {
+            if (!suppressed) {
+              LOG.info(line.trim());
+              if (ProcessOutputTypes.STDOUT == outputType) {
+                myVcs.showMessages(line);
+              }
+              else if (ProcessOutputTypes.STDERR == outputType) {
+                myVcs.showErrorMessages(line);
+              }
+            }
+            else {
+              LOG.debug(line.trim());
+            }
           }
         }
         start = savedPos;

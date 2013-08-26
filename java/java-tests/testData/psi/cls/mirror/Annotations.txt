@@ -25,6 +25,9 @@ abstract class Annotations {
     @pkg.Annotations.A4(ids = {42, 84})
     abstract void m4b();
 
+    @pkg.Annotations.A5(b = true, value = java.lang.Integer.class)
+    abstract void m5();
+
     static @interface IndeterminateAnno {
         float f1() default -1.0f / 0.0;
 
@@ -37,6 +40,12 @@ abstract class Annotations {
         double d2() default 0.0d / 0.0;
 
         double d3() default 1.0 / 0.0;
+    }
+
+    static @interface A5 {
+        boolean b() default false;
+
+        java.lang.Class<? extends java.lang.Number> value() default java.lang.Integer.class;
     }
 
     static @interface A4 {

@@ -848,6 +848,9 @@
     <applicationService serviceInterface="com.intellij.ide.util.treeView.TreeAnchorizer"
                         serviceImplementation="com.intellij.ide.projectView.impl.nodes.PsiTreeAnchorizer"/>
 
+    <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaModuleSourceRootEditHandler"/>
+    <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaTestSourceRootEditHandler"/>
+
     <elementPreviewProvider implementation="com.intellij.codeInsight.preview.ElementPreviewHintProvider"/>
   </extensions>
 </idea-plugin>

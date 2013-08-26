@@ -178,7 +178,7 @@ public class JpsModuleRootModelSerializer {
       rootModelElement.addContent(contentElement);
       for (JpsModuleSourceRoot root : sourceRoots) {
         if (FileUtil.startsWith(root.getUrl(), url)) {
-          saveSourceRoot(contentElement, (JpsTypedModuleSourceRoot<?>)root);
+          saveSourceRoot(contentElement, root.asTyped().getUrl(), root.asTyped());
         }
       }
       for (String excludedUrl : excludedUrls) {
@@ -241,9 +241,11 @@ public class JpsModuleRootModelSerializer {
     }
   }
 
-  public static <P extends JpsElement> void saveSourceRoot(Element contentElement, JpsTypedModuleSourceRoot<P> root) {
+  public static <P extends JpsElement> void saveSourceRoot(@NotNull Element contentElement,
+                                                           final @NotNull String rootUrl,
+                                                           @NotNull JpsTypedModuleSourceRoot<P> root) {
     Element sourceElement = new Element(SOURCE_FOLDER_TAG);
-    sourceElement.setAttribute(URL_ATTRIBUTE, root.getUrl());
+    sourceElement.setAttribute(URL_ATTRIBUTE, rootUrl);
     JpsModuleSourceRootPropertiesSerializer<P> serializer = getSerializer(root.getRootType());
     if (serializer != null) {
       String typeId = serializer.getTypeId();

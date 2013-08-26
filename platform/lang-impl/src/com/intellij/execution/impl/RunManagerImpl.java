@@ -49,8 +49,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     new HashMap<String, RunnerAndConfigurationSettings>();
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<String, RunnerAndConfigurationSettings>(); // template configurations are not included here
-  final Map<Object, List<RunnerAndConfigurationSettings>> myExternalSettings =
-    new java.util.HashMap<Object, List<RunnerAndConfigurationSettings>>();
   private final Map<String, Boolean> mySharedConfigurations = new TreeMap<String, Boolean>();
   private final Map<RunConfiguration, List<BeforeRunTask>> myConfigurationToBeforeTasksMap = new WeakHashMap<RunConfiguration, List<BeforeRunTask>>();
 
@@ -221,11 +219,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public RunConfiguration[] getAllConfigurations() {
     List<RunConfiguration> list = getAllConfigurationsList();
     return list.toArray(new RunConfiguration[list.size()]);
-  }
-
-  @NotNull
-  public List<RunnerAndConfigurationSettings> getExternalSettings(@NotNull Object key) {
-    return myExternalSettings.containsKey(key) ? myExternalSettings.get(key) : Collections.<RunnerAndConfigurationSettings>emptyList();
   }
 
   @NotNull
@@ -403,9 +396,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @Override
   public void removeConfiguration(@Nullable RunnerAndConfigurationSettings settings) {
     if (settings == null) return;
-    for (Map.Entry<Object, List<RunnerAndConfigurationSettings>> entry : myExternalSettings.entrySet()) {
-      if (entry.getValue().remove(settings)) break;
-    }
 
     for (Iterator<RunnerAndConfigurationSettings> it = getSortedConfigurations().iterator(); it.hasNext(); ) {
       final RunnerAndConfigurationSettings configuration = it.next();
@@ -786,33 +776,13 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     fireRunConfigurationsRemoved(configurations);
   }
 
-  public void removeExternalSettings(@NotNull Object removerKey) {
-    List<RunnerAndConfigurationSettings> settingsList = getExternalSettings(removerKey);
-    for (RunnerAndConfigurationSettings each : settingsList) {
-      removeConfiguration(each);
-    }
-    myExternalSettings.remove(removerKey);
-  }
-
   @Nullable
   public RunnerAndConfigurationSettings loadConfiguration(final Element element, boolean isShared) throws InvalidDataException {
-    return loadConfiguration(null, element, isShared);
-  }
-
-  @Nullable
-  public RunnerAndConfigurationSettings loadConfiguration(@Nullable final Object removerKey, final Element element, boolean isShared) throws InvalidDataException {
     final RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl(this);
     settings.readExternal(element);
     ConfigurationFactory factory = settings.getFactory();
     if (factory == null) {
       return null;
-    }
-
-    if (removerKey !=null) {
-      if (!myExternalSettings.containsKey(removerKey)) {
-        myExternalSettings.put(removerKey, new ArrayList<RunnerAndConfigurationSettings>());
-      }
-      myExternalSettings.get(removerKey).add(settings);
     }
 
     final Element methodsElement = element.getChild(METHOD);

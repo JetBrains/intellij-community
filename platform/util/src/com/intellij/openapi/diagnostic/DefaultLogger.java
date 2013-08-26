@@ -53,7 +53,9 @@ public class DefaultLogger extends Logger {
       }
     }
 
-    throw new AssertionError(message);
+    AssertionError error = new AssertionError(message);
+    error.initCause(t);
+    throw error;
   }
 
   @Override

@@ -16,14 +16,17 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.*;
+import com.intellij.xml.util.XmlEnumeratedValueReference;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +39,7 @@ import java.util.List;
 /**
  * @author Mike
  */
-public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor
+public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
   implements XmlElementDescriptor, PsiWritableMetaData, Validator<XmlTag>,
                                                  XmlElementDescriptorAwareAboutChildren {
   protected XmlTag myDescriptorTag;
@@ -473,8 +476,9 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor
   }
 
   public String getQualifiedName() {
-    if (!"".equals(getNS())) {
-      return getNS() + ":" + getName();
+    String ns = getNS();
+    if (ns != null && !ns.isEmpty()) {
+      return ns + ":" + getName();
     }
 
     return getName();
@@ -517,6 +521,16 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor
     if (validator != null) {
       validator.validate(context, host);
     }
+  }
+
+  @Override
+  public PsiReference[] getValueReferences(XmlTag xmlTag, @NotNull String text) {
+    XmlTagValue value = xmlTag.getValue();
+    XmlText[] elements = value.getTextElements();
+    if (elements.length == 0 || xmlTag.getSubTags().length > 0) return PsiReference.EMPTY_ARRAY;
+    return new PsiReference[] {
+      new XmlEnumeratedValueReference(xmlTag, this, ElementManipulators.getValueTextRange(xmlTag))
+    };
   }
 
   public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {

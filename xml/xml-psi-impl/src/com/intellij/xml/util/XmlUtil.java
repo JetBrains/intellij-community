@@ -933,6 +933,8 @@ public class XmlUtil {
     });
   }
 
+  private final static Set<String> doNotVisitTags = new HashSet<String>(Arrays.asList("annotation", "element", "attribute"));
+
   /**
    * @return true if enumeration is exhaustive
    */
@@ -954,7 +956,7 @@ public class XmlUtil {
         exhaustiveEnum = false;
         processEnumerationValues(tag, tagProcessor);
       }
-      else if (!localName.equals("annotation")) {
+      else if (!doNotVisitTags.contains(localName)) {
         // don't go into annotation
         exhaustiveEnum &= processEnumerationValues(tag, tagProcessor);
       }
@@ -1070,7 +1072,7 @@ public class XmlUtil {
     return new Pair<XmlTagChild, XmlTagChild>(first, last);
   }
 
-  public static boolean isSimpleXmlAttributeValue(@NotNull final String unquotedValue, final XmlAttributeValue context) {
+  public static boolean isSimpleValue(@NotNull final String unquotedValue, final PsiElement context) {
     for (int i = 0; i < unquotedValue.length(); ++i) {
       final char ch = unquotedValue.charAt(i);
       if (!Character.isJavaIdentifierPart(ch) && ch != ':' && ch != '-') {

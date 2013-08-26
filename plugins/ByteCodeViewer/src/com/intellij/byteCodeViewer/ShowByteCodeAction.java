@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
@@ -43,7 +42,7 @@ public class ShowByteCodeAction extends AnAction {
       final PsiElement psiElement = getPsiElement(e.getDataContext(), project, e.getData(PlatformDataKeys.EDITOR));
       if (psiElement != null) {
         if (psiElement.getContainingFile() instanceof PsiClassOwner &&
-            PsiTreeUtil.getParentOfType(psiElement, PsiClass.class, false) != null) {
+            ByteCodeViewerManager.getContainingClass(psiElement) != null) {
           e.getPresentation().setEnabled(true);
         }
       }

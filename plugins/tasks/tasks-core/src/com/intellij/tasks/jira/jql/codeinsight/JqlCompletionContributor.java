@@ -55,15 +55,15 @@ public class JqlCompletionContributor extends CompletionContributor {
         if (!(element instanceof PsiElement)) return false;
         PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf((PsiElement)element);
         if (prevLeaf == null) return false;
-        PsiElement enclosingClause = PsiTreeUtil.findFirstParent(prevLeaf, new Condition<PsiElement>() {
+        PsiElement parent = PsiTreeUtil.findFirstParent(prevLeaf, new Condition<PsiElement>() {
           @Override
           public boolean value(PsiElement element) {
             return pattern.accepts(element);
           }
         });
-        if (enclosingClause == null) return false;
-        if (PsiTreeUtil.hasErrorElements(enclosingClause)) return false;
-        return prevLeaf.getTextRange().getEndOffset() == enclosingClause.getTextRange().getEndOffset();
+        if (parent == null) return false;
+        if (PsiTreeUtil.hasErrorElements(parent)) return false;
+        return prevLeaf.getTextRange().getEndOffset() == parent.getTextRange().getEndOffset();
       }
 
       @Override
@@ -83,7 +83,10 @@ public class JqlCompletionContributor extends CompletionContributor {
     psiElement().and(rightAfterElement(JqlClauseWithHistoryPredicates.class));
 
   private static final PsiElementPattern.Capture<PsiElement> AFTER_ANY_CLAUSE =
-    psiElement().and(rightAfterElement(JqlTerminalClause.class));
+    psiElement().andOr(
+      rightAfterElement(JqlTerminalClause.class),
+      // in other words after closing parenthesis
+      rightAfterElement(JqlSubClause.class));
 
   private static final PsiElementPattern.Capture<PsiElement> AFTER_ORDER_KEYWORD =
     psiElement().afterLeaf(psiElement(JqlTokenTypes.ORDER_KEYWORD));
@@ -263,7 +266,6 @@ public class JqlCompletionContributor extends CompletionContributor {
       JqlFieldType operandType;
       boolean listFunctionExpected;
       PsiElement curElem = parameters.getPosition();
-      PsiElement origElem = parameters.getOriginalPosition();
       JqlHistoryPredicate predicate = PsiTreeUtil.getParentOfType(curElem, JqlHistoryPredicate.class);
       if (predicate != null) {
         listFunctionExpected = false;

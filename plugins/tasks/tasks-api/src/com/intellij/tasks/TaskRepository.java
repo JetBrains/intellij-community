@@ -46,14 +46,12 @@ public abstract class TaskRepository {
   public static final int STATE_UPDATING = 0x0008;
   /**
    * Supporting this feature means that server implements some kind of issues filtering.
-   * It may be special query language like the one used in Youtrack or mere plain
+   * It may be special query language like the one used in YouTrack or mere plain
    * text search.
-   * If server supports this feature it MUST return tasks already
-   * filtered according to {@code query} parameter from {@code getIssues} method.
-   * Otherwise they will be filtered using {@code TaskSearchSupport#filterTasks}
-   *
-   * @see com.intellij.tasks.impl.TaskManagerImpl
-   * @see com.intellij.tasks.actions.TaskSearchSupport
+   * <p>
+   * If server supports this feature it MUST return tasks already filtered according
+   * to {@code query} parameter from {@link #getIssues}} method, otherwise they will
+   * be filtered internally in {@link TaskManager#getIssues}
    */
   public static final int NATIVE_SEARCH = 0x0010;
 
@@ -106,7 +104,7 @@ public abstract class TaskRepository {
 
   /**
    * Get issues from the repository. If query is null, return issues should assigned to current user only.
-   * If server supports {@code NATIVE_SEARCH} feature, tasks returned MUST be filtered by specified query.
+   * If server supports {@link #NATIVE_SEARCH} feature, tasks returned MUST be filtered by specified query.
    *
    * @param query repository specific.
    * @param max   maximum issues number to return

@@ -44,7 +44,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private static final Border LIST_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListBackgroundPainter");
   private static final Border LIST_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListSelectionBackgroundPainter");
   private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListFocusedSelectionBackgroundPainter");
-  
+
   @NotNull private final Condition<Integer> myWideSelectionCondition;
   private boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
@@ -58,7 +58,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   /**
    * Creates new <code>WideSelectionTreeUI</code> object.
-   * 
+   *
    * @param wideSelection           flag that determines if wide selection should be used
    * @param wideSelectionCondition  strategy that determine if wide selection should be used for a target row (it's zero-based index
    *                                is given to the condition as an argument)
@@ -80,7 +80,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
         final TreePath pressedPath = getClosestPathForLocation(tree, e.getX(), e.getY());
         if (pressedPath != null) {
-          Rectangle bounds = getPathBounds(tree, pressedPath);
+          Rectangle bounds = getWidePathBounds(tree, pressedPath);
 
           if (e.getY() >= bounds.y + bounds.height) {
             return;
@@ -97,6 +97,15 @@ public class WideSelectionTreeUI extends BasicTreeUI {
       }
     }
   };
+
+  public Rectangle getWidePathBounds(JTree tree, TreePath path) {
+    Rectangle bounds = super.getPathBounds(tree, path);
+    if (bounds != null && tree != null) {
+      bounds.x = 0;
+      bounds.width = tree.getWidth();
+    }
+    return bounds;
+  }
 
   @Override
   protected void completeUIInstall() {

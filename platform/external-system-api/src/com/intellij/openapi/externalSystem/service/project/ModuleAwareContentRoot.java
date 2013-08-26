@@ -6,6 +6,8 @@ import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
  * @author Denis Zhdanov
@@ -75,6 +77,14 @@ public class ModuleAwareContentRoot implements ContentEntry {
   @Override
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix) {
     return myDelegate.addSourceFolder(file, isTestSource, packagePrefix);
+  }
+
+  @NotNull
+  @Override
+  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull VirtualFile file,
+                                                             @NotNull JpsModuleSourceRootType<P> type,
+                                                             @NotNull P properties) {
+    return myDelegate.addSourceFolder(file, type, properties);
   }
 
   @Override

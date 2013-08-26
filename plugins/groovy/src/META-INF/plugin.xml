@@ -26,6 +26,7 @@
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
   <depends optional="true">AntSupport</depends>
   <depends optional="true">cucumber</depends>
+  <depends optional="true">ByteCodeViewer</depends>
 
   <extensionPoints>
     <extensionPoint name="methodComparator" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
@@ -1391,6 +1392,11 @@
       <categoryKey>intention.category.groovy/intention.category.groovy.other</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.other.GrCopyStringConcatenationContentIntention</className>
     </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.declaration</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.declaration.GrRemoveExplicitTypeDeclarationIntention</className>
+    </intentionAction>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"
                     serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>
@@ -1427,6 +1433,10 @@
 
   <extensions defaultExtensionNs="com.intellij.debugger">
     <codeFragmentFactory implementation="org.jetbrains.plugins.groovy.debugger.GroovyCodeFragmentFactory"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="ByteCodeViewer">
+    <classSearcher implementation="org.jetbrains.plugins.groovy.byteCodeViewer.GroovyScriptClassSearcher"/>
   </extensions>
 
   <actions>

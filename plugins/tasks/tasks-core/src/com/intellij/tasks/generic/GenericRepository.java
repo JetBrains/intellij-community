@@ -16,6 +16,7 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,19 +32,22 @@ import static com.intellij.tasks.generic.TemplateVariable.*;
 public class GenericRepository extends BaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance(GenericRepository.class);
 
-  public final PredefinedFactoryVariable SERVER_URL_TEMPLATE_VARIABLE = new PredefinedFactoryVariable("serverUrl") {
+  public final FactoryVariable SERVER_URL_TEMPLATE_VARIABLE = new FactoryVariable("serverUrl") {
+    @NotNull
     @Override
     public String getValue() {
       return GenericRepository.this.getUrl();
     }
   };
-  public final PredefinedFactoryVariable USERNAME_TEMPLATE_VARIABLE = new PredefinedFactoryVariable("username") {
+  public final FactoryVariable USERNAME_TEMPLATE_VARIABLE = new FactoryVariable("username") {
+    @NotNull
     @Override
     public String getValue() {
       return GenericRepository.this.getUsername();
     }
   };
-  public final PredefinedFactoryVariable PASSWORD_TEMPLATE_VARIABLE = new PredefinedFactoryVariable("password", true) {
+  public final FactoryVariable PASSWORD_TEMPLATE_VARIABLE = new FactoryVariable("password", true) {
+    @NotNull
     @Override
     public String getValue() {
       return GenericRepository.this.getPassword();
@@ -155,7 +159,7 @@ public class GenericRepository extends BaseRepositoryImpl {
   public boolean isConfigured() {
     if (!super.isConfigured()) return false;
     for (TemplateVariable variable : getTemplateVariables()) {
-      if (variable.getIsShownOnFirstTab() && StringUtil.isEmpty(variable.getValue())) {
+      if (variable.isShownOnFirstTab() && StringUtil.isEmpty(variable.getValue())) {
         return false;
       }
     }
@@ -171,8 +175,8 @@ public class GenericRepository extends BaseRepositoryImpl {
       executeMethod(getLoginMethod());
     }
     List<TemplateVariable> variables = concat(getAllTemplateVariables(),
-                                              new TemplateVariable("max", max),
-                                              new TemplateVariable("since", since));
+                                              new TemplateVariable("max", String.valueOf(max)),
+                                              new TemplateVariable("since", String.valueOf(since)));
     String requestUrl = GenericRepositoryUtil.substituteTemplateVariables(getTasksListUrl(), variables);
     String responseBody = executeMethod(getHttpMethod(requestUrl, myTasksListMethodType));
     Task[] tasks = getActiveResponseHandler().parseIssues(responseBody, max);

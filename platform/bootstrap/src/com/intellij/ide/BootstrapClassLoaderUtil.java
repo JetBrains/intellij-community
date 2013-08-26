@@ -62,7 +62,6 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     addAdditionalClassPath(classpath);
     UrlClassLoader newClassLoader = UrlClassLoader.build()
       .urls(filterClassPath(classpath))
-      .nativeLibs("IdeaWin32", "focusKiller", "jumpListBridge")
       .allowLock().useCache().get();
 
     // prepare plugins

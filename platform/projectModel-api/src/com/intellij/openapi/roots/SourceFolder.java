@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
  * Represents a source or test source root under the content root of a module.
@@ -45,4 +46,7 @@ public interface SourceFolder extends ContentFolder {
    * @param packagePrefix the package prefix, or an empty string if the root has no package prefix.
    */
   void setPackagePrefix(@NotNull String packagePrefix);
+
+  @NotNull
+  JpsModuleSourceRootType<?> getRootType();
 }

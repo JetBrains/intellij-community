@@ -59,7 +59,8 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
   public List<TaskRepositorySubtype> getAvailableSubtypes() {
     return Arrays.asList(
       this,
-      new AsanaRepository()
+      new AsanaRepository(),
+      new AssemblaRepository()
     );
   }
 
@@ -109,6 +110,12 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
   public class AsanaRepository extends GenericSubtype {
     public AsanaRepository() {
       super("Asana", TasksIcons.Asana);
+    }
+  }
+
+  public class AssemblaRepository extends GenericSubtype {
+    public AssemblaRepository() {
+      super("Assembla", TasksIcons.Assembla);
     }
   }
 }

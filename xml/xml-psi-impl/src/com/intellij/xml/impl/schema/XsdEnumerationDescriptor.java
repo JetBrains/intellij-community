@@ -21,7 +21,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  *         Date: 22.08.13
  */
-public abstract class XsdEnumerationDescriptor extends XmlEnumerationDescriptor {
+public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends XmlEnumerationDescriptor<T> {
 
   private boolean myExhaustiveEnum;
 
@@ -60,7 +60,7 @@ public abstract class XsdEnumerationDescriptor extends XmlEnumerationDescriptor 
   }
 
   private boolean processEnumeration(XmlElement context, PairProcessor<PsiElement, String> processor) {
-    XmlTag contextTag = context != null ? PsiTreeUtil.getContextOfType(context, XmlTag.class, true) : null;
+    XmlTag contextTag = context != null ? PsiTreeUtil.getContextOfType(context, XmlTag.class, false) : null;
     final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(getDeclaration(), contextTag);
 
     if (elementDescriptor!=null && elementDescriptor.getType() instanceof ComplexTypeDescriptor) {

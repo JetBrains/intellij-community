@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.stubs.IStubElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @author Dmitry.Krasilschikov
@@ -43,5 +43,10 @@ public class GrInterfaceDefinitionImpl extends GrTypeDefinitionImpl implements G
 
   public boolean isInterface() {
     return true;
+  }
+
+  @Override
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitInterfaceDefinition(this);
   }
 }

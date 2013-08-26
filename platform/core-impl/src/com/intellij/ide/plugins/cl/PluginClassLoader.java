@@ -17,7 +17,9 @@ package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,37 +30,40 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * @author Eugene Zhuravlev
  * @since 6.03.2003
  */
-@SuppressWarnings({"UseOfSystemOutOrSystemErr"})
 public class PluginClassLoader extends UrlClassLoader {
   private final ClassLoader[] myParents;
   private final PluginId myPluginId;
   private final String myPluginVersion;
-  private final File myLibDirectory;
+  private final List<String> myLibDirectories;
 
   public PluginClassLoader(@NotNull List<URL> urls,
                            @NotNull ClassLoader[] parents,
-                           final PluginId pluginId,
-                           final String version,
-                           final File pluginRoot) {
+                           PluginId pluginId,
+                           String version,
+                           File pluginRoot) {
     super(build().urls(urls).allowLock().useCache());
     myParents = parents;
     myPluginId = pluginId;
     myPluginVersion = version;
-
-    //noinspection HardCodedStringLiteral
-    final File file = new File(pluginRoot, "lib");
-    myLibDirectory = file.exists()? file : null;
+    myLibDirectories = ContainerUtil.newSmartList();
+    File libDir = new File(pluginRoot, "lib");
+    if (libDir.exists()) {
+      myLibDirectories.add(libDir.getAbsolutePath());
+    }
   }
 
   // Changed sequence in which classes are searched, this is essential if plugin uses library,
   // a different version of which is used in IDEA.
+  @Override
   public Class loadClass(@NotNull String name, final boolean resolve) throws ClassNotFoundException {
     Class c = loadClassInsideSelf(name);
 
@@ -156,46 +161,50 @@ public class PluginClassLoader extends UrlClassLoader {
     return new CompoundEnumeration<URL>(resources);
   }
 
-  @Override
-  protected String findLibrary(String libName) {
-    if (myLibDirectory == null) {
-      return null;
-    }
-    final File libraryFile = new File(myLibDirectory, System.mapLibraryName(libName));
-    return libraryFile.exists()? libraryFile.getAbsolutePath() : null;
+  @SuppressWarnings("UnusedDeclaration")
+  public void addLibDirectories(@NotNull Collection<String> libDirectories) {
+    myLibDirectories.addAll(libDirectories);
   }
 
+  @Override
+  protected String findLibrary(String libName) {
+    if (!myLibDirectories.isEmpty()) {
+      String libFileName = System.mapLibraryName(libName);
+      ListIterator<String> i = myLibDirectories.listIterator(myLibDirectories.size());
+      while (i.hasPrevious()) {
+        File libFile = new File(i.previous(), libFileName);
+        if (libFile.exists()) {
+          return libFile.getAbsolutePath();
+        }
+      }
+    }
+
+    return null;
+  }
 
   private static URL fetchResource(ClassLoader cl, String resourceName) {
-    //protected URL findResource(String s)
     try {
-      //noinspection HardCodedStringLiteral
       final Method findResourceMethod = getFindResourceMethod(cl.getClass(), "findResource");
       return (URL)findResourceMethod.invoke(cl, resourceName);
     }
     catch (Exception e) {
-      e.printStackTrace();
+      Logger.getInstance(PluginClassLoader.class).error(e);
       return null;
     }
   }
 
   private static Enumeration fetchResources(ClassLoader cl, String resourceName) {
-    //protected Enumeration findResources(String s) throws IOException
     try {
-      //noinspection HardCodedStringLiteral
       final Method findResourceMethod = getFindResourceMethod(cl.getClass(), "findResources");
-      if (findResourceMethod == null) {
-        return null;
-      }
-      return (Enumeration)findResourceMethod.invoke(cl, resourceName);
+      return findResourceMethod == null ? null : (Enumeration)findResourceMethod.invoke(cl, resourceName);
     }
     catch (Exception e) {
-      e.printStackTrace();
+      Logger.getInstance(PluginClassLoader.class).error(e);
       return null;
     }
   }
 
-  private static Method getFindResourceMethod(final Class clClass, final String methodName) {
+  private static Method getFindResourceMethod(final Class<?> clClass, final String methodName) {
     try {
       final Method declaredMethod = clClass.getDeclaredMethod(methodName, String.class);
       declaredMethod.setAccessible(true);
@@ -214,6 +223,7 @@ public class PluginClassLoader extends UrlClassLoader {
     return myPluginId;
   }
 
+  @Override
   public String toString() {
     return "PluginClassLoader[" + myPluginId + ", " + myPluginVersion + "]";
   }

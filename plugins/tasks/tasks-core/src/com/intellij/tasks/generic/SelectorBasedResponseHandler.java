@@ -1,5 +1,6 @@
 package com.intellij.tasks.generic;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,6 +25,7 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public abstract class SelectorBasedResponseHandler extends ResponseHandler {
+  private static final Logger LOG = Logger.getInstance(SelectorBasedResponseHandler.class);
 
   // Supported selector names
   @NonNls protected static final String TASKS = "tasks";
@@ -165,6 +167,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
       throw new Exception("Selectors 'tasks', 'id' and 'summary' are mandatory");
     }
     List<Object> tasks = selectTasksList(response, max);
+    LOG.debug(String.format("Total %d tasks extracted from response", tasks.size()));
     List<Task> result = new ArrayList<Task>(tasks.size());
     for (Object context : tasks) {
       String id = selectString(getSelector(ID), context);

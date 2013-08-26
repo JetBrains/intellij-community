@@ -89,9 +89,7 @@ public final class ScriptRunnerUtil {
         if (outputTypeFilter.value(outputType)) {
           final String text = event.getText();
           outputBuilder.append(text);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(text);
-          }
+          LOG.debug(text);
         }
       }
     });
@@ -116,34 +114,19 @@ public final class ScriptRunnerUtil {
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters,
                                          @Nullable Charset charset) throws ExecutionException {
-    ExecutionException ex;
-    try {
-      return doExecute(exePath, workingDirectory, scriptFile, parameters, charset);
-    }
-    catch (ExecutionException e) {
-      ex = e;
-    }
-    boolean rerun = SystemInfo.isMac;
-    if (rerun) {
+    if (SystemInfo.isMac) {
       File exeFile = new File(exePath);
-      rerun = !exeFile.isAbsolute();
-    }
-    if (rerun) {
-      File originalExeFile = PathEnvironmentVariableUtil.findInOriginalPath(exePath);
-      rerun = originalExeFile == null;
-    }
-    if (rerun) {
-      File exeFile = PathEnvironmentVariableUtil.findInPath(exePath);
-      if (exeFile != null) {
-        try {
-          return doExecute(exeFile.getAbsolutePath(), workingDirectory, scriptFile, parameters, charset);
-        } catch (ExecutionException e) {
-          LOG.info("Standby command failed too", e);
-          throw ex;
+      if (!exeFile.isAbsolute() && !exePath.contains(File.separator)) {
+        File originalResolvedExeFile = PathEnvironmentVariableUtil.findInOriginalPath(exePath);
+        if (originalResolvedExeFile == null) {
+          File resolvedExeFile = PathEnvironmentVariableUtil.findInPath(exePath);
+          if (resolvedExeFile != null) {
+            exePath = resolvedExeFile.getAbsolutePath();
+          }
         }
       }
     }
-    throw ex;
+    return doExecute(exePath, workingDirectory, scriptFile, parameters, charset);
   }
 
   @NotNull
@@ -164,8 +147,8 @@ public final class ScriptRunnerUtil {
       commandLine.setWorkDirectory(workingDirectory);
     }
 
-    LOG.debug("Command line: " + commandLine.getCommandLineString());
-    LOG.debug("Command line env: " + commandLine.getEnvironment());
+    LOG.debug("Command line: ", commandLine.getCommandLineString());
+    LOG.debug("Command line env: ", commandLine.getEnvironment());
 
     if (charset == null) {
       charset = ObjectUtils.notNull(EncodingManager.getInstance().getDefaultCharset(), CharsetToolkit.UTF8_CHARSET);
@@ -190,8 +173,7 @@ public final class ScriptRunnerUtil {
                                                                   @Nullable String workingDirectory,
                                                                   long timeout,
                                                                   Condition<Key> scriptOutputType,
-                                                                  @NonNls String... parameters)
-    throws ExecutionException {
+                                                                  @NonNls String... parameters) throws ExecutionException {
     final OSProcessHandler processHandler = execute(exePathString, workingDirectory, scriptFile, parameters);
 
     ScriptOutput output = new ScriptOutput(scriptOutputType);
@@ -202,7 +184,7 @@ public final class ScriptRunnerUtil {
       LOG.warn("Process did not complete in " + timeout / 1000 + "s");
       throw new ExecutionException(ExecutionBundle.message("script.execution.timeout", String.valueOf(timeout / 1000)));
     }
-    LOG.debug("script output: " + output.myFilteredOutput);
+    LOG.debug("script output: ", output.myFilteredOutput);
     return output;
   }
 
