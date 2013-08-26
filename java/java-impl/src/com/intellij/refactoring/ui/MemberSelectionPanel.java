@@ -24,18 +24,16 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
-import com.intellij.ui.TableUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.util.List;
 
-public class MemberSelectionPanel extends JPanel {
+public class MemberSelectionPanel extends AbstractMemberSelectionPanel<PsiMember, MemberInfo> {
   private final MemberSelectionTable myTable;
 
   /**
