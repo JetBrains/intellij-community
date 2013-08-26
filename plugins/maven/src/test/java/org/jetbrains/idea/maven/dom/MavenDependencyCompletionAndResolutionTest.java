@@ -31,6 +31,7 @@ import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -659,6 +660,30 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
     assertResolved(myProjectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)));
     checkHighlighting();
+  }
+
+  public void testCompletionSystemScopeDependenciesWithProperties() throws Throwable {
+    String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <depDir>" + new File(libPath).getParent() + "</depDir>" +
+                     "</properties>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>xxx</groupId>" +
+                     "    <artifactId>xxx</artifactId>" +
+                     "    <version>xxx</version>" +
+                     "    <scope>system</scope>" +
+                     "    <systemPath>${depDir}/<caret></systemPath>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom, "junit-4.0.jar");
   }
 
   public void testResolvingSystemScopeDependenciesFromSystemPath() throws Throwable {
