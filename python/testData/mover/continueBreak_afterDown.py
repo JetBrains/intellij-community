@@ -1,4 +1,5 @@
 test()
 for item in range(10):
-    continue
+    pass
+continue
 test1()

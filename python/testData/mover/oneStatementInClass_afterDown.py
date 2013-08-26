@@ -1,4 +1,5 @@
 class B(Exception):
-    pass   #<---here
+    pass
+pass   #<---here
 class C(B):
     pass
