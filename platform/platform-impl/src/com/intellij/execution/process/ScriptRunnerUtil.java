@@ -89,9 +89,7 @@ public final class ScriptRunnerUtil {
         if (outputTypeFilter.value(outputType)) {
           final String text = event.getText();
           outputBuilder.append(text);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(text);
-          }
+          LOG.debug(text);
         }
       }
     });
@@ -164,8 +162,8 @@ public final class ScriptRunnerUtil {
       commandLine.setWorkDirectory(workingDirectory);
     }
 
-    LOG.debug("Command line: " + commandLine.getCommandLineString());
-    LOG.debug("Command line env: " + commandLine.getEnvironment());
+    LOG.debug("Command line: ", commandLine.getCommandLineString());
+    LOG.debug("Command line env: ", commandLine.getEnvironment());
 
     if (charset == null) {
       charset = ObjectUtils.notNull(EncodingManager.getInstance().getDefaultCharset(), CharsetToolkit.UTF8_CHARSET);
@@ -190,8 +188,7 @@ public final class ScriptRunnerUtil {
                                                                   @Nullable String workingDirectory,
                                                                   long timeout,
                                                                   Condition<Key> scriptOutputType,
-                                                                  @NonNls String... parameters)
-    throws ExecutionException {
+                                                                  @NonNls String... parameters) throws ExecutionException {
     final OSProcessHandler processHandler = execute(exePathString, workingDirectory, scriptFile, parameters);
 
     ScriptOutput output = new ScriptOutput(scriptOutputType);
@@ -202,7 +199,7 @@ public final class ScriptRunnerUtil {
       LOG.warn("Process did not complete in " + timeout / 1000 + "s");
       throw new ExecutionException(ExecutionBundle.message("script.execution.timeout", String.valueOf(timeout / 1000)));
     }
-    LOG.debug("script output: " + output.myFilteredOutput);
+    LOG.debug("script output: ", output.myFilteredOutput);
     return output;
   }
 
