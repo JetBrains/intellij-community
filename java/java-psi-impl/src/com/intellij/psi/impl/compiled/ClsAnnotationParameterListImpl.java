@@ -31,14 +31,20 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
   public ClsAnnotationParameterListImpl(@NotNull PsiAnnotation parent, @NotNull PsiNameValuePair[] psiAttributes) {
     myParent = parent;
     myAttributes = new ClsNameValuePairImpl[psiAttributes.length];
-    for (int i = 0; i < myAttributes.length; i++) {
+    for (int i = 0; i < psiAttributes.length; i++) {
       String name = psiAttributes[i].getName();
+
       PsiAnnotationMemberValue value = psiAttributes[i].getValue();
       if (value == null) {
         String anno = parent instanceof ClsAnnotationImpl ? ((ClsAnnotationImpl)parent).getStub().getText() : parent.getText();
-        Logger.getInstance(getClass()).error("name=" + name + " anno=[" + anno + "]");
+        Logger.getInstance(getClass()).error("name=" + name + " anno=[" + anno + "] file=" + parent.getContainingFile());
         value = new ClsLiteralExpressionImpl(this, "null", PsiType.NULL, null);
       }
+
+      if (psiAttributes.length == 1 && "value".equals(name)) {
+        name = null;  // cosmetics - omit default attribute name
+      }
+
       myAttributes[i] = new ClsNameValuePairImpl(this, name, value);
     }
   }

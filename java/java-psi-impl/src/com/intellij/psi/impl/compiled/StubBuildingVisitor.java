@@ -556,7 +556,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
         myBuilder.append(',');
       }
 
-      if (name != null && !"value".equals(name)) {
+      if (name != null) {
         myBuilder.append(name).append('=');
       }
     }
