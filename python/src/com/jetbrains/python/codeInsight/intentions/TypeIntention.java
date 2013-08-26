@@ -89,12 +89,15 @@ public abstract class TypeIntention implements IntentionAction {
     return parameter;
   }
 
-  private boolean isAvailableForReturn(PsiElement elementAt) {
+  private boolean isAvailableForReturn(@NotNull final PsiElement elementAt) {
     final PyFunction parentFunction = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
     if (parentFunction != null) {
       final ASTNode nameNode = parentFunction.getNameNode();
-      if (nameNode != null && nameNode.getPsi() == elementAt) {
-        return !isReturnTypeDefined(parentFunction);
+      if (nameNode != null) {
+        final PsiElement prev = elementAt.getPrevSibling();
+        if (nameNode.getPsi() == elementAt || nameNode.getPsi() == prev) {
+          return !isReturnTypeDefined(parentFunction);
+        }
       }
     }
 
