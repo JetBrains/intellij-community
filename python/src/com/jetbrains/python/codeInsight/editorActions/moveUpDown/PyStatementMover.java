@@ -354,7 +354,7 @@ public class PyStatementMover extends LineMover {
     }
 
     int offset = addedElement.getTextRange().getStartOffset();
-    if (addedElement instanceof PsiComment && offset == 0) {  // PsiComment gets broken after adjust indent
+    if ((addedElement instanceof PsiComment || addedElement instanceof PyPassStatement) && offset == 0) {  // PsiComment gets broken after adjust indent
       final PsiElement psiElement = PyUtil.findNonWhitespaceAtOffset(file, editor.getDocument().getLineEndOffset(addedElementLine) - 1);
       if (psiElement != null) {
         offset = psiElement.getTextOffset();
