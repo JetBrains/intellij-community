@@ -24,9 +24,7 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.psi.types.PyType;
@@ -35,6 +33,7 @@ import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
+import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -138,6 +137,31 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         final PyType type = context.getType(expr);
         final String actualType = PythonDocumentationProvider.getTypeName(type, context);
         assertEquals("int", actualType);
+      }
+    });
+  }
+
+  // PY-9797
+  public void testReadWriteDeletePropertyDefault() {
+    runTest(new SkeletonsTask() {
+      @Override
+      protected void runTestOn(@NotNull Sdk sdk) {
+        final Project project = myFixture.getProject();
+        final PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
+        assertNotNull(builtins);
+        final PyClass cls = builtins.findTopLevelClass("int");
+        assertNotNull(cls);
+        final Property prop = cls.findProperty("real");
+        assertNotNull(prop);
+        assertIsNotNull(prop.getGetter());
+        assertIsNotNull(prop.getSetter());
+        assertIsNotNull(prop.getDeleter());
+      }
+
+      private void assertIsNotNull(Maybe<Callable> accessor) {
+        if (accessor.isDefined()) {
+          assertNotNull(accessor.valueOrNull());
+        }
       }
     });
   }
