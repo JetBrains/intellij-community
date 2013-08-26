@@ -45,7 +45,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     PyFunction problemFunction = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyFunction.class);
     if (problemFunction == null) return;
-    PyFunction superInit = mySuper.findMethodByName(PyNames.INIT, false);
+    PyFunction superInit = mySuper.findMethodByName(PyNames.INIT, true);
     if (superInit == null) return;
     StringBuilder superCall = new StringBuilder();
     PyClass klass = problemFunction.getContainingClass();
@@ -55,7 +55,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       if (LanguageLevel.forElement(klass).isPy3K())
         superCall.append("super().__init__(");
       else
-        superCall.append("super("+klass.getName()+", self).__init__(");
+        superCall.append("super(").append(klass.getName()).append(", self).__init__(");
     }
     else {
       superCall.append(mySuperName);
@@ -63,9 +63,43 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     }
     StringBuilder newFunction = new StringBuilder("def __init__(self");
 
-    PyParameter[] parameters = problemFunction.getParameterList().getParameters();
-    List<String> problemParams = new ArrayList<String>();
-    List<String> functionParams = new ArrayList<String>();
+    buildParameterList(problemFunction, superInit, superCall, newFunction, addComma);
+
+    superCall.append(")");
+    final PyStatementList statementList = problemFunction.getStatementList();
+    PyExpression docstring = null;
+    final PyStatement[] statements = statementList == null ? new PyStatement[0] : statementList.getStatements();
+    if (statements.length != 0 && statements[0] instanceof PyExpressionStatement) {
+      PyExpressionStatement st = (PyExpressionStatement)statements[0];
+      if (st.getExpression() instanceof PyStringLiteralExpression)
+        docstring = st.getExpression();
+    }
+
+    newFunction.append("):\n\t");
+    if (docstring != null)
+      newFunction.append(docstring.getText()).append("\n\t");
+    newFunction.append(superCall).append("\n\t");
+    boolean first = true;
+    for (PyStatement statement : statements) {
+      if (first && docstring != null || statement instanceof PyPassStatement) {
+        first = false;
+        continue;
+      }
+      newFunction.append(statement.getText()).append("\n\t");
+    }
+
+    problemFunction.replace(
+      PyElementGenerator.getInstance(project).createFromText(LanguageLevel.forElement(problemFunction), PyFunction.class,
+                                                             newFunction.toString()));
+  }
+
+  private static void buildParameterList(@NotNull final PyFunction problemFunction,
+                                            @NotNull final PyFunction superInit,
+                                            @NotNull final StringBuilder superCall,
+                                            @NotNull final StringBuilder newFunction, boolean addComma) {
+    final PyParameter[] parameters = problemFunction.getParameterList().getParameters();
+    final List<String> problemParams = new ArrayList<String>();
+    final List<String> functionParams = new ArrayList<String>();
     String starName = null;
     String doubleStarName = null;
     for (int i = 1; i != parameters.length; i++) {
@@ -86,9 +120,15 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       newFunction.append(",").append(p.getText());
     }
 
-    PyParameterList paramList = superInit.getParameterList();
-    if (paramList == null) return;
-    parameters = paramList.getParameters();
+    addParametersFromSuper(superInit, superCall, newFunction, addComma, problemParams, functionParams, starName, doubleStarName);
+  }
+
+  private static void addParametersFromSuper(@NotNull final PyFunction superInit, @NotNull final StringBuilder superCall,
+                                             @NotNull final StringBuilder newFunction, boolean addComma,
+                                             @NotNull final List<String> problemParams, @NotNull final List<String> functionParams,
+                                             String starName, String doubleStarName) {
+    final PyParameterList paramList = superInit.getParameterList();
+    PyParameter[] parameters = paramList.getParameters();
     boolean addDouble = false;
     boolean addStar = false;
     for (int i = 1; i != parameters.length; i++) {
@@ -128,32 +168,5 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       superCall.append(doubleStarName);
       newFunction.append(",").append(doubleStarName);
     }
-
-    superCall.append(")");
-    final PyStatementList statementList = problemFunction.getStatementList();
-    PyExpression docstring = null;
-    final PyStatement[] statements = statementList.getStatements();
-    if (statements.length != 0 && statements[0] instanceof PyExpressionStatement) {
-      PyExpressionStatement st = (PyExpressionStatement)statements[0];
-      if (st.getExpression() instanceof PyStringLiteralExpression)
-        docstring = st.getExpression();
-    }
-
-    newFunction.append("):\n\t");
-    if (docstring != null)
-      newFunction.append(docstring.getText()).append("\n\t");
-    newFunction.append(superCall).append("\n\t");
-    boolean first = true;
-    for (PyStatement statement : statements) {
-      if (first && docstring != null || statement instanceof PyPassStatement) {
-        first = false;
-        continue;
-      }
-      newFunction.append(statement.getText()).append("\n\t");
-    }
-
-    problemFunction.replace(
-      PyElementGenerator.getInstance(project).createFromText(LanguageLevel.forElement(problemFunction), PyFunction.class,
-                                                             newFunction.toString()));
   }
 }
