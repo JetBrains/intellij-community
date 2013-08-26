@@ -24,6 +24,7 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -67,7 +68,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -1284,6 +1284,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(getTempDirPath(), fileName));
         }
 
+        prepareVirtualFile(vFile);
+
         final Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);
         if (document != null) {
           PsiDocumentManager.getInstance(getProject()).doPostponedOperationsAndUnblockDocument(document);
@@ -1372,6 +1374,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
 
     return myFile;
+  }
+
+  protected void prepareVirtualFile(@NotNull VirtualFile file) {
   }
 
   private void setupEditorForInjectedLanguage() {
