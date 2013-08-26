@@ -78,6 +78,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -1500,9 +1501,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ensureIndexesUpToDate(project);
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-    List<HighlightInfo> infos = codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
-    infos.addAll(DaemonCodeAnalyzerImpl.getFileLevelHighlights(project, file));
-    return infos;
+    ProcessCanceledException exception = null;
+    for (int i = 0; i < 100; i++) {
+      try {
+        List<HighlightInfo> infos = codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
+        infos.addAll(DaemonCodeAnalyzerImpl.getFileLevelHighlights(project, file));
+        return infos;
+      }
+      catch (ProcessCanceledException e) {
+        exception = e;
+      }
+    }
+    // unable to highlight after 100 retries
+    throw exception;
   }
 
   public static void ensureIndexesUpToDate(Project project) {
