@@ -509,9 +509,11 @@ public class GitHistoryUtils {
   }
 
   public static List<? extends VcsCommit> readMiniDetails(Project project, VirtualFile root, List<String> hashes) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME, AUTHOR_TIME, SUBJECT);
     h.setStdoutSuppressed(true);
+    // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
+    h.addParameters("--no-walk");
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(new ArrayList<String>(hashes));
 
