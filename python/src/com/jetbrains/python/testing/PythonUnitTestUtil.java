@@ -2,6 +2,7 @@ package com.jetbrains.python.testing;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
@@ -50,6 +51,11 @@ public class PythonUnitTestUtil {
   }
 
   private static boolean isUnitTestCaseClass(PyClass cls, HashSet<String> testQualifiedNames) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      for (PyExpression expression : cls.getSuperClassExpressions()) {
+        if (expression.getText().equals("TestCase")) return true;
+      }
+    }
     for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
       if (type != null && testQualifiedNames.contains(type.getClassQName())) {
         return true;

@@ -23,6 +23,10 @@ public class PyAttributeOutsideInitInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testUnitTest() {
+    doTest();
+  }
+
   public void testFromSuperClassWithoutInit() {
     doTest();
   }

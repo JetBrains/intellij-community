@@ -2,7 +2,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -52,10 +51,8 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
     public void visitPyFunction(PyFunction node) {
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
-      if (PythonUnitTestUtil.isUnitTestCaseClass(containingClass) || ApplicationManager.getApplication().isUnitTestMode()) {
-        final String functionName = node.getName();
-        if (functionName != null && functionName.startsWith("setUp"))
-          return;
+      if (PythonUnitTestUtil.isUnitTestCaseClass(containingClass)) {
+        return;
       }
 
       Map<String, PyTargetExpression> attributesInInit = new HashMap<String, PyTargetExpression>();
