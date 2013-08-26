@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -30,10 +31,20 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
   public ClsAnnotationParameterListImpl(@NotNull PsiAnnotation parent, @NotNull PsiNameValuePair[] psiAttributes) {
     myParent = parent;
     myAttributes = new ClsNameValuePairImpl[psiAttributes.length];
-    for (int i = 0; i < myAttributes.length; i++) {
+    for (int i = 0; i < psiAttributes.length; i++) {
       String name = psiAttributes[i].getName();
+
       PsiAnnotationMemberValue value = psiAttributes[i].getValue();
-      assert value != null : "name=" + name + " value" + value;
+      if (value == null) {
+        String anno = parent instanceof ClsAnnotationImpl ? ((ClsAnnotationImpl)parent).getStub().getText() : parent.getText();
+        Logger.getInstance(getClass()).error("name=" + name + " anno=[" + anno + "] file=" + parent.getContainingFile());
+        value = new ClsLiteralExpressionImpl(this, "null", PsiType.NULL, null);
+      }
+
+      if (psiAttributes.length == 1 && "value".equals(name)) {
+        name = null;  // cosmetics - omit default attribute name
+      }
+
       myAttributes[i] = new ClsNameValuePairImpl(this, name, value);
     }
   }
