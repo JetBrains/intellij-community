@@ -10,7 +10,7 @@ import javax.swing.*;
 
 /**
  * ResponseHandler subclasses represent different strategies of extracting tasks from
- * task server responses (e.g. using regular expressions, XPath, JSONPath, CSS selector etc.).
+ * task server responses (e.g. using regular expressions, XPath, JSONPath, CSS selector etc.)
  *
  * @see XPathResponseHandler
  * @see JsonPathResponseHandler
@@ -19,36 +19,40 @@ import javax.swing.*;
  */
 public abstract class ResponseHandler implements Cloneable {
 
-  // XXX: what about serialization of circular dependencies?
   protected GenericRepository myRepository;
 
-  // Serialization constructor
+  /**
+   * Serialization constructor
+   */
   public ResponseHandler() {
     // empty
   }
 
-  public ResponseHandler(GenericRepository repository) {
+  public ResponseHandler(@NotNull GenericRepository repository) {
     myRepository = repository;
   }
 
-  public void setRepository(GenericRepository repository) {
+  public void setRepository(@NotNull GenericRepository repository) {
     myRepository = repository;
   }
 
+  @NotNull
   @Transient
   public GenericRepository getRepository() {
     return myRepository;
   }
 
-  public abstract JComponent getConfigurationComponent(Project project);
+  @NotNull
+  public abstract JComponent getConfigurationComponent(@NotNull Project project);
 
+  @NotNull
   public abstract ResponseType getResponseType();
 
   @NotNull
-  public abstract Task[] parseIssues(String response, int max) throws Exception;
+  public abstract Task[] parseIssues(@NotNull String response, int max) throws Exception;
 
   @Nullable
-  public abstract Task parseIssue(String response) throws Exception;
+  public abstract Task parseIssue(@NotNull String response) throws Exception;
 
   public abstract boolean isConfigured();
 
