@@ -1,6 +1,9 @@
 package com.jetbrains.python.testing;
 
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.RefactoringListenerProvider;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -24,6 +27,7 @@ import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -233,6 +237,14 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
       default:
         throw new IllegalStateException("Unknown test type: " + myTestType);
     }
+  }
+
+  @Nullable
+  @Override
+  public String getActionName() {
+    if (TestType.TEST_METHOD.equals(myTestType))
+      return getTitle() + " " + myMethodName;
+    return suggestedName();
   }
 
   protected abstract String getTitle();

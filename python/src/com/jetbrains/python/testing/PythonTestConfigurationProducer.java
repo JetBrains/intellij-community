@@ -123,7 +123,7 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
     configuration.setFolderName(path);
     configuration.setWorkingDirectory(path);
-    configuration.setName(configuration.suggestedName());
+    configuration.setGeneratedName();
     return true;
   }
 
@@ -168,7 +168,7 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
 
     if (StringUtil.isEmptyOrSpaces(cfg.getWorkingDirectory()))
       cfg.setWorkingDirectory(parent.getPath());
-    cfg.setName(cfg.suggestedName());
+    cfg.setGeneratedName();
     return true;
   }
 
