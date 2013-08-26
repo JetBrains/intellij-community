@@ -48,87 +48,88 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
   private static final MyMemberInfoFilter MEMBER_INFO_FILTER = new MyMemberInfoFilter();
 
   public static class JavaGenerateEqualsWizardBuilder extends AbstractGenerateEqualsWizard.Builder<PsiClass, PsiMember, MemberInfo> {
-    private final PsiClass clazz;
+    private final PsiClass myClass;
 
-    private final MemberSelectionPanel equalsPanel;
-    private final MemberSelectionPanel hashCodePanel;
-    private final MemberSelectionPanel nonNullPanel;
-    private final HashMap<PsiMember, MemberInfo> fieldsToHashCode;
-    private final HashMap<PsiMember, MemberInfo> fieldsToNonNull;
-    private final List<MemberInfo> classFields;
+    private final MemberSelectionPanel myEqualsPanel;
+    private final MemberSelectionPanel myHashCodePanel;
+    private final MemberSelectionPanel myNonNullPanel;
+    private final HashMap<PsiMember, MemberInfo> myFieldsToHashCode;
+    private final HashMap<PsiMember, MemberInfo> myFieldsToNonNull;
+    private final List<MemberInfo> myClassFields;
 
     private JavaGenerateEqualsWizardBuilder(PsiClass aClass, boolean needEquals, boolean needHashCode) {
       LOG.assertTrue(needEquals || needHashCode);
-      clazz = aClass;
-      classFields = MemberInfo.extractClassMembers(clazz, MEMBER_INFO_FILTER, false);
-      for (MemberInfo myClassField : classFields) {
+      myClass = aClass;
+      myClassFields = MemberInfo.extractClassMembers(myClass, MEMBER_INFO_FILTER, false);
+      for (MemberInfo myClassField : myClassFields) {
         myClassField.setChecked(true);
       }
       if (needEquals) {
-        equalsPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.equals.fields.chooser.title"), classFields, null);
-        equalsPanel.getTable().setMemberInfoModel(new EqualsMemberInfoModel());
+        myEqualsPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.equals.fields.chooser.title"),
+                                                 myClassFields, null);
+        myEqualsPanel.getTable().setMemberInfoModel(new EqualsMemberInfoModel());
       }
       else {
-        equalsPanel = null;
+        myEqualsPanel = null;
       }
       if (needHashCode) {
         final List<MemberInfo> hashCodeMemberInfos;
         if (needEquals) {
-          fieldsToHashCode = createFieldToMemberInfoMap(true);
+          myFieldsToHashCode = createFieldToMemberInfoMap(true);
           hashCodeMemberInfos = Collections.emptyList();
         }
         else {
-          hashCodeMemberInfos = classFields;
-          fieldsToHashCode = null;
+          hashCodeMemberInfos = myClassFields;
+          myFieldsToHashCode = null;
         }
-        hashCodePanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.hashcode.fields.chooser.title"), hashCodeMemberInfos, null);
-        hashCodePanel.getTable().setMemberInfoModel(new HashCodeMemberInfoModel());
+        myHashCodePanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.hashcode.fields.chooser.title"), hashCodeMemberInfos, null);
+        myHashCodePanel.getTable().setMemberInfoModel(new HashCodeMemberInfoModel());
         if (needEquals) {
-          updateHashCodeMemberInfos(classFields);
+          updateHashCodeMemberInfos(myClassFields);
         }
       }
       else {
-        hashCodePanel = null;
-        fieldsToHashCode = null;
+        myHashCodePanel = null;
+        myFieldsToHashCode = null;
       }
-      nonNullPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"), Collections.<MemberInfo>emptyList(), null);
-      fieldsToNonNull = createFieldToMemberInfoMap(false);
-      for (final Map.Entry<PsiMember, MemberInfo> entry : fieldsToNonNull.entrySet()) {
+      myNonNullPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"), Collections.<MemberInfo>emptyList(), null);
+      myFieldsToNonNull = createFieldToMemberInfoMap(false);
+      for (final Map.Entry<PsiMember, MemberInfo> entry : myFieldsToNonNull.entrySet()) {
         entry.getValue().setChecked(entry.getKey().getModifierList().findAnnotation(NotNull.class.getName()) != null);
       }
     }
 
     @Override
-    protected List<MemberInfo> getClassFields() {return classFields;}
+    protected List<MemberInfo> getClassFields() {return myClassFields;}
 
     @Override
-    protected HashMap<PsiMember, MemberInfo> getFieldsToHashCode() {return fieldsToHashCode;}
+    protected HashMap<PsiMember, MemberInfo> getFieldsToHashCode() {return myFieldsToHashCode;}
 
     @Override
-    protected HashMap<PsiMember, MemberInfo> getFieldsToNonNull() {return fieldsToNonNull;}
+    protected HashMap<PsiMember, MemberInfo> getFieldsToNonNull() {return myFieldsToNonNull;}
 
     @Override
-    protected AbstractMemberSelectionPanel<PsiMember, MemberInfo> getEqualsPanel() {return equalsPanel;}
+    protected AbstractMemberSelectionPanel<PsiMember, MemberInfo> getEqualsPanel() {return myEqualsPanel;}
 
     @Override
-    protected AbstractMemberSelectionPanel<PsiMember, MemberInfo> getHashCodePanel() {return hashCodePanel;}
+    protected AbstractMemberSelectionPanel<PsiMember, MemberInfo> getHashCodePanel() {return myHashCodePanel;}
 
     @Override
-    protected AbstractMemberSelectionPanel<PsiMember, MemberInfo> getNonNullPanel() {return nonNullPanel;}
+    protected AbstractMemberSelectionPanel<PsiMember, MemberInfo> getNonNullPanel() {return myNonNullPanel;}
 
     @Override
-    protected PsiClass getPsiClass() {return clazz;}
+    protected PsiClass getPsiClass() {return myClass;}
 
     @Override
     protected void updateHashCodeMemberInfos(Collection<MemberInfo> equalsMemberInfos) {
-      if (hashCodePanel == null) return;
+      if (myHashCodePanel == null) return;
       List<MemberInfo> hashCodeFields = new ArrayList<MemberInfo>();
 
       for (MemberInfo equalsMemberInfo : equalsMemberInfos) {
-        hashCodeFields.add(fieldsToHashCode.get(equalsMemberInfo.getMember()));
+        hashCodeFields.add(myFieldsToHashCode.get(equalsMemberInfo.getMember()));
       }
 
-      hashCodePanel.getTable().setMemberInfos(hashCodeFields);
+      myHashCodePanel.getTable().setMemberInfos(hashCodeFields);
     }
 
     @Override
@@ -138,14 +139,14 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       for (MemberInfo equalsMemberInfo : equalsMemberInfos) {
         PsiField field = (PsiField)equalsMemberInfo.getMember();
         if (!(field.getType() instanceof PsiPrimitiveType)) {
-          list.add(fieldsToNonNull.get(equalsMemberInfo.getMember()));
+          list.add(myFieldsToNonNull.get(equalsMemberInfo.getMember()));
         }
       }
-      nonNullPanel.getTable().setMemberInfos(list);
+      myNonNullPanel.getTable().setMemberInfos(list);
     }
 
     private HashMap<PsiMember, MemberInfo> createFieldToMemberInfoMap(boolean checkedByDefault) {
-      Collection<MemberInfo> memberInfos = MemberInfo.extractClassMembers(clazz, MEMBER_INFO_FILTER, false);
+      Collection<MemberInfo> memberInfos = MemberInfo.extractClassMembers(myClass, MEMBER_INFO_FILTER, false);
       final HashMap<PsiMember, MemberInfo> result = new HashMap<PsiMember, MemberInfo>();
       for (MemberInfo memberInfo : memberInfos) {
         memberInfo.setChecked(checkedByDefault);
