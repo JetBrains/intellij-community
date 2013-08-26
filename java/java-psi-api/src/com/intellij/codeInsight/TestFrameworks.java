@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,4 +35,11 @@ public abstract class TestFrameworks {
 
   @Nullable
   public abstract PsiMethod findSetUpMethod(PsiClass psiClass);
+
+  @Nullable
+  public abstract PsiMethod findTearDownMethod(PsiClass psiClass);
+  
+  public boolean isTestOrConfig(PsiClass psiClass) {
+    return isTestClass(psiClass) || findTearDownMethod(psiClass) != null || findTearDownMethod(psiClass) != null;
+  } 
 }
