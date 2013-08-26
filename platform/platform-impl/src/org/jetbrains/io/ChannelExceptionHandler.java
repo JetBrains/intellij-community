@@ -18,6 +18,7 @@ package org.jetbrains.io;
 import com.intellij.openapi.diagnostic.Logger;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.net.ConnectException;
@@ -25,6 +26,15 @@ import java.net.ConnectException;
 @ChannelHandler.Sharable
 public final class ChannelExceptionHandler extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = Logger.getInstance(ChannelExceptionHandler.class);
+
+  private static final ChannelInboundHandler INSTANCE = new ChannelExceptionHandler();
+
+  private ChannelExceptionHandler() {
+  }
+
+  public static ChannelInboundHandler getInstance() {
+    return INSTANCE;
+  }
 
   @Override
   public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {

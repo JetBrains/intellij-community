@@ -15,19 +15,20 @@
  */
 package org.jetbrains.ide;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import io.netty.channel.ChannelInboundHandler;
+import org.jetbrains.annotations.NotNull;
 
-public abstract class BuiltInServerManager {
-  public static BuiltInServerManager getInstance() {
-    return ServiceManager.getService(BuiltInServerManager.class);
-  }
+import java.util.UUID;
 
-  public abstract int getPort();
+public abstract class BinaryRequestHandler {
+  public static final ExtensionPointName<BinaryRequestHandler> EP_NAME = ExtensionPointName.create("com.intellij.binaryRequestHandler");
 
-  public abstract BuiltInServerManager waitForStart();
+  @NotNull
+  /**
+   * You can use uuidgen on Mac OS X to generate UUID
+   */
+  public abstract UUID getId();
 
-  @Nullable
-  public abstract Disposable getServerDisposable();
+  public abstract ChannelInboundHandler getInboundHandler();
 }

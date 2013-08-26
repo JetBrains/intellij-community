@@ -68,7 +68,7 @@ public class BuiltInServer implements Disposable {
       bootstrap.childHandler(new ChannelInitializer() {
         @Override
         protected void initChannel(Channel channel) throws Exception {
-          channel.pipeline().addLast(channelRegistrar, portUnificationServerHandler);
+          channel.pipeline().addLast(channelRegistrar, portUnificationServerHandler, ChannelExceptionHandler.getInstance());
         }
       });
     }
@@ -79,7 +79,7 @@ public class BuiltInServer implements Disposable {
         protected void initChannel(Channel channel) throws Exception {
           channel.pipeline().addLast(channelRegistrar);
           NettyUtil.initHttpHandlers(channel.pipeline());
-          channel.pipeline().addLast(handler);
+          channel.pipeline().addLast(handler, ChannelExceptionHandler.getInstance());
         }
       });
     }

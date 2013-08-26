@@ -29,7 +29,6 @@ import io.netty.util.AttributeKey;
 import org.apache.sanselan.ImageFormat;
 import org.apache.sanselan.ImageWriteException;
 import org.apache.sanselan.Sanselan;
-import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.HttpRequestHandler;
 
 import javax.swing.*;
@@ -52,7 +51,7 @@ final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBas
       prevHandlerAttribute.set(null);
     }
 
-    for (HttpRequestHandler handler : BuiltInServerManager.EP_NAME.getExtensions()) {
+    for (HttpRequestHandler handler : HttpRequestHandler.EP_NAME.getExtensions()) {
       try {
         if (handler.isSupported(request) && handler.process(urlDecoder, request, context)) {
           prevHandlerAttribute.set(handler);

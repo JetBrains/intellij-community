@@ -25,15 +25,17 @@ import io.netty.handler.codec.http.HttpMessage;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.BinaryRequestHandler;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import java.security.KeyStore;
 import java.security.Security;
+import java.util.UUID;
 
 @ChannelHandler.Sharable
-final class PortUnificationServerHandler extends Decoder<ByteBuf> {
+class PortUnificationServerHandler extends Decoder {
   private static final AtomicNotNullLazyValue<SSLContext> SSL_SERVER_CONTEXT = new AtomicNotNullLazyValue<SSLContext>() {
     @NotNull
     @Override
@@ -86,22 +88,22 @@ final class PortUnificationServerHandler extends Decoder<ByteBuf> {
     }
   }
 
-  private void decode(ChannelHandlerContext context, ByteBuf buffer) throws Exception {
+  protected void decode(ChannelHandlerContext context, ByteBuf buffer) throws Exception {
     ChannelPipeline pipeline = context.pipeline();
     if (detectSsl && SslHandler.isEncrypted(buffer)) {
       SSLEngine engine = SSL_SERVER_CONTEXT.getValue().createSSLEngine();
       engine.setUseClientMode(false);
-      pipeline.addLast(new SslHandler(engine), new ChunkedWriteHandler());
-      pipeline.addLast(new PortUnificationServerHandler(delegatingHttpRequestHandler, false, detectGzip));
+      pipeline.addLast(new SslHandler(engine), new ChunkedWriteHandler(),
+                       new PortUnificationServerHandler(delegatingHttpRequestHandler, false, detectGzip));
     }
     else {
       int magic1 = buffer.getUnsignedByte(buffer.readerIndex());
       int magic2 = buffer.getUnsignedByte(buffer.readerIndex() + 1);
       if (detectGzip && magic1 == 31 && magic2 == 139) {
-        pipeline.addLast(new JZlibEncoder(ZlibWrapper.GZIP), new JdkZlibDecoder(ZlibWrapper.GZIP));
-        pipeline.addLast(new PortUnificationServerHandler(delegatingHttpRequestHandler, detectSsl, false));
+        pipeline.addLast(new JZlibEncoder(ZlibWrapper.GZIP), new JdkZlibDecoder(ZlibWrapper.GZIP),
+                         new PortUnificationServerHandler(delegatingHttpRequestHandler, detectSsl, false));
       }
-      else {
+      else if (isHttp(magic1, magic2)) {
         NettyUtil.initHttpHandlers(pipeline);
         pipeline.addLast(delegatingHttpRequestHandler);
         if (BuiltInServer.LOG.isDebugEnabled()) {
@@ -116,14 +118,66 @@ final class PortUnificationServerHandler extends Decoder<ByteBuf> {
           });
         }
       }
+      else if (magic1 == 'C' && magic2 == 'H') {
+        buffer.skipBytes(2);
+        pipeline.addLast(new CustomHandlerDelegator());
+      }
+      else {
+        BuiltInServer.LOG.warn("unknown request, first two bytes " + magic1 + " " + magic2);
+        context.close();
+      }
     }
     // must be after new channels handlers addition (netty bug?)
+    ensureThatExceptionHandlerIsLast(pipeline);
     pipeline.remove(this);
     context.fireChannelRead(buffer);
   }
 
-  @Override
-  public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
-    NettyUtil.log(cause, BuiltInServer.LOG);
+  private static void ensureThatExceptionHandlerIsLast(ChannelPipeline pipeline) {
+    ChannelInboundHandler exceptionHandler = ChannelExceptionHandler.getInstance();
+    if (pipeline.last() != exceptionHandler || pipeline.context(exceptionHandler) == null) {
+      return;
+    }
+
+    pipeline.remove(exceptionHandler);
+    pipeline.addLast(exceptionHandler);
+  }
+
+  private static boolean isHttp(int magic1, int magic2) {
+    return
+      magic1 == 'G' && magic2 == 'E' || // GET
+      magic1 == 'P' && magic2 == 'O' || // POST
+      magic1 == 'P' && magic2 == 'U' || // PUT
+      magic1 == 'H' && magic2 == 'E' || // HEAD
+      magic1 == 'O' && magic2 == 'P' || // OPTIONS
+      magic1 == 'P' && magic2 == 'A' || // PATCH
+      magic1 == 'D' && magic2 == 'E' || // DELETE
+      magic1 == 'T' && magic2 == 'R' || // TRACE
+      magic1 == 'C' && magic2 == 'O';   // CONNECT
+  }
+
+  private static class CustomHandlerDelegator extends Decoder {
+    private static final int UUID_LENGTH = 16;
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext context, ByteBuf message) throws Exception {
+      ByteBuf buffer = getBufferIfSufficient(message, UUID_LENGTH, context);
+      if (buffer == null) {
+        message.release();
+      }
+      else {
+        UUID uuid = new UUID(buffer.readLong(), buffer.readLong());
+        for (BinaryRequestHandler customHandler : BinaryRequestHandler.EP_NAME.getExtensions()) {
+          if (uuid.equals(customHandler.getId())) {
+            ChannelPipeline pipeline = context.pipeline();
+            pipeline.addLast(customHandler.getInboundHandler());
+            ensureThatExceptionHandlerIsLast(pipeline);
+            pipeline.remove(this);
+            context.fireChannelRead(buffer);
+            break;
+          }
+        }
+      }
+    }
   }
 }
