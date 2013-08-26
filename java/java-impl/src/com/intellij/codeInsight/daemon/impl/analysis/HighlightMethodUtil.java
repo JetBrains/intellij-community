@@ -915,7 +915,7 @@ public class HighlightMethodUtil {
     if (!hasNoBody) {
       QuickFixAction.registerQuickFixAction(info, new DeleteMethodBodyFix(method));
     }
-    if (method.hasModifierProperty(PsiModifier.ABSTRACT) && isInterface) {
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !isInterface) {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.ABSTRACT, false, false));
     }
     for (IntentionAction intentionAction : additionalFixes) {
