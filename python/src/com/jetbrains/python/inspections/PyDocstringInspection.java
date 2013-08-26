@@ -21,6 +21,7 @@ import com.jetbrains.python.documentation.*;
 import com.jetbrains.python.inspections.quickfix.DocstringQuickFix;
 import com.jetbrains.python.inspections.quickfix.PySuppressInspectionFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.testing.PythonUnitTestUtil;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -64,12 +65,16 @@ public class PyDocstringInspection extends PyInspection {
 
     @Override
     public void visitPyFunction(PyFunction node) {
+      if (PythonUnitTestUtil.isUnitTestCaseFunction(node)) return;
+      final PyClass containingClass = node.getContainingClass();
+      if (containingClass != null && PythonUnitTestUtil.isUnitTestCaseClass(containingClass)) return;
       final String name = node.getName();
       if (name != null && !name.startsWith("_")) checkDocString(node);
     }
 
     @Override
     public void visitPyClass(PyClass node) {
+      if (PythonUnitTestUtil.isUnitTestCaseClass(node)) return;
       final String name = node.getName();
       final PyClass outerClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
       final boolean isDjangoMeta = DjangoModel.isDjangoModelDescendant(outerClass) && DjangoMeta.isMetaClass(node);
