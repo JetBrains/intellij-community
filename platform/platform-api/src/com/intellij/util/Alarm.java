@@ -255,17 +255,7 @@ public class Alarm implements Disposable {
 
     private Request(@NotNull final Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
       synchronized (LOCK) {
-        myTask = new Runnable() {
-          @Override
-          public void run() {
-            try {
-              task.run();
-            }
-            catch (Exception e) {
-              LOG.error("Exception in task " + task, e);
-            }
-          }
-        };
+        myTask = task;
         myModalityState = modalityState;
         myDelay = delayMillis;
       }
@@ -296,10 +286,15 @@ public class Alarm implements Disposable {
 
             if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
               //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(task);
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  QueueProcessor.runSafely(task);
+                }
+              });
             }
             else {
-              task.run();
+              QueueProcessor.runSafely(task);
             }
           }
         };

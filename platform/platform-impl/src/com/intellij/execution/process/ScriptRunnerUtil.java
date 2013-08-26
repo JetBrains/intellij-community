@@ -114,33 +114,21 @@ public final class ScriptRunnerUtil {
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters,
                                          @Nullable Charset charset) throws ExecutionException {
-    ExecutionException ex;
-    try {
-      return doExecute(exePath, workingDirectory, scriptFile, parameters, charset);
-    }
-    catch (ExecutionException e) {
-      ex = e;
-    }
-    boolean rerun = SystemInfo.isMac;
-    if (rerun) {
+    if (SystemInfo.isMac) {
       File exeFile = new File(exePath);
-      rerun = !exeFile.isAbsolute();
-    }
-    if (rerun) {
-      File originalExeFile = PathEnvironmentVariableUtil.findInOriginalPath(exePath);
-      rerun = originalExeFile == null;
-    }
-    if (rerun) {
-      File exeFile = PathEnvironmentVariableUtil.findInPath(exePath);
-      if (exeFile != null) {
-        try {
-          return doExecute(exeFile.getAbsolutePath(), workingDirectory, scriptFile, parameters, charset);
-        } catch (ExecutionException e) {
-          LOG.info("Standby command failed too", e);
+      if (!exeFile.isAbsolute()) {
+        if (!exePath.contains(File.separator)) {
+          File originalResolvedExeFile = PathEnvironmentVariableUtil.findInOriginalPath(exePath);
+          if (originalResolvedExeFile == null) {
+            File resolvedExeFile = PathEnvironmentVariableUtil.findInPath(exePath);
+            if (resolvedExeFile != null) {
+              exePath = resolvedExeFile.getAbsolutePath();
+            }
+          }
         }
       }
     }
-    throw ex;
+    return doExecute(exePath, workingDirectory, scriptFile, parameters, charset);
   }
 
   @NotNull

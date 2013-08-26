@@ -197,10 +197,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     if (commonSettings.length > 0) {
       settings.addSeparator();
     }
-    settings.add(new ToggleSortValuesAction(commonSettings.length == 0));
+    if (!debugProcess.isValuesCustomSorted()) {
+      settings.add(new ToggleSortValuesAction(commonSettings.length == 0));
+    }
 
     leftToolbar.add(settings);
-
 
     leftToolbar.addSeparator();
 
