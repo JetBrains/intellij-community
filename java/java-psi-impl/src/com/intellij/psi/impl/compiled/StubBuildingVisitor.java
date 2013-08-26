@@ -17,9 +17,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiNameHelper;
-import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.*;
@@ -340,7 +338,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false);
     TypeInfo type = fieldType(desc, signature);
-    String initializer = constToString(value, "boolean".equals(type.text.getString()), false);
+    String initializer = constToString(value, type.text.getString(), false);
     PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, type, initializer, flags);
     PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packFieldFlags(access));
     return new AnnotationCollectingVisitor(modList);
@@ -537,7 +535,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     @Override
     public void visit(final String name, final Object value) {
       valuePairPrefix(name);
-      myBuilder.append(constToString(value, false, true));
+      myBuilder.append(constToString(value, null, true));
     }
 
     @Override
@@ -697,17 +695,32 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   @Nullable
-  private static String constToString(@Nullable Object value, boolean isBoolean, boolean anno) {
+  private static String constToString(@Nullable Object value, @Nullable String type, boolean anno) {
     if (value == null) return null;
 
-    if (value instanceof String) return "\"" + StringUtil.escapeStringCharacters((String)value) + "\"";
-    if (value instanceof Boolean) return value.toString();
-    if (value instanceof Long) return value.toString() + "L";
+    if (value instanceof String) {
+      return "\"" + StringUtil.escapeStringCharacters((String)value) + "\"";
+    }
+
+    if (value instanceof Boolean || value instanceof Short || value instanceof Byte) {
+      return value.toString();
+    }
+
+    if (value instanceof Character) {
+      return "'" + value.toString() + "'";
+    }
+
+    if (value instanceof Long) {
+      return value.toString() + "L";
+    }
 
     if (value instanceof Integer) {
-      if (isBoolean) {
+      if ("boolean".equals(type)) {
         if (value.equals(0)) return "false";
         if (value.equals(1)) return "true";
+      }
+      if ("char".equals(type)) {
+        return "'" + ((char)((Integer)value).intValue()) + "'";
       }
       return value.toString();
     }
