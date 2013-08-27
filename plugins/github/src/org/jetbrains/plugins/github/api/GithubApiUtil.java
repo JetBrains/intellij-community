@@ -617,6 +617,32 @@ public class GithubApiUtil {
   }
 
   @NotNull
+  public static List<GithubCommitComment> getCommitComments(@NotNull GithubAuthData auth,
+                                                            @NotNull String user,
+                                                            @NotNull String repo,
+                                                            @NotNull String sha) throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/commits/" + sha + "/comments";
+
+    PagedRequest<GithubCommitComment> request =
+      new PagedRequest<GithubCommitComment>(path, GithubCommitComment.class, GithubCommitCommentRaw[].class, ACCEPT_HTML_BODY_MARKUP);
+
+    return request.getAll(auth);
+  }
+
+  @NotNull
+  public static List<GithubCommitComment> getPullRequestComments(@NotNull GithubAuthData auth,
+                                                            @NotNull String user,
+                                                            @NotNull String repo,
+                                                            long id) throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/comments";
+
+    PagedRequest<GithubCommitComment> request =
+      new PagedRequest<GithubCommitComment>(path, GithubCommitComment.class, GithubCommitCommentRaw[].class, ACCEPT_HTML_BODY_MARKUP);
+
+    return request.getAll(auth);
+  }
+
+  @NotNull
   public static GithubPullRequest getPullRequest(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, int id)
     throws IOException {
     String path = "/repos/" + user + "/" + repo + "/pulls/" + id;
