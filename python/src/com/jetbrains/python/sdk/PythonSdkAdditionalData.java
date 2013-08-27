@@ -7,8 +7,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.SimpleProjectRoot;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -151,7 +152,8 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   protected static Set<SimpleProjectRoot> collectPaths(@NotNull List<String> paths) {
     final Set<SimpleProjectRoot> files = Sets.newHashSet();
     for (String path : paths) {
-      VirtualFile file = VirtualFileUtil.findFile(path);
+      if (StringUtil.isEmpty(path)) continue;
+      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
       SimpleProjectRoot root;
       if (file != null) {
         root = new SimpleProjectRoot(file);
