@@ -53,7 +53,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
 
-    final PythonTRunnerConsoleProperties consoleProperties = new PythonTRunnerConsoleProperties(myConfiguration, executor);
+    final PythonTRunnerConsoleProperties consoleProperties = createConsoleProperties(executor);
 
     if (isDebug()) {
       final ConsoleView testsOutputConsoleView = SMTestRunnerConnectionUtil.createConsole(PythonTRunnerConsoleProperties.FRAMEWORK_NAME,
@@ -70,6 +70,10 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
                                                                                       getEnvironment());
     consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfiguration.getWorkingDirectory()));
     return consoleView;
+  }
+
+  protected PythonTRunnerConsoleProperties createConsoleProperties(Executor executor) {
+    return new PythonTRunnerConsoleProperties(myConfiguration, executor, false);
   }
 
   public GeneralCommandLine generateCommandLine() throws ExecutionException {
