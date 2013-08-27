@@ -29,9 +29,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 7/18/13 12:40 PM
  */
-public interface CompilerOptionsManager {
+public interface CompilerOptionsFilter {
 
-  ExtensionPointName<CompilerOptionsManager> EP_NAME = ExtensionPointName.create("com.intellij.compiler.optionsManager");
+  ExtensionPointName<CompilerOptionsFilter> EP_NAME = ExtensionPointName.create("com.intellij.compiler.optionsManager");
 
   enum Setting {
     RESOURCE_PATTERNS, CLEAR_OUTPUT_DIR_ON_REBUILD, ADD_NOT_NULL_ASSERTIONS, AUTO_SHOW_FIRST_ERROR_IN_EDITOR,
