@@ -40,6 +40,6 @@ public abstract class TestFrameworks {
   public abstract PsiMethod findTearDownMethod(PsiClass psiClass);
   
   public boolean isTestOrConfig(PsiClass psiClass) {
-    return isTestClass(psiClass) || findTearDownMethod(psiClass) != null || findTearDownMethod(psiClass) != null;
+    return isTestClass(psiClass) || findTearDownMethod(psiClass) != null || findSetUpMethod(psiClass) != null;
   } 
 }
