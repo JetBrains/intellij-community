@@ -39,14 +39,17 @@ public class XSourcePositionImpl implements XSourcePosition {
     myOffset = offset;
   }
 
+  @Override
   public int getLine() {
     return myLine;
   }
 
+  @Override
   public int getOffset() {
     return myOffset;
   }
 
+  @Override
   @NotNull
   public VirtualFile getFile() {
     return myFile;
@@ -78,6 +81,7 @@ public class XSourcePositionImpl implements XSourcePosition {
     return new XSourcePositionImpl(file, line, offset);
   }
 
+  @Override
   @NotNull
   public Navigatable createNavigatable(final @NotNull Project project) {
     return myOffset != -1 ? new OpenFileDescriptor(project, myFile, myOffset) : new OpenFileDescriptor(project, myFile, getLine(), 0);

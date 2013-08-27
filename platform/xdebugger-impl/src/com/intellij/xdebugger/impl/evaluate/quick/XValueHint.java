@@ -24,24 +24,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.NotNullFunction;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValuePlace;
+import com.intellij.xdebugger.frame.XValuePresenter;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresenterAdapter;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,71 +69,33 @@ public class XValueHint extends AbstractValueHint {
   }
 
 
+  @Override
   protected boolean canShowHint() {
     return true;
   }
 
+  @Override
   protected void evaluateAndShowHint() {
     myEvaluator.evaluate(myExpression, new XEvaluationCallbackBase() {
+      @Override
       public void evaluated(@NotNull final XValue result) {
-        result.computePresentation(new XValueNode() {
+        result.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
           @Override
-          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren) {
-            setPresentation(icon, type, XDebuggerUIConstants.EQ_TEXT, value, hasChildren);
-          }
-
-          @Override
-          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value,
-                                      boolean hasChildren) {
-            setPresentation(icon, type, separator, value, null, hasChildren);
-          }
-
-          @Override
-          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value,
-                                      @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren) {
-            setPresentation(icon, type, XDebuggerUIConstants.EQ_TEXT, value, valuePresenter, hasChildren);
+          public void applyPresentation(Icon icon,
+                                        String type,
+                                        String value,
+                                        XValuePresenter valuePresenter,
+                                        boolean hasChildren,
+                                        boolean expand) {
+            doShowHint(result, value, type, valuePresenter, hasChildren);
           }
 
           @Override
-          public void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean expand) {
-            setPresentation(icon, value, valuePresenter, true);
-          }
-
-          @Override
-          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren) {
-            doSetPresentation(icon, null, XDebuggerUIConstants.EQ_TEXT, value, valuePresenter, hasChildren);
-          }
-
-          @Override
-          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
-                                      @NonNls @NotNull final String value, @Nullable final NotNullFunction<String, String> valuePresenter, final boolean hasChildren) {
-            doSetPresentation(icon, type, separator, value, valuePresenter == null ? null : new XValuePresenterAdapter(valuePresenter), hasChildren);
-          }
-
-          private void doSetPresentation(@Nullable Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
-                                      @NonNls @Nullable final String value, @Nullable final XValuePresenter valuePresenter, final boolean hasChildren) {
-            AppUIUtil.invokeOnEdt(new Runnable() {
-              public void run() {
-                doShowHint(result, separator, value, type, valuePresenter == null ? XValueNodeImpl.DEFAULT_VALUE_PRESENTER : valuePresenter, hasChildren);
-              }
-            });
-          }
-
-          public void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String value,
-                                      final boolean hasChildren) {
-            setPresentation(icon, type, value, hasChildren);
-          }
-
-          public void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
-                                      @NonNls @NotNull final String value,
-                                      final boolean hasChildren) {
-            setPresentation(icon, type, separator, value, hasChildren);
-          }
-
           public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
             //todo[nik] implement?
           }
 
+          @Override
           public boolean isObsolete() {
             //todo[nik]
             return false;
@@ -143,19 +103,23 @@ public class XValueHint extends AbstractValueHint {
         }, XValuePlace.TOOLTIP);
       }
 
+      @Override
       public void errorOccurred(@NotNull final String errorMessage) {
         LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);
       }
     }, myExpressionPosition);
   }
 
-  private void doShowHint(final XValue xValue, final String separator, final String value, String type,
-                          @NotNull XValuePresenter valuePresenter, final boolean hasChildren) {
+  private void doShowHint(final XValue xValue,
+                          String value,
+                          String type,
+                          @NotNull XValuePresenter valuePresenter,
+                          boolean hasChildren) {
     if (isHintHidden()) return;
 
     SimpleColoredText text = new SimpleColoredText();
     text.append(myExpression, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-    text.append(separator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    valuePresenter.appendSeparator(text);
     if (type != null) {
       text.append("{" + type + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
     }
@@ -169,6 +133,7 @@ public class XValueHint extends AbstractValueHint {
     }
     else {
       JComponent component = createExpandableHintComponent(text, new Runnable() {
+        @Override
         public void run() {
           showTree(xValue, myExpression);
         }

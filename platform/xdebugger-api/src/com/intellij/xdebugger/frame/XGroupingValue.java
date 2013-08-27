@@ -15,24 +15,12 @@
  */
 package com.intellij.xdebugger.frame;
 
-import com.intellij.ui.ColoredTextContainer;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.chromeConnector.debugger.frame.XGroupingValuePresenter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public abstract class XValuePresenter {
-  public void appendSeparator(@NotNull ColoredTextContainer text) {
-    text.append(" = ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-  }
-
-  public void append(String value, ColoredTextContainer text, boolean changed) {
-  }
-
-  @Nullable
-  /**
-   * if returns null, default value (depends on implementation) will be used
-   */
-  public SimpleTextAttributes getNameAttributes() {
-    return null;
+public abstract class XGroupingValue extends XValue {
+  @Override
+  public final void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
+    node.setPresentation(null, null, XGroupingValuePresenter.INSTANCE, true);
   }
 }
