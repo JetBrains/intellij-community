@@ -115,16 +115,6 @@ public class CoverageListNode extends AbstractTreeNode {
   }
 
   @Override
-  public Object getValue() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
-      @Override
-      public Object compute() {
-        return CoverageListNode.super.getValue();
-      }
-    });
-  }
-
-  @Override
   public int getWeight() {
     return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
       @Override
