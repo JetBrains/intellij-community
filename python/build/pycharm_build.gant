@@ -26,7 +26,8 @@ private List<String> pycharmPlatformApiModules() {
 
 
 private List pycharmImplementationModules() {   //modules to put into pycharm.jar
-  return ["yaml", "graph", "coverage-common", "python", "python-ide", "python-openapi", "python-psi-api", "duplicates", "duplicates-xml"]
+  return ["yaml", "graph", "coverage-common", "python-community", "python", "python-ide", "python-openapi", "python-psi-api",
+    "duplicates", "duplicates-xml"]
 }
 
 class Paths {

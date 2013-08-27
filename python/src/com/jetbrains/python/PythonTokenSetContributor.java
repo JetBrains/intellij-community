@@ -33,12 +33,12 @@ public class PythonTokenSetContributor implements PythonDialectsTokenSetContribu
   public TokenSet getNameDefinerTokens() {
     // FROM_IMPORT_STATEMENT is not exactly a NameDefiner but needed anyway in mypackage/__init__.py, 'from mypackage.foo import bar' makes
     // 'foo' name visible
-    return TokenSet.create(PyElementTypes.STAR_IMPORT_ELEMENT, PyElementTypes.IMPORT_ELEMENT, PyElementTypes.CLASS_DECLARATION,
-                           PyElementTypes.GLOBAL_STATEMENT, PyElementTypes.GENERATOR_EXPRESSION, PyElementTypes.DICT_COMP_EXPRESSION,
-                           PyElementTypes.LIST_COMP_EXPRESSION, PyElementTypes.SET_COMP_EXPRESSION, PyElementTypes.WITH_STATEMENT,
-                           PyElementTypes.FUNCTION_DECLARATION, PyElementTypes.ASSIGNMENT_STATEMENT, PyElementTypes.EXCEPT_PART,
-                           PyElementTypes.FOR_STATEMENT,
-                           PyElementTypes.FROM_IMPORT_STATEMENT);
+    return TokenSet.create(STAR_IMPORT_ELEMENT, IMPORT_ELEMENT, CLASS_DECLARATION,
+                           GLOBAL_STATEMENT, GENERATOR_EXPRESSION, DICT_COMP_EXPRESSION,
+                           LIST_COMP_EXPRESSION, SET_COMP_EXPRESSION, WITH_STATEMENT,
+                           FUNCTION_DECLARATION, ASSIGNMENT_STATEMENT, EXCEPT_PART,
+                           FOR_STATEMENT,
+                           FROM_IMPORT_STATEMENT);
   }
 
   @Override
