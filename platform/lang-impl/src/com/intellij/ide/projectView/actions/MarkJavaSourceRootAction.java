@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package com.intellij.ide.projectView.actions;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 /**
- * @author yole
- */
-public class MarkTestSourceRootAction extends MarkSourceRootAction {
-  public MarkTestSourceRootAction() {
-    super(JavaSourceRootType.TEST_SOURCE);
+* @author nik
+*/
+public class MarkJavaSourceRootAction extends MarkSourceRootAction {
+  public MarkJavaSourceRootAction() {
+    super(JavaSourceRootType.SOURCE);
   }
 }

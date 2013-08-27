@@ -105,4 +105,16 @@ public class ProjectRootsUtil {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
     return !projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file);
   }
+
+  @Nullable
+  public static SourceFolder findSourceFolder(@NotNull Module module, @NotNull VirtualFile root) {
+    for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
+      for (SourceFolder folder : entry.getSourceFolders()) {
+        if (root.equals(folder.getFile())) {
+          return folder;
+        }
+      }
+    }
+    return null;
+  }
 }

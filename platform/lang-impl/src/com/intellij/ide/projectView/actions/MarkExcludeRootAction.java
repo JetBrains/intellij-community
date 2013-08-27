@@ -17,24 +17,23 @@ package com.intellij.ide.projectView.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class MarkExcludeRootAction extends MarkRootAction {
-  public MarkExcludeRootAction() {
-    super(false, true);
-  }
-
+public class MarkExcludeRootAction extends MarkRootActionBase {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-    String message = vFiles.length == 1 ? FileUtil.toSystemDependentName(vFiles [0].getPath()) : vFiles.length + " selected files";
-    final int rc = Messages
-      .showOkCancelDialog(e.getData(PlatformDataKeys.PROJECT), getPromptText(message), "Mark as Excluded", Messages.getQuestionIcon());
+    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+
+    String message = files.length == 1 ? FileUtil.toSystemDependentName(files[0].getPath()) : files.length + " selected files";
+    final int rc = Messages.showOkCancelDialog(e.getData(PlatformDataKeys.PROJECT), getPromptText(message), "Mark as Excluded",
+                                               Messages.getQuestionIcon());
     if (rc != 0) {
       return;
     }
@@ -44,5 +43,14 @@ public class MarkExcludeRootAction extends MarkRootAction {
   protected String getPromptText(String message) {
     return "Are you sure you would like to exclude " + message +
            " from the project?\nYou can restore excluded directories later using the Project Structure dialog.";
+  }
+
+  protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
+    entry.addExcludeFolder(vFile);
+  }
+
+  @Override
+  protected boolean isEnabled(@NotNull RootsSelection selection) {
+    return true;
   }
 }
