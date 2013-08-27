@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.application.options;
 
 import com.intellij.openapi.module.Module;
@@ -6,10 +21,12 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Condition;
 import com.intellij.platform.ModuleAttachProcessor;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +66,10 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     return myHelpTopic;
   }
 
+  protected boolean isSuitableForModule(@NotNull Module module) {
+    return true;
+  }
+
   @Override
   public JComponent createComponent() {
     if (myProject.isDefault()) {
@@ -58,7 +79,12 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
         return configurable.createComponent();
       }
     }
-    final List<Module> modules = ModuleAttachProcessor.getSortedModules(myProject);
+    final List<Module> modules = ContainerUtil.filter(ModuleAttachProcessor.getSortedModules(myProject), new Condition<Module>() {
+      @Override
+      public boolean value(Module module) {
+        return isSuitableForModule(module);
+      }
+    });
     if (modules.size() == 1) {
       Module module = modules.get(0);
       final T configurable = createModuleConfigurable(module);
@@ -98,6 +124,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     return null;
   }
 
+  @NotNull
   protected abstract T createModuleConfigurable(Module module);
 
   @Override
