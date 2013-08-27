@@ -115,7 +115,7 @@ public class MavenProjectsManagerWatcher {
         if (mavenProject != null) {
           VirtualFile file = mavenProject.getFile();
 
-          if (myManager.isManagedFile(file)) {
+          if (myManager.isManagedFile(file) && myManager.getModules(mavenProject).isEmpty()) {
             myManager.removeManagedFiles(Collections.singletonList(file));
           }
           else {
