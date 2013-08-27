@@ -12,13 +12,13 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
@@ -244,7 +244,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
 
   @Nullable
   private static VirtualFile getFile(@NotNull PySignature signature) {
-    return VirtualFileUtil.findFile(signature.getFile());
+    return LocalFileSystem.getInstance().findFileByPath(signature.getFile());
   }
 
   @Nullable
