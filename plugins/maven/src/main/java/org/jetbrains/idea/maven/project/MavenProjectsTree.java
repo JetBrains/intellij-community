@@ -243,6 +243,14 @@ public class MavenProjectsTree {
     });
   }
 
+  public void removeIgnoredFilesPaths(final Collection<String> paths) {
+    doChangeIgnoreStatus(new Runnable() {
+      public void run() {
+        myIgnoredFilesPaths.removeAll(paths);
+      }
+    });
+  }
+
   public boolean getIgnoredState(MavenProject project) {
     synchronized (myStateLock) {
       return myIgnoredFilesPaths.contains(project.getPath());

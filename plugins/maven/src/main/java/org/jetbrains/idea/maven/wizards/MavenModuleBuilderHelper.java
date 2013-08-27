@@ -117,7 +117,7 @@ public class MavenModuleBuilderHelper {
 
     if (myAggregatorProject == null) {
       MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-      manager.addManagedFiles(Collections.singletonList(pom));
+      manager.addManagedFilesOrUnignore(Collections.singletonList(pom));
     }
 
     if (myArchetype == null) {
