@@ -1,7 +1,9 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.ui.AppUIUtil;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePresenter;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -12,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public final class XValueNodePresentationConfigurator {
-  public static final XValuePresenter DEFAULT_VALUE_PRESENTER = new XVariableValuePresenter();
+  private static final XValuePresenter DEFAULT_VALUE_PRESENTER = new XVariableValuePresenter(XDebuggerUIConstants.EQ_TEXT);
 
   public interface ConfigurableXValueNode {
     void applyPresentation(Icon icon,
@@ -94,7 +96,7 @@ public final class XValueNodePresentationConfigurator {
   }
 
   private static XValuePresenter createPresenter(@NotNull String separator) {
-    return separator.equals(XDebuggerUIConstants.EQ_TEXT) ? DEFAULT_VALUE_PRESENTER : new XVariableValuePresenter();
+    return separator.equals(XDebuggerUIConstants.EQ_TEXT) ? DEFAULT_VALUE_PRESENTER : new XVariableValuePresenter(separator);
   }
 
   public static void setPresentation(@Nullable Icon icon,
@@ -144,15 +146,22 @@ public final class XValueNodePresentationConfigurator {
   private static void doSetPresentation(@Nullable final Icon icon,
                                         @NonNls @Nullable final String type,
                                         @NonNls @Nullable final String value,
-                                        @Nullable final XValuePresenter valuePresenter,
+                                        @Nullable XValuePresenter valuePresenter,
                                         final boolean hasChildren,
                                         final boolean expand,
                                         final ConfigurableXValueNode node) {
-    AppUIUtil.invokeOnEdt(new Runnable() {
-      @Override
-      public void run() {
-        node.applyPresentation(icon, type, value, valuePresenter == null ? DEFAULT_VALUE_PRESENTER : valuePresenter, hasChildren, expand);
-      }
-    });
+    Application application = ApplicationManager.getApplication();
+    final XValuePresenter finalValuePresenter = ObjectUtils.notNull(valuePresenter, DEFAULT_VALUE_PRESENTER);
+    if (application.isDispatchThread()) {
+      node.applyPresentation(icon, type, value, finalValuePresenter, hasChildren, expand);
+    }
+    else {
+      application.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          node.applyPresentation(icon, type, value, finalValuePresenter, hasChildren, expand);
+        }
+      });
+    }
   }
 }

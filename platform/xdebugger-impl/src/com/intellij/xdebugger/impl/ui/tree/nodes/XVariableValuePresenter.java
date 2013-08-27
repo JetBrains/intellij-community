@@ -9,10 +9,6 @@ import org.jetbrains.annotations.NotNull;
 public final class XVariableValuePresenter extends StringValuePresenter {
   private final String separator;
 
-  public XVariableValuePresenter() {
-    this(XDebuggerUIConstants.EQ_TEXT);
-  }
-
   public XVariableValuePresenter(@NotNull String separator) {
     super(-1, null);
 
