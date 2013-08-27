@@ -59,6 +59,11 @@ public class IdeaWideProxySelector extends ProxySelector {
         return CommonProxy.NO_PROXY_LIST;
       }
 
+      if (myHttpConfigurable.PROXY_PORT < 0 || myHttpConfigurable.PROXY_PORT > 65535) {
+        LOG.debug("No proxy: invalid port: " + myHttpConfigurable.PROXY_PORT);
+        return CommonProxy.NO_PROXY_LIST;
+      }
+
       Proxy.Type type = myHttpConfigurable.PROXY_TYPE_IS_SOCKS ? Proxy.Type.SOCKS : Proxy.Type.HTTP;
       Proxy proxy = new Proxy(type, new InetSocketAddress(myHttpConfigurable.PROXY_HOST, myHttpConfigurable.PROXY_PORT));
       LOG.debug("Defined proxy: ", proxy);
