@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -587,6 +587,11 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
     }
     return LangBundle.message("completion.no.suggestions") + suffix;
+  }
+
+  @Override
+  public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
+    return typeChar == ':' && JavaTokenType.COLON == position.getNode().getElementType();
   }
 
   private static boolean shouldSuggestSmartCompletion(final PsiElement element) {
