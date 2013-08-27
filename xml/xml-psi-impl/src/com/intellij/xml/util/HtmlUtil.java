@@ -139,7 +139,8 @@ public class HtmlUtil {
 
   @NonNls private static final String[] HTML5_TAGS = {
     "article", "aside", "audio", "canvas", "command", "datalist", "details", "embed", "figcaption", "figure", "footer", "header", "hgroup",
-    "keygen", "mark", "meter", "nav", "output", "progress", "rp", "rt", "ruby", "section", "source", "summary", "time", "video", "wbr"
+    "keygen", "mark", "meter", "nav", "output", "progress", "rp", "rt", "ruby", "section", "source", "summary", "time", "video", "wbr",
+    "main"
   };
   private static final Set<String> HTML5_TAGS_SET = new THashSet<String>();
 
