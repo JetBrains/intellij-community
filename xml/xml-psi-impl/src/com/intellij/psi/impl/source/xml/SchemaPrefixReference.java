@@ -47,7 +47,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
    * @param name
    * @param reference
    */
-  public SchemaPrefixReference(XmlElement element, TextRange range, String name, TagNameReference reference) {
+  public SchemaPrefixReference(XmlElement element, TextRange range, String name, @Nullable TagNameReference reference) {
     super(element, range);
     myName = name;
     myTagNameReference = reference;
