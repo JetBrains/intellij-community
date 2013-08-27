@@ -62,23 +62,14 @@ public final class Annotation implements Segment {
 
   public static class QuickFixInfo {
     public final IntentionAction quickFix;
+    @NotNull
     public final TextRange textRange;
-    public final List<IntentionAction> options;
     public final HighlightDisplayKey key;
 
-    @Deprecated
-    public QuickFixInfo(final IntentionAction quickFix, final TextRange textRange, final List<IntentionAction> options, String displayName) {
-      key = null;
-      this.quickFix = quickFix;
-      this.textRange = textRange;
-      this.options = options;
-    }
-
-    public QuickFixInfo(@NotNull IntentionAction fix, final TextRange range, @Nullable final HighlightDisplayKey key) {
+    public QuickFixInfo(@NotNull IntentionAction fix, @NotNull TextRange range, @Nullable final HighlightDisplayKey key) {
       this.key = key;
       quickFix = fix;
       textRange = range;
-      options = null;
     }
 
     @Override
@@ -99,7 +90,7 @@ public final class Annotation implements Segment {
    * @see AnnotationHolder#createWarningAnnotation
    * @see AnnotationHolder#createInfoAnnotation
    */
-  public Annotation(final int startOffset, final int endOffset, final HighlightSeverity severity, final String message, String tooltip) {
+  public Annotation(final int startOffset, final int endOffset, @NotNull HighlightSeverity severity, final String message, String tooltip) {
     assert startOffset <= endOffset : startOffset + ":" + endOffset;
     assert startOffset >= 0 : "Start offset must not be negative: " +startOffset;
     myStartOffset = startOffset;
@@ -131,24 +122,6 @@ public final class Annotation implements Segment {
       myQuickFixes = new ArrayList<QuickFixInfo>();
     }
     myQuickFixes.add(new QuickFixInfo(new LocalQuickFixAsIntentionAdapter(fix, problemDescriptor), range, key));
-  }
-
-  /**
-   * Registers a quick fix for the annotation which is only available on a particular range of text
-   * within the annotation.
-   *
-   * @param fix   the quick fix implementation.
-   * @param range the text range (relative to the document) where the quick fix is available.
-   */
-  @Deprecated
-  public void registerFix(@NotNull IntentionAction fix, TextRange range, List<IntentionAction> options, String displayName) {
-    if (range == null) {
-      range = new TextRange(myStartOffset, myEndOffset);
-    }
-    if (myQuickFixes == null) {
-      myQuickFixes = new ArrayList<QuickFixInfo>();
-    }
-    myQuickFixes.add(new QuickFixInfo(fix, range, options, displayName));
   }
 
   /**
@@ -242,6 +215,7 @@ public final class Annotation implements Segment {
    *
    * @return the annotation severity.
    */
+  @NotNull
   public HighlightSeverity getSeverity() {
     return mySeverity;
   }
@@ -263,6 +237,7 @@ public final class Annotation implements Segment {
    *
    * @return the text attribute key used for highlighting
    */
+  @NotNull
   public TextAttributesKey getTextAttributes() {
     if (myEnforcedAttributesKey != null) return myEnforcedAttributesKey;
 

@@ -31,20 +31,9 @@ public class UpdateRootInfo {
 
   public UpdateRootInfo(File file, SvnVcs vcs) {
     myRevision = SVNRevision.HEAD;
-    try {
-      SVNWCClient wcClient = vcs.createWCClient();
-      SVNInfo info = wcClient.doInfo(file, SVNRevision.UNDEFINED);
-      if (info != null) {
-        final SVNURL url = info.getURL();
-        myUrl = url.toString();
-      } else {
-        myUrl = "";
-      }
-    }
-    catch (SVNException e) {
-      myUrl = "";
-    }
 
+    SVNInfo info = vcs.getInfo(file);
+    myUrl = info != null && info.getURL() != null ? info.getDepth().toString() : "";
   }
 
   public SVNURL getUrl() {

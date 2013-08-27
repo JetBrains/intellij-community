@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -513,14 +513,14 @@ public abstract class PsiAnchor {
     @Override
     public int getStartOffset() {
       final PsiElement resolved = retrieve();
-      if (resolved == null) throw new PsiInvalidElementAccessException(null);
+      if (resolved == null) throw new PsiInvalidElementAccessException(null, "Element type: " + myElementType.toString() + "; " + myVirtualFile);
       return resolved.getTextRange().getStartOffset();
     }
 
     @Override
     public int getEndOffset() {
       final PsiElement resolved = retrieve();
-      if (resolved == null) throw new PsiInvalidElementAccessException(null);
+      if (resolved == null) throw new PsiInvalidElementAccessException(null, "Element type: " + myElementType.toString() + "; " + myVirtualFile);
       return resolved.getTextRange().getEndOffset();
     }
 

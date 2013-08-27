@@ -109,17 +109,8 @@ public abstract class AbstractSvnUpdatePanel {
 
   @Nullable
   private SVNURL getUrlFor(@NotNull final FilePath root) {
-    try {
-      SVNWCClient wcClient = myVCS.createWCClient();
-      final SVNInfo info = wcClient.doInfo(root.getIOFile(), SVNRevision.UNDEFINED);
-      if (info != null) {
-        return info.getURL();
-      }
-      return null;
-    }
-    catch (SVNException e) {
-      return null;
-    }
+    final SVNInfo info = myVCS.getInfo(root.getIOFile());
+    return info != null ? info.getURL() : null;
   }
 
   protected abstract JComponent getPanel();

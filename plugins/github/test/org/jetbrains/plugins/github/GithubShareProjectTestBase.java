@@ -35,9 +35,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
   protected String PROJECT_NAME;
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-
+  protected void beforeTest() throws Exception {
     Random rnd = new Random();
     long time = Clock.getTime();
     PROJECT_NAME = "new_project_from_" + getTestName(false) + "_" + DateFormatUtil.formatDate(time).replace('/', '-') + "_" + rnd.nextLong();
@@ -45,13 +43,8 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
   }
 
   @Override
-  public void tearDown() throws Exception {
-    try {
-      deleteGithubRepo();
-    }
-    finally {
-      super.tearDown();
-    }
+  protected void afterTest() throws Exception {
+    deleteGithubRepo();
   }
 
   protected void deleteGithubRepo() throws IOException {

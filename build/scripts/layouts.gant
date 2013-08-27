@@ -323,9 +323,6 @@ public def layoutCommunityPlugins(String home) {
     }
 
     layoutPlugin("svn4idea") {
-      jar("bindSvn.jar") {
-        module("bindSvn")
-      }
       fileset(dir: "$home/plugins/svn4idea/lib", excludes: "**/svnkitsrc.zip")
     }
 

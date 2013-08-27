@@ -695,7 +695,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     @Override
     public void unregister(@NotNull Condition<IntentionAction> condition) {
       if (myInfo != null) {
-        QuickFixAction.unregisterQuickFixAction(myInfo, condition);
+        myInfo.unregisterQuickFix(condition);
       }
     }
   }

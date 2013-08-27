@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.*;
@@ -36,10 +35,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -55,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Iterator;
 import java.util.List;
 
 public class HighlightInfo implements Segment {
@@ -73,8 +70,8 @@ public class HighlightInfo implements Segment {
   public final int startOffset;
   public final int endOffset;
 
-  public int fixStartOffset;
-  public int fixEndOffset;
+  private int fixStartOffset;
+  private int fixEndOffset;
   RangeMarker fixMarker; // null means it the same as highlighter
 
   private final String description;
@@ -84,7 +81,7 @@ public class HighlightInfo implements Segment {
 
   final int navigationShift;
 
-  RangeHighlighterEx highlighter;
+  volatile RangeHighlighterEx highlighter; // modified in EDT only
 
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
@@ -99,6 +96,11 @@ public class HighlightInfo implements Segment {
   private static final int AFTER_END_OF_LINE_FLAG = 3;
   private static final int FILE_LEVEL_ANNOTATION_FLAG = 4;
   private static final int NEEDS_UPDATE_ON_TYPING_FLAG = 5;
+
+  @NotNull
+  ProperTextRange getFixTextRange() {
+    return new ProperTextRange(fixStartOffset, fixEndOffset);
+  }
 
   public void setFromInjection(boolean fromInjection) {
     setFlag(FROM_INJECTION_FLAG, fromInjection);
@@ -652,14 +654,16 @@ public class HighlightInfo implements Segment {
     return info;
   }
 
+  public static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
+
   private static void appendFixes(@Nullable TextRange fixedRange, @NotNull HighlightInfo info, List<Annotation.QuickFixInfo> fixes) {
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
         TextRange range = fixedRange != null ? fixedRange : quickFixInfo.textRange;
         HighlightDisplayKey key = quickFixInfo.key != null
                                   ? quickFixInfo.key
-                                  : HighlightDisplayKey.find(DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection.ANNOTATOR_SHORT_NAME);
-        QuickFixAction.registerQuickFixAction(info, range, quickFixInfo.quickFix, key);
+                                  : HighlightDisplayKey.find(ANNOTATOR_INSPECTION_SHORT_NAME);
+        info.registerFix(quickFixInfo.quickFix, null, HighlightDisplayKey.getDisplayNameByKey(key), range, key);
       }
     }
   }
@@ -821,7 +825,7 @@ public class HighlightInfo implements Segment {
           ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressActions, new Function<SuppressQuickFix, IntentionAction>() {
             @Override
             public IntentionAction fun(SuppressQuickFix fix) {
-              return InspectionManagerEx.convertBatchToSuppressIntentionAction(fix);
+              return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction(fix);
             }
           }));
         }
@@ -887,5 +891,33 @@ public class HighlightInfo implements Segment {
     if (highlighter == null) throw new RuntimeException("info not applied yet");
     if (!highlighter.isValid()) return "";
     return highlighter.getDocument().getText(TextRange.create(highlighter));
+  }
+
+  public void registerFix(@Nullable IntentionAction action,
+                          @Nullable List<IntentionAction> options,
+                          @Nullable String displayName,
+                          @Nullable TextRange fixRange,
+                          @Nullable HighlightDisplayKey key) {
+    if (action == null) return;
+    if (fixRange == null) fixRange = new TextRange(startOffset, endOffset);
+    if (quickFixActionRanges == null) {
+      quickFixActionRanges = ContainerUtil.createLockFreeCopyOnWriteList();
+    }
+    IntentionActionDescriptor desc = new IntentionActionDescriptor(action, options, displayName, null, key, getProblemGroup());
+    quickFixActionRanges.add(Pair.create(desc, fixRange));
+    fixStartOffset = Math.min (fixStartOffset, fixRange.getStartOffset());
+    fixEndOffset = Math.max (fixEndOffset, fixRange.getEndOffset());
+    if (action instanceof HintAction) {
+      setHint(true);
+    }
+  }
+
+  public void unregisterQuickFix(@NotNull Condition<IntentionAction> condition) {
+    for (Iterator<Pair<IntentionActionDescriptor, TextRange>> it = quickFixActionRanges.iterator(); it.hasNext();) {
+      Pair<IntentionActionDescriptor, TextRange> pair = it.next();
+      if (condition.value(pair.first.getAction())) {
+        it.remove();
+      }
+    }
   }
 }

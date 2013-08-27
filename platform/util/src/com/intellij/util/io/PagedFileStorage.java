@@ -98,7 +98,7 @@ public class PagedFileStorage implements Forceable {
   private final byte[] myTypedIOBuffer;
   private volatile boolean isDirty = false;
   private final File myFile;
-  protected long mySize = -1;
+  protected volatile long mySize = -1;
   protected final int myPageSize;
   protected final boolean myValuesAreBufferAligned;
   @NonNls private static final String RW = "rw";
@@ -239,7 +239,7 @@ public class PagedFileStorage implements Forceable {
                                            "buffer.limit=" + buffer.limit() + ", " +
                                            "page=" + page + ", " +
                                            "file=" + myFile.getName() + ", "+
-                                           "file.length=" + mySize);
+                                           "file.length=" + length());
       }
       buffer.get(dst, o, page_len);
 
@@ -298,10 +298,10 @@ public class PagedFileStorage implements Forceable {
 
   public void resize(int newSize) throws IOException {
     int oldSize = (int)myFile.length();
-    if (oldSize == newSize) return;
+    if (oldSize == newSize && oldSize == length()) return;
 
     final long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
-    myStorageLockContext.myStorageLock.invalidateBuffer((int)(myStorageIndex | (mySize / myPageSize)));
+    myStorageLockContext.myStorageLock.invalidateBuffer(myStorageIndex | (oldSize / myPageSize));
     //unmapAll(); // we do not need it since all page alighned buffers can be reused
     final long unmapAllFinished = IOStatistics.DEBUG ? System.currentTimeMillis():0;
 
@@ -322,6 +322,7 @@ public class PagedFileStorage implements Forceable {
 
   private void resizeFile(int newSize) throws IOException {
     RandomAccessFile raf = new RandomAccessFile(myFile, RW);
+    mySize = -1;
     try {
       raf.setLength(newSize);
     }
@@ -345,10 +346,11 @@ public class PagedFileStorage implements Forceable {
   }
 
   public final long length() {
-    if (mySize == -1) {
-      mySize = myFile.length();
+    long size = mySize;
+    if (size == -1) {
+      mySize = size = myFile.length();
     }
-    return mySize;
+    return size;
   }
 
   private ByteBuffer getBuffer(int page) {

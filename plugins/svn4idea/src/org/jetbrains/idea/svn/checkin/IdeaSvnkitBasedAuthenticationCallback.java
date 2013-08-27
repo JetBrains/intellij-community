@@ -28,6 +28,7 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.commandLine.AuthenticationCallback;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
@@ -75,6 +76,20 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     if (url == null) return false;
 
     return new CredentialsAuthenticator(myVcs).tryAuthenticate(realm, url, file, previousFailed, passwordRequest);
+  }
+
+  @Nullable
+  @Override
+  public SVNAuthentication requestCredentials(@Nullable SVNURL url, String type) {
+    SVNAuthentication authentication =
+      url != null ? myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getProvider().requestClientAuthentication(
+        type, url, url.toDecodedString(), null, null, true) : null;
+
+    if (authentication == null) {
+      LOG.warn("Could not get authentication. Type - " + type + ", Url - " + url);
+    }
+
+    return authentication;
   }
 
   @Override
@@ -354,7 +369,9 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
                                     }, new ThrowableRunnable<SVNException>() {
                                       @Override
                                       public void run() throws SVNException {
+                                        // NOTE: DO NOT replace this call - SSL authentication highly tied to SVNKit
                                         myVcs.createWCClient(active).doInfo(myUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+                                        //myVcs.getInfo(myUrl, SVNRevision.HEAD, active);
                                       }
                                     }
       );

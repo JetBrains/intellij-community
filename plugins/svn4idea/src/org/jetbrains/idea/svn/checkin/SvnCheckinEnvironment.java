@@ -48,8 +48,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.commandLine.SvnBindClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
-import org.tigris.subversion.javahl.ClientException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -177,7 +177,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     if (committables.isEmpty()) {
       return;
     }
-    if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(format) &&
+    if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) || WorkingCopyFormat.ONE_DOT_SEVEN.equals(format) &&
         SvnConfiguration.UseAcceleration.commandLine.equals(SvnConfiguration.getInstance(mySvnVcs.getProject()).myUseAcceleration) &&
         (SvnAuthenticationManager.HTTP.equals(url.getProtocol()) || SvnAuthenticationManager.HTTPS.equals(url.getProtocol()))) {
       doWithCommandLine(committables, comment, exception, feedback);
@@ -256,14 +256,25 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     });
     final IdeaSvnkitBasedAuthenticationCallback authenticationCallback = new IdeaSvnkitBasedAuthenticationCallback(mySvnVcs);
     try {
-      final SvnBindClient client = new SvnBindClient(SvnApplicationSettings.getInstance().getCommandLinePath());
+      final SvnBindClient client = new SvnBindClient(SvnApplicationSettings.getInstance().getCommandLinePath(), new Convertor<String[], SVNURL>() {
+        @Override
+        public SVNURL convert(String[] o) {
+          SVNInfo info = o.length > 0 ? mySvnVcs.getInfo(o[0]) : null;
+
+          if (info == null || info.getURL() == null) {
+            LOG.warn("Could not resolve repository url for commit. Paths - " + Arrays.toString(o));
+          }
+
+          return info != null ? info.getURL() : null;
+        }
+      });
       client.setAuthenticationCallback(authenticationCallback);
       client.setHandler(new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator()));
       final long revision = client.commit(ArrayUtil.toStringArray(paths), comment, false, false);
       reportCommittedRevisions(feedback, String.valueOf(revision));
     }
-    catch (ClientException e) {
-      exception.add(new VcsException(e));
+    catch (VcsException e) {
+      exception.add(e);
     } finally {
       authenticationCallback.reset();
     }
@@ -348,25 +359,19 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   private List<File> getCommitables(List<File> paths) {
     final Adder adder = new Adder();
 
-    SVNStatusClient statusClient = mySvnVcs.createStatusClient();
     for (File path : paths) {
       File file = path.getAbsoluteFile();
       adder.add(file);
       if (file.getParentFile() != null) {
-        addParents(statusClient, file.getParentFile(), adder);
+        addParents(file.getParentFile(), adder);
       }
     }
     return adder.getResult();
   }
 
-  private static void addParents(SVNStatusClient statusClient, File file, final Adder adder) {
-    SVNStatus status;
-    try {
-      status = statusClient.doStatus(file, false);
-    }
-    catch (SVNException e) {
-      return;
-    }
+  private void addParents(File file, final Adder adder) {
+    SVNStatus status = getStatus(file);
+
     if (status != null &&
         (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_ADDED) ||
          SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_REPLACED))) {
@@ -374,9 +379,31 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       adder.add(file);
       file = file.getParentFile();
       if (file != null) {
-        addParents(statusClient, file, adder);
+        addParents(file, adder);
       }
     }
+  }
+
+  private SVNStatus getStatus(File file) {
+    SVNStatus result = null;
+    WorkingCopyFormat format = mySvnVcs.getWorkingCopyFormat(file);
+
+    try {
+      result = WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ? getStatusCommandLine(file) : getStatusSvnKit(file);
+    }
+    catch (SVNException e) {
+      // do nothing
+    }
+
+    return result;
+  }
+
+  private SVNStatus getStatusSvnKit(File file) throws SVNException {
+    return mySvnVcs.createStatusClient().doStatus(file, false);
+  }
+
+  private SVNStatus getStatusCommandLine(File file) throws SVNException {
+    return new SvnCommandLineStatusClient(mySvnVcs.getProject()).doStatus(file, false);
   }
 
   private static List<File> collectPaths(final List<Change> changes) {
@@ -418,15 +445,14 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> filePaths) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
-    final SVNWCClient wcClient = mySvnVcs.createWCClient();
-
     List<File> files = ChangesUtil.filePathsToFiles(filePaths);
+
     for (File file : files) {
       try {
-        wcClient.doDelete(file, true, false);
+        mySvnVcs.getFactory(file).createDeleteClient().delete(file, true);
       }
-      catch (SVNException e) {
-        exceptions.add(new VcsException(e));
+      catch (VcsException e) {
+        exceptions.add(e);
       }
     }
 
@@ -434,30 +460,22 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
-    final List<VcsException> result = new ArrayList<VcsException>();
-    final SVNWCClient wcClient = mySvnVcs.createWCClient();
-
-    final List<SVNException> exceptionList = scheduleUnversionedFilesForAddition(wcClient, files);
-    for (SVNException svnException : exceptionList) {
-      result.add(new VcsException(svnException));
-    }
-    return result;
+    return scheduleUnversionedFilesForAddition(mySvnVcs, files);
   }
 
-  public static List<SVNException> scheduleUnversionedFilesForAddition(SVNWCClient wcClient, List<VirtualFile> files) {
-    return scheduleUnversionedFilesForAddition(wcClient, files, false);
+  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<VirtualFile> files) {
+    return scheduleUnversionedFilesForAddition(vcs, files, false);
   }
 
-  public static List<SVNException> scheduleUnversionedFilesForAddition(SVNWCClient wcClient, List<VirtualFile> files, final boolean recursive) {
-    List<SVNException> exceptions = new ArrayList<SVNException>();
-
+  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<VirtualFile> files, final boolean recursive) {
     Collections.sort(files, FilePathComparator.getInstance());
 
-    wcClient.setEventHandler(new ISVNEventHandler() {
+    ISVNEventHandler eventHandler = new ISVNEventHandler() {
       @Override
       public void handleEvent(SVNEvent event, double progress) throws SVNException {
         final ProgressManager pm = ProgressManager.getInstance();
         final ProgressIndicator pi = pm.getProgressIndicator();
+        // TODO: pi is null here when invoking "Add" action
         if (pi != null && event.getFile() != null) {
           File file = event.getFile();
           pi.setText(SvnBundle.message("progress.text2.adding", file.getName() + " (" + file.getParent() + ")"));
@@ -472,12 +490,18 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
           if (pi.isCanceled()) throw new SVNCancelException();
         }
       }
-    });
+    };
+
+    List<VcsException> exceptions = new ArrayList<VcsException>();
+
     for (VirtualFile file : files) {
       try {
-        wcClient.doAdd(new File(FileUtil.toSystemDependentName(file.getPath())), true, false, true, recursive);
+        File convertedFile = new File(FileUtil.toSystemDependentName(file.getPath()));
+        SVNDepth depth = recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY;
+
+        vcs.getFactory(convertedFile).createAddClient().add(convertedFile, depth, true, false, true, eventHandler);
       }
-      catch (SVNException e) {
+      catch (VcsException e) {
         exceptions.add(e);
       }
     }

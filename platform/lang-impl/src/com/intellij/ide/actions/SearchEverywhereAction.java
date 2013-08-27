@@ -121,7 +121,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       g.drawLine(myLeftWidth-1, 0, myLeftWidth-1, getHeight());
       super.paintComponent(g);
     }
-  }; //don't use JBList here!!! todo[kb]
+  };
   private AnActionEvent myActionEvent;
   private Component myContextComponent;
   private CalcThread myCalcThread;
@@ -141,6 +141,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private int myTopHitsCount;
+  private int myInitialWidth;
+  private int myInitialHeight;
 
   public SearchEverywhereAction() {
     createSearchField();
@@ -175,6 +177,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       protected void textChanged(DocumentEvent e) {
         final String pattern = editor.getText();
+        final int len = pattern.trim().length();
         myAlarm.cancelAllRequests();
         myAlarm.addRequest(new Runnable() {
           @Override
@@ -183,7 +186,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               rebuildList(pattern);
             }
           }
-        }, /*Registry.intValue("ide.goto.rebuild.delay")*/30);
+        }, /*Registry.intValue("ide.goto.rebuild.delay")*/ len == 1 ? 400 : len == 2 ? 300 : len == 3 ? 250 : 30);
       }
     });
     editor.addFocusListener(new FocusAdapter() {
@@ -220,7 +223,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       public void keyPressed(KeyEvent e) {
         int keyCode = e.getKeyCode();
-        if (keyCode == KeyEvent.VK_ESCAPE && (myPopup == null || !myPopup.isVisible())) {
+        if (keyCode == KeyEvent.VK_ESCAPE) {
+          if (myPopup != null && myPopup.isVisible()) {
+            myPopup.cancel();
+          }
           IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(editor);
           focusManager.requestDefaultFocus(true);
         }
@@ -730,7 +736,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
       for (VirtualFile file : ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles())) {
         if (StringUtil.isEmptyOrSpaces(pattern) || matcher.matches(file.getName())) {
-          files.add(file);
+          if (!files.contains(file)) {
+            files.add(file);
+          }
         }
         if (files.size() > 15) break;
       }
@@ -890,7 +898,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           if (myPopup == null || !myPopup.isVisible()) {
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(field.getTextEditor(), myList);
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(new JBScrollPane(myList), null);
-            myPopup = builder.setRequestFocus(false).createPopup();
+            myInitialWidth = myInitialHeight = 0;
+            myPopup = builder.setRequestFocus(false)
+              .setCancelKeyEnabled(false)
+              .createPopup();
             Disposer.register(myPopup, new Disposable() {
               @Override
               public void dispose() {
@@ -927,8 +938,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               sz.width++;
               sz.width++;
             }
-            sz.width = Math.max(600, sz.width);
-            sz.height = Math.max(800, sz.height);
             myPopup.setSize(sz);
             final Point screen = field.getLocationOnScreen();
             final int x = screen.x + field.getWidth() - myPopup.getSize().width;

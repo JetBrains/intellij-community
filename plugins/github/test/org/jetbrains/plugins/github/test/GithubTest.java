@@ -56,9 +56,11 @@ import static org.junit.Assume.assumeNotNull;
  * <li>Project base directory is the root of everything. </li>
  * </ul></p>
  * <p>All tests inherited from this class are required to have a login and a password to access the Github server.
- *    They are set up in System properties: <br/>
- *    <code>-Dtest.github.login=mylogin<br/>
- *           -Dtest.github.password=mypassword</code>
+ *    They are set up in Environment variables: <br/>
+ *    <code>idea.test.github.host=myHost<br/>
+ *          idea.test.github.login1=mylogin1<br/> // test user
+ *          idea.test.github.login2=mylogin2<br/> // user with configured test repositories
+ *          idea.test.github.password=mypassword</code> // password for test user
  * </p>
  *
  * @author Kirill Likhodedov
@@ -173,7 +175,7 @@ public abstract class GithubTest extends UsefulTestCase {
   }
 
   @Override
-  protected void setUp() throws Exception {
+  protected final void setUp() throws Exception {
     final String host = System.getenv("idea.test.github.host");
     final String login1 = System.getenv("idea.test.github.login1");
     final String login2 = System.getenv("idea.test.github.login2");
@@ -186,8 +188,14 @@ public abstract class GithubTest extends UsefulTestCase {
 
     super.setUp();
 
-    myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
-    myProjectFixture.setUp();
+    try {
+      myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
+      myProjectFixture.setUp();
+    }
+    catch (Exception e) {
+      super.tearDown();
+      throw e;
+    }
 
     myProject = myProjectFixture.getProject();
     myProjectRoot = myProject.getBaseDir();
@@ -209,17 +217,39 @@ public abstract class GithubTest extends UsefulTestCase {
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
 
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
+
+    try {
+      beforeTest();
+    }
+    catch (Exception e) {
+      try {
+        tearDown();
+      }
+      catch (Exception e2) {
+        e2.printStackTrace();
+      }
+      throw e;
+    }
   }
 
   @Override
-  protected void tearDown() throws Exception {
-    myHttpAuthService.cleanup();
-    myDialogManager.cleanup();
-    myNotificator.cleanup();
+  protected final void tearDown() throws Exception {
+    try {
+      afterTest();
+    }
+    finally {
+      myHttpAuthService.cleanup();
+      myDialogManager.cleanup();
+      myNotificator.cleanup();
 
-    myProjectFixture.tearDown();
-    super.tearDown();
+      myProjectFixture.tearDown();
+      super.tearDown();
+    }
   }
 
+  protected void beforeTest() throws Exception {
+  }
 
+  protected void afterTest() throws Exception {
+  }
 }

@@ -68,8 +68,12 @@ import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
+import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.CmdClientFactory;
+import org.jetbrains.idea.svn.api.SvnKitClientFactory;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
+import org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient;
 import org.jetbrains.idea.svn.commandLine.SvnExecutableChecker;
 import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
@@ -79,6 +83,7 @@ import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.lowLevel.PrimitivePool;
 import org.jetbrains.idea.svn.networking.SSLProtocolExceptionParser;
+import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
@@ -194,6 +199,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   };
   private SvnCheckoutProvider myCheckoutProvider;
+
+  private ClientFactory cmdClientFactory;
+  private ClientFactory svnKitClientFactory;
+
 
   public void checkCommandLineVersion() {
     myChecker.checkExecutableAndNotifyIfNeeded();
@@ -480,6 +489,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
              !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myChecker.checkExecutableAndNotifyIfNeeded();
     }
+
+    cmdClientFactory = new CmdClientFactory(this);
+    svnKitClientFactory = new SvnKitClientFactory(this);
 
     // do one time after project loaded
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
@@ -911,24 +923,125 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return new File(file, pathToDirProps);
   }
 
+  /**
+   * Provides info either with command line or SvnKit based on project settings.
+   * Call this method only if failed to detect working copy format by any other means.
+   *
+   * @param file
+   * @return
+   */
+  private SVNInfo runInfoCommand(@NotNull final File file) {
+    SVNInfo result = null;
+
+    try {
+      result = SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration.myUseAcceleration)
+               ? getInfoCommandLine(file, SVNRevision.UNDEFINED)
+               : getInfoSvnKit(file);
+    }
+    catch (SVNException e) {
+      handleInfoException(e);
+    }
+
+    return result;
+  }
+
+  public SVNInfo getInfo(@NotNull SVNURL url,
+                         SVNRevision pegRevision,
+                         SVNRevision revision,
+                         ISVNAuthenticationManager manager) throws SVNException {
+    if (SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration.myUseAcceleration)) {
+      return createInfoClient().doInfo(url, pegRevision, revision);
+    } else {
+      return (manager != null ? createWCClient(manager) : createWCClient()).doInfo(url, pegRevision, revision);
+    }
+  }
+
+  public SVNInfo getInfo(@NotNull SVNURL url, SVNRevision revision) throws SVNException {
+    return getInfo(url, SVNRevision.UNDEFINED, revision, null);
+  }
+
   @Nullable
-  public SVNInfo getInfo(final VirtualFile file) {
+  public SVNInfo getInfo(@NotNull final VirtualFile file) {
     final File ioFile = new File(file.getPath());
     return getInfo(ioFile);
   }
 
-  public SVNInfo getInfo(File ioFile) {
+  @Nullable
+  public SVNInfo getInfo(@NotNull String path) {
+    return getInfo(new File(path));
+  }
+
+  @Nullable
+  public SVNInfo getInfo(@NotNull File ioFile) {
+    WorkingCopyFormat format = getWorkingCopyFormat(ioFile);
+    SVNInfo result = null;
+
     try {
-      SVNWCClient wcClient = createWCClient();
-      SVNInfo info = wcClient.doInfo(ioFile, SVNRevision.UNDEFINED);
-      if (info == null || info.getRepositoryRootURL() == null) {
-        info = wcClient.doInfo(ioFile, SVNRevision.HEAD);
-      }
-      return info;
+      result = format == WorkingCopyFormat.ONE_DOT_EIGHT ? getInfoCommandLine(ioFile, SVNRevision.UNDEFINED) : runInfoCommand(ioFile);
     }
     catch (SVNException e) {
-      return null;
+      handleInfoException(e);
     }
+
+    return result;
+  }
+
+  @Nullable
+  public SVNInfo getInfo(@NotNull File ioFile, @NotNull SVNRevision revision) {
+    WorkingCopyFormat format = getWorkingCopyFormat(ioFile);
+    SVNInfo result = null;
+
+    try {
+      result = format == WorkingCopyFormat.ONE_DOT_EIGHT ? getInfoCommandLine(ioFile, revision) : getInfoSvnKit(ioFile, revision);
+    }
+    catch (SVNException e) {
+      handleInfoException(e);
+    }
+
+    return result;
+  }
+
+  private void handleInfoException(SVNException e) {
+    final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
+
+    if (SVNErrorCode.WC_PATH_NOT_FOUND.equals(errorCode) ||
+        SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode) || SVNErrorCode.WC_NOT_WORKING_COPY.equals(errorCode)) {
+      LOG.debug(e);
+    } else {
+      LOG.error(e);
+    }
+  }
+
+  private SVNInfo getInfoSvnKit(@NotNull File ioFile) throws SVNException {
+    SVNInfo info = getInfoSvnKit(ioFile, SVNRevision.UNDEFINED);
+    if (info == null || info.getRepositoryRootURL() == null) {
+      info = getInfoSvnKit(ioFile, SVNRevision.HEAD);
+    }
+    return info;
+  }
+
+  private SVNInfo getInfoSvnKit(@NotNull File ioFile, SVNRevision revision) throws SVNException {
+    return createWCClient().doInfo(ioFile, revision);
+  }
+
+  private SVNInfo getInfoCommandLine(@NotNull File ioFile, SVNRevision revision) throws SVNException {
+    SvnCommandLineInfoClient client = new SvnCommandLineInfoClient(myProject);
+    return client.doInfo(ioFile, revision);
+  }
+
+  private SvnWcClientI createInfoClient() {
+    return new SvnCommandLineInfoClient(myProject);
+  }
+
+  public WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile) {
+    RootUrlInfo rootInfo = getSvnFileUrlMapping().getWcRootForFilePath(ioFile);
+    WorkingCopyFormat format = rootInfo != null ? rootInfo.getFormat() : WorkingCopyFormat.UNKNOWN;
+
+    if (WorkingCopyFormat.UNKNOWN.equals(format)) {
+      format = SvnFormatSelector.findRootAndGetFormat(ioFile);
+    }
+
+    return format;
   }
 
   public void refreshSSLProperty() {
@@ -1244,5 +1357,28 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       myCheckoutProvider = new SvnCheckoutProvider();
     }
     return myCheckoutProvider;
+  }
+
+  /**
+   * Try to avoid usages of this method (for now) as it could not correctly for all cases
+   * detect svn 1.8 working copy format to guarantee command line client.
+   *
+   * For instance, when working copies of several formats are presented in project
+   * (though it seems to be rather unlikely case).
+   *
+   * @return
+   */
+  public ClientFactory getFactory() {
+    // check working copy format of project directory
+    WorkingCopyFormat format = getWorkingCopyFormat(new File(getProject().getBaseDir().getPath()));
+
+    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ||
+           myConfiguration.myUseAcceleration.equals(SvnConfiguration.UseAcceleration.commandLine) ? cmdClientFactory : svnKitClientFactory;
+  }
+
+  public ClientFactory getFactory(@NotNull File file) {
+    WorkingCopyFormat format = getWorkingCopyFormat(file);
+
+    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ? cmdClientFactory : getFactory();
   }
 }

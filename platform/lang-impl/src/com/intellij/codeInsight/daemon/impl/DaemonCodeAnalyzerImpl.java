@@ -46,6 +46,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -209,7 +210,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                                        @NotNull TextEditor textEditor,
                                        @NotNull int[] toIgnore,
                                        boolean canChangeDocument,
-                                       @Nullable Runnable callbackWhileWaiting) {
+                                       @Nullable Runnable callbackWhileWaiting) throws ProcessCanceledException {
     assert myInitialized;
     assert !myDisposed;
     Application application = ApplicationManager.getApplication();
@@ -240,13 +241,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     try {
       while (progress.isRunning()) {
         try {
-          if (progress.isCanceled() && progress.isRunning()) {
-            // write action sneaked in the AWT. restart
-            waitForTermination();
-            Throwable savedException = PassExecutorService.getSavedException(progress);
-            if (savedException != null) throw savedException;
-            return runPasses(file, document, textEditor, toIgnore, canChangeDocument, callbackWhileWaiting);
-          }
+          progress.checkCanceled();
           if (callbackWhileWaiting != null) {
             callbackWhileWaiting.run();
           }
@@ -292,7 +287,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     waitForTermination();
   }
 
-  private void waitForTermination() {
+  void waitForTermination() {
     myPassExecutorService.cancelAll(true);
   }
 

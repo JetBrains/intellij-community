@@ -1,4 +1,12 @@
 <html-property-table baseHelpRef="http://dev.w3.org/html5/spec/">
+<tag name        = "main"
+     helpref     = "grouping-content.html#the-main-element"
+     description = "represents the main content of the body of a document or application"
+     startTag    = "true"
+     endTag      = "true"
+     empty       = "false"
+     dtd         = ""
+/>
 <tag name        = "section"
      helpref     = "sections.html#the-section-element"
      description = "generic document or application section"

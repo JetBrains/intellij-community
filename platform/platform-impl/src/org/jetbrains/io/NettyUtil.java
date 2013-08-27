@@ -20,8 +20,10 @@ import com.intellij.openapi.util.ActionCallback;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.oio.OioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
@@ -107,6 +109,12 @@ public final class NettyUtil {
 
   public static Bootstrap oioClientBootstrap() {
     Bootstrap bootstrap = new Bootstrap().group(new OioEventLoopGroup(1, PooledThreadExecutor.INSTANCE)).channel(OioSocketChannel.class);
+    bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
+    return bootstrap;
+  }
+
+  public static Bootstrap nioClientBootstrap() {
+    Bootstrap bootstrap = new Bootstrap().group(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE)).channel(NioSocketChannel.class);
     bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
     return bootstrap;
   }

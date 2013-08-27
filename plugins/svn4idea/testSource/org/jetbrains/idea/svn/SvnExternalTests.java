@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -171,13 +172,22 @@ public class SvnExternalTests extends Svn17TestCase {
 
   private void updatedCreatedExternalFromIDEAImpl() {
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
-    ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
-      Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName())));
+    setNewDirectoryMappings(sourceDir);
     imitUpdate(myProject);
 
     final File externalFile = new File(sourceDir, "external/t11.txt");
     final VirtualFile externalVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(externalFile);
     Assert.assertNotNull(externalVf);
+  }
+
+  private void setNewDirectoryMappings(final File sourceDir) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
+          Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName())));
+      }
+    });
   }
 
   @Test
@@ -221,8 +231,7 @@ public class SvnExternalTests extends Svn17TestCase {
 
   private void uncommittedExternalCopyIsDetectedImpl() {
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
-    ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
-      Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName())));
+    setNewDirectoryMappings(sourceDir);
     imitUpdate(myProject);
     refreshSvnMappingsSynchronously();
 
