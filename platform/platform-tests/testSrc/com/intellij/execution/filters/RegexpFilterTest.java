@@ -1,14 +1,33 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.Project;
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class RegexpFilterTest extends TestCase {
+import static org.junit.Assert.assertEquals;
+
+public class RegexpFilterTest {
   private static final String FILE = RegexpFilter.FILE_PATH_MACROS;
   private static final String LINE = RegexpFilter.LINE_MACROS;
   private static final String COLUMN = RegexpFilter.COLUMN_MACROS;
+
   private RegexpFilter myFilter;
 
+  @Test
   public void test() {
     createFilter(FILE);
     String line = "C:\\Work\\SampleProjects\\makeOutput.cmd";
@@ -19,7 +38,8 @@ public class RegexpFilterTest extends TestCase {
     info.checkInfo(line, 0, 0);
   }
 
-  public void testFileLineComlumn() {
+  @Test
+  public void testFileLineColumn() {
     createFilter(FILE + "x" + LINE + "y" + COLUMN);
     String fileName = "C:\\file";
     Filter.Result result = applyFilter(fileName + "x12y34");
@@ -29,6 +49,7 @@ public class RegexpFilterTest extends TestCase {
     info.checkInfo(fileName, 11, 33);
   }
 
+  @Test
   public void testFileLineColumnWithTail() {
     createFilter(FILE + ":" + LINE + ":" + COLUMN + ".*");
     String fileName = "C:/file";
@@ -39,15 +60,17 @@ public class RegexpFilterTest extends TestCase {
     info.checkInfo(fileName, 11, 33);
   }
 
+  @Test
   public void test4814() {
     createFilter(FILE + ":" + LINE + ":" + COLUMN + ".*");
-    String fileName = "C:/work/dev/C3C/V9_9_9_9/src/java/strata/pswitch/ss5e/dataSync/BFGParser.java";
+    String fileName = "C:/work/dev/C3C/V9_9_9_9/src/java/strata/p_switch/ss5e/dataSync/BFGParser.java";
     String line = fileName + ":544:13:544:13:";
     Filter.Result result = applyFilter(line);
     HLInfo info = (HLInfo) result.hyperlinkInfo;
     info.checkInfo(fileName, 543, 12);
   }
 
+  @Test
   public void testWithSpaces() {
     createFilter("$FILE_PATH$\\s+\\($LINE$\\:$COLUMN$\\)");
     String line = "C:\\d ir\\file.ext (1:2)message";
@@ -69,7 +92,9 @@ public class RegexpFilterTest extends TestCase {
     };
   }
 
-  public HyperlinkInfo createOpenFile(String fileName, int line, int comumn) {return new HLInfo(fileName, line, comumn); }
+  private static HyperlinkInfo createOpenFile(String fileName, int line, int column) {
+    return new HLInfo(fileName, line, column);
+  }
 
   private static class HLInfo implements HyperlinkInfo {
     public String myFileName;
