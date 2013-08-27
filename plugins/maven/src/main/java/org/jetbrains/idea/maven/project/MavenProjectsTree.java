@@ -672,10 +672,12 @@ public class MavenProjectsTree {
   }
 
   public boolean isManagedFile(String path) {
-    for (String each : getManagedFilesPaths()) {
-      if (FileUtil.pathsEqual(each, path)) return true;
+    synchronized (myStateLock) {
+      for (String each : myManagedFilesPaths) {
+        if (FileUtil.pathsEqual(each, path)) return true;
+      }
+      return false;
     }
-    return false;
   }
 
   public boolean isPotentialProject(String path) {
