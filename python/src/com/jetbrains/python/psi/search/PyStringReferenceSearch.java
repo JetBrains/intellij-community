@@ -12,10 +12,9 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
-import com.jetbrains.django.lang.template.psi.impl.DjangoTemplateFileImpl;
-import com.jetbrains.django.util.PythonUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +24,7 @@ public class PyStringReferenceSearch extends QueryExecutorBase<PsiReference, Ref
   public void processQuery(@NotNull final ReferencesSearch.SearchParameters params,
                            @NotNull final Processor<PsiReference> consumer) {
     final PsiElement element = params.getElementToSearch();
-    if (!(element instanceof PyElement) && !(element instanceof PsiDirectory) && !(element instanceof DjangoTemplateFileImpl)) {
+    if (!(element instanceof PyElement) && !(element instanceof PsiDirectory)) {
       return;
     }
 
@@ -38,7 +37,7 @@ public class PyStringReferenceSearch extends QueryExecutorBase<PsiReference, Ref
         searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, PythonFileType.INSTANCE);
       }
 
-      name = PythonUtil.computeElementNameForStringSearch(element);
+      name = PyUtil.computeElementNameForStringSearch(element);
     }
     finally {
       token.finish();

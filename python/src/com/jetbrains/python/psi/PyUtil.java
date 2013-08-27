@@ -641,6 +641,21 @@ public class PyUtil {
     }
   }
 
+  public static String computeElementNameForStringSearch(PsiElement element) {
+    if (element instanceof PyFile) {
+      return FileUtil.getNameWithoutExtension(((PyFile)element).getName());
+    }
+    else if (element instanceof PsiDirectory) {
+      return ((PsiDirectory)element).getName();
+    }
+    else if (element instanceof PyElement) {
+      return ((PyElement)element).getName();
+    }
+    else {
+      return element.getNode().getText();
+    }
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
