@@ -5,13 +5,13 @@ import com.jetbrains.python.PyBundle;
 /**
  * @author traff
  */
-public enum PyConsoleType {
-  PYTHON("py", PyBundle.message("python.console")), DJANGO("django", PyBundle.message("django.console"));
+public class PyConsoleType {
+  public static PyConsoleType PYTHON = new PyConsoleType("py", PyBundle.message("python.console"));
 
   private String myTypeId;
   private String myTitle;
 
-  PyConsoleType(String typeId, String title) {
+  public PyConsoleType(String typeId, String title) {
     myTypeId = typeId;
     myTitle = title;
   }
