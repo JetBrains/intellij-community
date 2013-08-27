@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
-import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,7 +201,7 @@ public class LayoutCodeDialog extends DialogWrapper {
         updateState();
       }
     });
-    return OptionsDialog.addDoNotShowCheckBox(southPanel, myDoNotAskMeCheckBox);
+    return DialogWrapper.addDoNotShowCheckBox(southPanel, myDoNotAskMeCheckBox);
   }
 
   @NotNull
