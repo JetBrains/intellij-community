@@ -2,6 +2,7 @@ package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Location;
 import com.intellij.execution.configuration.AbstractRunConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
@@ -17,10 +18,15 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.intellij.util.PathMappingSettings;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
@@ -382,5 +388,21 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
 
   public boolean canRunWithCoverage() {
     return true;
+  }
+
+  public String getTestSpec(Location location) {
+    PsiElement element = location.getPsiElement();
+    PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
+    PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
+    final VirtualFile virtualFile = location.getVirtualFile();
+    if (virtualFile != null) {
+      String path = virtualFile.getCanonicalPath();
+      if (pyClass != null)
+        path += "::" + pyClass.getName();
+      if (pyFunction != null)
+        path += "::" + pyFunction.getName();
+      return path;
+    }
+    return null;
   }
 }
