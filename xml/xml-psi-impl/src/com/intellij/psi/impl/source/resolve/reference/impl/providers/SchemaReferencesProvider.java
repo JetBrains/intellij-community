@@ -410,7 +410,11 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     class CompletionProcessor implements PsiElementProcessor<XmlTag> {
       List<String> myElements = new ArrayList<String>(1);
       String namespace;
-      XmlTag tag;
+      final XmlTag tag;
+
+      CompletionProcessor(XmlTag tag) {
+        this.tag = tag;
+      }
 
       public boolean execute(@NotNull final XmlTag element) {
         String name = element.getAttributeValue(NAME_ATTR_NAME);
@@ -448,8 +452,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
           break;
       }
 
-      CompletionProcessor processor = new CompletionProcessor();
-      processor.tag = tag;
+      CompletionProcessor processor = new CompletionProcessor(tag);
 
       final XmlElement context = PsiTreeUtil.getContextOfType(myElement, XmlElement.class, false);
       if (context == null) {
