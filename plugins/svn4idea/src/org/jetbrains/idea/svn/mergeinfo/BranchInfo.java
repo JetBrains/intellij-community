@@ -238,12 +238,7 @@ public class BranchInfo {
   }
 
   private SVNInfo getInfo(final File pathFile) {
-    try {
-      return myClient.doInfo(pathFile, SVNRevision.UNDEFINED);
-    } catch (SVNException e) {
-      //
-    }
-    return null;
+    return myVcs.getInfo(pathFile);
   }
 
   private SvnMergeInfoCache.MergeCheckResult checkPathGoingUp(final long revisionAsked, final long targetRevision, final String branchRootPath,

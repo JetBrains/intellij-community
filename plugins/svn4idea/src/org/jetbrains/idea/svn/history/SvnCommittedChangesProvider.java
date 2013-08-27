@@ -518,9 +518,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       revisionBefore = SVNRevision.create(revision);
 
       svnurl = SVNURL.parseURIEncoded(url);
-      final SVNWCClient client = myVcs.createWCClient();
-      final SVNInfo info = client.doInfo(svnurl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-      targetInfo = client.doInfo(new File(file.getPath()), SVNRevision.UNDEFINED);
+      final SVNInfo info = myVcs.getInfo(svnurl, SVNRevision.HEAD);
+      targetInfo = myVcs.getInfo(new File(file.getPath()));
       if (info == null) {
         throw new VcsException("Can not get repository URL");
       }

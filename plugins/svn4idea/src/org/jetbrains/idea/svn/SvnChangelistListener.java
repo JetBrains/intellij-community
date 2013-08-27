@@ -176,11 +176,9 @@ public class SvnChangelistListener implements ChangeListListener {
   }
 
   @Nullable
-  public static String getCurrentMapping(final Project project, final File file) {
-    final SvnVcs vcs = SvnVcs.getInstance(project);
-    final SVNStatusClient statusClient = vcs.createStatusClient();
+  public static String getCurrentMapping(final SvnVcs vcs, final File file) {
     try {
-      final SVNStatus status = statusClient.doStatus(file, false);
+      final SVNStatus status = vcs.getFactory(file).createStatusClient().doStatus(file, false);
       return status == null ? null : status.getChangelistName();
     }
     catch (SVNException e) {

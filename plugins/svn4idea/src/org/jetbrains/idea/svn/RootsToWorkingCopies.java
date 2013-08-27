@@ -123,52 +123,31 @@ public class RootsToWorkingCopies implements VcsListener {
 
   @Nullable
   private WorkingCopy calculateRoot(final VirtualFile root) {
+    File workingCopyRoot = SvnUtil.getWorkingCopyRootNew(new File(root.getPath()));
     WorkingCopy workingCopy = null;
-    final File ioFile = new File(root.getPath());
-    File workingCopyRoot = null;
-    try {
-      workingCopyRoot = SVNWCUtil.getWorkingCopyRoot(ioFile, true);
-      if (workingCopyRoot != null) {
-        // ok to use low-level 1.6 API, 1.7 is checked below
-        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
-        try {
-          wcAccess.probeOpen(workingCopyRoot, false, 0);
-          SVNEntry entry = wcAccess.getVersionedEntry(workingCopyRoot, false);
-          final SVNURL url = entry.getSVNURL();
-          if (url != null) {
-            workingCopy = new WorkingCopy(workingCopyRoot, url, false);
-          }
-        } finally {
-          wcAccess.close();
-        }
+
+    if (workingCopyRoot != null) {
+      final SVNInfo svnInfo = myVcs.getInfo(workingCopyRoot);
+
+      if (svnInfo != null && svnInfo.getURL() != null) {
+        workingCopy = new WorkingCopy(workingCopyRoot, svnInfo.getURL(), true);
       }
     }
-    catch (SVNException e) {
-      //
-    }
-    if (workingCopy == null) {
-      workingCopyRoot = SvnUtil.getWcCopyRootIf17(ioFile, null);
-      if (workingCopyRoot != null) {
-        final SVNInfo svnInfo;
-        try {
-          svnInfo = SvnVcs.getInstance(myProject).createWCClient().doInfo(workingCopyRoot, SVNRevision.UNDEFINED);
-          workingCopy = new WorkingCopy(workingCopyRoot, svnInfo.getURL(), true);
-        }
-        catch (SVNException e) {
-          //
-        }
-      }
-    }
+
+    return registerWorkingCopy(root, workingCopy);
+  }
+
+  private WorkingCopy registerWorkingCopy(@NotNull VirtualFile root, @Nullable WorkingCopy resolvedWorkingCopy) {
     synchronized (myLock) {
-      if (workingCopy == null) {
+      if (resolvedWorkingCopy == null) {
         myRootMapping.remove(root);
         myUnversioned.add(root);
       } else {
         myUnversioned.remove(root);
-        myRootMapping.put(root, workingCopy);
+        myRootMapping.put(root, resolvedWorkingCopy);
       }
     }
-    return workingCopy;
+    return resolvedWorkingCopy;
   }
 
   public void clear() {
