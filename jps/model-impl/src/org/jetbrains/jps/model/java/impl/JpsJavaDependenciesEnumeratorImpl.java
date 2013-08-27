@@ -74,6 +74,11 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
   }
 
   @Override
+  public JpsJavaDependenciesEnumerator recursivelyExportedOnly() {
+    return recursively().exportedOnly();
+  }
+
+  @Override
   public JpsJavaDependenciesEnumerator includedIn(JpsJavaClasspathKind classpathKind) {
     myClasspathKind = classpathKind;
     return this;
