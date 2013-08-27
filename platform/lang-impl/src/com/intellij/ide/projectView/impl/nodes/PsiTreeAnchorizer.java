@@ -58,9 +58,14 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
   }
   @Override
   @Nullable
-  public Object retrieveElement(Object pointer) {
+  public Object retrieveElement(final Object pointer) {
     if (pointer instanceof SmartPointerWrapper) {
-      return ((SmartPointerWrapper)pointer).myPointer.getElement();
+      return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
+        @Override
+        public Object compute() {
+          return ((SmartPointerWrapper)pointer).myPointer.getElement();
+        }
+      });
     }
 
     return super.retrieveElement(pointer);
