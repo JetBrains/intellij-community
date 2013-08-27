@@ -41,9 +41,7 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
   protected String BRANCH_NAME;
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-
+  protected void beforeTest() throws Exception {
     Random rnd = new Random();
     long time = Clock.getTime();
     BRANCH_NAME = "branch_" + getTestName(false) + "_" + DateFormatUtil.formatDate(time).replace('/', '-') + "_" + rnd.nextLong();
@@ -58,13 +56,8 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
   }
 
   @Override
-  public void tearDown() throws Exception {
-    try {
-      deleteRemoteBranch();
-    }
-    finally {
-      super.tearDown();
-    }
+  protected void afterTest() throws Exception {
+    deleteRemoteBranch();
   }
 
   protected void deleteRemoteBranch() {

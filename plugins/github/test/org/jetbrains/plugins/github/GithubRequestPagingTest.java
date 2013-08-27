@@ -28,9 +28,9 @@ import static org.junit.Assume.assumeNotNull;
  * @author Aleksey Pivovarov
  */
 public class GithubRequestPagingTest extends GithubTest {
+
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void beforeTest() throws Exception {
     assumeNotNull(myLogin2);
   }
 
