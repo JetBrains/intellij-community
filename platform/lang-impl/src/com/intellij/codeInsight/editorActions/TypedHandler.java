@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
@@ -61,6 +62,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TypedHandler extends TypedActionHandlerBase {
@@ -173,7 +175,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
 
     if (!handled) {
-      autoPopupCompletion(editor, charTyped, project);
+      autoPopupCompletion(editor, charTyped, project, file);
       autoPopupParameterInfo(editor, charTyped, project, file);
     }
 
@@ -248,10 +250,24 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
   }
 
-  public static void autoPopupCompletion(Editor editor, char charTyped, Project project) {
-    if (charTyped == '.') {
+  public static void autoPopupCompletion(Editor editor, char charTyped, Project project, PsiFile file) {
+    if (charTyped == '.' || isAutoPopup(editor, file, charTyped)) {
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
     }
+  }
+
+  private static boolean isAutoPopup(Editor editor, PsiFile file, char charTyped) {
+    final int offset = editor.getCaretModel().getOffset() - 1;
+    if (offset >= 0) {
+      final PsiElement element = file.findElementAt(offset);
+      if (element != null) {
+        final List<CompletionContributor> list = CompletionContributor.forLanguage(element.getLanguage());
+        for (CompletionContributor contributor : list) {
+          if (contributor.invokeAutoPopup(element, charTyped)) return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean isInsideStringLiteral(final Editor editor, final PsiFile file) {

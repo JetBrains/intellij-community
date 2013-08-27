@@ -42,7 +42,6 @@ import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -50,7 +49,6 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Date;
@@ -285,18 +283,9 @@ public class SvnHistoryProvider
 
     @Override
     protected void preliminary() throws SVNException {
-      SVNWCClient wcClient = myVcs.createWCClient();
-      myInfo = wcClient.doInfo(new File(myFile.getIOFile().getAbsolutePath()), SVNRevision.UNDEFINED);
-      wcClient.setEventHandler(new ISVNEventHandler() {
-        public void handleEvent(SVNEvent event, double progress) throws SVNException {
-        }
-
-        public void checkCancelled() throws SVNCancelException {
-          myPI.checkCanceled();
-        }
-      });
+      myInfo = myVcs.getInfo(myFile.getIOFile());
       if (myInfo == null || myInfo.getRepositoryRootURL() == null) {
-        myException = new VcsException("File ''{0}'' is not under version control" + myFile.getIOFile());
+        myException = new VcsException("File " + myFile.getPath() + " is not under version control");
         return;
       }
       if (myInfo.getURL() == null) {
@@ -319,14 +308,15 @@ public class SvnHistoryProvider
         myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl));
       }
       final SVNRevision pegRevision = myInfo.getRevision();
-      SVNLogClient client = myVcs.createLogClient();
       try {
-        // a bug noticed when testing: we should pass "limit + 1" to get "limit" rows
-        client
-          .doLog(new File[]{new File(myFile.getIOFile().getAbsolutePath())},
-                 myFrom == null ? SVNRevision.HEAD : myFrom, myTo == null ? SVNRevision.create(1) : myTo, myPeg,
-                 false, true, myShowMergeSources && mySupport15, myLimit + 1, null,
-                 new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl, createConsumerAdapter(myConsumer), repoRootURL, myFile.getCharset()));
+        myVcs.getFactory(myFile.getIOFile()).createHistoryClient().doLog(
+          myFile.getIOFile(),
+          myFrom == null ? SVNRevision.HEAD : myFrom,
+          myTo == null ? SVNRevision.create(1) : myTo, myPeg,
+          false, true, myShowMergeSources && mySupport15, myLimit + 1, null,
+          new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl,
+                                createConsumerAdapter(myConsumer),
+                                repoRootURL, myFile.getCharset()));
       }
       catch (SVNCancelException e) {
         //
@@ -383,7 +373,6 @@ public class SvnHistoryProvider
           }
         }
 
-        SVNWCClient wcClient = myVcs.createWCClient();
         final SVNURL svnurl = SVNURL.parseURIEncoded(myUrl);
         SVNRevision operationalFrom = myFrom == null ? SVNRevision.HEAD : myFrom;
         final SVNURL rootURL = getRepositoryRoot(svnurl, myFrom);
@@ -395,6 +384,7 @@ public class SvnHistoryProvider
         if (myUrl.startsWith(root)) {
           relativeUrl = myUrl.substring(root.length());
         }
+        // TODO: Update this call to myVcs.getFactory.createHistoryClient
         SVNLogClient client = myVcs.createLogClient();
         // a bug noticed when testing: we should pass "limit + 1" to get "limit" rows
         client.doLog(svnurl, new String[]{}, myPeg == null ? myFrom : myPeg,
@@ -420,6 +410,7 @@ public class SvnHistoryProvider
           relativeUrl = myUrl.substring(root.length());
         }
 
+      // TODO: Update this call to myVcs.getFactory.createHistoryClient
         SVNLogClient client = myVcs.createLogClient();
 
         final RepositoryLogEntryHandler repositoryLogEntryHandler =
@@ -437,36 +428,15 @@ public class SvnHistoryProvider
     }
 
     private SVNURL getRepositoryRoot(SVNURL svnurl, SVNRevision operationalFrom) throws SVNException {
-      final SVNRepository repository = myVcs.createRepository(svnurl);
-      final SVNURL root = repository.getRepositoryRoot(false);
-      if (root == null) {
-        return repository.getRepositoryRoot(true);
-      }
-      return root;
-      /*final SVNWCClient wcClient = myVcs.createWCClient();
-      try {
-        final SVNInfo info;
-        info = wcClient.doInfo(svnurl, myPeg, operationalFrom);
-        return info.getRepositoryRootURL();
-      }
-      catch (SVNException e) {
-        try {
-          final SVNInfo info;
-          info = wcClient.doInfo(svnurl, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED);
-          return info.getRepositoryRootURL();
-        } catch (SVNException e1) {
-          final SVNInfo info;
-          info = wcClient.doInfo(svnurl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-          return info.getRepositoryRootURL();
-        }
-      }*/
+      SVNInfo info = myVcs.getInfo(svnurl, SVNRevision.HEAD);
+
+      return info != null ? info.getRepositoryRootURL() : null;
     }
 
     private boolean existsNow(SVNURL svnurl) {
-      final SVNWCClient wcClient = myVcs.createWCClient();
       final SVNInfo info;
       try {
-        info = wcClient.doInfo(svnurl, SVNRevision.HEAD, SVNRevision.HEAD);
+        info = myVcs.getInfo(svnurl, SVNRevision.HEAD, SVNRevision.HEAD, null);
       }
       catch (SVNException e) {
         return false;

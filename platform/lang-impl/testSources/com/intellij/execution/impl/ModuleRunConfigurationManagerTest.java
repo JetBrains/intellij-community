@@ -68,7 +68,6 @@ public class ModuleRunConfigurationManagerTest extends LightPlatformTestCase {
       createSettings("other-module-run", new MyModuleBasedConfiguration("other-module-run-config", getProject(), getModule())),
       mySettings
     );
-    myManager.myManager.myExternalSettings.put(myManager.myRemoverKey, Collections.singletonList(mySettings));
     myConfigurations = Collections.unmodifiableCollection(configs);
   }
 
@@ -108,13 +107,13 @@ public class ModuleRunConfigurationManagerTest extends LightPlatformTestCase {
 
   public void testBeforeOtherModuleRemoved() throws Exception {
     myRemovedSettings.clear();
-    myManager.moduleRemoved(getProject(), getModule());
+    myManager.beforeModuleRemoved(getProject(), getModule());
     assertEmpty("No settings should be removed", myRemovedSettings);
   }
 
   public void testBeforeMyModuleRemoved() throws Exception {
     myRemovedSettings.clear();
-    myManager.moduleRemoved(getProject(), myModule);
+    myManager.beforeModuleRemoved(getProject(), myModule);
     assertSameElements("one run config should be removed", myRemovedSettings, Collections.singleton(mySettings));
   }
 

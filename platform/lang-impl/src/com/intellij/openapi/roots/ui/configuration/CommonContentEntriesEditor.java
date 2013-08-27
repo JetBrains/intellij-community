@@ -43,9 +43,11 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -77,16 +79,16 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   private final String myModuleName;
   private final ModulesProvider myModulesProvider;
   private final ModuleConfigurationState myState;
-  private final boolean myCanMarkSources;
-  private final boolean myCanMarkTestSources;
+  private final List<ModuleSourceRootEditHandler<?>> myEditHandlers = new ArrayList<ModuleSourceRootEditHandler<?>>();
 
-  public CommonContentEntriesEditor(String moduleName, final ModuleConfigurationState state, boolean canMarkSources, boolean canMarkTestSources) {
+  public CommonContentEntriesEditor(String moduleName, final ModuleConfigurationState state, JpsModuleSourceRootType<?>... rootTypes) {
     super(state);
     myState = state;
     myModuleName = moduleName;
-    myCanMarkSources = canMarkSources;
-    myCanMarkTestSources = canMarkTestSources;
     myModulesProvider = state.getModulesProvider();
+    for (JpsModuleSourceRootType<?> type : rootTypes) {
+      ContainerUtil.addIfNotNull(myEditHandlers, ModuleSourceRootEditHandler.findEditHandler(type));
+    }
     final VirtualFileManagerAdapter fileManagerListener = new VirtualFileManagerAdapter() {
       @Override
       public void afterRefreshFinish(boolean asynchronous) {
@@ -123,6 +125,10 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   @Override
   public String getDisplayName() {
     return NAME;
+  }
+
+  protected final List<ModuleSourceRootEditHandler<?>> getEditHandlers() {
+    return myEditHandlers;
   }
 
   @Override
@@ -197,7 +203,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   }
 
   protected ContentEntryTreeEditor createContentEntryTreeEditor(Project project) {
-    return new ContentEntryTreeEditor(project, myCanMarkSources, myCanMarkTestSources);
+    return new ContentEntryTreeEditor(project, myEditHandlers);
   }
 
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
@@ -229,7 +235,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   }
 
   protected ContentEntryEditor createContentEntryEditor(String contentEntryUrl) {
-    return new ContentEntryEditor(contentEntryUrl, myCanMarkSources, myCanMarkTestSources) {
+    return new ContentEntryEditor(contentEntryUrl, myEditHandlers) {
       @Override
       protected ModifiableRootModel getModel() {
         return CommonContentEntriesEditor.this.getModel();

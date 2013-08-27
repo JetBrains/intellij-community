@@ -698,6 +698,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           JScrollPane scroll = ScrollPaneFactory.createScrollPane(c);
           scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
           scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+          scroll.getVerticalScrollBar().setUnitIncrement(10);
           scroll.setBorder(null);
           add(scroll, BorderLayout.CENTER);
         }

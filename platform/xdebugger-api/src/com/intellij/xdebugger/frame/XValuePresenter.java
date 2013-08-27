@@ -15,8 +15,24 @@
  */
 package com.intellij.xdebugger.frame;
 
-import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface XValuePresenter {
-  void append(String value, SimpleColoredText text, boolean changed);
+public abstract class XValuePresenter {
+  public void appendSeparator(@NotNull ColoredTextContainer text) {
+    text.append(" = ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  }
+
+  public void append(String value, ColoredTextContainer text, boolean changed) {
+  }
+
+  @Nullable
+  /**
+   * if returns null, default value (depends on implementation) will be used
+   */
+  public SimpleTextAttributes getNameAttributes() {
+    return null;
+  }
 }

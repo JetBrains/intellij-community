@@ -388,6 +388,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
       IndexInfrastructure.rewriteVersion(versionFile, version);
     }
+
+    initIndexStorage(extension, version, versionFile);
+
+    // save versions at last, they must be saved after initIndexVersion as it also can rewrite version
     Map<FileType, Integer> versionMap = extension.getVersionMap();
     for (Map.Entry<FileType, Integer> entry : versionMap.entrySet()) {
       ID stubId = IndexInfrastructure.getStubId(name, entry.getKey());
@@ -398,7 +402,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         IndexInfrastructure.rewriteVersion(file, stubVersion);
       }
     }
-    initIndexStorage(extension, version, versionFile);
     return versionChanged;
   }
 

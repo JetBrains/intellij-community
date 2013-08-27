@@ -15,6 +15,7 @@
  */
 package org.jetbrains.ide;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
@@ -23,6 +24,9 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 import java.io.IOException;
 
 public abstract class HttpRequestHandler {
+  // Your handler will be instantiated on first user request
+  public static final ExtensionPointName<HttpRequestHandler> EP_NAME = ExtensionPointName.create("com.intellij.httpRequestHandler");
+
   public boolean isSupported(FullHttpRequest request) {
     return request.getMethod() == HttpMethod.GET || request.getMethod() == HttpMethod.HEAD;
   }

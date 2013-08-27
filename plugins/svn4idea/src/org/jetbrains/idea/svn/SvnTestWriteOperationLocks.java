@@ -25,6 +25,7 @@ import java.io.File;
  * Date: 10/23/12
  * Time: 2:31 PM
  */
+// TODO: Used only in SvnLockingTest which is not required anymore. Likely to be removed.
 public class SvnTestWriteOperationLocks extends SvnAbstractWriteOperationLocks {
   private final WorkingCopy myWorkingCopy;
 

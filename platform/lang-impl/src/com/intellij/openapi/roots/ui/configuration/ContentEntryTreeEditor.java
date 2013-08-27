@@ -41,7 +41,6 @@ import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAc
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
@@ -59,6 +58,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -67,21 +67,19 @@ import java.util.Comparator;
  */
 public class ContentEntryTreeEditor {
   private final Project myProject;
-  private final boolean myCanMarkSources;
-  private final boolean myCanMarkTestSources;
-  protected Tree myTree;
+  private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;
+  protected final Tree myTree;
   private FileSystemTreeImpl myFileSystemTree;
   private final JPanel myTreePanel;
   private final DefaultMutableTreeNode EMPTY_TREE_ROOT = new DefaultMutableTreeNode(ProjectBundle.message("module.paths.empty.node"));
-  protected DefaultActionGroup myEditingActionsGroup;
+  protected final DefaultActionGroup myEditingActionsGroup;
   private ContentEntryEditor myContentEntryEditor;
   private final MyContentEntryEditorListener myContentEntryEditorListener = new MyContentEntryEditorListener();
   private final FileChooserDescriptor myDescriptor;
 
-  public ContentEntryTreeEditor(Project project, boolean canMarkSources, boolean canMarkTestSources) {
+  public ContentEntryTreeEditor(Project project, List<ModuleSourceRootEditHandler<?>> editHandlers) {
     myProject = project;
-    myCanMarkSources = canMarkSources;
-    myCanMarkTestSources = canMarkTestSources;
+    myEditHandlers = editHandlers;
     myTree = new Tree();
     myTree.setRootVisible(true);
     myTree.setShowsRootHandles(true);
@@ -101,21 +99,24 @@ public class ContentEntryTreeEditor {
   }
 
   protected void createEditingActions() {
-    if (myCanMarkSources) {
-      ToggleSourcesStateAction markSourcesAction = new ToggleSourcesStateAction(myTree, this, false);
-      markSourcesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.ALT_MASK)), myTree);
-      myEditingActionsGroup.add(markSourcesAction);
-    }
-
-    if (myCanMarkTestSources) {
-      setupTestsAction();
+    for (ModuleSourceRootEditHandler<?> editor : myEditHandlers) {
+      ToggleSourcesStateAction action = new ToggleSourcesStateAction(myTree, this, editor);
+      CustomShortcutSet shortcutSet = editor.getMarkRootShortcutSet();
+      if (shortcutSet != null) {
+        action.registerCustomShortcutSet(shortcutSet, myTree);
+      }
+      myEditingActionsGroup.add(action);
     }
 
     setupExcludedAction();
   }
 
+  protected List<ModuleSourceRootEditHandler<?>> getEditHandlers() {
+    return myEditHandlers;
+  }
+
   protected TreeCellRenderer getContentEntryCellRenderer() {
-    return new ContentEntryTreeCellRenderer(this);
+    return new ContentEntryTreeCellRenderer(this, myEditHandlers);
   }
 
   /**
@@ -225,7 +226,7 @@ public class ContentEntryTreeEditor {
     }
 
     @Override
-    public void sourceFolderRemoved(@NotNull ContentEntryEditor editor, VirtualFile file, boolean isTestSource) {
+    public void sourceFolderRemoved(@NotNull ContentEntryEditor editor, VirtualFile file) {
       update();
     }
 
@@ -240,7 +241,7 @@ public class ContentEntryTreeEditor {
     }
 
     @Override
-    public void packagePrefixSet(@NotNull ContentEntryEditor editor, @NotNull SourceFolder folder) {
+    public void sourceRootPropertiesChanged(@NotNull ContentEntryEditor editor, @NotNull SourceFolder folder) {
       update();
     }
   }
@@ -287,12 +288,6 @@ public class ContentEntryTreeEditor {
       }
       return null;
     }
-  }
-
-  protected void setupTestsAction() {
-    ToggleSourcesStateAction markTestsAction = new ToggleSourcesStateAction(myTree, this, true);
-    markTestsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.ALT_MASK)), myTree);
-    myEditingActionsGroup.add(markTestsAction);
   }
 
   protected void setupExcludedAction() {

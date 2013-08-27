@@ -25,12 +25,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.EventListener;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -43,24 +49,27 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   private JPanel myMainPanel;
   protected EventDispatcher<ContentEntryEditorListener> myEventDispatcher;
   private final String myContentEntryUrl;
-  protected final boolean myCanMarkSources;
-  protected final boolean myCanMarkTestSources;
+  private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;
 
   public interface ContentEntryEditorListener extends EventListener{
+
     void editingStarted(@NotNull ContentEntryEditor editor);
     void beforeEntryDeleted(@NotNull ContentEntryEditor editor);
     void sourceFolderAdded(@NotNull ContentEntryEditor editor, SourceFolder folder);
-    void sourceFolderRemoved(@NotNull ContentEntryEditor editor, VirtualFile file, boolean isTestSource);
+    void sourceFolderRemoved(@NotNull ContentEntryEditor editor, VirtualFile file);
     void folderExcluded(@NotNull ContentEntryEditor editor, VirtualFile file);
     void folderIncluded(@NotNull ContentEntryEditor editor, VirtualFile file);
     void navigationRequested(@NotNull ContentEntryEditor editor, VirtualFile file);
-    void packagePrefixSet(@NotNull ContentEntryEditor editor, @NotNull SourceFolder folder);
+    void sourceRootPropertiesChanged(@NotNull ContentEntryEditor editor, @NotNull SourceFolder folder);
   }
 
-  public ContentEntryEditor(final String contentEntryUrl, boolean canMarkSources, boolean canMarkTestSources) {
-    myContentEntryUrl = contentEntryUrl;
-    myCanMarkSources = canMarkSources;
-    myCanMarkTestSources = canMarkTestSources;
+  public ContentEntryEditor(String url, List<ModuleSourceRootEditHandler<?>> editHandlers) {
+    myContentEntryUrl = url;
+    myEditHandlers = editHandlers;
+  }
+
+  protected final List<ModuleSourceRootEditHandler<?>> getEditHandlers() {
+    return myEditHandlers;
   }
 
   public String getContentEntryUrl() {
@@ -145,10 +154,9 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   @Override
-  public void setPackagePrefix(@NotNull SourceFolder folder, @NotNull String prefix) {
-    folder.setPackagePrefix(prefix);
+  public void onSourceRootPropertiesChanged(@NotNull SourceFolder folder) {
     update();
-    myEventDispatcher.getMulticaster().packagePrefixSet(this, folder);
+    myEventDispatcher.getMulticaster().sourceRootPropertiesChanged(this, folder);
   }
 
   public void addContentEntryEditorListener(ContentEntryEditorListener listener) {
@@ -188,7 +196,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   protected ContentRootPanel createContentRootPane() {
-    return new ContentRootPanel(this, myCanMarkSources, myCanMarkTestSources) {
+    return new ContentRootPanel(this, myEditHandlers) {
       @Override
       protected ContentEntry getContentEntry() {
         return ContentEntryEditor.this.getContentEntry();
@@ -198,16 +206,19 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
 
   @Nullable
   public SourceFolder addSourceFolder(@NotNull final VirtualFile file, boolean isTestSource, String packagePrefix) {
+    return addSourceFolder(file, isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE,
+                           JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties(packagePrefix)));
+  }
+
+  @Nullable
+  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull final VirtualFile file, final JpsModuleSourceRootType<P> rootType,
+                                                             final P properties) {
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry != null) {
-      final SourceFolder sourceFolder = contentEntry.addSourceFolder(file, isTestSource, packagePrefix);
-      try {
-        return sourceFolder;
-      }
-      finally {
-        myEventDispatcher.getMulticaster().sourceFolderAdded(this, sourceFolder);
-        update();
-      }
+      final SourceFolder sourceFolder = contentEntry.addSourceFolder(file, rootType, properties);
+      myEventDispatcher.getMulticaster().sourceFolderAdded(this, sourceFolder);
+      update();
+      return sourceFolder;
     }
 
     return null;
@@ -224,7 +235,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
       doRemoveSourceFolder(sourceFolder);
     }
     finally {
-      myEventDispatcher.getMulticaster().sourceFolderRemoved(this, sourceFolder.getFile(), sourceFolder.isTestSource());
+      myEventDispatcher.getMulticaster().sourceFolderRemoved(this, sourceFolder.getFile());
       update();
     }
   }
@@ -268,14 +279,10 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     }
   }
 
-  public boolean isSource(@NotNull final VirtualFile file) {
-    final SourceFolder sourceFolder = getSourceFolder(file);
-    return sourceFolder != null && !sourceFolder.isTestSource();
-  }
-
-  public boolean isTestSource(@NotNull final VirtualFile file) {
-    final SourceFolder sourceFolder = getSourceFolder(file);
-    return sourceFolder != null && sourceFolder.isTestSource();
+  @Nullable
+  public JpsModuleSourceRootType<?> getRootType(@NotNull VirtualFile file) {
+    SourceFolder folder = getSourceFolder(file);
+    return folder != null ? folder.getRootType() : null;
   }
 
   public boolean isExcluded(@NotNull final VirtualFile file) {

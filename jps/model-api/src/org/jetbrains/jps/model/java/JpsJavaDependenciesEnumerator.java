@@ -36,6 +36,9 @@ public interface JpsJavaDependenciesEnumerator extends JpsDependenciesEnumerator
   @Override
   JpsJavaDependenciesEnumerator recursively();
 
+  JpsJavaDependenciesEnumerator recursivelyExportedOnly();
+
+
   @Override
   JpsJavaDependenciesEnumerator satisfying(Condition<JpsDependencyElement> condition);
 

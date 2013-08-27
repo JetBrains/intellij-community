@@ -21,7 +21,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
@@ -45,7 +44,7 @@ public class SuppressManagerImpl extends SuppressManager {
     return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, new Function<SuppressQuickFix, SuppressIntentionAction>() {
       @Override
       public SuppressIntentionAction fun(SuppressQuickFix fix) {
-        return InspectionManagerEx.convertBatchToSuppressIntentionAction(fix);
+        return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction(fix);
       }
     });
   }

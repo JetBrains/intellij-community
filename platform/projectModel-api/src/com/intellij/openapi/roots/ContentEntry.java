@@ -18,6 +18,8 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
  * Represents a module content root.
@@ -94,6 +96,10 @@ public interface ContentEntry extends Synthetic {
    * @return the object representing the added root.
    */
   SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix);
+
+  @NotNull
+  <P extends JpsElement>
+  SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties);
 
   /**
    * Adds a source or test source root under the content root.

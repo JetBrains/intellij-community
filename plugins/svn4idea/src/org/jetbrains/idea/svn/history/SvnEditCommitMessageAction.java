@@ -137,7 +137,7 @@ public class SvnEditCommitMessageAction extends AnAction {
       final String url = myLocation.getURL();
       final SVNURL root;
       try {
-        root = SvnUtil.getRepositoryRoot(myVcs, SVNURL.parseURIEncoded(url), true);
+        root = SvnUtil.getRepositoryRoot(myVcs, SVNURL.parseURIEncoded(url));
         if (root == null) {
           myException = new VcsException("Can not determine repository root for URL: " + url);
           return;

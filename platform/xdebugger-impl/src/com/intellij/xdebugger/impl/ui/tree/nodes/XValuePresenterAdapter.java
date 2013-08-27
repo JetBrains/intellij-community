@@ -15,13 +15,13 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
 import com.intellij.xdebugger.frame.XValuePresenter;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 
-public class XValuePresenterAdapter implements XValuePresenter {
+public class XValuePresenterAdapter extends XValuePresenter {
   private final NotNullFunction<String, String> valuePresenter;
 
   public XValuePresenterAdapter(NotNullFunction<String, String> valuePresenter) {
@@ -29,7 +29,7 @@ public class XValuePresenterAdapter implements XValuePresenter {
   }
 
   @Override
-  public void append(String value, SimpleColoredText text, boolean changed) {
+  public void append(String value, ColoredTextContainer text, boolean changed) {
     text.append(valuePresenter.fun(value), changed ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 }

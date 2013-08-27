@@ -31,11 +31,14 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.project.model.impl.module.JpsRootModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -141,10 +144,21 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     return addSourceFolder(file.getUrl(), isTestSource, packagePrefix);
   }
 
+  @NotNull
+  @Override
+  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull VirtualFile file,
+                                                             @NotNull JpsModuleSourceRootType<P> type,
+                                                             @NotNull P properties) {
+    final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(file.getUrl(), type, properties);
+    final JpsSourceFolder sourceFolder = new JpsSourceFolder(sourceRoot, this);
+    mySourceFolders.add(sourceFolder);
+    return sourceFolder;
+  }
+
   private SourceFolder addSourceFolder(final String url, boolean isTestSource, String packagePrefix) {
     final JavaSourceRootType rootType = isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-    final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(url, rootType, JpsElementFactory.getInstance()
-      .createSimpleElement(new JavaSourceRootProperties(packagePrefix)));
+    JpsSimpleElement<JavaSourceRootProperties> properties = JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties(packagePrefix));
+    final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(url, rootType, properties);
     final JpsSourceFolder sourceFolder = new JpsSourceFolder(sourceRoot, this);
     mySourceFolders.add(sourceFolder);
     return sourceFolder;

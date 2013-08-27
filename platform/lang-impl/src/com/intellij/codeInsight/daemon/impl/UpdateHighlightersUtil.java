@@ -449,11 +449,11 @@ public class UpdateHighlightersUtil {
           }
           info.quickFixActionMarkers = ContainerUtil.createLockFreeCopyOnWriteList(list);
         }
-        if (finalInfoRange.equalsToRange(info.fixStartOffset, info.fixEndOffset)) {
+        ProperTextRange fixRange = info.getFixTextRange();
+        if (finalInfoRange.equals(fixRange)) {
           info.fixMarker = null; // null means it the same as highlighter'
         }
         else {
-          TextRange fixRange = new TextRange(info.fixStartOffset, info.fixEndOffset);
           info.fixMarker = getOrCreate(document, ranges2markersCache, fixRange);
         }
       }

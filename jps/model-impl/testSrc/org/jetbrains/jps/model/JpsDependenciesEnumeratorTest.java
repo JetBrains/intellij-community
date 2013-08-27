@@ -177,7 +177,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
 
     assertClassRoots(orderEntries(myModule).withoutSdk(), getAsmJar());
     assertClassRoots(orderEntries(myModule).withoutSdk().recursively(), getAsmJar(), getJDomJar());
-    assertClassRoots(orderEntries(myModule).withoutSdk().recursively().exportedOnly(), getAsmJar());
+    assertClassRoots(orderEntries(myModule).withoutSdk().recursivelyExportedOnly(), getAsmJar());
     assertClassRoots(orderEntries(myModule).withoutSdk().exportedOnly().recursively());
   }
 

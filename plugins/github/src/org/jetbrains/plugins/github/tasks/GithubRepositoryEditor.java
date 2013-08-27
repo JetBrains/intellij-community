@@ -65,7 +65,6 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myHost.getDocument().addDocumentListener(buttonUpdater);
     myRepoAuthor.getDocument().addDocumentListener(buttonUpdater);
     myRepoName.getDocument().addDocumentListener(buttonUpdater);
-    myURLText.getDocument().addDocumentListener(buttonUpdater);
   }
 
   @Nullable

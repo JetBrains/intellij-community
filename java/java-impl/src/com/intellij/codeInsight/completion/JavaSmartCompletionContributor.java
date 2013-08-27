@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.ElementPatternCondition;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
@@ -28,6 +29,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.GeneratorFilter;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.filters.getters.*;
+import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.filters.types.AssignableGroupFilter;
 import com.intellij.psi.filters.types.AssignableToFilter;
@@ -92,6 +94,21 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       psiElement().withText(")").withParent(PsiTypeCastExpression.class)));
   static final PsiElementPattern.Capture<PsiElement> IN_TYPE_ARGS =
     psiElement().inside(psiElement(PsiReferenceParameterList.class));
+  static final PsiElementPattern.Capture<PsiElement> LAMBDA = psiElement().and(new FilterPattern(new ElementFilter() {
+    @Override
+    public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+      if (context == null) return false;
+      final PsiElement originalElement = context.getOriginalElement();
+      if (originalElement == null) return false;
+      final PsiElement rulezzRef = originalElement.getParent();
+      return LambdaUtil.isValidLambdaContext(rulezzRef.getParent());
+    }
+
+    @Override
+    public boolean isClassAcceptable(Class hintClass) {
+      return true;
+    }
+  }));
 
   @Nullable
   private static ElementFilter getReferenceFilter(PsiElement element) {
@@ -313,6 +330,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         }
       }
     });
+
+    extend(CompletionType.SMART, LAMBDA, new LambdaCompletionProvider());
   }
 
   private static void addExpectedTypeMembers(CompletionParameters params,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,20 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assert lookup.focused
 
     type 'a'
+    assert lookup.focused
+  }
+
+  public void testAfterDblColon() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        void foo() {
+          Runnable::<caret>
+        }
+      }
+    """)
+    type('r')
+    def les = myFixture.lookupElementStrings
+    assert 'run' in les
     assert lookup.focused
   }
 

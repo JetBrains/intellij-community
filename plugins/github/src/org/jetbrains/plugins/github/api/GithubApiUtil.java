@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubJsonException;
+import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException;
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubSslSupport;
@@ -209,7 +210,11 @@ public class GithubApiUtil {
       case HttpStatus.SC_UNAUTHORIZED:
       case HttpStatus.SC_PAYMENT_REQUIRED:
       case HttpStatus.SC_FORBIDDEN:
-        throw new GithubAuthenticationException("Request response: " + getErrorMessage(method));
+        String message = getErrorMessage(method);
+        if (message.contains("API rate limit exceeded")) {
+          throw new GithubRateLimitExceededException(message);
+        }
+        throw new GithubAuthenticationException("Request response: " + message);
       default:
         throw new GithubStatusCodeException(code + ": " + getErrorMessage(method), code);
     }
@@ -535,11 +540,15 @@ public class GithubApiUtil {
     return createDataFromRaw(fromJson(postRequest(auth, path, gson.toJson(request)), GithubRepoRaw.class), GithubRepo.class);
   }
 
+  /*
+   * Open issues only
+   */
   @NotNull
   public static List<GithubIssue> getIssuesAssigned(@NotNull GithubAuthData auth,
                                                     @NotNull String user,
                                                     @NotNull String repo,
-                                                    @Nullable String assigned) throws IOException {
+                                                    @Nullable String assigned,
+                                                    int max) throws IOException {
     String path;
     if (StringUtil.isEmptyOrSpaces(assigned)) {
       path = "/repos/" + user + "/" + repo + "/issues?" + PER_PAGE;
@@ -550,10 +559,17 @@ public class GithubApiUtil {
 
     PagedRequest<GithubIssue> request = new PagedRequest<GithubIssue>(path, GithubIssue.class, GithubIssueRaw[].class);
 
-    return request.getAll(auth);
+    List<GithubIssue> result = new ArrayList<GithubIssue>();
+    while (request.hasNext() && max > result.size()) {
+      result.addAll(request.next(auth));
+    }
+    return result;
   }
 
   @NotNull
+  /*
+   * All issues - open and closed
+   */
   public static List<GithubIssue> getIssuesQueried(@NotNull GithubAuthData auth,
                                                    @NotNull String user,
                                                    @NotNull String repo,

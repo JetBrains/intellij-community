@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.terminal;
 
+import com.google.common.base.Predicate;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -90,9 +91,14 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   protected abstract ProcessHandler createProcessHandler(T process);
 
   public JBTabbedTerminalWidget createTerminalWidget() {
-    JBTerminalSystemSettingsProvider provider = new JBTerminalSystemSettingsProvider();
-    JBTabbedTerminalWidget terminalWidget = new JBTabbedTerminalWidget(provider);
-    provider.setTerminalWidget(terminalWidget);
+    final JBTerminalSystemSettingsProvider provider = new JBTerminalSystemSettingsProvider();
+    JBTabbedTerminalWidget terminalWidget = new JBTabbedTerminalWidget(provider, new Predicate<TerminalWidget>() {
+      @Override
+      public boolean apply(TerminalWidget widget) {
+        openSession(widget);
+        return true;
+      }
+    });
     openSession(terminalWidget);
     return terminalWidget;
   }
@@ -102,9 +108,14 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
 
-    JBTerminalSystemSettingsProvider provider = new JBTerminalSystemSettingsProvider();
-    TerminalWidget widget = new JBTabbedTerminalWidget(provider);
-    provider.setTerminalWidget(widget);
+    final JBTerminalSystemSettingsProvider provider = new JBTerminalSystemSettingsProvider();
+    TerminalWidget widget = new JBTabbedTerminalWidget(provider, new Predicate<TerminalWidget>() {
+      @Override
+      public boolean apply(TerminalWidget widget) {
+        openSession(widget);
+        return true;
+      }
+    });
 
     openSession(widget, createTtyConnector(process));
 
@@ -161,22 +172,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   private class JBTerminalSystemSettingsProvider extends AbstractSystemSettingsProvider {
-    private TerminalWidget myTerminalWidget;
-
-    public void setTerminalWidget(TerminalWidget terminalWidget) {
-      myTerminalWidget = terminalWidget;
-    }
-
-    @Override
-    public AbstractAction getNewSessionAction() {
-      return new AbstractAction("New Session") {
-        @Override
-        public void actionPerformed(ActionEvent event) {
-          openSession(myTerminalWidget);
-        }
-      };
-    }
-
     @Override
     public KeyStroke[] getCopyKeyStrokes() {
       return getKeyStrokesByActionId("$Copy");

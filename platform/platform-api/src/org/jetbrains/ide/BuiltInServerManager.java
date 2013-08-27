@@ -17,13 +17,9 @@ package org.jetbrains.ide;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class BuiltInServerManager {
-  // Your handler will be instantiated on first user request
-  public static final ExtensionPointName<HttpRequestHandler> EP_NAME = ExtensionPointName.create("com.intellij.httpRequestHandler");
-
   public static BuiltInServerManager getInstance() {
     return ServiceManager.getService(BuiltInServerManager.class);
   }

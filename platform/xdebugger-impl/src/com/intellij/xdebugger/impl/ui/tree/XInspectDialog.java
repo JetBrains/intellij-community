@@ -45,16 +45,19 @@ public class XInspectDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return myTreePanel.getMainPanel();
   }
 
+  @Override
   @Nullable
   protected JComponent createSouthPanel() {
     return null;
   }
 
+  @Override
   @NonNls
   protected String getDimensionServiceKey() {
     return "#xdebugger.XInspectDialog";

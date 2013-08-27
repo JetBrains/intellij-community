@@ -117,6 +117,7 @@ public class PortableStatus extends SVNStatus {
         return null;
       }
     };
+    // TODO: Update working copy format detection
     setWorkingCopyFormat(WorkingCopyFormat.ONE_DOT_SEVEN.getFormat());
   }
 
@@ -239,6 +240,30 @@ public class PortableStatus extends SVNStatus {
     if (info == null) return null;
     SVNURL url = initInfo().getCopyFromURL();
     return url == null ? null : url.toString();
+  }
+
+  @Override
+  public SVNURL getURL() {
+    SVNURL url = super.getURL();
+
+    if (url == null) {
+      SVNInfo info = initInfo();
+      url = info != null ? info.getURL() : url;
+    }
+
+    return url;
+  }
+
+  @Override
+  public File getFile() {
+    File file = super.getFile();
+
+    if (file == null) {
+      SVNInfo info = initInfo();
+      file = info != null ? info.getFile() : file;
+    }
+
+    return file;
   }
 
   @Override

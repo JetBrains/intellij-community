@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,6 +205,13 @@ public abstract class CompletionContributor {
   }
 
   /**
+   * Allow autoPopup to appear after custom symbol
+   */
+  public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
+    return false;
+  }
+
+  /**
    * Invoked in a read action in parallel to the completion process. Used to calculate the replacement offset
    * (see {@link com.intellij.codeInsight.completion.CompletionInitializationContext#setReplacementOffset(int)})
    * if it takes too much time to spend it in {@link #beforeCompletion(CompletionInitializationContext)},
@@ -216,7 +223,7 @@ public abstract class CompletionContributor {
    */
   public void duringCompletion(@NotNull CompletionInitializationContext context) {
   }
-
+  
   /**
    * @param actionId
    * @return String representation of action shortcut. Useful while advertising something

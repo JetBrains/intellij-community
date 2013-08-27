@@ -18,12 +18,12 @@ package com.intellij.xdebugger.frame;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 
-public class StringValuePresenter implements XValuePresenter {
+public class StringValuePresenter extends XValuePresenter {
   public static final XValuePresenter DEFAULT = new StringValuePresenter(XValueNode.MAX_VALUE_LENGTH, "\"\\");
 
   private final int maxLength;
@@ -35,21 +35,26 @@ public class StringValuePresenter implements XValuePresenter {
   }
 
   @Override
-  public void append(String value, SimpleColoredText text, boolean changed) {
+  public void append(String value, ColoredTextContainer text, boolean changed) {
     SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DefaultLanguageHighlighterColors.STRING));
     text.append("\"", attributes);
     doAppend(value, text, attributes);
     text.append("\"", attributes);
   }
 
-  protected void doAppend(String value, SimpleColoredText text, SimpleTextAttributes attributes) {
+  protected void doAppend(String value, ColoredTextContainer text, SimpleTextAttributes attributes) {
+    append(value, text, attributes, maxLength, additionalChars);
+  }
+
+  public static void append(String value, ColoredTextContainer text, SimpleTextAttributes attributes, int maxLength, String additionalChars) {
     SimpleTextAttributes escapeAttributes = null;
     int lastOffset = 0;
     int length = maxLength == -1 ? value.length() : Math.min(value.length(), maxLength);
     for (int i = 0; i < length; i++) {
       char ch = value.charAt(i);
       int additionalCharIndex = -1;
-      if (ch == '\n' || ch == '\r' || ch == '\t' || ch == '\b' || ch == '\f' || (additionalChars != null && (additionalCharIndex = additionalChars.indexOf(ch)) != -1)) {
+      if (ch == '\n' || ch == '\r' || ch == '\t' || ch == '\b' || ch == '\f' || (additionalChars != null && (additionalCharIndex = additionalChars
+        .indexOf(ch)) != -1)) {
         if (i > lastOffset) {
           text.append(value.substring(lastOffset, i), attributes);
         }

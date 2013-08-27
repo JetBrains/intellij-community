@@ -21,7 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class Decoder<I> extends SimpleChannelInboundHandler<I> {
+public abstract class Decoder extends SimpleChannelInboundHandler<ByteBuf> {
   protected ByteBuf cumulation;
 
   protected Decoder() {

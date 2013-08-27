@@ -263,17 +263,11 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     super.init();
     SvnVcs vcs = SvnVcs.getInstance(myProject);
     String revStr = "";
-    try {
-      SVNWCClient client = vcs.createWCClient();
-      SVNInfo info = client.doInfo(mySrcFile, SVNRevision.UNDEFINED);
-      if (info != null) {
-        mySrcURL = info.getURL() == null ? null : info.getURL().toString();
-        revStr = String.valueOf(info.getRevision());
-        myURL = mySrcURL;
-      }
-    }
-    catch (SVNException e) {
-      //
+    SVNInfo info = vcs.getInfo(mySrcFile);
+    if (info != null) {
+      mySrcURL = info.getURL() == null ? null : info.getURL().toString();
+      revStr = String.valueOf(info.getRevision());
+      myURL = mySrcURL;
     }
     if (myURL == null) {
       return;
@@ -354,15 +348,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
         return true;
       }
       else if (myWorkingCopyRadioButton.isSelected()) {
-        String srcUrl;
-        try {
-          SVNWCClient client = SvnVcs.getInstance(myProject).createWCClient();
-          SVNInfo info = client.doInfo(mySrcFile, SVNRevision.UNDEFINED);
-          srcUrl = info != null && info.getURL() != null ? info.getURL().toString() : null;
-        }
-        catch (SVNException e) {
-          srcUrl = null;
-        }
+        SVNInfo info = SvnVcs.getInstance(myProject).getInfo(mySrcFile);
+        String srcUrl = info != null && info.getURL() != null ? info.getURL().toString() : null;
         if (srcUrl == null) {
           myErrorLabel.setText(SvnBundle.message("create.branch.no.working.copy.error", myWorkingCopyField.getText()));
           return false;

@@ -359,7 +359,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     // currently there are 6 of them and restoration does not happen very often so just iteration is enough
     if (type == PlainTextFileType.INSTANCE && !fileTypeName.equals(type.getName())) {
       for (FileType fileType: getRegisteredFileTypes()) {
-        if (fileType.equals(fileType.getName())) {
+        if (fileTypeName.equals(fileType.getName())) {
           return fileType;
         }
       }

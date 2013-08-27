@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -40,6 +39,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -50,6 +50,7 @@ import com.intellij.psi.IntentionFilterOwner;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
@@ -73,6 +74,62 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private final IntentionsInfo myIntentionsInfo = new IntentionsInfo();
   private volatile boolean myShowBulb;
   private volatile boolean myHasToRecreate;
+
+  @NotNull
+  public static List<HighlightInfo.IntentionActionDescriptor> getAvailableActions(@NotNull final Editor editor, @NotNull final PsiFile file, final int passId) {
+    final int offset = editor.getCaretModel().getOffset();
+    final Project project = file.getProject();
+
+    final List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true, new Processor<HighlightInfo>() {
+      @Override
+      public boolean process(HighlightInfo info) {
+        addAvailableActionsForGroups(info, editor, file, result, passId, offset);
+        return true;
+      }
+    });
+    return result;
+  }
+
+  private static void addAvailableActionsForGroups(@NotNull HighlightInfo info,
+                                                   @NotNull Editor editor,
+                                                   @NotNull PsiFile file,
+                                                   @NotNull List<HighlightInfo.IntentionActionDescriptor> outList,
+                                                   int group,
+                                                   int offset) {
+    if (info.quickFixActionMarkers == null) return;
+    if (group != -1 && group != info.getGroup()) return;
+    Editor injectedEditor = null;
+    PsiFile injectedFile = null;
+    for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> pair : info.quickFixActionMarkers) {
+      HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
+      RangeMarker range = pair.second;
+      if (!range.isValid()) continue;
+      int start = range.getStartOffset();
+      int end = range.getEndOffset();
+      final Project project = file.getProject();
+      if (start > offset || offset > end) {
+        continue;
+      }
+      Editor editorToUse;
+      PsiFile fileToUse;
+      if (info.isFromInjection()) {
+        if (injectedEditor == null) {
+          injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
+          injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+        }
+        editorToUse = injectedEditor;
+        fileToUse = injectedFile;
+      }
+      else {
+        editorToUse = editor;
+        fileToUse = file;
+      }
+      if (actionInGroup.getAction().isAvailable(project, editorToUse, fileToUse)) {
+        outList.add(actionInGroup);
+      }
+    }
+  }
 
   public static class IntentionsInfo {
     public final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
@@ -114,7 +171,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     myEditor = editor;
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    
+
     myFile = documentManager.getPsiFile(myEditor.getDocument());
     assert myFile != null : FileDocumentManager.getInstance().getFile(myEditor.getDocument());
   }
@@ -202,7 +259,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     int offset = hostEditor.getCaretModel().getOffset();
     Project project = hostFile.getProject();
 
-    List<HighlightInfo.IntentionActionDescriptor> fixes = QuickFixAction.getAvailableActions(hostEditor, hostFile, passIdToShowIntentionsFor);
+    List<HighlightInfo.IntentionActionDescriptor> fixes = getAvailableActions(hostEditor, hostFile, passIdToShowIntentionsFor);
     final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     final Document hostDocument = hostEditor.getDocument();
     HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(hostDocument, offset, true);

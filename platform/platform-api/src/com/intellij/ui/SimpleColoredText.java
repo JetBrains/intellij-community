@@ -18,10 +18,12 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 
-public class SimpleColoredText {
+public class SimpleColoredText implements ColoredTextContainer {
   private final ArrayList<String> myTexts;
   private final ArrayList<SimpleTextAttributes> myAttributes;
   private String myCachedToString = null;
@@ -36,10 +38,19 @@ public class SimpleColoredText {
     append(fragment, attributes);
   }
 
+  @Override
   public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes){
     myTexts.add(fragment);
     myCachedToString = null;
     myAttributes.add(attributes);
+  }
+
+  @Override
+  public void setIcon(@Nullable Icon icon) {
+  }
+
+  @Override
+  public void setToolTipText(String text) {
   }
 
   public void clear() {

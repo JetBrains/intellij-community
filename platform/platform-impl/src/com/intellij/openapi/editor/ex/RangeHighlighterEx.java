@@ -19,13 +19,14 @@
  * User: max
  * Date: Jun 10, 2002
  * Time: 5:54:59 PM
- * To change template for new interface use 
+ * To change template for new interface use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   boolean isAfterEndOfLine();
@@ -37,5 +38,5 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   @Override
   long getId();
 
-  void setTextAttributes(TextAttributes textAttributes);
+  void setTextAttributes(@NotNull TextAttributes textAttributes);
 }
