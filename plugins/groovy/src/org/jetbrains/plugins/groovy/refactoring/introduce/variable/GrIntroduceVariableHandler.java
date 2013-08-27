@@ -25,8 +25,8 @@ import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CanonicalTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -55,10 +55,8 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   @Override
   protected PsiElement findScope(GrExpression selectedExpr, GrVariable variable, StringPartInfo stringPartInfo) {
     // Get container element
-    final PsiElement scope = stringPartInfo != null
-                             ? GroovyRefactoringUtil.getEnclosingContainer(stringPartInfo.getLiteral())
-                             : GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
-    if (scope == null || !(scope instanceof GroovyPsiElement)) {
+    final PsiElement scope = ControlFlowUtils.findControlFlowOwner(stringPartInfo != null ? stringPartInfo.getLiteral() : selectedExpr);
+    if (scope == null) {
       throw new GrRefactoringError(
         GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
     }
