@@ -12,7 +12,6 @@ import javax.swing.*;
 // todo: load long lists by parts
 // todo: null modifier for modify modules, class objects etc.
 public class PyDebugValue extends XNamedValue {
-
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyDebugValue");
   public static final int MAX_VALUE = 512;
 
@@ -71,6 +70,7 @@ public class PyDebugValue extends XNamedValue {
     return myParent == null ? this : myParent.getTopParent();
   }
 
+  @Override
   public String getEvaluationExpression() {
     StringBuilder stringBuilder = new StringBuilder();
     buildExpression(stringBuilder);
@@ -120,24 +120,14 @@ public class PyDebugValue extends XNamedValue {
       value = value.substring(0, MAX_VALUE);
     }
 
-    String name = formatName(getName());
-
-    node.setPresentation(name, getValueIcon(),  myType, value, myContainer);
-  }
-
-  private static String formatName(String name) {
-    name = name.replace("\\", "\\\\").replace("\n", "\\n").replace("\t", "\\t");
-
-    if (name.length() >= MAX_VALUE) {
-      name = name.substring(0, MAX_VALUE);
-    }
-    return name;
+    node.setPresentation(getValueIcon(), myType, value, myContainer);
   }
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
       public void run() {
         if (myDebugProcess == null) return;
 

@@ -66,7 +66,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private boolean myClosing = false;
 
   private PyPositionConverter myPositionConverter;
-  private XSmartStepIntoHandler<?> mySmartStepIntoHandler;
+  private final XSmartStepIntoHandler<?> mySmartStepIntoHandler;
   private boolean myWaitingForConnection = false;
   private PyStackFrame myStackFrameBeforeResume;
 
@@ -198,6 +198,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   protected void waitForConnection(final String connectionMessage, String connectionTitle) {
     ProgressManager.getInstance().run(new Task.Backgroundable(getSession().getProject(), connectionTitle, false) {
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setText(connectionMessage);
         try {
@@ -218,6 +219,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           }
           if (!myClosing) {
             invokeLater(new Runnable() {
+              @Override
               public void run() {
                 Messages.showErrorDialog("Unable to establish connection with debugger:\n" + e.getMessage(), getConnectionTitle());
               }
@@ -228,6 +230,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     });
   }
 
+  @Override
   public void init() {
     getSession().rebuildViews();
     registerBreakpoints();
@@ -297,6 +300,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  @Override
   public void printToConsole(String text, ConsoleViewContentType contentType) {
     ((ConsoleView)myExecutionConsole).print(text, contentType);
   }
@@ -423,6 +427,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  @Override
   public PyDebugValue evaluate(final String expression, final boolean execute, boolean doTrunc) throws PyDebuggerException {
     dropFrameCaches();
     final PyStackFrame frame = currentFrame();
