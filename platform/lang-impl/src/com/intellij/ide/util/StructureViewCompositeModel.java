@@ -29,8 +29,8 @@ import java.util.ArrayList;
 /**
  * @author Konstantin Bulenkov
  */
-public class CompositeStructureViewmodel extends StructureViewModelBase {
-  public CompositeStructureViewmodel(PsiFile file, StructureViewComposite.StructureViewDescriptor[] views) {
+public class StructureViewCompositeModel extends StructureViewModelBase {
+  public StructureViewCompositeModel(PsiFile file, StructureViewComposite.StructureViewDescriptor[] views) {
     super(file, createRootNode(file, views));
   }
 

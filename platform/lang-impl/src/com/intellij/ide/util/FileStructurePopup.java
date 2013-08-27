@@ -145,13 +145,14 @@ public class FileStructurePopup implements Disposable {
         myPsiFile = PsiManager.getInstance(project).findFile(file);
         if (builder != null && myPsiFile != null) {
           myStructureView = builder.createStructureView(fileEditor, project);
+          Disposer.register(this, myStructureView);
         }
       }
     }
     //System.out.println(System.currentTimeMillis() - l);
     if (myStructureView instanceof StructureViewComposite) {
       StructureViewComposite.StructureViewDescriptor[] views = ((StructureViewComposite)myStructureView).getStructureViews();
-      myBaseTreeModel = new CompositeStructureViewmodel(myPsiFile, views);
+      myBaseTreeModel = new StructureViewCompositeModel(myPsiFile, views);
     } else {
       myBaseTreeModel = structureViewModel;
     }
@@ -487,6 +488,7 @@ public class FileStructurePopup implements Disposable {
 
   @Override
   public void dispose() {
+
   }
 
   @NonNls
