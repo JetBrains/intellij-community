@@ -114,7 +114,7 @@
     <programRunner implementation="com.jetbrains.python.coverage.PythonCoverageRunner"/>
     <runConfigurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
-    <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.DjangoTemplateLineBreakpointType"/>
+    <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.django.DjangoTemplateLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.django.DjangoExceptionBreakpointType"/>
 
@@ -910,6 +910,7 @@
     <extensionPoint qualifiedName="Pythonid.canonicalPathProvider" interface="com.jetbrains.python.psi.resolve.PyCanonicalPathProvider"/>
     <extensionPoint qualifiedName="Pythonid.templateContextProvider" interface="com.jetbrains.python.templateLanguages.TemplateContextProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyReferenceResolveProvider" interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"/>
+    <extensionPoint qualifiedName="Pythonid.breakpointHandler" interface="com.jetbrains.python.debugger.PyBreakpointHandlerFactory"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -950,7 +951,8 @@
     <documentationLinkProvider implementation="com.jetbrains.django.codeInsight.DjangoDocumentationLinkProvider"/>
     <templateLanguageCoreTags language="DjangoTemplate" implementationClass="com.jetbrains.django.model.DjangoTagLibrary"/>
     <templateContextProvider implementation="com.jetbrains.django.model.DjangoTemplateContextProvider"/>
-
+    <breakpointHandler implementation="com.jetbrains.python.debugger.django.DjangoExceptionBreakpointHandlerFactory"/>
+    <breakpointHandler implementation="com.jetbrains.python.debugger.django.DjangoLineBreakpointHandlerFactory"/>
 
     <!-- App Engine -->
     <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>
