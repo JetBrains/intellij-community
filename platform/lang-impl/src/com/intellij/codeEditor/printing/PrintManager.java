@@ -15,7 +15,11 @@
  */
 package com.intellij.codeEditor.printing;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -155,6 +159,10 @@ class PrintManager {
             LOG.info("Cancelled");
             printerJob.cancel();
           }
+          catch (PrinterException e) {
+            Notifications.Bus.notify(new Notification("Print", CommonBundle.getErrorTitle(), e.getMessage(), NotificationType.ERROR));
+            LOG.warn(e);
+          }
           catch (Exception e) {
             LOG.error(e);
           }
@@ -170,7 +178,7 @@ class PrintManager {
     if (isRecursive) {
       for (PsiDirectory directory : psiDirectory.getSubdirectories()) {
         if (!Project.DIRECTORY_STORE_FOLDER.equals(directory.getName())) {
-          addToPsiFileList(directory, filesList, isRecursive);
+          addToPsiFileList(directory, filesList, true);
         }
       }
     }
