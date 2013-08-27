@@ -68,8 +68,9 @@ public final class RegExResponseHandler extends ResponseHandler {
     return myTaskRegex.hashCode();
   }
 
+  @NotNull
   @Override
-  public JComponent getConfigurationComponent(Project project) {
+  public JComponent getConfigurationComponent(@NotNull Project project) {
     FormBuilder builder = FormBuilder.createFormBuilder();
     final EditorTextField taskPatternText;
     taskPatternText = new LanguageTextField(RegExpLanguage.INSTANCE, project, myTaskRegex, false);
@@ -86,7 +87,7 @@ public final class RegExResponseHandler extends ResponseHandler {
 
   @NotNull
   @Override
-  public Task[] parseIssues(String response, int max) throws Exception {
+  public Task[] parseIssues(@NotNull String response, int max) throws Exception {
     final List<String> placeholders = getPlaceholders(myTaskRegex);
     if (!placeholders.contains(ID_PLACEHOLDER) || !placeholders.contains(SUMMARY_PLACEHOLDER)) {
       throw new Exception("Incorrect Task Pattern");
@@ -120,7 +121,7 @@ public final class RegExResponseHandler extends ResponseHandler {
 
   @Nullable
   @Override
-  public Task parseIssue(String response) throws Exception {
+  public Task parseIssue(@NotNull String response) throws Exception {
     return null;
   }
 
@@ -150,6 +151,7 @@ public final class RegExResponseHandler extends ResponseHandler {
     return !StringUtil.isEmpty(myTaskRegex);
   }
 
+  @NotNull
   @Override
   public ResponseType getResponseType() {
     return ResponseType.TEXT;

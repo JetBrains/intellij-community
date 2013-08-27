@@ -16,30 +16,53 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+
+import java.util.Set;
 
 /**
  * @author yole
  */
-public class UnmarkRootAction extends MarkRootAction {
-  public UnmarkRootAction() {
-    super(true);
-  }
+public class UnmarkRootAction extends MarkRootActionBase {
+  private static final Logger LOG = Logger.getInstance(UnmarkRootAction.class);
 
   @Override
   public void update(AnActionEvent e) {
-    Ref<Boolean> rootType = new Ref<Boolean>();
-    boolean enabled = canMark(e, true, true, false, rootType);
-    if (rootType.get() == null) {
-      enabled = false;
+    super.update(e);
+    RootsSelection selection = getSelection(e);
+    Set<JpsModuleSourceRootType<?>> selectedRootTypes = new HashSet<JpsModuleSourceRootType<?>>();
+    for (SourceFolder root : selection.mySelectedRoots) {
+      selectedRootTypes.add(root.getRootType());
     }
-    else if (rootType.get()) {
-      e.getPresentation().setText("Unmark as Source Root");
+
+    if (!selectedRootTypes.isEmpty()) {
+      String text;
+      if (selectedRootTypes.size() == 1) {
+        JpsModuleSourceRootType<?> type = selectedRootTypes.iterator().next();
+        ModuleSourceRootEditHandler<?> handler = ModuleSourceRootEditHandler.findEditHandler(type);
+        LOG.assertTrue(handler != null, type);
+        text = "Unmark as " + handler.getRootTypeName() + " " + StringUtil.pluralize("Root", selection.mySelectedRoots.size());
+      }
+      else {
+        text = "Unmark Roots";
+      }
+      e.getPresentation().setText(text);
     }
-    else {
-      e.getPresentation().setText("Unmark as Test Source Root");
-    }
-    e.getPresentation().setVisible(enabled);
-    e.getPresentation().setEnabled(enabled);
+  }
+
+  @Override
+  protected boolean isEnabled(@NotNull RootsSelection selection) {
+    return selection.mySelectedFiles.isEmpty() && !selection.mySelectedRoots.isEmpty();
+  }
+
+  protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
   }
 }

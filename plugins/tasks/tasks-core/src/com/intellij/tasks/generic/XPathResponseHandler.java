@@ -1,10 +1,8 @@
 package com.intellij.tasks.generic;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.intellij.lang.xpath.XPathFileType;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -79,11 +77,7 @@ public final class XPathResponseHandler extends SelectorBasedResponseHandler {
     return myCompiledCache.get(path);
   }
 
-  @Override
-  public FileType getSelectorFileType() {
-    return XPathFileType.XPATH;
-  }
-
+  @NotNull
   @Override
   public ResponseType getResponseType() {
     return ResponseType.XML;

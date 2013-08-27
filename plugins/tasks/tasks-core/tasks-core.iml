@@ -39,7 +39,6 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="core-api" />
-    <orderEntry type="module" module-name="xpath" />
     <orderEntry type="module" module-name="RegExpSupport" />
     <orderEntry type="module-library">
       <library>

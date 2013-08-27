@@ -540,6 +540,9 @@ public class GithubApiUtil {
     return createDataFromRaw(fromJson(postRequest(auth, path, gson.toJson(request)), GithubRepoRaw.class), GithubRepo.class);
   }
 
+  /*
+   * Open issues only
+   */
   @NotNull
   public static List<GithubIssue> getIssuesAssigned(@NotNull GithubAuthData auth,
                                                     @NotNull String user,
@@ -564,6 +567,9 @@ public class GithubApiUtil {
   }
 
   @NotNull
+  /*
+   * All issues - open and closed
+   */
   public static List<GithubIssue> getIssuesQueried(@NotNull GithubAuthData auth,
                                                    @NotNull String user,
                                                    @NotNull String repo,

@@ -13,23 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.ui.tree.nodes;
+package com.intellij.chromeConnector.debugger.frame;
 
-import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.NotNullFunction;
 import com.intellij.xdebugger.frame.XValuePresenter;
-import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class XValuePresenterAdapter implements XValuePresenter {
-  private final NotNullFunction<String, String> valuePresenter;
+public class XGroupingValuePresenter extends XValuePresenter {
+  public static final XGroupingValuePresenter INSTANCE = new XGroupingValuePresenter();
 
-  public XValuePresenterAdapter(NotNullFunction<String, String> valuePresenter) {
-    this.valuePresenter = valuePresenter;
+  @Nullable
+  @Override
+  public SimpleTextAttributes getNameAttributes() {
+    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
   @Override
-  public void append(String value, SimpleColoredText text, boolean changed) {
-    text.append(valuePresenter.fun(value), changed ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  public void appendSeparator(@NotNull ColoredTextContainer text) {
+  }
+
+  @Override
+  public void append(String value, ColoredTextContainer text, boolean changed) {
   }
 }

@@ -13,33 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom.references;
+package com.intellij.psi.impl;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.psi.PsiReferenceBase;
 import org.jetbrains.annotations.NotNull;
 
-public class MavenUrlPsiReference extends MavenPsiReference {
-  public MavenUrlPsiReference(PsiElement element, String text, TextRange range) {
-    super(element, text, range);
+public class UrlPsiReference extends PsiReferenceBase<PsiElement> {
+  public UrlPsiReference(PsiElement element) {
+    super(element);
   }
 
   public PsiElement resolve() {
     return new FakePsiElement() {
       public PsiElement getParent() {
-        return myElement;
+        return getElement();
       }
 
       @Override
       public String getName() {
-        return myText;
+        return getValue();
       }
 
       @Override
       public void navigate(boolean requestFocus) {
-        BrowserUtil.launchBrowser(myText);
+        BrowserUtil.launchBrowser(getValue());
       }
     };
   }
@@ -47,5 +46,10 @@ public class MavenUrlPsiReference extends MavenPsiReference {
   @NotNull
   public Object[] getVariants() {
     return EMPTY_ARRAY;
+  }
+
+  @Override
+  public boolean isSoft() {
+    return true;
   }
 }

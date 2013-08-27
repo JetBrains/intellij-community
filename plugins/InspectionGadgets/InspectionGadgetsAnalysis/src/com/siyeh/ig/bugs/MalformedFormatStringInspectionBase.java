@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -23,9 +25,47 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.FormatUtils;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class MalformedFormatStringInspection extends BaseInspection {
+import java.util.ArrayList;
+import java.util.List;
+
+public class MalformedFormatStringInspectionBase extends BaseInspection {
+  /**
+   * @noinspection PublicField
+   */
+  @NonNls public String additionalClasses = "";
+
+  /**
+   * @noinspection PublicField
+   */
+  @NonNls public String additionalMethods = "";
+
+  final List<String> classNames;
+  final List<String> methodNames;
+
+  public MalformedFormatStringInspectionBase() {
+    classNames = new ArrayList<String>();
+    methodNames = new ArrayList<String>();
+    parseString(additionalClasses, classNames);
+    parseString(additionalMethods, methodNames);
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    super.readSettings(node);
+    parseString(additionalClasses, classNames);
+    parseString(additionalMethods, methodNames);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    additionalClasses = formatString(classNames);
+    additionalMethods = formatString(methodNames);
+    super.writeSettings(node);
+  }
 
   @Override
   @NotNull
@@ -61,12 +101,12 @@ public class MalformedFormatStringInspection extends BaseInspection {
     return new MalformedFormatStringVisitor();
   }
 
-  private static class MalformedFormatStringVisitor extends BaseInspectionVisitor {
+  private class MalformedFormatStringVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!FormatUtils.isFormatCall(expression)) {
+      if (!FormatUtils.isFormatCall(expression, methodNames, classNames)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();

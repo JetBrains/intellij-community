@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class ProjectStructureConfigurableAdder {
-  public static final ExtensionPointName<ProjectStructureConfigurableAdder> EP_NAME = ExtensionPointName.create("com.intellij.projectStructureConfigurableAdder");
+public abstract class ProjectStructureConfigurableContributor {
+  public static final ExtensionPointName<ProjectStructureConfigurableContributor> EP_NAME = ExtensionPointName.create("com.intellij.projectStructureConfigurableAdder");
 
   @NotNull
   public List<? extends Configurable> getExtraProjectConfigurables(@NotNull Project project, @NotNull StructureConfigurableContext context) {

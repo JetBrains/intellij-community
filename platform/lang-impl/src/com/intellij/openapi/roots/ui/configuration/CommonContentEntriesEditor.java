@@ -87,7 +87,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     myModuleName = moduleName;
     myModulesProvider = state.getModulesProvider();
     for (JpsModuleSourceRootType<?> type : rootTypes) {
-      ContainerUtil.addIfNotNull(myEditHandlers, findEditHandler(type));
+      ContainerUtil.addIfNotNull(myEditHandlers, ModuleSourceRootEditHandler.findEditHandler(type));
     }
     final VirtualFileManagerAdapter fileManagerListener = new VirtualFileManagerAdapter() {
       @Override
@@ -110,16 +110,6 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
         fileManager.removeVirtualFileManagerListener(fileManagerListener);
       }
     });
-  }
-
-  @Nullable
-  private static ModuleSourceRootEditHandler<?> findEditHandler(JpsModuleSourceRootType<?> type) {
-    for (ModuleSourceRootEditHandler editor : ModuleSourceRootEditHandler.EP_NAME.getExtensions()) {
-      if (editor.getRootType().equals(type)) {
-        return editor;
-      }
-    }
-    return null;
   }
 
   @Override
