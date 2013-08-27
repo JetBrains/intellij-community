@@ -808,7 +808,8 @@ public class HighlightUtil extends HighlightUtilBase {
         }
         else if (PsiModifier.STATIC.equals(modifier) || PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) ||
                  PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
-          isAllowed = modifierOwnerParent instanceof PsiClass && ((PsiClass)modifierOwnerParent).getQualifiedName() != null;
+          isAllowed = modifierOwnerParent instanceof PsiClass &&
+                      ((PsiClass)modifierOwnerParent).getQualifiedName() != null || JspPsiUtil.isInJspFile(modifierOwnerParent);
         }
 
         if (aClass.isEnum()) {
