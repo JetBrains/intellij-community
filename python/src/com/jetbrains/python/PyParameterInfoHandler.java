@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.TextRange;
@@ -21,7 +22,7 @@ import static com.jetbrains.python.psi.PyCallExpression.PyMarkedCallee;
  * @author dcheryasov
  */
 public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, CallArgumentsMapping> {
-  private static  final String NO_PARAMS_MSG = "&lt;No parameters&gt;";
+  private static  final String NO_PARAMS_MSG = CodeInsightBundle.message("parameter.info.no.parameters");
 
   public boolean couldShowInLookup() {
     return true;
