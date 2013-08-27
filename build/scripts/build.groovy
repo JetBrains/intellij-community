@@ -77,13 +77,14 @@ class Steps {
 class Build {
   def buildName
   def product
-  def productCode  
+//  def productCode
   def modules
   def steps
   def paths
   def home
   def projectBuilder
   def buildNumber
+  def system_selector
   def ant = new AntBuilder()
   Map layout_args
   Script utils
@@ -91,17 +92,11 @@ class Build {
   Script layouts
   Script libLicenses
 
-  Build(String arg_home, JpsGantProjectBuilder prjBuilder,
-        Script script_utils, Script script_ultimate_utils,
-        Script script_layouts, Script script_libLicenses){
+  Build(String arg_home, JpsGantProjectBuilder prjBuilder){
     home = arg_home
     projectBuilder = prjBuilder
     paths = new Paths(home)
     steps = new Steps()
-    utils = script_utils
-    ultimate_utils = script_ultimate_utils
-    layouts = script_layouts
-    libLicenses = script_libLicenses
   }
 
   def init () {
@@ -120,6 +115,11 @@ class Build {
     ant.tstamp() {
       format(property: "today.year", pattern: "yyyy")
     }
+
+//    idea_build.utils = includeFile("${guessHome(this)}/community/build/scripts/utils.gant")
+    ultimate_utils = utils.includeFile(home + "/build/scripts/ultimate_utils.gant")
+    layouts = utils.includeFile(home + "/build/scripts/layouts.gant")
+    libLicenses = utils.includeFile(home + "/community/build/scripts/libLicenses.gant")
     projectBuilder.stage("Init done")
   }
 
@@ -132,9 +132,9 @@ class Build {
 
   def compile(String jdk) {
     paths.jdkHome = jdk
-    projectBuilder.stage("Compilation")
-    projectBuilder.stage("step paths - " + paths.jdkHome + "/lib/tools.jar")
-    projectBuilder.stage("step home - " + home + "/community/lib/junit.jar")
+    projectBuilder.stage("- Compilation -")
+//    projectBuilder.stage("step paths - " + paths.jdkHome + "/lib/tools.jar")
+//    projectBuilder.stage("step home - " + home + "/community/lib/junit.jar")
 
     if (steps.compile) {
       projectBuilder.arrangeModuleCyclesOutputs = true
@@ -144,17 +144,12 @@ class Build {
       projectBuilder.buildProduction()
     }	
 
-/*    projectBuilder.stage("step - additionalCompilationStep")
-    if (utils.isDefined("additionalCompilationStep")) {
-      projectBuilder.info("Using additional compilation step: " + additionalCompilationStep)
-      def script = includeFile(additionalCompilationStep)
-      script.doCustomCompile();
-    }
-
-    projectBuilder.stage("step - wireBuildDate")
+    projectBuilder.stage("- additionalCompilation - ")
+    utils.additionalCompilation()
+    projectBuilder.stage("- searchableOptions - ")
+    utils.searchableOptions()
+    projectBuilder.stage("- wireBuildDate -")
     utils.wireBuildDate(buildName, appInfoFile())
-
-    projectBuilder.stage("step - steps.build_searchable_options - finished")*/
   }
 
   def layout(){
@@ -255,7 +250,8 @@ class Build {
     layouts.layoutMac(layout_args, paths.distMac)
 
     projectBuilder.stage("--- buildNSISs ---")
-    buildNSISs()
+//    buildNSISs()
+    buildWinInstallation()
 
     projectBuilder.stage("--- targz ---")
     utils.buildTeamServer()
@@ -264,41 +260,10 @@ class Build {
     libLicenses.checkLibLicenses();
   }
 
-  // think: should be relocated in utils.gant script
-/*  def includeFile(String filename) {
-    Script s = groovyShell.parse(new File("$home/build/scripts/$filename"))
-    s.setBinding(binding)
-    s
-  }*/
-
-  // think: to be implement for each product
-/*  String appInfoFile() {
-    projectBuilder.stage("step - wireBuildDate")
-    //return projectBuilder.moduleOutput(utils.findModule("ultimate-resources")) + "/idea/ApplicationInfo.xml"
-    return "${projectBuilder.moduleOutput(utils.findModule("ultimate-resources"))}/idea/ApplicationInfo.xml"
-  }*/
-
-  // rewrite to create one unspecified launcher
-/*
-  def buildLaunchers() {
-    Map args = ["tools_jar": "true"]
-    ultimate_utils.buildExe("$home/build/conf/idea.exe4j", system_selector, args)
-    ultimate_utils.buildExe("$home/build/conf/idea64.exe4j", system_selector, args + ["output.file": "idea64.exe"])
-
-    List ceResourcePaths = ["$ch/community-resources/src", "$ch/platform/icons/src"]
-    utils.buildWinLauncher(ch, "$ch/bin/WinLauncher/WinLauncher.exe", "$paths.sandbox/dist.win.ce/bin/idea.exe", appInfoFileCE(),
-                     "$home/build/conf/ideaCE-launcher.properties", system_selector_CE, ceResourcePaths)
-    utils.buildWinLauncher(ch, "$ch/bin/WinLauncher/WinLauncher64.exe", "$paths.sandbox/dist.win.ce/bin/idea64.exe", appInfoFileCE(),
-                     "$home/build/conf/ideaCE64-launcher.properties", system_selector_CE, ceResourcePaths)
-  }*/
-
-  // rewrite to create one unspecified installation
-  def buildNSISs() {
+  // should be optimized to allow using for all IDEA based builds
+  def buildWinInstallation() {
     ultimate_utils.buildNSIS([paths.distAll, paths.distJars, paths.distWin],
-              "$home/build/conf/nsis/strings.nsi", "$home/build/conf/nsis/paths.nsi",
-              "ideaIU-", true, true, system_selector)
-    ultimate_utils.buildNSIS(["$paths.sandbox/dist.all.ce", "$paths.sandbox/dist.win.ce"],
-              "$home/build/conf/nsis/stringsCE.nsi", "$home/build/conf/nsis/pathsCE.nsi",
-              "ideaIC-", true, true, system_selector_CE)
+                             "$home/build/conf/nsis/strings.nsi", "$home/build/conf/nsis/paths.nsi",
+                             "${product}-")
   }
 }
