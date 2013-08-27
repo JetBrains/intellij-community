@@ -121,7 +121,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       g.drawLine(myLeftWidth-1, 0, myLeftWidth-1, getHeight());
       super.paintComponent(g);
     }
-  }; //don't use JBList here!!! todo[kb]
+  };
   private AnActionEvent myActionEvent;
   private Component myContextComponent;
   private CalcThread myCalcThread;
@@ -736,7 +736,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
       for (VirtualFile file : ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles())) {
         if (StringUtil.isEmptyOrSpaces(pattern) || matcher.matches(file.getName())) {
-          files.add(file);
+          if (!files.contains(file)) {
+            files.add(file);
+          }
         }
         if (files.size() > 15) break;
       }
@@ -936,8 +938,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               sz.width++;
               sz.width++;
             }
-            sz.width = Math.max(myInitialWidth, sz.width);
-            sz.height = Math.max(myInitialHeight, sz.height);
             myPopup.setSize(sz);
             final Point screen = field.getLocationOnScreen();
             final int x = screen.x + field.getWidth() - myPopup.getSize().width;

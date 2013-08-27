@@ -465,7 +465,7 @@ public class SvnCommitTest extends Svn17TestCase {
     return feedback;
   }
 
-  private void checkinFile(VirtualFile file, FileStatus status) {
+  protected void checkinFile(VirtualFile file, FileStatus status) {
     final Change change = myChangeListManager.getChange(file);
     Assert.assertNotNull(change);
     Assert.assertEquals(status, change.getFileStatus());
@@ -478,6 +478,7 @@ public class SvnCommitTest extends Svn17TestCase {
   }
 
   protected void run2variants(final MyRunner runner) throws Exception {
+    // TODO: Change this to run different variants separately. See SvnTestCase.myUseAcceleration.
     setNativeAcceleration(false);
     runner.run();
     runner.cleanup();

@@ -17,23 +17,63 @@ package org.jetbrains.jps.model.module;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsLibrary;
 
 import java.util.Set;
 
 /**
+ * Interface for convenient processing dependencies of a module or a project
+ * <p/>
+ * Use {@link org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator JpsJavaDependenciesEnumerator} for java-specific dependencies processing
+ * <p/>
+ * Note that all configuration methods modify {@link org.jetbrains.jps.model.module.JpsDependenciesEnumerator} instance instead of creating a new one.
+ *
  * @author nik
  */
 public interface JpsDependenciesEnumerator {
+  @NotNull
   JpsDependenciesEnumerator withoutLibraries();
+  @NotNull
   JpsDependenciesEnumerator withoutDepModules();
+  @NotNull
   JpsDependenciesEnumerator withoutSdk();
+  @NotNull
   JpsDependenciesEnumerator withoutModuleSourceEntries();
-  JpsDependenciesEnumerator recursively();
-  JpsDependenciesEnumerator satisfying(Condition<JpsDependencyElement> condition);
 
+  /**
+   * Recursively process modules on which the module depends
+   *
+   * @return this instance
+   */
+  @NotNull
+  JpsDependenciesEnumerator recursively();
+
+  /**
+   * Process only dependencies which satisfies the specified condition
+   *
+   * @param condition filtering condition
+   * @return this instance
+   */
+  @NotNull
+  JpsDependenciesEnumerator satisfying(@NotNull Condition<JpsDependencyElement> condition);
+
+  /**
+   * @return all modules processed by enumerator
+   */
+  @NotNull
   Set<JpsModule> getModules();
+
+  /**
+   * @return all libraries processed by enumerator
+   */
+  @NotNull
   Set<JpsLibrary> getLibraries();
 
-  void processModules(Consumer<JpsModule> consumer);
+  /**
+   * Runs <code>consumer.consume()</code> for each module processed by this enumerator
+   *
+   * @param consumer consumer
+   */
+  void processModules(@NotNull Consumer<JpsModule> consumer);
 }

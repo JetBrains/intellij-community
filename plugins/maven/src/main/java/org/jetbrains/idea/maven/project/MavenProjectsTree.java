@@ -57,7 +57,7 @@ public class MavenProjectsTree {
   private final Lock myStructureWriteLock = myStructureLock.writeLock();
 
   // TODO replace with sets
-  private volatile List<String> myManagedFilesPaths = new ArrayList<String>();
+  private volatile Set<String> myManagedFilesPaths = new LinkedHashSet<String>();
   private volatile List<String> myIgnoredFilesPaths = new ArrayList<String>();
   private volatile List<String> myIgnoredFilesPatterns = new ArrayList<String>();
   private volatile Pattern myIgnoredFilesPatternsCache;
@@ -91,7 +91,7 @@ public class MavenProjectsTree {
     try {
       try {
         if (!STORAGE_VERSION.equals(in.readUTF())) return null;
-        result.myManagedFilesPaths = readCollection(in, new ArrayList<String>());
+        result.myManagedFilesPaths = readCollection(in, new LinkedHashSet<String>());
         result.myIgnoredFilesPaths = readCollection(in, new ArrayList<String>());
         result.myIgnoredFilesPatterns = readCollection(in, new ArrayList<String>());
         result.myExplicitProfiles = readCollection(in, new THashSet<String>());
@@ -190,7 +190,7 @@ public class MavenProjectsTree {
 
   public void resetManagedFilesPathsAndProfiles(List<String> paths, Collection<String> profiles) {
     synchronized (myStateLock) {
-      myManagedFilesPaths = new ArrayList<String>(paths);
+      myManagedFilesPaths = new LinkedHashSet<String>(paths);
     }
     setExplicitProfiles(profiles);
   }
@@ -672,10 +672,12 @@ public class MavenProjectsTree {
   }
 
   public boolean isManagedFile(String path) {
-    for (String each : getManagedFilesPaths()) {
-      if (FileUtil.pathsEqual(each, path)) return true;
+    synchronized (myStateLock) {
+      for (String each : myManagedFilesPaths) {
+        if (FileUtil.pathsEqual(each, path)) return true;
+      }
+      return false;
     }
-    return false;
   }
 
   public boolean isPotentialProject(String path) {

@@ -37,6 +37,16 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
     myRootType = rootType;
   }
 
+  @Nullable
+  public static ModuleSourceRootEditHandler<?> findEditHandler(JpsModuleSourceRootType<?> type) {
+    for (ModuleSourceRootEditHandler editor : EP_NAME.getExtensions()) {
+      if (editor.getRootType().equals(type)) {
+        return editor;
+      }
+    }
+    return null;
+  }
+
   public final JpsModuleSourceRootType<P> getRootType() {
     return myRootType;
   }

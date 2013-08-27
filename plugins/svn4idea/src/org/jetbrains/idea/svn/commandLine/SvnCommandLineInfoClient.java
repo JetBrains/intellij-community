@@ -15,12 +15,13 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Consumer;
-import org.jetbrains.idea.svn.SvnBindUtil;
+import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.portable.SvnkitSvnWcClient;
@@ -36,7 +37,9 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -45,9 +48,12 @@ import java.util.Collection;
  * Time: 12:59 PM
  */
 public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
+
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient");
   private final Project myProject;
 
   public SvnCommandLineInfoClient(final Project project) {
+    // TODO: Remove svn kit client instantiation
     super(SvnVcs.getInstance(project).createWCClient());
     myProject = project;
   }
@@ -74,22 +80,56 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     base = SvnBindUtil.correctUpToExistingParent(base);
     if (base == null) {
       // very unrealistic
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), new RuntimeException("Can not find existing parent file"));
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not find existing parent file"));
     }
-    final SvnSimpleCommand command = SvnCommandFactory.createSimpleCommand(myProject, base, SvnCommandName.info);
+    issueCommand(path.getAbsolutePath(), pegRevision, revision, depth, changeLists, handler, base);
+  }
 
-    if (depth != null) {
-      command.addParameters("--depth", depth.getName());
-    }
-    if (revision != null && ! SVNRevision.UNDEFINED.equals(revision) && ! SVNRevision.WORKING.equals(revision)) {
-      command.addParameters("-r", revision.toString());
-    }
-    command.addParameters("--xml");
+  private void issueCommand(String path, SVNRevision pegRevision,
+                            SVNRevision revision,
+                            SVNDepth depth,
+                            Collection changeLists,
+                            final ISVNInfoHandler handler, File base) throws SVNException {
+    final SvnSimpleCommand command = SvnCommandFactory.createSimpleCommand(myProject, base, SvnCommandName.info);
+    List<String> parameters = new ArrayList<String>();
+
+    fillParameters(path, pegRevision, revision, depth, parameters);
+    command.addParameters(parameters);
     SvnCommandLineStatusClient.changelistsToCommand(changeLists, command);
-    if (pegRevision != null && ! SVNRevision.UNDEFINED.equals(pegRevision) && ! SVNRevision.WORKING.equals(pegRevision)) {
-      command.addParameters(path.getPath() + "@" + pegRevision.toString());
-    } else {
-      command.addParameters(path.getPath());
+
+    parseResult(handler, base, execute(command));
+  }
+
+  private String execute(SvnSimpleCommand command) throws SVNException {
+    try {
+      return command.run();
+    }
+    catch (VcsException e) {
+      final String text = e.getMessage();
+      final boolean notEmpty = !StringUtil.isEmptyOrSpaces(text);
+      if (notEmpty && text.contains("W155010")) {
+        // just null
+        return null;
+      }
+      // not a working copy exception
+      // "E155007: '' is not a working copy"
+      if (notEmpty && text.contains("is not a working copy")) {
+        if (StringUtil.isNotEmpty(command.getOutput())) {
+          // workaround: as in subversion 1.8 "svn info" on a working copy root outputs such error for parent folder,
+          // if there are files with conflicts.
+          // but the requested info is still in the output except root closing tag
+          return command.getOutput() + "</info>";
+        } else {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, e), e);
+        }
+      }
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+    }
+  }
+
+  private void parseResult(final ISVNInfoHandler handler, File base, String result) throws SVNException {
+    if (StringUtil.isEmpty(result)) {
+      return;
     }
 
     final SvnInfoHandler[] infoHandler = new SvnInfoHandler[1];
@@ -106,36 +146,32 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     });
 
     try {
-      final String result = command.run();
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-      parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), infoHandler[0]);
 
+      parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), infoHandler[0]);
     }
     catch (SvnExceptionWrapper e) {
+      LOG.info("info output " + result);
       throw (SVNException) e.getCause();
     } catch (IOException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      LOG.info("info output " + result);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
     catch (ParserConfigurationException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      LOG.info("info output " + result);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
     catch (SAXException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      LOG.info("info output " + result);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
-    catch (VcsException e) {
-      final String text = e.getMessage();
-      final boolean notEmpty = !StringUtil.isEmptyOrSpaces(text);
-      if (notEmpty && text.contains("W155010")) {
-        // just null
-        return;
-      }
-      // not a working copy exception
-      // "E155007: '' is not a working copy"
-      if (notEmpty && text.contains("is not a working copy")) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY), e);
-      }
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
-    }
+  }
+
+  private void fillParameters(String path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, List<String> parameters) {
+    CommandUtil.put(parameters, depth);
+    CommandUtil.put(parameters, revision);
+    CommandUtil.put(parameters, path, pegRevision);
+    parameters.add("--xml");
   }
 
   @Override
@@ -147,7 +183,14 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
   @Override
   public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNInfoHandler handler)
     throws SVNException {
-    throw new UnsupportedOperationException();
+    String path = url.toDecodedString();
+    List<String> parameters = new ArrayList<String>();
+
+    fillParameters(path, pegRevision, revision, depth, parameters);
+    File base = new File(SvnApplicationSettings.getInstance().getCommandLinePath());
+    String result = CommandUtil.runSimple(SvnCommandName.info, SvnVcs.getInstance(myProject), base, url, parameters).getOutput();
+
+    parseResult(handler, base, result);
   }
 
   @Override

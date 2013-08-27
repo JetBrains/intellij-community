@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Date: 10/19/12
  * Time: 4:22 PM
  */
+// TODO: Likely to be removed (together with SvnAbstractWriteOperationLocks).
 public class SvnProxies {
   private final SvnAbstractWriteOperationLocks myLocks;
   private final AtomicReference<LearningProxy<SVNChangelistClientI, SVNException>> myChangelist;

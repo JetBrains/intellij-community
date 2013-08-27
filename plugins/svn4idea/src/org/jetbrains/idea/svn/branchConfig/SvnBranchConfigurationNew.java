@@ -223,9 +223,8 @@ public class SvnBranchConfigurationNew {
     private BranchRootSearcher(final SvnVcs vcs, final VirtualFile root) throws SVNException {
       myRoot = root;
       myBranchesUnder = new HashMap<String, String>();
-      final SVNWCClient client = vcs.createWCClient();
-      final SVNInfo info = client.doInfo(new File(myRoot.getPath()), SVNRevision.UNDEFINED);
-      myRootUrl = info.getURL();
+      final SVNInfo info = vcs.getInfo(myRoot.getPath());
+      myRootUrl = info != null ? info.getURL() : null;
     }
 
     public boolean accept(final String url) throws SVNException {

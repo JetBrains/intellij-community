@@ -1,7 +1,5 @@
 package com.intellij.tasks.generic;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
@@ -17,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Author: Mikhail Golubev
+ * @author Mikhail Golubev
  */
 @Tag("JsonResponseHandler")
 public final class JsonPathResponseHandler extends SelectorBasedResponseHandler {
@@ -42,11 +40,6 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
 
   public JsonPathResponseHandler(GenericRepository repository) {
     super(repository);
-  }
-
-  @Override
-  public FileType getSelectorFileType() {
-    return PlainTextFileType.INSTANCE;
   }
 
   @Nullable
@@ -140,6 +133,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     return myCompiledCache.get(path);
   }
 
+  @NotNull
   @Override
   public ResponseType getResponseType() {
     return ResponseType.JSON;

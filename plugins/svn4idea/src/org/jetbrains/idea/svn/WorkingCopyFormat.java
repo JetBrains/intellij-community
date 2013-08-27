@@ -15,18 +15,21 @@
  */
 package org.jetbrains.idea.svn;
 
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
-
 /**
  * since not all constants are available from svnkit & constants are fixed
  */
 public enum WorkingCopyFormat {
+
   ONE_DOT_THREE(4, false, false, false, SvnBundle.message("dialog.show.svn.map.table.version13.text")),
   ONE_DOT_FOUR(8, false, false, false, SvnBundle.message("dialog.show.svn.map.table.version14.text")),
   ONE_DOT_FIVE(9, true, true, false, SvnBundle.message("dialog.show.svn.map.table.version15.text")),
   ONE_DOT_SIX(10, true, true, true, SvnBundle.message("dialog.show.svn.map.table.version16.text")),
   ONE_DOT_SEVEN(12, true, true, true, SvnBundle.message("dialog.show.svn.map.table.version17.text")),
+  ONE_DOT_EIGHT(12, true, true, true, SvnBundle.message("dialog.show.svn.map.table.version18.text")),
   UNKNOWN(0, false, false, false, "unknown");
+
+  public static final int INTERNAL_FORMAT_17 = 29;
+  public static final int INTERNAL_FORMAT_18 = 31;
 
   private final int myFormat;
   private final boolean myChangelistSupport;
@@ -60,10 +63,11 @@ public enum WorkingCopyFormat {
 
   public static WorkingCopyFormat getInstance(final int value) {
     // somewhy 1.7 wc format can also be 29
-    if (ISVNWCDb.WC_FORMAT_17 == value) {
+    if (INTERNAL_FORMAT_17 == value) {
       return ONE_DOT_SEVEN;
-    }
-    if (ONE_DOT_FIVE.getFormat() == value) {
+    } else if (INTERNAL_FORMAT_18 == value) {
+      return ONE_DOT_EIGHT;
+    } else if (ONE_DOT_FIVE.getFormat() == value) {
       return ONE_DOT_FIVE;
     } else if (ONE_DOT_FOUR.getFormat() == value) {
       return ONE_DOT_FOUR;

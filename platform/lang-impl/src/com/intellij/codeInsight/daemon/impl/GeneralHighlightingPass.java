@@ -120,7 +120,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  boolean updateAll) {
     this(project, file, document, startOffset, endOffset, updateAll, new ProperTextRange(0,document.getTextLength()), null);
   }
-  public GeneralHighlightingPass(@NotNull Project project,
+  GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,
                                  @NotNull Document document,
                                  int startOffset,
@@ -385,9 +385,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               final TextRange fixedTextRange = getFixedTextRange(documentWindow, startOffset);
               addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, fixedTextRange, outInfos);
             }
-            holder.clear();
+            int injectedStart = holder.size();
             highlightInjectedSyntax(injectedPsi, holder);
-            for (int i = 0; i < holder.size(); i++) {
+            for (int i = injectedStart; i < holder.size(); i++) {
               HighlightInfo info = holder.get(i);
               final int startOffset = info.startOffset;
               final TextRange fixedTextRange = getFixedTextRange(documentWindow, startOffset);
@@ -523,7 +523,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
-  private void highlightInjectedSyntax(final PsiFile injectedPsi, HighlightInfoHolder holder) {
+  private void highlightInjectedSyntax(@NotNull PsiFile injectedPsi, @NotNull HighlightInfoHolder holder) {
     List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = InjectedLanguageUtil
       .getHighlightTokens(injectedPsi);
     if (tokens == null) return;

@@ -16,8 +16,8 @@
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import org.jetbrains.idea.svn.CommitEventHandler;
-import org.jetbrains.idea.svn.CommitEventType;
+import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
+import org.jetbrains.idea.svn.commandLine.CommitEventType;
 import org.jetbrains.idea.svn.SvnBundle;
 
 import java.io.File;

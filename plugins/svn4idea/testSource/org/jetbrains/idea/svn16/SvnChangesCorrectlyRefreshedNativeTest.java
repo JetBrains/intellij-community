@@ -49,7 +49,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
 
   @Override
   public void setUp() throws Exception {
-    myUseNativeAcceleration = true;
+    setUseNativeAcceleration(true);
     super.setUp();
 
     clManager = ChangeListManager.getInstance(myProject);

@@ -8,6 +8,8 @@
   <!--fake dependency for Web IDE-->
   <depends>com.intellij.modules.xml</depends>
   <depends optional="true" config-file="java-contexts.xml">com.intellij.modules.java</depends>
+  <!-- Optional dependency on XPath plugin for syntax highlighting in GenericRepository configuration dialog -->
+  <depends optional="true">XPathView</depends>
 
   <project-components>
     <component>

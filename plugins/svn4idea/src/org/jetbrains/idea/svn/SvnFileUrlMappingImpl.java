@@ -312,8 +312,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
             LOG.info("Error: cannot find repository URL for versioned folder: " + foundRoot.getFile().getPath());
           } else {
             myRepositoryRoots.register(repoRoot);
-            myTopRoots.add(new RootUrlInfo(repoRoot, foundRoot.getInfo().getURL(),
-                                       SvnFormatSelector.getWorkingCopyFormat(new File(foundRoot.getFile().getPath())), foundRoot.getFile(), vcsRoot));
+            myTopRoots.add(new RootUrlInfo(repoRoot, foundRoot.getInfo().getURL(), SvnFormatSelector.findRootAndGetFormat(
+              new File(foundRoot.getFile().getPath())), foundRoot.getFile(), vcsRoot));
           }
         }
       }
@@ -541,8 +541,9 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       final SVNInfo svnInfo = vcs.getInfo(copyRoot);
       if ((svnInfo == null) || (svnInfo.getRepositoryRootURL() == null)) continue;
 
-      final RootUrlInfo info = new RootUrlInfo(svnInfo.getRepositoryRootURL(), svnInfo.getURL(),
-                                               SvnFormatSelector.getWorkingCopyFormat(svnInfo.getFile()), copyRoot, vcsRoot);
+      final RootUrlInfo info =
+        new RootUrlInfo(svnInfo.getRepositoryRootURL(), svnInfo.getURL(), SvnFormatSelector.findRootAndGetFormat(svnInfo.getFile()),
+                        copyRoot, vcsRoot);
       mapping.add(info);
     }
   }

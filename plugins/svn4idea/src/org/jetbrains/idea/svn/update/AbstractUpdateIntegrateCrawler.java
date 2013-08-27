@@ -59,7 +59,7 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
       SVNUpdateClient client = myVcs.createUpdateClient();
       client.setEventHandler(myHandler);
 
-      long rev = doUpdate(root, client);
+      long rev = doUpdate(root);
 
       if (rev < 0 && !isMerge()) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, SvnBundle.message("exception.text.root.was.not.properly.updated", root)));
@@ -73,9 +73,7 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
 
   protected abstract void showProgressMessage(ProgressIndicator progress, File root);
 
-  protected abstract long doUpdate(
-    File root,
-    SVNUpdateClient client) throws SVNException;
+  protected abstract long doUpdate(File root) throws SVNException;
 
   protected abstract boolean isMerge();
 }

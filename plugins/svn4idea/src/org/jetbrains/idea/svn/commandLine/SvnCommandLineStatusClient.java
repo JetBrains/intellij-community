@@ -15,14 +15,16 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.Convertor;
-import org.jetbrains.idea.svn.SvnBindUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.portable.PortableStatus;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
@@ -48,6 +50,8 @@ import java.util.Map;
  * Time: 5:21 PM
  */
 public class SvnCommandLineStatusClient implements SvnStatusClientI {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient");
+
   private final Project myProject;
   private final SvnCommandLineInfoClient myInfoClient;
 
@@ -102,47 +106,84 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
     final SVNInfo infoBase = myInfoClient.doInfo(base, revision);
 
     final SvnSimpleCommand command = SvnCommandFactory.createSimpleCommand(myProject, base, SvnCommandName.st);
-    putParameters(depth, remote, reportAll, includeIgnored, changeLists, command);
+    putParameters(path, depth, remote, reportAll, includeIgnored, changeLists, command);
 
-    final SvnStatusHandler[] svnHandl = new SvnStatusHandler[1];
-    svnHandl[0] = createStatusHandler(revision, handler, base, infoBase, svnHandl);
+    parseResult(path, revision, handler, base, infoBase, command, execute(command, base));
+    return 0;
+  }
+
+  private String execute(SvnSimpleCommand command, File base) throws SVNException {
+    String result = CommandUtil.runSimple(command, SvnVcs.getInstance(myProject), base, null).getOutput();
+
+    if (StringUtil.isEmptyOrSpaces(result)) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Status request returned nothing for command: " +
+                                                                             command.myCommandLine.getCommandLineString()));
+    }
+
+    return result;
+  }
+
+  private void parseResult(final File path,
+                           SVNRevision revision,
+                           ISVNStatusHandler handler,
+                           File base,
+                           SVNInfo infoBase,
+                           SvnSimpleCommand command, String result) throws SVNException {
+
+    if (StringUtil.isEmpty(result)) {
+      return;
+    }
 
     try {
-      final String result = command.run();
-      if (StringUtil.isEmptyOrSpaces(result)) {
-        throw new VcsException("Status request returned nothing for command: " + command.myCommandLine.getCommandLineString());
-      }
+      final SvnStatusHandler[] svnHandl = new SvnStatusHandler[1];
+      svnHandl[0] = createStatusHandler(revision, handler, base, infoBase, svnHandl);
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), svnHandl[0]);
-      if (! svnHandl[0].isAnythingReported()) {
-        if (! SvnUtil.isSvnVersioned(myProject, path)) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY));
+      if (!svnHandl[0].isAnythingReported()) {
+        if (!SvnUtil.isSvnVersioned(myProject, path)) {
+          throw new SVNException(
+            SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Command - " + command.getCommandText() + ". Result - " + result));
+        } else {
+          // return status indicating "NORMAL" state
+          // typical output would be like
+          // <status>
+          // <target path="1.txt"></target>
+          // </status>
+          // so it does not contain any <entry> element and current parsing logic returns null
+
+          PortableStatus status = new PortableStatus();
+          status.setPath(path.getAbsolutePath());
+          status.setContentsStatus(SVNStatusType.STATUS_NORMAL);
+          status.setInfoGetter(new Getter<SVNInfo>() {
+            @Override
+            public SVNInfo get() {
+              return createInfoGetter(null).convert(path);
+            }
+          });
+          handler.handleStatus(status);
         }
       }
     }
     catch (SvnExceptionWrapper e) {
       throw (SVNException) e.getCause();
     } catch (IOException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
     catch (ParserConfigurationException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
     catch (SAXException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
-    catch (VcsException e) {
-      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
-    }
-    return 0;
   }
 
-  private void putParameters(SVNDepth depth,
+  private void putParameters(@NotNull File path, SVNDepth depth,
                              boolean remote,
                              boolean reportAll,
                              boolean includeIgnored,
                              Collection changeLists,
                              SvnSimpleCommand command) {
+    command.addParameters(path.getAbsolutePath());
     if (depth != null) {
       command.addParameters("--depth", depth.getName());
     }
@@ -171,7 +212,11 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
                                                final SVNInfo infoBase, final SvnStatusHandler[] svnHandl) {
     final SvnStatusHandler.ExternalDataCallback callback = createStatusCallback(handler, base, infoBase, svnHandl);
 
-    return new SvnStatusHandler(callback, base, new Convertor<File, SVNInfo>() {
+    return new SvnStatusHandler(callback, base, createInfoGetter(revision));
+  }
+
+  private Convertor<File, SVNInfo> createInfoGetter(final SVNRevision revision) {
+    return new Convertor<File, SVNInfo>() {
       @Override
       public SVNInfo convert(File o) {
         try {
@@ -181,7 +226,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
           throw new SvnExceptionWrapper(e);
         }
       }
-    });
+    };
   }
 
   public static SvnStatusHandler.ExternalDataCallback createStatusCallback(final ISVNStatusHandler handler,

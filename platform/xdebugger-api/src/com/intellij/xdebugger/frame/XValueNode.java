@@ -49,8 +49,7 @@ public interface XValueNode extends Obsolescent {
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @Nullable String value, boolean hasChildren);
 
   /**
-   * The same as {@link #setPresentation(javax.swing.Icon, String, String, boolean)} but also allows to
-   * customize {@code separator} between name and value
+   * @deprecated use XVariableValuePresenter
    */
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @Nullable String value, boolean hasChildren);
 
@@ -65,18 +64,21 @@ public interface XValueNode extends Obsolescent {
    * are escaped in the value. {@code valuePresenter} function doesn't affect 'Copy Value' action. It can be used to escape additional
    * characters and/or surround value by quotes.
    *
-   * @see com.intellij.openapi.util.text.StringUtil#QUOTER
-   * @see com.intellij.openapi.util.text.StringUtil#escaper
-   * @see com.intellij.util.FunctionUtil#composition
+   * @deprecated use {@link XValuePresenter}
    */
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value,
                        @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren);
 
+  void setPresentation(@Nullable Icon icon,
+                       @NonNls @Nullable String type,
+                       @NonNls @NotNull String value,
+                       @Nullable XValuePresenter valuePresenter,
+                       boolean hasChildren);
+
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren);
 
   /**
-   * The same as {@link #setPresentation(javax.swing.Icon, String, String, com.intellij.util.NotNullFunction, boolean)} but also allows to
-   * customize {@code separator} between name and value
+   * @deprecated use XVariableValuePresenter
    */
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value,
                        @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren);
@@ -89,16 +91,4 @@ public interface XValueNode extends Obsolescent {
    * @see #MAX_VALUE_LENGTH
    */
   void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator);
-
-  /**
-   * @deprecated use {@link #setPresentation(javax.swing.Icon, String, String, boolean)} instead. Names for values should be passed to
-   * {@link XCompositeNode#addChildren(XValueChildrenProvider, boolean)}
-   */
-  void setPresentation(@NonNls String name, @Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
-
-  /**
-   * @deprecated use {@link #setPresentation(javax.swing.Icon, String, String, String, boolean)} instead. Names for values should be passed to
-   * {@link XCompositeNode#addChildren(XValueChildrenProvider, boolean)}
-   */
-  void setPresentation(@NonNls String name, @Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
 }

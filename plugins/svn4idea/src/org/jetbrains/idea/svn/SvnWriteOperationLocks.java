@@ -30,6 +30,7 @@ import java.io.File;
  * Date: 10/23/12
  * Time: 2:29 PM
  */
+// TODO: Such locking functionality is not required anymore. Likely to be removed.
 public class SvnWriteOperationLocks extends SvnAbstractWriteOperationLocks {
   private final RootsToWorkingCopies myRootsToWorkingCopies;
 

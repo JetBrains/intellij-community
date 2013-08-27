@@ -30,9 +30,9 @@ import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
  * @author Aleksey Pivovarov
  */
 public class GithubCreateGistContentTest extends GithubCreateGistTestBase {
+
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  protected void beforeTest() throws Exception {
     createProjectFiles();
   }
 

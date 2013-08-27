@@ -270,6 +270,7 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   public void setToken(@NotNull String token) {
     myToken = token;
+    setUser("");
   }
 
   @Tag("token")

@@ -117,6 +117,11 @@ public class OpenTaskDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    createTask();
+    super.doOKAction();
+  }
+
+  public void createTask() {
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
 
     taskManager.getState().markAsInProgress = isMarkAsInProgress();
@@ -133,18 +138,17 @@ public class OpenTaskDialog extends DialogWrapper {
         LOG.warn(ex);
       }
     }
+    LocalTask activeTask = taskManager.getActiveTask();
     LocalTask localTask = taskManager.activateTask(myTask, isClearContext());
     if (myCreateChangelist.isSelected()) {
       taskManager.createChangeList(localTask, myChangelistName.getText());
     }
     if (myCreateBranch.isSelected()) {
-      LocalTask activeTask = taskManager.getActiveTask();
       taskManager.createBranch(localTask, activeTask, myBranchName.getText());
     }
     if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
       AnalyzeTaskStacktraceAction.analyzeStacktrace(myTask, myProject);
     }
-    super.doOKAction();
   }
 
   @Nullable

@@ -35,11 +35,13 @@ public class XValueHintTreeComponent extends AbstractValueHintTreeComponent<Pair
     updateTree(initialItem);
   }
 
+  @Override
   protected void updateTree(final Pair<XValue, String> selectedItem) {
     myTree.setRoot(new XValueNodeImpl(myTree, null, selectedItem.getSecond(), selectedItem.getFirst()), true);
     myValueHint.showTreePopup(this, myTree, selectedItem.getSecond());
   }
 
+  @Override
   protected void setNodeAsRoot(final Object node) {
     if (node instanceof XValueNodeImpl) {
       final XValueNodeImpl valueNode = (XValueNodeImpl)node;

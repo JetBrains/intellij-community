@@ -28,6 +28,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.revert.RevertClient;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -74,8 +75,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     checker.gather(changes);
     exceptions.addAll(checker.getExceptions());
 
-    final SVNWCClient client = mySvnVcs.createWCClient();
-    client.setEventHandler(new ISVNEventHandler() {
+    ISVNEventHandler revertHandler = new ISVNEventHandler() {
       public void handleEvent(SVNEvent event, double progress) {
         if (event.getAction() == SVNEventAction.REVERT) {
           final File file = event.getFile();
@@ -91,7 +91,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       public void checkCancelled() {
         listener.checkCanceled();
       }
-    });
+    };
 
     final List<CopiedAsideInfo> fromToModified = new ArrayList<CopiedAsideInfo>();
     final MultiMap<File, SVNPropertyData> properties = new MultiMap<File, SVNPropertyData>();
@@ -99,7 +99,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     // adds (deletes)
     // deletes (adds)
     // modifications
-    final Reverter reverter = new Reverter(client, exceptions);
+    final Reverter reverter = new Reverter(mySvnVcs.getFactory().createRevertClient(), revertHandler, exceptions);
     reverter.revert(checker.getForAdds(), true);
     reverter.revert(checker.getForDeletes(), true);
     final List<File> edits = checker.getForEdits();
@@ -256,24 +256,36 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   }
 
   private static class Reverter {
-    private final SVNWCClient myClient;
+    private final RevertClient myClient;
+    private ISVNEventHandler myHandler;
     private final List<VcsException> myExceptions;
 
-    private Reverter(SVNWCClient client, List<VcsException> exceptions) {
+    private Reverter(RevertClient client, ISVNEventHandler handler, List<VcsException> exceptions) {
       myClient = client;
+      myHandler = handler;
       myExceptions = exceptions;
     }
 
     public void revert(final File[] files, final boolean recursive) {
       if (files.length == 0) return;
       try {
-        myClient.doRevert(files, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, null);
+        myClient.revert(files, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, myHandler);
       }
-      catch (SVNException e) {
-        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
-          // skip errors on unversioned resources.
-          myExceptions.add(new VcsException(e));
+      catch (VcsException e) {
+        processRevertError(e);
+      }
+    }
+
+    private void processRevertError(@NotNull VcsException e) {
+      if (e.getCause() instanceof  SVNException) {
+        SVNException cause = (SVNException)e.getCause();
+
+        // skip errors on unversioned resources.
+        if (cause.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
+          myExceptions.add(e);
         }
+      } else {
+        myExceptions.add(e);
       }
     }
   }
@@ -294,18 +306,17 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   }
 
   private void revertFileOrDir(File file) throws SVNException, VcsException {
-    final SVNWCClient wcClient = mySvnVcs.createWCClient();
-    SVNInfo info = wcClient.doInfo(file, SVNRevision.UNDEFINED);
+    SVNInfo info = mySvnVcs.getInfo(file);
     if (info != null) {
       if (info.getKind() == SVNNodeKind.FILE) {
-        wcClient.doRevert(file, false);
+        doRevert(file, false);
       } else {
         if (SVNProperty.SCHEDULE_ADD.equals(info.getSchedule())) {
-          wcClient.doRevert(file, true);
+          doRevert(file, true);
         } else {
           boolean under17Copy = isUnder17Copy(file, info);
           if (under17Copy) {
-            wcClient.doRevert(file, true);
+            doRevert(file, true);
           } else {
             // do update to restore missing directory.
             mySvnVcs.createUpdateClient().doUpdate(file, SVNRevision.HEAD, true);
@@ -317,10 +328,16 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     }
   }
 
+  private void doRevert(@NotNull File path, boolean recursive) throws VcsException {
+    mySvnVcs.getFactory(path).createRevertClient().revert(new File[]{path}, SVNDepth.fromRecurse(recursive), null);
+  }
+
   private boolean isUnder17Copy(final File file, final SVNInfo info) throws VcsException {
     final RootsToWorkingCopies copies = mySvnVcs.getRootsToWorkingCopies();
     WorkingCopy copy = copies.getMatchingCopy(info.getURL());
     if (copy == null) {
+      // TODO: Why null could be here?
+      // TODO: Think we could just rewrite it with mySvnVcs.getWorkingCopyFormat(file)
       SVNStatus status = null;
       try {
         status = mySvnVcs.createStatusClient().doStatus(file, false);

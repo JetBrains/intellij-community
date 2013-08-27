@@ -49,11 +49,9 @@ public class ForNestedRootChecker {
 
   private static class UrlConstructor {
     final SvnVcs myVcs;
-    final SVNWCClient myClient;
 
     private UrlConstructor(final SvnVcs vcs) {
       myVcs = vcs;
-      myClient = myVcs.createWCClient();
     }
 
     @Nullable
