@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.vcs;
 
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsTaskHandler;
@@ -142,7 +143,9 @@ public class TaskBranchesTest extends PlatformTestCase {
   public void testOpenTaskDialog() throws Exception {
     initRepository("foo");
     LocalTaskImpl task = myTaskManager.createLocalTask("foo");
-    new OpenTaskDialog(getProject(), task).createTask();
+    OpenTaskDialog dialog = new OpenTaskDialog(getProject(), task);
+    Disposer.register(myTestRootDisposable, dialog.getDisposable());
+    dialog.createTask();
     assertEquals("foo", myTaskManager.getActiveTask().getSummary());
     List<BranchInfo> branches = task.getBranches(true);
     assertEquals(1, branches.size());
