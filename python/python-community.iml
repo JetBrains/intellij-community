@@ -17,6 +17,8 @@
     <orderEntry type="library" name="http-client-3.1" level="project" />
     <orderEntry type="module" module-name="RegExpSupport" />
     <orderEntry type="module" module-name="python" />
+    <orderEntry type="module" module-name="testRunner" />
+    <orderEntry type="module" module-name="smRunner" />
   </component>
 </module>
 
