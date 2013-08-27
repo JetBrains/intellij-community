@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.test
 
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.*
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -58,14 +59,16 @@ class ExternalProjectBuilder extends BuilderSupport {
   protected Object createNode(Object name, Map attributes) {
     switch (name) {
       case 'project':
-        ProjectData projectData = new ProjectData(TEST_EXTERNAL_SYSTEM_ID, projectDir.path, projectDir.path)
+        ProjectSystemId projectSystemId = attributes.projectSystemId ?: TEST_EXTERNAL_SYSTEM_ID
+        ProjectData projectData = new ProjectData(projectSystemId, projectDir.path, projectDir.path)
         projectData.name = attributes.name ?: 'project'
         projectNode = new DataNode<ProjectData>(ProjectKeys.PROJECT, projectData, null)
         return projectNode
       case 'module':
+        ProjectSystemId projectSystemId = attributes.projectSystemId ?: TEST_EXTERNAL_SYSTEM_ID
         String moduleFilePath = attributes.moduleFilePath ?: projectDir.path
         String externalConfigPath = attributes.externalConfigPath ?: projectDir.path
-        ModuleData moduleData = new ModuleData(TEST_EXTERNAL_SYSTEM_ID,
+        ModuleData moduleData = new ModuleData(projectSystemId,
                                                ModuleTypeId.JAVA_MODULE,
                                                attributes.name ?: name as String,
                                                moduleFilePath,
@@ -80,7 +83,8 @@ class ExternalProjectBuilder extends BuilderSupport {
         return parentNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, data)
       case 'task':
         DataNode<ExternalConfigPathAware> parentNode = current as DataNode
-        TaskData data = new TaskData(TEST_EXTERNAL_SYSTEM_ID, attributes.name, parentNode.data.linkedExternalProjectPath, null)
+        ProjectSystemId projectSystemId = attributes.projectSystemId ?: TEST_EXTERNAL_SYSTEM_ID
+        TaskData data = new TaskData(projectSystemId, attributes.name, parentNode.data.linkedExternalProjectPath, null)
         return parentNode.createChild(ProjectKeys.TASK, data)
       case 'contentRoot':
         DataNode<ModuleData> parentNode = current as DataNode
