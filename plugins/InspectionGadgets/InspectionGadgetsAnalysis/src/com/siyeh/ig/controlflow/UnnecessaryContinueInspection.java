@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.FileTypeUtils;
+import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

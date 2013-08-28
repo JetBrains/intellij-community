@@ -28,7 +28,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.FileTypeUtils;
+import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.ig.psiutils.StringUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.UiUtils;

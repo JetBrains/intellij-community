@@ -38,7 +38,7 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.siyeh.ig.psiutils.FileTypeUtils;
+import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;

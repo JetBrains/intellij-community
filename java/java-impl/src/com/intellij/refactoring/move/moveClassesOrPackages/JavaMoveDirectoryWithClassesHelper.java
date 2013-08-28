@@ -10,7 +10,7 @@ import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
-import com.siyeh.ig.psiutils.FileTypeUtils;
+import com.intellij.psi.util.FileTypeUtils;
 
 import java.util.*;
 

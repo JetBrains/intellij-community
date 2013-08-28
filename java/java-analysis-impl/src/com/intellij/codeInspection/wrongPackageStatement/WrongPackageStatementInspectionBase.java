@@ -21,7 +21,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.siyeh.ig.psiutils.FileTypeUtils;
+import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -61,7 +61,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import com.siyeh.ig.psiutils.FileTypeUtils;
+import com.intellij.psi.util.FileTypeUtils;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;

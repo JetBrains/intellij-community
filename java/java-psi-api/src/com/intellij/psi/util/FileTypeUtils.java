@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.psiutils;
+package com.intellij.psi.util;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ServerPageFile;
-import com.intellij.psi.util.PsiUtilCore;
 
 public class FileTypeUtils {
   public static boolean isInServerPageFile(PsiElement file) {
