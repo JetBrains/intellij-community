@@ -31,7 +31,7 @@ QUOTED_STRING = \"({VALID_ESCAPE}|[^\\\"])*\"
 SQUOTED_STRING = '({VALID_ESCAPE}|[^\\'])*'
 // only minus sign is allowed as prefix and no floating point numbers
 STRING_LITERAL = {UNQUOTED_STRING} | {QUOTED_STRING} | {SQUOTED_STRING}
-NUMBER_LITERAL = [-]?{DIGIT}+
+NUMBER_LITERAL = -?{DIGIT}+
 CUSTOM_FIELD = cf\[{DIGIT}+\]
 
 %%
