@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -92,7 +91,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
             myValueChildren = new ArrayList<XValueNodeImpl>();
           }
         }
-        List<XValueContainerNode<?>> newChildren = new SmartList<XValueContainerNode<?>>();
+        List<XValueContainerNode<?>> newChildren = new ArrayList<XValueContainerNode<?>>(children.size());
         for (int i = 0; i < children.size(); i++) {
           XValueNodeImpl node = new XValueNodeImpl(myTree, XValueContainerNode.this, children.getName(i), children.getValue(i));
           myValueChildren.add(node);
