@@ -16,7 +16,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.cython.psi.CythonVariable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
@@ -433,8 +432,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         if (!haveQualifiers(element)) {
           final ScopeOwner ourScopeOwner = ScopeUtil.getScopeOwner(getElement());
           final ScopeOwner theirScopeOwner = ScopeUtil.getScopeOwner(element);
-          // TODO: Cython-dependent code without CythonLanguageDialect.isInsideCythonFile() check
-          if (element instanceof PyParameter || element instanceof PyTargetExpression || element instanceof CythonVariable) {
+          if (element instanceof PyParameter || element instanceof PyTargetExpression) {
             // Check if the reference is in the same or inner scope of the element scope, not shadowed by an intermediate declaration
             if (resolvesToSameLocal(element, elementName, ourScopeOwner, theirScopeOwner)) {
               return true;
