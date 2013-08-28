@@ -20,7 +20,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.intellij.ide.plugins.*;
 import com.intellij.notification.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -85,6 +87,8 @@ public class PluginsAdvertiser implements StartupActivity {
     if (unknownFeatures.isEmpty()) return;
     final Runnable runnable = new Runnable() {
       public void run() {
+        final Application application = ApplicationManager.getApplication();
+        if (application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Search for non-bundled plugins in plugin repository...") {
           private final Set<PluginDownloader> myPlugins = new HashSet<PluginDownloader>();
           private List<IdeaPluginDescriptor> myAllPlugins;
