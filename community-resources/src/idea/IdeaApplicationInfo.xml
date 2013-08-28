@@ -2,7 +2,7 @@
   <version codename="Community Edition" major="13" minor="0" eap="true"/>
   <company name="JetBrains s.r.o." url="http://www.jetbrains.com/?fromIDE"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <install-over minbuild="129.1" maxbuild="130.9999" version="12.1"/>
+  <install-over minbuild="129.1" maxbuild="132.9999" version="12.1"/>
   <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffaa16" progressY="230" progressTailIcon="/community_progress_tail.png"/>
   <about url="/idea_community_about.png" foreground="f5f5f5" linkColor="9dc0ff" logoX="300" logoY="265" logoW="75" logoH="30"/>
   <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size32opaque="/icon_CEwhite.png" size12="/toolwindows/toolWindowProject.png" size128="/icon_CE_128.png" ico="idea_CE.ico"/>
@@ -10,7 +10,7 @@
   <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
 
   <welcome-screen logo-url="/Logo_welcomeScreen.png"
-                  caption-url="/welcomeCaption_community.png" 
+                  caption-url="/welcomeCaption_community.png"
                   slogan-url="/developSlogan_community.png"/>
 
   <third-party url="http://www.jetbrains.org/"/>
