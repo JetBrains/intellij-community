@@ -16,8 +16,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.cython.CythonLanguageDialect;
-import com.jetbrains.cython.psi.CythonIncludeStatement;
 import com.jetbrains.cython.psi.CythonNamedElement;
 import com.jetbrains.cython.psi.CythonVariable;
 import com.jetbrains.python.PyNames;
@@ -373,10 +371,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   public static int getRate(PsiElement elt) {
     int rate;
-    if (CythonLanguageDialect.isInsideCythonFile(elt) && elt instanceof CythonIncludeStatement) {
-      rate = RatedResolveResult.RATE_LOW;
-    }
-    else if (elt instanceof PyImportElement || elt instanceof PyStarImportElement || elt instanceof PyReferenceExpression) {
+    if (elt instanceof PyImportedNameDefiner || elt instanceof PyReferenceExpression) {
       rate = RatedResolveResult.RATE_LOW;
     }
     else if (elt instanceof PyFile) {
