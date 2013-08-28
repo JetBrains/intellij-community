@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -147,7 +148,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       EnumSet[] flags = new EnumSet[hintFlags.size()];
       for (int i = 0; i < flags.length; i += 1) flags[i] = hintFlags.get(i);
       if (hints.length < 1) {
-        hints = new String[]{NO_PARAMS_MSG};
+        hints = new String[]{XmlStringUtil.escapeString(NO_PARAMS_MSG)};
         flags = new EnumSet[]{EnumSet.of(ParameterInfoUIContextEx.Flag.DISABLE)};
       }
 
@@ -160,7 +161,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         for (String s : hints) signatureBuilder.append(s);
       }
       else {
-        signatureBuilder.append(NO_PARAMS_MSG);
+        signatureBuilder.append(XmlStringUtil.escapeString(NO_PARAMS_MSG));
       }
       context.setupUIComponentPresentation(
         signatureBuilder.toString(), -1, 0, false, false, false, context.getDefaultParameterColor()
