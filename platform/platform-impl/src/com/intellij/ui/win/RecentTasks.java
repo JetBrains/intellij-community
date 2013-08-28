@@ -55,7 +55,12 @@ public class RecentTasks {
     clearNative();
   }
 
+  /**
+   * Use #clearNative method instead of passing empty array of tasks.
+   * @param tasks
+   */
   public synchronized static void addTasks(final Task[] tasks) {
+    if (tasks.length == 0) return;
     init();
     checkThread();
     addTasksNativeForCategory("Recent", tasks);
