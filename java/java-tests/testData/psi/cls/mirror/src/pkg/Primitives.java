@@ -8,12 +8,12 @@ class Primitives  {
   @BooleanAnno(false) public static boolean FALSE() { return FALSE; }
 
   public static final byte BYTE = 1;
-  public static final char CHAR = 'c';
+  public static final char CHAR = '\'';
   public static final short SHORT = 42;
   public static final int INT = 42;
   public static final long LONG = 42L;
 
-  @ByteAnno(1) @CharAnno('c') @ShortAnno(42) @IntAnno(42) @LongAnno(42L)
+  @ByteAnno(1) @CharAnno('\\') @ShortAnno(42) @IntAnno(42) @LongAnno(42L)
   public static void m() { }
 }
 

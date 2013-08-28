@@ -707,7 +707,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     if (value instanceof Character) {
-      return "'" + value.toString() + "'";
+      return "'" + StringUtil.escapeCharCharacters(value.toString()) + "'";
     }
 
     if (value instanceof Long) {
@@ -720,7 +720,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
         if (value.equals(1)) return "true";
       }
       if ("char".equals(type)) {
-        return "'" + ((char)((Integer)value).intValue()) + "'";
+        char ch = (char)((Integer)value).intValue();
+        return "'" + StringUtil.escapeCharCharacters(String.valueOf(ch)) + "'";
       }
       return value.toString();
     }
