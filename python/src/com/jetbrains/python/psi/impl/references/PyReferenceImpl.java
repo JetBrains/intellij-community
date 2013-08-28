@@ -16,7 +16,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.cython.psi.CythonNamedElement;
 import com.jetbrains.cython.psi.CythonVariable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -277,7 +276,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                 definers = processor.getDefiners();
               }
             }
-            else if (!isCythonLevel(myElement)) {
+            else {
               uexpr = null;
             }
           }
@@ -325,10 +324,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     return ret;
-  }
-
-  private static boolean isCythonLevel(@Nullable PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, CythonNamedElement.class) != null;
   }
 
   private PsiElement findResolveRoof(String referencedName, PsiElement realContext) {
