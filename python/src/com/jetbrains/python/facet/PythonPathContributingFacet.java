@@ -7,4 +7,5 @@ import java.util.List;
  */
 public interface PythonPathContributingFacet {
   List<String> getAdditionalPythonPath();
+  boolean acceptRootAsTopLevelPackage();
 }
