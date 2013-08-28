@@ -544,7 +544,7 @@ public abstract class ChooseByNameBase {
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        clearPosponedOkAction(false);
+        clearPostponedOkAction(false);
         rebuildList(false);
       }
     });
@@ -751,7 +751,7 @@ public abstract class ChooseByNameBase {
       cancelListUpdater();
       close(ok);
 
-      clearPosponedOkAction(ok);
+      clearPostponedOkAction(ok);
     }
     finally {
       myListModel.clear();
@@ -1017,7 +1017,7 @@ public abstract class ChooseByNameBase {
       myTextField.setForeground(JBColor.red);
       myListUpdater.cancelAll();
       hideList();
-      clearPosponedOkAction(false);
+      clearPostponedOkAction(false);
       return;
     }
 
@@ -1163,12 +1163,12 @@ public abstract class ChooseByNameBase {
         if (getChosenElement() != null) {
           doClose(true);
         }
-        clearPosponedOkAction(checkDisposed());
+        clearPostponedOkAction(checkDisposed());
       }
     }
   }
 
-  private void clearPosponedOkAction(boolean success) {
+  private void clearPostponedOkAction(boolean success) {
     if (myPostponedOkAction != null) {
       if (success) {
         myPostponedOkAction.setDone();
