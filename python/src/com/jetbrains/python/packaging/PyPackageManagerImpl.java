@@ -60,6 +60,7 @@ import java.util.List;
 /**
  * @author vlan
  */
+@SuppressWarnings({"UnusedDeclaration", "FieldAccessedSynchronizedAndUnsynchronized"})
 public class PyPackageManagerImpl extends PyPackageManager {
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
@@ -237,6 +238,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
                                                    @Override
                                                    public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                @NotNull HyperlinkEvent event) {
+                                                     assert myProject != null;
                                                      PackagesNotificationPanel.showError(myProject, failureTitle, description);
                                                    }
                                                  }));
@@ -387,7 +389,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
       boolean canModify = true;
       for (PyPackage pkg : packages) {
         if (canModify) {
-          canModify = FileUtil.ensureCanCreateFile(new File(pkg.getLocation()));
+          final String location = pkg.getLocation();
+          if (location != null)
+            canModify = FileUtil.ensureCanCreateFile(new File(location));
         }
         args.add(pkg.getName());
       }
@@ -581,7 +585,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @Nullable
-  private String getProxyString() {
+  private static String getProxyString() {
     final HttpConfigurable settings = HttpConfigurable.getInstance();
     if (settings != null && settings.USE_HTTP_PROXY) {
       final String credentials;
@@ -657,13 +661,17 @@ public class PyPackageManagerImpl extends PyPackageManager {
                                          @Nullable String workingDir)
     throws PyExternalProcessException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
+    final String homePath = mySdk.getHomePath();
+    if (homePath == null) {
+      throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Cannot find interpreter for SDK");
+    }
     if (sdkData instanceof RemoteSdkData) { //remote interpreter
       final RemoteSdkData remoteSdkData = (RemoteSdkData)sdkData;
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         final List<String> cmdline = new ArrayList<String>();
-        cmdline.add(mySdk.getHomePath());
-        cmdline.add(RemoteFile.detectSystemByPath(mySdk.getHomePath()).createRemoteFile(helperPath).getPath());
+        cmdline.add(homePath);
+        cmdline.add(RemoteFile.detectSystemByPath(homePath).createRemoteFile(helperPath).getPath());
         cmdline.addAll(Collections2.transform(args, new com.google.common.base.Function<String, String>() {
           @Override
           public String apply(@Nullable String input) {
@@ -695,10 +703,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
     }
     else {
-      final String homePath = mySdk.getHomePath();
-      if (homePath == null) {
-        throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Cannot find interpreter for SDK");
-      }
       if (workingDir == null) {
         workingDir = new File(homePath).getParent();
       }
@@ -707,7 +711,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
       cmdline.addAll(args);
 
-      final boolean canCreate = FileUtil.ensureCanCreateFile(new File(mySdk.getHomePath()));
+      final boolean canCreate = FileUtil.ensureCanCreateFile(new File(homePath));
       if (!canCreate && !SystemInfo.isWindows && askForSudo) {   //is system site interpreter --> we need sudo privileges
         try {
           helperPath = StringUtil.replace(helperPath, " ", "\\ ");
