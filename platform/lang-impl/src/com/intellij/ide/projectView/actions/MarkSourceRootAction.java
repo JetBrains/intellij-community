@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
@@ -65,6 +64,6 @@ public class MarkSourceRootAction extends MarkRootActionBase {
 
   private static <P extends JpsElement> void addSourceFolder(VirtualFile vFile, ContentEntry entry,
                                                              JpsModuleSourceRootType<P> markAsRootType) {
-    entry.addSourceFolder(vFile, markAsRootType, ((JpsElementTypeWithDefaultProperties<P>)markAsRootType).createDefaultProperties());
+    entry.addSourceFolder(vFile, markAsRootType, ModuleSourceRootEditHandler.getEditHandler(markAsRootType).createDefaultProperties());
   }
 }
