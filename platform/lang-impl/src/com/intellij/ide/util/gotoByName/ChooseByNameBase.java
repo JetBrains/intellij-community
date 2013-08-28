@@ -155,6 +155,7 @@ public abstract class ChooseByNameBase {
   private ShortcutSet myCheckBoxShortcut;
   protected boolean myInitIsDone;
   static final boolean ourLoadNamesEachTime = FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
+  private boolean myFixLostTyping = true;
 
   public boolean checkDisposed() {
     if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
@@ -777,8 +778,12 @@ public abstract class ChooseByNameBase {
     return false;
   }
 
-  protected static boolean isToFixLostTyping() {
-    return Registry.is("actionSystem.fixLostTyping");
+  public void setFixLostTyping(boolean fixLostTyping) {
+    myFixLostTyping = fixLostTyping;
+  }
+
+  protected boolean isToFixLostTyping() {
+    return myFixLostTyping && Registry.is("actionSystem.fixLostTyping");
   }
 
   private synchronized void ensureNamesLoaded(boolean checkboxState) {
@@ -1194,10 +1199,12 @@ public abstract class ChooseByNameBase {
   }
 
   protected List<Object> getChosenElements() {
-    if (myListIsUpToDate) {
-      List<Object> values = new ArrayList<Object>(Arrays.asList(myList.getSelectedValues()));
-      values.remove(EXTRA_ELEM);
-      values.remove(NON_PREFIX_SEPARATOR);
+
+    List<Object> values = new ArrayList<Object>(Arrays.asList(myList.getSelectedValues()));
+    values.remove(EXTRA_ELEM);
+    values.remove(NON_PREFIX_SEPARATOR);
+
+    if (myListIsUpToDate || !values.isEmpty()) {
       return values;
     }
 
