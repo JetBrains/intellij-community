@@ -72,24 +72,13 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
         if (!consumer.process(CREATE_NEW_TASK_ACTION)) return false;
 
         boolean cachedTasksFound = !cachedAndLocalTasks.isEmpty();
-        if (cachedTasksFound && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
-
-        for (Object element : cachedAndLocalTasks) {
-          cancelled.checkCanceled();
-          if (!consumer.process(element)) return false;
-        }
+        if (!processTasks(cachedAndLocalTasks, consumer, cachedTasksFound, cancelled)) return false;
 
         List<Task> tasks = TaskSearchSupport
           .getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true, everywhere, cancelled);
         tasks.removeAll(cachedAndLocalTasks);
 
-        if (!cachedTasksFound && !tasks.isEmpty() && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
-
-        for (Object element : tasks) {
-          cancelled.checkCanceled();
-          if (!consumer.process(element)) return false;
-        }
-        return true;
+        return processTasks(tasks, consumer, cachedTasksFound, cancelled);
       }
     }, null, false, 0);
     popup.setShowListForEmptyPattern(true);
@@ -144,6 +133,16 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
         }
       }
     }, null, popup);
+  }
+
+  private boolean processTasks(List<Task> tasks, Processor<Object> consumer, boolean cachedTasksFound, ProgressIndicator cancelled) {
+    if (!cachedTasksFound && !tasks.isEmpty() && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
+
+    for (Object element : tasks) {
+      cancelled.checkCanceled();
+      if (!consumer.process(element)) return false;
+    }
+    return true;
   }
 
   private static void showOpenTaskDialog(final Project project, final Task task) {
