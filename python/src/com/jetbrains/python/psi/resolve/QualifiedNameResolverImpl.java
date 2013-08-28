@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.resolve;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -12,9 +13,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.django.facet.DjangoFacetType;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportResolver;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -86,7 +87,15 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
   private boolean isAcceptRootAsTopLevelPackage() {
     Module module = myContext.getModule();
-    return module != null && FacetManager.getInstance(module).getFacetByType(DjangoFacetType.ID) != null;
+    if (module != null) {
+      Facet[] facets = FacetManager.getInstance(module).getAllFacets();
+      for (Facet facet : facets) {
+        if (facet instanceof PythonPathContributingFacet && ((PythonPathContributingFacet)facet).acceptRootAsTopLevelPackage()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
