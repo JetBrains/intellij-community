@@ -3,7 +3,7 @@ package com.jetbrains.python.codeInsight.dataflow.scope;
 import com.intellij.codeInsight.dataflow.DFALimitExceededException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.jetbrains.python.psi.NameDefiner;
+import com.jetbrains.python.psi.PyImportedNameDefiner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ public interface Scope {
   boolean containsDeclaration(String name);
 
   @NotNull
-  List<NameDefiner> getNameDefiners();
+  List<PyImportedNameDefiner> getImportedNameDefiners();
 
   @Nullable
   PsiNamedElement getNamedElement(String name);

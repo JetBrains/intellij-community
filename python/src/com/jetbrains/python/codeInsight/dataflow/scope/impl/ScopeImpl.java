@@ -6,7 +6,6 @@ import com.intellij.codeInsight.dataflow.map.DFAMap;
 import com.intellij.codeInsight.dataflow.map.DFAMapEngine;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.jetbrains.cython.psi.CythonIncludeStatement;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsDfaInstance;
@@ -31,7 +30,7 @@ public class ScopeImpl implements Scope {
   private volatile List<Scope> myNestedScopes;
   private final ScopeOwner myFlowOwner;
   private volatile Map<String, PsiNamedElement> myNamedElements;
-  private volatile List<NameDefiner> myNameDefiners;  // declarations which declare unknown set of names, such as 'from ... import *'
+  private volatile List<PyImportedNameDefiner> myImportedNameDefiners;  // Declarations which declare unknown set of imported names
   private volatile Set<String> myAugAssignments;
 
   public ScopeImpl(final ScopeOwner flowOwner) {
@@ -97,7 +96,7 @@ public class ScopeImpl implements Scope {
   }
 
   public boolean containsDeclaration(final String name) {
-    if (myNamedElements == null || myNameDefiners == null) {
+    if (myNamedElements == null || myImportedNameDefiners == null) {
       collectDeclarations();
     }
     if (isNonlocal(name)) {
@@ -109,7 +108,7 @@ public class ScopeImpl implements Scope {
     if (isAugAssignment(name)) {
       return true;
     }
-    for (NameDefiner definer : getNameDefiners()) {
+    for (NameDefiner definer : getImportedNameDefiners()) {
       if (definer.getElementNamed(name) != null) {
         return true;
       }
@@ -119,11 +118,11 @@ public class ScopeImpl implements Scope {
 
   @NotNull
   @Override
-  public List<NameDefiner> getNameDefiners() {
-    if (myNameDefiners == null) {
+  public List<PyImportedNameDefiner> getImportedNameDefiners() {
+    if (myImportedNameDefiners == null) {
       collectDeclarations();
     }
-    return myNameDefiners;
+    return myImportedNameDefiners;
   }
 
   @Nullable
@@ -158,7 +157,7 @@ public class ScopeImpl implements Scope {
 
   private void collectDeclarations() {
     final Map<String, PsiNamedElement> namedElements = new HashMap<String, PsiNamedElement>();
-    final List<NameDefiner> nameDefiners = new ArrayList<NameDefiner>();
+    final List<PyImportedNameDefiner> importedNameDefiners = new ArrayList<PyImportedNameDefiner>();
     final List<Scope> nestedScopes = new ArrayList<Scope>();
     final Set<String> globals = new HashSet<String>();
     final Set<String> nonlocals = new HashSet<String>();
@@ -214,9 +213,8 @@ public class ScopeImpl implements Scope {
         if (node instanceof PsiNamedElement && !(node instanceof PyKeywordArgument)) {
           namedElements.put(node.getName(), (PsiNamedElement)node);
         }
-        // TODO: Cython-specific code
-        if (node instanceof PyStarImportElement || node instanceof PyImportElement || node instanceof CythonIncludeStatement) {
-          nameDefiners.add((NameDefiner)node);
+        if (node instanceof PyImportedNameDefiner) {
+          importedNameDefiners.add((PyImportedNameDefiner)node);
         }
         if (node instanceof ScopeOwner) {
           final Scope scope = ControlFlowCache.getScope((ScopeOwner)node);
@@ -228,7 +226,7 @@ public class ScopeImpl implements Scope {
       }
     });
 
-    Collections.sort(nameDefiners, new Comparator<NameDefiner>() {
+    Collections.sort(importedNameDefiners, new Comparator<NameDefiner>() {
       @Override
       public int compare(NameDefiner d1, NameDefiner d2) {
         return getPriority(d2) - getPriority(d1);
@@ -243,7 +241,7 @@ public class ScopeImpl implements Scope {
     });
 
     myNamedElements = namedElements;
-    myNameDefiners = nameDefiners;
+    myImportedNameDefiners = importedNameDefiners;
     myNestedScopes = nestedScopes;
     myGlobals = globals;
     myNonlocals = nonlocals;

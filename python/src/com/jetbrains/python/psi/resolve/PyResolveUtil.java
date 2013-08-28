@@ -125,7 +125,7 @@ public class PyResolveUtil {
             }
           }
         }
-        for (NameDefiner definer : scope.getNameDefiners()) {
+        for (NameDefiner definer : scope.getImportedNameDefiners()) {
           if (!processor.execute(definer, ResolveState.initial())) {
             found = true;
             break;

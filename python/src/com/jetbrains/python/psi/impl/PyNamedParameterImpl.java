@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
-import com.jetbrains.cython.psi.CythonClass;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -310,9 +309,6 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
     }
     final PyClass cls = function.getContainingClass();
     if (cls != null && function.getParameterList().getParameters()[0] == this) {
-      if (cls instanceof CythonClass && ((CythonClass)cls).isCppClass()) {
-        return false;
-      }
       if (PyNames.NEW.equals(function.getName())) {
         return true;
       }

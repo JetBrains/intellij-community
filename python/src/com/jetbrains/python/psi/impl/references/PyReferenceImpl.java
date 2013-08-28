@@ -16,10 +16,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.cython.CythonLanguageDialect;
-import com.jetbrains.cython.psi.CythonIncludeStatement;
-import com.jetbrains.cython.psi.CythonNamedElement;
-import com.jetbrains.cython.psi.CythonVariable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
@@ -279,7 +275,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                 definers = processor.getDefiners();
               }
             }
-            else if (!isCythonLevel(myElement)) {
+            else {
               uexpr = null;
             }
           }
@@ -329,10 +325,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return ret;
   }
 
-  private static boolean isCythonLevel(@Nullable PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, CythonNamedElement.class) != null;
-  }
-
   private PsiElement findResolveRoof(String referencedName, PsiElement realContext) {
     if (PyUtil.isClassPrivateName(referencedName)) {
       // a class-private name; limited by either class or this file
@@ -373,10 +365,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   public static int getRate(PsiElement elt) {
     int rate;
-    if (CythonLanguageDialect.isInsideCythonFile(elt) && elt instanceof CythonIncludeStatement) {
-      rate = RatedResolveResult.RATE_LOW;
-    }
-    else if (elt instanceof PyImportElement || elt instanceof PyStarImportElement || elt instanceof PyReferenceExpression) {
+    if (elt instanceof PyImportedNameDefiner || elt instanceof PyReferenceExpression) {
       rate = RatedResolveResult.RATE_LOW;
     }
     else if (elt instanceof PyFile) {
@@ -443,8 +432,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         if (!haveQualifiers(element)) {
           final ScopeOwner ourScopeOwner = ScopeUtil.getScopeOwner(getElement());
           final ScopeOwner theirScopeOwner = ScopeUtil.getScopeOwner(element);
-          // TODO: Cython-dependent code without CythonLanguageDialect.isInsideCythonFile() check
-          if (element instanceof PyParameter || element instanceof PyTargetExpression || element instanceof CythonVariable) {
+          if (element instanceof PyParameter || element instanceof PyTargetExpression) {
             // Check if the reference is in the same or inner scope of the element scope, not shadowed by an intermediate declaration
             if (resolvesToSameLocal(element, elementName, ourScopeOwner, theirScopeOwner)) {
               return true;
