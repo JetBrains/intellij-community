@@ -277,6 +277,7 @@ target(name: "compile", description: "Compile module python") {
       include(name: "pydevSrc")
       include(name: "openapi/src")
       include(name: "psi-api/src")
+      include(name: "community/src")
       include(name: "pluginResources")
     }
     connectorPlugins.each {
