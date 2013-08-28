@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -86,7 +87,8 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     final GrExpression expression = findExpression();
     final GrVariable variable = findVariable();
     final StringPartInfo stringPart = findStringPart();
-    final GrIntroduceContext context = handler.getContext(getProject(), editor, expression, variable, stringPart);
+    PsiElement[] scopes = handler.findPossibleScopes(expression, variable, stringPart, editor);
+    final GrIntroduceContext context = handler.getContext(getProject(), editor, expression, variable, stringPart, scopes[0]);
 
     PsiClass targetClass;
     if (targetClassName == null) {

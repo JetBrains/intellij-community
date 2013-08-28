@@ -16,7 +16,9 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
@@ -26,6 +28,7 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -46,16 +49,19 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyIntroduceVariableSettings> {
+public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyIntroduceVariableSettings, GrControlFlowOwner> {
   public static final String DUMMY_NAME = "________________xxx_________________";
   protected static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
   private RangeMarker myPosition = null;
 
   @NotNull
   @Override
-  protected PsiElement findScope(GrExpression selectedExpr, GrVariable variable, StringPartInfo stringPartInfo) {
+  protected GrControlFlowOwner[] findPossibleScopes(GrExpression selectedExpr,
+                                                    GrVariable variable,
+                                                    StringPartInfo stringPartInfo,
+                                                    Editor editor) {
     // Get container element
-    final PsiElement scope = ControlFlowUtils.findControlFlowOwner(stringPartInfo != null ? stringPartInfo.getLiteral() : selectedExpr);
+    final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(stringPartInfo != null ? stringPartInfo.getLiteral() : selectedExpr);
     if (scope == null) {
       throw new GrRefactoringError(
         GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
@@ -64,7 +70,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
       throw new GrRefactoringError(
         GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
     }
-    return scope;
+    return new GrControlFlowOwner[]{scope};
   }
 
   protected void checkExpression(@NotNull GrExpression selectedExpr) {
@@ -183,6 +189,11 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
         return myType != null ? myType.getType(context.getPlace(), context.getPlace().getManager()) : null;
       }
     };
+  }
+
+  @Override
+  protected void showScopeChooser(GrControlFlowOwner[] scopes, Pass<GrControlFlowOwner> callback, Editor editor) {
+    //todo do nothing right now
   }
 
   @NotNull

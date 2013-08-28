@@ -16,17 +16,21 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +55,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceFieldSettings> {
+public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceFieldSettings, PsiClass> {
 
   @NotNull
   @Override
@@ -67,9 +71,23 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
 
   @NotNull
   @Override
-  protected PsiClass findScope(GrExpression expression, GrVariable variable, StringPartInfo partInfo) {
+  protected PsiClass[] findPossibleScopes(GrExpression expression,
+                                            GrVariable variable,
+                                            StringPartInfo partInfo,
+                                            Editor editor) {
     PsiElement place = getCurrentPlace(expression, variable, partInfo);
-    return ObjectUtils.assertNotNull(PsiUtil.getContextClass(place));
+    PsiClass aClass = PsiUtil.getContextClass(place);
+    if (aClass instanceof GroovyScriptClass) {
+      return new PsiClass[]{aClass};
+    }
+    else {
+      List<PsiClass> result = ContainerUtil.newArrayList(aClass);
+      while (aClass != null) {
+        aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+        ContainerUtil.addIfNotNull(result, aClass);
+      }
+      return result.toArray(new PsiClass[result.size()]);
+    }
   }
 
   @Override
@@ -231,6 +249,19 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
                null;
       }
     };
+  }
+
+  @Override
+  protected void showScopeChooser(PsiClass[] scopes, final Pass<PsiClass> callback, Editor editor) {
+    PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
+      @Override
+      public boolean execute(@NotNull PsiClass element) {
+        callback.pass(element);
+        return false;
+      }
+    };
+
+    NavigationUtil.getPsiElementPopup(scopes, new PsiClassListCellRenderer(), "Choose class to introduce field", processor).showInBestPositionFor(editor);
   }
 
   @NotNull
