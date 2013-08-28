@@ -48,15 +48,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library name="guava">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/guava-14.0.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
 
