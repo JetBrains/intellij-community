@@ -83,6 +83,17 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     });
   }
 
+  public interface InheritanceChecker {
+    boolean checkInheritance(@NotNull PsiClass subClass, @NotNull PsiClass parentClass);
+
+    InheritanceChecker DEFAULT = new InheritanceChecker() {
+      @Override
+      public boolean checkInheritance(@NotNull PsiClass subClass, @NotNull PsiClass parentClass) {
+        return subClass.isInheritor(parentClass, false);
+      }
+    };
+  }
+
   public static class SearchParameters {
     private final PsiClass myClass;
     private final SearchScope myScope;
@@ -90,6 +101,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     private final boolean myCheckInheritance;
     private final boolean myIncludeAnonymous;
     private final Condition<String> myNameCondition;
+    private final InheritanceChecker myInheritanceChecker;
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
       this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Condition.TRUE);
@@ -97,12 +109,18 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
                             boolean includeAnonymous, @NotNull final Condition<String> nameCondition) {
+      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, nameCondition, InheritanceChecker.DEFAULT);
+    }
+
+    public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
+                            boolean includeAnonymous, @NotNull final Condition<String> nameCondition, @NotNull InheritanceChecker inheritanceChecker) {
       myClass = aClass;
       myScope = scope;
       myCheckDeep = checkDeep;
       myCheckInheritance = checkInheritance;
       myIncludeAnonymous = includeAnonymous;
       myNameCondition = nameCondition;
+      myInheritanceChecker = inheritanceChecker;
     }
 
     @NotNull
@@ -204,7 +222,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
           public void run() {
             fqn[0] = candidate.getQualifiedName();
             if (parameters.isCheckInheritance() || parameters.isCheckDeep() && !(candidate instanceof PsiAnonymousClass)) {
-              if (!candidate.isInheritor(currentBase.get(), false)) {
+              if (!parameters.myInheritanceChecker.checkInheritance(candidate, currentBase.get())) {
                 result.set(true);
                 return;
               }
