@@ -14,7 +14,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
@@ -67,10 +66,8 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
                                     @NotNull ProgressIndicator cancelled,
                                     @NotNull Processor<Object> consumer) {
 
-        if (StringUtil.isNotEmpty(pattern)) {
-          CREATE_NEW_TASK_ACTION.setTaskName(pattern);
-          if (!consumer.process(CREATE_NEW_TASK_ACTION)) return false;
-        }
+        CREATE_NEW_TASK_ACTION.setTaskName(pattern);
+        if (!consumer.process(CREATE_NEW_TASK_ACTION)) return false;
 
         List<Task> cachedAndLocalTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(project), pattern, everywhere);
         boolean cachedTasksFound = !cachedAndLocalTasks.isEmpty();
@@ -138,7 +135,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
     }, null, popup);
   }
 
-  private boolean processTasks(List<Task> tasks, Processor<Object> consumer, boolean cachedTasksFound, ProgressIndicator cancelled) {
+  private static boolean processTasks(List<Task> tasks, Processor<Object> consumer, boolean cachedTasksFound, ProgressIndicator cancelled) {
     if (!cachedTasksFound && !tasks.isEmpty() && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
 
     for (Object element : tasks) {
