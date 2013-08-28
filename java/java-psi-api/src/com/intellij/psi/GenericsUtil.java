@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -47,6 +48,7 @@ public class GenericsUtil {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type1) || TypeConversionUtil.isPrimitiveAndNotNull(type2)) return null;
     if (TypeConversionUtil.isNullType(type1)) return type2;
     if (TypeConversionUtil.isNullType(type2)) return type1;
+    if (Comparing.equal(type1, type2)) return type1;
     return getLeastUpperBound(type1, type2, new LinkedHashSet<Pair<PsiType, PsiType>>(), manager);
   }
 
