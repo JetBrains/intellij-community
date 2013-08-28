@@ -138,7 +138,7 @@ public class PyConsoleParsingContext extends ParsingContext {
 
         if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
           myBuilder.advanceLexer();
-          command.done(PyElementTypes.REFERENCE_EXPRESSION);
+          command.done(getReferenceType());
         }
         else {
           expr.drop();

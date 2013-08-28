@@ -47,7 +47,7 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
   }
 
   public boolean isBuiltin() {
-    ASTNode node = getNode().findChildByType(PyElementTypes.REFERENCE_EXPRESSION);
+    ASTNode node = getNode().findChildByType(PyElementTypes.REFERENCE_EXPRESSION_SET);
     if (node != null) {
       PyReferenceExpression ref = (PyReferenceExpression)node.getPsi();
       PsiElement target = ref.getReference().resolve();
