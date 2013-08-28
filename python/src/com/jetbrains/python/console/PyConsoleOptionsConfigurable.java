@@ -49,12 +49,12 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
   protected Configurable[] buildConfigurables() {
     List<Configurable> result = Lists.newArrayList();
 
-    myPythonConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel();
+    myPythonConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel(myProject);
     result.add(createConsoleChildConfigurable("Python Console", myPythonConsoleOptionsPanel,
                                               myOptionsProvider.getPythonConsoleSettings(), CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON));
 
     if (DjangoFacet.isPresentInAnyModule(myProject)) {
-      myDjangoConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel();
+      myDjangoConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel(myProject);
       result.add(createConsoleChildConfigurable("Django Console",
                                                 myDjangoConsoleOptionsPanel, myOptionsProvider.getDjangoConsoleSettings(),
                                                 CONSOLE_SETTINGS_HELP_REFERENCE_DJANGO));
@@ -93,7 +93,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
 
       @Override
       public JComponent createComponent() {
-        return panel.createPanel(myProject, settings);
+        return panel.createPanel(settings);
       }
 
       @Override

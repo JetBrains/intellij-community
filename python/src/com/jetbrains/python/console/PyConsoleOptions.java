@@ -2,13 +2,10 @@ package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ComparatorUtil;
-import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -23,14 +20,6 @@ import java.util.Map;
 )
 public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptions.State> {
   private State myState = new State();
-
-  @NotNull
-  private final Project myProject;
-
-  public PyConsoleOptions(@NotNull Project project) {
-    myProject = project;
-    myState.setProject(project);
-  }
 
   public PyConsoleSettings getPythonConsoleSettings() {
     return myState.myPythonConsoleState;
@@ -72,7 +61,6 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myShowSeparatorLine = state.myShowSeparatorLine;
     myState.myPythonConsoleState = state.myPythonConsoleState;
     myState.myDjangoConsoleState = state.myDjangoConsoleState;
-    myState.setProject(myProject);
   }
 
   public static class State {
@@ -81,11 +69,6 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
 
     public boolean myShowDebugConsoleByDefault = false;
     public boolean myShowSeparatorLine = true;
-
-    public void setProject(Project project) {
-      myPythonConsoleState.myProject = project;
-      myDjangoConsoleState.myProject = project;
-    }
   }
 
   public static class PyConsoleSettings {
@@ -98,9 +81,6 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public String myWorkingDirectory = "";
     public boolean myAddContentRoots = true;
     public boolean myAddSourceRoots;
-
-    @Transient
-    private Project myProject;
 
     public String getCustomStartScript() {
       return myCustomStartScript;
@@ -133,7 +113,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
              || !myWorkingDirectory.equals(form.getWorkingDirectory());
     }
 
-    public void reset(AbstractPyCommonOptionsForm form) {
+    public void reset(Project project, AbstractPyCommonOptionsForm form) {
       form.setEnvs(myEnvs);
       form.setInterpreterOptions(myInterpreterOptions);
       form.setSdkHome(mySdkHome);
@@ -147,7 +127,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       }
 
       if (myModuleName != null) {
-        form.setModule(ModuleManager.getInstance(myProject).findModuleByName(myModuleName));
+        form.setModule(ModuleManager.getInstance(project).findModuleByName(myModuleName));
       }
 
       if (moduleWasAutoselected && form.getModule() != null) {
