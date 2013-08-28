@@ -24,7 +24,6 @@ import com.intellij.testFramework.PsiTestUtil;
 
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Stack;
 
 
 public class CoreJavaFileManagerTest extends PsiTestCase {
@@ -34,7 +33,7 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
     VirtualFile pkg = root.createChildDirectory(this, "foo");
     PsiDirectory dir = myPsiManager.findDirectory(pkg);
     assertNotNull(dir);
-    PsiElement created = dir.add(PsiFileFactory.getInstance(getProject()).createFileFromText(clazzName + ".java", JavaFileType.INSTANCE, clazzData));
+    dir.add(PsiFileFactory.getInstance(getProject()).createFileFromText(clazzName + ".java", JavaFileType.INSTANCE, clazzData));
     return root;
   }
 
