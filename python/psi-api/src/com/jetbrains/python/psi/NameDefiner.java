@@ -5,10 +5,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * PSI element that (re)defnies names in following namespace, e.g. as assignment statement does.
+ * PSI element that (re)defines names in following namespace, e.g. as assignment statement does.
  *
  * NOTE: When declaring additional elements as name definers, please also adjust the token set via
- * {@link PythonDialectsTokenSetContributor#getNameDefinerTokens()}.
+ * {@link com.jetbrains.python.PythonDialectsTokenSetContributor#getNameDefinerTokens()}.
  *
  * @author dcheryasov
  */
