@@ -27,11 +27,11 @@ public class PyConsoleSpecificOptionsPanel {
   private JPanel myWholePanel;
   private JPanel myStartingScriptPanel;
   private JPanel myInterpreterPanel;
-  private PyConsoleOptionsProvider.PyConsoleSettings myConsoleSettings;
+  private PyConsoleOptions.PyConsoleSettings myConsoleSettings;
   private EditorTextField myEditorTextField;
   private AbstractPyCommonOptionsForm myCommonOptionsForm;
 
-  public JPanel createPanel(final Project project, final PyConsoleOptionsProvider.PyConsoleSettings optionsProvider) {
+  public JPanel createPanel(final Project project, final PyConsoleOptions.PyConsoleSettings optionsProvider) {
     myInterpreterPanel.setLayout(new BorderLayout());
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(createCommonOptionsFormData(project));
     myCommonOptionsForm.subscribe();
@@ -83,7 +83,7 @@ public class PyConsoleSpecificOptionsPanel {
     };
   }
 
-  private void configureStartingScriptPanel(final Project project, final PyConsoleOptionsProvider.PyConsoleSettings optionsProvider) {
+  private void configureStartingScriptPanel(final Project project, final PyConsoleOptions.PyConsoleSettings optionsProvider) {
     myEditorTextField =
       new EditorTextField(createDocument(project, optionsProvider.myCustomStartScript), project, PythonFileType.INSTANCE) {
         @Override
