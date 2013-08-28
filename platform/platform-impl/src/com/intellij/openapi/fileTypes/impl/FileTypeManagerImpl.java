@@ -367,10 +367,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return type;
   }
 
-  private static class FileTypeDetectorHolder {
-    private static final FileTypeDetector[] FILE_TYPE_DETECTORS = Extensions.getExtensions(FileTypeDetector.EP_NAME);
-  }
-
   private static final AtomicInteger DETECTED_COUNT = new AtomicInteger();
   private static final int DETECT_BUFFER_SIZE = 8192;
 
@@ -403,8 +399,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
             else {
               text = null;
             }
+
             FileType detected = null;
-            for (FileTypeDetector detector : FileTypeDetectorHolder.FILE_TYPE_DETECTORS) {
+            for (FileTypeDetector detector : Extensions.getExtensions(FileTypeDetector.EP_NAME)) {
               detected = detector.detect(file, byteSequence, text);
               if (detected != null) break;
             }

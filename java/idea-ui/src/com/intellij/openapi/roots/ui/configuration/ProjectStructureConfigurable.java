@@ -223,8 +223,8 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       addArtifactsConfig();
     }
 
-    ProjectStructureConfigurableAdder[] adders = ProjectStructureConfigurableAdder.EP_NAME.getExtensions();
-    for (ProjectStructureConfigurableAdder adder : adders) {
+    ProjectStructureConfigurableContributor[] adders = ProjectStructureConfigurableContributor.EP_NAME.getExtensions();
+    for (ProjectStructureConfigurableContributor adder : adders) {
       for (Configurable configurable : adder.getExtraProjectConfigurables(myProject, myContext)) {
         addConfigurable(configurable, true);
       }
@@ -234,7 +234,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     addJdkListConfig();
     addGlobalLibrariesConfig();
 
-    for (ProjectStructureConfigurableAdder adder : adders) {
+    for (ProjectStructureConfigurableContributor adder : adders) {
       for (Configurable configurable : adder.getExtraPlatformConfigurables(myProject, myContext)) {
         addConfigurable(configurable, true);
       }

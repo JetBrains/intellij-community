@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.util;
+package com.intellij.util;
 
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -6,11 +6,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Sergey Evdokimov
  */
-public class ClassInstanceCache {
+public class SingletonInstancesCache {
 
   private static final ConcurrentHashMap<String, Object> CACHE = new ConcurrentHashMap<String, Object>();
 
-  private ClassInstanceCache() {
+  private SingletonInstancesCache() {
   }
 
   @SuppressWarnings("unchecked")

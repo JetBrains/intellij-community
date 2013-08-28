@@ -298,7 +298,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
           return false;
         }
 
-        manager.addManagedFiles(pomFiles);
+        manager.addManagedFilesOrUnignore(pomFiles);
 
         return true;
       }

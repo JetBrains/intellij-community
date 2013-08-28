@@ -112,10 +112,10 @@ public class MavenProjectsManagerWatcher {
       @Override
       public void moduleRemoved(Project project, Module module) {
         MavenProject mavenProject = myManager.findProject(module);
-        if (mavenProject != null) {
+        if (mavenProject != null && !myManager.isIgnored(mavenProject)) {
           VirtualFile file = mavenProject.getFile();
 
-          if (myManager.isManagedFile(file)) {
+          if (myManager.isManagedFile(file) && myManager.getModules(mavenProject).isEmpty()) {
             myManager.removeManagedFiles(Collections.singletonList(file));
           }
           else {

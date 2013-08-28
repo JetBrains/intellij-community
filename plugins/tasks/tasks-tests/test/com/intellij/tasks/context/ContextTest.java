@@ -17,6 +17,7 @@
 package com.intellij.tasks.context;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -91,6 +92,18 @@ public class ContextTest extends TaskManagerTestCase {
     XBreakpoint<?>[] breakpoints = breakpointManager.getAllBreakpoints();
     assertEquals(1, breakpoints.length);
     manager.clearContext();
+  }
+
+  public void testContextFileName() throws Exception {
+    ProjectImpl project = (ProjectImpl)getProject();
+    String name = project.getName();
+    try {
+      project.setProjectName("invalid | name");
+      getContextManager().saveContext("foo", "bar");
+    }
+    finally {
+      project.setProjectName(name);
+    }
   }
 
   private WorkingContextManager getContextManager() {

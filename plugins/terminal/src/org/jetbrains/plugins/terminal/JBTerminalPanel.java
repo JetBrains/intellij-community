@@ -124,14 +124,19 @@ public class JBTerminalPanel extends TerminalPanel {
       if (img == null) {
         img = image;
       }
-      newG.drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, observer);
+      newG.drawImage(img, 2*dx1, 2*dy1, 2*dx2, 2*dy2, sx1, sy1, sx2, sy2, observer);
       newG.scale(1, 1);
       newG.dispose();
     } else {
       g.drawImage(image, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, observer);
     }
   }
-  
+
+  @Override
+  protected boolean isRetina() {
+    return UIUtil.isRetina();
+  }
+
   @Override
   protected String getClipboardContent() throws IOException, UnsupportedFlavorException {
     Transferable contents = CopyPasteManager.getInstance().getContents();

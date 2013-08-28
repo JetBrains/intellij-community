@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
+import com.intellij.util.SingletonInstancesCache;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
-import org.jetbrains.plugins.groovy.util.ClassInstanceCache;
 import org.jetbrains.plugins.groovy.util.FixedValuesReferenceProvider;
 
 import java.lang.reflect.Modifier;
@@ -253,7 +253,7 @@ public class GroovyMethodInfo {
   @NotNull
   public PairFunction<GrMethodCall, PsiMethod, PsiType> getReturnTypeCalculator() {
     if (myReturnTypeCalculatorInstance == null) {
-      myReturnTypeCalculatorInstance = ClassInstanceCache.getInstance(myReturnTypeCalculatorClassName, myClassLoader);
+      myReturnTypeCalculatorInstance = SingletonInstancesCache.getInstance(myReturnTypeCalculatorClassName, myClassLoader);
     }
     return myReturnTypeCalculatorInstance;
   }
@@ -286,7 +286,7 @@ public class GroovyMethodInfo {
 
   public GroovyNamedArgumentProvider getNamedArgProvider() {
     if (myNamedArgProviderInstance == null) {
-      myNamedArgProviderInstance = ClassInstanceCache.getInstance(myNamedArgProviderClassName, myClassLoader);
+      myNamedArgProviderInstance = SingletonInstancesCache.getInstance(myNamedArgProviderClassName, myClassLoader);
     }
     return myNamedArgProviderInstance;
   }
@@ -328,7 +328,7 @@ public class GroovyMethodInfo {
 
     private Object doGetProvider(ClassLoader classLoader) {
       if (myProviderClassName != null) {
-        return ClassInstanceCache.getInstance(myProviderClassName, classLoader);
+        return SingletonInstancesCache.getInstance(myProviderClassName, classLoader);
       }
 
       return new FixedValuesReferenceProvider(myValues);

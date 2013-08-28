@@ -1,10 +1,10 @@
 package org.jetbrains.idea.maven.plugins.api;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SingletonInstancesCache;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenPlugin;
-import org.jetbrains.plugins.groovy.util.ClassInstanceCache;
 
 import java.util.Collection;
 import java.util.List;
@@ -54,7 +54,8 @@ public class MavenModelPropertiesPatcher {
       }
 
       if (descriptor.propertyGenerator != null) {
-        MavenPropertiesGenerator generator = ClassInstanceCache.getInstance(descriptor.propertyGenerator, descriptor.getLoaderForClass());
+        MavenPropertiesGenerator generator = SingletonInstancesCache
+          .getInstance(descriptor.propertyGenerator, descriptor.getLoaderForClass());
         generator.generate(modelProperties, goal, plugin, cfgElement);
       }
     }

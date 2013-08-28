@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.util.NullableFunction;
@@ -170,7 +171,7 @@ public class WorkingContextManager {
       //noinspection ResultOfMethodCallIgnored
       tasksFolder.mkdir();
     }
-    String projectName = myProject.getName();
+    String projectName = FileUtil.sanitizeFileName(myProject.getName());
     return new File(tasksFolder, projectName + postfix);
   }
 

@@ -40,6 +40,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
       myMatcher = PatternUtil.fromMask(pattern).matcher("");
     }
 
+    @Override
     public boolean matches(final String filename) {
       synchronized (myMatcher) {
         myMatcher.reset(filename);
@@ -55,6 +56,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
       mySuffix = suffix;
     }
 
+    @Override
     public boolean matches(final String filename) {
       return filename.endsWith(mySuffix);
     }
@@ -67,6 +69,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
       myPrefix = prefix;
     }
 
+    @Override
     public boolean matches(final String filename) {
       return filename.startsWith(myPrefix);
     }
@@ -79,6 +82,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
       myInfix = infix;
     }
 
+    @Override
     public boolean matches(final String filename) {
       return filename.contains(myInfix);
     }
@@ -108,10 +112,12 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
     return new RegexpMatcher(pattern);
   }
 
+  @Override
   public boolean accept(@NotNull String fileName) {
     return myMatcher.matches(fileName);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getPresentableString() {

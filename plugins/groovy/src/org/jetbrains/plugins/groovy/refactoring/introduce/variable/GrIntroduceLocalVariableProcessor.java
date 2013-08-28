@@ -75,11 +75,12 @@ public class GrIntroduceLocalVariableProcessor {
 
     int expressionIndex = ArrayUtilRt.find(myOccurrences, myExpression);
     final PsiElement[] replaced = processOccurrences();
-    GrStatement anchor = getAnchor(replaced);
+    PsiElement replacedExpression = replaced[expressionIndex];
+    GrStatement anchor = getAnchor(replaced, replacedExpression);
 
     RefactoringUtil.highlightAllOccurrences(myContext.getProject(), replaced, myContext.getEditor());
 
-    return insertVariableDefinition(declaration, anchor, replaced[expressionIndex]);
+    return insertVariableDefinition(declaration, anchor, replacedExpression);
   }
 
   private void refreshPositionMarker(PsiElement e) {
@@ -206,8 +207,8 @@ public class GrIntroduceLocalVariableProcessor {
   }
 
   @NotNull
-  private GrStatement getAnchor(PsiElement[] replaced) {
-    PsiElement anchor = GrIntroduceHandlerBase.findAnchor(replaced, myContext.getScope());
+  private GrStatement getAnchor(PsiElement[] replaced, PsiElement replacedExpression) {
+    PsiElement anchor = GrIntroduceHandlerBase.findAnchor(replaced, GroovyRefactoringUtil.getEnclosingContainer(replacedExpression));
     if (!(anchor instanceof GrStatement)) {
       StringBuilder error = new StringBuilder("scope:");
       error.append(myContext.getScope());

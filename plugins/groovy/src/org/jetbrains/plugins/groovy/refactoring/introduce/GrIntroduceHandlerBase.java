@@ -370,12 +370,17 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
               RangeMarker stringPartRangeMarker = createRange(document, context.getStringPart());
               RangeMarker varRangeMarker = createRange(document, context.getVar());
 
-              GrVariable var = ApplicationManager.getApplication().runWriteAction(new Computable<GrVariable>() {
-                @Override
-                public GrVariable compute() {
-                  return runRefactoring(context, settings);
-                }
-              });
+              SmartPsiElementPointer<GrVariable> pointer =
+                ApplicationManager.getApplication().runWriteAction(new Computable<SmartPsiElementPointer<GrVariable>>() {
+                  @Override
+                  public SmartPsiElementPointer<GrVariable> compute() {
+                    GrVariable var = runRefactoring(context, settings);
+                    return var != null
+                           ? SmartPointerManager.getInstance(context.getProject()).createSmartPsiElementPointer(var)
+                           : null;
+                  }
+                });
+              GrVariable var = pointer != null ? pointer.getElement() : null;
 
               if (isInplace && var != null) {
                 GrInplaceIntroducer introducer = getIntroducer(var, context, settings, occurrences, varRangeMarker, expressionRangeMarker, stringPartRangeMarker);

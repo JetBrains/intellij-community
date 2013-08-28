@@ -145,13 +145,14 @@ public class FileStructurePopup implements Disposable {
         myPsiFile = PsiManager.getInstance(project).findFile(file);
         if (builder != null && myPsiFile != null) {
           myStructureView = builder.createStructureView(fileEditor, project);
+          Disposer.register(this, myStructureView);
         }
       }
     }
     //System.out.println(System.currentTimeMillis() - l);
     if (myStructureView instanceof StructureViewComposite) {
       StructureViewComposite.StructureViewDescriptor[] views = ((StructureViewComposite)myStructureView).getStructureViews();
-      myBaseTreeModel = new CompositeStructureViewmodel(myPsiFile, views);
+      myBaseTreeModel = new StructureViewCompositeModel(myPsiFile, views);
     } else {
       myBaseTreeModel = structureViewModel;
     }
@@ -431,6 +432,28 @@ public class FileStructurePopup implements Disposable {
     Set<PsiElement> parents = getAllParents(element);
 
     FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)myAbstractTreeBuilder.getRootElement();
+    if (node != null && myStructureView instanceof StructureViewComposite) {
+      parents.remove(element.getContainingFile());
+      final List<FilteringTreeStructure.FilteringNode> fileNodes = node.children();
+
+      for (FilteringTreeStructure.FilteringNode fileNode : fileNodes) {
+        final FilteringTreeStructure.FilteringNode found = findNode(parents, fileNode);
+        if (found != null && found != fileNode) {
+          return found;
+        }
+      }
+    } else {
+      final FilteringTreeStructure.FilteringNode found = findNode(parents, node);
+      if (found == null) {
+        TreeUtil.selectFirstNode(myTree);
+      }
+      return found;
+    }
+    TreeUtil.selectFirstNode(myTree);
+    return null;
+  }
+
+  private FilteringTreeStructure.FilteringNode findNode(Set<PsiElement> parents, FilteringTreeStructure.FilteringNode node) {
     while (node != null) {
       boolean changed = false;
       for (FilteringTreeStructure.FilteringNode n : node.children()) {
@@ -450,7 +473,6 @@ public class FileStructurePopup implements Disposable {
         return node;
       }
     }
-    TreeUtil.selectFirstNode(myTree);
     return null;
   }
 
@@ -487,6 +509,7 @@ public class FileStructurePopup implements Disposable {
 
   @Override
   public void dispose() {
+
   }
 
   @NonNls
@@ -503,6 +526,10 @@ public class FileStructurePopup implements Disposable {
     Object elementAtCursor = myTreeModel.getCurrentEditorElement();
     if (elementAtCursor instanceof PsiElement) {
       return (PsiElement)elementAtCursor;
+    }
+
+    if (myEditor != null) {
+      return psiFile.getViewProvider().findElementAt(myEditor.getCaretModel().getOffset());
     }
 
     return null;

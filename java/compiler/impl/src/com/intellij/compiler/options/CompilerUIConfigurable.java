@@ -40,7 +40,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
 
-import static com.intellij.compiler.options.CompilerOptionsManager.*;
+import static com.intellij.compiler.options.CompilerOptionsFilter.*;
 
 public class CompilerUIConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerUIConfigurable");
@@ -110,9 +110,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   }
 
   private void tweakControls(@NotNull Project project) {
-    CompilerOptionsManager[] managers = CompilerOptionsManager.EP_NAME.getExtensions();
+    CompilerOptionsFilter[] managers = CompilerOptionsFilter.EP_NAME.getExtensions();
     boolean showExternalBuildSetting = true;
-    for (CompilerOptionsManager manager : managers) {
+    for (CompilerOptionsFilter manager : managers) {
       showExternalBuildSetting = manager.isAvailable(Setting.EXTERNAL_BUILD, project);
       if (!showExternalBuildSetting) {
         myDisabledSettings.add(Setting.EXTERNAL_BUILD);
@@ -126,7 +126,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
         myDisabledSettings.add(setting);
       }
       else {
-        for (CompilerOptionsManager manager : managers) {
+        for (CompilerOptionsFilter manager : managers) {
           if (!manager.isAvailable(setting, project)) {
             myDisabledSettings.add(setting);
             break;

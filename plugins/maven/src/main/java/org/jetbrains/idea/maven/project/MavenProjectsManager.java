@@ -484,6 +484,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     addManagedFilesWithProfiles(files, Collections.<String>emptyList());
   }
 
+  public void addManagedFilesOrUnignore(@NotNull List<VirtualFile> files) {
+    removeIgnoredFilesPaths(MavenUtil.collectPaths(files));
+    addManagedFiles(files);
+  }
+
   public void removeManagedFiles(@NotNull List<VirtualFile> files) {
     myWatcher.removeManagedFiles(files);
   }
@@ -627,6 +632,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public void setIgnoredFilesPaths(@NotNull List<String> paths) {
     if (!isInitialized()) return;
     myProjectsTree.setIgnoredFilesPaths(paths);
+  }
+
+  public void removeIgnoredFilesPaths(final Collection<String> paths) {
+    if (!isInitialized()) return;
+    myProjectsTree.removeIgnoredFilesPaths(paths);
   }
 
   public boolean getIgnoredState(@NotNull MavenProject project) {

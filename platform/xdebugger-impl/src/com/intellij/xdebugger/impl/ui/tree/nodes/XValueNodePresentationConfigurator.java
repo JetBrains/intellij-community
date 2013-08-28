@@ -2,6 +2,8 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.xdebugger.frame.XValueNode;
@@ -162,6 +164,19 @@ public final class XValueNodePresentationConfigurator {
           node.applyPresentation(icon, type, value, finalValuePresenter, hasChildren, expand);
         }
       });
+    }
+  }
+
+  private static final class XValuePresenterAdapter extends XValuePresenter {
+    private final NotNullFunction<String, String> valuePresenter;
+
+    public XValuePresenterAdapter(NotNullFunction<String, String> valuePresenter) {
+      this.valuePresenter = valuePresenter;
+    }
+
+    @Override
+    public void append(String value, ColoredTextContainer text, boolean changed) {
+      text.append(valuePresenter.fun(value), changed ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
 }

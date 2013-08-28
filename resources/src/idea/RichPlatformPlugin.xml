@@ -51,7 +51,7 @@
                     interface="com.intellij.compiler.DependencyProcessor"/>
 
     <extensionPoint name="compiler.optionsManager"
-                    interface="com.intellij.compiler.options.CompilerOptionsManager"/>
+                    interface="com.intellij.compiler.options.CompilerOptionsFilter"/>
 
     <extensionPoint name="compiler.resourceCompilerExtension"
                     interface="com.intellij.compiler.impl.resourceCompiler.ResourceCompilerExtension"/>
@@ -79,7 +79,7 @@
     <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
     <extensionPoint name="projectStructureConfigurableFilter" interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter"/>
-    <extensionPoint name="projectStructureConfigurableAdder" interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableAdder"/>
+    <extensionPoint name="projectStructureConfigurableAdder" interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableContributor"/>
 
     <extensionPoint name="compiler" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.Compiler"/>
     <extensionPoint name="compilerFactory" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.CompilerFactory"/>
