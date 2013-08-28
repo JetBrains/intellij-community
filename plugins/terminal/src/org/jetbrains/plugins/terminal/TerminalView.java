@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.terminal;
 
-import com.apple.eawt.Application;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.*;
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
@@ -101,9 +101,8 @@ public class TerminalView {
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
     content.setCloseable(true);
 
-    if (getComponentToFocus() != null) {
-      content.setPreferredFocusableComponent(getComponentToFocus());
-    }
+    content.setPreferredFocusableComponent(terminalWidget.getComponent());
+    
     return content;
   }
 
