@@ -121,7 +121,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   @Nullable
-  public final String getVersionString(final Sdk sdk) {
+  public final String getVersionString(@NotNull final Sdk sdk) {
     final Sdk internalJavaSdk = getInternalJavaSdk(sdk);
     return internalJavaSdk != null ? internalJavaSdk.getVersionString() : null;
   }
@@ -401,13 +401,13 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   @Nullable
-  public String getBinPath(Sdk sdk) {
+  public String getBinPath(@NotNull Sdk sdk) {
     final Sdk internalJavaSdk = getInternalJavaSdk(sdk);
     return internalJavaSdk == null ? null : JavaSdk.getInstance().getBinPath(internalJavaSdk);
   }
 
   @Nullable
-  public String getToolsPath(Sdk sdk) {
+  public String getToolsPath(@NotNull Sdk sdk) {
     final Sdk jdk = getInternalJavaSdk(sdk);
     if (jdk != null && jdk.getVersionString() != null){
       return JavaSdk.getInstance().getToolsPath(jdk);
@@ -416,12 +416,12 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   @Nullable
-  public String getVMExecutablePath(Sdk sdk) {
+  public String getVMExecutablePath(@NotNull Sdk sdk) {
     final Sdk internalJavaSdk = getInternalJavaSdk(sdk);
     return internalJavaSdk == null ? null : JavaSdk.getInstance().getVMExecutablePath(internalJavaSdk);
   }
 
-  public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
+  public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
     if (additionalData instanceof Sandbox) {
       try {
         ((Sandbox)additionalData).writeExternal(additional);
@@ -432,7 +432,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     }
   }
 
-  public SdkAdditionalData loadAdditionalData(Sdk sdk, Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull Sdk sdk, Element additional) {
     Sandbox sandbox = new Sandbox(sdk);
     try {
       sandbox.readExternal(additional);

@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -35,11 +36,12 @@ public class UnknownSdkType extends SdkType{
   /**
    * @param typeName the name of the SDK type that this SDK serves as a plug for
    */
-  private UnknownSdkType(String typeName) {
+  private UnknownSdkType(@NotNull String typeName) {
     super(typeName);
   }
 
-  public static UnknownSdkType getInstance(String typeName) {
+  @NotNull
+  public static UnknownSdkType getInstance(@NotNull String typeName) {
     UnknownSdkType instance = ourTypeNameToInstanceMap.get(typeName);
     if (instance == null) {
       instance = new UnknownSdkType(typeName);
@@ -86,7 +88,7 @@ public class UnknownSdkType extends SdkType{
   }
 
   @Override
-  public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
+  public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
   }
 
   @Override
