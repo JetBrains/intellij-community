@@ -14,7 +14,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiManager;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
@@ -22,7 +21,6 @@ import com.intellij.tasks.doc.TaskPsiElement;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,24 +66,15 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
                                     @NotNull ProgressIndicator cancelled,
                                     @NotNull Processor<Object> consumer) {
         List<Task> cachedAndLocalTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(project), pattern, everywhere);
-        List<TaskPsiElement> taskPsiElements = ContainerUtil.map(cachedAndLocalTasks, new Function<Task, TaskPsiElement>() {
-          @Override
-          public TaskPsiElement fun(Task task) {
-            return new TaskPsiElement(PsiManager.getInstance(project), task);
-          }
-        });
 
         CREATE_NEW_TASK_ACTION.setTaskName(pattern);
         cancelled.checkCanceled();
         if (!consumer.process(CREATE_NEW_TASK_ACTION)) return false;
 
-        boolean cachedTasksFound = taskPsiElements.size() != 0;
-        if (cachedTasksFound) {
-          cancelled.checkCanceled();
-          if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
-        }
+        boolean cachedTasksFound = !cachedAndLocalTasks.isEmpty();
+        if (cachedTasksFound && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
 
-        for (Object element : taskPsiElements) {
+        for (Object element : cachedAndLocalTasks) {
           cancelled.checkCanceled();
           if (!consumer.process(element)) return false;
         }
@@ -93,19 +82,10 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
         List<Task> tasks = TaskSearchSupport
           .getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true, everywhere, cancelled);
         tasks.removeAll(cachedAndLocalTasks);
-        taskPsiElements = ContainerUtil.map(tasks, new Function<Task, TaskPsiElement>() {
-          @Override
-          public TaskPsiElement fun(Task task) {
-            return new TaskPsiElement(PsiManager.getInstance(project), task);
-          }
-        });
 
-        if (!cachedTasksFound && taskPsiElements.size() != 0) {
-          cancelled.checkCanceled();
-          if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
-        }
+        if (!cachedTasksFound && !tasks.isEmpty() && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
 
-        for (Object element : taskPsiElements) {
+        for (Object element : tasks) {
           cancelled.checkCanceled();
           if (!consumer.process(element)) return false;
         }
