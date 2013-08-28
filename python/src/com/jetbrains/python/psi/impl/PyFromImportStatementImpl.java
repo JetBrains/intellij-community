@@ -8,6 +8,7 @@ import com.intellij.util.ArrayFactory;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
@@ -49,7 +50,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
 
   @Nullable
   public PyReferenceExpression getImportSource() {
-    return childToPsi(PyElementTypes.REFERENCE_EXPRESSION_SET, 0);
+    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getReferenceExpressionTokens(), 0);
   }
 
   public PyQualifiedName getImportSourceQName() {
