@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.actions.xmlbeans.UIUtils;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
@@ -24,6 +23,7 @@ import java.util.List;
  * @author traff
  */
 public class PyConsoleSpecificOptionsPanel {
+  private final Project myProject;
   private JPanel myWholePanel;
   private JPanel myStartingScriptPanel;
   private JPanel myInterpreterPanel;
@@ -31,15 +31,19 @@ public class PyConsoleSpecificOptionsPanel {
   private EditorTextField myEditorTextField;
   private AbstractPyCommonOptionsForm myCommonOptionsForm;
 
-  public JPanel createPanel(final Project project, final PyConsoleOptions.PyConsoleSettings optionsProvider) {
+  public PyConsoleSpecificOptionsPanel(Project project) {
+    myProject = project;
+  }
+
+  public JPanel createPanel(final PyConsoleOptions.PyConsoleSettings optionsProvider) {
     myInterpreterPanel.setLayout(new BorderLayout());
-    myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(createCommonOptionsFormData(project));
+    myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(createCommonOptionsFormData());
     myCommonOptionsForm.subscribe();
 
     myInterpreterPanel.add(myCommonOptionsForm.getMainPanel(),
                            BorderLayout.CENTER);
 
-    configureStartingScriptPanel(project, optionsProvider);
+    configureStartingScriptPanel(optionsProvider);
 
     return myWholePanel;
   }
@@ -61,19 +65,19 @@ public class PyConsoleSpecificOptionsPanel {
       }
     });
 
-    myConsoleSettings.reset(myCommonOptionsForm);
+    myConsoleSettings.reset(myProject, myCommonOptionsForm);
   }
 
-  private static PyCommonOptionsFormData createCommonOptionsFormData(final Project project) {
+  private PyCommonOptionsFormData createCommonOptionsFormData() {
     return new PyCommonOptionsFormData() {
       @Override
       public Project getProject() {
-        return project;
+        return myProject;
       }
 
       @Override
       public List<Module> getValidModules() {
-        return AbstractPythonRunConfiguration.getValidModules(project);
+        return AbstractPythonRunConfiguration.getValidModules(myProject);
       }
 
       @Override
@@ -83,9 +87,9 @@ public class PyConsoleSpecificOptionsPanel {
     };
   }
 
-  private void configureStartingScriptPanel(final Project project, final PyConsoleOptions.PyConsoleSettings optionsProvider) {
+  private void configureStartingScriptPanel(final PyConsoleOptions.PyConsoleSettings optionsProvider) {
     myEditorTextField =
-      new EditorTextField(createDocument(project, optionsProvider.myCustomStartScript), project, PythonFileType.INSTANCE) {
+      new EditorTextField(createDocument(myProject, optionsProvider.myCustomStartScript), myProject, PythonFileType.INSTANCE) {
         @Override
         protected EditorEx createEditor() {
           final EditorEx editor = super.createEditor();
