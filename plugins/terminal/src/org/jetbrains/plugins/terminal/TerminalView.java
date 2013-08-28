@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.terminal;
 
+import com.apple.eawt.Application;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.*;
