@@ -25,7 +25,7 @@ public abstract class XValuePresenter {
     text.append(" = ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  public void append(String value, ColoredTextContainer text, boolean changed) {
+  public void append(@NotNull String value, @NotNull ColoredTextContainer text, boolean changed) {
   }
 
   @Nullable

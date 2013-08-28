@@ -19,10 +19,10 @@ public final class XValueNodePresentationConfigurator {
   private static final XValuePresenter DEFAULT_VALUE_PRESENTER = new XVariableValuePresenter(XDebuggerUIConstants.EQ_TEXT);
 
   public interface ConfigurableXValueNode {
-    void applyPresentation(Icon icon,
-                           String type,
-                           String value,
-                           XValuePresenter valuePresenter,
+    void applyPresentation(@Nullable Icon icon,
+                           @Nullable String type,
+                           @Nullable String value,
+                           @NotNull XValuePresenter valuePresenter,
                            boolean hasChildren,
                            boolean expand);
   }
@@ -175,7 +175,7 @@ public final class XValueNodePresentationConfigurator {
     }
 
     @Override
-    public void append(String value, ColoredTextContainer text, boolean changed) {
+    public void append(@NotNull String value, @NotNull ColoredTextContainer text, boolean changed) {
       text.append(valuePresenter.fun(value), changed ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }

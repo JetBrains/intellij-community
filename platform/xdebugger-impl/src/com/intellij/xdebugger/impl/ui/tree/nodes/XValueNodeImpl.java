@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ObjectUtils;
@@ -123,10 +124,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   @Override
-  public void applyPresentation(Icon icon,
-                                String type,
-                                String value,
-                                XValuePresenter valuePresenter,
+  public void applyPresentation(@Nullable Icon icon,
+                                @Nullable String type,
+                                @Nullable String value,
+                                @NotNull XValuePresenter valuePresenter,
                                 boolean hasChildren,
                                 boolean expand) {
     setIcon(icon);
@@ -176,15 +177,22 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
                                   MAX_VALUE_LENGTH, null);
     }
 
-    if (myValue != null) {
-      myValuePresenter.appendSeparator(myText);
-    }
+    buildText(myType, myValue, myValuePresenter, myText, myChanged);
+  }
 
-    if (myType != null) {
-      myText.append("{" + myType + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
+  public static void buildText(@Nullable String type,
+                               @Nullable String value,
+                               @NotNull XValuePresenter valuePresenter,
+                               @NotNull ColoredTextContainer text,
+                               boolean changed) {
+    if (value != null) {
+      valuePresenter.appendSeparator(text);
     }
-    if (myValue != null) {
-      myValuePresenter.append(myValue, myText, myChanged);
+    if (type != null) {
+      text.append("{" + type + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
+    }
+    if (value != null) {
+      valuePresenter.append(value, text, changed);
     }
   }
 
