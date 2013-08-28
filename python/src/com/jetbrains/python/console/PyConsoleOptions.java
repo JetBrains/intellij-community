@@ -25,10 +25,6 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     return myState.myPythonConsoleState;
   }
 
-  public PyConsoleSettings getDjangoConsoleSettings() {
-    return myState.myDjangoConsoleState;
-  }
-
   public boolean isShowDebugConsoleByDefault() {
     return myState.myShowDebugConsoleByDefault;
   }
@@ -60,12 +56,10 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myShowDebugConsoleByDefault = state.myShowDebugConsoleByDefault;
     myState.myShowSeparatorLine = state.myShowSeparatorLine;
     myState.myPythonConsoleState = state.myPythonConsoleState;
-    myState.myDjangoConsoleState = state.myDjangoConsoleState;
   }
 
   public static class State {
     public PyConsoleSettings myPythonConsoleState = new PyConsoleSettings();
-    public PyConsoleSettings myDjangoConsoleState = new PyConsoleSettings();
 
     public boolean myShowDebugConsoleByDefault = false;
     public boolean myShowSeparatorLine = true;

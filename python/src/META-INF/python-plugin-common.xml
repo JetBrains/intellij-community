@@ -685,6 +685,7 @@
     <referencesSearch implementation="com.jetbrains.django.refactoring.DjangoParameterReferenceSearcher"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.django.DjangoDefaultLiveTemplatesProvider"/>
+    <projectService serviceImplementation="com.jetbrains.django.console.DjangoConsoleOptions"/>
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
