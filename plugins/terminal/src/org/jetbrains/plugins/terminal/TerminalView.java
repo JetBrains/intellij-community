@@ -100,9 +100,8 @@ public class TerminalView {
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
     content.setCloseable(true);
 
-    if (getComponentToFocus() != null) {
-      content.setPreferredFocusableComponent(getComponentToFocus());
-    }
+    content.setPreferredFocusableComponent(terminalWidget.getComponent());
+    
     return content;
   }
 
