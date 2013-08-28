@@ -7,7 +7,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
-import com.intellij.tasks.doc.TaskPsiElement;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -39,8 +38,8 @@ public class TaskCellRenderer extends DefaultListCellRenderer implements Matcher
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBackground(UIUtil.getListBackground(sel));
     panel.setForeground(UIUtil.getListForeground(sel));
-    if (value instanceof TaskPsiElement) {
-      final Task task = ((TaskPsiElement)value).getTask();
+    if (value instanceof Task) {
+      final Task task = ((Task)value);
       final SimpleColoredComponent c = new SimpleColoredComponent();
       final TaskManager taskManager = TaskManager.getManager(myProject);
       final boolean isLocalTask = taskManager.findTask(task.getId()) != null;
