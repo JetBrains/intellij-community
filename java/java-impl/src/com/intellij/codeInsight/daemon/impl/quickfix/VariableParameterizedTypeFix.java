@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -40,7 +40,7 @@ public class VariableParameterizedTypeFix {
     PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(parameterList.getProject());
     PsiClass[] classes = shortNamesCache.getClassesByName(shortName, GlobalSearchScope.allScope(manager.getProject()));
     PsiElementFactory factory = facade.getElementFactory();
-    JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(parameterList);
+    JavaSdkVersion version = JavaVersionService.getInstance().getJavaSdkVersion(parameterList);
     for (PsiClass aClass : classes) {
       if (GenericsHighlightUtil.checkReferenceTypeArgumentList(aClass, parameterList, PsiSubstitutor.EMPTY, false, version) == null) {
         PsiType[] actualTypeParameters = parameterList.getTypeArguments();
