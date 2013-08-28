@@ -1516,13 +1516,12 @@ public abstract class ChooseByNameBase {
             return;
           }
 
-          final String cardToShow;
           if (elements.isEmpty() && !myCheckboxState) {
             myScopeExpanded = true;
             myCheckboxState = true;
             calculation.run();
           }
-          cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
+          final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
           showCard(cardToShow, 0);
 
           final Set<Object> filtered = filter(elements);
