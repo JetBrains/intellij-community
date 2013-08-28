@@ -31,7 +31,7 @@ import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.django.DjangoTemplateLineBreakpointType;
 import com.jetbrains.python.debugger.pydev.*;
-import com.jetbrains.python.debugger.remote.vfs.PyRemotePositionConverter;
+import com.jetbrains.python.remote.RemoteDebuggableProcessHandler;
 import com.jetbrains.python.run.PythonProcessHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,8 +99,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (myProcessHandler != null) {
       myProcessHandler.addProcessListener(this);
     }
-    if (processHandler instanceof RemoteProcessHandlerBase) {
-      myPositionConverter = new PyRemotePositionConverter(this, ((RemoteProcessHandlerBase)processHandler).getMappingSettings());
+    if (processHandler instanceof RemoteDebuggableProcessHandler) {
+      myPositionConverter = ((RemoteDebuggableProcessHandler) processHandler).createPositionConverter(this);
     }
     else {
       myPositionConverter = new PyLocalPositionConverter();
@@ -264,12 +264,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void recordSignature(PySignature signature) {
-    if (myPositionConverter instanceof PyRemotePositionConverter) {
-      String localPath = ((PyRemotePositionConverter)myPositionConverter).getPathMappingSettings().convertToLocal(signature.getFile());
-      signature = new PySignature(localPath, signature.getFunctionName()).addAllArgs(signature);
-    }
-
-    PySignatureCacheManager.getInstance(getSession().getProject()).recordSignature(signature);
+    PySignatureCacheManager.getInstance(getSession().getProject()).recordSignature(myPositionConverter.convertSignature(signature));
   }
 
   protected void afterConnect() {
