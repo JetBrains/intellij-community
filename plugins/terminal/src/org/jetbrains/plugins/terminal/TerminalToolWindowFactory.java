@@ -9,6 +9,8 @@ import com.intellij.openapi.wm.ToolWindowFactory;
  * @author traff
  */
 public class TerminalToolWindowFactory implements ToolWindowFactory, DumbAware {
+  public static final String TOOL_WINDOW_ID = "Terminal";
+  
   @Override
   public void createToolWindowContent(Project project, ToolWindow toolWindow) {
     TerminalView terminalView = TerminalView.getInstance();
