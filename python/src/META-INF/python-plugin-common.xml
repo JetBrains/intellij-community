@@ -892,7 +892,7 @@
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider"
                     interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"/>
     <extensionPoint qualifiedName="Pythonid.dumbAnnotator" interface="com.jetbrains.python.validation.PyAnnotator"/>
-    <extensionPoint qualifiedName="Pythonid.unusedLocalFilter" interface="com.jetbrains.python.inspections.UnusedLocalFilter"/>
+    <extensionPoint qualifiedName="Pythonid.inspectionExtension" interface="com.jetbrains.python.inspections.PyInspectionExtension"/>
     <extensionPoint qualifiedName="Pythonid.customTargetExpressionStubType"
                     interface="com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType"/>
     <extensionPoint qualifiedName="Pythonid.knownDecoratorProvider" interface="com.jetbrains.python.psi.PyKnownDecoratorProvider"/>
@@ -945,7 +945,7 @@
     <typeProvider implementation="com.jetbrains.django.codeInsight.DjangoTypeProvider"/>
     <unresolvedReferenceQuickFixProvider implementation="com.jetbrains.django.ref.DjangoReferenceQuickFixProvider"/>
     <runnableUnitTestFilter implementation="com.jetbrains.django.testRunner.DjangoUnitTestFilter"/>
-    <unusedLocalFilter implementation="com.jetbrains.django.codeInsight.DjangoUnusedLocalFilter"/>
+    <unusedLocalFilter implementation="com.jetbrains.django.codeInsight.DjangoInspectionExtension"/>
     <customTargetExpressionStubType implementation="com.jetbrains.django.model.stubs.DjangoForeignKeyStubType"/>
     <knownDecoratorProvider implementation="com.jetbrains.django.codeInsight.DjangoKnownDecoratorProvider"/>
     <documentationLinkProvider implementation="com.jetbrains.django.codeInsight.DjangoDocumentationLinkProvider"/>

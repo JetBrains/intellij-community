@@ -211,7 +211,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   void registerProblems() {
-    final UnusedLocalFilter[] filters = Extensions.getExtensions(UnusedLocalFilter.EP_NAME);
+    final PyInspectionExtension[] filters = Extensions.getExtensions(PyInspectionExtension.EP_NAME);
     // Register problems
 
     final Set<PyFunction> functionsWithInheritors = new HashSet<PyFunction>();
@@ -219,7 +219,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
     for (PsiElement element : myUnusedElements) {
       boolean ignoreUnused = false;
-      for (UnusedLocalFilter filter : filters) {
+      for (PyInspectionExtension filter : filters) {
         if (filter.ignoreUnused(element)) {
           ignoreUnused = true;
         }
