@@ -148,7 +148,7 @@ public class PyDocstringInspection extends PyInspection {
         if (!missingParams.isEmpty()) {
           for (PyParameter param : missingParams) {
             registerProblem(param, "Missing parameter " + param.getName() + " in docstring",
-                            new DocstringQuickFix(param, null));
+                            new DocstringQuickFix(param.getName(), null));
           }
           registered = true;
         }
