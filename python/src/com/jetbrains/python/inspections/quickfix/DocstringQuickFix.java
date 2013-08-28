@@ -26,28 +26,18 @@ import org.jetbrains.annotations.Nullable;
  * User : catherine
  */
 public class DocstringQuickFix implements LocalQuickFix {
-
-  PyParameter myMissing;
-  String myMissingText = "";
+  String myMissingText;
   String myUnexpected;
   String myPrefix;
 
-  public DocstringQuickFix(PyParameter missing, String unexpected) {
-    myMissing = missing;
-    if (myMissing != null) {
-      if (myMissing.getText().startsWith("*")) {
-        myMissingText = myMissing.getText();
-      }
-      else {
-        myMissingText = myMissing.getName();
-      }
-    }
+  public DocstringQuickFix(String missing, String unexpected) {
+    myMissingText = missing;
     myUnexpected = unexpected;
   }
 
   @NotNull
   public String getName() {
-    if (myMissing != null) {
+    if (myMissingText != null) {
       return PyBundle.message("QFIX.docstring.add.$0", myMissingText);
     }
     else if (myUnexpected != null) {
@@ -81,17 +71,8 @@ public class DocstringQuickFix implements LocalQuickFix {
     PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyDocStringOwner.class);
     if (docStringOwner == null) return;
     PyStringLiteralExpression docStringExpression = docStringOwner.getDocStringExpression();
-    if (docStringExpression == null && myMissing == null && myUnexpected == null) {
-      if (docStringOwner instanceof PyFunction) {
-        PyGenerateDocstringIntention
-          .generateDocstringForFunction(project, getEditor(project, docStringOwner.getContainingFile()), (PyFunction)docStringOwner);
-      }
-      if (docStringOwner instanceof PyClass) {
-        PyFunction init = ((PyClass)docStringOwner).findInitOrNew(false);
-        if (init == null) return;
-        PythonDocumentationProvider.insertDocStub(init, ((PyClass)docStringOwner).getStatementList(),
-                                                  project, getEditor(project, docStringOwner.getContainingFile()));
-      }
+    if (docStringExpression == null && myMissingText == null && myUnexpected == null) {
+      addEmptyDocstring(project, docStringOwner);
       return;
     }
     if (docStringExpression != null) {
@@ -107,7 +88,7 @@ public class DocstringQuickFix implements LocalQuickFix {
       }
 
       String replacement = docStringExpression.getText();
-      if (myMissing != null) {
+      if (myMissingText != null) {
         replacement = createMissingReplacement(docStringOwner);
       }
       if (myUnexpected != null) {
@@ -117,6 +98,19 @@ public class DocstringQuickFix implements LocalQuickFix {
         PyExpression str = elementGenerator.createDocstring(replacement).getExpression();
         docStringExpression.replace(str);
       }
+    }
+  }
+
+  private static void addEmptyDocstring(Project project, PyDocStringOwner docStringOwner) {
+    if (docStringOwner instanceof PyFunction) {
+      PyGenerateDocstringIntention
+        .generateDocstringForFunction(project, getEditor(project, docStringOwner.getContainingFile()), (PyFunction)docStringOwner);
+    }
+    if (docStringOwner instanceof PyClass) {
+      PyFunction init = ((PyClass)docStringOwner).findInitOrNew(false);
+      if (init == null) return;
+      PythonDocumentationProvider.insertDocStub(init, ((PyClass)docStringOwner).getStatementList(),
+                                                project, getEditor(project, docStringOwner.getContainingFile()));
     }
   }
 
