@@ -90,6 +90,6 @@ public class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntry
   @Override
   public void update(final AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setText(myEditHandler.getRootTypeName());
+    e.getPresentation().setVisible(!e.getPlace().equals(ContentEntryTreeEditor.TOOLBAR_PLACE) || myEditHandler.showMarkActionOnToolbar());
   }
 }

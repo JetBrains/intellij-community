@@ -54,10 +54,6 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
   }
 
   @Override
-  public void buildStarted(CompileContext context) {
-  }
-
-  @Override
   public void build(@NotNull ResourcesTarget target,
                     @NotNull DirtyFilesHolder<ResourceRootDescriptor, ResourcesTarget> holder,
                     @NotNull final BuildOutputConsumer outputConsumer,

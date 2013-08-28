@@ -66,6 +66,7 @@ import java.util.List;
  * Time: 1:19:47 PM
  */
 public class ContentEntryTreeEditor {
+  public static final String TOOLBAR_PLACE = "ContentEntryTreeToolbar";
   private final Project myProject;
   private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;
   protected final Tree myTree;
@@ -91,7 +92,7 @@ public class ContentEntryTreeEditor {
 
     myTreePanel = new MyPanel(new BorderLayout());
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    myTreePanel.add(new ToolbarPanel(scrollPane, myEditingActionsGroup), BorderLayout.CENTER);
+    myTreePanel.add(new ToolbarPanel(scrollPane, myEditingActionsGroup, TOOLBAR_PLACE), BorderLayout.CENTER);
 
     myTreePanel.setVisible(false);
     myDescriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor();

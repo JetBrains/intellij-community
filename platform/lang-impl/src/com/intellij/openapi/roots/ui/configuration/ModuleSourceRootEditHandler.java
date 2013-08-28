@@ -60,6 +60,10 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   @Nullable
   public abstract Icon getFolderUnderRootIcon();
 
+  public boolean showMarkActionOnToolbar() {
+    return true;
+  }
+
   @Nullable
   public abstract CustomShortcutSet getMarkRootShortcutSet();
 
