@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,9 @@ package com.intellij.ide.plugins;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -35,12 +28,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.net.IOExceptionDialog;
-import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.util.*;
 
@@ -162,7 +151,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
               }
 
               if (needToRestart) {
-                notifyPluginsWereInstalled(list.size() == 1 ? list.get(0).getName() : null);
+                PluginManagerMain.notifyPluginsWereInstalled(list.size() == 1 ? list.get(0).getName() : null);
               }
             }
           }
@@ -266,33 +255,6 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
     for (PluginNode node : list) {
       installedPluginsModel.appendOrUpdateDescriptor(node);
     }
-  }
-
-  private static void notifyPluginsWereInstalled(@Nullable String pluginName) {
-    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    final boolean restartCapable = app.isRestartCapable();
-    String message =
-      restartCapable ? IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getFullProductName())
-                     : IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getFullProductName());
-    message += "<br><a href=";
-    message += restartCapable ? "\"restart\">Restart now" : "\"shutdown\">Shutdown";
-    message += "</a>";
-    Notifications.Bus.notify(new Notification("Plugins Lifecycle Group",
-                                              pluginName != null ? "Plugin \'" + pluginName + "\' was successfully installed" : "Plugins were installed",
-                                              XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION,
-                                              new NotificationListener() {
-                                                @Override
-                                                public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                            @NotNull HyperlinkEvent event) {
-                                                  notification.expire();
-                                                  if (restartCapable) {
-                                                    app.restart(true);
-                                                  }
-                                                  else {
-                                                    app.exit(true);
-                                                  }
-                                                }
-                                              }));
   }
 
 

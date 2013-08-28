@@ -21,10 +21,17 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -37,6 +44,7 @@ import com.intellij.ui.*;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -294,7 +302,7 @@ public abstract class PluginManagerMain implements Disposable {
   public static boolean downloadPlugins(final List<PluginNode> plugins,
                                         final List<IdeaPluginDescriptor> allPlugins,
                                         final Runnable onSuccess,
-                                        final Runnable cleanup) throws IOException {
+                                        @Nullable final Runnable cleanup) throws IOException {
     final boolean[] result = new boolean[1];
     try {
       ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
@@ -307,7 +315,7 @@ public abstract class PluginManagerMain implements Disposable {
             }
           }
           finally {
-            cleanup.run();
+            if (cleanup != null) cleanup.run();
           }
         }
       });
@@ -512,6 +520,36 @@ public abstract class PluginManagerMain implements Disposable {
       return true;
     }
     return false;
+  }
+
+
+  public static void notifyPluginsWereInstalled(@Nullable String pluginName) {
+    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    final boolean restartCapable = app.isRestartCapable();
+    String message =
+      restartCapable ? IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getFullProductName())
+                     : IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getFullProductName());
+    message += "<br><a href=";
+    message += restartCapable ? "\"restart\">Restart now" : "\"shutdown\">Shutdown";
+    message += "</a>";
+    Notifications.Bus.notify(new Notification("Plugins Lifecycle Group",
+                                              pluginName != null
+                                              ? "Plugin \'" + pluginName + "\' was successfully installed"
+                                              : "Plugins were installed",
+                                              XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION,
+                                              new NotificationListener() {
+                                                @Override
+                                                public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                            @NotNull HyperlinkEvent event) {
+                                                  notification.expire();
+                                                  if (restartCapable) {
+                                                    app.restart(true);
+                                                  }
+                                                  else {
+                                                    app.exit(true);
+                                                  }
+                                                }
+                                              }));
   }
 
   protected class SortByStatusAction extends ToggleAction {
