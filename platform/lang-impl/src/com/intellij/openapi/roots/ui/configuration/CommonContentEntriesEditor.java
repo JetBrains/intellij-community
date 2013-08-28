@@ -43,7 +43,6 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,10 +53,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -87,7 +84,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     myModuleName = moduleName;
     myModulesProvider = state.getModulesProvider();
     for (JpsModuleSourceRootType<?> type : rootTypes) {
-      ContainerUtil.addIfNotNull(myEditHandlers, ModuleSourceRootEditHandler.findEditHandler(type));
+      myEditHandlers.add(ModuleSourceRootEditHandler.getEditHandler(type));
     }
     final VirtualFileManagerAdapter fileManagerListener = new VirtualFileManagerAdapter() {
       @Override

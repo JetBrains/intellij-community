@@ -15,8 +15,11 @@
  */
 package com.intellij.ide.projectView.actions;
 
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
@@ -31,6 +34,11 @@ public class MarkSourceRootAction extends MarkRootActionBase {
 
   public MarkSourceRootAction(@NotNull JpsModuleSourceRootType<?> type) {
     myRootType = type;
+    Presentation presentation = getTemplatePresentation();
+    ModuleSourceRootEditHandler<?> editHandler = ModuleSourceRootEditHandler.getEditHandler(type);
+    presentation.setIcon(editHandler.getRootIcon());
+    presentation.setText(editHandler.getRootTypeName() + " Root");
+    presentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description", editHandler.getRootTypeName()));
   }
 
   protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {

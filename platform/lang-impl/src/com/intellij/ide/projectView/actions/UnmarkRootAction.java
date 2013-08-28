@@ -16,7 +16,6 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
@@ -32,8 +31,6 @@ import java.util.Set;
  * @author yole
  */
 public class UnmarkRootAction extends MarkRootActionBase {
-  private static final Logger LOG = Logger.getInstance(UnmarkRootAction.class);
-
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
@@ -47,8 +44,7 @@ public class UnmarkRootAction extends MarkRootActionBase {
       String text;
       if (selectedRootTypes.size() == 1) {
         JpsModuleSourceRootType<?> type = selectedRootTypes.iterator().next();
-        ModuleSourceRootEditHandler<?> handler = ModuleSourceRootEditHandler.findEditHandler(type);
-        LOG.assertTrue(handler != null, type);
+        ModuleSourceRootEditHandler<?> handler = ModuleSourceRootEditHandler.getEditHandler(type);
         text = "Unmark as " + handler.getRootTypeName() + " " + StringUtil.pluralize("Root", selection.mySelectedRoots.size());
       }
       else {
