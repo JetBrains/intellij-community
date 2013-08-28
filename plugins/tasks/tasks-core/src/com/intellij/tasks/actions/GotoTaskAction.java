@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
@@ -65,12 +66,13 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
                                     boolean everywhere,
                                     @NotNull ProgressIndicator cancelled,
                                     @NotNull Processor<Object> consumer) {
+
+        if (StringUtil.isNotEmpty(pattern)) {
+          CREATE_NEW_TASK_ACTION.setTaskName(pattern);
+          if (!consumer.process(CREATE_NEW_TASK_ACTION)) return false;
+        }
+
         List<Task> cachedAndLocalTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(project), pattern, everywhere);
-
-        CREATE_NEW_TASK_ACTION.setTaskName(pattern);
-        cancelled.checkCanceled();
-        if (!consumer.process(CREATE_NEW_TASK_ACTION)) return false;
-
         boolean cachedTasksFound = !cachedAndLocalTasks.isEmpty();
         if (!processTasks(cachedAndLocalTasks, consumer, cachedTasksFound, cancelled)) return false;
 
@@ -81,6 +83,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
         return processTasks(tasks, consumer, cachedTasksFound, cancelled);
       }
     }, null, false, 0);
+
     popup.setShowListForEmptyPattern(true);
     popup.setSearchInAnyPlace(true);
     popup.setAdText("<html>Press SHIFT to merge with current context<br/>" +
