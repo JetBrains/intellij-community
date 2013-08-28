@@ -72,7 +72,9 @@ public class InterpreterPathChooser extends BaseListPopupStep<String> {
       paths.add(FileUtil.getLocationRelativeToUserHome(sdkHome));
     }
     paths.add(LOCAL);
-    paths.add(REMOTE);
+    if (PythonRemoteInterpreterManager.getInstance() != null) {
+      paths.add(REMOTE);
+    }
     if (showVirtualEnv) {
       paths.add(VIRTUALENV);
     }
