@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBCheckBox;
+import com.jetbrains.django.console.DjangoConsoleOptions;
 import com.jetbrains.django.facet.DjangoFacet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
     if (DjangoFacet.isPresentInAnyModule(myProject)) {
       myDjangoConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel(myProject);
       result.add(createConsoleChildConfigurable("Django Console",
-                                                myDjangoConsoleOptionsPanel, myOptionsProvider.getDjangoConsoleSettings(),
+                                                myDjangoConsoleOptionsPanel, DjangoConsoleOptions.getInstance(myProject).getState(),
                                                 CONSOLE_SETTINGS_HELP_REFERENCE_DJANGO));
     }
 
