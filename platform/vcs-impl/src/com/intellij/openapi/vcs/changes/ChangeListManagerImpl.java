@@ -1459,6 +1459,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     ourUpdateAlarm.get().execute(r);
   }
 
+  @TestOnly
   public boolean ensureUpToDate(final boolean canBeCanceled) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       updateImmediately();
