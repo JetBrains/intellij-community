@@ -83,7 +83,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     });
   }
 
-  public static interface InheritanceChecker {
+  public interface InheritanceChecker {
     boolean checkInheritance(@NotNull PsiClass subClass, @NotNull PsiClass parentClass);
 
     InheritanceChecker DEFAULT = new InheritanceChecker() {
@@ -109,7 +109,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
                             boolean includeAnonymous, @NotNull final Condition<String> nameCondition) {
-      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Condition.TRUE, InheritanceChecker.DEFAULT);
+      this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, nameCondition, InheritanceChecker.DEFAULT);
     }
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
