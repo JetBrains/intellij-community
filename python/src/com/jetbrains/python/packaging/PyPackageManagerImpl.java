@@ -5,11 +5,13 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -20,6 +22,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -36,6 +39,7 @@ import com.intellij.remotesdk.RemoteSdkData;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
@@ -98,6 +102,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final String PIP = "pip-1.1";
 
   private List<PyPackage> myPackagesCache = null;
+  private Map<String, Set<PyPackage>> myDependenciesCache = null;
   private PyExternalProcessException myExceptionCache = null;
 
   private Sdk mySdk;
@@ -180,6 +185,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
           return "'" + pkg.getName() + "'";
         }
       }, ", ");
+      if (checkDependents(packages)) return;
 
       run(new MultiExternalRunnable() {
         @Override
@@ -198,6 +204,51 @@ public class PyPackageManagerImpl extends PyPackageManager {
         }
       }, "Uninstalling packages", "Packages uninstalled successfully", "Uninstalled packages: " + packagesString,
           "Uninstall packages failed");
+    }
+
+    private boolean checkDependents(@NotNull final List<PyPackage> packages) {
+      try {
+        final Map<String, Set<PyPackage>> dependentPackages = collectDependents(packages, mySdk);
+        final int[] warning = {0};
+        if (!dependentPackages.isEmpty()) {
+          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+              if (dependentPackages.size() == 1) {
+                String message = "You are attempting to uninstall ";
+                List<String> dep = new ArrayList<String>();
+                int size = 1;
+                for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
+                  final Set<PyPackage> value = entry.getValue();
+                  size = value.size();
+                  dep.add(entry.getKey() + " package which is required for " + StringUtil.join(value, ", "));
+                }
+                message += StringUtil.join(dep, "\n");
+                message += size == 1 ? " package" : " packages";
+                message += "\n\nDo you want to proceed?";
+                warning[0] = Messages.showYesNoDialog(message, "Warning",
+                                                      AllIcons.General.BalloonWarning);
+              }
+              else {
+                String message = "You are attempting to uninstall packages which are required for another packages.\n\n";
+                List<String> dep = new ArrayList<String>();
+                for (Map.Entry<String, Set<PyPackage>> entry : dependentPackages.entrySet()) {
+                  dep.add(entry.getKey() + " -> " + StringUtil.join(entry.getValue(), ", "));
+                }
+                message += StringUtil.join(dep, "\n");
+                message += "\n\nDo you want to proceed?";
+                warning[0] = Messages.showYesNoDialog(message, "Warning",
+                                                      AllIcons.General.BalloonWarning);
+              }
+            }
+          }, ModalityState.current());
+        }
+        if (warning[0] != 0) return true;
+      }
+      catch (PyExternalProcessException e) {
+        LOG.info("Error loading packages dependents: " + e.getMessage(), e);
+      }
+      return false;
     }
 
     private interface MultiExternalRunnable {
@@ -402,6 +453,22 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
   }
 
+  private static Map<String, Set<PyPackage>> collectDependents(@NotNull final List<PyPackage> packages, Sdk sdk) throws PyExternalProcessException {
+    Map<String, Set<PyPackage>> dependentPackages = new HashMap<String, Set<PyPackage>>();
+    for (PyPackage pkg : packages) {
+      final Set<PyPackage> dependents =
+        ((PyPackageManagerImpl)PyPackageManager.getInstance(sdk)).getDependents(pkg.getName());
+      if (dependents != null && !dependents.isEmpty()) {
+        for (PyPackage dependent : dependents) {
+          if (!packages.contains(dependent))
+            dependentPackages.put(pkg.getName(), dependents);
+        }
+
+      }
+    }
+    return dependentPackages;
+  }
+
   public static String getUserSite() {
     if (SystemInfo.isWindows) {
       final String appdata = System.getenv("APPDATA");
@@ -447,6 +514,17 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return myPackagesCache;
   }
 
+  public synchronized Set<PyPackage> getDependents(String pkg) throws PyExternalProcessException {
+    if (myDependenciesCache == null) {
+      if (myExceptionCache != null) {
+        throw myExceptionCache;
+      }
+
+      loadPackages();
+    }
+    return myDependenciesCache.get(pkg);
+  }
+
   public synchronized void loadPackages() throws PyExternalProcessException {
     try {
       final String output = runPythonHelper(PACKAGING_TOOL, list("list"));
@@ -457,11 +535,27 @@ public class PyPackageManagerImpl extends PyPackageManager {
           return aPackage.getName().compareTo(aPackage1.getName());
         }
       });
+
+      calculateDependents();
     }
     catch (PyExternalProcessException e) {
       myExceptionCache = e;
       LOG.info("Error loading packages list: " + e.getMessage(), e);
       throw e;
+    }
+  }
+
+  private void calculateDependents() {
+    myDependenciesCache = new HashMap<String, Set<PyPackage>>();
+    for (PyPackage p : myPackagesCache) {
+      final List<PyRequirement> requirements = p.getRequirements();
+      for (PyRequirement requirement : requirements) {
+        final String name = requirement.getName();
+        Set<PyPackage> value = myDependenciesCache.get(name);
+        if (value == null) value = new HashSet<PyPackage>();
+        value.add(p);
+        myDependenciesCache.put(name, value);
+      }
     }
   }
 
@@ -577,6 +671,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   private void clearCaches() {
     myPackagesCache = null;
+    myDependenciesCache = null;
     myExceptionCache = null;
   }
 
