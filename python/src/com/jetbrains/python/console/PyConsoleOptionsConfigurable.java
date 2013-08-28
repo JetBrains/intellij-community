@@ -1,13 +1,12 @@
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBCheckBox;
-import com.jetbrains.django.console.DjangoConsoleOptions;
-import com.jetbrains.django.facet.DjangoFacet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,12 +19,9 @@ import java.util.List;
 public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll{
   public static final String CONSOLE_SETTINGS_HELP_REFERENCE = "reference.project.settings.console";
   public static final String CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON = "reference.project.settings.console.python";
-  public static final String CONSOLE_SETTINGS_HELP_REFERENCE_DJANGO = "reference.project.settings.console.django";
 
 
   private PyConsoleOptionsPanel myPanel;
-  private PyConsoleSpecificOptionsPanel myPythonConsoleOptionsPanel;
-  private PyConsoleSpecificOptionsPanel myDjangoConsoleOptionsPanel;
 
   private final PyConsoleOptions myOptionsProvider;
   private Project myProject;
@@ -50,24 +46,25 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
   protected Configurable[] buildConfigurables() {
     List<Configurable> result = Lists.newArrayList();
 
-    myPythonConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel(myProject);
-    result.add(createConsoleChildConfigurable("Python Console", myPythonConsoleOptionsPanel,
+    PyConsoleSpecificOptionsPanel pythonConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel(myProject);
+    result.add(createConsoleChildConfigurable("Python Console", pythonConsoleOptionsPanel,
                                               myOptionsProvider.getPythonConsoleSettings(), CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON));
 
-    if (DjangoFacet.isPresentInAnyModule(myProject)) {
-      myDjangoConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel(myProject);
-      result.add(createConsoleChildConfigurable("Django Console",
-                                                myDjangoConsoleOptionsPanel, DjangoConsoleOptions.getInstance(myProject).getState(),
-                                                CONSOLE_SETTINGS_HELP_REFERENCE_DJANGO));
+    for (PyConsoleOptionsProvider provider : Extensions.getExtensions(PyConsoleOptionsProvider.EP_NAME)) {
+      if (provider.isApplicableTo(myProject)) {
+        result.add(createConsoleChildConfigurable(provider.getName(),
+                                                  new PyConsoleSpecificOptionsPanel(myProject),
+                                                  provider.getSettings(myProject),
+                                                  provider.getHelpTopic()));
+      }
     }
-
 
     return result.toArray(new Configurable[result.size()]);
   }
 
-  private Configurable createConsoleChildConfigurable(final String name,
-                                                      final PyConsoleSpecificOptionsPanel panel,
-                                                      final PyConsoleOptions.PyConsoleSettings settings, final String helpReference) {
+  private static Configurable createConsoleChildConfigurable(final String name,
+                                                             final PyConsoleSpecificOptionsPanel panel,
+                                                             final PyConsoleOptions.PyConsoleSettings settings, final String helpReference) {
     return new SearchableConfigurable() {
 
       @NotNull
@@ -133,7 +130,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
   public JComponent createComponent() {
     myPanel = new PyConsoleOptionsPanel();
 
-    return myPanel.createPanel(myProject, myOptionsProvider);
+    return myPanel.createPanel(myOptionsProvider);
   }
 
   @Override
@@ -163,7 +160,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
     private JBCheckBox myShowSeparatorLine;
     private PyConsoleOptions myOptionsProvider;
 
-    public JPanel createPanel(Project project, PyConsoleOptions optionsProvider) {
+    public JPanel createPanel(PyConsoleOptions optionsProvider) {
       myOptionsProvider = optionsProvider;
 
       return myWholePanel;
