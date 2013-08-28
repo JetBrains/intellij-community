@@ -94,4 +94,5 @@ public abstract class InjectedLanguageManager {
   public abstract void startRunInjectors(@NotNull Document hostDocument, boolean synchronously);
 
   public abstract void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);
+  public abstract void enumerateEx(@NotNull PsiElement host, @NotNull PsiFile containingFile, boolean probeUp, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);
 }
