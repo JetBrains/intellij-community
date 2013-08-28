@@ -912,6 +912,7 @@
     <extensionPoint qualifiedName="Pythonid.templateContextProvider" interface="com.jetbrains.python.templateLanguages.TemplateContextProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyReferenceResolveProvider" interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"/>
     <extensionPoint qualifiedName="Pythonid.breakpointHandler" interface="com.jetbrains.python.debugger.PyBreakpointHandlerFactory"/>
+    <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider" interface="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -946,7 +947,7 @@
     <typeProvider implementation="com.jetbrains.django.codeInsight.DjangoTypeProvider"/>
     <unresolvedReferenceQuickFixProvider implementation="com.jetbrains.django.ref.DjangoReferenceQuickFixProvider"/>
     <runnableUnitTestFilter implementation="com.jetbrains.django.testRunner.DjangoUnitTestFilter"/>
-    <unusedLocalFilter implementation="com.jetbrains.django.codeInsight.DjangoInspectionExtension"/>
+    <inspectionExtension implementation="com.jetbrains.django.codeInsight.DjangoInspectionExtension"/>
     <customTargetExpressionStubType implementation="com.jetbrains.django.model.stubs.DjangoForeignKeyStubType"/>
     <knownDecoratorProvider implementation="com.jetbrains.django.codeInsight.DjangoKnownDecoratorProvider"/>
     <documentationLinkProvider implementation="com.jetbrains.django.codeInsight.DjangoDocumentationLinkProvider"/>
@@ -954,6 +955,7 @@
     <templateContextProvider implementation="com.jetbrains.django.model.DjangoTemplateContextProvider"/>
     <breakpointHandler implementation="com.jetbrains.python.debugger.django.DjangoExceptionBreakpointHandlerFactory"/>
     <breakpointHandler implementation="com.jetbrains.python.debugger.django.DjangoLineBreakpointHandlerFactory"/>
+    <consoleOptionsProvider implementation="com.jetbrains.django.console.DjangoConsoleOptionsProvider"/>
 
     <!-- App Engine -->
     <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>
