@@ -6,17 +6,19 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.django.facet.DjangoFacet;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
 
@@ -29,10 +31,10 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  */
 public class AddFunctionQuickFix  implements LocalQuickFix {
 
-  private String myIdentifier;
+  private final String myIdentifier;
   private PyFile myPyFile;
 
-  public AddFunctionQuickFix(String identifier, PyFile module) {
+  public AddFunctionQuickFix(@NotNull String identifier, PyFile module) {
     myIdentifier = identifier;
     myPyFile = module;
   }
@@ -52,15 +54,14 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
       // descriptor points to the unresolved identifier
       // there can be no name clash, else the name would have resolved, and it hasn't.
       PsiElement problem_elt = descriptor.getPsiElement().getParent(); // id -> ref expr
-      String item_name = myIdentifier;
-      sure(myPyFile); sure(item_name);
+      sure(myPyFile);
       sure(FileModificationService.getInstance().preparePsiElementForWrite(myPyFile));
       // try to at least match parameter count
       // TODO: get parameter style from code style
-      PyFunctionBuilder builder = new PyFunctionBuilder(item_name);
-      PsiElement problem_parent = problem_elt.getParent();
-      if (problem_parent instanceof PyCallExpression) {
-        PyArgumentList arglist = ((PyCallExpression)problem_parent).getArgumentList();
+      PyFunctionBuilder builder = new PyFunctionBuilder(myIdentifier);
+      PsiElement problemParent = problem_elt.getParent();
+      if (problemParent instanceof PyCallExpression) {
+        PyArgumentList arglist = ((PyCallExpression)problemParent).getArgumentList();
         sure(arglist);
         final PyExpression[] args = arglist.getArguments();
         for (PyExpression arg : args) {
@@ -76,10 +77,15 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
           }
         }
       }
-      else if (problem_parent != null) {
-        PsiFile source_file = problem_parent.getContainingFile();
-        if (source_file != null && "urls.py".equals(source_file.getName()) && DjangoFacet.isPresent(source_file)) {
-          builder.parameter("request"); // specifically for mentions in urlpatterns
+      else if (problemParent != null) {
+        for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
+          List<String> params = extension.getFunctionParametersFromUsage(problem_elt);
+          if (params != null) {
+            for (String param : params) {
+              builder.parameter(param);
+            }
+            break;
+          }
         }
       }
       // else: no arglist, use empty args
