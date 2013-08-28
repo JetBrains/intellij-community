@@ -73,11 +73,15 @@ binding.setVariable("vmOptions64yjp", { String systemSelector ->
 })
 
 binding.setVariable("isDefined", {String key ->
+  projectBuilder.stage("isDefined - $key")
   try {
+    projectBuilder.stage("isDefined - try")
     this[key]
+    projectBuilder.stage("isDefined - try finished")
     return true
   }
   catch (MissingPropertyException ignored) {
+    projectBuilder.stage("isDefined - catch")
     return false
   }
 })
@@ -734,6 +738,10 @@ private void fixIdeaPropertiesEol(List paths, String eol) {
   }
 }
 
+private boolean isUnderTeamCity() {
+  return isDefined("teamcity.buildType.id")
+}
+
 binding.setVariable("buildWinLauncher", { String ch, String inputPath, String outputPath, String appInfo,
                                           String launcherProperties, String pathsSelector, List resourcePaths ->
   projectBuilder.stage("winLauncher")
@@ -772,3 +780,36 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
     launcherPropertiesTempFile.delete()
   }
 })
+
+binding.setVariable("additionalCompilation", { ->
+  projectBuilder.stage("step - additionalCompilationStep")
+  if (isDefined("additionalCompilationStep")) {
+    projectBuilder.stage("step - additionalCompilationStep - do it")
+    projectBuilder.info("Using additional compilation step: " + additionalCompilationStep)
+    def script = includeFile(additionalCompilationStep)
+    script.doCustomCompile();
+  }
+  projectBuilder.stage("step - additionalCompilationStep - finished")
+})
+
+binding.setVariable("searchableOptions", { ->
+  projectBuilder.stage("step - steps.build_searchable_options")
+  if (steps.build_searchable_options) {
+    println "steps.build_searchable_options: $jdkHome/lib/tools.jar"
+    buildSearchableOptions("${projectBuilder.moduleOutput(findModule("resources-en"))}/search", ["$home/build/idea.license"], {
+      ant.pathelement(location: "$jdkHome/lib/tools.jar")
+      ant.pathelement(location: "$home/community/lib/junit.jar")
+      projectBuilder.moduleRuntimeClasspath(findModule("main"), false).each {
+        ant.pathelement(location: it)
+      }
+    })
+  }
+})
+
+def buildTeamServer() {
+  executeExternalAnt(["dist.jars": paths.distJars,
+                       "dist.teamserver": "$paths.sandbox/dist.teamserver"],
+                     "$home/build/release_teamcity.xml")
+}
+
+
