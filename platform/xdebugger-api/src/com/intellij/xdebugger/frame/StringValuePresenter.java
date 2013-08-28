@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class StringValuePresenter extends XValuePresenter {
@@ -35,18 +36,18 @@ public class StringValuePresenter extends XValuePresenter {
   }
 
   @Override
-  public void append(String value, ColoredTextContainer text, boolean changed) {
+  public void append(@NotNull String value, @NotNull ColoredTextContainer text, boolean changed) {
     SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DefaultLanguageHighlighterColors.STRING));
     text.append("\"", attributes);
     doAppend(value, text, attributes);
     text.append("\"", attributes);
   }
 
-  protected void doAppend(String value, ColoredTextContainer text, SimpleTextAttributes attributes) {
+  protected void doAppend(@NotNull String value, @NotNull ColoredTextContainer text, @NotNull SimpleTextAttributes attributes) {
     append(value, text, attributes, maxLength, additionalChars);
   }
 
-  public static void append(String value, ColoredTextContainer text, SimpleTextAttributes attributes, int maxLength, String additionalChars) {
+  public static void append(@NotNull String value, @NotNull ColoredTextContainer text, @NotNull SimpleTextAttributes attributes, int maxLength, @Nullable String additionalChars) {
     SimpleTextAttributes escapeAttributes = null;
     int lastOffset = 0;
     int length = maxLength == -1 ? value.length() : Math.min(value.length(), maxLength);

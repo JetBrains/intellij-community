@@ -4,6 +4,7 @@ import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValuePresenter;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.concurrent.Semaphore;
@@ -19,10 +20,10 @@ public class XTestValueNode extends XValueNodePresentationConfigurator.Configura
   private final Semaphore myFinished = new Semaphore(0);
 
   @Override
-  public void applyPresentation(Icon icon,
-                                String type,
-                                String value,
-                                XValuePresenter valuePresenter,
+  public void applyPresentation(@Nullable Icon icon,
+                                @Nullable String type,
+                                @Nullable String value,
+                                @NotNull XValuePresenter valuePresenter,
                                 boolean hasChildren,
                                 boolean expand) {
     myType = type;

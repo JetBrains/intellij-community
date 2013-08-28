@@ -39,6 +39,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,13 +82,32 @@ public class XValueHint extends AbstractValueHint {
       public void evaluated(@NotNull final XValue result) {
         result.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
           @Override
-          public void applyPresentation(Icon icon,
-                                        String type,
-                                        String value,
-                                        XValuePresenter valuePresenter,
+          public void applyPresentation(@Nullable Icon icon,
+                                        @Nullable String type,
+                                        @Nullable String value,
+                                        @NotNull XValuePresenter valuePresenter,
                                         boolean hasChildren,
                                         boolean expand) {
-            doShowHint(result, value, type, valuePresenter, hasChildren);
+            if (isHintHidden()) return;
+
+            SimpleColoredText text = new SimpleColoredText();
+            text.append(myExpression, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
+            XValueNodeImpl.buildText(type, value, valuePresenter, text, false);
+            if (!hasChildren) {
+              showHint(HintUtil.createInformationLabel(text));
+            }
+            else if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
+              showTree(result, myExpression);
+            }
+            else {
+              JComponent component = createExpandableHintComponent(text, new Runnable() {
+                @Override
+                public void run() {
+                  showTree(result, myExpression);
+                }
+              });
+              showHint(component);
+            }
           }
 
           @Override
@@ -108,38 +128,6 @@ public class XValueHint extends AbstractValueHint {
         LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);
       }
     }, myExpressionPosition);
-  }
-
-  private void doShowHint(final XValue xValue,
-                          String value,
-                          String type,
-                          @NotNull XValuePresenter valuePresenter,
-                          boolean hasChildren) {
-    if (isHintHidden()) return;
-
-    SimpleColoredText text = new SimpleColoredText();
-    text.append(myExpression, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-    valuePresenter.appendSeparator(text);
-    if (type != null) {
-      text.append("{" + type + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
-    }
-    valuePresenter.append(value, text, false);
-
-    if (!hasChildren) {
-      showHint(HintUtil.createInformationLabel(text));
-    }
-    else if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
-      showTree(xValue, myExpression);
-    }
-    else {
-      JComponent component = createExpandableHintComponent(text, new Runnable() {
-        @Override
-        public void run() {
-          showTree(xValue, myExpression);
-        }
-      });
-      showHint(component);
-    }
   }
 
   private void showTree(final XValue value, final String name) {

@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 public class PrimitiveXValuePresenter extends XValuePresenter {
   public static final XValuePresenter KEYWORD = new PrimitiveXValuePresenter(DefaultLanguageHighlighterColors.KEYWORD);
@@ -32,7 +33,7 @@ public class PrimitiveXValuePresenter extends XValuePresenter {
   }
 
   @Override
-  public void append(String value, ColoredTextContainer text, boolean changed) {
+  public void append(@NotNull String value, @NotNull ColoredTextContainer text, boolean changed) {
     text.append(value, SimpleTextAttributes.fromTextAttributes(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(textAttributesKey)));
   }
 }

@@ -21,7 +21,7 @@ public final class XVariableValuePresenter extends StringValuePresenter {
   }
 
   @Override
-  public void append(String value, ColoredTextContainer text, boolean changed) {
+  public void append(@NotNull String value, @NotNull ColoredTextContainer text, boolean changed) {
     doAppend(value, text, changed ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 }

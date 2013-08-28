@@ -35,6 +35,6 @@ public class XGroupingValuePresenter extends XValuePresenter {
   }
 
   @Override
-  public void append(String value, ColoredTextContainer text, boolean changed) {
+  public void append(@NotNull String value, @NotNull ColoredTextContainer text, boolean changed) {
   }
 }
