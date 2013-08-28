@@ -5,8 +5,8 @@ import com.intellij.lexer.FlexLexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.jetbrains.cython.parser.CythonTokenTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,13 +21,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   private int myCurrentNewLineIndent = 0;
 
   private static final boolean DUMP_TOKENS = false;
-  private static final TokenSet RECOVERY_TOKENS =
-    TokenSet.create(PyTokenTypes.DEF_KEYWORD, PyTokenTypes.CLASS_KEYWORD, PyTokenTypes.RETURN_KEYWORD, PyTokenTypes.WITH_KEYWORD,
-                    PyTokenTypes.WHILE_KEYWORD, PyTokenTypes.BREAK_KEYWORD, PyTokenTypes.CONTINUE_KEYWORD, PyTokenTypes.RAISE_KEYWORD,
-                    PyTokenTypes.TRY_KEYWORD, PyTokenTypes.EXCEPT_KEYWORD, PyTokenTypes.FINALLY_KEYWORD,
-                    // TODO: Cython dependency. Collect these tokens via the PythonDialectsTokenSetProvider (requires setting up the
-                    // "Pythonid.dialectsTokenSetContributor" extension point in all the tests.
-                    CythonTokenTypes.CDEF_KEYWORD, CythonTokenTypes.CPDEF_KEYWORD, CythonTokenTypes.CTYPEDEF_KEYWORD);
+  private final TokenSet RECOVERY_TOKENS = PythonDialectsTokenSetProvider.INSTANCE.getUnbalancedBracesRecoveryTokens();
 
   public PythonIndentingProcessor(FlexLexer lexer, TokenSet tokens) {
     super(new FlexAdapter(lexer), tokens);
