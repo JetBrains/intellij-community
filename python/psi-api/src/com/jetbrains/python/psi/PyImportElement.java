@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface PyImportElement extends PyElement, NameDefiner, StubBasedPsiElement<PyImportElementStub> {
+public interface PyImportElement extends PyElement, PyImportedNameDefiner, StubBasedPsiElement<PyImportElementStub> {
   @Nullable
   PyReferenceExpression getImportReferenceExpression();
 
