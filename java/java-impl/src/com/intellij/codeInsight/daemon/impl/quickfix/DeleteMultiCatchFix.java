@@ -32,7 +32,7 @@ import java.util.List;
 public class DeleteMultiCatchFix implements IntentionAction {
   private final PsiTypeElement myTypeElement;
 
-  public DeleteMultiCatchFix(final PsiTypeElement typeElement) {
+  public DeleteMultiCatchFix(@NotNull PsiTypeElement typeElement) {
     myTypeElement = typeElement;
   }
 
@@ -50,9 +50,7 @@ public class DeleteMultiCatchFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myTypeElement != null &&
-           myTypeElement.isValid() &&
-           PsiManager.getInstance(project).isInProject(myTypeElement.getContainingFile());
+    return myTypeElement.isValid() && PsiManager.getInstance(project).isInProject(myTypeElement.getContainingFile());
   }
 
   @Override

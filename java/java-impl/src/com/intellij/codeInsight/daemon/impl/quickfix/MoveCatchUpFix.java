@@ -35,10 +35,10 @@ public class MoveCatchUpFix implements IntentionAction {
   private final PsiCatchSection myCatchSection;
   private final PsiCatchSection myMoveBeforeSection;
 
-    public MoveCatchUpFix(PsiCatchSection catchSection, PsiCatchSection moveBeforeSection) {
+  public MoveCatchUpFix(@NotNull PsiCatchSection catchSection, @NotNull PsiCatchSection moveBeforeSection) {
     this.myCatchSection = catchSection;
-        myMoveBeforeSection = moveBeforeSection;
-    }
+    myMoveBeforeSection = moveBeforeSection;
+  }
 
   @Override
   @NotNull
@@ -56,10 +56,8 @@ public class MoveCatchUpFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myCatchSection != null
-           && myCatchSection.isValid()
+    return myCatchSection.isValid()
            && myCatchSection.getManager().isInProject(myCatchSection)
-           && myMoveBeforeSection != null
            && myMoveBeforeSection.isValid()
            && myCatchSection.getCatchType() != null
            && PsiUtil.resolveClassInType(myCatchSection.getCatchType()) != null

@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public class NegationBroadScopeFix implements IntentionAction {
   private final PsiPrefixExpression myPrefixExpression;
 
-  public NegationBroadScopeFix(PsiPrefixExpression prefixExpression) {
+  public NegationBroadScopeFix(@NotNull PsiPrefixExpression prefixExpression) {
     myPrefixExpression = prefixExpression;
   }
 
@@ -70,7 +70,7 @@ public class NegationBroadScopeFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (myPrefixExpression == null || !myPrefixExpression.isValid()) return false;
+    if (!myPrefixExpression.isValid()) return false;
 
     PsiElement parent = myPrefixExpression.getParent();
     if (parent instanceof PsiInstanceOfExpression && ((PsiInstanceOfExpression)parent).getOperand() == myPrefixExpression) {

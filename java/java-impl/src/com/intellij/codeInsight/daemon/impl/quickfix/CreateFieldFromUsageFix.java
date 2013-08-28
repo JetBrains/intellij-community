@@ -32,8 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Mike
  */
 public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
-
-  public CreateFieldFromUsageFix(PsiReferenceExpression referenceElement) {
+  public CreateFieldFromUsageFix(@NotNull PsiReferenceExpression referenceElement) {
     super(referenceElement);
   }
 

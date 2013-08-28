@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
-import com.intellij.xml.XmlTagNameProvider;
+import com.intellij.xml.XmlCompletionExtension;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
+public class DefaultXmlCompletionExtension extends XmlCompletionExtension {
   @Override
   public void addTagNameVariants(List<LookupElement> elements, @NotNull XmlTag tag, String prefix) {
     final List<String> namespaces;

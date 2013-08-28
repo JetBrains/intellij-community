@@ -68,7 +68,7 @@ public abstract class SdkType implements SdkTypeId {
 
   @Override
   @Nullable
-  public String getVersionString(Sdk sdk) {
+  public String getVersionString(@NotNull Sdk sdk) {
     return getVersionString(sdk.getHomePath());
   }
 
@@ -99,15 +99,15 @@ public abstract class SdkType implements SdkTypeId {
 
   @Override
   @Nullable
-  public SdkAdditionalData loadAdditionalData(Sdk currentSdk, Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, Element additional) {
     return loadAdditionalData(additional);
   }
 
-
-  public SdkType(@NonNls String name) {
+  public SdkType(@NotNull @NonNls String name) {
     myName = name;
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myName;

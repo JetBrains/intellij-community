@@ -20,6 +20,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -55,24 +56,24 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   }
 
   @Override
-  public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
+  public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
   }
 
   @Override
-  public String getBinPath(Sdk sdk) {
+  public String getBinPath(@NotNull Sdk sdk) {
     return getConvertedHomePath(sdk) + "bin";
   }
 
   @Override
   @NonNls
-  public String getToolsPath(Sdk sdk) {
+  public String getToolsPath(@NotNull Sdk sdk) {
     final String versionString = sdk.getVersionString();
     final boolean isJdk1_x = versionString != null && (versionString.contains("1.0") || versionString.contains("1.1"));
     return getConvertedHomePath(sdk) + "lib" + File.separator + (isJdk1_x? "classes.zip" : "tools.jar");
   }
 
   @Override
-  public String getVMExecutablePath(Sdk sdk) {
+  public String getVMExecutablePath(@NotNull Sdk sdk) {
     return getBinPath(sdk) + File.separator + VM_EXE_NAME;
   }
 

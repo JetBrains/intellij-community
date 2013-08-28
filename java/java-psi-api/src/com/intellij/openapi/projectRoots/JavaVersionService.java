@@ -32,4 +32,8 @@ public class JavaVersionService {
   public boolean isAtLeast(@NotNull PsiElement element, @NotNull JavaSdkVersion version) {
     return PsiUtil.getLanguageLevel(element).isAtLeast(version.getMaxLanguageLevel());
   }
+
+  public JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
+    return JavaSdkVersion.fromLanguageLevel(PsiUtil.getLanguageLevel(element));
+  }
 }

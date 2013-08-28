@@ -27,4 +27,9 @@ public class JavaVersionServiceImpl extends JavaVersionService {
   public boolean isAtLeast(@NotNull PsiElement element, @NotNull JavaSdkVersion version) {
     return JavaSdkVersionUtil.isAtLeast(element, version);
   }
+
+  @Override
+  public JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
+    return JavaSdkVersionUtil.getJavaSdkVersion(element);
+  }
 }
