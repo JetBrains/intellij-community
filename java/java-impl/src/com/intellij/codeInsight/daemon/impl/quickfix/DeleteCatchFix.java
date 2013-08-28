@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class DeleteCatchFix implements IntentionAction {
   private final PsiParameter myCatchParameter;
 
-  public DeleteCatchFix(PsiParameter myCatchParameter) {
+  public DeleteCatchFix(@NotNull PsiParameter myCatchParameter) {
     this.myCatchParameter = myCatchParameter;
   }
 
@@ -45,9 +45,7 @@ public class DeleteCatchFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myCatchParameter != null
-           && myCatchParameter.isValid()
-           && PsiManager.getInstance(project).isInProject(myCatchParameter.getContainingFile());
+    return myCatchParameter.isValid() && PsiManager.getInstance(project).isInProject(myCatchParameter.getContainingFile());
   }
 
   @Override

@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final PsiType myType;
 
-  public AddTypeCastFix(PsiType type, PsiExpression expression) {
+  public AddTypeCastFix(@NotNull PsiType type, @NotNull PsiExpression expression) {
     super(expression);
     myType = type;
   }

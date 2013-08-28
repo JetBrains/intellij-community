@@ -40,7 +40,7 @@ public class SurroundWithTryCatchFix implements IntentionAction {
 
   private PsiStatement myStatement = null;
 
-  public SurroundWithTryCatchFix(PsiElement element) {
+  public SurroundWithTryCatchFix(@NotNull PsiElement element) {
     final PsiMethodReferenceExpression methodReferenceExpression = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class, false);
     if (methodReferenceExpression == null) {
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);

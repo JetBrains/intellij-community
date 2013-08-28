@@ -40,7 +40,7 @@ import java.util.Set;
 public class ConvertSwitchToIfIntention implements IntentionAction {
   private final PsiSwitchStatement mySwitchExpression;
 
-  public ConvertSwitchToIfIntention(PsiSwitchStatement switchStatement) {
+  public ConvertSwitchToIfIntention(@NotNull PsiSwitchStatement switchStatement) {
     mySwitchExpression = switchStatement;
   }
 
