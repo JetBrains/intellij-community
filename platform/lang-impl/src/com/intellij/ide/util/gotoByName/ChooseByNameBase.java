@@ -1562,8 +1562,8 @@ public abstract class ChooseByNameBase {
           }
         }
       );
-      long end = System.currentTimeMillis();
       if (ContributorsBasedGotoByModel.LOG.isDebugEnabled()) {
+        long end = System.currentTimeMillis();
         ContributorsBasedGotoByModel.LOG.debug("addElementsByPattern("+pattern+"): "+(end-start)+"ms; "+elements.size()+" elements");
       }
     }
