@@ -15,14 +15,11 @@
  */
 package com.intellij.ide.browsers;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTargetBase;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -72,19 +69,7 @@ class SelectInDefaultBrowserTarget extends SelectInTargetBase {
     LOG.assertTrue(psiElement != null);
     PsiFile psiFile = psiElement.getContainingFile();
     LOG.assertTrue(psiFile != null);
-    try {
-      Url url = WebBrowserService.getInstance().getUrlToOpen(psiFile, false);
-      if (url != null) {
-        ApplicationManager.getApplication().saveAll();
-        BrowserUtil.launchBrowser(url.toExternalForm());
-      }
-    }
-    catch (WebBrowserUrlProvider.BrowserException e1) {
-      Messages.showErrorDialog(e1.getMessage(), XmlBundle.message("browser.error"));
-    }
-    catch (Exception e1) {
-      LOG.error(e1);
-    }
+    OpenFileInDefaultBrowserAction.doOpen(psiFile, false);
   }
 
   @Override
