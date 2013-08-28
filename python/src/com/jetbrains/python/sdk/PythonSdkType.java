@@ -51,7 +51,7 @@ import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
@@ -390,11 +390,12 @@ public class PythonSdkType extends SdkType {
   @Override
   public SdkAdditionalData loadAdditionalData(final Sdk currentSdk, final Element additional) {
     if (RemoteSdkDataHolder.isRemoteSdk(currentSdk.getHomePath())) {
-      return PyRemoteSdkAdditionalData.loadRemote(currentSdk, additional);
+      PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+      if (manager != null) {
+        return manager.loadRemoteSdkData(currentSdk, additional);
+      }
     }
-    else {
-      return PythonSdkAdditionalData.load(currentSdk, additional);
-    }
+    return PythonSdkAdditionalData.load(currentSdk, additional);
   }
 
   private boolean switchPathToInterpreter(Sdk currentSdk, String... variants) {

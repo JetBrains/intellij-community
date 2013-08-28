@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,6 +19,7 @@ import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,6 +122,8 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract PathMappingSettings setupMappings(@Nullable Project project,
                                                     @NotNull PyRemoteSdkData data,
                                                     @Nullable PathMappingSettings mappingSettings);
+
+  public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
   public static class PyRemoteInterpreterExecutionException extends ExecutionException {
 
