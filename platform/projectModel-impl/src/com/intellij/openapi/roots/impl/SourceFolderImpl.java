@@ -124,8 +124,12 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     int i = super.compareTo(folder);
     if (i!= 0) return i;
 
-    i = getPackagePrefix().compareTo(((SourceFolderImpl)folder).getPackagePrefix());
+    SourceFolderImpl sourceFolder = (SourceFolderImpl)folder;
+    i = getPackagePrefix().compareTo(sourceFolder.getPackagePrefix());
     if (i!= 0) return i;
-    return Boolean.valueOf(isTestSource()).compareTo(((SourceFolderImpl)folder).isTestSource());
+    i = Boolean.valueOf(isTestSource()).compareTo(sourceFolder.isTestSource());
+    if (i != 0) return i;
+    //todo[nik] perhaps we should use LinkedSet instead of SortedSet and get rid of this method
+    return myJpsElement.getRootType().getClass().getName().compareTo(sourceFolder.getRootType().getClass().getName());
   }
 }
