@@ -247,7 +247,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
       // Mark editor as console one, to prevent autopopup completion
       getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
 
-      setShowSeparatorLine(PyConsoleOptionsProvider.getInstance(project).isShowSeparatorLine());
+      setShowSeparatorLine(PyConsoleOptions.getInstance(project).isShowSeparatorLine());
 
       initComponents();
     }

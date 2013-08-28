@@ -55,7 +55,7 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
     add(myTextConsole.getComponent(), TEXT_CONSOLE_PANEL);
     add(myPydevConsoleView.getComponent(), PYDEV_CONSOLE_PANEL);
 
-    showDebugConsole(PyConsoleOptionsProvider.getInstance(project).isShowDebugConsoleByDefault());
+    showDebugConsole(PyConsoleOptions.getInstance(project).isShowDebugConsoleByDefault());
 
     Disposer.register(this, myPydevConsoleView);
     Disposer.register(this, myTextConsole);

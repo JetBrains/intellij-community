@@ -26,10 +26,10 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
   private PyConsoleSpecificOptionsPanel myPythonConsoleOptionsPanel;
   private PyConsoleSpecificOptionsPanel myDjangoConsoleOptionsPanel;
 
-  private final PyConsoleOptionsProvider myOptionsProvider;
+  private final PyConsoleOptions myOptionsProvider;
   private Project myProject;
 
-  public PyConsoleOptionsConfigurable(PyConsoleOptionsProvider optionsProvider, Project project) {
+  public PyConsoleOptionsConfigurable(PyConsoleOptions optionsProvider, Project project) {
     myOptionsProvider = optionsProvider;
     myProject = project;
   }
@@ -66,7 +66,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
 
   private Configurable createConsoleChildConfigurable(final String name,
                                                       final PyConsoleSpecificOptionsPanel panel,
-                                                      final PyConsoleOptionsProvider.PyConsoleSettings settings, final String helpReference) {
+                                                      final PyConsoleOptions.PyConsoleSettings settings, final String helpReference) {
     return new SearchableConfigurable() {
 
       @NotNull
@@ -160,9 +160,9 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
     private JPanel myWholePanel;
     private JBCheckBox myShowDebugConsoleByDefault;
     private JBCheckBox myShowSeparatorLine;
-    private PyConsoleOptionsProvider myOptionsProvider;
+    private PyConsoleOptions myOptionsProvider;
 
-    public JPanel createPanel(Project project, PyConsoleOptionsProvider optionsProvider) {
+    public JPanel createPanel(Project project, PyConsoleOptions optionsProvider) {
       myOptionsProvider = optionsProvider;
 
       return myWholePanel;

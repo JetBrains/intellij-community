@@ -76,7 +76,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
     String[] setupFragment;
 
-    PyConsoleOptionsProvider.PyConsoleSettings settingsProvider = PyConsoleOptionsProvider.getInstance(project).getPythonConsoleSettings();
+    PyConsoleOptions.PyConsoleSettings settingsProvider = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
     Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.addContentRoots(),
                                                                              settingsProvider.addSourceRoots());
 
@@ -148,7 +148,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
   private static Pair<Sdk, Module> findPythonSdkAndModule(Project project, Module contextModule) {
     Sdk sdk = null;
     Module module = null;
-    PyConsoleOptionsProvider.PyConsoleSettings settings = PyConsoleOptionsProvider.getInstance(project).getPythonConsoleSettings();
+    PyConsoleOptions.PyConsoleSettings settings = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
     String sdkHome = settings.getSdkHome();
     if (sdkHome != null) {
       sdk = PythonSdkType.findSdkByPath(sdkHome);

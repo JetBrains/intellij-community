@@ -21,13 +21,13 @@ import java.util.Map;
     @Storage(file = StoragePathMacros.WORKSPACE_FILE)
   }
 )
-public class PyConsoleOptionsProvider implements PersistentStateComponent<PyConsoleOptionsProvider.State> {
+public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptions.State> {
   private State myState = new State();
 
   @NotNull
   private final Project myProject;
 
-  public PyConsoleOptionsProvider(@NotNull Project project) {
+  public PyConsoleOptions(@NotNull Project project) {
     myProject = project;
     myState.setProject(project);
   }
@@ -57,8 +57,8 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
   }
 
 
-  public static PyConsoleOptionsProvider getInstance(Project project) {
-    return ServiceManager.getService(project, PyConsoleOptionsProvider.class);
+  public static PyConsoleOptions getInstance(Project project) {
+    return ServiceManager.getService(project, PyConsoleOptions.class);
   }
 
   @Override
