@@ -38,8 +38,10 @@ public abstract class TestFrameworks {
 
   @Nullable
   public abstract PsiMethod findTearDownMethod(PsiClass psiClass);
-  
+
+  protected abstract boolean hasConfigMethods(PsiClass psiClass);
+
   public boolean isTestOrConfig(PsiClass psiClass) {
-    return isTestClass(psiClass) || findTearDownMethod(psiClass) != null || findSetUpMethod(psiClass) != null;
-  } 
+    return isTestClass(psiClass) || hasConfigMethods(psiClass);
+  }
 }

@@ -51,12 +51,14 @@ public class GroovyTestFramework extends JavaTestFramework {
   @Override
   protected boolean isTestClass(PsiClass clazz, boolean canBePotential) {
     return clazz.getLanguage() == GroovyFileType.GROOVY_LANGUAGE &&
-           JUnitUtil.isTestClass(clazz) &&
+           //JUnitUtil.isTestClass(clazz) &&
            InheritanceUtil.isInheritor(clazz, GroovyCommonClassNames.GROOVY_UTIL_TEST_CASE);
   }
 
   @Override
   protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
+    if (!isTestClass(clazz, false)) return null;
+
     for (PsiMethod method : clazz.getMethods()) {
       if (method.getName().equals("setUp")) return method;
     }
@@ -65,6 +67,8 @@ public class GroovyTestFramework extends JavaTestFramework {
 
   @Override
   protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
+    if (!isTestClass(clazz, false)) return null;
+
     for (PsiMethod method : clazz.getMethods()) {
       if (method.getName().equals("tearDown")) return method;
     }
