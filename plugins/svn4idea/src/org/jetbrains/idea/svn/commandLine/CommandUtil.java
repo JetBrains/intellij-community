@@ -96,7 +96,7 @@ public class CommandUtil {
     StringBuilder builder = new StringBuilder(path);
 
     if (pegRevision != null && !SVNRevision.UNDEFINED.equals(pegRevision) && !SVNRevision.WORKING.equals(pegRevision) &&
-        pegRevision.getNumber() > 0) {
+        pegRevision.isValid() && pegRevision.getNumber() != 0) {
       builder.append("@");
       builder.append(pegRevision);
     }
@@ -118,7 +118,7 @@ public class CommandUtil {
   }
 
   public static void put(@NotNull List<String> parameters, @Nullable SVNRevision revision) {
-    if (revision != null && !SVNRevision.UNDEFINED.equals(revision) && !SVNRevision.WORKING.equals(revision) && revision.getNumber() >= 0) {
+    if (revision != null && !SVNRevision.UNDEFINED.equals(revision) && !SVNRevision.WORKING.equals(revision) && revision.isValid()) {
       parameters.add("--revision");
       parameters.add(revision.toString());
     }

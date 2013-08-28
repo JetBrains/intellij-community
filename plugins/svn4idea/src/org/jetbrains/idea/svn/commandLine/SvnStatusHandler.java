@@ -257,6 +257,12 @@ public class SvnStatusHandler extends DefaultHandler {
         return new Target();
       }
     });
+    myElementsMap.put("against", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new Against();
+      }
+    });
     myElementsMap.put("wc-status", new Getter<ElementHandlerBase>() {
       @Override
       public ElementHandlerBase get() {
@@ -319,6 +325,18 @@ public class SvnStatusHandler extends DefaultHandler {
     if (! shouldBeTrue) {
       throw new SAXException("can not parse output");
     }
+  }
+
+  private static SVNStatusType parseContentsStatus(Attributes attributes) throws SAXException {
+    final String item = attributes.getValue("item");
+    assertSAX(item != null);
+    return StatusCallbackConvertor.convert(org.apache.subversion.javahl.types.Status.Kind.valueOf(item));
+  }
+
+  private static SVNStatusType parsePropertiesStatus(Attributes attributes) throws SAXException {
+    final String props = attributes.getValue("props");
+    assertSAX(props != null);
+    return StatusCallbackConvertor.convert(org.apache.subversion.javahl.types.Status.Kind.valueOf(props));
   }
 
   private static class Fake extends ElementHandlerBase {
@@ -403,15 +421,6 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
-      final String revision = attributes.getValue("revision");
-      if (! StringUtil.isEmptyOrSpaces(revision)) {
-        try {
-          final long number = Long.parseLong(revision);
-          status.setRemoteRevision(SVNRevision.create(number));
-        } catch (NumberFormatException e) {
-          throw new SAXException(e);
-        }
-      }
     }
 
     @Override
@@ -582,7 +591,11 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
-      //not used now
+      final SVNStatusType propertiesStatus = parsePropertiesStatus(attributes);
+      status.setRemotePropertiesStatus(propertiesStatus);
+
+      final SVNStatusType contentsStatus = parseContentsStatus(attributes);
+      status.setRemoteContentsStatus(contentsStatus);
     }
 
     @Override
@@ -623,13 +636,9 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
-      final String props = attributes.getValue("props");
-      assertSAX(props != null);
-      final SVNStatusType propertiesStatus = StatusCallbackConvertor.convert(org.apache.subversion.javahl.types.Status.Kind.valueOf(props));
+      final SVNStatusType propertiesStatus = parsePropertiesStatus(attributes);
       status.setPropertiesStatus(propertiesStatus);
-      final String item = attributes.getValue("item");
-      assertSAX(item != null);
-      final SVNStatusType contentsStatus = StatusCallbackConvertor.convert(org.apache.subversion.javahl.types.Status.Kind.valueOf(item));
+      final SVNStatusType contentsStatus = parseContentsStatus(attributes);
       status.setContentsStatus(contentsStatus);
 
       if (SVNStatusType.STATUS_CONFLICTED.equals(propertiesStatus) || SVNStatusType.STATUS_CONFLICTED.equals(contentsStatus)) {
@@ -683,7 +692,7 @@ public class SvnStatusHandler extends DefaultHandler {
     private final File myBase;
 
     private Entry(final File base) {
-      super(new String[]{"wc-status"}, new String[]{});
+      super(new String[]{"wc-status", "repos-status"}, new String[]{});
       myBase = base;
     }
 
@@ -796,11 +805,33 @@ and no "mod4" under
 
   private static class Target extends ElementHandlerBase {
     private Target() {
-      super(new String[]{}, new String[]{"entry"});
+      super(new String[]{"against"}, new String[]{"entry"});
     }
 
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) {
+    }
+
+    @Override
+    public void postEffect(DataCallback callback) {
+    }
+
+    @Override
+    public void preEffect(DataCallback callback) {
+    }
+
+    @Override
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
+    }
+  }
+
+  private static class Against extends ElementHandlerBase {
+    private Against() {
+      super(new String[0], new String[0]);
+    }
+
+    @Override
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
     }
 
     @Override
