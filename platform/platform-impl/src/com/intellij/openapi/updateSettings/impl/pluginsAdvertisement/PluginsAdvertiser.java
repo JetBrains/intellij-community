@@ -75,9 +75,9 @@ public class PluginsAdvertiser implements StartupActivity {
       }
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
+      return null;
     }
-    return null;
   }
 
   @Override
