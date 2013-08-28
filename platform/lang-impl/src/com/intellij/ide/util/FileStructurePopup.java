@@ -433,11 +433,12 @@ public class FileStructurePopup implements Disposable {
 
     FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)myAbstractTreeBuilder.getRootElement();
     if (node != null && myStructureView instanceof StructureViewComposite) {
+      parents.remove(element.getContainingFile());
       final List<FilteringTreeStructure.FilteringNode> fileNodes = node.children();
 
       for (FilteringTreeStructure.FilteringNode fileNode : fileNodes) {
         final FilteringTreeStructure.FilteringNode found = findNode(parents, fileNode);
-        if (found != null) {
+        if (found != null && found != fileNode) {
           return found;
         }
       }
@@ -448,6 +449,7 @@ public class FileStructurePopup implements Disposable {
       }
       return found;
     }
+    TreeUtil.selectFirstNode(myTree);
     return null;
   }
 
