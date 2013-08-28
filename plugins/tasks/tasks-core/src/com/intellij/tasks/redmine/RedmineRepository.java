@@ -185,10 +185,10 @@ public class RedmineRepository extends BaseRepositoryImpl {
     // Ad-hoc fix for IDEA-110012
     Date parsed;
     try {
-      parsed = (new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.US)).parse(date);
+      parsed = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.US).parse(date);
     }
     catch (ParseException e) {
-      LOG.warn("Unparseable date: " + date, e);
+      LOG.warn("Unparseable date: '" + date + "'. Trying ISO-8601 format instead.");
       parsed = TaskUtil.parseDate(date);
     }
     return parsed;
