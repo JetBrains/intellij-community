@@ -245,7 +245,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   @Nullable
-  private PyType getTypeFromDocString() {
+  public PyType getTypeFromDocString() {
     String typeName = null;
     final String name = getName();
     final StructuredDocString targetDocString = getStructuredDocString();

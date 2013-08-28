@@ -10,6 +10,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -28,7 +29,7 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
-import com.jetbrains.python.debugger.django.DjangoExceptionBreakpointHandler;
+import com.jetbrains.python.debugger.django.DjangoTemplateLineBreakpointType;
 import com.jetbrains.python.debugger.pydev.*;
 import com.jetbrains.python.debugger.remote.vfs.PyRemotePositionConverter;
 import com.jetbrains.python.run.PythonProcessHandler;
@@ -66,7 +67,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private boolean myClosing = false;
 
   private PyPositionConverter myPositionConverter;
-  private XSmartStepIntoHandler<?> mySmartStepIntoHandler;
+  private final XSmartStepIntoHandler<?> mySmartStepIntoHandler;
   private boolean myWaitingForConnection = false;
   private PyStackFrame myStackFrameBeforeResume;
 
@@ -82,8 +83,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     else {
       myDebugger = new RemoteDebugger(this, serverSocket, getConnectTimeout());
     }
-    myBreakpointHandlers = new XBreakpointHandler[]{new PyLineBreakpointHandler(this), new PyExceptionBreakpointHandler(this),
-      new DjangoLineBreakpointHandler(this), new DjangoExceptionBreakpointHandler(this)};
+
+    List<XBreakpointHandler> breakpointHandlers = new ArrayList<XBreakpointHandler>();
+    breakpointHandlers.add(new PyLineBreakpointHandler(this));
+    breakpointHandlers.add(new PyExceptionBreakpointHandler(this));
+    for (PyBreakpointHandlerFactory factory : Extensions.getExtensions(PyBreakpointHandlerFactory.EP_NAME)) {
+      breakpointHandlers.add(factory.createBreakpointHandler(this));
+    }
+    myBreakpointHandlers = breakpointHandlers.toArray(new XBreakpointHandler[breakpointHandlers.size()]);
+
     myEditorsProvider = new PyDebuggerEditorsProvider();
     mySmartStepIntoHandler = new PySmartStepIntoHandler(this);
     myProcessHandler = processHandler;
@@ -198,6 +206,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   protected void waitForConnection(final String connectionMessage, String connectionTitle) {
     ProgressManager.getInstance().run(new Task.Backgroundable(getSession().getProject(), connectionTitle, false) {
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setText(connectionMessage);
         try {
@@ -218,6 +227,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           }
           if (!myClosing) {
             invokeLater(new Runnable() {
+              @Override
               public void run() {
                 Messages.showErrorDialog("Unable to establish connection with debugger:\n" + e.getMessage(), getConnectionTitle());
               }
@@ -228,6 +238,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     });
   }
 
+  @Override
   public void init() {
     getSession().rebuildViews();
     registerBreakpoints();
@@ -297,6 +308,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  @Override
   public void printToConsole(String text, ConsoleViewContentType contentType) {
     ((ConsoleView)myExecutionConsole).print(text, contentType);
   }
@@ -423,6 +435,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  @Override
   public PyDebugValue evaluate(final String expression, final boolean execute, boolean doTrunc) throws PyDebuggerException {
     dropFrameCaches();
     final PyStackFrame frame = currentFrame();

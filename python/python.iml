@@ -39,6 +39,7 @@
     <orderEntry type="module" module-name="python-openapi" exported="" />
     <orderEntry type="module" module-name="webide-api" />
     <orderEntry type="module" module-name="duplicates" />
+    <orderEntry type="module" module-name="python-community" exported="" />
   </component>
   <component name="copyright">
     <Base>

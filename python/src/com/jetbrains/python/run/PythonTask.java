@@ -16,7 +16,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
-import com.jetbrains.django.util.OSUtil;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -128,12 +127,6 @@ public class PythonTask {
       bashParams.addParameter(paramString.toString());
     }
     else {
-      String pathKey = OSUtil.getPATHenvVariableName();
-      String sysPath = System.getenv().get(pathKey);
-      if (pathKey != null && !StringUtil.isEmpty(sysPath)) {
-        env.put(pathKey, OSUtil.appendToPATHenvVariable(null, sysPath));
-      }
-
       cmd.setExePath(homePath);
       scriptParams.addParameter(myRunnerScript);
       scriptParams.addParameters(myParameters);

@@ -9,8 +9,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.debugger.PydevXmlUtils;
@@ -173,7 +174,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     String path = (String)params.get(0);
     int line = Integer.parseInt((String)params.get(1));
 
-    final VirtualFile file = VirtualFileUtil.findFile(path);
+    final VirtualFile file = StringUtil.isEmpty(path) ? null : LocalFileSystem.getInstance().findFileByPath(path);
     if (file != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override

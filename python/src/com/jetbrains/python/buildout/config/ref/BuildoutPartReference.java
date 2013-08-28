@@ -1,15 +1,10 @@
 package com.jetbrains.python.buildout.config.ref;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.django.lang.template.psi.impl.DjangoTemplateFileImpl;
-import com.jetbrains.django.model.DjangoTemplateManager;
-import com.jetbrains.django.ref.BaseReference;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFile;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgSection;
@@ -21,7 +16,7 @@ import java.util.List;
 /**
  * @author traff
  */
-public class BuildoutPartReference extends BaseReference {
+public class BuildoutPartReference extends PsiReferenceBase<PsiElement> {
   private final String myPartName;
   private final int myOffsetInElement;
 
@@ -64,17 +59,5 @@ public class BuildoutPartReference extends BaseReference {
   public PsiElement handleElementRename(@NotNull String newElementName) {
     String fullName = PythonStringUtil.replaceLastSuffix(getElement().getText(), "/", newElementName);
     return myElement.replace(PyElementGenerator.getInstance(myElement.getProject()).createStringLiteralAlreadyEscaped(fullName));
-  }
-
-  @Override
-  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    Module module = ModuleUtil.findModuleForPsiElement(myElement);
-    if (module != null) {
-      String name = DjangoTemplateManager.getRelativeName(module, (DjangoTemplateFileImpl)element);
-      if (name != null) {
-        return myElement.replace(PyElementGenerator.getInstance(myElement.getProject()).createStringLiteralFromString(name));
-      }
-    }
-    return myElement;
   }
 }

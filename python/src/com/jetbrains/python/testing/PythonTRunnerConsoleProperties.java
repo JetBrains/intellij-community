@@ -3,7 +3,6 @@ package com.jetbrains.python.testing;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
-import com.jetbrains.django.testRunner.DjangoTestsRunConfiguration;
 
 /**
  * @author Roman.Chernyatchik
@@ -13,10 +12,10 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
 
   private final boolean myIsEditable;
 
-  public PythonTRunnerConsoleProperties(final ModuleRunConfiguration config, final Executor executor) {
+  public PythonTRunnerConsoleProperties(final ModuleRunConfiguration config, final Executor executor, boolean editable) {
     super(config, FRAMEWORK_NAME, executor);
 
-    myIsEditable = config instanceof DjangoTestsRunConfiguration;
+    myIsEditable = editable;
   }
 
   @Override

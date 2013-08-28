@@ -15,14 +15,7 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.django.testRunner.DjangoTestUtil;
-import com.jetbrains.django.testRunner.DjangoTestsRunConfiguration;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,29 +90,9 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
         if (failedTest.isLeaf()) {
           final Location location = failedTest.getLocation(myProject, myConsoleProperties.getScope());
           if (location != null) {
-            final PsiElement element = location.getPsiElement();
-
-            if (getConfiguration() instanceof DjangoTestsRunConfiguration) {
-              final Module module = location.getModule();
-              final String appName = DjangoTestUtil.getAppNameForLocation(module, location.getPsiElement());
-              final String target = DjangoTestUtil.buildTargetFromLocation(module, appName, element);
-              if (target != null)
-                specs.add(target);
-            }
-            else {
-              PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-              PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
-              final VirtualFile virtualFile = location.getVirtualFile();
-              if (virtualFile != null) {
-                String path = virtualFile.getCanonicalPath();
-                if (pyClass != null)
-                  path += "::" + pyClass.getName();
-                if (pyFunction != null)
-                  path += "::" + pyFunction.getName();
-  
-                if (!specs.contains(path))
-                  specs.add(path);
-              }
+            String spec = getConfiguration().getTestSpec(location);
+            if (spec != null && !specs.contains(spec)) {
+              specs.add(spec);
             }
           }
         }

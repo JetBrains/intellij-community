@@ -734,6 +734,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     @Nullable
     @Override
     public PyType getType(@NotNull TypeEvalContext context) {
+      if (mySite instanceof PyTargetExpressionImpl) {
+        final PyType targetDocStringType = ((PyTargetExpressionImpl)mySite).getTypeFromDocString();
+        if (targetDocStringType != null) {
+          return targetDocStringType;
+        }
+      }
       final Callable callable = myGetter.valueOrNull();
       if (callable != null) {
         // Ignore return types of non stub-based elements if we are not allowed to use AST

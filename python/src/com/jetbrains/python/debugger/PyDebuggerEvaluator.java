@@ -27,7 +27,7 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
 
   private void doEvaluate(String expression, XEvaluationCallback callback, boolean doTrunc) {
     expression = expression.trim();
-    if ("".equals(expression)) {
+    if (expression.isEmpty()) {
       callback.evaluated(NONE);
       return;
     }
