@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -542,10 +542,16 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   public static String escapeStringCharacters(@NotNull String s) {
     StringBuilder buffer = new StringBuilder();
-    escapeStringCharacters(s.length(), s, buffer);
+    escapeStringCharacters(s.length(), s, "\"", buffer);
     return buffer.toString();
   }
 
+  @NotNull
+  public static String escapeCharCharacters(@NotNull String s) {
+    StringBuilder buffer = new StringBuilder();
+    escapeStringCharacters(s.length(), s, "\'", buffer);
+    return buffer.toString();
+  }
 
   @NotNull
   public static String unescapeStringCharacters(@NotNull String s) {
@@ -1196,7 +1202,7 @@ public class StringUtil extends StringUtilRt {
     }
     return result.toString();
   }
-  
+
   @NotNull
   public static <T> String join(@NotNull Iterable<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
     final StringBuilder result = new StringBuilder();
