@@ -118,7 +118,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       return false;
     }
     final ASTNode functionNode = TreeUtil.findParent(node, PyElementTypes.FUNCTION_DECLARATION);
-    final ASTNode qualifierNode = node.findChildByType(PyElementTypes.REFERENCE_EXPRESSION);
+    final ASTNode qualifierNode = node.findChildByType(PyElementTypes.REFERENCE_EXPRESSION_SET);
     if (functionNode != null && qualifierNode != null) {
       final PsiElement function = functionNode.getPsi();
       if (function instanceof PyFunction && PyNames.NEW.equals(((PyFunction)function).getName())) {
