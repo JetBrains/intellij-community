@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,12 +141,17 @@ public class JavaExecutionUtil {
   }
 
   @Nullable
+  public static String getPresentableClassName(final String rtClassName) {
+    return getPresentableClassName(rtClassName, null);
+  }
+
+  /**
+   * {@link JavaExecutionUtil#getPresentableClassName(java.lang.String)} 
+   */
+  @Deprecated
+  @Nullable
   public static String getPresentableClassName(final String rtClassName, final JavaRunConfigurationModule configurationModule) {
     if (StringUtil.isEmpty(rtClassName)) return null;
-    final PsiClass psiClass = configurationModule.findClass(rtClassName);
-    if (psiClass != null) {
-      return psiClass.getName();
-    }
     final int lastDot = rtClassName.lastIndexOf('.');
     if (lastDot == -1 || lastDot == rtClassName.length() - 1) {
       return rtClassName;

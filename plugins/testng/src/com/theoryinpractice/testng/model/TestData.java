@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,7 +177,7 @@ public class TestData implements Cloneable
   public String getGeneratedName(JavaRunConfigurationModule runconfigurationmodule) {
     if (TestType.PACKAGE.getType().equals(TEST_OBJECT)) if (getPackageName().length() == 0) return "<default>";
     else return getPackageName();
-    String name = JavaExecutionUtil.getPresentableClassName(getMainClassName(), runconfigurationmodule);
+    String name = JavaExecutionUtil.getPresentableClassName(getMainClassName());
     if (TestType.METHOD.getType().equals(TEST_OBJECT)) {
       return name + '.' + getMethodName();
     }
