@@ -34,4 +34,24 @@ public class UnknownFeature {
   public String getImplementationName() {
     return myImplementationName;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    UnknownFeature feature = (UnknownFeature)o;
+
+    if (!myFeatureType.equals(feature.myFeatureType)) return false;
+    if (!myImplementationName.equals(feature.myImplementationName)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myFeatureType.hashCode();
+    result = 31 * result + myImplementationName.hashCode();
+    return result;
+  }
 }
