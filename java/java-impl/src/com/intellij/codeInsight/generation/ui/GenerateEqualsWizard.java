@@ -100,25 +100,39 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     }
 
     @Override
-    protected List<MemberInfo> getClassFields() {return myClassFields;}
+    protected List<MemberInfo> getClassFields() {
+      return myClassFields;
+    }
 
     @Override
-    protected HashMap<PsiMember, MemberInfo> getFieldsToHashCode() {return myFieldsToHashCode;}
+    protected HashMap<PsiMember, MemberInfo> getFieldsToHashCode() {
+      return myFieldsToHashCode;
+    }
 
     @Override
-    protected HashMap<PsiMember, MemberInfo> getFieldsToNonNull() {return myFieldsToNonNull;}
+    protected HashMap<PsiMember, MemberInfo> getFieldsToNonNull() {
+      return myFieldsToNonNull;
+    }
 
     @Override
-    protected AbstractMemberSelectionPanel<PsiMember, MemberInfo> getEqualsPanel() {return myEqualsPanel;}
+    protected AbstractMemberSelectionPanel<PsiMember, MemberInfo> getEqualsPanel() {
+      return myEqualsPanel;
+    }
 
     @Override
-    protected AbstractMemberSelectionPanel<PsiMember, MemberInfo> getHashCodePanel() {return myHashCodePanel;}
+    protected AbstractMemberSelectionPanel<PsiMember, MemberInfo> getHashCodePanel() {
+      return myHashCodePanel;
+    }
 
     @Override
-    protected AbstractMemberSelectionPanel<PsiMember, MemberInfo> getNonNullPanel() {return myNonNullPanel;}
+    protected AbstractMemberSelectionPanel<PsiMember, MemberInfo> getNonNullPanel() {
+      return myNonNullPanel;
+    }
 
     @Override
-    protected PsiClass getPsiClass() {return myClass;}
+    protected PsiClass getPsiClass() {
+      return myClass;
+    }
 
     @Override
     protected void updateHashCodeMemberInfos(Collection<MemberInfo> equalsMemberInfos) {

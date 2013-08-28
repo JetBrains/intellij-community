@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * Nikolay.Tropin
  * 8/23/13
  */
-public class AbstractMemberInfoModel<T extends PsiElement, M extends MemberInfoBase<T>> implements MemberInfoModel<T, M> {
+public abstract class AbstractMemberInfoModel<T extends PsiElement, M extends MemberInfoBase<T>> implements MemberInfoModel<T, M> {
 
   @Override
   public boolean isMemberEnabled(M member) {

@@ -34,10 +34,10 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
 
   private int myNonNullStepCode;
   private int myEqualsStepCode;
-  private int myHashcodeStepCode;
+  private int myHashCodeStepCode;
 
-  protected int getHashcodeStepCode() {
-    return myHashcodeStepCode;
+  protected int getHashCodeStepCode() {
+    return myHashCodeStepCode;
   }
 
   protected int getEqualsStepCode() {
@@ -83,7 +83,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
 
   protected void addSteps() {
     myEqualsStepCode = addStepForPanel(myEqualsPanel);
-    myHashcodeStepCode = addStepForPanel(myHashCodePanel);
+    myHashCodeStepCode = addStepForPanel(myHashCodePanel);
     myNonNullStepCode = addStepForPanel(myNonNullPanel);
   }
 
@@ -107,7 +107,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
     if (getCurrentStep() == getEqualsStepCode() && myEqualsPanel != null) {
       equalsFieldsSelected();
     }
-    else if (getCurrentStep() == getHashcodeStepCode() && myHashCodePanel != null) {
+    else if (getCurrentStep() == getHashCodeStepCode() && myHashCodePanel != null) {
       Collection<I> selectedMemberInfos = myEqualsPanel != null ? myEqualsPanel.getTable().getSelectedMemberInfos()
                                                                 : myHashCodePanel.getTable().getSelectedMemberInfos();
       updateNonNullMemberInfos(selectedMemberInfos);
@@ -170,7 +170,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
   }
 
   private class MyTableModelListener implements TableModelListener {
-    public void tableChanged(TableModelEvent M) {
+    public void tableChanged(TableModelEvent modelEvent) {
       updateButtons();
     }
   }
