@@ -973,6 +973,7 @@
     <visitorFilter language="Cython" implementationClass="com.jetbrains.cython.CythonVisitorFilter"/>
     <pyModuleMembersProvider implementation="com.jetbrains.cython.CythonModuleMembersProvider"/>
     <pyReferenceResolveProvider implementation="com.jetbrains.cython.CythonReferenceResolveProvider"/>
+    <inspectionExtension implementation="com.jetbrains.cython.CythonInspectionExtension"/>
 
     <!-- Mako -->
     <dialectsTokenSetContributor implementation="com.jetbrains.mako.MakoTokenSetContributor"/>
