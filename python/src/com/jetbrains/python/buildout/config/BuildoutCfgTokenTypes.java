@@ -1,8 +1,5 @@
 package com.jetbrains.python.buildout.config;
 
-import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.yaml.YAMLElementType;
-
 /**
  * @author traff
  */

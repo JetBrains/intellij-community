@@ -1,8 +1,6 @@
 package com.jetbrains.python.buildout.config;
 
 import com.intellij.psi.tree.IFileElementType;
-import org.jetbrains.yaml.YAMLElementType;
-import org.jetbrains.yaml.YAMLLanguage;
 
 /**
  * @author traff
