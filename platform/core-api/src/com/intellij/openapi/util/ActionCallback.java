@@ -136,12 +136,17 @@ public class ActionCallback implements Disposable {
 
   @NotNull
   public final ActionCallback notifyWhenRejected(@NotNull final ActionCallback child) {
-    return doWhenRejected(child.createSetRejectedRunnable());
+    return doWhenRejected(new Runnable() {
+      @Override
+      public void run() {
+        child.reject(myError);
+      }
+    });
   }
 
   @NotNull
   public ActionCallback notify(@NotNull final ActionCallback child) {
-    return doWhenDone(child.createSetDoneRunnable()).doWhenRejected(child.createSetRejectedRunnable());
+    return doWhenDone(child.createSetDoneRunnable()).notifyWhenRejected(child);
   }
 
   @NotNull
@@ -204,7 +209,12 @@ public class ActionCallback implements Disposable {
     };
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @NotNull
+  @Deprecated
+  /**
+   * @deprecated use {@link #notifyWhenRejected(ActionCallback)}
+   */
   public Runnable createSetRejectedRunnable() {
     return new Runnable() {
       @Override
