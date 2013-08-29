@@ -10,10 +10,7 @@
     </extensionPoint>
 
     <extensionPoint name="dom.converter"
-                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP">
-      <with attribute="interfaceName" implements="com.intellij.util.xml.Converter"/>
-      <with attribute="implementationName" implements="com.intellij.util.xml.Converter"/>
-    </extensionPoint>
+                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"/>
 
     <extensionPoint name="dom.extender"
                     beanClass="com.intellij.util.xml.reflect.DomExtenderEP">
