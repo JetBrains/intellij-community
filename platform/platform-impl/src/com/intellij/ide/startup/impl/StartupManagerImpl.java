@@ -176,12 +176,12 @@ public class StartupManagerImpl extends StartupManagerEx {
     runActivities(myDumbAwarePostStartupActivities);
     DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
       public void run() {
+        //noinspection SynchronizeOnThis
         synchronized (StartupManagerImpl.this) {
           app.assertIsDispatchThread();
           if (myProject.isDisposed()) return;
           runActivities(myDumbAwarePostStartupActivities); // they can register activities while in the dumb mode
           runActivities(myNotDumbAwarePostStartupActivities);
-
           myPostStartupActivitiesPassed = true;
         }
       }
@@ -267,12 +267,12 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
+  @Override
   public synchronized void runWhenProjectIsInitialized(@NotNull final Runnable action) {
-    final Runnable runnable;
-
     final Application application = ApplicationManager.getApplication();
     if (application == null) return;
 
+    final Runnable runnable;
     if (DumbService.isDumbAware(action)) {
       runnable = new DumbAwareRunnable() {
         public void run() {
