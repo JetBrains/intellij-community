@@ -395,7 +395,6 @@ public class MatcherImpl {
     }
     else {
       final PsiElement[] elementsToScan = ((LocalSearchScope)searchScope).getScope();
-      if (elementsToScan == null) return false;
       totalFilesToScan = elementsToScan.length;
 
       for (int i = 0; i < elementsToScan.length; ++i) {
