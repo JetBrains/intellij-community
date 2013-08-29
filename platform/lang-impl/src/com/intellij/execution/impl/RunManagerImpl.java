@@ -834,7 +834,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @Nullable
   public ConfigurationFactory getFactory(final String typeName, String factoryName, boolean checkUnknown) {
     final ConfigurationType type = myTypesByName.get(typeName);
-    if (type == null && checkUnknown) {
+    if (type == null && checkUnknown && typeName != null) {
       UnknownFeaturesCollector.getInstance(myProject).registerUnknownRunConfiguration(typeName);
     }
     if (factoryName == null) {
