@@ -1,5 +1,6 @@
 package com.jetbrains.python.codeInsight.override;
 
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
@@ -67,13 +68,22 @@ public class PyOverrideImplementUtil {
     chooseAndOverrideOrImplementMethods(project, editor, pyClass);
   }
 
-  private static void chooseAndOverrideOrImplementMethods(final Project project,
+
+  public static void chooseAndOverrideOrImplementMethods(final Project project,
+                                                         @NotNull final Editor editor,
+                                                         @NotNull final PyClass pyClass) {
+    chooseAndOverrideOrImplementMethods(project, editor, pyClass, Sets.<PyFunction>newHashSet());
+  }
+
+  public static void chooseAndOverrideOrImplementMethods(final Project project,
                                                           @NotNull final Editor editor,
-                                                          @NotNull final PyClass pyClass) {
+                                                          @NotNull final PyClass pyClass,
+                                                          @NotNull final Set<PyFunction> toSelect) {
     LOG.assertTrue(pyClass.isValid());
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Collection<PyFunction> superFunctions = getAllSuperFunctions(pyClass);
+    final List<PyMethodMember> membersToSelect = new ArrayList<PyMethodMember>();
     List<PyMethodMember> elements = new ArrayList<PyMethodMember>();
     for (PyFunction function : superFunctions) {
       final String name = function.getName();
@@ -81,7 +91,11 @@ public class PyOverrideImplementUtil {
         continue;
       }
       if (pyClass.findMethodByName(name, false) == null) {
-        elements.add(new PyMethodMember(function));
+        final PyMethodMember member = new PyMethodMember(function);
+        elements.add(member);
+        if (toSelect.contains(function)) {
+          membersToSelect.add(member);
+        }
       }
     }
     if (elements.size() == 0) {
@@ -103,6 +117,7 @@ public class PyOverrideImplementUtil {
       };
     chooser.setTitle("Select Methods to Override");
     chooser.setCopyJavadocVisible(false);
+    chooser.selectElements(membersToSelect.toArray(new PyMethodMember[membersToSelect.size()]));
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
@@ -192,7 +207,7 @@ public class PyOverrideImplementUtil {
       }
     }
 
-    if (PyNames.FAKE_OLD_BASE.equals(baseFunction.getContainingClass().getName())) {
+    if (PyNames.FAKE_OLD_BASE.equals(baseClass.getName())) {
       statementBody.append(PyNames.PASS);
     }
     else {
@@ -238,7 +253,7 @@ public class PyOverrideImplementUtil {
   }
 
   @NotNull
-  private static Collection<PyFunction> getAllSuperFunctions(@NotNull final PyClass pyClass) {
+  public static Collection<PyFunction> getAllSuperFunctions(@NotNull final PyClass pyClass) {
     final Map<String, PyFunction> superFunctions = new HashMap<String, PyFunction>();
     for (PyClass aClass : pyClass.getAncestorClasses()) {
       for (PyFunction function : aClass.getMethods()) {
