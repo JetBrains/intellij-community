@@ -16,12 +16,12 @@ public class PythonParsingTest extends ParsingTestCase {
 
   public PythonParsingTest() {
     super("psi", "py", new PythonParserDefinition());
-    PyTestCase.initPlatformPrefix();
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    PyTestCase.initPlatformPrefix();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new CythonTokenSetContributor());

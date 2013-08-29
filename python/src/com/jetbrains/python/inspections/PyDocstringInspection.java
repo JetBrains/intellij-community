@@ -8,16 +8,15 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.django.model.DjangoMeta;
-import com.jetbrains.django.model.DjangoModel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.documentation.*;
+import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.inspections.quickfix.DocstringQuickFix;
 import com.jetbrains.python.inspections.quickfix.PySuppressInspectionFix;
 import com.jetbrains.python.psi.*;
@@ -76,9 +75,15 @@ public class PyDocstringInspection extends PyInspection {
     public void visitPyClass(PyClass node) {
       if (PythonUnitTestUtil.isUnitTestCaseClass(node)) return;
       final String name = node.getName();
-      final PyClass outerClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
-      final boolean isDjangoMeta = DjangoModel.isDjangoModelDescendant(outerClass) && DjangoMeta.isMetaClass(node);
-      if (name != null && !name.startsWith("_") && !isDjangoMeta) checkDocString(node);
+      if (name == null || name.startsWith("_")) {
+        return;
+      }
+      for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
+        if (extension.ignoreMissingDocstring(node)) {
+          return;
+        }
+      }
+      checkDocString(node);
     }
 
     private void checkDocString(PyDocStringOwner node) {

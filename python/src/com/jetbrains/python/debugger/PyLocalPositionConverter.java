@@ -89,6 +89,11 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     return createXSourcePosition(getVirtualFile(position.getFile()), position.getLine());
   }
 
+  @Override
+  public PySignature convertSignature(PySignature signature) {
+    return signature;
+  }
+
   public VirtualFile getVirtualFile(String path) {
     VirtualFile vFile = getLocalFileSystem().findFileByPath(path);
 

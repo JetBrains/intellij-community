@@ -277,6 +277,7 @@ target(name: "compile", description: "Compile module python") {
       include(name: "pydevSrc")
       include(name: "openapi/src")
       include(name: "psi-api/src")
+      include(name: "community/src")
       include(name: "pluginResources")
     }
     connectorPlugins.each {
@@ -325,6 +326,10 @@ target(name: "compile", description: "Compile module python") {
       type(type: "file")
     }
     fileset(dir: "${pluginHome}/psi-api/resources") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
+    fileset(dir: "${pluginHome}/community/src") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }

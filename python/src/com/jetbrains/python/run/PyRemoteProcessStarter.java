@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.PathMappingSettings;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.remote.PyRemoteSdkData;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +59,7 @@ public class PyRemoteProcessStarter {
                                                 @Nullable PathMappingSettings settings)
     throws ExecutionException {
 
-    return manager.startRemoteProcess(project, (PyRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine,
+    return manager.startRemoteProcess(project, (PyRemoteSdkData)sdk.getSdkAdditionalData(), commandLine,
                                       settings);
   }
 }

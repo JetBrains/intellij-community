@@ -15,6 +15,7 @@
         <dir name="lib">
           <jar name="python.jar">
             <module name="python"> <patternset refid="resources.excluded"/> </module>
+            <module name="python-community"/>
             <module name="python-plugin"/>
             <module name="python-pydev"/>
             <module name="python-openapi"/>

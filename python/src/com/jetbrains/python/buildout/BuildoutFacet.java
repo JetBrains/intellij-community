@@ -236,6 +236,11 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     return cfg.getPaths();
   }
 
+  @Override
+  public boolean acceptRootAsTopLevelPackage() {
+    return false;
+  }
+
   @Nullable
   public static BuildoutFacet getInstance(Module module) {
     return FacetManager.getInstance(module).getFacetByType(BuildoutFacetType.ID);

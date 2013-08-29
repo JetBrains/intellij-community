@@ -6,11 +6,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.cython.CythonLanguageDialect;
-import com.jetbrains.cython.psi.CythonCImportElement;
-import com.jetbrains.cython.psi.CythonFromCImportStatement;
-import com.jetbrains.cython.psi.CythonImportReference;
-import com.jetbrains.cython.psi.CythonReference;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -56,12 +51,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyExpression qualifier = getQualifier();
 
     // Handle import reference
-    final boolean inCythonFile = CythonLanguageDialect.isInsideCythonFile(this);
-    if (inCythonFile) {
-      if (PsiTreeUtil.getParentOfType(this, CythonCImportElement.class, CythonFromCImportStatement.class) != null) {
-        return new CythonImportReference(this, context);
-      }
-    }
     final PsiElement importParent = PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class);
     if (importParent != null) {
       return PyImportReference.forElement(this, importParent, context);
@@ -78,10 +67,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     if (qualifier != null) {
       return new PyQualifiedReference(this, context);
-    }
-
-    if (inCythonFile) {
-      return new CythonReference(this, context);
     }
 
     return new PyReferenceImpl(this, context);

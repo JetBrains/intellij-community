@@ -8,18 +8,18 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remotesdk.RemoteInterpreterException;
 import com.intellij.remotesdk.RemoteSdkData;
-import com.intellij.remotesdk.RemoteSdkFactory;
 import com.intellij.remotesdk.RemoteSshProcess;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.remote.ui.RemoteProjectSettings;
 import com.jetbrains.python.sdk.skeletons.PySkeletonGenerator;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,21 +30,21 @@ import java.util.List;
 /**
  * @author traff
  */
-public abstract class PythonRemoteInterpreterManager implements RemoteSdkFactory<PyRemoteSdkAdditionalData> {
+public abstract class PythonRemoteInterpreterManager {
   public final static ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
     ExtensionPointName.create("Pythonid.remoteInterpreterManager");
   public static final String WEB_DEPLOYMENT_PLUGIN_IS_DISABLED =
     "Remote interpreter can't be executed. Please enable the Remote Hosts Access plugin.";
 
   public abstract ProcessHandler startRemoteProcess(@Nullable Project project,
-                                                    @NotNull PyRemoteSdkAdditionalData data,
+                                                    @NotNull PyRemoteSdkData data,
                                                     @NotNull GeneralCommandLine commandLine,
                                                     @Nullable
                                                     PathMappingSettings mappingSettings)
     throws RemoteInterpreterException;
 
   public abstract ProcessHandler startRemoteProcessWithPid(@Nullable Project project,
-                                                           @NotNull PyRemoteSdkAdditionalData data,
+                                                           @NotNull PyRemoteSdkData data,
                                                            @NotNull GeneralCommandLine commandLine,
                                                            @Nullable
                                                            PathMappingSettings mappingSettings)
@@ -120,8 +120,10 @@ public abstract class PythonRemoteInterpreterManager implements RemoteSdkFactory
   }
 
   public abstract PathMappingSettings setupMappings(@Nullable Project project,
-                                                    @NotNull PyRemoteSdkAdditionalData data,
+                                                    @NotNull PyRemoteSdkData data,
                                                     @Nullable PathMappingSettings mappingSettings);
+
+  public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
   public static class PyRemoteInterpreterExecutionException extends ExecutionException {
 

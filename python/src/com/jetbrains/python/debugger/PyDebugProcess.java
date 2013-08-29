@@ -23,15 +23,14 @@ import com.intellij.remotesdk.RemoteProcessHandlerBase;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
-import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
-import com.jetbrains.python.debugger.django.DjangoTemplateLineBreakpointType;
 import com.jetbrains.python.debugger.pydev.*;
-import com.jetbrains.python.debugger.remote.vfs.PyRemotePositionConverter;
+import com.jetbrains.python.remote.RemoteDebuggableProcessHandler;
 import com.jetbrains.python.run.PythonProcessHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,8 +98,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (myProcessHandler != null) {
       myProcessHandler.addProcessListener(this);
     }
-    if (processHandler instanceof RemoteProcessHandlerBase) {
-      myPositionConverter = new PyRemotePositionConverter(this, ((RemoteProcessHandlerBase)processHandler).getMappingSettings());
+    if (processHandler instanceof RemoteDebuggableProcessHandler) {
+      myPositionConverter = ((RemoteDebuggableProcessHandler) processHandler).createPositionConverter(this);
     }
     else {
       myPositionConverter = new PyLocalPositionConverter();
@@ -264,12 +263,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void recordSignature(PySignature signature) {
-    if (myPositionConverter instanceof PyRemotePositionConverter) {
-      String localPath = ((PyRemotePositionConverter)myPositionConverter).getPathMappingSettings().convertToLocal(signature.getFile());
-      signature = new PySignature(localPath, signature.getFunctionName()).addAllArgs(signature);
-    }
-
-    PySignatureCacheManager.getInstance(getSession().getProject()).recordSignature(signature);
+    PySignatureCacheManager.getInstance(getSession().getProject()).recordSignature(myPositionConverter.convertSignature(signature));
   }
 
   protected void afterConnect() {
@@ -425,8 +419,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       String type = PyLineBreakpointType.ID;
       final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
       if (document != null) {
-        if (DjangoUtil.isDjangoTemplateDocument(document, getSession().getProject())) {
-          type = DjangoTemplateLineBreakpointType.ID;
+        for (XBreakpointType breakpointType : Extensions.getExtensions(XBreakpointType.EXTENSION_POINT_NAME)) {
+          if (breakpointType instanceof PyBreakpointType &&
+              ((PyBreakpointType)breakpointType).canPutInDocument(getSession().getProject(), document)) {
+            type = breakpointType.getId();
+            break;
+          }
         }
       }
       myDebugger.setTempBreakpoint(type, pyPosition.getFile(), pyPosition.getLine());

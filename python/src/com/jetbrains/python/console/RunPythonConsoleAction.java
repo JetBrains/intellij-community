@@ -20,7 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.buildout.BuildoutFacet;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.remote.PyRemoteSdkData;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -76,7 +76,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
     String[] setupFragment;
 
-    PyConsoleOptionsProvider.PyConsoleSettings settingsProvider = PyConsoleOptionsProvider.getInstance(project).getPythonConsoleSettings();
+    PyConsoleOptions.PyConsoleSettings settingsProvider = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
     Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.addContentRoots(),
                                                                              settingsProvider.addSourceRoots());
 
@@ -138,7 +138,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       PythonRemoteInterpreterManager instance = PythonRemoteInterpreterManager.getInstance();
       if (instance != null) {
         mappingSettings =
-          instance.setupMappings(project, (PyRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), null);
+          instance.setupMappings(project, (PyRemoteSdkData)sdk.getSdkAdditionalData(), null);
       }
     }
     return mappingSettings;
@@ -148,7 +148,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
   private static Pair<Sdk, Module> findPythonSdkAndModule(Project project, Module contextModule) {
     Sdk sdk = null;
     Module module = null;
-    PyConsoleOptionsProvider.PyConsoleSettings settings = PyConsoleOptionsProvider.getInstance(project).getPythonConsoleSettings();
+    PyConsoleOptions.PyConsoleSettings settings = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
     String sdkHome = settings.getSdkHome();
     if (sdkHome != null) {
       sdk = PythonSdkType.findSdkByPath(sdkHome);

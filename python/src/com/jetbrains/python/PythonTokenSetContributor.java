@@ -64,4 +64,15 @@ public class PythonTokenSetContributor implements PythonDialectsTokenSetContribu
   public TokenSet getFunctionDeclarationTokens() {
     return TokenSet.create(FUNCTION_DECLARATION);
   }
+
+  @Override
+  public TokenSet getUnbalancedBracesRecoveryTokens() {
+    return TokenSet.create(DEF_KEYWORD, CLASS_KEYWORD, RETURN_KEYWORD, WITH_KEYWORD, WHILE_KEYWORD, BREAK_KEYWORD, CONTINUE_KEYWORD,
+                           RAISE_KEYWORD, TRY_KEYWORD, EXCEPT_KEYWORD, FINALLY_KEYWORD);
+  }
+
+  @Override
+  public TokenSet getReferenceExpressionTokens() {
+    return TokenSet.create(REFERENCE_EXPRESSION);
+  }
 }
