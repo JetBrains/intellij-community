@@ -35,7 +35,7 @@ public final class HgVersion implements Comparable<HgVersion> {
 
   private static final Logger LOGGER = Logger.getInstance(HgVersion.class);
   private static final Pattern HG_VERSION_PATTERN =
-    Pattern.compile(".+\\(\\s*\\S+\\s+(\\d+)\\.(\\d+)[\\+\\.-]?(\\d*)?.*\\s*\\)\\s*.*\\s*", Pattern.CASE_INSENSITIVE);
+    Pattern.compile(".+\\(\\s*\\S+\\s+(\\d+)\\.(\\d+)[\\.]?(\\d)?.*\\s*\\)\\s*.*\\s*", Pattern.CASE_INSENSITIVE);
   //f.e. Mercurial Distributed SCM (version 2.6+20130507) or Mercurial Distributed SCM (version 2.6.2), 2.7-rc+5-ca2dfc2f63eb
 
   /**
@@ -43,6 +43,10 @@ public final class HgVersion implements Comparable<HgVersion> {
    */
   public static final HgVersion MIN = new HgVersion(1, 9, 1);
   public static final HgVersion AMEND_SUPPORTED = new HgVersion(2, 2, 0);
+  public static final HgVersion BUILD_IN_FUNCTION_SUPPORTED = new HgVersion(2, 6, 0);
+  // before 2.3 build in func not supported
+  // since 2.3 - 2.5.3 hg has bug with join function with file_copies
+  // see http://mercurial.808500.n3.nabble.com/Bug-3887-New-hg-log-template-quot-rev-join-file-copies-n-quot-prints-literal-quot-sourcename-quot-fos-td4000129.html
 
   /**
    * Special version which indicates, that Hg version information is unavailable.
@@ -51,7 +55,7 @@ public final class HgVersion implements Comparable<HgVersion> {
 
   private final int myMajor;
   private final int myMiddle;
-  private final int myMinor;
+  private final int myMinor;  //use only first digit after second dot
 
   public HgVersion(int major, int middle, int minor) {
     myMajor = major;
@@ -106,6 +110,10 @@ public final class HgVersion implements Comparable<HgVersion> {
 
   public boolean isAmendSupported() {
     return !isNull() && compareTo(AMEND_SUPPORTED) >= 0;
+  }
+
+  public boolean isBuildInFunctionSupported() {
+    return !isNull() && compareTo(BUILD_IN_FUNCTION_SUPPORTED) >= 0;
   }
 
   /**
