@@ -437,12 +437,12 @@ public abstract class ChooseByNameBase {
     final JComponent toolbarComponent = actionToolbar.getComponent();
     toolbarComponent.setBorder(null);
 
-    hBox.add(toolbarComponent);
-
     if (myToolArea == null) {
       myToolArea = new JLabel(EmptyIcon.create(1, 24));
     }
     hBox.add(myToolArea);
+    hBox.add(toolbarComponent);
+
     myTextFieldPanel.add(caption2Tools);
 
     final ActionMap actionMap = new ActionMap();
@@ -1635,7 +1635,7 @@ public abstract class ChooseByNameBase {
 
   private abstract class ShowFindUsagesAction extends AnAction {
     public ShowFindUsagesAction() {
-      super(ACTION_NAME, ACTION_NAME, AllIcons.Actions.Find);
+      super(ACTION_NAME, ACTION_NAME, AllIcons.General.AutohideOff);
     }
 
     @Override
