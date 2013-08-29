@@ -14,8 +14,13 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 import java.io.File;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -104,6 +109,10 @@ public class CommandUtil {
     parameters.add(builder.toString());
   }
 
+  public static void put(@NotNull List<String> parameters, @NotNull SvnTarget target) {
+    put(parameters, target.getPathOrUrlString(), target.getPegRevision());
+  }
+
   public static void put(@NotNull List<String> parameters, @NotNull File... paths) {
     for (File path : paths) {
       put(parameters, path);
@@ -145,6 +154,13 @@ public class CommandUtil {
         parameters.add(value);
       }
     }
+  }
+
+  public static <T> T parse(@NotNull String data, @NotNull Class<T> type) throws JAXBException {
+    JAXBContext context = JAXBContext.newInstance(type);
+    Unmarshaller unmarshaller = context.createUnmarshaller();
+
+    return (T) unmarshaller.unmarshal(new StringReader(data));
   }
 
   /**

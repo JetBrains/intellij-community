@@ -64,15 +64,14 @@ public class SvnLazyPropertyContentRevision implements ContentRevision, MarkerVc
 
   private String loadContent() {
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient client = vcs.createWCClient();
     final Ref<String> ref = new Ref<String>();
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {
         try {
-          ref.set(AbstractShowPropertiesDiffAction.getPropertyList(myUrl, ((SvnRevisionNumber) myNumber).getRevision(), client));
+          ref.set(AbstractShowPropertiesDiffAction.getPropertyList(vcs, myUrl, ((SvnRevisionNumber)myNumber).getRevision()));
         }
-        catch (SVNException e) {
+        catch (VcsException e) {
           // unknown node kind (node deleted)
           /*if (e.getErrorMessage().getErrorCode().getCode() == 145000) {
             return "";
