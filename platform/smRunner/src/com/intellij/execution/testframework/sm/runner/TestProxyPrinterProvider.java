@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,13 @@ public final class TestProxyPrinterProvider {
     }
 
     private void printLine(@NotNull String line, @NotNull ConsoleViewContentType contentType) {
-      Filter.Result result = myFilter.applyFilter(line, line.length());
+      Filter.Result result = null;
+      try {
+        result = myFilter.applyFilter(line, line.length());
+      }
+      catch (Throwable t) {
+        throw new RuntimeException("Error while applying " + myFilter + " to '"+line+"'", t);
+      }
       if (result != null) {
         defaultPrint(line.substring(0, result.highlightStartOffset), contentType);
         String linkText = line.substring(result.highlightStartOffset, result.highlightEndOffset);

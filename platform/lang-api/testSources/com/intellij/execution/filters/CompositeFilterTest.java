@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,18 @@ public class CompositeFilterTest {
 
   }
 
+  @Test
+  public void testApplyBadFilter() throws Exception {
+    myCompositeFilter.addFilter(throwSOEFilter());
+    try {
+      Assert.assertNull(applyFilter());
+      Assert.fail("Exception expected");
+    }
+    catch (Exception e) {
+      Assert.assertTrue(e.getMessage().contains("Error while applying com.intellij.execution.filters.CompositeFilterTest$"));
+    }
+  }
+
   private Filter.Result applyFilter() {
     return myCompositeFilter.applyFilter("foo\n", 10);
   }
@@ -100,6 +112,16 @@ public class CompositeFilterTest {
     for (Filter.ResultItem resultItem : resultItems) {
       Assert.assertNotNull(resultItem);
     }
+  }
+
+  private Filter throwSOEFilter() {
+    return new Filter() {
+      @Nullable
+      @Override
+      public Result applyFilter(String line, int entireLength) {
+        return applyFilter(line, entireLength);
+      }
+    };
   }
 
   private Filter returnNullFilter() {

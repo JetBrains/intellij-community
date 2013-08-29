@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,13 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     final int stacktraceLength = stacktrace.length();
     final String[] lines = StringUtil.splitByLines(stacktrace);
     for (String line : lines) {
-      final Filter.Result result = myCustomFilter.applyFilter(line, stacktraceLength);
+      final Filter.Result result;
+      try {
+        result = myCustomFilter.applyFilter(line, stacktraceLength);
+      }
+      catch (Throwable t) {
+        throw new RuntimeException("Error while applying " + myCustomFilter + " to '"+line+"'", t);
+      }
       if (result != null) {
         final HyperlinkInfo info = result.hyperlinkInfo;
 
