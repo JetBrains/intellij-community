@@ -4,14 +4,21 @@
                     interface="com.intellij.util.xml.DomFileDescription"/>
 
     <extensionPoint name="dom.implementation"
-                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"/>
+                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP">
+      <with attribute="interfaceName" implements="com.intellij.util.xml.DomElement"/>
+      <with attribute="implementationName" implements="com.intellij.util.xml.DomElement"/>
+    </extensionPoint>
 
     <extensionPoint name="dom.converter"
-                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"/>
+                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP">
+      <with attribute="interfaceName" implements="com.intellij.util.xml.Converter"/>
+      <with attribute="implementationName" implements="com.intellij.util.xml.Converter"/>
+    </extensionPoint>
 
     <extensionPoint name="dom.extender"
                     beanClass="com.intellij.util.xml.reflect.DomExtenderEP">
-      <with attribute="myDomClass" implements="com.intellij.util.xml.reflect.DomExtender"/>
+      <with attribute="domClassName" implements="com.intellij.util.xml.DomElement"/>
+      <with attribute="extenderClassName" implements="com.intellij.util.xml.reflect.DomExtender"/>
     </extensionPoint>
 
     <extensionPoint name="dom.customAnnotationChecker"
