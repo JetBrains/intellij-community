@@ -1,6 +1,7 @@
 package com.intellij.tasks.jira;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
@@ -8,6 +9,7 @@ import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.EnumSet;
 
 /**
  * @author Dmitry Avdeev
@@ -46,10 +48,9 @@ public class JiraRepositoryType extends BaseRepositoryType<JiraRepository> {
     return new JiraRepositoryEditor(project, repository, changeListener);
   }
 
-  //
-  //@Override
-  //public EnumSet<TaskState> getPossibleTaskStates() {
-  //  return EnumSet.of(TaskState.OPEN, TaskState.IN_PROGRESS, TaskState.REOPENED, TaskState.RESOLVED);
-  //}
+  @Override
+  public EnumSet<TaskState> getPossibleTaskStates() {
+    return EnumSet.of(TaskState.OPEN, TaskState.IN_PROGRESS, TaskState.REOPENED, TaskState.RESOLVED);
+  }
 }
 

@@ -1,15 +1,21 @@
 package com.intellij.tasks.jira;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskState;
 import com.intellij.tasks.jira.model.JiraIssue;
 import com.intellij.tasks.jira.model.api2.JiraRestApi2;
 import com.intellij.tasks.jira.model.api20alpha1.JiraRestApi20Alpha1;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.tasks.jira.JiraRepository.REST_API_PATH_SUFFIX;
 
 /**
  * @author Mikhail Golubev
@@ -57,12 +63,12 @@ public abstract class JiraRestApi {
 
   @NotNull
   protected GetMethod getSingleIssueSearchMethod(String key) {
-    return new GetMethod(myRepository.getUrl() + JiraRepository.REST_API_PATH_SUFFIX + "/issue/" + key);
+    return new GetMethod(myRepository.getUrl() + REST_API_PATH_SUFFIX + "/issue/" + key);
   }
 
   @NotNull
   protected GetMethod getMultipleIssuesSearchMethod(String jql, int max) {
-    GetMethod method = new GetMethod(myRepository.getUrl() + JiraRepository.REST_API_PATH_SUFFIX + "/search");
+    GetMethod method = new GetMethod(myRepository.getUrl() + REST_API_PATH_SUFFIX + "/search");
     method.setQueryString(new NameValuePair[]{
       new NameValuePair("jql", jql),
       new NameValuePair("maxResults", String.valueOf(max))
@@ -83,4 +89,26 @@ public abstract class JiraRestApi {
 
   @NotNull
   public abstract String getVersionName();
+
+  public void setTaskState(Task task, TaskState state) throws Exception {
+    int transitionId;
+    switch (state) {
+      case IN_PROGRESS:
+        transitionId = 4;
+        break;
+      case RESOLVED:
+        transitionId = 5; // 5 for "Resolved", 2 for "Close"
+        break;
+      default:
+        // also 3 for "Reopen"
+        return;
+    }
+    // REST API 2.0 require double quotes both around field names and values (even numbers)
+    // REST API 2.0alpha1 permits to omit them, but handles both variants
+    final String transitionsUrl = myRepository.getUrl() + REST_API_PATH_SUFFIX + "/issue/" + task.getId() + "/transitions";
+    final PostMethod method = new PostMethod(transitionsUrl);
+    final String json = String.format("{\"transition\": \"%d\", \"resolution\": \"Fixed\"}", transitionId);
+    method.setRequestEntity(new StringRequestEntity(json, "application/json", "utf-8"));
+    myRepository.executeMethod(method);
+  }
 }
