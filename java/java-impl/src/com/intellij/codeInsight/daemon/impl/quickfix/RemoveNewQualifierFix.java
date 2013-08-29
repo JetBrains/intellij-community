@@ -38,7 +38,7 @@ public class RemoveNewQualifierFix implements IntentionAction {
   private final PsiNewExpression expression;
   private final PsiClass aClass;
 
-  public RemoveNewQualifierFix(PsiNewExpression expression, PsiClass aClass) {
+  public RemoveNewQualifierFix(@NotNull PsiNewExpression expression, PsiClass aClass) {
     this.expression = expression;
     this.aClass = aClass;
   }
@@ -58,10 +58,7 @@ public class RemoveNewQualifierFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
-        expression != null
-        && expression.isValid()
-        && (aClass == null || aClass.isValid())
-        && expression.getManager().isInProject(expression);
+      expression.isValid() && (aClass == null || aClass.isValid()) && expression.getManager().isInProject(expression);
   }
 
   @Override

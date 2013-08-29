@@ -43,7 +43,7 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
   /**
    * @param newFileName with extension
    */
-  public RenameFileFix(String newFileName) {
+  public RenameFileFix(@NotNull String newFileName) {
     myNewFileName = newFileName;
   }
 

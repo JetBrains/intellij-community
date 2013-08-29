@@ -48,7 +48,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
 
   private final PsiClass myClass;
 
-  public CreateConstructorMatchingSuperFix(PsiClass aClass) {
+  public CreateConstructorMatchingSuperFix(@NotNull PsiClass aClass) {
     myClass = aClass;
   }
 
