@@ -4,12 +4,14 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
@@ -33,6 +35,24 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
       }
     }
     catch (SVNException e) {
+      throw new VcsException(e);
+    }
+  }
+
+  @Override
+  public void list(@NotNull SvnTarget target,
+                   @Nullable SVNRevision revision,
+                   @Nullable SVNDepth depth,
+                   @Nullable ISVNPropertyHandler handler) throws VcsException {
+    SVNWCClient client = myVcs.createWCClient();
+
+    try {
+      if (target.isURL()) {
+        client.doGetProperty(target.getURL(), null, target.getPegRevision(), revision, depth, handler);
+      } else {
+        client.doGetProperty(target.getFile(), null, target.getPegRevision(), revision, depth, handler, null);
+      }
+    } catch (SVNException e) {
       throw new VcsException(e);
     }
   }
