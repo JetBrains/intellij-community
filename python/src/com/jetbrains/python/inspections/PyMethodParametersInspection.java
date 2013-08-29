@@ -5,10 +5,10 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.cython.psi.CythonClass;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.AddSelfQuickFix;
@@ -66,17 +66,18 @@ public class PyMethodParametersInspection extends PyInspection {
       return ret;
     }
 
-
     @Override
     public void visitPyFunction(final PyFunction node) {
+      for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
+        if (extension.ignoreMethodParameters(node)) {
+          return;
+        }
+      }
       // maybe it's a zope interface?
       PsiElement zope_interface = findZopeInterface(node);
       final PyClass cls = node.getContainingClass();
       if (zope_interface instanceof PyClass) {
         if (cls != null && cls.isSubclass((PyClass) zope_interface)) return; // it can have any params
-      }
-      if (cls instanceof CythonClass && ((CythonClass)cls).isCppClass()) {
-        return;
       }
       // analyze function itself
       PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(node);

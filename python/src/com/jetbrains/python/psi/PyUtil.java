@@ -817,6 +817,10 @@ public class PyUtil {
     return name.startsWith("__") && !name.endsWith("__");
   }
 
+  public static boolean isSpecialName(@NotNull String name) {
+    return name.length() > 4 && name.startsWith("__") && name.endsWith("__");
+  }
+
   public static boolean isPythonIdentifier(@NotNull String name) {
     return PyNames.isIdentifier(name);
   }
