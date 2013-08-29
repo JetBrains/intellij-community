@@ -71,6 +71,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                            "        <extensionPoint name=\"custom\"/>\n" +
                            "    </extensionPoints>\n" +
                            "</idea-plugin>");
+    myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}");
 
     configureByFile();
     myFixture.checkHighlighting(false, false, false);
