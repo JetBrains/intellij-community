@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.jira.model.JiraIssue;
 import com.intellij.util.Function;
@@ -18,6 +19,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -143,6 +145,11 @@ public class JiraRepository extends BaseRepositoryImpl {
     return JiraRestApi.fromJiraVersion(object.get("version").getAsString(), this);
   }
 
+  @Override
+  public void setTaskState(Task task, TaskState state) throws Exception {
+    myRestApiVersion.setTaskState(task, state);
+  }
+
   @NotNull
   public String executeMethod(HttpMethod method) throws Exception {
     LOG.debug("URI is " + method.getURI());
@@ -151,13 +158,18 @@ public class JiraRepository extends BaseRepositoryImpl {
     try {
       statusCode = getHttpClient().executeMethod(method);
       LOG.debug("Status code is " + statusCode);
-      entityContent = StreamUtil.readText(method.getResponseBodyAsStream(), "utf-8");
+      // may be null if 204 No Content received
+      final InputStream stream = method.getResponseBodyAsStream();
+      entityContent = stream == null ? "" : StreamUtil.readText(stream, "utf-8");
       LOG.debug(entityContent);
     }
     finally {
       method.releaseConnection();
     }
-    if (statusCode == HttpStatus.SC_OK) {
+    // besides SC_OK, can also be SC_NO_CONTENT in issue transition requests
+    // see: JiraRestApi#setTaskStatus
+    if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_NO_CONTENT) {
+      //if (statusCode >= 200 && statusCode < 300) {
       return entityContent;
     }
     else if (method.getResponseHeader("Content-Type") != null) {
@@ -168,7 +180,7 @@ public class JiraRepository extends BaseRepositoryImpl {
           String reason = StringUtil.join(object.getAsJsonArray("errorMessages"), " ");
           // something meaningful to user, e.g. invalid field name in JQL query
           LOG.warn(reason);
-          throw new Exception("Search failed. Reason: " + reason);
+          throw new Exception("Request failed. Reason: " + reason);
         }
       }
     }
@@ -182,6 +194,6 @@ public class JiraRepository extends BaseRepositoryImpl {
     if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
       throw new Exception(LOGIN_FAILED_CHECK_YOUR_PERMISSIONS);
     }
-    throw new Exception("Request failed with error: " + HttpStatus.getStatusText(method.getStatusCode()));
+    throw new Exception("Request failed with HTTP error: " + HttpStatus.getStatusText(method.getStatusCode()));
   }
 }

@@ -14,13 +14,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This REST API versions is used in JIRA 4.3.4 and 4.4.1.
+ * This REST API is used in JIRA 4.3.4 and 4.4.1.
  * @author Mikhail Golubev
  */
 public class JiraRestApi20Alpha1 extends JiraRestApi {
   private static final Logger LOG = Logger.getInstance(JiraRestApi20Alpha1.class);
-  private static final Type ISSUES_WRAPPER_TYPE = new TypeToken<JiraResponseWrapper.Issues<JiraIssueApi20Alpha1>>() { /* empty */
-  }.getType();
+  private static final Type ISSUES_WRAPPER_TYPE = new TypeToken<JiraResponseWrapper.Issues<JiraIssueApi20Alpha1>>() { /* empty */ }.getType();
 
   public JiraRestApi20Alpha1(JiraRepository repository) {
     super(repository);
@@ -42,7 +41,7 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
         updatedIssues.add(findIssue(issue.getKey()));
       }
       catch (Exception e) {
-        LOG.warn("Can't fetch detailed info about issue: " + issue);
+        LOG.warn("Can't fetch detailed info about issue: " + issue.getKey());
       }
     }
     return updatedIssues;
