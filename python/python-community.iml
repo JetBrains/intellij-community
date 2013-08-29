@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="RegExpSupport" />
     <orderEntry type="module" module-name="testRunner" />
     <orderEntry type="module" module-name="smRunner" />
+    <orderEntry type="module" module-name="spellchecker" />
   </component>
 </module>
 
