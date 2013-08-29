@@ -37,7 +37,7 @@ public class SuperMethodReturnFix implements IntentionAction {
   private final PsiType mySuperMethodType;
   private final PsiMethod mySuperMethod;
 
-  public SuperMethodReturnFix(PsiMethod superMethod, PsiType superMethodType) {
+  public SuperMethodReturnFix(@NotNull PsiMethod superMethod, @NotNull PsiType superMethodType) {
     mySuperMethodType = superMethodType;
     mySuperMethod = superMethod;
   }
@@ -64,11 +64,7 @@ public class SuperMethodReturnFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
-            mySuperMethod != null
-            && mySuperMethod.isValid()
-            && mySuperMethod.getManager().isInProject(mySuperMethod)
-            && mySuperMethodType != null
-            && mySuperMethodType.isValid();
+      mySuperMethod.isValid() && mySuperMethod.getManager().isInProject(mySuperMethod) && mySuperMethodType.isValid();
   }
 
   @Override

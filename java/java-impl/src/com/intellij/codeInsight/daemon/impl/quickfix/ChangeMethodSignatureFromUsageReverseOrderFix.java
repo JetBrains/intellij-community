@@ -35,12 +35,12 @@ import java.util.Set;
  * Date: 2/9/12
  */
 public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodSignatureFromUsageFix {
-  ChangeMethodSignatureFromUsageReverseOrderFix(@NotNull PsiMethod targetMethod,
-                                                @NotNull PsiExpression[] expressions,
-                                                @NotNull PsiSubstitutor substitutor,
-                                                @NotNull PsiElement context,
-                                                boolean changeAllUsages,
-                                                int minUsagesNumberToShowDialog) {
+  public ChangeMethodSignatureFromUsageReverseOrderFix(@NotNull PsiMethod targetMethod,
+                                                       @NotNull PsiExpression[] expressions,
+                                                       @NotNull PsiSubstitutor substitutor,
+                                                       @NotNull PsiElement context,
+                                                       boolean changeAllUsages,
+                                                       int minUsagesNumberToShowDialog) {
     super(targetMethod, expressions, substitutor, context, changeAllUsages, minUsagesNumberToShowDialog);
   }
 

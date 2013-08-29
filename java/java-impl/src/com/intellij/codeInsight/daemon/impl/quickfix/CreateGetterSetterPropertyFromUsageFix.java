@@ -21,6 +21,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PropertyUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ import java.util.List;
  * Date: 7/12/12
  */
 public class CreateGetterSetterPropertyFromUsageFix extends CreatePropertyFromUsageFix {
-  public CreateGetterSetterPropertyFromUsageFix(PsiMethodCallExpression methodCall) {
+  public CreateGetterSetterPropertyFromUsageFix(@NotNull PsiMethodCallExpression methodCall) {
     super(methodCall);
   }
 

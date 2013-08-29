@@ -55,7 +55,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
   private final SmartPsiElementPointer myMethodCall;
 
-  public CreateMethodFromUsageFix(PsiMethodCallExpression methodCall) {
+  public CreateMethodFromUsageFix(@NotNull PsiMethodCallExpression methodCall) {
     myMethodCall = SmartPointerManager.getInstance(methodCall.getProject()).createSmartPsiElementPointer(methodCall);
   }
 

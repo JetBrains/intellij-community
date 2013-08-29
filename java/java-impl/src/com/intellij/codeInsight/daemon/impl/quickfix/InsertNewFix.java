@@ -32,7 +32,7 @@ public class InsertNewFix implements IntentionAction {
   private final PsiMethodCallExpression myMethodCall;
   private final PsiClass myClass;
 
-  public InsertNewFix(PsiMethodCallExpression methodCall, PsiClass aClass) {
+  public InsertNewFix(@NotNull PsiMethodCallExpression methodCall, @NotNull PsiClass aClass) {
     myMethodCall = methodCall;
     myClass = aClass;
   }
@@ -51,9 +51,7 @@ public class InsertNewFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethodCall != null
-    && myMethodCall.isValid()
-    && myMethodCall.getManager().isInProject(myMethodCall);
+    return myMethodCall.isValid() && myMethodCall.getManager().isInProject(myMethodCall);
   }
 
   @Override

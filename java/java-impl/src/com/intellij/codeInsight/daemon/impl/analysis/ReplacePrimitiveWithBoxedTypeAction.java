@@ -26,12 +26,12 @@ import org.jetbrains.annotations.Nullable;
 /**
 * User: anna
 */
-class ReplacePrimitiveWithBoxedTypeAction extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class ReplacePrimitiveWithBoxedTypeAction extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final String myPrimitiveName;
   private final String myBoxedTypeName;
   private static final Logger LOG = Logger.getInstance("#" + ReplacePrimitiveWithBoxedTypeAction.class.getName());
 
-  protected ReplacePrimitiveWithBoxedTypeAction(@Nullable PsiTypeElement element, String typeName, String boxedTypeName) {
+  public ReplacePrimitiveWithBoxedTypeAction(@NotNull PsiTypeElement element, @NotNull String typeName, @NotNull String boxedTypeName) {
     super(element);
     myPrimitiveName = typeName;
     myBoxedTypeName = boxedTypeName;

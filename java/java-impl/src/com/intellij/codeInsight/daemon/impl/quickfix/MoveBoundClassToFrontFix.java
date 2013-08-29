@@ -31,7 +31,7 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MoveBoundClassToFrontFix");
   private final String myName;
 
-  public MoveBoundClassToFrontFix(PsiClass aClass, PsiClassType classToExtendFrom) {
+  public MoveBoundClassToFrontFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom) {
     super(aClass, classToExtendFrom, true);
     myName = QuickFixBundle.message("move.bound.class.to.front.fix.text",
                                     HighlightUtil.formatClass(myClassToExtendFrom),

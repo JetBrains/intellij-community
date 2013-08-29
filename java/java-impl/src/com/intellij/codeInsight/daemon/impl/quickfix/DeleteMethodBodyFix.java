@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class DeleteMethodBodyFix implements IntentionAction {
   private final PsiMethod myMethod;
 
-  public DeleteMethodBodyFix(PsiMethod method) {
+  public DeleteMethodBodyFix(@NotNull PsiMethod method) {
     myMethod = method;
   }
 
