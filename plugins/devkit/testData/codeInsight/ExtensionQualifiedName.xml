@@ -6,7 +6,12 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.myPlugin">
-    <ext implementation="java.lang.Runnable"/>
+    <<error descr="'implementation' attribute should be defined">ext</error>/>
+    <ext implementation="<error descr="Interface not allowed">java.lang.Runnable</error>"/>
+    <ext implementation="<error descr="'java.util.concurrent.TimeUnit' is not assignable to 'java.lang.Runnable'"><error descr="Enum not allowed">java.util.concurrent.TimeUnit</error></error>"/>
+    <ext implementation="<error descr="'java.lang.String' is not assignable to 'java.lang.Runnable'">java.lang.String</error>"/>
+
+    <ext implementation="foo.MyRunnable"/>
   </extensions>
 
 </idea-plugin>
