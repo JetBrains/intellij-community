@@ -72,9 +72,11 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                            "    </extensionPoints>\n" +
                            "</idea-plugin>");
     myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}");
+    myFixture.addClass("package foo; @Deprecated public abstract class MyDeprecatedEP {}");
+    myFixture.addClass("package foo; public class MyDeprecatedEPImpl extends foo.MyDeprecatedEP {}");
 
     configureByFile();
-    myFixture.checkHighlighting(false, false, false);
+    myFixture.checkHighlighting(true, false, false);
   }
 
   public void testDependsHighlighting() throws Throwable {
