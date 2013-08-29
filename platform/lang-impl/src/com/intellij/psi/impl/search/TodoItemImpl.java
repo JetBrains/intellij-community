@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.TodoPattern;
+import org.jetbrains.annotations.NotNull;
 
 public class TodoItemImpl implements TodoItem {
   private final PsiFile myFile;
@@ -28,23 +29,26 @@ public class TodoItemImpl implements TodoItem {
   private final int myEndOffset;
   private final TodoPattern myPattern;
 
-  public TodoItemImpl(PsiFile file, int startOffset, int endOffset, TodoPattern pattern) {
+  public TodoItemImpl(@NotNull PsiFile file, int startOffset, int endOffset, @NotNull TodoPattern pattern) {
     myFile = file;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myPattern = pattern;
   }
 
+  @NotNull
   @Override
   public PsiFile getFile() {
     return myFile;
   }
 
+  @NotNull
   @Override
   public TextRange getTextRange() {
     return new TextRange(myStartOffset, myEndOffset);
   }
 
+  @NotNull
   @Override
   public TodoPattern getPattern() {
     return myPattern;
@@ -59,14 +63,9 @@ public class TodoItemImpl implements TodoItem {
       return false;
     }
     TodoItemImpl todoItem=(TodoItemImpl)obj;
-    if(
-      !myFile.equals(todoItem.myFile)||
-      myStartOffset!=todoItem.myStartOffset||
-      myEndOffset!=todoItem.myEndOffset||
-      !myPattern.equals(todoItem.myPattern)
-    ){
-      return false;
-    }
-    return true;
+    return myFile.equals(todoItem.myFile) &&
+           myStartOffset == todoItem.myStartOffset &&
+           myEndOffset == todoItem.myEndOffset &&
+           myPattern.equals(todoItem.myPattern);
   }
 }
