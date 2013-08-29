@@ -228,16 +228,18 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     assertTrue("link=" + link + ", vLink=" + vLink1,
                vLink1 != null && vLink1.isDirectory() && vLink1.is(VFileProperty.SYMLINK));
     assertEquals(1, vLink1.getChildren().length);
+    assertPathsEqual(targetDir1.getPath(), vLink1.getCanonicalPath());
 
     assertTrue(link.toString(), link.delete());
     createSymLink(targetDir2.getPath(), myTempDir + "/" + link.getName());
 
     refresh();
-    assertFalse(vLink1.isValid());
+    assertTrue(vLink1.isValid());
     VirtualFile vLink2 = myFileSystem.findFileByIoFile(link);
     assertTrue("link=" + link + ", vLink=" + vLink2,
-               vLink2 != null && vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
+               vLink2 == vLink1 && vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
     assertEquals(2, vLink2.getChildren().length);
+    assertPathsEqual(targetDir2.getPath(), vLink1.getCanonicalPath());
   }
 
   public void testFileLinkSwitch() throws Exception {
@@ -251,16 +253,18 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     assertTrue("link=" + link + ", vLink=" + vLink1,
                vLink1 != null && !vLink1.isDirectory() && vLink1.is(VFileProperty.SYMLINK));
     assertEquals(FileUtil.loadFile(target1), VfsUtilCore.loadText(vLink1));
+    assertPathsEqual(target1.getPath(), vLink1.getCanonicalPath());
 
     assertTrue(link.toString(), link.delete());
     createSymLink(target2.getPath(), myTempDir + "/" + link.getName());
 
     refresh();
-    assertFalse(vLink1.isValid());
+    assertTrue(vLink1.isValid());
     VirtualFile vLink2 = myFileSystem.findFileByIoFile(link);
     assertTrue("link=" + link + ", vLink=" + vLink2,
-               vLink2 != null && !vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
+               vLink2 == vLink1 && !vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
     assertEquals(FileUtil.loadFile(target2), VfsUtilCore.loadText(vLink2));
+    assertPathsEqual(target2.getPath(), vLink1.getCanonicalPath());
   }
 
 /*

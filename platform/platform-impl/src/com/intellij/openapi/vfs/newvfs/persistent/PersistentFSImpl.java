@@ -1055,6 +1055,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         else if (VirtualFile.PROP_HIDDEN.equals(propertyChangeEvent.getPropertyName())) {
           executeSetHidden(propertyChangeEvent.getFile(), ((Boolean)propertyChangeEvent.getNewValue()).booleanValue());
         }
+        else if (VirtualFile.PROP_SYMLINK_TARGET.equals(propertyChangeEvent.getPropertyName())) {
+          executeSetTarget(propertyChangeEvent.getFile(), (String)propertyChangeEvent.getNewValue());
+        }
       }
     }
     catch (Exception e) {
@@ -1172,6 +1175,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private static void executeSetHidden(@NotNull VirtualFile file, boolean hiddenFlag) {
     setFlag(file, IS_HIDDEN, hiddenFlag);
     ((VirtualFileSystemEntry)file).updateProperty(VirtualFile.PROP_HIDDEN, hiddenFlag);
+  }
+
+  private static void executeSetTarget(@NotNull VirtualFile file, String target) {
+    ((VirtualFileSystemEntry)file).setLinkTarget(target);
   }
 
   private static void setFlag(@NotNull VirtualFile file, int mask, boolean value) {
