@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.openapi.vfs.impl.jar;
 
@@ -48,6 +44,9 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * @author max
+ */
 public class JarHandler extends JarHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarHandler");
 
@@ -111,6 +110,8 @@ public class JarHandler extends JarHandlerBase {
   private File getMirrorWithContentHash(File originalFile,
                                         FileAttributes originalAttributes) {
     File mirrorFile = null;
+    String jarDir = getJarsDir();
+
     try {
       String path = originalFile.getPath();
       CacheLibraryInfo info = CacheLibraryInfo.ourCachedLibraryInfo.get(path);
@@ -120,7 +121,7 @@ public class JarHandler extends JarHandlerBase {
         if (originalAttributes.length == info.myFileLength &&
             Math.abs(originalAttributes.lastModified - info.myModificationTime) <= FS_TIME_RESOLUTION
            ) {
-          mirrorFile = new File(new File(getJarsDir()), info.mySnapshotPath);
+          mirrorFile = new File(new File(jarDir), info.mySnapshotPath);
           mirrorFileAttributes = FileSystemUtil.getAttributes(mirrorFile);
           if (mirrorFileAttributes != null &&
               mirrorFileAttributes.length == originalAttributes.length &&
@@ -139,7 +140,7 @@ public class JarHandler extends JarHandlerBase {
       File tempJarFile = null;
 
       try {
-        tempJarFile = FileUtil.createTempFile(new File(getJarsDir()), originalFile.getName(), "", true, false);
+        tempJarFile = FileUtil.createTempFile(new File(jarDir), originalFile.getName(), "", true, false);
         os = new DataOutputStream(new FileOutputStream(tempJarFile));
         is = new FileInputStream(originalFile);
         byte[] buffer = new byte[20 * 1024];
@@ -154,10 +155,13 @@ public class JarHandler extends JarHandlerBase {
           sha1.update(buffer, 0, read);
           os.write(buffer, 0, read);
         }
-      } catch (IOException ex) {
-        reportIOErrorWithJars(originalFile, mirrorFile  != null ? mirrorFile:tempJarFile, ex);
+      }
+      catch (IOException ex) {
+        File target = mirrorFile != null ? mirrorFile : tempJarFile != null ? tempJarFile : new File(jarDir);
+        reportIOErrorWithJars(originalFile, target, ex);
         return originalFile;
-      } catch (NoSuchAlgorithmException ex) {
+      }
+      catch (NoSuchAlgorithmException ex) {
         assert false;
         return originalFile; // should never happen for sha1
       }
@@ -167,7 +171,7 @@ public class JarHandler extends JarHandlerBase {
       }
 
       byte[] digest = sha1.digest();
-      mirrorFile = new File(new File(getJarsDir()), getSnapshotName(originalFile.getName(), digest));
+      mirrorFile = new File(new File(jarDir), getSnapshotName(originalFile.getName(), digest));
       mirrorFileAttributes = FileSystemUtil.getAttributes(mirrorFile);
 
       if (mirrorFileAttributes == null ||
@@ -193,7 +197,7 @@ public class JarHandler extends JarHandlerBase {
       CacheLibraryInfo.ourCachedLibraryInfo.force();
       return mirrorFile;
     } catch (IOException ex) {
-      reportIOErrorWithJars(originalFile, mirrorFile != null ? mirrorFile: new File(getJarsDir(), originalFile.getName()), ex);
+      reportIOErrorWithJars(originalFile, mirrorFile != null ? mirrorFile: new File(jarDir, originalFile.getName()), ex);
       return originalFile;
     }
   }
@@ -314,13 +318,13 @@ public class JarHandler extends JarHandlerBase {
     }
   };
 
-  private void reportIOErrorWithJars(File original, File mirror, IOException e) {
+  private void reportIOErrorWithJars(File original, File target, IOException e) {
     LOG.warn(e);
-    final String path = original.getPath();
-    final String message = VfsBundle.message("jar.copy.error.message", path, mirror.getPath(), e.getMessage());
 
-    ERROR_COPY_NOTIFICATION.getValue().createNotification(message, NotificationType.ERROR).notify(null);
-
+    String path = original.getPath();
     myFileSystem.setNoCopyJarForPath(path);
+
+    String message = VfsBundle.message("jar.copy.error.message", path, target.getPath(), e.getMessage());
+    ERROR_COPY_NOTIFICATION.getValue().createNotification(message, NotificationType.ERROR).notify(null);
   }
 }
