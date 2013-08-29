@@ -31,7 +31,6 @@ import java.io.IOException;
  * @author Dennis.Ushakov
  */
 public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepository> {
-  private MyTextField myHost;
   private MyTextField myRepoAuthor;
   private MyTextField myRepoName;
   private MyTextField myToken;
@@ -43,14 +42,12 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   public GithubRepositoryEditor(final Project project, final GithubRepository repository, Consumer<GithubRepository> changeListener) {
     super(project, repository, changeListener);
     myUrlLabel.setVisible(false);
-    myURLText.setVisible(false);
     myUsernameLabel.setVisible(false);
     myUserNameText.setVisible(false);
     myPasswordLabel.setVisible(false);
     myPasswordText.setVisible(false);
     myUseHttpAuthenticationCheckBox.setVisible(false);
 
-    myHost.setText(repository.getUrl());
     myRepoAuthor.setText(repository.getRepoAuthor());
     myRepoName.setText(repository.getRepoName());
     myToken.setText(repository.getToken());
@@ -62,7 +59,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
       }
     };
 
-    myHost.getDocument().addDocumentListener(buttonUpdater);
+    myURLText.getDocument().addDocumentListener(buttonUpdater);
     myRepoAuthor.getDocument().addDocumentListener(buttonUpdater);
     myRepoName.getDocument().addDocumentListener(buttonUpdater);
   }
@@ -71,10 +68,9 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   @Override
   protected JComponent createCustomPanel() {
     myHostLabel = new JBLabel("Host:", SwingConstants.RIGHT);
-    myHost = new MyTextField("Github host");
 
     JPanel myHostPanel = new JPanel(new BorderLayout(5, 0));
-    myHostPanel.add(myHost, BorderLayout.CENTER);
+    myHostPanel.add(myURLText, BorderLayout.CENTER);
     myHostPanel.add(myShareUrlCheckBox, BorderLayout.EAST);
 
     myRepositoryLabel = new JBLabel("Repository:", SwingConstants.RIGHT);
@@ -104,7 +100,6 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     myTokenPanel.add(myToken, BorderLayout.CENTER);
     myTokenPanel.add(myTokenButton, BorderLayout.EAST);
 
-    installListener(myHost);
     installListener(myRepoAuthor);
     installListener(myRepoName);
     installListener(myToken);
@@ -164,14 +159,9 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
     }
   }
 
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myHost;
-  }
-
   @NotNull
   private String getHost() {
-    return myHost.getText().trim();
+    return myURLText.getText().trim();
   }
 
   @NotNull
