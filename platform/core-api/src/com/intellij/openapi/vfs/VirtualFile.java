@@ -84,6 +84,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   @NonNls public static final String PROP_HIDDEN = VFileProperty.HIDDEN.getName();
 
+  /**
+   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a symlink target of a
+   * {@link VirtualFile} changes.
+   *
+   * @see VirtualFileListener#propertyChanged
+   * @see VirtualFilePropertyEvent#getPropertyName
+   */
+  @NonNls public static final String PROP_SYMLINK_TARGET = "symlink";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VirtualFile");
   private static final Key<byte[]> BOM_KEY = Key.create("BOM");
   private static final Key<Charset> CHARSET_KEY = Key.create("CHARSET");
