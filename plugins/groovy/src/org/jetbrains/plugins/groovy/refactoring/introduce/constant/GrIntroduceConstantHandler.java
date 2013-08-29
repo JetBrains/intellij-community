@@ -15,9 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
@@ -43,7 +41,7 @@ import java.util.Map;
 /**
  * @author Maxim.Medvedev
  */
-public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntroduceConstantSettings, PsiElement> {
+public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIntroduceConstantSettings> {
   public static final String REFACTORING_NAME = "Introduce Constant";
 
   @NotNull
@@ -56,13 +54,6 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   @Override
   protected String getHelpID() {
     return HelpID.INTRODUCE_CONSTANT;
-  }
-
-  @NotNull
-  @Override
-  public PsiElement[] findPossibleScopes(GrExpression expression, GrVariable variable, StringPartInfo stringPart, Editor editor) {
-    final PsiElement place = getCurrentPlace(expression, variable, stringPart);
-    return new PsiFile[]{place.getContainingFile()};
   }
 
   @Override
@@ -134,11 +125,6 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   @Override
   protected Map<OccurrencesChooser.ReplaceChoice, List<Object>> fillChoice(GrIntroduceContext context) {
     return null;
-  }
-
-  @Override
-  protected void showScopeChooser(PsiElement[] scopes, Pass<PsiElement> callback, Editor editor) {
-    //todo do nothing right now
   }
 
   @Override
