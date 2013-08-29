@@ -571,6 +571,7 @@
       <reference ref="AddAllToFavorites"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
+      <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
