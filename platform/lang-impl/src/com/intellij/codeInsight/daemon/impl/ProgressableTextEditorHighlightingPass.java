@@ -59,7 +59,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     repaintTrafficIcon();
   }
 
-  protected abstract void collectInformationWithProgress(final ProgressIndicator progress);
+  protected abstract void collectInformationWithProgress(@NotNull ProgressIndicator progress);
 
   @Override
   public final void doApplyInformationToEditor() {
@@ -135,7 +135,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
     @Override
     public void doApplyInformationToEditor() {
-      FileStatusMap statusMap = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap();
+      FileStatusMap statusMap = ((DaemonCodeAnalyzerEx)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap();
       statusMap.markFileUpToDate(getDocument(), getId());
     }
   }
