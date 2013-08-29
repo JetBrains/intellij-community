@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.introduce.field;
+package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
-import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
-import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,55 +27,45 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrFinalListener;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrInplaceIntroducer;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl;
+import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrFieldNameSuggester;
+import org.jetbrains.plugins.groovy.refactoring.introduce.field.GroovyInplaceFieldValidator;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
- * @author Max Medvedev
+ * Created by Max Medvedev on 8/29/13
  */
-public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
-  private final GrInplaceIntroduceFieldPanel myPanel;
+public class GrInplaceConstantIntroducer extends GrInplaceIntroducer {
+  private final GrInplaceIntroduceConstantPanel myPanel;
   private final GrIntroduceContext myContext;
   private final RangeMarker myExpressionRangeMarker;
   private final RangeMarker myStringPartRangeMarker;
-  private final GrExpression myInitializer;
-  private final GrFinalListener finalListener;
   private final boolean myReplaceAll;
 
-  @Nullable
-  @Override
-  protected PsiElement checkLocalScope() {
-    return getVariable().getContainingFile();
-  }
-
-  public GrInplaceFieldIntroducer(GrVariable var,
-                                  GrIntroduceContext context,
-                                  List<RangeMarker> occurrences,
-                                  boolean replaceAll,
-                                  @Nullable RangeMarker expressionRangeMarker,
-                                  @Nullable RangeMarker stringPartRangeMarker,
-                                  GrExpression initializer) {
-    super(var, context.getEditor(), context.getProject(), IntroduceFieldHandler.REFACTORING_NAME, occurrences, context.getPlace());
+  public GrInplaceConstantIntroducer(GrVariable var,
+                                     GrIntroduceContext context,
+                                     List<RangeMarker> occurrences,
+                                     boolean replaceAllOccurrences,
+                                     RangeMarker expressionRangeMarker,
+                                     RangeMarker stringPartRangeMarker) {
+    super(var, context.getEditor(), context.getProject(), GrIntroduceConstantHandler.REFACTORING_NAME, occurrences, context.getPlace());
 
     myContext = context;
-    myReplaceAll = replaceAll;
+    myReplaceAll = replaceAllOccurrences;
     myExpressionRangeMarker = expressionRangeMarker;
     myStringPartRangeMarker = stringPartRangeMarker;
-    myInitializer = initializer;
 
-    myPanel = new GrInplaceIntroduceFieldPanel(context.getProject(),
-                                               GrIntroduceFieldHandler.getApplicableInitPlaces(context));
+    myPanel = new GrInplaceIntroduceConstantPanel();
+  }
 
-    finalListener = new GrFinalListener(myEditor);
+  @Override
+  public LinkedHashSet<String> suggestNames(GrIntroduceContext context) {
+    return new GrFieldNameSuggester(context , new GroovyInplaceFieldValidator(context), false).suggestNames();
   }
 
   @Override
@@ -89,17 +73,15 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
     if (success) {
       final GrVariable field = getVariable();
       assert field != null;
-      GrIntroduceFieldProcessor processor = new GrIntroduceFieldProcessor(generateContext(), generateSettings(), false) {
-        @NotNull
+      GrIntroduceConstantProcessor processor = new GrIntroduceConstantProcessor(generateContext(), generateSettings()) {
         @Override
-        protected GrExpression getInitializer() {
-          return myInitializer;
+        protected GrVariableDeclaration addDeclaration(PsiClass targetClass, GrVariableDeclaration declaration) {
+          return (GrVariableDeclaration)field.getParent();
         }
 
-        @NotNull
         @Override
-        protected GrVariableDeclaration insertField(@NotNull PsiClass targetClass, @NotNull GrVariableDeclaration declaration) {
-          return (GrVariableDeclaration)field.getParent();
+        protected boolean checkErrors(@NotNull PsiClass targetClass) {
+          return false;
         }
       };
       processor.run();
@@ -149,31 +131,11 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
     return null;
   }
 
-  private GrIntroduceFieldSettings generateSettings() {
-    return new GrIntroduceFieldSettings() {
-      @Override
-      public boolean declareFinal() {
-        return myPanel.isFinal();
-      }
-
-      @Override
-      public Init initializeIn() {
-        return myPanel.getInitPlace();
-      }
-
+  private GrIntroduceConstantSettings generateSettings() {
+    return new GrIntroduceConstantSettings() {
       @Override
       public String getVisibilityModifier() {
-        return PsiModifier.PRIVATE;
-      }
-
-      @Override
-      public boolean isStatic() {
-        return getVariable().hasModifierProperty(PsiModifier.STATIC);
-      }
-
-      @Override
-      public boolean removeLocalVar() {
-        return false;
+        return PsiModifier.PUBLIC;
       }
 
       @Nullable
@@ -192,62 +154,26 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
       public PsiType getSelectedType() {
         return getVariable().getDeclaredType();
       }
+
+      @Nullable
+      @Override
+      public PsiClass getTargetClass() {
+        return (PsiClass)myContext.getScope();
+      }
     };
   }
 
   @Nullable
   @Override
   protected JComponent getComponent() {
-    return myPanel.getRootPane();
+    //return myPanel.getRootPane();
+    return null;
   }
 
+  @Nullable
   @Override
-  public LinkedHashSet<String> suggestNames(GrIntroduceContext context) {
-    return new GrFieldNameSuggester(context , new GroovyInplaceFieldValidator(context), false).suggestNames();
+  protected PsiElement checkLocalScope() {
+    return getVariable().getContainingFile();
   }
 
-  public class GrInplaceIntroduceFieldPanel {
-    private final Project myProject;
-    private JPanel myRootPane;
-    private JComboBox myInitCB;
-    private NonFocusableCheckBox myDeclareFinalCB;
-
-    public GrInplaceIntroduceFieldPanel(Project project, EnumSet<GrIntroduceFieldSettings.Init> initPlaces) {
-      myProject = project;
-
-      KeyboardComboSwitcher.setupActions(myInitCB, project);
-
-      for (GrIntroduceFieldSettings.Init place : initPlaces) {
-        myInitCB.addItem(place);
-      }
-
-      myDeclareFinalCB.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
-            @Override
-            protected void run(Result result) throws Throwable {
-              PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-              final GrVariable variable = getVariable();
-              if (variable != null) {
-                finalListener.perform(myDeclareFinalCB.isSelected(), variable);
-              }
-            }
-          }.execute();
-        }
-      });
-    }
-
-    public JPanel getRootPane() {
-      return myRootPane;
-    }
-
-    public GrIntroduceFieldSettings.Init getInitPlace() {
-      return (GrIntroduceFieldSettings.Init)myInitCB.getSelectedItem();
-    }
-
-    public boolean isFinal() {
-      return myDeclareFinalCB.isSelected();
-    }
-  }
 }

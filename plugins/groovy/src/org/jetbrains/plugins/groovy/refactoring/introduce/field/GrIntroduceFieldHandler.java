@@ -202,7 +202,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
       @Nullable
       @Override
       public String getName() {
-        return new GrFieldNameSuggester(context, new GroovyInplaceFieldValidator(context)).suggestNames().iterator().next();
+        return new GrFieldNameSuggester(context, new GroovyInplaceFieldValidator(context), false).suggestNames().iterator().next();
       }
 
       @Override

@@ -271,7 +271,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   @NotNull
   @Override
   public LinkedHashSet<String> suggestNames() {
-    return new GrFieldNameSuggester(myContext, new GroovyFieldValidator(myContext)).suggestNames();
+    return new GrFieldNameSuggester(myContext, new GroovyFieldValidator(myContext), false).suggestNames();
   }
 
   private void createUIComponents() {

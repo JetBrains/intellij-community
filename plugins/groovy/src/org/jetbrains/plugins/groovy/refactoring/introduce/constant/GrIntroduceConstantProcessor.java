@@ -101,7 +101,7 @@ public class GrIntroduceConstantProcessor {
     context.getEditor().getSelectionModel().removeSelection();
   }
 
-  private static GrVariableDeclaration addDeclaration(PsiClass targetClass, GrVariableDeclaration declaration) {
+  protected GrVariableDeclaration addDeclaration(PsiClass targetClass, GrVariableDeclaration declaration) {
     final GrVariableDeclaration added;
     if (targetClass instanceof GrEnumTypeDefinition) {
       final GrEnumConstantList enumConstants = ((GrEnumTypeDefinition)targetClass).getEnumConstantList();
@@ -115,7 +115,7 @@ public class GrIntroduceConstantProcessor {
     return added;
   }
 
-  private boolean checkErrors(@NotNull PsiClass targetClass) {
+  protected boolean checkErrors(@NotNull PsiClass targetClass) {
     String fieldName = settings.getName();
     String errorString = check(targetClass, fieldName);
 
@@ -200,7 +200,7 @@ public class GrIntroduceConstantProcessor {
   }
 
   @NotNull
-  private GrExpression getInitializer() {
+  protected GrExpression getInitializer() {
     final GrExpression expression = context.getExpression();
     if (expression != null) {
       return expression;
