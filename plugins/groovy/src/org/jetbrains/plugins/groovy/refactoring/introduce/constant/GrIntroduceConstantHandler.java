@@ -23,14 +23,12 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduce.*;
@@ -83,17 +81,8 @@ public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIn
   }
 
   @Nullable
-  public static GrTypeDefinition findContainingClass(GrIntroduceContext context) {
-    PsiElement place = context.getPlace();
-    while (true) {
-      final GrTypeDefinition typeDefinition = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, true, GroovyFileBase.class);
-      if (typeDefinition == null) return null;
-      if (!typeDefinition.isAnonymous() &&
-          (typeDefinition.hasModifierProperty(PsiModifier.STATIC) || typeDefinition.getContainingClass() == null)) {
-        return typeDefinition;
-      }
-      place = typeDefinition;
-    }
+  public static PsiClass findContainingClass(GrIntroduceContext context) {
+    return (PsiClass)context.getScope();
   }
 
   @NotNull

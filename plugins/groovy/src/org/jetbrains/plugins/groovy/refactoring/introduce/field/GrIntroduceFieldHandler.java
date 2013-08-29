@@ -34,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -228,9 +227,6 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
   @NotNull
   @Override
   protected PsiElement[] findOccurrences(@NotNull GrExpression expression, @NotNull PsiElement scope) {
-    if (scope instanceof GroovyScriptClass) {
-      scope = scope.getContainingFile();
-    }
     final PsiElement[] occurrences = super.findOccurrences(expression, scope);
     if (shouldBeStatic(expression, scope)) return occurrences;
 

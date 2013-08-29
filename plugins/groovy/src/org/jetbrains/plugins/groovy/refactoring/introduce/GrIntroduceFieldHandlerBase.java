@@ -69,4 +69,13 @@ public abstract class GrIntroduceFieldHandlerBase<Settings extends GrIntroduceSe
 
     NavigationUtil.getPsiElementPopup(scopes, new PsiClassListCellRenderer(), "Choose class to introduce field", processor).showInBestPositionFor(editor);
   }
+
+  @NotNull
+  @Override
+  protected PsiElement[] findOccurrences(@NotNull GrExpression expression, @NotNull PsiElement scope) {
+    if (scope instanceof GroovyScriptClass) {
+      scope = scope.getContainingFile();
+    }
+    return super.findOccurrences(expression, scope);
+  }
 }
