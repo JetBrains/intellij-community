@@ -46,10 +46,6 @@ public class GithubRepository extends BaseRepositoryImpl {
   @NotNull private String myUser = "";
   @NotNull private String myToken = "";
 
-  {
-    setUrl(GithubApiUtil.DEFAULT_GITHUB_HOST);
-  }
-
   @SuppressWarnings({"UnusedDeclaration"})
   public GithubRepository() {}
 
@@ -62,6 +58,7 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   public GithubRepository(GithubRepositoryType type) {
     super(type);
+    setUrl(GithubApiUtil.DEFAULT_GITHUB_HOST);
   }
 
   @Override
