@@ -684,6 +684,7 @@
     <usageTargetProvider implementation="com.jetbrains.django.refactoring.DjangoUsageTargetProvider"/>
     <findUsagesHandlerFactory implementation="com.jetbrains.django.refactoring.DjangoFindUsagesHandlerFactory"/>
     <referencesSearch implementation="com.jetbrains.django.refactoring.DjangoParameterReferenceSearcher"/>
+    <referencesSearch implementation="com.jetbrains.django.refactoring.DjangoVariableReferenceSearcher"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.django.DjangoDefaultLiveTemplatesProvider"/>
     <projectService serviceImplementation="com.jetbrains.django.console.DjangoConsoleOptions"/>
