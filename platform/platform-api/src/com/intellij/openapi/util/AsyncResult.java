@@ -84,6 +84,10 @@ public class AsyncResult<T> extends ActionCallback {
   }
 
   @NotNull
+  @Deprecated
+  /**
+   * @deprecated use {@link #doWhenDone(com.intellij.util.Consumer)}
+   */
   public AsyncResult<T> doWhenRejected(@NotNull final Handler<T> handler) {
     doWhenRejected(new Runnable() {
       @Override
