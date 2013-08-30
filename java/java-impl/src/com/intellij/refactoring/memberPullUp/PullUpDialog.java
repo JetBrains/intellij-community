@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -222,9 +223,12 @@ public class PullUpDialog extends RefactoringDialog {
     boolean hasJavadoc = false;
     for (MemberInfo info : myMemberInfos) {
       final PsiMember member = info.getMember();
-      if (myMemberInfoModel.isAbstractEnabled(info) && member instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)member).getDocComment() != null) {
-        hasJavadoc = true;
-        break;
+      if (myMemberInfoModel.isAbstractEnabled(info) && member instanceof PsiDocCommentOwner) {
+        info.setToAbstract(myMemberInfoModel.isAbstractWhenDisabled(info));
+        if (((PsiDocCommentOwner)member).getDocComment() != null) {
+          hasJavadoc = true;
+          break;
+        }
       }
     }
     UIUtil.setEnabled(myJavaDocPanel, hasJavadoc, true);
@@ -270,6 +274,9 @@ public class PullUpDialog extends RefactoringDialog {
     public boolean isAbstractEnabled(MemberInfo member) {
       PsiClass currentSuperClass = getSuperClass();
       if (currentSuperClass == null || !currentSuperClass.isInterface()) return true;
+      if (PsiUtil.isLanguageLevel8OrHigher(currentSuperClass)) {
+        return true;
+      }
       return false;
     }
 

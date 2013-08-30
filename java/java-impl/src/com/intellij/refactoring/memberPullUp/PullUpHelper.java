@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -232,10 +232,18 @@ public class PullUpHelper extends BaseRefactoringProcessor{
         if (method.findSuperMethods(myTargetSuperClass).length == 0) {
           deleteOverrideAnnotationIfFound(methodCopy);
         }
-        final boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.DEFAULT);
+        boolean isOriginalMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.DEFAULT);
         if (myIsTargetInterface || info.isToAbstract()) {
           ChangeContextUtil.clearContextInfo(method);
-          RefactoringUtil.makeMethodAbstract(myTargetSuperClass, methodCopy);
+
+          if (!info.isToAbstract() && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            //pull as default
+            RefactoringUtil.makeMethodDefault(methodCopy);
+            isOriginalMethodAbstract = true;
+          } else {
+            RefactoringUtil.makeMethodAbstract(myTargetSuperClass, methodCopy);
+          }
+
           RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
 
           myJavaDocPolicy.processCopiedJavaDoc(methodCopy.getDocComment(), method.getDocComment(), isOriginalMethodAbstract);

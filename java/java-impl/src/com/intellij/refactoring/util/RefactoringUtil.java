@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -763,14 +763,25 @@ public class RefactoringUtil {
       PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, true);
     }
 
-    PsiUtil.setModifierProperty(method, PsiModifier.FINAL, false);
-    PsiUtil.setModifierProperty(method, PsiModifier.SYNCHRONIZED, false);
-    PsiUtil.setModifierProperty(method, PsiModifier.NATIVE, false);
+    prepareForInterface(method);
 
     if (!targetClass.isInterface()) {
       PsiUtil.setModifierProperty(targetClass, PsiModifier.ABSTRACT, true);
     }
 
+  }
+  
+  public static void makeMethodDefault(@NotNull PsiMethod method) throws IncorrectOperationException {
+    PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, true);
+    PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, false);
+
+    prepareForInterface(method);
+  }
+
+  private static void prepareForInterface(PsiMethod method) {
+    PsiUtil.setModifierProperty(method, PsiModifier.FINAL, false);
+    PsiUtil.setModifierProperty(method, PsiModifier.SYNCHRONIZED, false);
+    PsiUtil.setModifierProperty(method, PsiModifier.NATIVE, false);
     removeFinalParameters(method);
   }
 

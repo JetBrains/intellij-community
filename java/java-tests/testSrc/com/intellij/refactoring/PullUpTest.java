@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,11 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class));
   }
 
+  public void testAsDefault() {
+    final RefactoringTestUtil.MemberDescriptor descriptor = new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class);
+    doTest(descriptor);
+  }
+
   public void testTypeParamErasure() {
     doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
@@ -127,7 +132,7 @@ public class PullUpTest extends LightRefactoringTestCase {
   }
 
   public void testTypeParamsConflictingNames() {
-    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
   } 
 
   public void testEscalateVisibility() {
