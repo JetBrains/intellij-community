@@ -25,9 +25,9 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
@@ -103,13 +103,11 @@ public class MvcModuleStructureUtil {
       removeSrcFolderFromRoots(root.findFileByRelativePath(src), actions, sourceRoots);
     }
 
-    for (final String excluded : structure.getExcludedFolders()) {
-      final VirtualFile src = root.findFileByRelativePath(excluded);
-
-      if (src != null && moduleRootManager.getFileIndex().isInContent(src)) {
+    for (final VirtualFile excluded : structure.getExcludedFolders(root)) {
+      if (moduleRootManager.getFileIndex().isInContent(excluded)) {
         actions.add(new Consumer<ContentEntry>() {
           public void consume(ContentEntry contentEntry) {
-            contentEntry.addExcludeFolder(src);
+            contentEntry.addExcludeFolder(excluded);
           }
         });
       }
