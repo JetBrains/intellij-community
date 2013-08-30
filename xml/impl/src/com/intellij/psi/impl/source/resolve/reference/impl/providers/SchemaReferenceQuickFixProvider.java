@@ -25,10 +25,10 @@ import org.jetbrains.annotations.PropertyKey;
 /**
  * @author yole
  */
-public class SchemaReferenceQuickFixProvider extends UnresolvedReferenceQuickFixProvider<SchemaReferencesProvider.TypeOrElementOrAttributeReference> {
+public class SchemaReferenceQuickFixProvider extends UnresolvedReferenceQuickFixProvider<TypeOrElementOrAttributeReference> {
   @Override
-  public void registerFixes(@NotNull SchemaReferencesProvider.TypeOrElementOrAttributeReference ref, @NotNull QuickFixActionRegistrar registrar) {
-    if (ref.getType() == SchemaReferencesProvider.TypeOrElementOrAttributeReference.ReferenceType.TypeReference) {
+  public void registerFixes(@NotNull TypeOrElementOrAttributeReference ref, @NotNull QuickFixActionRegistrar registrar) {
+    if (ref.getType() == TypeOrElementOrAttributeReference.ReferenceType.TypeReference) {
       registrar.register(
         new CreateXmlElementIntentionAction("xml.schema.create.complex.type.intention.name", SchemaReferencesProvider.COMPLEX_TYPE_TAG_NAME, ref)
       );
@@ -40,16 +40,16 @@ public class SchemaReferenceQuickFixProvider extends UnresolvedReferenceQuickFix
       @PropertyKey(resourceBundle = XmlBundle.PATH_TO_BUNDLE) String key = null;
       @NonNls String declarationTagName = null;
 
-      if (ref.getType() == SchemaReferencesProvider.TypeOrElementOrAttributeReference.ReferenceType.ElementReference) {
+      if (ref.getType() == TypeOrElementOrAttributeReference.ReferenceType.ElementReference) {
         declarationTagName = SchemaReferencesProvider.ELEMENT_TAG_NAME;
         key = "xml.schema.create.element.intention.name";
-      } else if (ref.getType() == SchemaReferencesProvider.TypeOrElementOrAttributeReference.ReferenceType.AttributeReference) {
+      } else if (ref.getType() == TypeOrElementOrAttributeReference.ReferenceType.AttributeReference) {
         declarationTagName = SchemaReferencesProvider.ATTRIBUTE_TAG_NAME;
         key = "xml.schema.create.attribute.intention.name";
-      } else if (ref.getType() == SchemaReferencesProvider.TypeOrElementOrAttributeReference.ReferenceType.AttributeGroupReference) {
+      } else if (ref.getType() == TypeOrElementOrAttributeReference.ReferenceType.AttributeGroupReference) {
         declarationTagName = SchemaReferencesProvider.ATTRIBUTE_GROUP_TAG_NAME;
         key = "xml.schema.create.attribute.group.intention.name";
-      } else if (ref.getType() == SchemaReferencesProvider.TypeOrElementOrAttributeReference.ReferenceType.GroupReference) {
+      } else if (ref.getType() == TypeOrElementOrAttributeReference.ReferenceType.GroupReference) {
         declarationTagName = SchemaReferencesProvider.GROUP_TAG_NAME;
         key = "xml.schema.create.group.intention.name";
       }
@@ -61,7 +61,7 @@ public class SchemaReferenceQuickFixProvider extends UnresolvedReferenceQuickFix
 
   @NotNull
   @Override
-  public Class<SchemaReferencesProvider.TypeOrElementOrAttributeReference> getReferenceClass() {
-    return SchemaReferencesProvider.TypeOrElementOrAttributeReference.class;
+  public Class<TypeOrElementOrAttributeReference> getReferenceClass() {
+    return TypeOrElementOrAttributeReference.class;
   }
 }

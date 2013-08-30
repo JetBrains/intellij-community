@@ -22,7 +22,7 @@ import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.TypeOrElementOrAttributeReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
@@ -109,7 +109,7 @@ public class XsltReferenceContributor {
     }
   }
 
-  public static class SchemaTypeReference extends SchemaReferencesProvider.TypeOrElementOrAttributeReference implements
+  public static class SchemaTypeReference extends TypeOrElementOrAttributeReference implements
                                                                                                              EmptyResolveMessageProvider {
     private static final Pattern NAME_PATTERN = Pattern.compile("(?:[\\w-]+:)[\\w-]+");
 
