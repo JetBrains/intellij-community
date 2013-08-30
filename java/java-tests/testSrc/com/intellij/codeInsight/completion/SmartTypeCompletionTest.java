@@ -627,6 +627,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testDefaultAnnoParam() throws Throwable { doTest(); }
 
   public void testCastGenericQualifier() throws Throwable { doTest(); }
+  
+  public void testNewWithTypeParameterErasure() throws Throwable { doTest(); }
 
   public void testEverythingDoubles() throws Throwable {
     configureByTestName();
