@@ -273,25 +273,12 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
 
   private static String getPropertyList(@NotNull SvnVcs vcs, @NotNull SvnTarget target, @Nullable SVNRevision revision)
     throws VcsException {
-    PropertyClient client = createPropertyClient(vcs, target);
-
     final List<SVNPropertyData> lines = new ArrayList<SVNPropertyData>();
     final ISVNPropertyHandler propertyHandler = createHandler(revision, lines);
-    client.list(target, revision, SVNDepth.EMPTY, propertyHandler);
+
+    vcs.getFactory(target).createPropertyClient().list(target, revision, SVNDepth.EMPTY, propertyHandler);
 
     return toSortedStringPresentation(lines);
-  }
-
-  private static PropertyClient createPropertyClient(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
-    PropertyClient client;
-
-    if (target.isFile()) {
-      client = vcs.getFactory(target.getFile()).createPropertyClient();
-    } else {
-      client = vcs.getFactory().createPropertyClient();
-    }
-
-    return client;
   }
 
   private static ISVNPropertyHandler createHandler(SVNRevision revision, final List<SVNPropertyData> lines) {

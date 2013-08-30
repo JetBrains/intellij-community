@@ -8,6 +8,7 @@ import org.jetbrains.idea.svn.SvnVcs;
  */
 public abstract class BaseSvnClient implements SvnClient {
   protected SvnVcs myVcs;
+  protected ClientFactory myFactory;
 
   @NotNull
   @Override
@@ -18,5 +19,16 @@ public abstract class BaseSvnClient implements SvnClient {
   @Override
   public void setVcs(@NotNull SvnVcs vcs) {
     myVcs = vcs;
+  }
+
+  @NotNull
+  @Override
+  public ClientFactory getFactory() {
+    return myFactory;
+  }
+
+  @Override
+  public void setFactory(@NotNull ClientFactory factory) {
+    myFactory = factory;
   }
 }

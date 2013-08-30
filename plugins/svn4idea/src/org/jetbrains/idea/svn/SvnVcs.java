@@ -73,7 +73,6 @@ import org.jetbrains.idea.svn.api.CmdClientFactory;
 import org.jetbrains.idea.svn.api.SvnKitClientFactory;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
-import org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient;
 import org.jetbrains.idea.svn.commandLine.SvnExecutableChecker;
 import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
@@ -102,6 +101,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -923,47 +923,21 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return new File(file, pathToDirProps);
   }
 
-  /**
-   * Provides info either with command line or SvnKit based on project settings.
-   * Call this method only if failed to detect working copy format by any other means.
-   *
-   * @param file
-   * @return
-   */
-  private SVNInfo runInfoCommand(@NotNull final File file) {
-    SVNInfo result = null;
-
-    try {
-      result = SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration.myUseAcceleration)
-               ? getInfoCommandLine(file, SVNRevision.UNDEFINED)
-               : getInfoSvnKit(file);
-    }
-    catch (SVNException e) {
-      handleInfoException(e);
-    }
-
-    return result;
-  }
-
+  @Nullable
   public SVNInfo getInfo(@NotNull SVNURL url,
                          SVNRevision pegRevision,
-                         SVNRevision revision,
-                         ISVNAuthenticationManager manager) throws SVNException {
-    if (SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration.myUseAcceleration)) {
-      return createInfoClient().doInfo(url, pegRevision, revision);
-    } else {
-      return (manager != null ? createWCClient(manager) : createWCClient()).doInfo(url, pegRevision, revision);
-    }
+                         SVNRevision revision) throws SVNException {
+    return getFactory().createInfoClient().doInfo(url, pegRevision, revision);
   }
 
+  @Nullable
   public SVNInfo getInfo(@NotNull SVNURL url, SVNRevision revision) throws SVNException {
-    return getInfo(url, SVNRevision.UNDEFINED, revision, null);
+    return getInfo(url, SVNRevision.UNDEFINED, revision);
   }
 
   @Nullable
   public SVNInfo getInfo(@NotNull final VirtualFile file) {
-    final File ioFile = new File(file.getPath());
-    return getInfo(ioFile);
+    return getInfo(new File(file.getPath()));
   }
 
   @Nullable
@@ -973,11 +947,20 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Nullable
   public SVNInfo getInfo(@NotNull File ioFile) {
-    WorkingCopyFormat format = getWorkingCopyFormat(ioFile);
     SVNInfo result = null;
+    SvnWcClientI client = getFactory(ioFile).createInfoClient();
 
     try {
-      result = format == WorkingCopyFormat.ONE_DOT_EIGHT ? getInfoCommandLine(ioFile, SVNRevision.UNDEFINED) : runInfoCommand(ioFile);
+      // applying such behavior only when info requested w/o explicitly specifying revision
+      // TODO: logs should be analyzed and decision taken if we need it or just need to explicitly specify HEAD revision in certain calls
+      result = client.doInfo(ioFile, SVNRevision.UNDEFINED);
+      SVNInfo localInfo = result;
+      if (result == null || result.getRepositoryRootURL() == null) {
+        result = client.doInfo(ioFile, SVNRevision.HEAD);
+        if (result != null) {
+          LOG.info("Local info was " + localInfo + ", HEAD info was " + result);
+        }
+      }
     }
     catch (SVNException e) {
       handleInfoException(e);
@@ -988,11 +971,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Nullable
   public SVNInfo getInfo(@NotNull File ioFile, @NotNull SVNRevision revision) {
-    WorkingCopyFormat format = getWorkingCopyFormat(ioFile);
     SVNInfo result = null;
 
     try {
-      result = format == WorkingCopyFormat.ONE_DOT_EIGHT ? getInfoCommandLine(ioFile, revision) : getInfoSvnKit(ioFile, revision);
+      result = getFactory(ioFile).createInfoClient().doInfo(ioFile, revision);
     }
     catch (SVNException e) {
       handleInfoException(e);
@@ -1010,27 +992,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     } else {
       LOG.error(e);
     }
-  }
-
-  private SVNInfo getInfoSvnKit(@NotNull File ioFile) throws SVNException {
-    SVNInfo info = getInfoSvnKit(ioFile, SVNRevision.UNDEFINED);
-    if (info == null || info.getRepositoryRootURL() == null) {
-      info = getInfoSvnKit(ioFile, SVNRevision.HEAD);
-    }
-    return info;
-  }
-
-  private SVNInfo getInfoSvnKit(@NotNull File ioFile, SVNRevision revision) throws SVNException {
-    return createWCClient().doInfo(ioFile, revision);
-  }
-
-  private SVNInfo getInfoCommandLine(@NotNull File ioFile, SVNRevision revision) throws SVNException {
-    SvnCommandLineInfoClient client = new SvnCommandLineInfoClient(myProject);
-    return client.doInfo(ioFile, revision);
-  }
-
-  private SvnWcClientI createInfoClient() {
-    return new SvnCommandLineInfoClient(myProject);
   }
 
   public WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile) {
@@ -1384,6 +1345,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     boolean isUnknown = WorkingCopyFormat.UNKNOWN.equals(format);
 
     return is18 ? cmdClientFactory : (isUnknown ? getFactory() : getFactoryFromSettings());
+  }
+
+  @NotNull
+  public ClientFactory getFactory(@NotNull SvnTarget target) {
+    return target.isFile() ? getFactory(target.getFile()) : getFactory();
   }
 
   @NotNull

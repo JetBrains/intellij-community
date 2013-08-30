@@ -10,6 +10,7 @@ import org.jetbrains.idea.svn.copy.CopyMoveClient;
 import org.jetbrains.idea.svn.delete.DeleteClient;
 import org.jetbrains.idea.svn.history.HistoryClient;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
+import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.revert.RevertClient;
 
@@ -28,6 +29,7 @@ public abstract class ClientFactory {
   protected RevertClient revertClient;
   protected DeleteClient deleteClient;
   protected SvnStatusClientI statusClient;
+  protected SvnWcClientI infoClient;
   protected CopyMoveClient copyMoveClient;
   protected ConflictClient conflictClient;
   protected PropertyClient propertyClient;
@@ -71,6 +73,12 @@ public abstract class ClientFactory {
   }
 
   @NotNull
+  public SvnWcClientI createInfoClient() {
+    // TODO: Update this in same like other clients - move to corresponding package, rename clients
+    return infoClient;
+  }
+
+  @NotNull
   public DeleteClient createDeleteClient() {
     return prepare(deleteClient);
   }
@@ -93,6 +101,7 @@ public abstract class ClientFactory {
   @NotNull
   protected <T extends SvnClient> T prepare(@NotNull T client) {
     client.setVcs(myVcs);
+    client.setFactory(this);
 
     return client;
   }

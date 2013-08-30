@@ -176,14 +176,15 @@ public class CommandUtil {
   public static SvnCommand execute(@NotNull SvnVcs vcs,
                                    @NotNull SvnCommandName name,
                                    @NotNull List<String> parameters,
-                                   @Nullable FileStatusResultParser parser)
-    throws VcsException {
+                                   @Nullable FileStatusResultParser parser,
+                                   @Nullable LineCommandListener listener)
+  throws VcsException {
     String exe = resolveExePath();
     File base = resolveBaseDirectory(null, exe);
     SVNURL url = resolveRepositoryUrl(vcs, null);
 
     SvnLineCommand command = SvnLineCommand.runWithAuthenticationAttempt(
-      exe, base, url, name, new SvnCommitRunner.CommandListener(null),
+      exe, base, url, name, listener != null ? listener : new SvnCommitRunner.CommandListener(null),
       new IdeaSvnkitBasedAuthenticationCallback(vcs),
       ArrayUtil.toStringArray(parameters));
 
@@ -192,6 +193,13 @@ public class CommandUtil {
     }
 
     return command;
+  }
+
+  public static SvnCommand execute(@NotNull SvnVcs vcs,
+                                   @NotNull SvnCommandName name,
+                                   @NotNull List<String> parameters,
+                                   @Nullable FileStatusResultParser parser) throws VcsException {
+    return execute(vcs, name, parameters, parser, null);
   }
 
   /**

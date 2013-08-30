@@ -436,7 +436,7 @@ public class SvnHistoryProvider
     private boolean existsNow(SVNURL svnurl) {
       final SVNInfo info;
       try {
-        info = myVcs.getInfo(svnurl, SVNRevision.HEAD, SVNRevision.HEAD, null);
+        info = myVcs.getInfo(svnurl, SVNRevision.HEAD, SVNRevision.HEAD);
       }
       catch (SVNException e) {
         return false;
