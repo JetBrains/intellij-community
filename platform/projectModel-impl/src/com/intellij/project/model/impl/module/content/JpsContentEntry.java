@@ -92,11 +92,13 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     return mySourceFolders.toArray(new SourceFolder[mySourceFolders.size()]);
   }
 
+  @NotNull
   @Override
   public List<SourceFolder> getSourceFolders(@NotNull JpsModuleSourceRootType<?> rootType) {
     return getSourceFolders(Collections.singleton(rootType));
   }
 
+  @NotNull
   @Override
   public List<SourceFolder> getSourceFolders(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     List<SourceFolder> folders = new SmartList<SourceFolder>();
@@ -108,6 +110,7 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     return folders;
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getSourceFolderFiles() {
     return getFiles(getSourceFolders());
@@ -124,6 +127,7 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @NotNull
   @Override
   public ExcludeFolder[] getExcludeFolders() {
     final ArrayList<ExcludeFolder> result = new ArrayList<ExcludeFolder>(myExcludeFolders);
@@ -149,16 +153,19 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     }
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getExcludeFolderFiles() {
     return getFiles(getExcludeFolders());
   }
 
+  @NotNull
   @Override
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource) {
     return addSourceFolder(file, isTestSource, "");
   }
 
+  @NotNull
   @Override
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix) {
     return addSourceFolder(file.getUrl(), isTestSource, packagePrefix);
@@ -184,6 +191,7 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     return sourceFolder;
   }
 
+  @NotNull
   @Override
   public SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource) {
     return addSourceFolder(url, isTestSource, "");

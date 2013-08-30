@@ -47,6 +47,7 @@ public interface ModuleRootModel {
    * @return list of content entries for this module
    * @see ContentEntry
    */
+  @NotNull
   ContentEntry[] getContentEntries();
 
   /**

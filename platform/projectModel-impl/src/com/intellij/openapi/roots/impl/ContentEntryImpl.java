@@ -113,11 +113,13 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return mySourceFolders.toArray(new SourceFolder[mySourceFolders.size()]);
   }
 
+  @NotNull
   @Override
   public List<SourceFolder> getSourceFolders(@NotNull JpsModuleSourceRootType<?> rootType) {
     return getSourceFolders(Collections.singleton(rootType));
   }
 
+  @NotNull
   @Override
   public List<SourceFolder> getSourceFolders(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     SmartList<SourceFolder> folders = new SmartList<SourceFolder>();
@@ -144,6 +146,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @NotNull
   @Override
   public ExcludeFolder[] getExcludeFolders() {
     //assert !isDisposed();
@@ -181,11 +184,13 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @NotNull
   @Override
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource) {
     return addSourceFolder(file, isTestSource, SourceFolderImpl.DEFAULT_PACKAGE_PREFIX);
   }
 
+  @NotNull
   @Override
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix) {
     JavaSourceRootType type = isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
@@ -201,6 +206,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return addSourceFolder(new SourceFolderImpl(file, JpsElementFactory.getInstance().createModuleSourceRoot(file.getUrl(), type, properties), this));
   }
 
+  @NotNull
   @Override
   public SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource) {
     assertFolderUnderMe(url);
@@ -209,7 +215,8 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return addSourceFolder(new SourceFolderImpl(JpsElementFactory.getInstance().createModuleSourceRoot(url, type, properties), this));
   }
 
-  private SourceFolder addSourceFolder(SourceFolderImpl f) {
+  @NotNull
+  private SourceFolder addSourceFolder(@NotNull SourceFolderImpl f) {
     mySourceFolders.add(f);
     Disposer.register(this, f); //rewire source folder dispose parent from rootmodel to this content root
     return f;

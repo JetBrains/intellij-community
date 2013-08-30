@@ -40,11 +40,13 @@ public class ModuleAwareContentRoot implements ContentEntry {
     return myModule;
   }
 
+  @NotNull
   @Override
   public List<SourceFolder> getSourceFolders(@NotNull JpsModuleSourceRootType<?> rootType) {
     return myDelegate.getSourceFolders(rootType);
   }
 
+  @NotNull
   @Override
   public List<SourceFolder> getSourceFolders(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     return myDelegate.getSourceFolders(rootTypes);
@@ -68,26 +70,31 @@ public class ModuleAwareContentRoot implements ContentEntry {
     return myDelegate.getSourceFolders();
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getSourceFolderFiles() {
     return myDelegate.getSourceFolderFiles();
   }
 
+  @NotNull
   @Override
   public ExcludeFolder[] getExcludeFolders() {
     return myDelegate.getExcludeFolders();
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getExcludeFolderFiles() {
     return myDelegate.getExcludeFolderFiles();
   }
 
+  @NotNull
   @Override
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource) {
     return myDelegate.addSourceFolder(file, isTestSource);
   }
 
+  @NotNull
   @Override
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix) {
     return myDelegate.addSourceFolder(file, isTestSource, packagePrefix);
@@ -101,6 +108,7 @@ public class ModuleAwareContentRoot implements ContentEntry {
     return myDelegate.addSourceFolder(file, type, properties);
   }
 
+  @NotNull
   @Override
   public SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource) {
     return myDelegate.addSourceFolder(url, isTestSource);

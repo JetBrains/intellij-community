@@ -150,6 +150,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel;
   }
 
+  @NotNull
   @Override
   public ContentEntry[] getContentEntries() {
     return myRootModel.getContentEntries();

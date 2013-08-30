@@ -153,6 +153,7 @@ public abstract class RootModelBase implements ModuleRootModel {
     return result;
   }
 
+  @NotNull
   @Override
   public ContentEntry[] getContentEntries() {
     final Collection<ContentEntry> content = getContent();
