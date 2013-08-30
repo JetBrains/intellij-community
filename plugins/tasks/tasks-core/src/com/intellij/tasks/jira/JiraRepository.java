@@ -196,4 +196,10 @@ public class JiraRepository extends BaseRepositoryImpl {
     }
     throw new Exception("Request failed with HTTP error: " + HttpStatus.getStatusText(method.getStatusCode()));
   }
+
+  @Override
+  public void setUrl(String url) {
+    myRestApiVersion = null;
+    super.setUrl(url);
+  }
 }

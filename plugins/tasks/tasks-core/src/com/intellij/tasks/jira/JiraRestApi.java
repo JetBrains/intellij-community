@@ -91,24 +91,26 @@ public abstract class JiraRestApi {
   public abstract String getVersionName();
 
   public void setTaskState(Task task, TaskState state) throws Exception {
-    int transitionId;
+    String requestBody;
     switch (state) {
       case IN_PROGRESS:
-        transitionId = 4;
+        requestBody = "{\"transition\": \"4\"}";
         break;
       case RESOLVED:
-        transitionId = 5; // 5 for "Resolved", 2 for "Close"
+        // 5 for "Resolved", 2 for "Close"
+        requestBody = "{\"transition\": \"5\", \"resolution\": \"Fixed\"}";
+        break;
+      case REOPENED:
+        requestBody = "{\"transition\": \"3\"}";
         break;
       default:
-        // also 3 for "Reopen"
         return;
     }
     // REST API 2.0 require double quotes both around field names and values (even numbers)
     // REST API 2.0alpha1 permits to omit them, but handles both variants
     final String transitionsUrl = myRepository.getUrl() + REST_API_PATH_SUFFIX + "/issue/" + task.getId() + "/transitions";
     final PostMethod method = new PostMethod(transitionsUrl);
-    final String json = String.format("{\"transition\": \"%d\", \"resolution\": \"Fixed\"}", transitionId);
-    method.setRequestEntity(new StringRequestEntity(json, "application/json", "utf-8"));
+    method.setRequestEntity(new StringRequestEntity(requestBody, "application/json", "utf-8"));
     myRepository.executeMethod(method);
   }
 }
