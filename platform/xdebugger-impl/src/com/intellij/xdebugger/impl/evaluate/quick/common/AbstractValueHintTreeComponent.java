@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
@@ -58,6 +59,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
 
   private AnAction createGoForwardAction(){
     return new AnAction(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward){
+      @Override
       public void actionPerformed(AnActionEvent e) {
         if (myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1){
           myCurrentIndex ++;
@@ -81,6 +83,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
 
   private AnAction createGoBackAction(){
     return new AnAction(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back){
+      @Override
       public void actionPerformed(AnActionEvent e) {
         if (myHistory.size() > 1 && myCurrentIndex > 0) {
           myCurrentIndex--;
@@ -89,6 +92,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
       }
 
 
+      @Override
       public void update(AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex > 0);
       }
@@ -113,11 +117,11 @@ public abstract class AbstractValueHintTreeComponent<H> {
     group.add(createSetRoot());
 
     AnAction back = createGoBackAction();
-    back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.ALT_MASK)), parent);
+    back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_MASK)), parent);
     group.add(back);
 
     AnAction forward = createGoForwardAction();
-    forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.ALT_MASK)), parent);
+    forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK)), parent);
     group.add(forward);
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
@@ -126,6 +130,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
   private AnAction createSetRoot() {
     final String title = XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip");
     return new AnAction(title, title, AllIcons.Modules.UnmarkWebroot) {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         final TreePath path = myTree.getSelectionPath();
         if (path == null) return;
