@@ -124,6 +124,7 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
       myWatchPanel = watchPanel;
     }
 
+    @Override
     public void threadAction() {
       final DebuggerSession session = myDebuggerContext.getDebuggerSession();
       if (session == null) {
@@ -136,6 +137,7 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
           final TextWithImports expression = DebuggerTreeNodeExpression.createEvaluationText(node, myDebuggerContext);
           if (expression != null) {
             DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
+              @Override
               public void run() {
                 doAddWatch(myWatchPanel, expression, descriptor);
               }
@@ -144,6 +146,7 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
         }
         catch (final EvaluateException e) {
           DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
+            @Override
             public void run() {
               Messages.showErrorDialog(project, e.getMessage(), ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH));
             }
@@ -152,8 +155,10 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
       }
     }
 
+    @Override
     protected void commandCancelled() {
       DebuggerInvocationUtil.swingInvokeLater(myDebuggerContext.getProject(), new Runnable() {
+        @Override
         public void run() {
           for (DebuggerTreeNodeImpl node : mySelectedNodes) {
             final NodeDescriptorImpl descriptor = node.getDescriptor();

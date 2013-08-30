@@ -722,10 +722,6 @@
 
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
-    </group>
-
-    <group id="XDebugger.Value.Hint.Tree.Popup">
-      <reference ref="XDebugger.ValueGroup"/>
       <reference ref="XDebugger.AddToWatches"/>
     </group>
 
