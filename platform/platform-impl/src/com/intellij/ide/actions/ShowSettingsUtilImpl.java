@@ -63,7 +63,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   private static void _showSettingsDialog(final Project project, ConfigurableGroup[] group, @Nullable Configurable toSelect) {
     group = filterEmptyGroups(group);
-    if (Registry.is("ide.mac.modalDialogsOnFullscreen")) {
+    if (Registry.is("ide.perProjectModality")) {
       new OptionsEditorDialog(project, group, toSelect, true).show();
     } else {
       if (Registry.is("ide.new.preferences")) {
@@ -113,7 +113,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     group = filterEmptyGroups(group);
 
     OptionsEditorDialog dialog;
-    if (Registry.is("ide.mac.modalDialogsOnFullscreen")) {
+    if (Registry.is("ide.perProjectModality")) {
       dialog = new OptionsEditorDialog(actualProject, group, nameToSelect, true);
     } else {
       dialog = new OptionsEditorDialog(actualProject, group, nameToSelect);
@@ -137,7 +137,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     final Configurable configurable2Select = findConfigurable2Select(id2Select, group);
 
     final OptionsEditorDialog dialog;
-    if (Registry.is("ide.mac.modalDialogsOnFullscreen")) {
+    if (Registry.is("ide.perProjectModality")) {
       dialog = new OptionsEditorDialog(actualProject, group, configurable2Select, true);
     } else {
       dialog = new OptionsEditorDialog(actualProject, group, configurable2Select);
