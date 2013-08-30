@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +79,8 @@ public final class CommandProcessor implements Runnable {
       // definitely have some since runnables in command list may (and do) request some PSI activity
       final boolean queueNext = myCommandCount > 0;
       Application application = ApplicationManager.getApplication();
-      application.getInvokator().invokeLater(command, ModalityState.NON_MODAL, expire == null ? application.getDisposed() : expire).doWhenDone(new Runnable() {
+      ModalityState modalityState = Registry.is("ide.perProjectModality") ? ModalityState.defaultModalityState() : ModalityState.NON_MODAL;
+      application.getInvokator().invokeLater(command, modalityState, expire == null ? application.getDisposed() : expire).doWhenDone(new Runnable() {
         public void run() {
           if (queueNext) {
             CommandProcessor.this.run();

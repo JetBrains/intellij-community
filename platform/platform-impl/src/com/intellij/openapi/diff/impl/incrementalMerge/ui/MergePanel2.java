@@ -146,7 +146,7 @@ public class MergePanel2 implements DiffViewer {
         toolbar.addAction(PreviousDiffAction.find());
         toolbar.addAction(NextDiffAction.find());
         toolbar.addSeparator();
-        toolbar.addAction(new OpenPartialDiffAction(1, 0, AllIcons.Diff.LeftDiff));
+        toolbar.addAction(new OpenPartialDiffAction(0, 1, AllIcons.Diff.LeftDiff));
         toolbar.addAction(new OpenPartialDiffAction(1, 2, AllIcons.Diff.RightDiff));
         toolbar.addAction(new OpenPartialDiffAction(0, 2, AllIcons.Diff.BranchDiff));
         toolbar.addSeparator();

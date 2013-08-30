@@ -45,6 +45,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
     super(root);
   }
 
+  @Override
   public void processMouseEvent(final MouseEvent e) {
 //todo [kirillk] to delegate this to DnDEnabler
     if (getToolTipText() == null && e.getID() == MouseEvent.MOUSE_ENTERED) return;
@@ -57,6 +58,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
     super.processMouseMotionEvent(e);
   }
 
+  @Override
   public final boolean isOverSelection(final Point point) {
     final TreeUI ui = getUI();
     final TreePath path = ui instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)ui).isWideSelection()
@@ -65,10 +67,12 @@ public class DnDAwareTree extends Tree implements DnDAware {
     return isPathSelected(path);
   }
 
+  @Override
   public void dropSelectionButUnderPoint(final Point point) {
     TreeUtil.dropSelectionButUnderPoint(this, point);
   }
 
+  @Override
   @NotNull
   public final JComponent getComponent() {
     return this;

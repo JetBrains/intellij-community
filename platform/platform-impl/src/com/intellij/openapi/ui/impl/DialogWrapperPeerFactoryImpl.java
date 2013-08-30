@@ -30,6 +30,10 @@ public class DialogWrapperPeerFactoryImpl extends DialogWrapperPeerFactory {
     return new DialogWrapperPeerImpl(wrapper, project, canBeParent);
   }
 
+  public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType) {
+    return new DialogWrapperPeerImpl(wrapper, project, canBeParent, ideModalityType);
+  }
+
   @Override
   public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent) {
     return new DialogWrapperPeerImpl(wrapper, canBeParent);
@@ -52,5 +56,18 @@ public class DialogWrapperPeerFactoryImpl extends DialogWrapperPeerFactory {
   @Override
   public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     return new DialogWrapperPeerImpl(wrapper, parent, canBeParent);
+  }
+
+  @Override
+  public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType) {
+    return new DialogWrapperPeerImpl(wrapper, (Window)null, canBeParent, ideModalityType);
+  }
+
+  @Override
+  public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper,
+                                      Window owner,
+                                      boolean canBeParent,
+                                      DialogWrapper.IdeModalityType ideModalityType) {
+    return new DialogWrapperPeerImpl(wrapper, owner, canBeParent, ideModalityType);
   }
 }
