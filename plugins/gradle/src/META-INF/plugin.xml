@@ -31,6 +31,7 @@
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleRepositoriesContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDependenciesContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleConfigurationsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleRootContributor"/>
   </extensions>
   
@@ -72,6 +73,7 @@
     <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.gradle.config.GradleGroovyConfigNotification"/>
     
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleConfigurationsNonCodeMembersContributor"/>
     <methodDescriptor class="org.gradle.api.Project" name="apply">
       <namedArgument name="plugin" values="java,groovy,idea,eclipse,scala,antlr,application,ear,jetty,maven,osgi,war,announce,build-announcements,checkstyle,codenarc,eclipse-wtp,findbugs,jdepend,pmd,project-report,signing,sonar"/>
     </methodDescriptor>
