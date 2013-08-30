@@ -123,14 +123,14 @@ class Build {
 
   def zip() {
     if (steps.zipSources) {
-      projectBuilder.stage("--- zip: $home $paths.artifacts")
+      projectBuilder.stage("zip: $home $paths.artifacts")
       utils.zipSources(home, paths.artifacts)
     }
   }
 
   def compile(String jdk) {
     paths.jdkHome = jdk
-    projectBuilder.stage("--- Compilation ---")
+    projectBuilder.stage("- Compilation -")
     if (steps.compile) {
       projectBuilder.arrangeModuleCyclesOutputs = true
       projectBuilder.targetFolder = paths.classesTarget
@@ -139,16 +139,16 @@ class Build {
       projectBuilder.buildProduction()
     }	
 
-    projectBuilder.stage("--- additionalCompilation ---")
+    projectBuilder.stage("- additionalCompilation -")
     utils.additionalCompilation()
-    projectBuilder.stage("--- searchableOptions ---")
+    projectBuilder.stage("- searchableOptions -")
     utils.searchableOptions()
-    projectBuilder.stage("--- wireBuildDate ---")
+    projectBuilder.stage("- wireBuildDate -")
     utils.wireBuildDate(buildName, appInfoFile())
   }
 
   def layout(){
-    projectBuilder.stage("--- layout ---")
+    projectBuilder.stage("- layout -")
     if (steps.layout) {
       LayoutInfo layoutInfo = layouts.layoutFull(paths.distJars)
       ultimate_utils.layoutUpdater(paths.artifacts)
@@ -162,11 +162,10 @@ class Build {
       layouts.layoutJps(home, jpsArtifactsPath)
       utils.notifyArtifactBuilt(jpsArtifactsPath)
     }
-    projectBuilder.stage("layout - Finished")
   }
 
   def scramble (Map args) {
-    projectBuilder.stage("--- scramble ---")
+    projectBuilder.stage("- scramble -")
     if (utils.isUnderTeamCity()) {
       projectBuilder.stage("Scrambling - getPreviousLogs")
       getPreviousLogs()
@@ -181,7 +180,7 @@ class Build {
       def unscrambledPath = "${paths.artifacts}/${args.jarName}.unscramble"
       ant.copy(file: "${paths.distJars}/lib/${args.jarName}", todir: unscrambledPath)
       utils.notifyArtifactBuilt("${unscrambledPath}/${args.jar}")
-      ultimate_utils.zkmScramble("${paths.sandbox}/script.zkm", paths.distJars/lib, args.jarName)
+      ultimate_utils.zkmScramble("${paths.sandbox}/script.zkm", "${paths.distJars}/lib", args.jarName)
       ant.zip(destfile: "${paths.artifacts}/logs.zip") {
         fileset(file: "ChangeLog.txt")
         fileset(file: "ZKM_log.txt")
@@ -193,7 +192,7 @@ class Build {
     else {
       projectBuilder.info("teamcity.buildType.id is not defined. Incremental scrambling is disabled")
     }
-    projectBuilder.stage("--- Scrambling - finished")
+    projectBuilder.stage("- Scrambling - finished -")
   }
 
   private lastPinnedBuild() {
@@ -221,25 +220,25 @@ class Build {
   }
 
   def install() {
-    projectBuilder.stage("--- layoutShared ---")
+    projectBuilder.stage("- layoutShared -")
     layouts.layoutShared(layout_args, paths.distAll)
 
-    projectBuilder.stage("--- layoutWin ---")
+    projectBuilder.stage("- layoutWin -")
     layouts.layoutWin(layout_args, paths.distWin)
 
-    projectBuilder.stage("--- layoutUnix ---")
+    projectBuilder.stage("- layoutUnix -")
     layouts.layoutUnix(layout_args, paths.distUnix)
 
-    projectBuilder.stage("--- layoutMac ---")
+    projectBuilder.stage("- layoutMac -")
     layouts.layoutMac(layout_args, paths.distMac)
 
-    projectBuilder.stage("--- buildNSISs ---")
+    projectBuilder.stage("- buildNSISs -")
     buildWinInstallation()
 
-    projectBuilder.stage("--- targz ---")
+    projectBuilder.stage("- targz -")
     utils.buildTeamServer()
 
-    projectBuilder.stage("--- checkLibLicenses ---")
+    projectBuilder.stage("- checkLibLicenses -")
     libLicenses.checkLibLicenses();
   }
 
