@@ -58,6 +58,7 @@ import jetbrains.coverage.report.html.HTMLReportBuilder;
 import jetbrains.coverage.report.idea.IDEACoverageData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
@@ -191,7 +192,8 @@ public class JavaCoverageEngine extends CoverageEngine {
     final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
     final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
 
-    if ((outputpath == null && isModuleOutputNeeded(module, false)) || (suite.isTrackTestFolders() && testOutputpath == null && isModuleOutputNeeded(module, true))) {
+    if ((outputpath == null && isModuleOutputNeeded(module, JavaSourceRootType.SOURCE))
+        || (suite.isTrackTestFolders() && testOutputpath == null && isModuleOutputNeeded(module, JavaSourceRootType.TEST_SOURCE))) {
       final Project project = module.getProject();
       if (suite.isModuleChecked(module)) return false;
       suite.checkModule(module);
@@ -223,17 +225,8 @@ public class JavaCoverageEngine extends CoverageEngine {
     return false;
   }
 
-  private static boolean isModuleOutputNeeded(Module module, boolean checkTestRoots) {
-    for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
-      for (SourceFolder sourceFolder : entry.getSourceFolders()) {
-        if (checkTestRoots) {
-          if (sourceFolder.isTestSource()) return true;
-        } else {
-          if (!sourceFolder.isTestSource()) return true;
-        }
-      }
-    }
-    return false;
+  private static boolean isModuleOutputNeeded(Module module, final JavaSourceRootType rootType) {
+    return !ModuleRootManager.getInstance(module).getSourceRoots(rootType).isEmpty();
   }
 
   public static boolean isUnderFilteredPackages(final PsiClassOwner javaFile, final List<PsiPackage> packages) {

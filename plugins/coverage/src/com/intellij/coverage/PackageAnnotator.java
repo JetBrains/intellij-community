@@ -22,6 +22,7 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
@@ -222,14 +223,12 @@ public class PackageAnnotator {
     final List<DirCoverageInfo> dirs = new ArrayList<DirCoverageInfo>();
     final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
     for (ContentEntry contentEntry : contentEntries) {
-      for (SourceFolder folder : contentEntry.getSourceFolders()) {
+      for (SourceFolder folder : contentEntry.getSourceFolders(isTestHierarchy ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE)) {
         final VirtualFile file = folder.getFile();
         if (file == null) continue;
-        if (folder.isTestSource() && isTestHierarchy || !isTestHierarchy) {
-          final String prefix = folder.getPackagePrefix().replaceAll("\\.", "/");
-          final VirtualFile relativeSrcRoot = file.findFileByRelativePath(StringUtil.trimStart(packageVMName, prefix));
-          dirs.add(new DirCoverageInfo(relativeSrcRoot));
-        }
+        final String prefix = folder.getPackagePrefix().replaceAll("\\.", "/");
+        final VirtualFile relativeSrcRoot = file.findFileByRelativePath(StringUtil.trimStart(packageVMName, prefix));
+        dirs.add(new DirCoverageInfo(relativeSrcRoot));
       }
     }
 
