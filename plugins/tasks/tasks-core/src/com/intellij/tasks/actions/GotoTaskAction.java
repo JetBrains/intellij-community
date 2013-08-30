@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiManager;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
@@ -71,13 +72,13 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
 
         List<Task> cachedAndLocalTasks = TaskSearchSupport.getLocalAndCachedTasks(TaskManager.getManager(project), pattern, everywhere);
         boolean cachedTasksFound = !cachedAndLocalTasks.isEmpty();
-        if (!processTasks(cachedAndLocalTasks, consumer, cachedTasksFound, cancelled)) return false;
+        if (!processTasks(cachedAndLocalTasks, consumer, cachedTasksFound, cancelled, PsiManager.getInstance(project))) return false;
 
         List<Task> tasks = TaskSearchSupport
           .getRepositoriesTasks(TaskManager.getManager(project), pattern, base.getMaximumListSizeLimit(), 0, true, everywhere, cancelled);
         tasks.removeAll(cachedAndLocalTasks);
 
-        return processTasks(tasks, consumer, cachedTasksFound, cancelled);
+        return processTasks(tasks, consumer, cachedTasksFound, cancelled, PsiManager.getInstance(project));
       }
     }, null, false, 0);
 
@@ -136,12 +137,16 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
     }, null, popup);
   }
 
-  private static boolean processTasks(List<Task> tasks, Processor<Object> consumer, boolean cachedTasksFound, ProgressIndicator cancelled) {
+  private static boolean processTasks(List<Task> tasks,
+                                      Processor<Object> consumer,
+                                      boolean cachedTasksFound,
+                                      ProgressIndicator cancelled,
+                                      PsiManager psiManager) {
     if (!cachedTasksFound && !tasks.isEmpty() && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
 
-    for (Object element : tasks) {
+    for (Task task : tasks) {
       cancelled.checkCanceled();
-      if (!consumer.process(element)) return false;
+      if (!consumer.process(new TaskPsiElement(psiManager, task))) return false;
     }
     return true;
   }
