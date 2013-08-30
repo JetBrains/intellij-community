@@ -21,6 +21,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -39,7 +41,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
   private final Tree myTree;
   private JPanel myMainPanel;
 
-  protected AbstractValueHintTreeComponent(final AbstractValueHint valueHint, final Tree tree, final H initialItem) {
+  protected AbstractValueHintTreeComponent(@Nullable AbstractValueHint valueHint, @NotNull Tree tree, @NotNull H initialItem) {
     myValueHint = valueHint;
     myTree = tree;
     myHistory.add(initialItem);
@@ -63,7 +65,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
         }
       }
 
-
+      @Override
       public void update(AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1);
       }
@@ -71,7 +73,9 @@ public abstract class AbstractValueHintTreeComponent<H> {
   }
 
   private void updateHint() {
-    myValueHint.shiftLocation();
+    if (myValueHint != null) {
+      myValueHint.shiftLocation();
+    }
     updateTree(myHistory.get(myCurrentIndex));
   }
 

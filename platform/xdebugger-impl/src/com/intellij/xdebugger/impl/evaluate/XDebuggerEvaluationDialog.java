@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 /**
@@ -93,15 +94,17 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     mySwitchModeAction = new SwitchModeAction();
 
     new AnAction(){
+      @Override
       public void actionPerformed(AnActionEvent e) {
         doOKAction();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.CTRL_DOWN_MASK)), getRootPane(), myDisposable);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK)), getRootPane(), myDisposable);
     new AnAction() {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         IdeFocusManager.getInstance(mySession.getProject()).requestFocus(myTreePanel.getTree(), true);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK)), getRootPane(), myDisposable);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(), myDisposable);
 
     EvaluationMode mode = EvaluationMode.EXPRESSION;
     if (text.indexOf('\n') != -1) {
@@ -122,6 +125,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     super.dispose();
   }
 
+  @Override
   protected void doOKAction() {
     evaluate();
   }
@@ -192,10 +196,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myInputComponent.getInputEditor().selectAll();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#xdebugger.evaluate";
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myMainPanel;
   }
@@ -207,11 +213,13 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myEvaluator.evaluate(expression, evaluationCallback, null, inputEditor.getMode());
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myInputComponent.getInputEditor().getPreferredFocusedComponent();
   }
 
   private class SwitchModeAction extends AbstractAction {
+    @Override
     public void actionPerformed(ActionEvent e) {
       String text = myInputComponent.getInputEditor().getText();
       if (myMode == EvaluationMode.EXPRESSION) {

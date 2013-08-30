@@ -16,13 +16,14 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.evaluate.quick.XValueHintTreeComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,16 +34,16 @@ import javax.swing.*;
  * @author nik
  */
 public class XInspectDialog extends DialogWrapper {
-  private final XDebuggerTreePanel myTreePanel;
+  private final XValueHintTreeComponent myTreePanel;
 
   public XInspectDialog(XDebugSession session, XDebuggerEditorsProvider editorsProvider, XSourcePosition sourcePosition, @NotNull String name, @NotNull XValue value) {
     super(session.getProject(), false);
 
     setTitle(XDebuggerBundle.message("inspect.value.dialog.title", name));
     setModal(false);
-    myTreePanel = new XDebuggerTreePanel(session, editorsProvider, myDisposable, sourcePosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP);
-    XDebuggerTree tree = myTreePanel.getTree();
-    tree.setRoot(new XValueNodeImpl(tree, null, name, value), true);
+
+    XDebuggerTree tree = new XDebuggerTree(session, editorsProvider, sourcePosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP);
+    myTreePanel = new XValueHintTreeComponent(null, tree, Pair.create(value, name));
     init();
   }
 
