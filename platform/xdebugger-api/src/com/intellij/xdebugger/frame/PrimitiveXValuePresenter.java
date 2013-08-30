@@ -36,4 +36,8 @@ public class PrimitiveXValuePresenter extends XValuePresenter {
   public void append(@NotNull String value, @NotNull ColoredTextContainer text, boolean changed) {
     text.append(value, SimpleTextAttributes.fromTextAttributes(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(textAttributesKey)));
   }
+
+  public static XValuePresenter forNumber(String value) {
+    return value.equals("NaN") || value.equals("Infinity") ? KEYWORD : NUMBER;
+  }
 }
