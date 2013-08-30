@@ -15,11 +15,20 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.IdeaTestCase;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 
@@ -57,6 +66,38 @@ public class JarFileSystemTest extends IdeaTestCase {
     assertEquals(1, children.length);
   }
 
+  public void testJarRefresh() throws IOException {
+    File jar = IoTestUtil.createTestJar();
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
+    assertNotNull(vFile);
+
+    final VirtualFile entry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + "entry.txt");
+    assertContent(entry, "test");
+
+    final Ref<Boolean> updated = Ref.create(false);
+    ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable).subscribe(
+      VirtualFileManager.VFS_CHANGES,
+      new BulkFileListener.Adapter() {
+        @Override
+        public void before(@NotNull List<? extends VFileEvent> events) {
+          for (VFileEvent event : events) {
+            if (event instanceof VFileContentChangeEvent && entry.equals(event.getFile())) {
+              updated.set(true);
+              break;
+            }
+          }
+        }
+      }
+    );
+
+    IoTestUtil.writeEntry(jar, "entry.txt", "update");
+    vFile.refresh(false, false);
+
+    assertTrue(updated.get());
+    assertTrue(entry.isValid());
+    assertContent(entry, "update");
+  }
+
   private String getJdkRtPath(String relativePath) {
     Sdk jdk = ModuleRootManager.getInstance(myModule).getSdk();
     assertNotNull(jdk);
@@ -70,5 +111,10 @@ public class JarFileSystemTest extends IdeaTestCase {
     assertNotNull(file);
     assertPathsEqual(path, file.getPath());
     return file;
+  }
+
+  private static void assertContent(VirtualFile file, String expected) throws IOException {
+    String content = new String(file.contentsToByteArray());
+    assertEquals(expected, content);
   }
 }
