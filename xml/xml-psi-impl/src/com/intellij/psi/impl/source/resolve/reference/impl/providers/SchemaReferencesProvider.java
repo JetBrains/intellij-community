@@ -285,7 +285,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
             TypeDescriptor typeDescriptor = nsDescriptor.getTypeDescriptor(canonicalText,tag);
             if (typeDescriptor instanceof ComplexTypeDescriptor) {
               return ((ComplexTypeDescriptor)typeDescriptor).getDeclaration();
-            } else if (typeDescriptor instanceof TypeDescriptor) {
+            } else if (typeDescriptor != null) {
               return myElement;
             }
           }
@@ -388,10 +388,8 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       return name;
     }
 
-    public PsiElement handleElementRename(String _newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
       final String canonicalText = getCanonicalText();
-      //final String newElementName = canonicalText.substring(0,canonicalText.indexOf(':') + 1) + _newElementName;
-      final String newElementName = _newElementName;
 
       final PsiElement element = ElementManipulators.getManipulator(myElement)
         .handleContentChange(myElement, getRangeInElement(), newElementName);
@@ -452,8 +450,6 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
           break;
       }
 
-      CompletionProcessor processor = new CompletionProcessor(tag);
-
       final XmlElement context = PsiTreeUtil.getContextOfType(myElement, XmlElement.class, false);
       if (context == null) {
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -466,7 +462,8 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       String ourNamespace = rootTag != null ? rootTag.getAttributeValue(TARGET_NAMESPACE) : "";
       if (ourNamespace == null) ourNamespace = "";
 
-      for(String namespace:tag.knownNamespaces()) {
+      CompletionProcessor processor = new CompletionProcessor(tag);
+      for(String namespace: tag.knownNamespaces()) {
         if (ourNamespace.equals(namespace)) continue;
         final XmlNSDescriptor nsDescriptor = tag.getNSDescriptor(namespace, true);
 
@@ -474,7 +471,6 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
           processNamespace(namespace, processor, nsDescriptor, tagNames);
         }
       }
-
 
       XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
       if (nsDescriptor != null) {
