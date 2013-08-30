@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -39,23 +40,19 @@ public class InstanceofChainInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "chain.of.instanceof.checks.display.name");
+    return InspectionGadgetsBundle.message("chain.of.instanceof.checks.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "chain.of.instanceof.checks.problem.descriptor");
+    return InspectionGadgetsBundle.message("chain.of.instanceof.checks.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "ignore.instanceof.on.library.classes"),
-      this, "ignoreInstanceofOnLibraryClasses");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.instanceof.on.library.classes"), this,
+                                          "ignoreInstanceofOnLibraryClasses");
   }
 
   @Override
@@ -63,26 +60,34 @@ public class InstanceofChainInspection extends BaseInspection {
     return new InstanceofChainVisitor();
   }
 
-  private class InstanceofChainVisitor
-    extends BaseInspectionVisitor {
+  private class InstanceofChainVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitIfStatement(
-      @NotNull PsiIfStatement statement) {
-      super.visitIfStatement(statement);
-      final PsiElement parent = statement.getParent();
+    public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
+      super.visitIfStatement(ifStatement);
+      final PsiElement parent = ifStatement.getParent();
       if (parent instanceof PsiIfStatement) {
         final PsiIfStatement parentStatement = (PsiIfStatement)parent;
         final PsiStatement elseBranch = parentStatement.getElseBranch();
-        if (statement.equals(elseBranch)) {
+        if (ifStatement.equals(elseBranch)) {
+          return;
+        }
+      }
+      final PsiStatement previousStatement = PsiTreeUtil.getPrevSiblingOfType(ifStatement, PsiStatement.class);
+      if (previousStatement instanceof PsiIfStatement) {
+        final PsiIfStatement previousIfStatement = (PsiIfStatement)previousStatement;
+        if (isInstanceofCheck(previousIfStatement.getCondition())) {
           return;
         }
       }
       int numChecks = 0;
-      PsiIfStatement branch = statement;
-      while (branch != null) {
+      PsiIfStatement branch = ifStatement;
+      while (true) {
         final PsiExpression condition = branch.getCondition();
         if (!isInstanceofCheck(condition)) {
+          if (numChecks > 1) {
+            break;
+          }
           return;
         }
         numChecks++;
@@ -90,14 +95,21 @@ public class InstanceofChainInspection extends BaseInspection {
         if (elseBranch instanceof PsiIfStatement) {
           branch = (PsiIfStatement)elseBranch;
         }
+        else if (elseBranch == null) {
+          final PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(branch, PsiStatement.class);
+          if (!(nextStatement instanceof PsiIfStatement)) {
+            break;
+          }
+          branch = (PsiIfStatement)nextStatement;
+        }
         else {
-          branch = null;
+          break;
         }
       }
       if (numChecks < 2) {
         return;
       }
-      registerStatementError(statement);
+      registerStatementError(ifStatement);
     }
 
     private boolean isInstanceofCheck(PsiExpression condition) {
@@ -107,8 +119,7 @@ public class InstanceofChainInspection extends BaseInspection {
         }
         else if (condition instanceof PsiInstanceOfExpression) {
           if (ignoreInstanceofOnLibraryClasses) {
-            final PsiInstanceOfExpression instanceOfExpression =
-              (PsiInstanceOfExpression)condition;
+            final PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)condition;
             if (isInstanceofOnLibraryClass(instanceOfExpression)) {
               return false;
             }
@@ -116,10 +127,8 @@ public class InstanceofChainInspection extends BaseInspection {
           return true;
         }
         else if (condition instanceof PsiPolyadicExpression) {
-          final PsiPolyadicExpression polyadicExpression =
-            (PsiPolyadicExpression)condition;
-          final PsiExpression[] operands =
-            polyadicExpression.getOperands();
+          final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+          final PsiExpression[] operands = polyadicExpression.getOperands();
           for (PsiExpression operand : operands) {
             if (!isInstanceofCheck(operand)) {
               return false;
@@ -128,20 +137,17 @@ public class InstanceofChainInspection extends BaseInspection {
           return true;
         }
         else if (condition instanceof PsiParenthesizedExpression) {
-          final PsiParenthesizedExpression parenthesizedExpression =
-            (PsiParenthesizedExpression)condition;
+          final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)condition;
           condition = parenthesizedExpression.getExpression();
           continue;
         }
         else if (condition instanceof PsiPrefixExpression) {
-          final PsiPrefixExpression prefixExpression =
-            (PsiPrefixExpression)condition;
+          final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
           condition = prefixExpression.getOperand();
           continue;
         }
         else if (condition instanceof PsiPostfixExpression) {
-          final PsiPostfixExpression postfixExpression =
-            (PsiPostfixExpression)condition;
+          final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)condition;
           condition = postfixExpression.getOperand();
           continue;
         }
@@ -149,10 +155,8 @@ public class InstanceofChainInspection extends BaseInspection {
       }
     }
 
-    private boolean isInstanceofOnLibraryClass(
-      PsiInstanceOfExpression instanceOfExpression) {
-      final PsiTypeElement checkType =
-        instanceOfExpression.getCheckType();
+    private boolean isInstanceofOnLibraryClass(PsiInstanceOfExpression instanceOfExpression) {
+      final PsiTypeElement checkType = instanceOfExpression.getCheckType();
       if (checkType == null) {
         return false;
       }
