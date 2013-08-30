@@ -77,7 +77,12 @@ public class TextRange implements Segment, Serializable {
 
   @NotNull
   public String substring(@NotNull String str) {
-    return str.substring(myStartOffset, myEndOffset);
+    try {
+      return str.substring(myStartOffset, myEndOffset);
+    }
+    catch (StringIndexOutOfBoundsException e) {
+      throw new StringIndexOutOfBoundsException("Can't extract " + this + " range from " + str);
+    }
   }
 
   @NotNull
