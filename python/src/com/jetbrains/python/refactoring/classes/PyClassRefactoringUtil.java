@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring.classes;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -348,7 +349,11 @@ public class PyClassRefactoringUtil {
         }
         if (deleteImportElement) {
           if (importStatement.getImportElements().length == 1) {
-            importStatement.delete();
+            final boolean isInjected = InjectedLanguageManager.getInstance(importElement.getProject()).isInjectedFragment(importElement.getContainingFile());
+            if (!isInjected)
+              importStatement.delete();
+            else
+              deleteImportStatementFromInjected(importStatement);
           }
           else {
             importElement.delete();
@@ -356,6 +361,13 @@ public class PyClassRefactoringUtil {
         }
       }
     }
+  }
+
+  private static void deleteImportStatementFromInjected(@NotNull final PyImportStatementBase importStatement) {
+    final PsiElement sibling = importStatement.getPrevSibling();
+    importStatement.delete();
+    if (sibling instanceof PsiWhiteSpace)
+      sibling.delete();
   }
 
   @Nullable
