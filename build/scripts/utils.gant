@@ -76,7 +76,8 @@ binding.setVariable("isDefined", {String key ->
   projectBuilder.stage("isDefined - $key")
   try {
     projectBuilder.stage("isDefined - try")
-    this[key]
+    def key_value = this[key]
+    projectBuilder.stage("isDefined key- " + key + " -value- " + key_value)
     projectBuilder.stage("isDefined - try finished")
     return true
   }
