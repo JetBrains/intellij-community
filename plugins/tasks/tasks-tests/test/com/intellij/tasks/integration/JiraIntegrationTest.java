@@ -20,12 +20,22 @@ import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraRepositoryType;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 1/15/13
  */
 public class JiraIntegrationTest extends TaskManagerTestCase {
+
+  /**
+   * JIRA 4.4.5, REST API 2.0.alpha1
+   */
+  @NonNls private static final String JIRA_4_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8014";
+  /**
+   * JIRA 5.0.6, REST API 2.0
+   */
+  @NonNls private static final String JIRA_5_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8015";
 
   private JiraRepository myRepository;
 
@@ -46,29 +56,14 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     assertEquals(JiraRepository.LOGIN_FAILED_CHECK_YOUR_PERMISSIONS, exception.getMessage());
   }
 
-  /**
-   * JIRA 5.0.6, REST API 2.0
-   */
-  public void testVersionDiscovery1() throws Exception {
-    myRepository.setUrl("http://trackers-tests.labs.intellij.net:8015");
-    myRepository.setUsername("buildtest");
-    myRepository.setPassword("buildtest");
+  public void testVersionDiscovery() throws Exception {
+    myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
     assertEquals("2.0", myRepository.discoverRestApiVersion().getVersionName());
-  }
-
-  /**
-   * JIRA 4.4.5, REST API 2.0.alpha1
-   */
-  public void testVersionDiscovery2() throws Exception {
-    myRepository.setUrl("http://trackers-tests.labs.intellij.net:8014");
-    myRepository.setUsername("buildtest");
-    myRepository.setPassword("buildtest");
+    myRepository.setUrl(JIRA_4_TEST_SERVER_URL);
     assertEquals("2.0.alpha1", myRepository.discoverRestApiVersion().getVersionName());
   }
 
   public void testJqlQuery() throws Exception {
-    myRepository.setUsername("buildtest");
-    myRepository.setPassword("buildtest");
     myRepository.setSearchQuery("assignee = currentUser() AND (summary ~ 'foo' or resolution = Fixed)");
     assertEquals(2, myRepository.getIssues("", 50, 0).length);
   }
@@ -77,22 +72,38 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
    * Holds only for JIRA > 5.x.x
    */
   public void testExtractedErrorMessage() throws Exception {
-    myRepository.setUsername("buildtest");
-    myRepository.setPassword("buildtest");
     myRepository.setSearchQuery("foo < bar");
     try {
       myRepository.getIssues("", 50, 0);
       fail();
     }
     catch (Exception e) {
-      assertEquals("Search failed. Reason: \"Field 'foo' does not exist or you do not have permission to view it.\"", e.getMessage());
+      assertEquals("Request failed. Reason: \"Field 'foo' does not exist or you do not have permission to view it.\"", e.getMessage());
     }
+  }
+
+  public void testSetTaskState() throws Exception {
+    changeStateAndCheck(JIRA_4_TEST_SERVER_URL, "PRJONE-8");
+    changeStateAndCheck(JIRA_5_TEST_SERVER_URL, "UT-8");
+  }
+
+  private void changeStateAndCheck(String url, String key) throws Exception {
+    myRepository.setUrl(url);
+    Task task = myRepository.findTask(key);
+    myRepository.setTaskState(task, TaskState.IN_PROGRESS);
+    assertEquals(myRepository.findTask(key).getState(), TaskState.IN_PROGRESS);
+    myRepository.setTaskState(task, TaskState.RESOLVED);
+    assertEquals(myRepository.findTask(key).getState(), TaskState.RESOLVED);
+    myRepository.setTaskState(task, TaskState.REOPENED);
+    assertEquals(myRepository.findTask(key).getState(), TaskState.REOPENED);
   }
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     myRepository = new JiraRepository(new JiraRepositoryType());
-    myRepository.setUrl("http://trackers-tests.labs.intellij.net:8015");
+    myRepository.setUrl(JIRA_5_TEST_SERVER_URL);
+    myRepository.setUsername("buildtest");
+    myRepository.setPassword("buildtest");
   }
 }
