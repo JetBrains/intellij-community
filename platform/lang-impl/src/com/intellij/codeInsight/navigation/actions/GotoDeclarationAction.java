@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       else {
         final TextRange range = reference.getRangeInElement();
         final String elementText = reference.getElement().getText();
-        LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), Arrays.toString(elements));
+        LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), Arrays.toString(elements) + ";" + reference);
         final String refText = range.substring(elementText);
         title = MessageFormat.format(titlePattern, refText);
       }
