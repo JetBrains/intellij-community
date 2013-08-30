@@ -106,6 +106,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -2387,8 +2388,8 @@ public class CompileDriver {
         if (!compilerManager.isValidationEnabled(module)) {
           continue;
         }
-        final boolean hasSources = hasSources(module, false);
-        final boolean hasTestSources = hasSources(module, true);
+        final boolean hasSources = hasSources(module, JavaSourceRootType.SOURCE);
+        final boolean hasTestSources = hasSources(module, JavaSourceRootType.TEST_SOURCE);
         if (!hasSources && !hasTestSources) {
           // If module contains no sources, shouldn't have to select JDK or output directory (SCR #19333)
           // todo still there may be problems with this approach if some generated files are attributed by this module
@@ -2619,27 +2620,8 @@ public class CompileDriver {
     }
   }
 
-  private static boolean hasSources(Module module, boolean checkTestSources) {
-    final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-    for (final ContentEntry contentEntry : contentEntries) {
-      final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-      for (final SourceFolder sourceFolder : sourceFolders) {
-        if (sourceFolder.getFile() == null) {
-          continue; // skip invalid source folders
-        }
-        if (checkTestSources) {
-          if (sourceFolder.isTestSource()) {
-            return true;
-          }
-        }
-        else {
-          if (!sourceFolder.isTestSource()) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+  private static boolean hasSources(Module module, final JavaSourceRootType rootType) {
+    return !ModuleRootManager.getInstance(module).getSourceRoots(rootType).isEmpty();
   }
 
   private void showNotSpecifiedError(@NonNls final String resourceId, List<String> modules, String editorNameToSelect) {

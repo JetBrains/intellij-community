@@ -536,10 +536,16 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   public static String escapeStringCharacters(@NotNull String s) {
     StringBuilder buffer = new StringBuilder(s.length());
-    escapeStringCharacters(s.length(), s, buffer);
+    escapeStringCharacters(s.length(), s, "\"", buffer);
     return buffer.toString();
   }
 
+  @NotNull
+  public static String escapeCharCharacters(@NotNull String s) {
+    StringBuilder buffer = new StringBuilder(s.length());
+    escapeStringCharacters(s.length(), s, "\'", buffer);
+    return buffer.toString();
+  }
 
   @NotNull
   public static String unescapeStringCharacters(@NotNull String s) {

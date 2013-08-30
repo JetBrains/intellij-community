@@ -21,7 +21,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ public class WrongPackageStatementInspectionBase extends BaseJavaBatchLocalInspe
     // does not work in tests since CodeInsightTestCase copies file into temporary location
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     if (file instanceof PsiJavaFile) {
-      if (isInJsp(file)) return null;
+      if (FileTypeUtils.isInServerPageFile(file)) return null;
       PsiJavaFile javaFile = (PsiJavaFile)file;
 
       PsiDirectory directory = javaFile.getContainingDirectory();
@@ -84,10 +84,6 @@ public class WrongPackageStatementInspectionBase extends BaseJavaBatchLocalInspe
       }
     }
     return null;
-  }
-
-  private static boolean isInJsp(PsiFile file) {
-    return PsiUtilCore.getTemplateLanguageFile(file) instanceof ServerPageFile;
   }
 
   protected void addMoveToPackageFix(PsiFile file, String packName, List<LocalQuickFix> availableFixes) {

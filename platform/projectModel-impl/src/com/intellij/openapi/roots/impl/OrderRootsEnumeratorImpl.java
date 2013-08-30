@@ -26,6 +26,7 @@ import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -218,13 +219,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         Collections.addAll(result, rootModel.getSourceRoots(includeTests));
       }
       else {
-        for (ContentEntry entry : rootModel.getContentEntries()) {
-          for (SourceFolder folder : entry.getSourceFolders()) {
-            if (folder.isTestSource()) {
-              ContainerUtil.addIfNotNull(result, folder.getFile());
-            }
-          }
-        }
+        result.addAll(rootModel.getSourceRoots(JavaModuleSourceRootTypes.TESTS));
       }
     }
     else if (type.equals(OrderRootType.CLASSES)) {
@@ -256,10 +251,8 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
       }
       else {
         for (ContentEntry entry : rootModel.getContentEntries()) {
-          for (SourceFolder folder : entry.getSourceFolders()) {
-            if (folder.isTestSource()) {
-              result.add(folder.getUrl());
-            }
+          for (SourceFolder folder : entry.getSourceFolders(JavaModuleSourceRootTypes.TESTS)) {
+            result.add(folder.getUrl());
           }
         }
       }

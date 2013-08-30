@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public abstract class XValue extends XValueContainer {
-
   /**
    * Start computing presentation of the value in the debugger tree and call {@link XValueNode#setPresentation(javax.swing.Icon, String, String, boolean)}
    * when computation is finished.
@@ -33,15 +32,7 @@ public abstract class XValue extends XValueContainer {
    * @param node node
    * @param place where the node will be shown.
    */
-  public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-    computePresentation(node);
-  }
-
-  /**
-   * @deprecated override {@link #computePresentation(XValueNode, XValuePlace)} instead
-   */
-  public void computePresentation(@NotNull XValueNode node) {
-  }
+  public abstract void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place);
 
   /**
    * @return expression which evaluates to the current value

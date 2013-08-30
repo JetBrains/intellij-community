@@ -17,7 +17,7 @@ package com.siyeh.ipp.conditional;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.psiutils.FileTypeUtils;
+import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ReplaceConditionalWithIfPredicate implements PsiElementPredicate {

@@ -16,6 +16,7 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -64,8 +65,12 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   }
 
   @Override
-  public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
-    //assert myContainer == container : "Different containers: " + myContainer + " - " + container;
+  public Object getComponentInstance(final PicoContainer container)
+    throws PicoInitializationException,
+           PicoIntrospectionException,
+           AssignabilityRegistrationException,
+           NotConcreteRegistrationException,
+           ProcessCanceledException {
     if (myComponentInstance == null) {
       if (Element.class.equals(getComponentImplementation())) {
         myComponentInstance = myExtensionElement;

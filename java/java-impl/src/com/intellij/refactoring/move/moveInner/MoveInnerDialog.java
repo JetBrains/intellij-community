@@ -49,10 +49,12 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -196,10 +198,10 @@ public class MoveInnerDialog extends RefactoringDialog {
       final String targetName = myPackageNameField.getText();
       if (!Comparing.equal(name, targetName)) {
         final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-        final VirtualFile[] contentSourceRoots = projectRootManager.getContentSourceRoots();
+        final List<VirtualFile> contentSourceRoots = projectRootManager.getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
         final PackageWrapper newPackage = new PackageWrapper(PsiManager.getInstance(myProject), targetName);
         final VirtualFile targetSourceRoot;
-        if (contentSourceRoots.length > 1) {
+        if (contentSourceRoots.size() > 1) {
           PsiDirectory initialDir = null;
           if (oldPackage != null) {
             final PsiDirectory[] directories = oldPackage.getDirectories();
@@ -215,7 +217,7 @@ public class MoveInnerDialog extends RefactoringDialog {
           targetSourceRoot = sourceRoot;
         }
         else {
-          targetSourceRoot = contentSourceRoots [0];
+          targetSourceRoot = contentSourceRoots.get(0);
         }
         PsiDirectory dir = RefactoringUtil.findPackageDirectoryInSourceRoot(newPackage, targetSourceRoot);
         if (dir == null) {

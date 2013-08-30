@@ -37,6 +37,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,9 +57,8 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
     final Module[] modules = ModuleManager.getInstance(psiPackage.getProject()).getModules();
 
     for (final Module module : modules) {
-      final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-      for (final ContentEntry contentEntry : contentEntries) {
-        final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+      for (final ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
+        final List<SourceFolder> sourceFolders = contentEntry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES);
         for (final SourceFolder sourceFolder : sourceFolders) {
           final String packagePrefix = sourceFolder.getPackagePrefix();
           if (packagePrefix.startsWith(psiPackage.getQualifiedName())) {
@@ -100,10 +100,8 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
     for (final Module module : modules) {
       boolean anyChange = false;
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-      final ContentEntry[] contentEntries = rootModel.getContentEntries();
-      for (final ContentEntry contentEntry : contentEntries) {
-        final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-        for (final SourceFolder sourceFolder : sourceFolders) {
+      for (final ContentEntry contentEntry : rootModel.getContentEntries()) {
+        for (final SourceFolder sourceFolder : contentEntry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
           final String packagePrefix = sourceFolder.getPackagePrefix();
           if (packagePrefix.startsWith(oldQualifiedName)) {
             sourceFolder.setPackagePrefix(newQualifiedName + packagePrefix.substring(oldQualifiedName.length()));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -492,7 +492,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
         final String fqName = myPattern.iterator().next();
         return (fqName.contains("*") ? fqName : StringUtil.getShortName(fqName)) + (size > 1 ? " and " + (size - 1) + " more" : "");
       }
-      final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName(), configurationModule);
+      final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {
         return className + '.' + getMethodName();
       }

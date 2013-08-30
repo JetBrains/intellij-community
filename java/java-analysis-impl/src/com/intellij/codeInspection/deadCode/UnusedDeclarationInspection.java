@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,7 +263,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     }
   }
 
-  private static boolean isExternalizableNoParameterConstructor(PsiMethod method, RefClass refClass) {
+  private static boolean isExternalizableNoParameterConstructor(@NotNull PsiMethod method, RefClass refClass) {
     if (!method.isConstructor()) return false;
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     final PsiParameterList parameterList = method.getParameterList();
@@ -272,7 +272,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     return aClass == null || isExternalizable(aClass, refClass);
   }
 
-  private static boolean isSerializationImplicitlyUsedField(PsiField field) {
+  private static boolean isSerializationImplicitlyUsedField(@NotNull PsiField field) {
     @NonNls final String name = field.getName();
     if (!HighlightUtilBase.SERIAL_VERSION_UID_FIELD_NAME.equals(name) && !"serialPersistentFields".equals(name)) return false;
     if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
@@ -280,7 +280,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     return aClass == null || isSerializable(aClass, null);
   }
 
-  private static boolean isWriteObjectMethod(PsiMethod method, RefClass refClass) {
+  private static boolean isWriteObjectMethod(@NotNull PsiMethod method, RefClass refClass) {
     @NonNls final String name = method.getName();
     if (!"writeObject".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -291,7 +291,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
-  private static boolean isReadObjectMethod(PsiMethod method, RefClass refClass) {
+  private static boolean isReadObjectMethod(@NotNull PsiMethod method, RefClass refClass) {
     @NonNls final String name = method.getName();
     if (!"readObject".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -302,7 +302,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
-  private static boolean isWriteReplaceMethod(PsiMethod method, RefClass refClass) {
+  private static boolean isWriteReplaceMethod(@NotNull PsiMethod method, RefClass refClass) {
     @NonNls final String name = method.getName();
     if (!"writeReplace".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -313,7 +313,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
-  private static boolean isReadResolveMethod(PsiMethod method, RefClass refClass) {
+  private static boolean isReadResolveMethod(@NotNull PsiMethod method, RefClass refClass) {
     @NonNls final String name = method.getName();
     if (!"readResolve".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -329,7 +329,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     return serializableClass != null && isSerializable(aClass, refClass, serializableClass);
   }
 
-  private static boolean isExternalizable(PsiClass aClass, RefClass refClass) {
+  private static boolean isExternalizable(@NotNull PsiClass aClass, RefClass refClass) {
     final GlobalSearchScope scope = aClass.getResolveScope();
     final PsiClass externalizableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.io.Externalizable", scope);
     return externalizableClass != null && isSerializable(aClass, refClass, externalizableClass);
@@ -537,7 +537,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
             public void visitField(@NotNull final RefField refField) {
               myProcessedSuspicious.add(refField);
               PsiField psiField = refField.getElement();
-              if (isSerializationImplicitlyUsedField(psiField)) {
+              if (psiField != null && isSerializationImplicitlyUsedField(psiField)) {
                 getEntryPointsManager().addEntryPoint(refField, false);
               }
               else {
@@ -560,7 +560,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
               }
               else {
                 PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
-                if (isSerializablePatternMethod(psiMethod, refMethod.getOwnerClass())) {
+                if (psiMethod != null && isSerializablePatternMethod(psiMethod, refMethod.getOwnerClass())) {
                   getEntryPointsManager().addEntryPoint(refMethod, false);
                 }
                 else if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
@@ -614,7 +614,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     return true;
   }
 
-  private static boolean isSerializablePatternMethod(PsiMethod psiMethod, RefClass refClass) {
+  private static boolean isSerializablePatternMethod(@NotNull PsiMethod psiMethod, RefClass refClass) {
     return isReadObjectMethod(psiMethod, refClass) || isWriteObjectMethod(psiMethod, refClass) || isReadResolveMethod(psiMethod, refClass) ||
            isWriteReplaceMethod(psiMethod, refClass) || isExternalizableNoParameterConstructor(psiMethod, refClass);
   }

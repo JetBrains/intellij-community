@@ -35,6 +35,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -94,7 +95,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     boolean isSymLink = is(VFileProperty.SYMLINK);
     if (isSymLink) {
       String target = myParent.getFileSystem().resolveSymLink(this);
-      putUserData(SYMLINK_TARGET, target != null ? FileUtil.toSystemIndependentName(target) : target);
+      setLinkTarget(target != null ? FileUtil.toSystemIndependentName(target) : null);
     }
     setFlagInt(HAS_SYMLINK_FLAG, isSymLink || myParent.getFlagInt(HAS_SYMLINK_FLAG));
   }
@@ -423,6 +424,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public void updateProperty(String property, boolean value) {
     if (property == PROP_WRITABLE) setFlagInt(IS_WRITABLE_FLAG, value);
     if (property == PROP_HIDDEN) setFlagInt(IS_HIDDEN_FLAG, value);
+  }
+
+  public void setLinkTarget(@Nullable String target) {
+    putUserData(SYMLINK_TARGET, target);
   }
 
   @Override

@@ -6,7 +6,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.myPlugin">
-    <ext implementation="java.lang.Runnable"/>
+    <ext implementation="foo.MyRunnable"/>
   </extensions>
 
 </idea-plugin>

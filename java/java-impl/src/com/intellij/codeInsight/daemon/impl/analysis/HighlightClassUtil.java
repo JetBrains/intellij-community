@@ -789,7 +789,7 @@ public class HighlightClassUtil {
           if (!PsiUtil.isInnerClass(base)) return;
 
           if (resolve == resolved && baseClass != null && (!PsiTreeUtil.isAncestor(baseClass, extendRef, true) || aClass.hasModifierProperty(PsiModifier.STATIC)) &&
-              !hasEnclosingInstanceInScope(baseClass, extendRef, !aClass.hasModifierProperty(PsiModifier.STATIC), true) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
+              !InheritanceUtil.hasEnclosingInstanceInScope(baseClass, extendRef, !aClass.hasModifierProperty(PsiModifier.STATIC), true) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
             String description = JavaErrorMessages.message("no.enclosing.instance.in.scope", HighlightUtil.formatClass(baseClass));
             infos[0] = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(extendRef).descriptionAndTooltip(description).create();
           }
@@ -823,35 +823,6 @@ public class HighlightClassUtil {
       if (resolved != baseClass) return false;
     }
     return true;
-  }
-
-  public static boolean hasEnclosingInstanceInScope(PsiClass aClass,
-                                                    PsiElement scope,
-                                                    final boolean isSuperClassAccepted,
-                                                    boolean isTypeParamsAccepted) {
-    PsiManager manager = aClass.getManager();
-    PsiElement place = scope;
-    while (place != null && place != aClass && !(place instanceof PsiFile)) {
-      if (place instanceof PsiClass) {
-        if (isSuperClassAccepted) {
-          if (InheritanceUtil.isInheritorOrSelf((PsiClass)place, aClass, true)) return true;
-        }
-        else {
-          if (manager.areElementsEquivalent(place, aClass)) return true;
-        }
-        if (isTypeParamsAccepted && place instanceof PsiTypeParameter) {
-          return true;
-        }
-      }
-      if (place instanceof PsiModifierListOwner) {
-        final PsiModifierList modifierList = ((PsiModifierListOwner)place).getModifierList();
-        if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
-          return false;
-        }
-      }
-      place = place.getParent();
-    }
-    return place == aClass;
   }
 
   @Nullable
@@ -892,7 +863,8 @@ public class HighlightClassUtil {
     PsiClass outerClass = aClass.getContainingClass();
     if (outerClass == null) return null;
 
-    if (outerClass instanceof PsiSyntheticClass || hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true, false)) return null;
+    if (outerClass instanceof PsiSyntheticClass || InheritanceUtil.hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true,
+                                                                                               false)) return null;
     return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, element);
   }
 

@@ -29,7 +29,7 @@ public class RemoveParameterListFix implements IntentionAction {
 
   private final PsiMethod myMethod;
 
-  public RemoveParameterListFix(PsiMethod method) {
+  public RemoveParameterListFix(@NotNull PsiMethod method) {
     myMethod = method;
   }
 
@@ -47,7 +47,7 @@ public class RemoveParameterListFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethod != null && myMethod.isValid();
+    return myMethod.isValid();
   }
 
   @Override

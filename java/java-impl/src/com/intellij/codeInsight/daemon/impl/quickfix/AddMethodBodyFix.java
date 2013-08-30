@@ -33,7 +33,7 @@ public class AddMethodBodyFix implements IntentionAction {
 
   private final PsiMethod myMethod;
 
-  public AddMethodBodyFix(PsiMethod method) {
+  public AddMethodBodyFix(@NotNull PsiMethod method) {
     myMethod = method;
   }
 
@@ -51,11 +51,10 @@ public class AddMethodBodyFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethod != null
-        && myMethod.isValid()
-        && myMethod.getBody() == null
-        && myMethod.getContainingClass() != null
-        && myMethod.getManager().isInProject(myMethod);
+    return myMethod.isValid() &&
+           myMethod.getBody() == null &&
+           myMethod.getContainingClass() != null &&
+           myMethod.getManager().isInProject(myMethod);
   }
 
   @Override

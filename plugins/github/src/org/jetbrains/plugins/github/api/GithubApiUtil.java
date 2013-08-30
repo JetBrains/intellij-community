@@ -35,7 +35,10 @@ import org.jetbrains.plugins.github.util.GithubSslSupport;
 import org.jetbrains.plugins.github.util.GithubUrlUtil;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -462,21 +465,32 @@ public class GithubApiUtil {
     List<GithubRepo> repos = new ArrayList<GithubRepo>();
 
     repos.addAll(getUserRepos(auth));
-
-    String path = "/user/orgs?" + PER_PAGE;
-    PagedRequest<GithubOrg> request = new PagedRequest<GithubOrg>(path, GithubOrg.class, GithubOrgRaw[].class);
-
-    for (GithubOrg org : request.getAll(auth)) {
-      String pathOrg = "/orgs/" + org.getLogin() + "/repos?type=member&" + PER_PAGE;
-      PagedRequest<GithubRepo> requestOrg = new PagedRequest<GithubRepo>(pathOrg, GithubRepo.class, GithubRepoRaw[].class);
-      repos.addAll(requestOrg.getAll(auth));
-    }
-
-    String pathWatched = "/user/subscriptions?" + PER_PAGE;
-    PagedRequest<GithubRepo> requestWatched = new PagedRequest<GithubRepo>(pathWatched, GithubRepo.class, GithubRepoRaw[].class);
-    repos.addAll(requestWatched.getAll(auth));
+    repos.addAll(getMembershipRepos(auth));
+    repos.addAll(getWatchedRepos(auth));
 
     return repos;
+  }
+
+  @NotNull
+  public static List<GithubRepoOrg> getMembershipRepos(@NotNull GithubAuthData auth) throws IOException {
+    String orgsPath = "/user/orgs?" + PER_PAGE;
+    PagedRequest<GithubOrg> orgsRequest = new PagedRequest<GithubOrg>(orgsPath, GithubOrg.class, GithubOrgRaw[].class);
+
+    List<GithubRepoOrg> repos = new ArrayList<GithubRepoOrg>();
+    for (GithubOrg org : orgsRequest.getAll(auth)) {
+      String path = "/orgs/" + org.getLogin() + "/repos?type=member&" + PER_PAGE;
+      PagedRequest<GithubRepoOrg> request = new PagedRequest<GithubRepoOrg>(path, GithubRepoOrg.class, GithubRepoRaw[].class);
+      repos.addAll(request.getAll(auth));
+    }
+
+    return repos;
+  }
+
+  @NotNull
+  public static List<GithubRepo> getWatchedRepos(@NotNull GithubAuthData auth) throws IOException {
+    String pathWatched = "/user/subscriptions?" + PER_PAGE;
+    PagedRequest<GithubRepo> requestWatched = new PagedRequest<GithubRepo>(pathWatched, GithubRepo.class, GithubRepoRaw[].class);
+    return requestWatched.getAll(auth);
   }
 
   @NotNull

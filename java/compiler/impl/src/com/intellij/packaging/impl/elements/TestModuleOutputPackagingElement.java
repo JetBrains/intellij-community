@@ -19,9 +19,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.ArtifactAntGenerationContext;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
@@ -29,13 +26,11 @@ import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author nik
@@ -68,16 +63,7 @@ public class TestModuleOutputPackagingElement extends ModuleOutputPackagingEleme
     Module module = findModule(context);
     if (module == null) return Collections.emptyList();
 
-    List<VirtualFile> roots = new SmartList<VirtualFile>();
-    ModuleRootModel rootModel = context.getModulesProvider().getRootModel(module);
-    for (ContentEntry entry : rootModel.getContentEntries()) {
-      for (SourceFolder folder : entry.getSourceFolders()) {
-        if (folder.isTestSource()) {
-          ContainerUtil.addIfNotNull(folder.getFile(), roots);
-        }
-      }
-    }
-    return roots;
+    return context.getModulesProvider().getRootModel(module).getSourceRoots(JavaModuleSourceRootTypes.TESTS);
   }
 
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {

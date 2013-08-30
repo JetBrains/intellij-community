@@ -18,14 +18,14 @@ import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubIssue;
+import org.jetbrains.plugins.github.api.GithubIssueComment;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubJsonException;
 import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException;
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubUtil;
-import org.jetbrains.plugins.github.api.GithubIssue;
-import org.jetbrains.plugins.github.api.GithubIssueComment;
 
 import javax.swing.*;
 import java.util.Date;
@@ -46,10 +46,6 @@ public class GithubRepository extends BaseRepositoryImpl {
   @NotNull private String myUser = "";
   @NotNull private String myToken = "";
 
-  {
-    setUrl(GithubApiUtil.DEFAULT_GITHUB_HOST);
-  }
-
   @SuppressWarnings({"UnusedDeclaration"})
   public GithubRepository() {}
 
@@ -62,6 +58,7 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   public GithubRepository(GithubRepositoryType type) {
     super(type);
+    setUrl(GithubApiUtil.DEFAULT_GITHUB_HOST);
   }
 
   @Override
@@ -72,7 +69,9 @@ public class GithubRepository extends BaseRepositoryImpl {
   @Override
   public boolean isConfigured() {
     return super.isConfigured() &&
-           StringUtil.isNotEmpty(getRepoName());
+           !StringUtil.isEmptyOrSpaces(getRepoAuthor()) &&
+           !StringUtil.isEmptyOrSpaces(getRepoName()) &&
+           !StringUtil.isEmptyOrSpaces(getToken());
   }
 
   @Override

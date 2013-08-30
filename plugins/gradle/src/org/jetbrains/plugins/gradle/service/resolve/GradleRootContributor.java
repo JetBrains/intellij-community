@@ -19,12 +19,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
@@ -32,12 +33,22 @@ import java.util.List;
  */
 public class GradleRootContributor implements GradleMethodContextContributor {
 
+  private final static Set<String> PROJECT_ACTIONS = ContainerUtil.newHashSet(
+    "subprojects",
+    "allprojects",
+    "beforeEvaluate",
+    "afterEvaluate");
+
   @Override
   public void process(@NotNull List<String> methodCallInfo,
                       @NotNull PsiScopeProcessor processor,
                       @NotNull ResolveState state,
                       @NotNull PsiElement place) {
-    if (methodCallInfo.size() > 1) {
+    if(methodCallInfo.size() > 2) {
+      return;
+    }
+
+    if (methodCallInfo.size() == 2 && !PROJECT_ACTIONS.contains(methodCallInfo.get(1))) {
       return;
     }
 

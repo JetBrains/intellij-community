@@ -37,7 +37,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 class CreateXmlElementIntentionAction implements IntentionAction {
   private final String myMessageKey;
-  protected final SchemaReferencesProvider.TypeOrElementOrAttributeReference myRef;
+  protected final TypeOrElementOrAttributeReference myRef;
   private boolean myIsAvailableEvaluated;
   private XmlFile myTargetFile;
   private final String myDeclarationTagName;
@@ -45,7 +45,7 @@ class CreateXmlElementIntentionAction implements IntentionAction {
   CreateXmlElementIntentionAction(
     @PropertyKey(resourceBundle = XmlBundle.PATH_TO_BUNDLE) String messageKey,
     @NonNls @NotNull String declarationTagName,
-    SchemaReferencesProvider.TypeOrElementOrAttributeReference ref) {
+    TypeOrElementOrAttributeReference ref) {
 
     myMessageKey = messageKey;
     myRef = ref;

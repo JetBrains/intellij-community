@@ -120,7 +120,7 @@ public class IdRefReference extends BasicAttributeValueReference {
     return subTag.getAttributeValue(IdReferenceProvider.ID_ATTR_NAME) != null ||
            subTag.getAttributeValue(IdReferenceProvider.FOR_ATTR_NAME) != null || getImplicitIdRefValue(subTag) != null ||
            (subTag.getAttributeValue(IdReferenceProvider.NAME_ATTR_NAME) != null &&
-            subTag.getName().indexOf(".directive") == -1);
+            !subTag.getName().contains(".directive"));
   }
 
   private static final FileBasedUserDataCache<List<PsiElement>> ourCachedIdsCache = new FileBasedUserDataCache<List<PsiElement>>() {

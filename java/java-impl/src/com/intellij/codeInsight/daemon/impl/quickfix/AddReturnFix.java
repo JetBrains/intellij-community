@@ -34,7 +34,7 @@ public class AddReturnFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddReturnFix");
   private final PsiMethod myMethod;
 
-  public AddReturnFix(PsiMethod method) {
+  public AddReturnFix(@NotNull PsiMethod method) {
     myMethod = method;
   }
 
@@ -52,11 +52,10 @@ public class AddReturnFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethod != null
-        && myMethod.isValid()
-        && myMethod.getManager().isInProject(myMethod)
-        && myMethod.getBody() != null
-        && myMethod.getBody().getRBrace() != null
+    return myMethod.isValid() &&
+           myMethod.getManager().isInProject(myMethod) &&
+           myMethod.getBody() != null &&
+           myMethod.getBody().getRBrace() != null
         ;
   }
 

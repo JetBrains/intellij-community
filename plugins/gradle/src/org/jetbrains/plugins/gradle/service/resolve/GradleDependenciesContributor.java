@@ -35,7 +35,7 @@ import java.util.List;
  * @since 8/14/13 12:58 PM
  */
 public class GradleDependenciesContributor implements GradleMethodContextContributor {
-  
+
   @Override
   public void process(@NotNull List<String> methodCallInfo,
                       @NotNull PsiScopeProcessor processor,
@@ -50,7 +50,7 @@ public class GradleDependenciesContributor implements GradleMethodContextContrib
     if (i != 1) {
       return;
     }
-    
+
     // Assuming that the method call is addition of new dependency into configuration.
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
     PsiClass contributorClass = psiManager.findClassWithCache(DependencyHandler.class.getName(), place.getResolveScope());
@@ -70,7 +70,7 @@ public class GradleDependenciesContributor implements GradleMethodContextContrib
     PsiClassType type = PsiType.getJavaLangObject(place.getManager(), place.getResolveScope());
     builder.addParameter(new GrLightParameter("dependencyInfo", type, builder));
     processor.execute(builder, state);
-    
+
     GrMethodCall call = PsiTreeUtil.getParentOfType(place, GrMethodCall.class);
     if (call == null) {
       return;
@@ -79,20 +79,8 @@ public class GradleDependenciesContributor implements GradleMethodContextContrib
     if (args == null) {
       return;
     }
-    int argsCount = 0;
-    boolean namedArgProcessed = false;
-    for (GroovyPsiElement arg : args.getAllArguments()) {
-      if (arg instanceof GrNamedArgument) {
-        if (!namedArgProcessed) {
-          namedArgProcessed = true;
-          argsCount++;
-        }
-      }
-      else {
-        argsCount++;
-      }
-    }
-    
+
+    int argsCount = GradleResolverUtil.getGrMethodArumentsCount(args);
     argsCount++; // Configuration name is delivered as an argument.
 
     for (PsiMethod method : dependencyHandlerClass.findMethodsByName("add", false)) {

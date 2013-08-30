@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Iconable;
@@ -43,6 +44,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection;
 import org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import javax.swing.*;
 import java.io.File;
@@ -75,10 +78,14 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final List<VirtualFile> virtualFiles = isIntention ?
-                                           IntentionDescriptionNotFoundInspection.getPotentialRoots(myModule)
-                                           :
-                                           InspectionDescriptionNotFoundInspection.getPotentialRoots(myModule);
+    final PsiDirectory[] dirs;
+    if (isIntention) {
+      dirs = IntentionDescriptionNotFoundInspection.getIntentionDescriptionsDirs(myModule);
+    }
+    else {
+      dirs = InspectionDescriptionNotFoundInspection.getInspectionDescriptionsDirs(myModule);
+    }
+    final List<VirtualFile> virtualFiles = getPotentialRoots(myModule, dirs);
     final VirtualFile[] roots = prepare(VfsUtil.toVirtualFileArray(virtualFiles));
     if (roots.length == 1) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -117,6 +124,25 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
       final Editor editor = FileEditorManager.getInstance(myModule.getProject()).getSelectedTextEditor();
       if (editor == null) return;
       popup.showInBestPositionFor(editor);
+    }
+  }
+
+  private static List<VirtualFile> getPotentialRoots(Module module, PsiDirectory[] dirs) {
+    if (dirs.length != 0) {
+      final List<VirtualFile> result = new ArrayList<VirtualFile>();
+      for (PsiDirectory dir : dirs) {
+        final PsiDirectory parent = dir.getParentDirectory();
+        if (parent != null) result.add(parent.getVirtualFile());
+      }
+      return result;
+    }
+    else {
+      ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      List<VirtualFile> resourceRoots = rootManager.getSourceRoots(JavaResourceRootType.RESOURCE);
+      if (!resourceRoots.isEmpty()) {
+        return resourceRoots;
+      }
+      return rootManager.getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
     }
   }
 

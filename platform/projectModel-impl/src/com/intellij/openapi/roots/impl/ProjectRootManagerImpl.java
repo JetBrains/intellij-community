@@ -46,6 +46,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
@@ -167,6 +168,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getContentSourceRoots() {
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
@@ -175,6 +177,16 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       ContainerUtil.addAll(result, sourceRoots);
     }
     return VfsUtilCore.toVirtualFileArray(result);
+  }
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    for (Module module : getModuleManager().getModules()) {
+      roots.addAll(ModuleRootManager.getInstance(module).getSourceRoots(rootTypes));
+    }
+    return roots;
   }
 
   @NotNull

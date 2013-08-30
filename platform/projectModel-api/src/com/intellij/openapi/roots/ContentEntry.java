@@ -21,6 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.List;
+import java.util.Set;
+
 /**
  * Represents a module content root.
  * You can get existing entries with {@link com.intellij.openapi.roots.ModuleRootModel#getContentEntries()} or
@@ -54,13 +57,30 @@ public interface ContentEntry extends Synthetic {
    *
    * @return list of this <code>ContentEntry</code> {@link com.intellij.openapi.roots.SourceFolder}s
    */
+  @NotNull
   SourceFolder[] getSourceFolders();
+
+  /**
+   * @param rootType type of accepted source roots
+   * @return list of source roots of the specified type containing in this content root
+   */
+  @NotNull
+  List<SourceFolder> getSourceFolders(@NotNull JpsModuleSourceRootType<?> rootType);
+
+  /**
+   *
+   * @param rootTypes types of accepted source roots
+   * @return list of source roots of the specified types containing in this content root
+   */
+  @NotNull
+  List<SourceFolder> getSourceFolders(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
    * Returns the list of directories for valid source roots under this content root.
    *
    * @return list of all valid source roots.
    */
+  @NotNull
   VirtualFile[] getSourceFolderFiles();
 
   /**
@@ -68,6 +88,7 @@ public interface ContentEntry extends Synthetic {
    *
    * @return list of this <code>ContentEntry</code> {@link com.intellij.openapi.roots.ExcludeFolder}s
    */
+  @NotNull
   ExcludeFolder[] getExcludeFolders();
 
   /**
@@ -75,6 +96,7 @@ public interface ContentEntry extends Synthetic {
    *
    * @return list of all valid exclude roots.
    */
+  @NotNull
   VirtualFile[] getExcludeFolderFiles();
 
   /**
@@ -84,6 +106,7 @@ public interface ContentEntry extends Synthetic {
    * @param isTestSource true if the directory is added as a test source root.
    * @return the object representing the added root.
    */
+  @NotNull
   SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource);
 
   /**
@@ -95,6 +118,7 @@ public interface ContentEntry extends Synthetic {
    *                      package prefix is required.
    * @return the object representing the added root.
    */
+  @NotNull
   SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix);
 
   @NotNull
@@ -108,6 +132,7 @@ public interface ContentEntry extends Synthetic {
    * @param isTestSource true if the directory is added as a test source root.
    * @return the object representing the added root.
    */
+  @NotNull
   SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource);
 
   /**

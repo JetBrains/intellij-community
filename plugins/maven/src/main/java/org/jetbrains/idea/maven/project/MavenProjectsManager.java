@@ -453,6 +453,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public void setMavenizedModules(Collection<Module> modules, boolean mavenized) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     for (Module m : modules) {
+      if (m.isDisposed()) continue;
+
       if (mavenized) {
         m.setOption(getMavenizedModuleOptionName(), "true");
       }

@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -120,7 +121,7 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
 
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(m);
         final ModuleFileIndex fileIndex = rootManager.getFileIndex();
-        for (VirtualFile file : rootManager.getSourceRoots()) {
+        for (VirtualFile file : rootManager.getSourceRoots(JavaModuleSourceRootTypes.SOURCES)) {
           if (!fileIndex.iterateContentUnderDirectory(file, groovyFileSearcher)) {
             return true;
           }

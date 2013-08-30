@@ -36,6 +36,7 @@ public class ProblemImpl implements Problem {
     this.highlightInfo = highlightInfo;
   }
 
+  @NotNull
   @Override
   public VirtualFile getVirtualFile() {
     return virtualFile;

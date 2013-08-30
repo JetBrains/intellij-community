@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class MakeVarargParameterLastFix implements IntentionAction {
-  public MakeVarargParameterLastFix(PsiParameter parameter) {
+  public MakeVarargParameterLastFix(@NotNull PsiParameter parameter) {
     myParameter = parameter;
   }
 

@@ -463,6 +463,7 @@ public class SvnHistoryProvider
     protected final SvnPathThroughHistoryCorrection myLastPathCorrector;
     private final Charset myCharset;
     protected final ThrowableConsumer<VcsFileRevision, SVNException> myResult;
+    private final String myLastPath;
     private VcsFileRevision myPrevious;
     private final SVNRevision myPegRevision;
     protected final String myUrl;
@@ -482,6 +483,7 @@ public class SvnHistoryProvider
       throws SVNException, VcsException {
       myVcs = vcs;
       myLastPathCorrector = new SvnPathThroughHistoryCorrection(lastPath);
+      myLastPath = lastPath;
       myCharset = charset;
       myIndicator = ProgressManager.getInstance().getProgressIndicator();
       myResult = result;
@@ -580,9 +582,9 @@ public class SvnHistoryProvider
       String author = logEntry.getAuthor();
       String message = logEntry.getMessage();
       SVNRevision rev = SVNRevision.create(logEntry.getRevision());
-//      final SVNURL url = myRepositoryRoot.appendPath(myLastPath, true);
-      final SVNURL url = entryPath != null ? myRepositoryRoot.appendPath(entryPath.getPath(), true) :
-                         myRepositoryRoot.appendPath(myLastPathCorrector.getBefore(), false);
+      final SVNURL url = myRepositoryRoot.appendPath(myLastPath, true);
+//      final SVNURL url = entryPath != null ? myRepositoryRoot.appendPath(entryPath.getPath(), true) :
+//                         myRepositoryRoot.appendPath(myLastPathCorrector.getBefore(), false);
       return new SvnFileRevision(myVcs, myPegRevision, rev, url.toString(), author, date, message, copyPath, myCharset);
     }
   }

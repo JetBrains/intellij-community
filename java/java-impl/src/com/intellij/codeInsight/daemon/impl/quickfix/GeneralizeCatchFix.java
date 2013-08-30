@@ -32,7 +32,7 @@ public class GeneralizeCatchFix implements IntentionAction {
   private PsiTryStatement myTryStatement;
   private PsiParameter myCatchParameter;
 
-  public GeneralizeCatchFix(PsiElement element, PsiClassType unhandledException) {
+  public GeneralizeCatchFix(@NotNull PsiElement element, @NotNull PsiClassType unhandledException) {
     myElement = element;
     myUnhandledException = unhandledException;
   }
@@ -53,9 +53,7 @@ public class GeneralizeCatchFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(myElement != null
-          && myElement.isValid()
-          && myUnhandledException != null
+    if (!(myElement.isValid()
           && myUnhandledException.isValid()
           && myElement.getManager().isInProject(myElement))) return false;
     // find enclosing try

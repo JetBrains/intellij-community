@@ -23,14 +23,12 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduce.*;
@@ -41,7 +39,7 @@ import java.util.Map;
 /**
  * @author Maxim.Medvedev
  */
-public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntroduceConstantSettings> {
+public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIntroduceConstantSettings> {
   public static final String REFACTORING_NAME = "Introduce Constant";
 
   @NotNull
@@ -54,13 +52,6 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   @Override
   protected String getHelpID() {
     return HelpID.INTRODUCE_CONSTANT;
-  }
-
-  @NotNull
-  @Override
-  protected PsiElement findScope(GrExpression expression, GrVariable variable, StringPartInfo stringPart) {
-    final PsiElement place = getCurrentPlace(expression, variable, stringPart);
-    return place.getContainingFile();
   }
 
   @Override
@@ -90,17 +81,8 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
   }
 
   @Nullable
-  public static GrTypeDefinition findContainingClass(GrIntroduceContext context) {
-    PsiElement place = context.getPlace();
-    while (true) {
-      final GrTypeDefinition typeDefinition = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, true, GroovyFileBase.class);
-      if (typeDefinition == null) return null;
-      if (!typeDefinition.isAnonymous() &&
-          (typeDefinition.hasModifierProperty(PsiModifier.STATIC) || typeDefinition.getContainingClass() == null)) {
-        return typeDefinition;
-      }
-      place = typeDefinition;
-    }
+  public static PsiClass findContainingClass(GrIntroduceContext context) {
+    return (PsiClass)context.getScope();
   }
 
   @NotNull

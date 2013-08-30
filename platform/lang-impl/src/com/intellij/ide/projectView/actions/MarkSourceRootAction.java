@@ -15,12 +15,14 @@
  */
 package com.intellij.ide.projectView.actions;
 
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
@@ -31,6 +33,11 @@ public class MarkSourceRootAction extends MarkRootActionBase {
 
   public MarkSourceRootAction(@NotNull JpsModuleSourceRootType<?> type) {
     myRootType = type;
+    Presentation presentation = getTemplatePresentation();
+    ModuleSourceRootEditHandler<?> editHandler = ModuleSourceRootEditHandler.getEditHandler(type);
+    presentation.setIcon(editHandler.getRootIcon());
+    presentation.setText(editHandler.getRootTypeName() + " Root");
+    presentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description", editHandler.getRootTypeName()));
   }
 
   protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
@@ -57,6 +64,6 @@ public class MarkSourceRootAction extends MarkRootActionBase {
 
   private static <P extends JpsElement> void addSourceFolder(VirtualFile vFile, ContentEntry entry,
                                                              JpsModuleSourceRootType<P> markAsRootType) {
-    entry.addSourceFolder(vFile, markAsRootType, ((JpsElementTypeWithDefaultProperties<P>)markAsRootType).createDefaultProperties());
+    entry.addSourceFolder(vFile, markAsRootType, ModuleSourceRootEditHandler.getEditHandler(markAsRootType).createDefaultProperties());
   }
 }

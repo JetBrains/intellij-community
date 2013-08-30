@@ -41,10 +41,10 @@ public abstract class SymlinkTestCase extends LightPlatformLangTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      IoTestUtil.delete(myTempDir);
+      super.tearDown();
     }
     finally {
-      super.tearDown();
+      IoTestUtil.delete(myTempDir);
     }
   }
 
@@ -59,17 +59,13 @@ public abstract class SymlinkTestCase extends LightPlatformLangTestCase {
   }
 
   protected void refresh() {
-    refresh(false);
-  }
-
-  protected void refresh(boolean recursive) {
     assertTrue(myTempDir.getPath(), myTempDir.isDirectory() || myTempDir.mkdirs());
+
     VirtualFile tempDir = myFileSystem.refreshAndFindFileByIoFile(myTempDir);
     assertNotNull(myTempDir.getPath(), tempDir);
+
     tempDir.getChildren();
     tempDir.refresh(false, true);
-    if (recursive) {
-      VfsUtilCore.visitChildrenRecursively(tempDir, new VirtualFileVisitor() { });
-    }
+    VfsUtilCore.visitChildrenRecursively(tempDir, new VirtualFileVisitor() { });
   }
 }

@@ -403,6 +403,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     InjectedLanguageUtil.enumerate(host, visitor);
   }
 
+  @Override
+  public void enumerateEx(@NotNull PsiElement host,
+                          @NotNull PsiFile containingFile,
+                          boolean probeUp,
+                          @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
+    InjectedLanguageUtil.enumerate(host, containingFile, probeUp, visitor);
+  }
+
   private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();
   @TestOnly
   public static void pushInjectors(@NotNull Project project) {

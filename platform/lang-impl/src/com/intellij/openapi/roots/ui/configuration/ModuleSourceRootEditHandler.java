@@ -37,14 +37,14 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
     myRootType = rootType;
   }
 
-  @Nullable
-  public static ModuleSourceRootEditHandler<?> findEditHandler(JpsModuleSourceRootType<?> type) {
+  @NotNull
+  public static <P extends JpsElement> ModuleSourceRootEditHandler<P> getEditHandler(@NotNull JpsModuleSourceRootType<P> type) {
     for (ModuleSourceRootEditHandler editor : EP_NAME.getExtensions()) {
       if (editor.getRootType().equals(type)) {
         return editor;
       }
     }
-    return null;
+    throw new IllegalArgumentException("Cannot find edit handler for " + type);
   }
 
   public final JpsModuleSourceRootType<P> getRootType() {
@@ -59,6 +59,10 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
 
   @Nullable
   public abstract Icon getFolderUnderRootIcon();
+
+  public boolean showMarkActionOnToolbar() {
+    return true;
+  }
 
   @Nullable
   public abstract CustomShortcutSet getMarkRootShortcutSet();

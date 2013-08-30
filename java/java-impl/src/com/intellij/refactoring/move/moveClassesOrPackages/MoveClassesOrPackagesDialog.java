@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
@@ -55,11 +54,13 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.Set;
 
 public class MoveClassesOrPackagesDialog extends RefactoringDialog {
@@ -141,7 +142,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private void updateControlsEnabled() {
     myClassPackageChooser.setEnabled(myToPackageRadioButton.isSelected());
     myInnerClassChooser.setEnabled(myMakeInnerClassOfRadioButton.isSelected());
-    UIUtil.setEnabled(myTargetPanel, isMoveToPackage() && getSourceRoots().length > 1 && !myTargetDirectoryFixed, true);
+    UIUtil.setEnabled(myTargetPanel, isMoveToPackage() && getSourceRoots().size() > 1 && !myTargetDirectoryFixed, true);
     validateButtons();
   }
 
@@ -162,8 +163,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   protected JComponent createCenterPanel() {
-    final VirtualFile[] sourceRoots = getSourceRoots();
-    boolean isDestinationVisible = sourceRoots.length > 1;
+    boolean isDestinationVisible = getSourceRoots().size() > 1;
     myDestinationFolderCB.setVisible(isDestinationVisible);
     myTargetDestinationLabel.setVisible(isDestinationVisible);
     return null;
@@ -289,7 +289,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
                                                                    setErrorText(s);
                                                                  }
                                                                }, myHavePackages ? myWithBrowseButtonReference.getChildComponent() : myClassPackageChooser.getChildComponent());
-    UIUtil.setEnabled(myTargetPanel, getSourceRoots().length > 0 && isMoveToPackage() && !isTargetDirectoryFixed, true);
+    UIUtil.setEnabled(myTargetPanel, !getSourceRoots().isEmpty() && isMoveToPackage() && !isTargetDirectoryFixed, true);
     validateButtons();
     myHelpID = helpID;
   }
@@ -505,7 +505,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     return ((DestinationFolderComboBox)myDestinationFolderCB).selectDirectory(targetPackage, mySuggestToMoveToAnotherRoot);
   }
 
-  private VirtualFile[] getSourceRoots() {
-    return ProjectRootManager.getInstance(myProject).getContentSourceRoots();
+  private List<VirtualFile> getSourceRoots() {
+    return ProjectRootManager.getInstance(myProject).getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
   }
 }

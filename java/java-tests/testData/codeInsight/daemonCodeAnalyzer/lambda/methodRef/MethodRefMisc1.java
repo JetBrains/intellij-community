@@ -68,7 +68,7 @@ class MyTest3 {
    static void m() { }
 
    public static void main(String[] args) {
-      <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest3.I'">I s = new MyTest3()::m;</error>
+      I s = <error descr="Static method referenced through non-static qualifier">new MyTest3()::m</error>;
    }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,5 +127,34 @@ public class InheritanceUtil {
         getSuperClassesOfList(resolved.getSuperTypes(), results, includeNonProject, visited, manager);
       }
     }
+  }
+
+  public static boolean hasEnclosingInstanceInScope(PsiClass aClass,
+                                                    PsiElement scope,
+                                                    final boolean isSuperClassAccepted,
+                                                    boolean isTypeParamsAccepted) {
+    PsiManager manager = aClass.getManager();
+    PsiElement place = scope;
+    while (place != null && place != aClass && !(place instanceof PsiFile)) {
+      if (place instanceof PsiClass) {
+        if (isSuperClassAccepted) {
+          if (isInheritorOrSelf((PsiClass)place, aClass, true)) return true;
+        }
+        else {
+          if (manager.areElementsEquivalent(place, aClass)) return true;
+        }
+        if (isTypeParamsAccepted && place instanceof PsiTypeParameter) {
+          return true;
+        }
+      }
+      if (place instanceof PsiModifierListOwner) {
+        final PsiModifierList modifierList = ((PsiModifierListOwner)place).getModifierList();
+        if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
+          return false;
+        }
+      }
+      place = place.getParent();
+    }
+    return place == aClass;
   }
 }

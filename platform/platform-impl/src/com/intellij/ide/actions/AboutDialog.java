@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,7 +193,9 @@ public class AboutDialog extends JDialog {
       myLines.add(new AboutBoxLine(""));
 
       final Properties properties = System.getProperties();
-      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.jdk", properties.getProperty("java.version", "unknown")), true, null));
+      final String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
+      final String arch = properties.getProperty("os.arch", "");
+      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.jdk", javaVersion, arch), true, null));
       appendLast();
       myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vm", properties.getProperty("java.vm.name", "unknown"),
                                                      properties.getProperty("java.vendor", "unknown"))));

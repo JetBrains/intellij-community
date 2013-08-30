@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,7 +157,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         for (int j = 0; j < i; j++) {
           ProgressManager.checkCanceled();
           final CandidateInfo conflict = newConflictsArray[j];
-          assert conflict != method;
+          if (checkSameConflicts(method, conflict)) continue; 
           switch (isMoreSpecific(method, conflict, applicabilityLevel, languageLevel)) {
             case FIRST:
               conflicts.remove(conflict);
@@ -171,6 +171,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
       }
     }
+  }
+
+  protected boolean checkSameConflicts(CandidateInfo method, CandidateInfo conflict) {
+    assert method != conflict;
+    return false;
   }
 
   private static void checkAccessStaticLevels(List<CandidateInfo> conflicts, boolean checkAccessible) {

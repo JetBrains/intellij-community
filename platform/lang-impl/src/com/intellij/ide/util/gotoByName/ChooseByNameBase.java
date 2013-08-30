@@ -155,6 +155,7 @@ public abstract class ChooseByNameBase {
   private ShortcutSet myCheckBoxShortcut;
   protected boolean myInitIsDone;
   static final boolean ourLoadNamesEachTime = FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
+  private boolean myFixLostTyping = true;
 
   public boolean checkDisposed() {
     if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
@@ -436,12 +437,12 @@ public abstract class ChooseByNameBase {
     final JComponent toolbarComponent = actionToolbar.getComponent();
     toolbarComponent.setBorder(null);
 
-    hBox.add(toolbarComponent);
-
     if (myToolArea == null) {
       myToolArea = new JLabel(EmptyIcon.create(1, 24));
     }
     hBox.add(myToolArea);
+    hBox.add(toolbarComponent);
+
     myTextFieldPanel.add(caption2Tools);
 
     final ActionMap actionMap = new ActionMap();
@@ -544,7 +545,7 @@ public abstract class ChooseByNameBase {
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        clearPosponedOkAction(false);
+        clearPostponedOkAction(false);
         rebuildList(false);
       }
     });
@@ -751,7 +752,7 @@ public abstract class ChooseByNameBase {
       cancelListUpdater();
       close(ok);
 
-      clearPosponedOkAction(ok);
+      clearPostponedOkAction(ok);
     }
     finally {
       myListModel.clear();
@@ -777,8 +778,12 @@ public abstract class ChooseByNameBase {
     return false;
   }
 
-  protected static boolean isToFixLostTyping() {
-    return Registry.is("actionSystem.fixLostTyping");
+  public void setFixLostTyping(boolean fixLostTyping) {
+    myFixLostTyping = fixLostTyping;
+  }
+
+  protected boolean isToFixLostTyping() {
+    return myFixLostTyping && Registry.is("actionSystem.fixLostTyping");
   }
 
   private synchronized void ensureNamesLoaded(boolean checkboxState) {
@@ -1017,7 +1022,7 @@ public abstract class ChooseByNameBase {
       myTextField.setForeground(JBColor.red);
       myListUpdater.cancelAll();
       hideList();
-      clearPosponedOkAction(false);
+      clearPostponedOkAction(false);
       return;
     }
 
@@ -1163,12 +1168,12 @@ public abstract class ChooseByNameBase {
         if (getChosenElement() != null) {
           doClose(true);
         }
-        clearPosponedOkAction(checkDisposed());
+        clearPostponedOkAction(checkDisposed());
       }
     }
   }
 
-  private void clearPosponedOkAction(boolean success) {
+  private void clearPostponedOkAction(boolean success) {
     if (myPostponedOkAction != null) {
       if (success) {
         myPostponedOkAction.setDone();
@@ -1194,10 +1199,12 @@ public abstract class ChooseByNameBase {
   }
 
   protected List<Object> getChosenElements() {
-    if (myListIsUpToDate) {
-      List<Object> values = new ArrayList<Object>(Arrays.asList(myList.getSelectedValues()));
-      values.remove(EXTRA_ELEM);
-      values.remove(NON_PREFIX_SEPARATOR);
+
+    List<Object> values = new ArrayList<Object>(Arrays.asList(myList.getSelectedValues()));
+    values.remove(EXTRA_ELEM);
+    values.remove(NON_PREFIX_SEPARATOR);
+
+    if (myListIsUpToDate || !values.isEmpty()) {
       return values;
     }
 
@@ -1516,13 +1523,12 @@ public abstract class ChooseByNameBase {
             return;
           }
 
-          final String cardToShow;
           if (elements.isEmpty() && !myCheckboxState) {
             myScopeExpanded = true;
             myCheckboxState = true;
             calculation.run();
           }
-          cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
+          final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
           showCard(cardToShow, 0);
 
           final Set<Object> filtered = filter(elements);
@@ -1562,8 +1568,8 @@ public abstract class ChooseByNameBase {
           }
         }
       );
-      long end = System.currentTimeMillis();
       if (ContributorsBasedGotoByModel.LOG.isDebugEnabled()) {
+        long end = System.currentTimeMillis();
         ContributorsBasedGotoByModel.LOG.debug("addElementsByPattern("+pattern+"): "+(end-start)+"ms; "+elements.size()+" elements");
       }
     }
@@ -1629,7 +1635,7 @@ public abstract class ChooseByNameBase {
 
   private abstract class ShowFindUsagesAction extends AnAction {
     public ShowFindUsagesAction() {
-      super(ACTION_NAME, ACTION_NAME, AllIcons.Actions.Find);
+      super(ACTION_NAME, ACTION_NAME, AllIcons.General.AutohideOff);
     }
 
     @Override

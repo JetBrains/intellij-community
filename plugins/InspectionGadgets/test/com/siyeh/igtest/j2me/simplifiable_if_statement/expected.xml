@@ -76,4 +76,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">If statement may be replaced with &amp;&amp; or || expression</problem_class>
     <description>&lt;code&gt;if&lt;/code&gt; statement can be replaced with 'return (a || b) &amp;&amp; (c || d);' #loc</description>
   </problem>
+
+  <problem>
+    <file>SimplifiableIfStatement.java</file>
+    <line>103</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'if' statement may be replaced with &amp;&amp; or || expression</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; statement can be replaced with 'return b1!=b2==b3!=b4 &amp;amp;&amp;amp; (i = true);' #loc</description>
+  </problem>
 </problems>

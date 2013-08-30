@@ -12,7 +12,6 @@ import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
 
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.dvcs.test.Executor.cd;
 import static com.intellij.dvcs.test.Executor.touch;
@@ -46,14 +45,6 @@ public class HgLogTest extends HgPlatformTest {
 
   public void testParseCopiedWithBraces() throws HgCommandException {
     parseCopied("(f.txt)");
-  }
-
-  public void testParseFileCopiesWithWhitespaces() {
-    Map<String, String> filesMap = HgLogCommand.parseCopiesFileList("/a/b c/d.txt (a/b a/d.txt)\u0001/a/b c/(d).txt (/a/b c/(f).txt)");
-    assertTrue(filesMap.containsKey("a/b a/d.txt"));
-    assertTrue(filesMap.containsKey("/a/b c/(f).txt"));
-    assertTrue(filesMap.containsValue("/a/b c/d.txt"));
-    assertTrue(filesMap.containsValue("/a/b c/(d).txt"));
   }
 
   private void parseCopied(@NotNull String sourceFileName) throws HgCommandException {

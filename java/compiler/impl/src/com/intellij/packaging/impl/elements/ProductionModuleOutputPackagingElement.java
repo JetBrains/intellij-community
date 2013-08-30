@@ -29,8 +29,8 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -66,7 +66,7 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
     if (module == null) return Collections.emptyList();
 
     ModuleRootModel rootModel = context.getModulesProvider().getRootModel(module);
-    return Arrays.asList(rootModel.getSourceRoots(false));
+    return rootModel.getSourceRoots(JavaModuleSourceRootTypes.PRODUCTION);
   }
 
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {

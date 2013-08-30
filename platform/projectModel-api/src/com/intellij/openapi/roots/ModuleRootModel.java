@@ -20,6 +20,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Interface providing root information model for a given module.
@@ -43,6 +47,7 @@ public interface ModuleRootModel {
    * @return list of content entries for this module
    * @see ContentEntry
    */
+  @NotNull
   ContentEntry[] getContentEntries();
 
   /**
@@ -126,6 +131,23 @@ public interface ModuleRootModel {
    */
   @NotNull
   VirtualFile[] getSourceRoots(boolean includingTests);
+
+  /**
+   * Return a list of source roots of the specified type
+   * @param rootType type of source roots
+   * @return list of source roots
+   */
+  @NotNull
+  List<VirtualFile> getSourceRoots(@NotNull JpsModuleSourceRootType<?> rootType);
+
+  /**
+   * Return a list of source roots which types belong to the specified set
+   *
+   * @param rootTypes types of source roots
+   * @return list of source roots
+   */
+  @NotNull
+  List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
    * Returns an array of source root urls from all content entries. A helper method.

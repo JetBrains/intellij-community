@@ -428,7 +428,13 @@ public class LambdaUtil {
         return ((PsiArrayType)psiType).getComponentType();
       }
     } else if (parent instanceof PsiTypeCastExpression) {
-      return ((PsiTypeCastExpression)parent).getType();
+      final PsiType castType = ((PsiTypeCastExpression)parent).getType();
+      if (castType instanceof PsiIntersectionType) {
+        for (PsiType conjunctType : ((PsiIntersectionType)castType).getConjuncts()) {
+          if (getFunctionalInterfaceMethod(conjunctType) != null) return conjunctType;
+        }
+      }
+      return castType;
     }
     else if (parent instanceof PsiVariable) {
       return ((PsiVariable)parent).getType();

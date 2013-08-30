@@ -22,26 +22,35 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
 
 public class CoreJavaFileManagerTest extends PsiTestCase {
 
-  public void testNotNullInnerClass() throws Exception {
+  private VirtualFile prepareClasses(String clazzName, String clazzData) throws Exception {
     VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
     VirtualFile pkg = root.createChildDirectory(this, "foo");
     PsiDirectory dir = myPsiManager.findDirectory(pkg);
     assertNotNull(dir);
+    dir.add(PsiFileFactory.getInstance(getProject()).createFileFromText(clazzName + ".java", JavaFileType.INSTANCE, clazzData));
+    return root;
+  }
+
+  public void testNotNullInnerClass() throws Exception {
     String text = "package foo;\n\n" +
                   "public class Nested {\n" +
                   "public class InnerGeneral {}\n" +
-                  "public class Inner$ {}\n" +
+                  "public class Inner$ {" +
+                  "}\n" +
                   "\n" +
                   "public Inner$ inner() {\n" +
                   "   return  new Inner$();\n" +
                   "}\n" +
                   "\n" +
                   "}";
-    PsiElement created = dir.add(PsiFileFactory.getInstance(getProject()).createFileFromText("Nested.java", JavaFileType.INSTANCE, text));
 
+    VirtualFile root = prepareClasses("Nested", text);
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
     CoreJavaFileManager manager = new CoreJavaFileManager(myPsiManager);
     manager.addToClasspath(root);
@@ -63,6 +72,92 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
 
     PsiClass clazzInner$Wrong3 = manager.findClass("foo.Nested.Inner$$", scope);
     assertNull(clazzInner$Wrong3);
+  }
+
+
+  public void testNotNullInnerClass2() throws Exception {
+    String text = "package foo;\n\n" +
+                  "public class Nested {\n" +
+
+                  "public class Inner {" +
+                  "   public class XInner{}" +
+                  "   public class XInner${}" +
+                  "}\n" +
+                  "public class Inner$ {" +
+                  "   public class XInner{}" +
+                  "   public class XInner${}" +
+                  "}\n" +
+                  "\n" +
+                  "}";
+
+    VirtualFile root = prepareClasses("Nested", text);
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    CoreJavaFileManager manager = new CoreJavaFileManager(myPsiManager);
+    manager.addToClasspath(root);
+
+    PsiClass clazzInner = manager.findClass("foo.Nested.Inner", scope);
+    assertNotNull(clazzInner);
+
+    PsiClass clazzXInner = manager.findClass("foo.Nested.Inner.XInner", scope);
+    assertNotNull(clazzXInner);
+
+    PsiClass clazzXInner$ = manager.findClass("foo.Nested.Inner.XInner$", scope);
+    assertNotNull(clazzXInner$);
+
+    PsiClass clazz$XInner = manager.findClass("foo.Nested.Inner$.XInner", scope);
+    assertNotNull(clazz$XInner);
+
+    PsiClass clazz$XInner$ = manager.findClass("foo.Nested.Inner$.XInner$", scope);
+    assertNotNull(clazz$XInner$);
+  }
+
+
+  public void testNotNullInnerClass3() throws Exception {
+    String text = "package foo;\n\n" +
+                  "public class NestedX {\n" +
+
+                  "public class XX {" +
+                  "   public class XXX{" +
+                  "     public class XXXX{ }" +
+                  "     public class XXXX${ }" +
+                  "   }" +
+                  "   public class XXX${" +
+                  "     public class XXXX{ }" +
+                  "     public class XXXX${ }" +
+                  "   }" +
+                  "}\n" +
+                  "public class XX$ {" +
+                  "   public class XXX{" +
+                  "     public class XXXX{ }" +
+                  "     public class XXXX${ }" +
+                  "   }" +
+                  "   public class XXX${" +
+                  "     public class XXXX{ }" +
+                  "     public class XXXX${ }" +
+                  "   }" +
+                  "}\n" +
+                  "\n" +
+                  "}";
+
+    VirtualFile root = prepareClasses("NestedX", text);
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    CoreJavaFileManager manager = new CoreJavaFileManager(myPsiManager);
+    manager.addToClasspath(root);
+
+    Queue<String> queue = new LinkedList<String>();
+    queue.add("foo.NestedX");
+
+    while(!queue.isEmpty()) {
+      String head = queue.remove();
+      PsiClass clazzInner = manager.findClass(head, scope);
+      assertNotNull(head, clazzInner);      
+      String lastSegment = head.substring(head.lastIndexOf('.'));
+      String xs = lastSegment.substring(lastSegment.indexOf("X")).replace("$", "");
+      if (xs.length() < 4) {
+        queue.add(head + "." + xs + "X");
+        queue.add(head + "." + xs + "X$");
+      }
+    }
   }
 
 }

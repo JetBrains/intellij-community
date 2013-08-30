@@ -36,7 +36,7 @@ public class ChangeToAppendFix implements IntentionAction {
   private final PsiType myLhsType;
   private final PsiAssignmentExpression myAssignmentExpression;
 
-  public ChangeToAppendFix(IElementType eqOpSign, PsiType lType, PsiAssignmentExpression assignmentExpression) {
+  public ChangeToAppendFix(@NotNull IElementType eqOpSign, @NotNull PsiType lType, @NotNull PsiAssignmentExpression assignmentExpression) {
     myTokenType = eqOpSign;
     myLhsType = lType;
     myAssignmentExpression = assignmentExpression;

@@ -99,15 +99,14 @@ public class RefreshWorker {
         continue;
       }
 
-      boolean checkFurther = true;
       NewVirtualFile parent = file.getParent();
-      if (parent != null &&
-          (checkAndScheduleAttributesChange(parent, file, attributes) ||
-           checkAndScheduleSymLinkTargetChange(parent, file, attributes, fs))) {
+      if (parent != null && checkAndScheduleFileTypeChange(parent, file, attributes)) {
         // ignore everything else
-        checkFurther = false;
+        file.markClean();
+        continue ;
       }
-      else if (file.isDirectory()) {
+
+      if (file.isDirectory()) {
         VirtualDirectoryImpl dir = (VirtualDirectoryImpl)file;
         boolean fullSync = dir.allChildrenLoaded();
         if (fullSync) {
@@ -187,19 +186,26 @@ public class RefreshWorker {
         }
       }
 
-      if (checkFurther) {
-        boolean currentWritable = persistence.isWritable(file);
-        boolean upToDateWritable = attributes.isWritable();
-        if (currentWritable != upToDateWritable) {
-          scheduleAttributeChange(file, VirtualFile.PROP_WRITABLE, currentWritable, upToDateWritable);
-        }
+      boolean currentWritable = persistence.isWritable(file);
+      boolean upToDateWritable = attributes.isWritable();
+      if (currentWritable != upToDateWritable) {
+        scheduleAttributeChange(file, VirtualFile.PROP_WRITABLE, currentWritable, upToDateWritable);
+      }
 
-        if (SystemInfo.isWindows) {
-          boolean currentHidden = file.is(VFileProperty.HIDDEN);
-          boolean upToDateHidden = attributes.isHidden();
-          if (currentHidden != upToDateHidden) {
-            scheduleAttributeChange(file, VirtualFile.PROP_HIDDEN, currentHidden, upToDateHidden);
-          }
+      if (SystemInfo.isWindows) {
+        boolean currentHidden = file.is(VFileProperty.HIDDEN);
+        boolean upToDateHidden = attributes.isHidden();
+        if (currentHidden != upToDateHidden) {
+          scheduleAttributeChange(file, VirtualFile.PROP_HIDDEN, currentHidden, upToDateHidden);
+        }
+      }
+
+      if (attributes.isSymLink()) {
+        String currentTarget = file.getCanonicalPath();
+        String upToDateTarget = fs.resolveSymLink(file);
+        String upToDateVfsTarget = upToDateTarget != null ? FileUtil.toSystemIndependentName(upToDateTarget) : null;
+        if (!Comparing.equal(currentTarget, upToDateVfsTarget)) {
+          scheduleAttributeChange(file, VirtualFile.PROP_SYMLINK_TARGET, currentTarget, upToDateVfsTarget);
         }
       }
 
@@ -210,7 +216,7 @@ public class RefreshWorker {
   private void checkAndScheduleChildRefresh(@NotNull VirtualFile parent,
                                             @NotNull VirtualFile child,
                                             @NotNull FileAttributes childAttributes) {
-    if (!checkAndScheduleAttributesChange(parent, child, childAttributes)) {
+    if (!checkAndScheduleFileTypeChange(parent, child, childAttributes)) {
       boolean upToDateIsDirectory = childAttributes.isDirectory();
       if (myIsRecursive || !upToDateIsDirectory) {
         myRefreshQueue.addLast(Pair.create((NewVirtualFile)child, childAttributes));
@@ -218,9 +224,9 @@ public class RefreshWorker {
     }
   }
 
-  private boolean checkAndScheduleAttributesChange(@NotNull VirtualFile parent,
-                                                   @NotNull VirtualFile child,
-                                                   @NotNull FileAttributes childAttributes) {
+  private boolean checkAndScheduleFileTypeChange(@NotNull VirtualFile parent,
+                                                 @NotNull VirtualFile child,
+                                                 @NotNull FileAttributes childAttributes) {
     boolean currentIsDirectory = child.isDirectory();
     boolean currentIsSymlink = child.is(VFileProperty.SYMLINK);
     boolean currentIsSpecial = child.is(VFileProperty.SPECIAL);
@@ -237,26 +243,7 @@ public class RefreshWorker {
     return false;
   }
 
-  private boolean checkAndScheduleSymLinkTargetChange(@NotNull VirtualFile parent,
-                                                      @NotNull VirtualFile child,
-                                                      @NotNull FileAttributes childAttributes,
-                                                      @NotNull NewVirtualFileSystem fs) {
-    if (childAttributes.isSymLink()) {
-      String currentTarget = child.getCanonicalPath();
-      String upToDateTarget = fs.resolveSymLink(child);
-      String upToDateVfsTarget = upToDateTarget != null ? FileUtil.toSystemIndependentName(upToDateTarget) : null;
-
-      if (!Comparing.equal(currentTarget, upToDateVfsTarget)) {
-        scheduleDeletion(child);
-        scheduleReCreation(parent, child.getName(), childAttributes.isDirectory());
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private void scheduleAttributeChange(@NotNull VirtualFile file, String property, boolean current, boolean upToDate) {
+  private void scheduleAttributeChange(@NotNull VirtualFile file, String property, Object current, Object upToDate) {
     debug(LOG, "update '%s' file=%s", property, file);
     myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
   }

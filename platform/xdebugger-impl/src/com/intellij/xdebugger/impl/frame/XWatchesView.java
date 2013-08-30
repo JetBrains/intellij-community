@@ -31,7 +31,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
@@ -117,15 +116,12 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
   }
 
   public void addWatchExpression(@NotNull String expression, int index, final boolean navigateToWatchNode) {
-    XDebuggerEvaluator evaluator = null;
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
-    if (stackFrame != null) {
-      evaluator = stackFrame.getEvaluator();
-    }
-    myRootNode.addWatchExpression(evaluator, expression, index, navigateToWatchNode);
+    myRootNode.addWatchExpression(stackFrame == null ? null : stackFrame.getEvaluator(), expression, index, navigateToWatchNode);
     updateSessionData();
   }
 
+  @Override
   protected void rebuildView(final SessionEvent event) {
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
     XDebuggerTree tree = myTreePanel.getTree();
@@ -173,6 +169,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
     List<XDebuggerTreeNode> toRemove = new ArrayList<XDebuggerTreeNode>();
     if (children != null) {
       for (XDebuggerTreeNode node : nodes) {
+        @SuppressWarnings("SuspiciousMethodCalls")
         int index = children.indexOf(node);
         if (index != -1) {
           toRemove.add(node);
@@ -183,7 +180,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
     myRootNode.removeChildren(toRemove);
 
     List<? extends WatchNode> newChildren = myRootNode.getAllChildren();
-    if (newChildren != null && newChildren.size() > 0) {
+    if (newChildren != null && !newChildren.isEmpty()) {
       WatchNode node = minIndex < newChildren.size() ? newChildren.get(minIndex) : newChildren.get(newChildren.size() - 1);
       TreeUtil.selectNode(myTreePanel.getTree(), node);
     }
@@ -206,6 +203,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
     mySessionData.setWatchExpressions(ArrayUtil.toStringArray(watchExpressions));
   }
 
+  @Override
   public boolean update(final DnDEvent aEvent) {
     Object object = aEvent.getAttachedObject();
     boolean possible = false;
@@ -221,6 +219,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
     return true;
   }
 
+  @Override
   public void drop(final DnDEvent aEvent) {
     Object object = aEvent.getAttachedObject();
     if (object instanceof XValueNodeImpl[]) {
@@ -240,9 +239,11 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
     }
   }
 
+  @Override
   public void cleanUpOnLeave() {
   }
 
+  @Override
   public void updateDraggedImage(final Image image, final Point dropPoint, final Point imageOffset) {
   }
 }

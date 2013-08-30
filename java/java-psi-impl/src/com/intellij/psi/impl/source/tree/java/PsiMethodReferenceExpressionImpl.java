@@ -41,10 +41,7 @@ import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -305,7 +302,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           }
 
           final MethodReferenceConflictResolver conflictResolver =
-            new MethodReferenceConflictResolver(qualifierResolveResult, signature);
+            new MethodReferenceConflictResolver(qualifierResolveResult, signature, interfaceMethod != null && interfaceMethod.isVarArgs());
           final PsiConflictResolver[] resolvers;
           if (signature != null) {
             final PsiType[] parameterTypes = signature.getParameterTypes();
@@ -407,17 +404,17 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     }
 
     private class MethodReferenceConflictResolver implements PsiConflictResolver {
-      private final PsiClass myContainingClass;
       private final PsiSubstitutor mySubstitutor;
       private final MethodSignature mySignature;
-      private final boolean myBeginsWithReferenceType;
+      private final PsiMethodReferenceUtil.QualifierResolveResult myQualifierResolveResult;
+      private final boolean myFunctionalMethodVarArgs;
 
       private MethodReferenceConflictResolver(PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
-                                              @Nullable MethodSignature signature) {
-        myContainingClass = qualifierResolveResult.getContainingClass();
+                                              @Nullable MethodSignature signature, boolean varArgs) {
+        myQualifierResolveResult = qualifierResolveResult;
+        myFunctionalMethodVarArgs = varArgs;
         mySubstitutor = qualifierResolveResult.getSubstitutor();
         mySignature = signature;
-        myBeginsWithReferenceType = qualifierResolveResult.isReferenceTypeQualified();
       }
 
       @Nullable
@@ -425,13 +422,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts) {
         if (mySignature == null) return null;
 
-        boolean hasReceiver = false;
         final PsiType[] parameterTypes = mySignature.getParameterTypes();
-        if (parameterTypes.length > 0 && 
-            PsiMethodReferenceUtil.isReceiverType(parameterTypes[0], myContainingClass, mySubstitutor) && 
-            PsiMethodReferenceUtil.isStaticallyReferenced(PsiMethodReferenceExpressionImpl.this)) {
-          hasReceiver = true;
-        }
+        boolean hasReceiver = PsiMethodReferenceUtil.hasReceiver(parameterTypes, myQualifierResolveResult,
+                                                                 PsiMethodReferenceExpressionImpl.this);
 
         final List<CandidateInfo> firstCandidates = new ArrayList<CandidateInfo>();
         final List<CandidateInfo> secondCandidates = new ArrayList<CandidateInfo>();
@@ -445,11 +438,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final PsiType[] signatureParameterTypes2 = psiMethod.getSignature(subst).getParameterTypes();
 
           final boolean varArgs = psiMethod.isVarArgs();
-          final boolean validConstructorRef = psiMethod.isConstructor() && (myContainingClass.getContainingClass() == null || myContainingClass.hasModifierProperty(PsiModifier.STATIC));
-          final boolean staticOrValidConstructorRef = psiMethod.hasModifierProperty(PsiModifier.STATIC) || validConstructorRef;
 
-          if ((parameterTypes.length == signatureParameterTypes2.length || varArgs) &&
-              (!(myBeginsWithReferenceType ^ staticOrValidConstructorRef) || (psiMethod.isConstructor() && conflict.isStaticsScopeCorrect()))) {
+          if (parameterTypes.length == signatureParameterTypes2.length || (varArgs && !myFunctionalMethodVarArgs)) {
             boolean correct = true;
             for (int i = 0; i < parameterTypes.length; i++) {
               final PsiType type1 = subst.substitute(GenericsUtil.eliminateWildcards(parameterTypes[i]));
@@ -466,7 +456,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             }
           }
 
-          if (hasReceiver && parameterTypes.length == signatureParameterTypes2.length + 1 && !staticOrValidConstructorRef) {
+          if (hasReceiver && parameterTypes.length == signatureParameterTypes2.length + 1) {
             boolean correct = true;
             for (int i = 0; i < signatureParameterTypes2.length; i++) {
               final PsiType type1 = subst.substitute(GenericsUtil.eliminateWildcards(parameterTypes[i + 1]));
@@ -491,7 +481,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             conflicts.clear();
           }
           firstCandidates.addAll(secondCandidates);
-          conflicts.retainAll(firstCandidates);
+          conflicts.clear();
+          conflicts.addAll(firstCandidates);
           return null;
         }
         return !firstCandidates.isEmpty() ? firstCandidates.get(0) : secondCandidates.get(0);
@@ -517,6 +508,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                        varargs ? MethodCandidateInfo.ApplicabilityLevel.VARARGS : MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY,
                        myLanguageLevel);
         return conflicts.size() == 1 ? conflicts.get(0) : null;
+      }
+
+      @Override
+      protected boolean checkSameConflicts(CandidateInfo method, CandidateInfo conflict) {
+        return method == conflict;
       }
     }
   }

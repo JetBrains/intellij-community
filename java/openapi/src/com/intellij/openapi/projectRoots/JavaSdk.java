@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public abstract class JavaSdk extends SdkType implements JavaSdkType, ApplicationComponent {
-  public JavaSdk(@NonNls String name) {
+  public JavaSdk(@NotNull @NonNls String name) {
     super(name);
   }
 

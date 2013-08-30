@@ -48,7 +48,8 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
     "org.junit.Assert,assert.*|fail.*," +
     "junit.framework.Assert,assert.*|fail.*," +
     "org.mockito.Mockito,verify.*," +
-    "org.junit.rules.ExpectedException,expect.*";
+    "org.junit.rules.ExpectedException,expect.*," +
+    "org.hamcrest.MatcherAssert,assertThat";
 
   private final List<String> methodNamePatterns = new ArrayList();
   private final List<String> classNames = new ArrayList();

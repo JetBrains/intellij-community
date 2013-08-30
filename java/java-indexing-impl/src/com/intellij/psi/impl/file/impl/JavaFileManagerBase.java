@@ -41,6 +41,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
 
@@ -333,7 +334,7 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
     if (myNontrivialPackagePrefixes == null) {
       Set<String> names = new HashSet<String>();
       final ProjectRootManager rootManager = myProjectRootManager;
-      final VirtualFile[] sourceRoots = rootManager.getContentSourceRoots();
+      final List<VirtualFile> sourceRoots = rootManager.getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
       final ProjectFileIndex fileIndex = rootManager.getFileIndex();
       for (final VirtualFile sourceRoot : sourceRoots) {
         final String packageName = fileIndex.getPackageNameByDirectory(sourceRoot);

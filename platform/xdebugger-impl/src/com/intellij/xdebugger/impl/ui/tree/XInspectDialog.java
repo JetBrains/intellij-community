@@ -35,13 +35,14 @@ import javax.swing.*;
 public class XInspectDialog extends DialogWrapper {
   private final XDebuggerTreePanel myTreePanel;
 
-  public XInspectDialog(final XDebugSession session, XDebuggerEditorsProvider editorsProvider, XSourcePosition sourcePosition, @NotNull String nodeName, @NotNull XValue value) {
+  public XInspectDialog(XDebugSession session, XDebuggerEditorsProvider editorsProvider, XSourcePosition sourcePosition, @NotNull String name, @NotNull XValue value) {
     super(session.getProject(), false);
-    setTitle(XDebuggerBundle.message("inspect.value.dialog.title", nodeName));
+
+    setTitle(XDebuggerBundle.message("inspect.value.dialog.title", name));
     setModal(false);
     myTreePanel = new XDebuggerTreePanel(session, editorsProvider, myDisposable, sourcePosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP);
     XDebuggerTree tree = myTreePanel.getTree();
-    tree.setRoot(new XValueNodeImpl(tree, null, nodeName, value), true);
+    tree.setRoot(new XValueNodeImpl(tree, null, name, value), true);
     init();
   }
 

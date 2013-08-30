@@ -9,15 +9,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.ui.JediTermWidget;
 import com.jediterm.terminal.ui.TabbedTerminalWidget;
 import com.jediterm.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
@@ -29,25 +34,47 @@ public class TerminalView {
   private JBTabbedTerminalWidget myTerminalWidget;
   private Project myProject;
 
-  public void initTerminal(Project project, final ToolWindow toolWindow) {
+  public void initTerminal(final Project project, final ToolWindow toolWindow) {
     myProject = project;
     LocalTerminalDirectRunner terminalRunner = OpenLocalTerminalAction.createTerminalRunner(project);
-    
+
     toolWindow.setToHideOnEmptyContent(true);
-    
+
     if (terminalRunner != null) {
       myTerminalWidget = terminalRunner.createTerminalWidget();
       myTerminalWidget.addTabListener(new TabbedTerminalWidget.TabListener() {
         @Override
         public void tabClosed(JediTermWidget terminal) {
-          hideIfNoActiveSessions(toolWindow, myTerminalWidget);
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              hideIfNoActiveSessions(toolWindow, myTerminalWidget);
+            }
+          });
         }
       });
     }
 
     Content content = createToolWindowContentPanel(terminalRunner, myTerminalWidget, toolWindow);
-    
+
     toolWindow.getContentManager().addContent(content);
+
+    ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerListener() {
+      @Override
+      public void toolWindowRegistered(@NotNull String id) {
+      }
+
+      @Override
+      public void stateChanged() {
+        ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+        if (window != null) {
+          boolean visible = window.isVisible();
+          if (visible && toolWindow.getContentManager().getContentCount() == 0) {
+            initTerminal(project, window);
+          }
+        }
+      }
+    });
   }
 
   private Content createToolWindowContentPanel(@Nullable LocalTerminalDirectRunner terminalRunner,
@@ -59,6 +86,7 @@ public class TerminalView {
         return PlatformDataKeys.HELP_ID.is(dataId) ? EventLog.HELP_ID : super.getData(dataId);
       }
     };
+
     if (terminalWidget != null) {
       panel.setContent(terminalWidget.getComponent());
 
@@ -73,9 +101,8 @@ public class TerminalView {
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
     content.setCloseable(true);
 
-    if (getComponentToFocus() != null) {
-      content.setPreferredFocusableComponent(getComponentToFocus());
-    }
+    content.setPreferredFocusableComponent(terminalWidget.getComponent());
+    
     return content;
   }
 
@@ -129,7 +156,7 @@ public class TerminalView {
   }
 
   private ActionToolbar createToolbar(@Nullable final LocalTerminalDirectRunner terminalRunner,
-                                             final JBTabbedTerminalWidget terminal, ToolWindow toolWindow) {
+                                      final JBTabbedTerminalWidget terminal, ToolWindow toolWindow) {
     DefaultActionGroup group = new DefaultActionGroup();
 
     if (terminalRunner != null) {
@@ -151,16 +178,9 @@ public class TerminalView {
     }, true);
   }
 
-  private void hideIfNoActiveSessions(final ToolWindow toolWindow, JBTabbedTerminalWidget terminal) {
+  private static void hideIfNoActiveSessions(final ToolWindow toolWindow, JBTabbedTerminalWidget terminal) {
     if (terminal.isNoActiveSessions()) {
       toolWindow.getContentManager().removeAllContents(true);
-
-      toolWindow.getActivation().doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          initTerminal(myProject, toolWindow);
-        }
-      });
     }
   }
 

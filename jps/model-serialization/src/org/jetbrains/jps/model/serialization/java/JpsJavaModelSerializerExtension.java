@@ -19,10 +19,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.JpsSimpleElement;
-import org.jetbrains.jps.model.JpsUrlList;
+import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -85,7 +82,9 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   @Override
   public List<? extends JpsModuleSourceRootPropertiesSerializer<?>> getModuleSourceRootPropertiesSerializers() {
     return Arrays.asList(new JavaSourceRootPropertiesSerializer(JavaSourceRootType.SOURCE, JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID),
-                         new JavaSourceRootPropertiesSerializer(JavaSourceRootType.TEST_SOURCE, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID));
+                         new JavaSourceRootPropertiesSerializer(JavaSourceRootType.TEST_SOURCE, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID),
+                         new JavaResourceRootPropertiesSerializer(JavaResourceRootType.RESOURCE, "java-resource"),
+                         new JavaResourceRootPropertiesSerializer(JavaResourceRootType.TEST_RESOURCE, "java-test-resource"));
   }
 
   @Override
@@ -317,6 +316,21 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       if (!packagePrefix.isEmpty()) {
         sourceRootTag.setAttribute(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE, packagePrefix);
       }
+    }
+  }
+  
+  private static class JavaResourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JpsDummyElement> {
+    private JavaResourceRootPropertiesSerializer(JpsModuleSourceRootType<JpsDummyElement> type, String typeId) {
+      super(type, typeId);
+    }
+
+    @Override
+    public JpsDummyElement loadProperties(@NotNull Element sourceRootTag) {
+      return JpsElementFactory.getInstance().createDummyElement();
+    }
+
+    @Override
+    public void saveProperties(@NotNull JpsDummyElement properties, @NotNull Element sourceRootTag) {
     }
   }
 }

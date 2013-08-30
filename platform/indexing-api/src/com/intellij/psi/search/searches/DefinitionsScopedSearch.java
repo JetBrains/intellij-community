@@ -16,7 +16,9 @@
 
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
@@ -80,7 +82,12 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
     }
 
     public SearchScope getScope() {
-      final SearchScope accessScope = PsiSearchHelper.SERVICE.getInstance(myElement.getProject()).getUseScope(myElement);
+      final SearchScope accessScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+        @Override
+        public SearchScope compute() {
+          return PsiSearchHelper.SERVICE.getInstance(myElement.getProject()).getUseScope(myElement);
+        }
+      });
       return myScope.intersectWith(accessScope);
     }
   }

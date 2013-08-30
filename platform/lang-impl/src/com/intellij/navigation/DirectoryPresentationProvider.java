@@ -21,6 +21,8 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -48,13 +50,10 @@ public class DirectoryPresentationProvider implements ItemPresentationProvider<P
     }
 
     if (ProjectRootsUtil.isSourceRoot(directory)) {
-      if (ProjectRootsUtil.isInTestSource(directory)) {
-        return new PresentationData(directory.getName(), locationString,
-                                    PlatformIcons.MODULES_TEST_SOURCE_FOLDER, null);
-      }
-      else {
-        return new PresentationData(directory.getName(), locationString,
-                                    PlatformIcons.MODULES_SOURCE_FOLDERS_ICON, null);
+      SourceFolder sourceRoot = ProjectRootsUtil.getModuleSourceRoot(vFile, project);
+      if (sourceRoot != null) {
+        Icon icon = ModuleSourceRootEditHandler.getEditHandler(sourceRoot.getRootType()).getRootIcon();
+        return new PresentationData(directory.getName(), locationString, icon, null);
       }
     }
 

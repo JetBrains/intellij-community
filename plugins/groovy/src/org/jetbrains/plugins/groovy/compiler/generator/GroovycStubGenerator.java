@@ -51,6 +51,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerBase;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -108,22 +110,18 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
 
   private static boolean containsJavaSources(Module module, boolean inTests) {
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    for (ContentEntry entry : rootManager.getContentEntries()) {
-      for (SourceFolder folder : entry.getSourceFolders()) {
-        VirtualFile dir = folder.getFile();
-        if ((!inTests || folder.isTestSource()) && dir != null) {
-          if (!rootManager.getFileIndex().iterateContentUnderDirectory(dir, new ContentIterator() {
-            @Override
-            public boolean processFile(VirtualFile fileOrDir) {
-              if (!fileOrDir.isDirectory() && JavaFileType.INSTANCE == fileOrDir.getFileType()) {
-                return false;
-              }
-              return true;
-            }
-          })) {
-            return true;
+    List<VirtualFile> roots = inTests ? rootManager.getSourceRoots(JavaSourceRootType.TEST_SOURCE) : rootManager.getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+    for (VirtualFile dir : roots) {
+      if (!rootManager.getFileIndex().iterateContentUnderDirectory(dir, new ContentIterator() {
+        @Override
+        public boolean processFile(VirtualFile fileOrDir) {
+          if (!fileOrDir.isDirectory() && JavaFileType.INSTANCE == fileOrDir.getFileType()) {
+            return false;
           }
+          return true;
         }
+      })) {
+        return true;
       }
     }
     return false;

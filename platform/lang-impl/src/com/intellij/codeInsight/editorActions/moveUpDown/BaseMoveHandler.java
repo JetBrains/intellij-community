@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,9 +46,11 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
     final Document document = editor.getDocument();
     PsiFile file = getRoot(documentManager.getPsiFile(document), editor);
 
-    final MoverWrapper mover = getSuitableMover(editor, file);
-    if (mover != null) {
-      mover.move(editor,file);
+    if (file != null) {
+      final MoverWrapper mover = getSuitableMover(editor, file);
+      if (mover != null) {
+        mover.move(editor,file);
+      }
     }
   }
 
@@ -72,7 +75,7 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
   }
 
   @Nullable
-  protected abstract MoverWrapper getSuitableMover(Editor editor, PsiFile file);
+  protected abstract MoverWrapper getSuitableMover(@NotNull Editor editor, @NotNull PsiFile file);
 
   @Nullable
   private static PsiFile getRoot(final PsiFile file, final Editor editor) {

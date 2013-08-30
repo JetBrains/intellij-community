@@ -62,6 +62,9 @@ public class AsyncResult<T> extends ActionCallback {
   }
 
   @NotNull
+  /**
+   * Please use {@link #doWhenDone(com.intellij.util.Consumer)}
+   */
   public AsyncResult<T> doWhenDone(@NotNull final Handler<T> handler) {
     doWhenDone(new Runnable() {
       @Override
@@ -84,6 +87,10 @@ public class AsyncResult<T> extends ActionCallback {
   }
 
   @NotNull
+  @Deprecated
+  /**
+   * @deprecated use {@link #doWhenRejected(com.intellij.util.Consumer)}
+   */
   public AsyncResult<T> doWhenRejected(@NotNull final Handler<T> handler) {
     doWhenRejected(new Runnable() {
       @Override
@@ -169,7 +176,7 @@ public class AsyncResult<T> extends ActionCallback {
   }
 
   // we don't use inner class, avoid memory leak, we don't want to hold this result while dependent is computing
-  private static class SubResultDoneCallback<Result, SubResult, AsyncSubResult extends AsyncResult<SubResult>> implements Handler<Result> {
+  private static class SubResultDoneCallback<Result, SubResult, AsyncSubResult extends AsyncResult<SubResult>> implements Consumer<Result> {
     private final AsyncSubResult subResult;
     private final Function<Result, SubResult> doneHandler;
 
@@ -179,7 +186,7 @@ public class AsyncResult<T> extends ActionCallback {
     }
 
     @Override
-    public void run(Result result) {
+    public void consume(Result result) {
       SubResult v;
       try {
         v = doneHandler.fun(result);
@@ -193,7 +200,7 @@ public class AsyncResult<T> extends ActionCallback {
     }
   }
 
-  private static class SubCallbackDoneCallback<Result> implements Handler<Result> {
+  private static class SubCallbackDoneCallback<Result> implements Consumer<Result> {
     private final ActionCallback subResult;
     private final Consumer<Result> doneHandler;
 
@@ -203,7 +210,7 @@ public class AsyncResult<T> extends ActionCallback {
     }
 
     @Override
-    public void run(Result result) {
+    public void consume(Result result) {
       try {
         doneHandler.consume(result);
       }

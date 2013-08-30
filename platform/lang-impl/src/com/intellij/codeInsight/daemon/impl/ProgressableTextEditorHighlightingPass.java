@@ -59,7 +59,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     repaintTrafficIcon();
   }
 
-  protected abstract void collectInformationWithProgress(final ProgressIndicator progress);
+  protected abstract void collectInformationWithProgress(@NotNull ProgressIndicator progress);
 
   @Override
   public final void doApplyInformationToEditor() {

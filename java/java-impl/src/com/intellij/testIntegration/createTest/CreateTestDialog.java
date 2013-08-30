@@ -36,9 +36,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -53,10 +51,15 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
-import com.intellij.ui.*;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.RecentsManager;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -449,16 +452,16 @@ public class CreateTestDialog extends DialogWrapper {
       protected void run(Result<VirtualFile> result) throws Throwable {
         final HashSet<VirtualFile> testFolders = new HashSet<VirtualFile>();
         CreateTestAction.checkForTestRoots(myTargetModule, testFolders);
-        VirtualFile[] roots;
+        List<VirtualFile> roots;
         if (testFolders.isEmpty()) {
-          roots = ModuleRootManager.getInstance(myTargetModule).getSourceRoots();
-          if (roots.length == 0) return;
+          roots = ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+          if (roots.isEmpty()) return;
         } else {
-          roots = testFolders.toArray(new VirtualFile[testFolders.size()]); 
+          roots = new ArrayList<VirtualFile>(testFolders);
         }
 
-        if (roots.length == 1) {
-          result.setResult(roots[0]);
+        if (roots.size() == 1) {
+          result.setResult(roots.get(0));
         }
         else {
           PsiDirectory defaultDir = chooseDefaultDirectory(packageName);
@@ -479,15 +482,10 @@ public class CreateTestDialog extends DialogWrapper {
   @Nullable
   private PsiDirectory chooseDefaultDirectory(String packageName) {
     List<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
-    for (ContentEntry e : ModuleRootManager.getInstance(myTargetModule).getContentEntries()) {
-      for (SourceFolder f : e.getSourceFolders()) {
-        final VirtualFile file = f.getFile();
-        if (file != null && f.isTestSource()) {
-          final PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(file);
-          if (dir != null) {
-            dirs.add(dir);
-          }
-        }
+    for (VirtualFile file : ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE)) {
+      final PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(file);
+      if (dir != null) {
+        dirs.add(dir);
       }
     }
     if (!dirs.isEmpty()) {
