@@ -49,7 +49,7 @@ public class GradleConfigurationsNonCodeMembersContributor extends NonCodeMember
       return;
     }
 
-    if (!ConfigurationContainer.class.getName().equals(aClass.getQualifiedName())) {
+    if (aClass == null || !ConfigurationContainer.class.getName().equals(aClass.getQualifiedName())) {
       return;
     }
 
