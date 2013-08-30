@@ -359,7 +359,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(text);
       final String namespaceByPrefix = tag.getNamespaceByPrefix(namespacePrefix);
       if (namespaceByPrefix.length() > 0) return namespaceByPrefix;
-      final XmlTag rootTag = ((XmlFile)tag.getContainingFile()).getDocument().getRootTag();
+      final XmlTag rootTag = ((XmlFile)tag.getContainingFile()).getRootTag();
 
       if (rootTag != null &&
           "schema".equals(rootTag.getLocalName()) &&
