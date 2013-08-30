@@ -112,9 +112,24 @@ public abstract class AbstractValueHintTreeComponent<H> {
     }
   }
 
-  private JComponent createToolbar(final JPanel parent) {
+  private JComponent createToolbar(JPanel parent) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(createSetRoot());
+    group.add(new AnAction(XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"),
+                           XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"), AllIcons.Modules.UnmarkWebroot) {
+      @Override
+      public void update(AnActionEvent e) {
+        TreePath path = myTree.getSelectionPath();
+        e.getPresentation().setEnabled(path != null && path.getPathCount() > 1);
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        TreePath path = myTree.getSelectionPath();
+        if (path != null) {
+          setNodeAsRoot(path.getLastPathComponent());
+        }
+      }
+    });
 
     AnAction back = createGoBackAction();
     back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_MASK)), parent);
@@ -125,19 +140,6 @@ public abstract class AbstractValueHintTreeComponent<H> {
     group.add(forward);
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
-  }
-
-  private AnAction createSetRoot() {
-    final String title = XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip");
-    return new AnAction(title, title, AllIcons.Modules.UnmarkWebroot) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        final TreePath path = myTree.getSelectionPath();
-        if (path == null) return;
-        final Object node = path.getLastPathComponent();
-        setNodeAsRoot(node);
-      }
-    };
   }
 
   protected abstract void setNodeAsRoot(Object node);
