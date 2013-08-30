@@ -412,6 +412,7 @@
     <templateLanguageCoreTags language="Jinja2" implementationClass="com.jetbrains.jinja2.tags.Jinja2TagLibrary"/>
 
     <!-- Cython -->
+    <fileTypeFactory implementation="com.jetbrains.cython.CythonFileTypeFactory"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.cython.CythonTokenSetContributor"/>
     <typeProvider implementation="com.jetbrains.cython.types.CythonTypeProvider"/>
     <importResolver implementation="com.jetbrains.cython.CythonImportResolver"/>
