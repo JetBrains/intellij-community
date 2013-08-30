@@ -22,7 +22,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
@@ -61,8 +60,6 @@ public abstract class MvcToolWindowDescriptor implements ToolWindowFactory, Cond
   }
 
   public boolean value(Project project) {
-    if (!Registry.is("grails_griffon.view", true)) return false;
-
     return MvcModuleStructureUtil.hasModulesWithSupport(project, myFramework);
   }
 
