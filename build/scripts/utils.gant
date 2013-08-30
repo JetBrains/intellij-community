@@ -739,7 +739,7 @@ private void fixIdeaPropertiesEol(List paths, String eol) {
   }
 }
 
-private boolean isUnderTeamCity() {
+def boolean isUnderTeamCity() {
   return isDefined("teamcity.buildType.id")
 }
 
