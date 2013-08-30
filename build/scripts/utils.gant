@@ -76,8 +76,7 @@ binding.setVariable("isDefined", {String key ->
   projectBuilder.stage("isDefined - $key")
   try {
     projectBuilder.stage("isDefined - try")
-    def key_value = this[key]
-    projectBuilder.stage("isDefined key- " + key + " -value- " + key_value)
+    this[key]
     projectBuilder.stage("isDefined - try finished")
     return true
   }
@@ -739,7 +738,7 @@ private void fixIdeaPropertiesEol(List paths, String eol) {
   }
 }
 
-def boolean isUnderTeamCity() {
+private boolean isUnderTeamCity() {
   return isDefined("teamcity.buildType.id")
 }
 

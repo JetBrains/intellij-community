@@ -85,6 +85,7 @@ class Build {
   def projectBuilder
   def buildNumber
   def system_selector
+  def teamcity_buildType_id
   def ant = new AntBuilder()
   Map layout_args
   Script utils
@@ -196,7 +197,8 @@ class Build {
   }
 
   private lastPinnedBuild() {
-    "http://buildserver/httpAuth/repository/download/${this."teamcity.buildType.id"}/.lastPinned"
+    "http://buildserver/httpAuth/repository/download/" + teamcity_buildType_id + "/.lastPinned"
+    //"http://buildserver/httpAuth/repository/download/${this."teamcity.buildType.id"}/.lastPinned"
   }
 
   private getPreviousLogs() {
