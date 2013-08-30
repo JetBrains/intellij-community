@@ -24,20 +24,6 @@
 
   <problem>
     <file>PointlessArithmeticExpression.java</file>
-    <line>19</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
-    <description>&lt;code&gt;j * ZERO_CONSTANT&lt;/code&gt; can be replaced with '0' #loc</description>
-  </problem>
-
-  <problem>
-    <file>PointlessArithmeticExpression.java</file>
-    <line>21</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
-    <description>&lt;code&gt;j * ONE_CONSTANT&lt;/code&gt; can be replaced with 'j' #loc</description>
-  </problem>
-
-  <problem>
-    <file>PointlessArithmeticExpression.java</file>
     <line>23</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
     <description>&lt;code&gt;j / 1&lt;/code&gt; can be replaced with 'j' #loc</description>
