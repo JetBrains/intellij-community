@@ -1,10 +1,12 @@
 package com.jetbrains.python.documentation.doctest;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
@@ -27,8 +29,10 @@ public class PyDocReferenceExpression extends PyReferenceExpressionImpl {
     if (qualifier != null) {
       return new PyQualifiedReference(this, context);
     }
-    else if (PsiTreeUtil.getParentOfType(this, PyImportStatement.class) != null)
-      return new PyImportReference(this, context);
+    final PsiElement importParent = PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class);
+    if (importParent != null) {
+      return PyImportReference.forElement(this, importParent, context);
+    }
     return new PyDocReference(this, context);
   }
 }
