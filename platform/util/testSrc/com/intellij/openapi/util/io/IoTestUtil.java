@@ -211,16 +211,20 @@ public class IoTestUtil {
   @NotNull
   public static File createTestJar() throws IOException {
     File jarFile = FileUtil.createTempFile("test.", ".jar");
+    writeEntry(jarFile, "entry.txt", "test");
+    return jarFile;
+  }
+
+  public static void writeEntry(@NotNull File jarFile, @NotNull String name, @NotNull String content) throws IOException {
     JarOutputStream stream = new JarOutputStream(new FileOutputStream(jarFile));
     try {
-      stream.putNextEntry(new JarEntry("entry.txt"));
-      stream.write("test".getBytes("UTF-8"));
+      stream.putNextEntry(new JarEntry(name));
+      stream.write(content.getBytes("UTF-8"));
       stream.closeEntry();
     }
     finally {
       stream.close();
     }
-    return jarFile;
   }
 
   @NotNull
