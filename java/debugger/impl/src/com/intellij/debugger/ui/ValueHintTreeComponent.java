@@ -43,11 +43,13 @@ class ValueHintTreeComponent extends AbstractValueHintTreeComponent<Pair<NodeDes
   }
 
 
+  @Override
   protected void updateTree(Pair<NodeDescriptorImpl, String> descriptorWithTitle){
     final NodeDescriptorImpl descriptor = descriptorWithTitle.first;
     final String title = descriptorWithTitle.second;
     final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(myValueHint.getProject())).getContext();
     context.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(context) {
+      @Override
       public void threadAction() {
         myTree.setInspectDescriptor(descriptor);
         myValueHint.showTreePopup(myTree, context, title, ValueHintTreeComponent.this);
@@ -56,12 +58,14 @@ class ValueHintTreeComponent extends AbstractValueHintTreeComponent<Pair<NodeDes
   }
 
 
+  @Override
   protected void setNodeAsRoot(final Object node) {
     if (node instanceof DebuggerTreeNodeImpl) {
       myValueHint.shiftLocation();
       final DebuggerTreeNodeImpl debuggerTreeNode = (DebuggerTreeNodeImpl)node;
       final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(myValueHint.getProject())).getContext();
       context.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(context) {
+        @Override
         public void threadAction() {
           try {
             final NodeDescriptorImpl descriptor = debuggerTreeNode.getDescriptor();

@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.Disposable;
@@ -32,6 +33,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +55,7 @@ public abstract class AbstractValueHint {
   private static final Icon COLLAPSED_TREE_ICON = IconUtil.getAddIcon();
   private static final int HINT_TIMEOUT = 7000; // ms
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
+    @Override
     public void keyReleased(KeyEvent e) {
       if(!isAltMask(e.getModifiers())) {
         ValueLookupManager.getInstance(myProject).hideHint();
@@ -265,12 +268,11 @@ public abstract class AbstractValueHint {
     final JRootPane rootPane = editor.getComponent().getRootPane();
     if(rootPane == null) return false;
 
-    short constraint = HintManagerImpl.UNDER;
-    Point p = HintManagerImpl.getHintPosition(myCurrentHint, editor, editor.xyToLogicalPosition(myPoint), constraint);
-    final HintHint hintHint = HintManagerImpl.createHintHint(editor, p, myCurrentHint, constraint, true);
+    Point p = HintManagerImpl.getHintPosition(myCurrentHint, editor, editor.xyToLogicalPosition(myPoint), HintManager.UNDER);
+    final HintHint hintHint = HintManagerImpl.createHintHint(editor, p, myCurrentHint, HintManager.UNDER, true);
 
     HintManagerImpl.getInstanceImpl().showEditorHint(myCurrentHint, editor, p,
-                               HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_SCROLLING, HINT_TIMEOUT, false,
+                               HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, HINT_TIMEOUT, false,
                                hintHint);
     return true;
   }
@@ -310,19 +312,8 @@ public abstract class AbstractValueHint {
   }
 
   protected TreeModelListener createTreeListener(final Tree tree) {
-    return new TreeModelListener() {
-      public void treeNodesChanged(TreeModelEvent e) {
-        //do nothing
-      }
-
-      public void treeNodesInserted(TreeModelEvent e) {
-        //do nothing
-      }
-
-      public void treeNodesRemoved(TreeModelEvent e) {
-        //do nothing
-      }
-
+    return new TreeModelAdapter() {
+      @Override
       public void treeStructureChanged(TreeModelEvent e) {
         resize(e.getTreePath(), tree);
       }
