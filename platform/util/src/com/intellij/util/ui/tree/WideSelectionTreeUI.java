@@ -70,6 +70,11 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   private final MouseListener mySelectionListener = new MouseAdapter() {
     @Override
+    public void mouseReleased(MouseEvent e) {
+      mousePressed(e);
+    }
+
+    @Override
     public void mousePressed(@NotNull final MouseEvent e) {
       final JTree tree = (JTree)e.getSource();
       if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger()) {
@@ -80,7 +85,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
         final TreePath pressedPath = getClosestPathForLocation(tree, e.getX(), e.getY());
         if (pressedPath != null) {
-          Rectangle bounds = getWidePathBounds(tree, pressedPath);
+          Rectangle bounds = getPathBounds(tree, pressedPath);
 
           if (e.getY() >= bounds.y + bounds.height) {
             return;
@@ -98,7 +103,8 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     }
   };
 
-  public Rectangle getWidePathBounds(JTree tree, TreePath path) {
+  @Override
+  public Rectangle getPathBounds(JTree tree, TreePath path) {
     Rectangle bounds = super.getPathBounds(tree, path);
     if (bounds != null && tree != null) {
       bounds.x = 0;

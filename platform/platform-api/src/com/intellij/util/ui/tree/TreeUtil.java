@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
@@ -944,16 +943,8 @@ public final class TreeUtil {
   }
 
   public static boolean isOverSelection(@NotNull final JTree tree, @NotNull final Point point) {
-    TreePath path = tree.getClosestPathForLocation(point.x, point.y);
-    if (path == null || !tree.getSelectionModel().isPathSelected(path)) return false;
-    TreeUI ui = tree.getUI();
-    Rectangle bounds;
-    if (ui instanceof WideSelectionTreeUI) {
-      bounds = ((WideSelectionTreeUI)ui).getWidePathBounds(tree, path);
-    } else {
-      bounds = tree.getPathBounds(path);
-    }
-    return bounds != null && bounds.contains(point);
+    TreePath path = tree.getPathForLocation(point.x, point.y);
+    return path != null && tree.getSelectionModel().isPathSelected(path);
   }
 
   public static void dropSelectionButUnderPoint(@NotNull JTree tree, @NotNull Point treePoint) {
