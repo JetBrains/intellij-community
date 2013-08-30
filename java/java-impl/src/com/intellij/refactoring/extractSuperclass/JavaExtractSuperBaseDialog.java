@@ -36,6 +36,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,8 +72,8 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
 
   @Override
   protected JPanel createDestinationRootPanel() {
-    final VirtualFile[] sourceRoots = ProjectRootManager.getInstance(myProject).getContentSourceRoots();
-    if (sourceRoots.length <= 1) return super.createDestinationRootPanel();
+    final List<VirtualFile> sourceRoots = ProjectRootManager.getInstance(myProject).getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+    if (sourceRoots.size() <= 1) return super.createDestinationRootPanel();
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
     final JBLabel label = new JBLabel(RefactoringBundle.message("target.destination.folder"));

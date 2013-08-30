@@ -49,6 +49,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -207,7 +208,7 @@ public class CreateClassDialog extends DialogWrapper {
     gbConstraints.insets.top = 4;
     panel.add(myDestinationCB, gbConstraints);
 
-    final boolean isMultipleSourceRoots = ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1;
+    final boolean isMultipleSourceRoots = ProjectRootManager.getInstance(myProject).getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES).size() > 1;
     myDestinationCB.setVisible(isMultipleSourceRoots);
     label.setVisible(isMultipleSourceRoots);
     label.setLabelFor(myDestinationCB);

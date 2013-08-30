@@ -22,10 +22,12 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 
@@ -74,9 +76,16 @@ public class MockProjectRootManager extends ProjectRootManager {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getContentSourceRoots() {
     throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    throw new UnsupportedOperationException("'getContentSourceRoots' not implemented in " + getClass().getName());
   }
 
   @Override

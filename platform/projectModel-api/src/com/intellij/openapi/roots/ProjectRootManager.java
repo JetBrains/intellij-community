@@ -23,9 +23,11 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Allows to query and modify the list of root directories belonging to a project.
@@ -95,7 +97,17 @@ public abstract class ProjectRootManager implements ModificationTracker {
    *
    * @return the list of content source roots.
    */
+  @NotNull
   public abstract VirtualFile[] getContentSourceRoots();
+
+  /**
+   * Returns the list of source roots from all modules which types belong to the specified set
+   *
+   * @param rootTypes types of source roots
+   * @return list of source roots
+   */
+  @NotNull
+  public abstract List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
    * Returns the instance of the JDK selected for the project.

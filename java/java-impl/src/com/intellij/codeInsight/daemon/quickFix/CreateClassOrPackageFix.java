@@ -37,6 +37,7 @@ import com.intellij.psi.util.CreateClassUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
 
@@ -251,7 +252,8 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
       }
     }
     else {
-      for (VirtualFile root : ProjectRootManager.getInstance(psiManager.getProject()).getContentSourceRoots()) {
+      for (VirtualFile root : ProjectRootManager.getInstance(psiManager.getProject()).getModuleSourceRoots(
+        JavaModuleSourceRootTypes.SOURCES)) {
         PsiDirectory directory = psiManager.findDirectory(root);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Root: " + root + ", directory: " + directory);

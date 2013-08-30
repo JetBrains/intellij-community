@@ -40,6 +40,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.io.File;
 import java.util.*;
@@ -283,12 +284,13 @@ public class MoveClassesOrPackagesUtil {
       directory = directories[0];
     }
     else {
-      final VirtualFile[] contentSourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
-      if (contentSourceRoots.length == 1 && (baseDirVirtualFile == null || fileIndex.isInTestSourceContent(contentSourceRoots[0]) == isBaseDirInTestSources)) {
+      final List<VirtualFile> contentSourceRoots = ProjectRootManager.getInstance(project).getModuleSourceRoots(
+        JavaModuleSourceRootTypes.SOURCES);
+      if (contentSourceRoots.size() == 1 && (baseDirVirtualFile == null || fileIndex.isInTestSourceContent(contentSourceRoots.get(0)) == isBaseDirInTestSources)) {
         directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
           @Override
           public PsiDirectory compute() {
-            return RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots[0]);
+            return RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots.get(0));
           }
         });
       }
@@ -307,7 +309,7 @@ public class MoveClassesOrPackagesUtil {
   }
 
   public static VirtualFile chooseSourceRoot(final PackageWrapper targetPackage,
-                                             final VirtualFile[] contentSourceRoots,
+                                             final List<VirtualFile> contentSourceRoots,
                                              final PsiDirectory initialDirectory) {
     Project project = targetPackage.getManager().getProject();
     //ensure that there would be no duplicates: e.g. when one content root is subfolder of another root (configured via excluded roots)
@@ -330,7 +332,7 @@ public class MoveClassesOrPackagesUtil {
   }
 
   public static void buildDirectoryList(PackageWrapper aPackage,
-                                        VirtualFile[] contentSourceRoots,
+                                        List<VirtualFile> contentSourceRoots,
                                         LinkedHashSet<PsiDirectory> targetDirectories,
                                         Map<PsiDirectory, String> relativePathsToCreate) {
 
@@ -372,7 +374,7 @@ public class MoveClassesOrPackagesUtil {
         }
       }
     }
-    LOG.assertTrue(targetDirectories.size() <= contentSourceRoots.length);
-    LOG.assertTrue(relativePathsToCreate.size() <= contentSourceRoots.length);
+    LOG.assertTrue(targetDirectories.size() <= contentSourceRoots.size());
+    LOG.assertTrue(relativePathsToCreate.size() <= contentSourceRoots.size());
   }
 }

@@ -465,7 +465,7 @@ public class CreateTestDialog extends DialogWrapper {
         }
         else {
           PsiDirectory defaultDir = chooseDefaultDirectory(packageName);
-          result.setResult(MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots.toArray(new VirtualFile[roots.size()]), defaultDir));
+          result.setResult(MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir));
         }
       }
     }.execute().getResultObject();

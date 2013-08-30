@@ -44,6 +44,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -367,7 +368,7 @@ public class MoveClassesOrPackagesImpl {
   }
 
   private static List<PsiDirectory> buildRearrangeTargetsList(final Project project, final PsiDirectory[] directories) {
-    final VirtualFile[] sourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
+    final List<VirtualFile> sourceRoots = ProjectRootManager.getInstance(project).getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
     List<PsiDirectory> sourceRootDirectories = new ArrayList<PsiDirectory>();
     sourceRoots:
     for (final VirtualFile sourceRoot : sourceRoots) {
