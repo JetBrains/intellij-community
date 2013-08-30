@@ -21,6 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.List;
+import java.util.Set;
+
 /**
  * Represents a module content root.
  * You can get existing entries with {@link com.intellij.openapi.roots.ModuleRootModel#getContentEntries()} or
@@ -54,7 +57,21 @@ public interface ContentEntry extends Synthetic {
    *
    * @return list of this <code>ContentEntry</code> {@link com.intellij.openapi.roots.SourceFolder}s
    */
+  @NotNull
   SourceFolder[] getSourceFolders();
+
+  /**
+   * @param rootType type of accepted source roots
+   * @return list of source roots of the specified type containing in this content root
+   */
+  List<SourceFolder> getSourceFolders(@NotNull JpsModuleSourceRootType<?> rootType);
+
+  /**
+   *
+   * @param rootTypes types of accepted source roots
+   * @return list of source roots of the specified types containing in this content root
+   */
+  List<SourceFolder> getSourceFolders(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
    * Returns the list of directories for valid source roots under this content root.

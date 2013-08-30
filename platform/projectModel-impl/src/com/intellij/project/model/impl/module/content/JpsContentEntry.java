@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.project.model.impl.module.JpsRootModel;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -41,7 +42,9 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -83,9 +86,26 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     return myRoot.getUrl();
   }
 
+  @NotNull
   @Override
   public SourceFolder[] getSourceFolders() {
     return mySourceFolders.toArray(new SourceFolder[mySourceFolders.size()]);
+  }
+
+  @Override
+  public List<SourceFolder> getSourceFolders(@NotNull JpsModuleSourceRootType<?> rootType) {
+    return getSourceFolders(Collections.singleton(rootType));
+  }
+
+  @Override
+  public List<SourceFolder> getSourceFolders(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    List<SourceFolder> folders = new SmartList<SourceFolder>();
+    for (JpsSourceFolder folder : mySourceFolders) {
+      if (rootTypes.contains(folder.getRootType())) {
+        folders.add(folder);
+      }
+    }
+    return folders;
   }
 
   @Override

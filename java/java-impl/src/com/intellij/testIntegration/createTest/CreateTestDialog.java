@@ -36,9 +36,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -53,10 +51,14 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
-import com.intellij.ui.*;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.RecentsManager;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -479,15 +481,10 @@ public class CreateTestDialog extends DialogWrapper {
   @Nullable
   private PsiDirectory chooseDefaultDirectory(String packageName) {
     List<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
-    for (ContentEntry e : ModuleRootManager.getInstance(myTargetModule).getContentEntries()) {
-      for (SourceFolder f : e.getSourceFolders()) {
-        final VirtualFile file = f.getFile();
-        if (file != null && f.isTestSource()) {
-          final PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(file);
-          if (dir != null) {
-            dirs.add(dir);
-          }
-        }
+    for (VirtualFile file : ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE)) {
+      final PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(file);
+      if (dir != null) {
+        dirs.add(dir);
       }
     }
     if (!dirs.isEmpty()) {

@@ -19,12 +19,13 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.hash.HashMap;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Thread-safe.
@@ -155,16 +156,8 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
   }
 
   private static void createSourceRootIfAbsent(@NotNull ContentEntry entry, @NotNull String path, @NotNull String moduleName) {
-    SourceFolder[] folders = entry.getSourceFolders();
-    if (folders == null) {
-      LOG.info(String.format("Importing source root '%s' for content root '%s' of module '%s'", path, entry.getUrl(), moduleName));
-      entry.addSourceFolder(toVfsUrl(path), false);
-      return;
-    }
+    List<SourceFolder> folders = entry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES);
     for (SourceFolder folder : folders) {
-      if (folder.isTestSource()) {
-        continue;
-      }
       VirtualFile file = folder.getFile();
       if (file == null) {
         continue;
@@ -198,16 +191,8 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
   }
 
   private static void createTestRootIfAbsent(@NotNull ContentEntry entry, @NotNull String path, @NotNull String moduleName) {
-    SourceFolder[] folders = entry.getSourceFolders();
-    if (folders == null) {
-      LOG.info(String.format("Importing test root '%s' for content root '%s' of module '%s'", path, entry.getUrl(), moduleName));
-      entry.addSourceFolder(toVfsUrl(path), true);
-      return;
-    }
+    List<SourceFolder> folders = entry.getSourceFolders(JavaModuleSourceRootTypes.TESTS);
     for (SourceFolder folder : folders) {
-      if (!folder.isTestSource()) {
-        continue;
-      }
       VirtualFile file = folder.getFile();
       if (file == null) {
         continue;

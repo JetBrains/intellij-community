@@ -63,20 +63,7 @@ public class ProjectRootsUtil {
   public static SourceFolder getModuleSourceRoot(@NotNull VirtualFile root, @NotNull Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = projectFileIndex.getModuleForFile(root);
-    if (module == null) {
-      return null;
-    }
-
-    final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-    for (ContentEntry contentEntry : contentEntries) {
-      final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-      for (SourceFolder sourceFolder : sourceFolders) {
-        if (root.equals(sourceFolder.getFile())) {
-          return sourceFolder;
-        }
-      }
-    }
-    return null;
+    return module != null ? findSourceFolder(module, root) : null;
   }
 
   public static boolean isLibraryRoot(final VirtualFile directoryFile, final Project project) {

@@ -9,6 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.List;
+import java.util.Set;
+
 /**
  * @author Denis Zhdanov
  * @since 2/21/12 11:15 AM
@@ -37,6 +40,16 @@ public class ModuleAwareContentRoot implements ContentEntry {
     return myModule;
   }
 
+  @Override
+  public List<SourceFolder> getSourceFolders(@NotNull JpsModuleSourceRootType<?> rootType) {
+    return myDelegate.getSourceFolders(rootType);
+  }
+
+  @Override
+  public List<SourceFolder> getSourceFolders(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    return myDelegate.getSourceFolders(rootTypes);
+  }
+
   @NotNull
   @Override
   public VirtualFile getFile() {
@@ -49,6 +62,7 @@ public class ModuleAwareContentRoot implements ContentEntry {
     return myDelegate.getUrl();
   }
 
+  @NotNull
   @Override
   public SourceFolder[] getSourceFolders() {
     return myDelegate.getSourceFolders();
