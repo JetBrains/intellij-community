@@ -356,11 +356,7 @@ public class PsiMethodReferenceUtil {
 
       isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
       isConstructor = method.isConstructor();
-      final Boolean receiver = hasReceiver(methodRef, method);
-      if (receiver == null) {
-        return null; //invalid reference
-      }
-      receiverReferenced = receiver;
+      receiverReferenced = hasReceiver(methodRef, method);
       
       if (method.hasModifierProperty(PsiModifier.ABSTRACT) && qualifier instanceof PsiSuperExpression) {
         return "Abstract method '" + method.getName() + "' cannot be accessed directly";
@@ -400,11 +396,11 @@ public class PsiMethodReferenceUtil {
     return null;
   }
 
-  public static Boolean hasReceiver(@NotNull PsiMethodReferenceExpression methodRef, @NotNull PsiMethod method) {
+  public static boolean hasReceiver(@NotNull PsiMethodReferenceExpression methodRef, @NotNull PsiMethod method) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(methodRef.getFunctionalInterfaceType());
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(LambdaUtil.getSubstitutor(interfaceMethod, resolveResult)) : null;
-    if (signature == null) return null;
+    LOG.assertTrue(signature != null);
     final PsiType[] parameterTypes = signature.getParameterTypes();
     final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(methodRef);
     return method.getParameterList().getParametersCount() + 1 == parameterTypes.length &&

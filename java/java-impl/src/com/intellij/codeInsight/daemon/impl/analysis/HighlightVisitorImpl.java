@@ -1191,7 +1191,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
 
-      if (!myHolder.hasErrorResults()) {
+      if (functionalInterfaceType != null && LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null && !myHolder.hasErrorResults()) {
         final String errorMessage = PsiMethodReferenceUtil.checkMethodReferenceContext(expression);
         if (errorMessage != null) {
           myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create());
