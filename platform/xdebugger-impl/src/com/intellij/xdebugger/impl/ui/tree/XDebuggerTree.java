@@ -55,6 +55,7 @@ import java.util.List;
 public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
   private static final Convertor<TreePath, String> SPEED_SEARCH_CONVERTER = new Convertor<TreePath, String>() {
+    @Override
     public String convert(TreePath o) {
       String text = null;
       if (o != null) {
@@ -75,7 +76,6 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private XSourcePosition mySourcePosition;
   private final List<XDebuggerTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final XDebugSession mySession;
-  private final PopupHandler myPopupHandler;
 
   public XDebuggerTree(final @NotNull XDebugSession session,
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -119,14 +119,13 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
 
     final ActionManager actionManager = ActionManager.getInstance();
-    myPopupHandler = new PopupHandler() {
+    addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(final Component comp, final int x, final int y) {
-        final ActionGroup group = (ActionGroup)actionManager.getAction(popupActionGroupId);
-        ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-        popupMenu.getComponent().show(comp, x, y);
+        ActionGroup group = (ActionGroup)actionManager.getAction(popupActionGroupId);
+        actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
       }
-    };
-    addMouseListener(myPopupHandler);
+    });
     registerShortcuts();
   }
 
@@ -188,6 +187,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     return myTreeModel;
   }
 
+  @Override
   @Nullable
   public Object getData(@NonNls final String dataId) {
     if (XDEBUGGER_TREE_KEY.is(dataId)) {
@@ -226,6 +226,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     }
   }
 
+  @Override
   public void dispose() {
     ActionManager actionManager = ActionManager.getInstance();
     actionManager.getAction(XDebuggerActions.SET_VALUE).unregisterCustomShortcutSet(this);
