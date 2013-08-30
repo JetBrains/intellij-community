@@ -132,7 +132,7 @@ public abstract class ElementPresentationManager {
   }
 
   @Nullable
-  public static String getElementName(Object element) {
+  public static String getElementName(@NotNull Object element) {
     for (final Function<Object, String> function : ourNameProviders) {
       final String s = function.fun(element);
       if (s != null) {
@@ -167,7 +167,7 @@ public abstract class ElementPresentationManager {
   }
 
   @Nullable
-  public static Object invokeNameValueMethod(final Object element) {
+  public static Object invokeNameValueMethod(@NotNull final Object element) {
     final Method nameValueMethod = findNameValueMethod(element.getClass());
     if (nameValueMethod == null) {
       return null;
