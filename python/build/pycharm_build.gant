@@ -137,7 +137,8 @@ target('default': "Build artifacts") {
   def launcher = "${paths.distWin}/bin/pycharm.exe"
   List resourcePaths = ["$home/community/community-resources/src",
                         "$home/community/platform/icons/src",
-                        "$home/python/resources"]
+                        "$home/python/resources",
+                        "$home/python/community/resources"]
   buildWinLauncher("$home/community", "$home/community/bin/WinLauncher/WinLauncher.exe", launcher,
                    appInfoFile(), "$home/python/build/pycharm_launcher.properties", system_selector, resourcePaths)
   signExe(launcher)
@@ -267,13 +268,15 @@ private layoutFull(Map args, String target, Set usedJars) {
         fileset(dir: "$home/python/resources") {
           include(name: "**/tips/**")
         }
+        fileset(dir: "$home/python/community/resources") {
+          include(name: "**/tips/**")
+        }
         module("platform-resources-en") {
           ant.patternset {
             exclude(name: "tips/images/switcher.png")
             exclude(name: "tips/images/navigateToFilePath.gif")
           }
         }
-        zipfileset(dir: "$home/python/resources/tips", prefix: "tips")
       }
 
       jar("icons.jar") { module("icons") }
