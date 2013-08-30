@@ -1064,7 +1064,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         final PsiTypeParameterListOwner owner = ((PsiTypeParameter)resolved).getOwner();
         if (owner instanceof PsiClass) {
           final PsiClass outerClass = (PsiClass)owner;
-          if (!HighlightClassUtil.hasEnclosingInstanceInScope(outerClass, ref, true, false)) {
+          if (!InheritanceUtil.hasEnclosingInstanceInScope(outerClass, ref, true, false)) {
             myHolder.add(HighlightClassUtil.reportIllegalEnclosingUsage(ref, aClass, (PsiClass)owner, ref));
           }
         }
@@ -1190,20 +1190,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                          .descriptionAndTooltip(HighlightUtil.buildProblemWithAccessDescription(expression, resolveResult)).create());
         }
       }
+
+      if (!myHolder.hasErrorResults()) {
+        final String errorMessage = PsiMethodReferenceUtil.checkMethodReferenceContext(expression);
+        if (errorMessage != null) {
+          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create());
+        }
+      }
     }
     if (!myHolder.hasErrorResults()) {
       myHolder.add(HighlightUtil.checkUnhandledExceptions(expression, expression.getTextRange()));
-    }
-    if (!myHolder.hasErrorResults()) {
-      if (method instanceof PsiMethod && ((PsiMethod)method).hasModifierProperty(PsiModifier.ABSTRACT)) {
-        final PsiElement qualifier = expression.getQualifier();
-        if (qualifier instanceof PsiSuperExpression) {
-          myHolder.add(HighlightInfo
-                         .newHighlightInfo(HighlightInfoType.ERROR)
-                         .range(expression.getReferenceNameElement())
-                         .descriptionAndTooltip("Abstract method '" + ((PsiMethod)method).getName() + "' cannot be accessed directly").create());
-        }
-      }
     }
   }
 
