@@ -18,9 +18,7 @@ package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,17 +43,12 @@ import java.util.Set;
  *         Date: Jan 16, 2008
  */
 public class IndexTodoCacheManagerImpl implements TodoCacheManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.IndexTodoCacheManagerImpl");
   private final Project myProject;
   private final PsiManager myPsiManager;
 
   public IndexTodoCacheManagerImpl(PsiManager psiManager) {
     myPsiManager = psiManager;
     myProject = psiManager.getProject();
-  }
-
-  public static boolean shouldBeFound(GlobalSearchScope scope, VirtualFile virtualFile, FileIndexFacade index) {
-    return (scope.isSearchOutsideRootModel() || index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile)) && !virtualFile.getFileType().isBinary();
   }
 
   @Override
@@ -89,7 +82,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
   }
 
   @Override
-  public int getTodoCount(@NotNull final VirtualFile file, final IndexPatternProvider patternProvider) {
+  public int getTodoCount(@NotNull final VirtualFile file, @NotNull final IndexPatternProvider patternProvider) {
     if (myProject.isDefault()) {
       return 0;
     }
@@ -103,7 +96,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
   }
 
   @Override
-  public int getTodoCount(@NotNull final VirtualFile file, final IndexPattern pattern) {
+  public int getTodoCount(@NotNull final VirtualFile file, @NotNull final IndexPattern pattern) {
     if (myProject.isDefault()) {
       return 0;
     }
@@ -111,7 +104,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
     return fetchCount(FileBasedIndex.getInstance(), file, pattern);
   }
 
-  private int fetchCount(final FileBasedIndex fileBasedIndex, final VirtualFile file, final IndexPattern indexPattern) {
+  private int fetchCount(@NotNull FileBasedIndex fileBasedIndex, @NotNull VirtualFile file, @NotNull IndexPattern indexPattern) {
     final int[] count = {0};
     fileBasedIndex.processValues(
       TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), file,

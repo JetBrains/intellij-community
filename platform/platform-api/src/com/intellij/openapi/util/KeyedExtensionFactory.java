@@ -38,6 +38,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
     myEpName = new ExtensionPointName<KeyedFactoryEPBean>(epName);
   }
 
+  @NotNull
   public T get() {
     final KeyedFactoryEPBean[] epBeans = Extensions.getExtensions(myEpName);
     InvocationHandler handler = new InvocationHandler() {
@@ -56,7 +57,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
     return (T)Proxy.newProxyInstance(myInterfaceClass.getClassLoader(), new Class<?>[] { myInterfaceClass }, handler );
   }
 
-  public T getByKey(KeyT key) {
+  public T getByKey(@NotNull KeyT key) {
     final KeyedFactoryEPBean[] epBeans = Extensions.getExtensions(myEpName);
     for (KeyedFactoryEPBean epBean : epBeans) {
       if (Comparing.strEqual(getKey(key), epBean.key)) {
@@ -101,6 +102,6 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
     return (T)result;
   }
 
-  public abstract String getKey(KeyT key);
+  public abstract String getKey(@NotNull KeyT key);
 }
 

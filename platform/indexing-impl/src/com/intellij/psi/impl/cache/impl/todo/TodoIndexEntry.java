@@ -16,6 +16,8 @@
 
 package com.intellij.psi.impl.cache.impl.todo;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Jan 20, 2008
@@ -24,7 +26,7 @@ public class TodoIndexEntry {
   final String pattern;
   final boolean caseSensitive;
 
-  public TodoIndexEntry(final String pattern, final boolean caseSensitive) {
+  public TodoIndexEntry(@NotNull String pattern, final boolean caseSensitive) {
     this.pattern = pattern;
     this.caseSensitive = caseSensitive;
   }
@@ -35,15 +37,11 @@ public class TodoIndexEntry {
 
     final TodoIndexEntry that = (TodoIndexEntry)o;
 
-    if (caseSensitive != that.caseSensitive) return false;
-    if (!pattern.equals(that.pattern)) return false;
-
-    return true;
+    return caseSensitive == that.caseSensitive && pattern.equals(that.pattern);
   }
 
   public int hashCode() {
-    int result;
-    result = pattern.hashCode();
+    int result = pattern.hashCode();
     result = 31 * result + (caseSensitive ? 1 : 0);
     return result;
   }
