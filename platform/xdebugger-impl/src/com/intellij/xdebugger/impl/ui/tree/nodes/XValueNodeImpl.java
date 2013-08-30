@@ -57,15 +57,21 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private boolean myChanged;
   private XValuePresenter myValuePresenter;
 
-  public XValueNodeImpl(XDebuggerTree tree, final XDebuggerTreeNode parent, String name, final @NotNull XValue value) {
+  public XValueNodeImpl(XDebuggerTree tree, XDebuggerTreeNode parent, String name, @NotNull XValue value) {
     super(tree, parent, value);
+
     myName = name;
-    if (myName != null) {
-      myText.append(myName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-      myText.append(XDebuggerUIConstants.EQ_TEXT, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    }
-    myText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
+
     value.computePresentation(this, XValuePlace.TREE);
+
+    // add "Collecting" message only if computation is not yet done
+    if (!isComputed()) {
+      if (myName != null) {
+        myText.append(myName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
+        myText.append(XDebuggerUIConstants.EQ_TEXT, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+      myText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
+    }
   }
 
   @Override
@@ -171,13 +177,16 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         myText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
       }
     }
+    appendName();
+    buildText(myType, myValue, myValuePresenter, myText, myChanged);
+  }
+
+  private void appendName() {
     if (!StringUtil.isEmpty(myName)) {
       StringValuePresenter.append(myName, myText,
                                   ObjectUtils.notNull(myValuePresenter.getNameAttributes(), XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES),
                                   MAX_VALUE_LENGTH, null);
     }
-
-    buildText(myType, myValue, myValuePresenter, myText, myChanged);
   }
 
   public static void buildText(@Nullable String type,
@@ -254,7 +263,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     ApplicationManager.getApplication().assertIsDispatchThread();
     myValue = null;
     myText.clear();
-    myText.append(myName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
+    appendName();
     myValuePresenter.appendSeparator(myText);
     myText.append(XDebuggerUIConstants.MODIFYING_VALUE_MESSAGE, XDebuggerUIConstants.MODIFYING_VALUE_HIGHLIGHT_ATTRIBUTES);
     setLeaf(true);
