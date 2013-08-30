@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.frame;
 
-import com.intellij.chromeConnector.debugger.frame.XGroupingValuePresenter;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class XGroupingValue extends XValue {
