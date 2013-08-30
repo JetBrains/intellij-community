@@ -99,4 +99,10 @@ public class SimplifiableIfStatement {
     }
   }
 
+  boolean m(boolean b1, boolean b2, boolean b3, boolean b4, boolean i) {
+    if (b1 == b2 == b3 == b4) {
+      return false;
+    }
+    return i = true;
+  }
 }

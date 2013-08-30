@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Bas Leijdekkers
+ * Copyright 2006-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,16 +165,16 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
     final StringBuilder builder = new StringBuilder();
     if (ParenthesesUtils.getPrecedence(expression) > precedence) {
       builder.append('(');
-      getPresentableText(expression, builder);
+      appendPresentableText(expression, builder);
       builder.append(')');
     }
     else {
-      getPresentableText(expression, builder);
+      appendPresentableText(expression, builder);
     }
     return builder.toString();
   }
 
-  private static void getPresentableText(@Nullable PsiElement element, StringBuilder builder) {
+  private static void appendPresentableText(@Nullable PsiElement element, StringBuilder builder) {
     if (element == null) {
       return;
     }
@@ -196,7 +196,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
     }
     else {
       for (PsiElement child : children) {
-        getPresentableText(child, builder);
+        appendPresentableText(child, builder);
       }
     }
   }
@@ -220,40 +220,42 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
       }
       if (ParenthesesUtils.getPrecedence(negated) > precedence) {
         result.append('(');
-        getPresentableText(negated, result);
+        appendPresentableText(negated, result);
         result.append(')');
       }
       else {
-        getPresentableText(negated, result);
+        appendPresentableText(negated, result);
       }
     }
     else if (ComparisonUtils.isComparison(expression)) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-      final IElementType tokenType = binaryExpression.getOperationTokenType();
-      final String negatedComparison = ComparisonUtils.getNegatedComparison(tokenType);
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      if (ParenthesesUtils.getPrecedence(expression) > precedence) {
-        result.append('(');
-        getPresentableText(lhs, result);
-        result.append(negatedComparison);
-        getPresentableText(rhs, result);
-        result.append(')');
-      }
-      else {
-        getPresentableText(lhs, result);
-        result.append(negatedComparison);
-        getPresentableText(rhs, result);
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      final String negatedComparison = ComparisonUtils.getNegatedComparison(polyadicExpression.getOperationTokenType());
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      final boolean isEven = (operands.length & 1) != 1;
+      for (int i = 0, length = operands.length; i < length; i++) {
+        final PsiExpression operand = operands[i];
+        if (i > 0) {
+          if (isEven && (i & 1) != 1) {
+            final PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(operand);
+            if (token != null) {
+              result.append(token.getText());
+            }
+          }
+          else {
+            result.append(negatedComparison);
+          }
+        }
+        appendPresentableText(operand, result);
       }
     }
     else if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
       result.append("!(");
-      getPresentableText(expression, result);
+      appendPresentableText(expression, result);
       result.append(')');
     }
     else {
       result.append('!');
-      getPresentableText(expression, result);
+      appendPresentableText(expression, result);
     }
     return result.toString();
   }
