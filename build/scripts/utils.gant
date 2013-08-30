@@ -75,9 +75,7 @@ binding.setVariable("vmOptions64yjp", { String systemSelector ->
 binding.setVariable("isDefined", {String key ->
   projectBuilder.stage("isDefined - $key")
   try {
-    projectBuilder.stage("isDefined - try")
     this[key]
-    projectBuilder.stage("isDefined - try finished")
     return true
   }
   catch (MissingPropertyException ignored) {
