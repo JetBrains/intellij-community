@@ -11,5 +11,10 @@ public interface SvnClient {
   @NotNull
   SvnVcs getVcs();
 
+  @NotNull
+  ClientFactory getFactory();
+
   void setVcs(@NotNull SvnVcs vcs);
+
+  void setFactory(@NotNull ClientFactory factory);
 }

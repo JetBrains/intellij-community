@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+
 import java.io.File;
 
 /**
@@ -24,7 +26,7 @@ import java.io.File;
  * Date: 2/26/13
  * Time: 10:12 AM
  */
-public interface CommitEventHandler {
+public interface CommitEventHandler extends ISVNEventHandler {
   void commitEvent(final CommitEventType type, final File target);
   void committedRevision(final long revNum);
 }
