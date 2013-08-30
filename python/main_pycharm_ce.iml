@@ -5,7 +5,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="bootstrap" />
-    <orderEntry type="module" module-name="python-tests" />
     <orderEntry type="module" module-name="colorSchemes" />
     <orderEntry type="module" module-name="cvs-plugin" />
     <orderEntry type="module" module-name="hg4idea" />
@@ -14,11 +13,12 @@
     <orderEntry type="module" module-name="relaxng" />
     <orderEntry type="module" module-name="github" />
     <orderEntry type="module" module-name="rest" />
-    <orderEntry type="module" module-name="python-rest" />
     <orderEntry type="module" module-name="pycharm-numpy" />
     <orderEntry type="module" module-name="python-helpers" />
     <orderEntry type="module" module-name="terminal" />
     <orderEntry type="module" module-name="ini4idea" />
+    <orderEntry type="module" module-name="python-ide-community" />
+    <orderEntry type="module" module-name="platform-main" />
   </component>
 </module>
 
