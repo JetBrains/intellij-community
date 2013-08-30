@@ -3,8 +3,6 @@
 
   <xi:include href="/META-INF/python-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <resource-bundle>com.jetbrains.python.PyBundle</resource-bundle>
-
   <extensions defaultExtensionNs="com.intellij">
 
     <applicationService serviceInterface="com.jetbrains.python.duplocator.PyDuplocatorSettings"
