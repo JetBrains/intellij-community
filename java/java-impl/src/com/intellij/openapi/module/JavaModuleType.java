@@ -30,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -128,7 +129,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   public static boolean isValidJavaSdk(@NotNull Module module) {
-    if (ModuleRootManager.getInstance(module).getSourceRoots().length == 0) return true;
+    if (ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES).isEmpty()) return true;
     return JavaPsiFacade.getInstance(module.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT,
                                                                     module.getModuleWithLibrariesScope()) != null;
   }

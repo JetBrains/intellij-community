@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.awt.*;
@@ -91,7 +92,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private void doAdd() {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
     final ModuleRootModel rootModel = myContext.getRootModel();
-    descriptor.setRoots(rootModel.getSourceRoots());
+    descriptor.setRoots(rootModel.getSourceRoots(JavaModuleSourceRootTypes.SOURCES));
     final VirtualFile[] files = FileChooser.chooseFiles(descriptor, myContext.getProject(), null);
     for (VirtualFile file : files) {
       myFilesListModel.addElement(file.getPath());

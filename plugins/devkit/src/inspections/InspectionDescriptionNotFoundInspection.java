@@ -20,11 +20,9 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -107,20 +104,6 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
       }
     }
     return isLastMethodDefinitionIn(methodName, classFQN, cls.getSuperClass());
-  }
-
-  public static List<VirtualFile> getPotentialRoots(Module module) {
-    final PsiDirectory[] dirs = getInspectionDescriptionsDirs(module);
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
-    if (dirs.length != 0) {
-      for (PsiDirectory dir : dirs) {
-        final PsiDirectory parent = dir.getParentDirectory();
-        if (parent != null) result.add(parent.getVirtualFile());
-      }
-    } else {
-      ContainerUtil.addAll(result, ModuleRootManager.getInstance(module).getSourceRoots());
-    }
-    return result;
   }
 
   public static PsiDirectory[] getInspectionDescriptionsDirs(Module module) {

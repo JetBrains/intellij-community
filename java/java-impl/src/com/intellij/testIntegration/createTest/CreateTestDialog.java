@@ -58,6 +58,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
@@ -451,20 +452,20 @@ public class CreateTestDialog extends DialogWrapper {
       protected void run(Result<VirtualFile> result) throws Throwable {
         final HashSet<VirtualFile> testFolders = new HashSet<VirtualFile>();
         CreateTestAction.checkForTestRoots(myTargetModule, testFolders);
-        VirtualFile[] roots;
+        List<VirtualFile> roots;
         if (testFolders.isEmpty()) {
-          roots = ModuleRootManager.getInstance(myTargetModule).getSourceRoots();
-          if (roots.length == 0) return;
+          roots = ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+          if (roots.isEmpty()) return;
         } else {
-          roots = testFolders.toArray(new VirtualFile[testFolders.size()]); 
+          roots = new ArrayList<VirtualFile>(testFolders);
         }
 
-        if (roots.length == 1) {
-          result.setResult(roots[0]);
+        if (roots.size() == 1) {
+          result.setResult(roots.get(0));
         }
         else {
           PsiDirectory defaultDir = chooseDefaultDirectory(packageName);
-          result.setResult(MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir));
+          result.setResult(MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots.toArray(new VirtualFile[roots.size()]), defaultDir));
         }
       }
     }.execute().getResultObject();
