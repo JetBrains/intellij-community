@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,6 +263,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
       }
     }
 
+    saveOpenInEditorState(myOpenFilesInEditor.isSelected());
     if (myShowDirectoryField) {
       final String targetDirectoryName = myTargetDirectoryField.getChildComponent().getText();
 
@@ -273,7 +274,6 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
       }
 
       RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_KEYS, targetDirectoryName);
-      saveOpenInEditorState(myOpenFilesInEditor.isSelected());
 
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         @Override
