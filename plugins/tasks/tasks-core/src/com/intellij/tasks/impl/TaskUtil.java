@@ -16,6 +16,7 @@
 
 package com.intellij.tasks.impl;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
@@ -24,7 +25,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -91,5 +94,40 @@ public class TaskUtil {
     catch (ParseException e) {
       return null;
     }
+  }
+
+  /**
+   * {@link Task#equals(Object)} implementation compares tasks by they unique IDs only.
+   * This method should be used then full comparison is necessary.
+   */
+  public static boolean tasksEqual(@NotNull Task t1, @NotNull Task t2) {
+    if (!t1.getId().equals(t2.getId())) return false;
+    if (!t1.getSummary().equals(t2.getSummary())) return false;
+    if (t1.isClosed() != t2.isClosed()) return false;
+    if (t1.isIssue() != t2.isIssue()) return false;
+    if (!Comparing.equal(t1.getState(), t2.getState())) return false;
+    if (!Comparing.equal(t1.getType(), t2.getType())) return false;
+    if (!Comparing.equal(t1.getDescription(), t2.getDescription())) return false;
+    if (!Comparing.equal(t1.getCreated(), t2.getCreated())) return false;
+    if (!Comparing.equal(t1.getUpdated(), t2.getUpdated())) return false;
+    if (!Comparing.equal(t1.getIssueUrl(), t2.getIssueUrl())) return false;
+    if (!Comparing.equal(t1.getComments(), t2.getComments())) return false;
+    if (!Comparing.equal(t1.getIcon(), t2.getIcon())) return false;
+    if (!Comparing.equal(t1.getCustomIcon(), t2.getCustomIcon())) return false;
+    return Comparing.equal(t1.getRepository(), t2.getRepository());
+  }
+
+  public static boolean tasksEqual(@NotNull List<? extends Task> tasks1, @NotNull List<? extends Task> tasks2) {
+    if (tasks1.size() != tasks2.size()) return false;
+    for (int i = 0; i < tasks1.size(); i++) {
+      if (!tasksEqual(tasks1.get(i), tasks2.get(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean tasksEqual(@NotNull Task[] task1, @NotNull Task[] task2) {
+    return tasksEqual(Arrays.asList(task1), Arrays.asList(task2));
   }
 }
