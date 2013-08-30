@@ -96,7 +96,7 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
         document = JDOMUtil.loadResourceDocument(resourceUrl);
       }
       catch (Exception e) {
-        throw new RuntimeException(e);
+        throw new AssertionError(e);
       }
       GenericRepository repository = XmlSerializer.deserialize(document.getRootElement(), GenericRepository.class);
       if (repository != null) {
@@ -107,13 +107,14 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
     }
   }
 
-  public class AsanaRepository extends GenericSubtype {
+  // Subtypes:
+  public final class AsanaRepository extends GenericSubtype {
     public AsanaRepository() {
       super("Asana", TasksIcons.Asana);
     }
   }
 
-  public class AssemblaRepository extends GenericSubtype {
+  public final class AssemblaRepository extends GenericSubtype {
     public AssemblaRepository() {
       super("Assembla", TasksIcons.Assembla);
     }
