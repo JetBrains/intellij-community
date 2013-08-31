@@ -398,11 +398,14 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE})
-@interface TClassAnno {}
+@interface TxClassAnno {}
+
+interface TxANotAnno {}
 
 @Target({ElementType.METHOD})
-@interface TMethodAnno {}'''
-    checkPreferredItems 0, 'TMethodAnno', 'TClassAnno'
+@interface TxMethodAnno {}'''
+    checkPreferredItems 0, 'TxMethodAnno', 'TxClassAnno'
+    assert !('TxANotAnno' in myFixture.lookupElementStrings)
   }
 
   public void testJComponentAddNewWithStats() throws Throwable {
