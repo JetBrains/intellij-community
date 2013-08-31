@@ -261,7 +261,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferInterfacesInImplements() {
-    checkPreferredItems(0, "FooIntf", "Foo", "FooClass");
+    checkPreferredItems(0, "XFooIntf", "XFoo", "XFooClass");
   }
 
   public void testPreferClassesInExtends() {
@@ -445,14 +445,11 @@ import java.lang.annotation.Target;
   }
 
   public void testChangePreselectionOnSecondInvocation() {
-    myFixture.addClass('package foo; public class FooZoo { }')
-    myFixture.addClass('public class FooZooImpl { }')
-    myFixture.addClass('public class FooZooGoo {}')
     configureNoCompletion(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC);
-    assertPreferredItems(0, 'FooZooGoo', 'FooZooImpl');
+    assertPreferredItems(0, 'fooZooGoo', 'fooZooImpl');
     myFixture.complete(CompletionType.BASIC);
-    assertPreferredItems(0, 'FooZoo', 'FooZooGoo', 'FooZooImpl');
+    assertPreferredItems(0, 'fooZoo', 'fooZooGoo', 'fooZooImpl');
   }
 
   public void testUnderscoresDontMakeMatchMiddle() {

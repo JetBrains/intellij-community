@@ -192,7 +192,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testReferenceParameters() throws Exception {
     configureByFile("ReferenceParameters.java");
     assertNotNull(myItems);
-    assert myFixture.lookupElementStrings == ['AAAA', 'AAAB']
+    myFixture.assertPreferredCompletionItems 0, 'AAAA', 'AAAB'
   }
 
   @Override
