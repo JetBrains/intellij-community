@@ -6223,11 +6223,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   class EditorDocumentBulkUpdateAdapter implements DocumentBulkUpdateListener {
     @Override
     public void updateStarted(@NotNull Document doc) {
+      if (doc != getDocument()) return;
+      
       bulkUpdateStarted();
     }
 
     @Override
     public void updateFinished(@NotNull Document doc) {
+      if (doc != getDocument()) return;
+      
       bulkUpdateFinished();
     }
   }
