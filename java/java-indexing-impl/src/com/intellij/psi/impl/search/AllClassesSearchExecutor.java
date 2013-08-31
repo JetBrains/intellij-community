@@ -24,8 +24,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -34,17 +32,13 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.intellij.util.TimedReference;
+import com.intellij.util.indexing.IdFilter;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.ref.SoftReference;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClassesSearch.SearchParameters> {
-  private static final Key<TimedReference<SoftReference<Pair<String[], Long>>>> ALL_CLASS_NAMES_CACHE = Key.create("ALL_CLASS_NAMES_CACHE");
   @Override
   public boolean execute(@NotNull final AllClassesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiClass> consumer) {
     SearchScope scope = queryParameters.getScope();
@@ -60,52 +54,34 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     return true;
   }
 
-  @NotNull
-  private static String[] getAllClassNames(@NotNull final Project project) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
-      @Override
-      public String[] compute() {
-        final long modCount = PsiManager.getInstance(project).getModificationTracker().getJavaStructureModificationCount();
-        TimedReference<SoftReference<Pair<String[], Long>>> ref1 = project.getUserData(ALL_CLASS_NAMES_CACHE);
-        SoftReference<Pair<String[], Long>> ref2 = ref1 == null ? null : ref1.get();
-        Pair<String[], Long> pair = ref2 == null ? null : ref2.get();
-        if (pair != null && pair.second.equals(modCount)) {
-          return pair.first;
-        }
-
-        String[] names = PsiShortNamesCache.getInstance(project).getAllClassNames();
-        ref1 = new TimedReference<SoftReference<Pair<String[], Long>>>(null);
-        ref1.set(new SoftReference<Pair<String[], Long>>(Pair.create(names, modCount)));
-        project.putUserData(ALL_CLASS_NAMES_CACHE, ref1);
-        return names;
-      }
-    });
-  }
-
   private static boolean processAllClassesInGlobalScope(@NotNull final GlobalSearchScope scope,
-                                                        @NotNull AllClassesSearch.SearchParameters parameters,
+                                                        @NotNull final AllClassesSearch.SearchParameters parameters,
                                                         @NotNull Processor<PsiClass> processor) {
-    String[] names = getAllClassNames(parameters.getProject());
+    Project project = parameters.getProject();
+    final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    
+    final Set<String> names = new THashSet<String>(10000);
+    cache.processAllClassNames(new Processor<String>() {
+      int i = 0;
+
+      @Override
+      public boolean process(String s) {
+        if (indicator != null && i++ % 512 == 0) {
+          indicator.checkCanceled();
+        }
+        if (parameters.nameMatches(s)) {
+          names.add(s);
+        }
+        return true;
+      }
+    }, scope, IdFilter.getProjectIdFilter(project, true));
+
     if (indicator != null) {
       indicator.checkCanceled();
     }
 
-    List<String> sorted = new ArrayList<String>(names.length);
-    for (int i = 0; i < names.length; i++) {
-      String name = names[i];
-      if (parameters.nameMatches(name)) {
-        sorted.add(name);
-      }
-      if (indicator != null && i % 512 == 0) {
-        indicator.checkCanceled();
-      }
-    }
-
-    if (indicator != null) {
-      indicator.checkCanceled();
-    }
-
+    List<String> sorted = new ArrayList<String>(names);
     Collections.sort(sorted, new Comparator<String>() {
       @Override
       public int compare(final String o1, final String o2) {
@@ -113,7 +89,6 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       }
     });
 
-    final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(parameters.getProject());
     for (final String name : sorted) {
       ProgressIndicatorProvider.checkCanceled();
       final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
