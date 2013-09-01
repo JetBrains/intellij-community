@@ -127,10 +127,9 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public String consoleExec(String threadId, String frameId, String expression) throws PyDebuggerException {
+  public void consoleExec(String threadId, String frameId, String expression, DebugCallback<String> callback) {
     final ConsoleExecCommand command = new ConsoleExecCommand(this, threadId, frameId, expression);
-    command.execute();
-    return command.getValue();
+    command.execute(callback);
   }
 
   @Override

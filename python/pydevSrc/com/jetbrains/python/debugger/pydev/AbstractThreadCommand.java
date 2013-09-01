@@ -1,7 +1,7 @@
 package com.jetbrains.python.debugger.pydev;
 
 
-public abstract class AbstractThreadCommand extends AbstractCommand {
+public abstract class AbstractThreadCommand<T> extends AbstractCommand<T> {
   private final String myThreadId;
 
   protected AbstractThreadCommand(final RemoteDebugger debugger, final int commandCode, final String threadId) {
