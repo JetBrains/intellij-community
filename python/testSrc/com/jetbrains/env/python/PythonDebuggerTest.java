@@ -9,8 +9,10 @@ import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.ut.PyUnitTestTask;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
+import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.PyExceptionBreakpointType;
+import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
 import java.util.List;
@@ -109,22 +111,39 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
         waitForPause();
 
-        myDebugProcess.consoleExec("'i=%d'%i");
+        consoleExec("'i=%d'%i");
 
         waitForOutput("'i=1'");
 
-        myDebugProcess.consoleExec("x");
+        consoleExec("x");
 
         waitForOutput("name 'x' is not defined");
 
-        myDebugProcess.consoleExec("1-;");
+        consoleExec("1-;");
 
         waitForOutput("SyntaxError");
 
         resume();
       }
+
+      private void consoleExec(String command) {
+        myDebugProcess.consoleExec(command, new ProcessDebugger.DebugCallback<String>() {
+          @Override
+          public void ok(String value) {
+
+          }
+
+          @Override
+          public void error(PyDebuggerException exception) {
+          }
+        });
+      }
     });
+    
+    
   }
+
+  
 
   public void testDebugCompletion() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test4.py") {
