@@ -8,6 +8,7 @@ import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -47,29 +48,39 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
     return false;
   }
 
-  protected Pair<String, Boolean> exec(final String command) throws PyDebuggerException {
-    String value = myDebugProcess.consoleExec(command);
-    return parseExecResponseString(value);
+  protected void exec(final String command, final ProcessDebugger.DebugCallback<Pair<String, Boolean>> callback) {
+    myDebugProcess.consoleExec(command, new ProcessDebugger.DebugCallback<String>() {
+      @Override
+      public void ok(String value) {
+        callback.ok(parseExecResponseString(value));
+      }
+
+      @Override
+      public void error(PyDebuggerException exception) {
+        callback.error(exception);
+      }
+    });
   }
 
-  public void execInterpreter(
-    String s,
-    ICallback<Object, InterpreterResponse> callback) {
-    try {
-      myExpression.append(s);
-      Pair<String, Boolean> executed = exec(myExpression.toString());
+  public void execInterpreter(String s, final ICallback<Object, InterpreterResponse> callback) {
+    myExpression.append(s);
+    exec(myExpression.toString(), new ProcessDebugger.DebugCallback<Pair<String, Boolean>>() {
+      @Override
+      public void ok(Pair<String, Boolean> executed) {
+        boolean more = executed.second;
 
-      boolean more = executed.second;
-
-      if (!more) {
-        myExpression.setLength(0);
+        if (!more) {
+          myExpression.setLength(0);
+        }
+        callback.call(new InterpreterResponse(more, isWaitingForInput()));
       }
-      callback.call(new InterpreterResponse(more, isWaitingForInput()));
-    }
-    catch (PyDebuggerException e) {
-      myExpression.setLength(0);
-      callback.call(new InterpreterResponse(false, isWaitingForInput()));
-    }
+
+      @Override
+      public void error(PyDebuggerException exception) {
+        myExpression.setLength(0);
+        callback.call(new InterpreterResponse(false, isWaitingForInput()));
+      }
+    });
   }
 
   @Override

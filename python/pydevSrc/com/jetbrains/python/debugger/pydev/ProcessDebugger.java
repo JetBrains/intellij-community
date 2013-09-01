@@ -28,7 +28,7 @@ public interface ProcessDebugger {
                         boolean trimResult)
                                  throws PyDebuggerException;
 
-  String consoleExec(String threadId, String frameId, String expression) throws PyDebuggerException;
+  void consoleExec(String threadId, String frameId, String expression, DebugCallback<String> callback);
 
   XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException;
 
@@ -84,4 +84,12 @@ public interface ProcessDebugger {
   void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);
 
   void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);
+
+  /**
+  * @author traff
+  */
+  interface DebugCallback<T> {
+    void ok(T value);
+    void error(PyDebuggerException exception);
+  }
 }
