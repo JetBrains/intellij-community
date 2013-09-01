@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
@@ -24,24 +23,18 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.TabbedPaneImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.UIUtil;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
@@ -52,8 +45,8 @@ import git4idea.commands.GitCommandResult;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
-import git4idea.ui.GitCommitListPanel;
-import icons.Git4ideaIcons;
+import git4idea.ui.branch.GitCompareBranchesDialog;
+import git4idea.util.GitCommitCompareInfo;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,11 +58,11 @@ import org.jetbrains.plugins.github.util.GithubNotifications;
 import org.jetbrains.plugins.github.util.GithubUrlUtil;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
@@ -410,7 +403,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       return;
     }
 
-    GithubCreatePullRequestDiffDialog dialog = new GithubCreatePullRequestDiffDialog(project, info);
+    GitCompareBranchesDialog dialog = new GitCompareBranchesDialog(project, info.getTo(), info.getFrom(), info.getInfo(), gitRepository);
     dialog.show();
   }
 
@@ -444,7 +437,10 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
           List<GitCommit> commits = GitHistoryUtils.history(project, repository.getRoot(), targetBranch + "..");
           Collection<Change> diff =
             GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), targetBranch, currentBranch, null);
-          return new DiffInfo(targetBranch, currentBranch, commits, diff);
+          GitCommitCompareInfo info = new GitCommitCompareInfo(GitCommitCompareInfo.InfoType.BRANCH_TO_HEAD);
+          info.put(repository, diff);
+          info.put(repository, Pair.<List<GitCommit>, List<GitCommit>>create(new ArrayList<GitCommit>(), commits));
+          return new DiffInfo(info, currentBranch, targetBranch);
         }
       });
     }
@@ -452,108 +448,6 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       LOG.info(e);
       return null;
     }
-  }
-
-  private static class GithubCreatePullRequestDiffDialog extends DialogWrapper {
-    @NotNull private final Project myProject;
-    @NotNull private final DiffInfo myInfo;
-    private JPanel myLogPanel;
-
-    public GithubCreatePullRequestDiffDialog(@NotNull Project project, @NotNull DiffInfo info) {
-      super(project, false);
-      myProject = project;
-      myInfo = info;
-      setTitle(String.format("Comparing %s with %s", info.getFrom(), info.getTo()));
-      setModal(false);
-      init();
-    }
-
-    @Override
-    protected JComponent createCenterPanel() {
-      myLogPanel = new GithubCreatePullRequestLogPanel(myProject, myInfo);
-      JPanel diffPanel = new GithubCreatePullRequestDiffPanel(myProject, myInfo);
-
-      TabbedPaneImpl tabbedPane = new TabbedPaneImpl(SwingConstants.TOP);
-      tabbedPane.addTab("Log", Git4ideaIcons.Branch, myLogPanel);
-      tabbedPane.addTab("Diff", AllIcons.Actions.Diff, diffPanel);
-      tabbedPane.setKeyboardNavigation(TabbedPaneImpl.DEFAULT_PREV_NEXT_SHORTCUTS);
-      return tabbedPane;
-    }
-
-    @NotNull
-    @Override
-    protected Action[] createActions() {
-      return new Action[0];
-    }
-
-    @Override
-    protected String getDimensionServiceKey() {
-      return "Github.CreatePullRequestDiffDialog";
-    }
-  }
-
-  private static class GithubCreatePullRequestDiffPanel extends JPanel {
-
-    private final Project myProject;
-    private final DiffInfo myInfo;
-
-    public GithubCreatePullRequestDiffPanel(@NotNull Project project, @NotNull DiffInfo info) {
-      super(new BorderLayout(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP));
-      myProject = project;
-      myInfo = info;
-
-      add(createCenterPanel());
-    }
-
-    private JComponent createCenterPanel() {
-      List<Change> diff = new ArrayList<Change>(myInfo.getDiff());
-      final ChangesBrowser changesBrowser =
-        new ChangesBrowser(myProject, null, diff, null, false, true, null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
-      changesBrowser.setChangesToDisplay(diff);
-      return changesBrowser;
-    }
-  }
-
-  private static class GithubCreatePullRequestLogPanel extends JPanel {
-    private final Project myProject;
-    private final DiffInfo myInfo;
-
-    private GitCommitListPanel myCommitPanel;
-
-    GithubCreatePullRequestLogPanel(@NotNull Project project, @NotNull DiffInfo info) {
-      super(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
-      myProject = project;
-      myInfo = info;
-
-      add(createCenterPanel());
-    }
-
-    private JComponent createCenterPanel() {
-      final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, null, Collections.<Change>emptyList(), null, false, true, null,
-                                                               ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
-
-      myCommitPanel =
-        new GitCommitListPanel(myInfo.getCommits(), String.format("Branch %s is fully merged to %s", myInfo.getFrom(), myInfo.getTo()));
-      addSelectionListener(myCommitPanel, changesBrowser);
-
-      myCommitPanel.registerDiffAction(changesBrowser.getDiffAction());
-
-      Splitter rootPanel = new Splitter(false, 0.7f);
-      rootPanel.setSecondComponent(changesBrowser);
-      rootPanel.setFirstComponent(myCommitPanel);
-
-      return rootPanel;
-    }
-
-    private static void addSelectionListener(@NotNull GitCommitListPanel sourcePanel, @NotNull final ChangesBrowser changesBrowser) {
-      sourcePanel.addListSelectionListener(new Consumer<GitCommit>() {
-        @Override
-        public void consume(GitCommit commit) {
-          changesBrowser.setChangesToDisplay(commit.getChanges());
-        }
-      });
-    }
-
   }
 
   private static class RemoteBranch {
@@ -652,26 +546,19 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
   }
 
   private static class DiffInfo {
-    @NotNull private final List<GitCommit> commits;
-    @NotNull private final Collection<Change> diff;
+    @NotNull private final GitCommitCompareInfo info;
     @NotNull private final String from;
     @NotNull private final String to;
 
-    private DiffInfo(@NotNull String from, @NotNull String to, @NotNull List<GitCommit> commits, @NotNull Collection<Change> diff) {
-      this.commits = commits;
-      this.diff = diff;
+    private DiffInfo(@NotNull GitCommitCompareInfo info, @NotNull String from, @NotNull String to) {
+      this.info = info;
       this.from = from;
       this.to = to;
     }
 
     @NotNull
-    public List<GitCommit> getCommits() {
-      return commits;
-    }
-
-    @NotNull
-    public Collection<Change> getDiff() {
-      return diff;
+    public GitCommitCompareInfo getInfo() {
+      return info;
     }
 
     @NotNull
