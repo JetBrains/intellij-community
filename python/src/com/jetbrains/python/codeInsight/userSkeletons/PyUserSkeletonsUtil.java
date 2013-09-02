@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,21 +35,28 @@ import java.util.List;
  * @author vlan
  */
 public class PyUserSkeletonsUtil {
+  public static final String USER_SKELETONS_DIR = "user-skeletons";
   @Nullable private static VirtualFile ourUserSkeletonsDirectory;
 
   @NotNull
-  public static String getUserSkeletonsPath() {
-    if (ApplicationManager.getApplication().isInternal()) {
-      return StringUtil.join(new String[] {PathManager.getHomePath(), "python", "helpers", "user-skeletons"}, File.separator);
-    }
-    // TODO: Add the possibility to put skeletons into PathManager.getSystemPath() + "/user-skeletons"
-    return PythonHelpersLocator.getHelperPath("user-skeletons");
+  private static List<String> getPossibleUserSkeletonsPaths() {
+    final List<String> result = new ArrayList<String>();
+    result.add(PathManager.getConfigPath() + File.separator + USER_SKELETONS_DIR);
+    result.add(ApplicationManager.getApplication().isInternal()
+               ? StringUtil.join(new String[]{PathManager.getHomePath(), "python", "helpers", USER_SKELETONS_DIR}, File.separator)
+               : PythonHelpersLocator.getHelperPath(USER_SKELETONS_DIR));
+    return result;
   }
 
   @Nullable
   public static VirtualFile getUserSkeletonsDirectory() {
     if (ourUserSkeletonsDirectory == null) {
-      ourUserSkeletonsDirectory = LocalFileSystem.getInstance().findFileByPath(getUserSkeletonsPath());
+      for (String path : getPossibleUserSkeletonsPaths()) {
+        ourUserSkeletonsDirectory = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+        if (ourUserSkeletonsDirectory != null) {
+          break;
+        }
+      }
     }
     return ourUserSkeletonsDirectory;
   }
@@ -75,7 +83,7 @@ public class PyUserSkeletonsUtil {
     if (sdk != null) {
       final Project project = foothold.getProject();
       final PythonSdkPathCache cache = PythonSdkPathCache.getInstance(project, sdk);
-      final PyQualifiedName cacheQName = PyQualifiedName.fromDottedString("user-skeletons." + qName);
+      final PyQualifiedName cacheQName = PyQualifiedName.fromDottedString(USER_SKELETONS_DIR + "." + qName);
       final List<PsiElement> results = cache.get(cacheQName);
       if (results != null) {
         final PsiElement element = results.isEmpty() ? null : results.get(0);
@@ -101,7 +109,7 @@ public class PyUserSkeletonsUtil {
   }
 
   public static void addUserSkeletonsRoot(@NotNull SdkModificator sdkModificator) {
-    final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByPath(getUserSkeletonsPath());
+    final VirtualFile root = getUserSkeletonsDirectory();
     if (root != null) {
       sdkModificator.addRoot(root, OrderRootType.CLASSES);
     }
