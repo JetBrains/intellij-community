@@ -35,7 +35,7 @@ import java.util.List;
  * @author vlan
  */
 public class PyUserSkeletonsUtil {
-  public static final String USER_SKELETONS_DIR = "user-skeletons";
+  public static final String USER_SKELETONS_DIR = "python-skeletons";
   @Nullable private static VirtualFile ourUserSkeletonsDirectory;
 
   @NotNull
