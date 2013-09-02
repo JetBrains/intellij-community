@@ -2,8 +2,8 @@ package org.hanuna.gitalk.ui.tables;
 
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsCommitMiniDetails;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsCommit;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.data.rebase.FakeCommitParents;
@@ -48,7 +48,7 @@ public class GraphTableModel extends AbstractTableModel {
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
     Node commitNode = dataPack.getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
-    VcsCommit data;
+    VcsCommitMiniDetails data;
     if (commitNode == null) {
       data = null;
     }

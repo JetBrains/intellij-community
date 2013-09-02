@@ -114,7 +114,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
           Object nodeInfo = node.getUserObject();
           if (nodeInfo instanceof GitCommit) {
             myChangesBrowser.getViewer().setEmptyText("No differences");
-            myChangesBrowser.setChangesToDisplay(((GitCommit)nodeInfo).getChanges());
+            myChangesBrowser.setChangesToDisplay(new ArrayList<Change>(((GitCommit)nodeInfo).getChanges()));
             return;
           }
         }

@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.log.parser;
 
-import com.intellij.vcs.log.VcsCommit;
+import com.intellij.vcs.log.VcsCommitMiniDetails;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -12,7 +12,7 @@ import static junit.framework.Assert.assertEquals;
  */
 public class CommitDataParserTest {
 
-  private static String toStr(@NotNull VcsCommit commitData) {
+  private static String toStr(@NotNull VcsCommitMiniDetails commitData) {
     StringBuilder s = new StringBuilder();
     s.append(commitData.getHash()).append("|-");
     s.append(commitData.getAuthorName()).append("|-");
@@ -22,7 +22,7 @@ public class CommitDataParserTest {
   }
 
   private void runTest(@NotNull String inputStr) {
-    VcsCommit commitData = CommitParser.parseCommitData(inputStr);
+    VcsCommitMiniDetails commitData = CommitParser.parseCommitData(inputStr);
     assertEquals(inputStr, toStr(commitData));
   }
 
@@ -58,7 +58,7 @@ public class CommitDataParserTest {
 
   @Test
   public void emptyTimestamp() {
-    VcsCommit commitData = CommitParser.parseCommitData("af56|-author |-|-message");
+    VcsCommitMiniDetails commitData = CommitParser.parseCommitData("af56|-author |-|-message");
     Assert.assertEquals("author ", commitData.getAuthorName());
     Assert.assertEquals(0, commitData.getAuthorTime());
     Assert.assertEquals("message", commitData.getSubject());

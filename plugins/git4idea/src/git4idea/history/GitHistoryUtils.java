@@ -482,7 +482,7 @@ public class GitHistoryUtils {
     return null;
   }
 
-  public static List<? extends VcsCommit> readAllMiniDetails(Project project, VirtualFile root) throws VcsException {
+  public static List<? extends VcsCommitMiniDetails> readAllMiniDetails(Project project, VirtualFile root) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME, AUTHOR_TIME, SUBJECT);
     h.setStdoutSuppressed(true);
@@ -495,20 +495,20 @@ public class GitHistoryUtils {
 
     List<GitLogRecord> records = parser.parse(output);
 
-    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, VcsCommitImpl>() {
+    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, VcsCommitMiniDetails>() {
       @Override
-      public VcsCommitImpl fun(GitLogRecord record) {
+      public VcsCommitMiniDetails fun(GitLogRecord record) {
         List<Hash> parents = new SmartList<Hash>();
         for (String parent : record.getParentsHashes()) {
           parents.add(Hash.build(parent));
         }
-        return new VcsCommitImpl(Hash.build(record.getHash()), parents,
-                                 record.getSubject(), record.getAuthorName(), record.getAuthorTimeStamp());
+        return new VcsCommitMiniDetails(Hash.build(record.getHash()), parents, record.getAuthorTimeStamp(),
+                                        record.getSubject(), record.getAuthorName());
       }
     });
   }
 
-  public static List<? extends VcsCommit> readMiniDetails(Project project, VirtualFile root, List<String> hashes) throws VcsException {
+  public static List<? extends VcsCommitMiniDetails> readMiniDetails(Project project, VirtualFile root, List<String> hashes) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME, AUTHOR_TIME, SUBJECT);
     h.setStdoutSuppressed(true);
@@ -520,15 +520,15 @@ public class GitHistoryUtils {
     String output = h.run();
     List<GitLogRecord> records = parser.parse(output);
 
-    return ContainerUtil.map(records, new Function<GitLogRecord, VcsCommitImpl>() {
+    return ContainerUtil.map(records, new Function<GitLogRecord, VcsCommitMiniDetails>() {
       @Override
-      public VcsCommitImpl fun(GitLogRecord record) {
+      public VcsCommitMiniDetails fun(GitLogRecord record) {
         List<Hash> parents = new SmartList<Hash>();
         for (String parent : record.getParentsHashes()) {
           parents.add(Hash.build(parent));
         }
-        return new VcsCommitImpl(Hash.build(record.getHash()), parents,
-                                 record.getSubject(), record.getAuthorName(), record.getAuthorTimeStamp());
+        return new VcsCommitMiniDetails(Hash.build(record.getHash()), parents, record.getAuthorTimeStamp(),
+                                        record.getSubject(), record.getAuthorName());
       }
     });
   }
@@ -555,7 +555,7 @@ public class GitHistoryUtils {
         for (String parent : record.getParentsHashes()) {
           parents.add(Hash.build(parent));
         }
-        return new TimeCommitParentsImpl(Hash.build(record.getHash()), parents, record.getAuthorTimeStamp());
+        return new TimeCommitParents(Hash.build(record.getHash()), parents, record.getAuthorTimeStamp());
       }
     });
   }
@@ -710,9 +710,10 @@ public class GitHistoryUtils {
         return Hash.build(hash);
       }
     });
-    return new GitCommit(Hash.build(record.getHash()), record.getAuthorName(), record.getAuthorEmail(), record.getAuthorTimeStamp(),
+    return new GitCommit(Hash.build(record.getHash()), parents, record.getAuthorTimeStamp(), record.getSubject(), record.getAuthorName(),
+                         record.getAuthorEmail(), record.getFullMessage(),
                          record.getCommitterName(), record.getCommitterEmail(), record.getLongTimeStamp(),
-                         record.getSubject(), record.getFullMessage(), parents, record.parseChanges(project, root));
+                         record.parseChanges(project, root));
   }
 
   /**

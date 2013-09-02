@@ -2,7 +2,7 @@ package org.hanuna.gitalk.data;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.VcsCommit;
+import com.intellij.vcs.log.VcsCommitMiniDetails;
 import com.intellij.vcs.log.VcsLogProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,15 +12,15 @@ import java.util.Map;
 /**
  * @author Kirill Likhodedov
  */
-public class MiniDetailsGetter extends DataGetter<VcsCommit> {
+public class MiniDetailsGetter extends DataGetter<VcsCommitMiniDetails> {
 
   MiniDetailsGetter(@NotNull VcsLogDataHolder dataHolder, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
-    super(dataHolder, logProviders, new VcsCommitCache<VcsCommit>());
+    super(dataHolder, logProviders, new VcsCommitCache<VcsCommitMiniDetails>());
   }
 
   @NotNull
   @Override
-  protected List<? extends VcsCommit> readDetails(@NotNull VcsLogProvider logProvider, @NotNull VirtualFile root,
+  protected List<? extends VcsCommitMiniDetails> readDetails(@NotNull VcsLogProvider logProvider, @NotNull VirtualFile root,
                                                   @NotNull List<String> hashes) throws VcsException {
     return logProvider.readMiniDetails(root, hashes);
   }

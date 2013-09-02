@@ -3,7 +3,6 @@ package org.hanuna.gitalk.log.parser;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.TimeCommitParentsImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,7 +51,7 @@ public class CommitParser {
    *             timestamp|-hash commit|-parent hashes
    */
   @NotNull
-  public static TimeCommitParentsImpl parseTimestampParentHashes(@NotNull String line) {
+  public static TimeCommitParents parseTimestampParentHashes(@NotNull String line) {
     int firstSeparatorIndex = nextSeparatorIndex(line, 0);
     String timestampStr = line.substring(0, firstSeparatorIndex);
     long timestamp;
@@ -69,7 +68,7 @@ public class CommitParser {
     }
     CommitParents commitParents = parseCommitParents(line.substring(firstSeparatorIndex + 2));
 
-    return new TimeCommitParentsImpl(commitParents.getHash(), commitParents.getParents(), timestamp);
+    return new TimeCommitParents(commitParents.getHash(), commitParents.getParents(), timestamp);
   }
 
   /**
@@ -77,7 +76,7 @@ public class CommitParser {
    *             hash|-author name|-123124|-commit message
    */
   @NotNull
-  public static VcsCommit parseCommitData(@NotNull String line) {
+  public static VcsCommitMiniDetails parseCommitData(@NotNull String line) {
     int prevIndex = 0;
     int nextIndex = nextSeparatorIndex(line, 0);
     final String hashStr = line.substring(0, nextIndex);
@@ -105,7 +104,7 @@ public class CommitParser {
 
     final String commitMessage = line.substring(nextIndex + 2);
 
-    return new VcsCommitImpl(Hash.build(hashStr), Collections.<Hash>emptyList(), commitMessage, authorName ,timestamp);
+    return new VcsCommitMiniDetails(Hash.build(hashStr), Collections.<Hash>emptyList(), timestamp, commitMessage, authorName);
   }
 
 

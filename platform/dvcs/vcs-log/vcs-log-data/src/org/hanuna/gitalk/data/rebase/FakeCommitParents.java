@@ -1,14 +1,13 @@
 package org.hanuna.gitalk.data.rebase;
 
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.RebaseCommand;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.List;
 
-public class FakeCommitParents implements CommitParents {
+public class FakeCommitParents extends CommitParents {
 
   private static final String FAKE_HASH_PREFIX = "aaaaaaaaaaaaa00000000";
 
@@ -38,24 +37,10 @@ public class FakeCommitParents implements CommitParents {
   private final RebaseCommand command;
   private final Hash fakeHash;
 
-  private final Hash parent;
-
   public FakeCommitParents(@NotNull Hash parent, @NotNull RebaseCommand command) {
-    this.parent = parent;
+    super(fakeHash(command.getCommit()), Collections.singletonList(parent));
     this.command = command;
     this.fakeHash = fakeHash(command.getCommit());
-  }
-
-  @NotNull
-  @Override
-  public Hash getHash() {
-    return fakeHash;
-  }
-
-  @NotNull
-  @Override
-  public List<Hash> getParents() {
-    return Collections.singletonList(parent);
   }
 
   @NotNull

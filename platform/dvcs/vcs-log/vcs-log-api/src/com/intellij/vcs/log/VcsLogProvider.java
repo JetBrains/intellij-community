@@ -33,7 +33,7 @@ public interface VcsLogProvider {
    * Reads those details of the given commits, which are necessary to be shown in the log table.
    */
   @NotNull
-  List<? extends VcsCommit> readMiniDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
+  List<? extends VcsCommitMiniDetails> readMiniDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
 
   /**
    * Read full details of the given commits from the VCS.
@@ -44,6 +44,7 @@ public interface VcsLogProvider {
   /**
    * Read all references (branches, tags, etc.) for the given roots.
    */
+  @NotNull
   Collection<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException;
 
   /**

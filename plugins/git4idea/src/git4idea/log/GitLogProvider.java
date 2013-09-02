@@ -69,7 +69,7 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsCommit> readMiniDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
+  public List<? extends VcsCommitMiniDetails> readMiniDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
     return GitHistoryUtils.readMiniDetails(myProject, root, hashes);
   }
 
@@ -79,6 +79,7 @@ public class GitLogProvider implements VcsLogProvider {
     return GitHistoryUtils.commitsDetails(myProject, root, hashes);
   }
 
+  @NotNull
   @Override
   public Collection<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException {
     myRepositoryManager.waitUntilInitialized();
