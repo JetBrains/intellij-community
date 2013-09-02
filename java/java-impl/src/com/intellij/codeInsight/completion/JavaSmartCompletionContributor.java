@@ -19,10 +19,7 @@ import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Key;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.ElementPatternCondition;
-import com.intellij.patterns.PsiElementPattern;
-import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
@@ -94,21 +91,12 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       psiElement().withText(")").withParent(PsiTypeCastExpression.class)));
   static final PsiElementPattern.Capture<PsiElement> IN_TYPE_ARGS =
     psiElement().inside(psiElement(PsiReferenceParameterList.class));
-  static final PsiElementPattern.Capture<PsiElement> LAMBDA = psiElement().and(new FilterPattern(new ElementFilter() {
+  static final PsiElementPattern.Capture<PsiElement> LAMBDA = psiElement().with(new PatternCondition<PsiElement>("LAMBDA_CONTEXT") {
     @Override
-    public boolean isAcceptable(Object element, @Nullable PsiElement context) {
-      if (context == null) return false;
-      final PsiElement originalElement = context.getOriginalElement();
-      if (originalElement == null) return false;
-      final PsiElement rulezzRef = originalElement.getParent();
-      return LambdaUtil.isValidLambdaContext(rulezzRef.getParent());
-    }
-
-    @Override
-    public boolean isClassAcceptable(Class hintClass) {
-      return true;
-    }
-  }));
+    public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
+      final PsiElement rulezzRef = element.getParent();
+      return rulezzRef != null && LambdaUtil.isValidLambdaContext(rulezzRef.getParent());
+    }});
 
   @Nullable
   private static ElementFilter getReferenceFilter(PsiElement element) {
