@@ -3,8 +3,6 @@
 
   <xi:include href="/META-INF/python-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <resource-bundle>com.jetbrains.python.PyBundle</resource-bundle>
-
   <extensions defaultExtensionNs="com.intellij">
 
     <applicationService serviceInterface="com.jetbrains.python.duplocator.PyDuplocatorSettings"
@@ -23,6 +21,7 @@
                          id="com.jetbrains.python.templateLanguages.TemplateLanguageModulesConfigurable"
                          displayName="Python Template Languages"/>
     <!-- Cython -->
+    <fileTypeFactory implementation="com.jetbrains.cython.CythonFileTypeFactory"/>
     <stubElementTypeHolder class="com.jetbrains.cython.psi.elementTypes.CythonElementTypes"/>
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
     <lang.syntaxHighlighterFactory key="Cython" implementationClass="com.jetbrains.cython.CythonSyntaxHighlighterFactory"/>

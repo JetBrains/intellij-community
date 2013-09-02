@@ -14,6 +14,7 @@ ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", c
 
 setProperty("system_selector", "PyCharm${p("component.version.major")}0")
 setProperty("ch", "$home/community")
+setProperty("pythonCommunityHome", "$home/python/community")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
 
@@ -26,8 +27,8 @@ private List<String> pycharmPlatformApiModules() {
 
 
 private List pycharmImplementationModules() {   //modules to put into pycharm.jar
-  return ["yaml", "graph", "coverage-common", "python-community", "python", "python-ide", "python-openapi", "python-psi-api",
-    "duplicates", "duplicates-xml"]
+  return ["yaml", "graph", "coverage-common", "python-community", "python", "python-ide", "python-ide-community",
+    "python-openapi", "python-psi-api", "duplicates", "duplicates-xml"]
 }
 
 class Paths {
@@ -137,7 +138,8 @@ target('default': "Build artifacts") {
   def launcher = "${paths.distWin}/bin/pycharm.exe"
   List resourcePaths = ["$home/community/community-resources/src",
                         "$home/community/platform/icons/src",
-                        "$home/python/resources"]
+                        "$home/python/resources",
+                        "$pythonCommunityHome/resources"]
   buildWinLauncher("$home/community", "$home/community/bin/WinLauncher/WinLauncher.exe", launcher,
                    appInfoFile(), "$home/python/build/pycharm_launcher.properties", system_selector, resourcePaths)
   signExe(launcher)
@@ -214,7 +216,7 @@ private scramble() {
 }
 
 private String appInfoFile() {
-  return "$home/out/pycharm/classes/production/python-ide/idea/PythonApplicationInfo.xml"
+  return "$home/out/pycharm/classes/production/python-ide-community/idea/PythonApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
@@ -267,13 +269,15 @@ private layoutFull(Map args, String target, Set usedJars) {
         fileset(dir: "$home/python/resources") {
           include(name: "**/tips/**")
         }
+        fileset(dir: "$pythonCommunityHome/resources") {
+          include(name: "**/tips/**")
+        }
         module("platform-resources-en") {
           ant.patternset {
             exclude(name: "tips/images/switcher.png")
             exclude(name: "tips/images/navigateToFilePath.gif")
           }
         }
-        zipfileset(dir: "$home/python/resources/tips", prefix: "tips")
       }
 
       jar("icons.jar") { module("icons") }
