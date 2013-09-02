@@ -15,7 +15,18 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.LineSeparator;
+import com.intellij.util.containers.hash.HashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNException;
+
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,11 +37,54 @@ import com.intellij.openapi.vcs.VcsException;
  * Marker exception
  */
 public class SvnBindException extends VcsException {
+
+  private static final Pattern ERROR_PATTERN = Pattern.compile("^svn: (E(\\d+)): (.*)$", Pattern.MULTILINE);
+
+  private Map<Integer, String> errors = new HashMap<Integer, String>();
+
   public SvnBindException(String message) {
     super(message);
+
+    if (!StringUtil.isEmpty(message)) {
+      parseErrors(message);
+    }
   }
 
   public SvnBindException(Throwable throwable) {
     super(throwable);
+
+    if (throwable instanceof SVNException) {
+      SVNException e = (SVNException)throwable;
+      int code = e.getErrorMessage().getErrorCode().getCode();
+
+      put(code, e.getMessage());
+    }
+  }
+
+  public boolean contains(int error) {
+    return errors.containsKey(error);
+  }
+
+  public boolean contains(@NotNull SVNErrorCode error) {
+    return errors.containsKey(error.getCode());
+  }
+
+  private void parseErrors(@NotNull String message) {
+    Matcher matcher = ERROR_PATTERN.matcher(message);
+
+    while (matcher.find()) {
+      put(Integer.valueOf(matcher.group(2)), matcher.group());
+    }
+  }
+
+  private void put(int code, @Nullable String message) {
+    if (errors.containsKey(code)) {
+      if (!StringUtil.isEmpty(message)) {
+        errors.put(code, errors.get(code) + LineSeparator.LF.getSeparatorString() + message);
+      }
+    }
+    else {
+      errors.put(code, message);
+    }
   }
 }

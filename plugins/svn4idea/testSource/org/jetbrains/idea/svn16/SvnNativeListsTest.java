@@ -16,12 +16,12 @@
 package org.jetbrains.idea.svn16;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnChangeProvider;
 import org.jetbrains.idea.svn.SvnChangelistListener;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNException;
 
 import java.util.Collection;
 import java.util.List;
@@ -52,7 +52,7 @@ public class SvnNativeListsTest extends Svn16TestCase {
     super.tearDown();
   }
 
-  private void clearListForRevision(final ContentRevision revision) throws SVNException {
+  private void clearListForRevision(final ContentRevision revision) throws VcsException {
     if (revision == null) return;
     SvnChangelistListener.removeFromList(myProject, revision.getFile().getIOFile());
   }

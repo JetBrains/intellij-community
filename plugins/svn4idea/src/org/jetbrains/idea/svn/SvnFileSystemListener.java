@@ -44,6 +44,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.ActionWithTempFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.*;
@@ -95,20 +96,35 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     myLfs = LocalFileSystem.getInstance();
   }
 
-  private void addToMoveExceptions(final Project project, final SVNException e) {
+  private void addToMoveExceptions(@NotNull final Project project, @NotNull final Exception e) {
     List<VcsException> exceptionList = myMoveExceptions.get(project);
     if (exceptionList == null) {
       exceptionList = new ArrayList<VcsException>();
       myMoveExceptions.put(project, exceptionList);
     }
+    exceptionList.add(handleMoveException(e));
+  }
+
+  private VcsException handleMoveException(@NotNull Exception e) {
     VcsException vcsException;
-    if (SVNErrorCode.ENTRY_EXISTS.equals(e.getErrorMessage().getErrorCode())) {
-      vcsException = new VcsException(Arrays.asList("Target of move operation is already under version control.",
-                                                    "Subversion move had not been performed. ", e.getMessage()));
-    } else {
+    if (e instanceof SVNException && SVNErrorCode.ENTRY_EXISTS.equals(((SVNException)e).getErrorMessage().getErrorCode())) {
+      vcsException = createMoveTargetExistsError(e);
+    }
+    else if (e instanceof SvnBindException && ((SvnBindException)e).contains(SVNErrorCode.ENTRY_EXISTS)) {
+      vcsException = createMoveTargetExistsError(e);
+    }
+    else if (e instanceof VcsException) {
+      vcsException = (VcsException)e;
+    }
+    else {
       vcsException = new VcsException(e);
     }
-    exceptionList.add(vcsException);
+    return vcsException;
+  }
+
+  private static VcsException createMoveTargetExistsError(@NotNull Exception e) {
+    return new VcsException(Arrays.asList("Target of move operation is already under version control.",
+                                          "Subversion move had not been performed. ", e.getMessage()));
   }
 
   @Nullable
@@ -270,6 +286,10 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       dst.setLastModified(srcTime);
     }
     catch (SVNException e) {
+      addToMoveExceptions(vcs.getProject(), e);
+      return false;
+    }
+    catch(VcsException e) {
       addToMoveExceptions(vcs.getProject(), e);
       return false;
     }
