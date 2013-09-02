@@ -114,10 +114,10 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testClassesAndPackagesInUnqualifiedImports() {
-    myFixture.addClass("package xxxxx; public class Xxxxxxxxx {}")
+    myFixture.addClass("package xxxxx; public class xxxxxxxxx {}")
     myFixture.configureByText 'a.groovy', 'package foo; import <caret>'
     type 'xxx'
-    assert myFixture.lookupElementStrings == ['xxxxx', 'Xxxxxxxxx']
+    assert myFixture.lookupElementStrings == ['xxxxxxxxx', 'xxxxx']
   }
 
 

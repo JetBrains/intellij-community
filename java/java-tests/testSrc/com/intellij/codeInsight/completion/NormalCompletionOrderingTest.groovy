@@ -102,11 +102,11 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testDispreferDeclared() throws Throwable {
-    checkPreferredItems(0, "aabbb", "aaa", "Aaaaaaa");
+    checkPreferredItems(0, "aabbb", "aaa");
   }
 
   public void testDispreferDeclaredOfExpectedType() throws Throwable {
-    checkPreferredItems(0, "aabbb", "aaa", "Aaaaaaa");
+    checkPreferredItems(0, "aabbb", "aaa");
   }
 
   public void testDispreferImpls() throws Throwable {
@@ -598,14 +598,6 @@ interface TxANotAnno {}
     myFixture.completeBasic()
     myFixture.type('set')
     assertPreferredItems 0, 'setText', 'setOurText'
-  }
-
-  public void testEnumConstantStartMatching() {
-    checkPreferredItems(0, 'rMethod', 'Zoo.RIGHT')
-    myFixture.type('i\n;\nreturn r')
-    myFixture.completeBasic()
-    assertPreferredItems 0, 'Zoo.RIGHT', 'rMethod'
-
   }
 
 }
