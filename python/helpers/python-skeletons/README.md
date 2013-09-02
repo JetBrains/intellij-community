@@ -21,7 +21,7 @@ Often library API definitions are quite static and easy to grasp (defined
 using `class`, `def`), but types of function parameters and return values
 usually are not specified. Sometimes API definitions involve metaprogramming.
 
-As there is not enough information in API defintion code of libraries,
+As there is not enough information in API definition code of libraries,
 developers of static analysis tools collect extended API data themselves and
 store it in their own formats. For example, PyLint uses imperative AST
 transformations of API modules in order to extend them with hard-coded data.
@@ -58,7 +58,7 @@ Conventions
 Skeletons should respect PEP-8 and PEP-257 style guides.
 
 The most simple way of specifying types in skeletons is Sphinx docstrings.
-Function annoatations could be used for specifying types, but they are
+Function annotations could be used for specifying types, but they are
 available only for Python 3.
 
 There is no standard notation for specifying types in Python code. We propose
@@ -121,7 +121,7 @@ repository into your PyCharm config directory:
 
 where `<PyCharm config>` is:
 
-* Mac OS X: `~/Library/Prefernces/PyCharmXX/config`
+* Mac OS X: `~/Library/Preferences/PyCharmXX/config`
 * Linux: `~/.PyCharmXX/config`
 * Windows: `<User home>\.PyCharmXX\config`
 
