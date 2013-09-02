@@ -24,6 +24,11 @@ public interface PropertyClient extends SvnClient {
                               @Nullable SVNRevision pegRevision,
                               @Nullable SVNRevision revision) throws VcsException;
 
+  void getProperty(@NotNull SvnTarget target, @NotNull String property,
+                   @Nullable SVNRevision revision,
+                   @Nullable SVNDepth depth,
+                   @Nullable ISVNPropertyHandler handler) throws VcsException;
+
   void list(@NotNull SvnTarget target,
             @Nullable SVNRevision revision,
             @Nullable SVNDepth depth,

@@ -56,21 +56,42 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
   }
 
   @Override
+  public void getProperty(@NotNull SvnTarget target,
+                          @NotNull String property,
+                          @Nullable SVNRevision revision,
+                          @Nullable SVNDepth depth,
+                          @Nullable ISVNPropertyHandler handler) throws VcsException {
+    List<String> parameters = new ArrayList<String>();
+
+    parameters.add(property);
+    fillListParameters(target, revision, depth, parameters, false);
+
+    SvnCommand command = CommandUtil.execute(myVcs, SvnCommandName.propget, parameters, null);
+    parseOutput(target, command.getOutput(), handler);
+  }
+
+  @Override
   public void list(@NotNull SvnTarget target,
                    @Nullable SVNRevision revision,
                    @Nullable SVNDepth depth,
                    @Nullable ISVNPropertyHandler handler) throws VcsException {
     List<String> parameters = new ArrayList<String>();
+    fillListParameters(target, revision, depth, parameters, true);
 
+    SvnCommand command = CommandUtil.execute(myVcs, SvnCommandName.proplist, parameters, null);
+    parseOutput(target, command.getOutput(), handler);
+  }
+
+  private void fillListParameters(@NotNull SvnTarget target,
+                                  @Nullable SVNRevision revision,
+                                  @Nullable SVNDepth depth,
+                                  @NotNull List<String> parameters,
+                                  boolean verbose) {
     CommandUtil.put(parameters, target);
     CommandUtil.put(parameters, revision);
     CommandUtil.put(parameters, depth);
     parameters.add("--xml");
-    parameters.add("--verbose");
-
-    SvnCommand command = CommandUtil.execute(myVcs, SvnCommandName.proplist, parameters, null);
-
-    parseOutput(target, command.getOutput(), handler);
+    CommandUtil.put(parameters, verbose, "--verbose");
   }
 
   private static void parseOutput(SvnTarget target, String output, ISVNPropertyHandler handler) throws VcsException {
