@@ -172,6 +172,7 @@ public class Main {
     showMessage(title, message.toString(), true);
   }
 
+  @SuppressWarnings({"UseJBColor", "UndesirableClassUsage"})
   public static void showMessage(String title, String message, boolean error) {
     if (isCommandLine()) {
       PrintStream stream = error ? System.err : System.out;
@@ -184,10 +185,21 @@ public class Main {
       JTextPane textPane = new JTextPane();
       textPane.setEditable(false);
       textPane.setText(message.replaceAll("\t", "    "));
-      textPane.setBackground(UIManager.getColor("Panel.background"));
+      textPane.setBackground(Color.white);
+      textPane.setCaretPosition(0);
+      JScrollPane scrollPane = new JScrollPane(
+        textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+      int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height - 150;
+      Dimension component = scrollPane.getPreferredSize();
+      if (component.height >= maxHeight) {
+        Object setting = UIManager.get("ScrollBar.width");
+        int width = setting instanceof Integer ? ((Integer)setting).intValue() : 20;
+        scrollPane.setPreferredSize(new Dimension(component.width + width, maxHeight));
+      }
 
       int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), textPane, title, type);
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
     }
   }
 }
