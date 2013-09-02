@@ -43,6 +43,10 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
@@ -159,6 +163,10 @@ public class PsiTestUtil {
   }
 
   public static void addSourceRoot(final Module module, final VirtualFile vDir, final boolean isTestSource) {
+    addSourceRoot(module, vDir, isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE);
+  }
+
+  public static void addSourceRoot(final Module module, final VirtualFile vDir, @NotNull final JpsModuleSourceRootType rootType) {
     new WriteCommandAction.Simple(module.getProject()) {
       @Override
       protected void run() throws Throwable {
@@ -166,7 +174,7 @@ public class PsiTestUtil {
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
         ContentEntry entry = findContentEntry(rootModel, vDir);
         if (entry == null) entry = rootModel.addContentEntry(vDir);
-        entry.addSourceFolder(vDir, isTestSource);
+        entry.addSourceFolder(vDir, rootType, ((JpsElementTypeWithDefaultProperties<JpsElement>)rootType).createDefaultProperties());
         rootModel.commit();
       }
     }.execute().throwException();

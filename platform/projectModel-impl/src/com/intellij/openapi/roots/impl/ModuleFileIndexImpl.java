@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Collections;
 import java.util.List;
@@ -113,7 +114,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
-      return info != null && info.isInModuleSource() && info.isTestSource() && myModule.equals(info.getModule());
+      return info != null && info.isInModuleSource() && myModule.equals(info.getModule()) && JavaModuleSourceRootTypes.isTestSourceOrResource(myDirectoryIndex.getSourceRootType(info));
     }
     else {
       VirtualFile parent = fileOrDir.getParent();

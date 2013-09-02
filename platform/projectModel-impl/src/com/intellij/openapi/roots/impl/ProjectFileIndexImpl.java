@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -239,7 +240,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   @Override
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info != null && info.isInModuleSource() && info.isTestSource();
+    return info != null && info.isInModuleSource() && JavaModuleSourceRootTypes.isTestSourceOrResource(myDirectoryIndex.getSourceRootType(info));
   }
 
   private class ContentFilter implements VirtualFileFilter {
