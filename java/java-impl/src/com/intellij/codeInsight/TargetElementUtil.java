@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -309,20 +309,20 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if (referenceExpression != null && element instanceof PsiMethod) {
       final PsiClass[] memberClass = getMemberClass(referenceExpression, element);
       if (memberClass != null && memberClass.length == 1) {
-        final List<PsiClass> classesToSearch = new ArrayList<PsiClass>();
-        classesToSearch.addAll(ClassInheritorsSearch.search(memberClass[0], true).findAll());
-
-        final Set<PsiClass> supers = new HashSet<PsiClass>();
-        for (PsiClass psiClass : classesToSearch) {
-          supers.addAll(InheritanceUtil.getSuperClasses(psiClass));
-        }
-        classesToSearch.addAll(supers);
-
         return CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<SearchScope>() {
           @Nullable
           @Override
           public Result<SearchScope> compute() {
-            return new Result<SearchScope>(new LocalSearchScope(PsiUtilCore.toPsiElementArray(classesToSearch)));
+            final List<PsiClass> classesToSearch = new ArrayList<PsiClass>();
+            classesToSearch.addAll(ClassInheritorsSearch.search(memberClass[0], true).findAll());
+
+            final Set<PsiClass> supers = new HashSet<PsiClass>();
+            for (PsiClass psiClass : classesToSearch) {
+              supers.addAll(InheritanceUtil.getSuperClasses(psiClass));
+            }
+            classesToSearch.addAll(supers);
+
+            return new Result<SearchScope>(new LocalSearchScope(PsiUtilCore.toPsiElementArray(classesToSearch)), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
           }
         }, false).getValue();
       }
