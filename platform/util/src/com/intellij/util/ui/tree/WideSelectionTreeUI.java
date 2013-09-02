@@ -350,13 +350,10 @@ public class WideSelectionTreeUI extends BasicTreeUI {
         }
       }
       else {
-        if (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula()) {
+        if (selected && (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula())) {
           Color bg = UIUtil.getTreeSelectionBackground(tree.hasFocus());
-          if (!selected) {
-            bg = background;
-          }
 
-          if (myWideSelectionCondition.value(row) || selected) {
+          if (myWideSelectionCondition.value(row)) {
             rowGraphics.setColor(bg);
             rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height);
           }
