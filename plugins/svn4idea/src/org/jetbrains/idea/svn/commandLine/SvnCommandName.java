@@ -40,7 +40,8 @@ public enum SvnCommandName {
   resolve("resolve", true),
   propget("propget", false),
   proplist("proplist", false),
-  blame("blame", false);
+  blame("blame", false),
+  merge("merge", true);
 
   private final String myName;
   private final boolean myWriteable;

@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.Topic;
@@ -88,7 +89,7 @@ public class GroupMerger implements IMerger {
     return mySplitter.hasNext();
   }
 
-  public void mergeNext() throws SVNException {
+  public void mergeNext() throws SVNException, VcsException {
     final int step = mySplitter.step();
     myPackStart = myPackEnd + 1;
     myPackEnd = myPackStart + step - 1;

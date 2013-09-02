@@ -258,7 +258,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
       progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
     }
-
+    // TODO: Rewrite this without using SVNKit
     final String repositoryRoot;
     SVNRepository repository = null;
     try {

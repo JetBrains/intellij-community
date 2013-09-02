@@ -554,10 +554,9 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNStatus getStatus(final SvnVcs vcs, final File file) {
-    final SVNStatusClient statusClient = vcs.createStatusClient();
+  public static SVNStatus getStatus(@NotNull final SvnVcs vcs, @NotNull final File file) {
     try {
-      return statusClient.doStatus(file, false);
+      return vcs.getFactory(file).createStatusClient().doStatus(file, false);
     }
     catch (SVNException e) {
       return null;

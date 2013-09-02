@@ -9,6 +9,7 @@ import org.jetbrains.idea.svn.content.ContentClient;
 import org.jetbrains.idea.svn.copy.CopyMoveClient;
 import org.jetbrains.idea.svn.delete.DeleteClient;
 import org.jetbrains.idea.svn.history.HistoryClient;
+import org.jetbrains.idea.svn.integrate.MergeClient;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
 import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.jetbrains.idea.svn.properties.PropertyClient;
@@ -33,6 +34,7 @@ public abstract class ClientFactory {
   protected CopyMoveClient copyMoveClient;
   protected ConflictClient conflictClient;
   protected PropertyClient propertyClient;
+  protected MergeClient mergeClient;
 
   protected ClientFactory(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -96,6 +98,11 @@ public abstract class ClientFactory {
   @NotNull
   public PropertyClient createPropertyClient() {
     return prepare(propertyClient);
+  }
+
+  @NotNull
+  public MergeClient createMergeClient() {
+    return prepare(mergeClient);
   }
 
   @NotNull
