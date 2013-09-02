@@ -420,7 +420,12 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
 
           GithubFullPath forkPath = findTargetRepository(project, auth, ref, branchesInfo);
           if (forkPath == null) {
-            GithubNotifications.showErrorDialog(project, "Can't show diff", "Can't find fork for user '" + user + "'");
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                GithubNotifications.showErrorDialog(project, "Can't show diff", "Can't find fork for user '" + user + "'");
+              }
+            }, indicator.getModalityState());
             return null;
           }
 
@@ -452,7 +457,12 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
 
         DiffInfo info = getDiffInfo(project, gitRepository, currentBranch, targetBranchInfo.getBranch());
         if (info == null) {
-          GithubNotifications.showErrorDialog(project, "Can't show diff", "Can't get diff info");
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              GithubNotifications.showErrorDialog(project, "Can't show diff", "Can't get diff info");
+            }
+          }, indicator.getModalityState());
           return null;
         }
         return info;
