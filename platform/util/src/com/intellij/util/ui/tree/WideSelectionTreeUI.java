@@ -69,15 +69,18 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   }
 
   private final MouseListener mySelectionListener = new MouseAdapter() {
+    boolean handled = false;
     public void mousePressed(@NotNull final MouseEvent e) {
+      handled = false;
       if (!isSelected(e)) {
+        handled = true;
         handle(e);
       }
     }
 
     @Override
     public void mouseReleased(@NotNull final MouseEvent e) {
-      if (isSelected(e)) {
+      if (!handled) {
         handle(e);
       }
     }
