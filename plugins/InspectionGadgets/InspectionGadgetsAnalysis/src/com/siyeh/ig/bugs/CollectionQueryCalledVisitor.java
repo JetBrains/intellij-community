@@ -96,6 +96,17 @@ class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor {
     checkQualifier(qualifier);
   }
 
+
+  @Override
+  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    if (queried) return;
+    final String methodName = expression.getReferenceName();
+    if (methodName == null) {
+      return;
+    }
+    checkQualifier(expression.getQualifierExpression());
+  }
+
   private void checkQualifier(PsiExpression expression) {
     if (queried) {
       return;
