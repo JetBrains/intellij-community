@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -31,29 +30,21 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class ProjectFileIndexImpl implements ProjectFileIndex {
+public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ProjectFileIndexImpl");
-
   private final Project myProject;
-  private final FileTypeRegistry myFileTypeRegistry;
-  private final DirectoryIndex myDirectoryIndex;
   private final ContentFilter myContentFilter;
-  private final ProjectFileExclusionManager myFileExclusionManager;
 
   public ProjectFileIndexImpl(@NotNull Project project, @NotNull DirectoryIndex directoryIndex, @NotNull FileTypeRegistry fileTypeManager) {
+    super(directoryIndex, fileTypeManager, project);
     myProject = project;
-
-    myDirectoryIndex = directoryIndex;
-    myFileTypeRegistry = fileTypeManager;
     myContentFilter = new ContentFilter();
-    myFileExclusionManager = ProjectFileExclusionManager.SERVICE.getInstance(project);
   }
 
   @Override
@@ -81,28 +72,6 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     return true;
   }
 
-  @Nullable
-  private DirectoryInfo getInfoForFileOrDirectory(@NotNull VirtualFile file) {
-    return getInfoForFileOrDirectory(file, myDirectoryIndex);
-  }
-
-  @Nullable
-  static DirectoryInfo getInfoForFileOrDirectory(@NotNull VirtualFile file, DirectoryIndex directoryIndex) {
-    if (!file.isDirectory() && file.getParent() == null) return null; // e.g. LightVirtualFile in test
-    DirectoryInfo info = directoryIndex.getInfoForDirectory(file);
-    if (info != null) {
-      return info;
-    }
-
-    if (!file.isDirectory()) {
-      VirtualFile dir = file.getParent();
-      if (dir != null) {
-        return directoryIndex.getInfoForDirectory(dir);
-      }
-    }
-    return null;
-  }
-
   @Override
   public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator) {
     return VfsUtilCore.iterateChildrenRecursively(dir, myContentFilter, iterator);
@@ -111,7 +80,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   @Override
   public boolean isIgnored(@NotNull VirtualFile file) {
     if (myFileTypeRegistry.isFileIgnored(file)) return true;
-    if (myFileExclusionManager != null && myFileExclusionManager.isExcluded(file)) return true;
+    if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return true;
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return false;
 
@@ -172,13 +141,6 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   public String getPackageNameByDirectory(@NotNull VirtualFile dir) {
     LOG.assertTrue(dir.isDirectory());
     return myDirectoryIndex.getPackageName(dir);
-  }
-
-  @Override
-  public boolean isContentSourceFile(@NotNull VirtualFile file) {
-    return !file.isDirectory() &&
-           !myFileTypeRegistry.isFileIgnored(file) &&
-           isInSourceContent(file);
   }
 
   @Override
@@ -251,7 +213,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
         return info != null && info.getModule() != null;
       }
       else {
-        return (myFileExclusionManager == null || !myFileExclusionManager.isExcluded(file))
+        return (myExclusionManager == null || !myExclusionManager.isExcluded(file))
                && !myFileTypeRegistry.isFileIgnored(file);
       }
     }
