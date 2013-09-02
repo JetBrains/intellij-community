@@ -72,7 +72,7 @@ public abstract class LoginDialogPanel {
 
     myCreateAccountLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-    myProxySettingsPanel = new HTTPProxySettingsPanel(IdeaServerManagerImpl.getInstance().getIdeaServerSettings().getHttpProxySettings());
+    myProxySettingsPanel = new HTTPProxySettingsPanel(IdeaConfigurationServerManager.getInstance().getIdeaServerSettings().getHttpProxySettings());
     myProxyPanel.add(myProxySettingsPanel.createComponent(), BorderLayout.CENTER);
   }
 
@@ -115,7 +115,7 @@ public abstract class LoginDialogPanel {
       myFailedMessage.setVisible(true);
       myFailedMessage.setText(failedMessage);
     }
-    IdeaServerSettings settings = IdeaServerManagerImpl.getInstance().getIdeaServerSettings();
+    IdeaServerSettings settings = IdeaConfigurationServerManager.getInstance().getIdeaServerSettings();
     myLogin.setText(settings.getUserName());
     myPassword.setText(settings.getPassword());
     if (settings.REMEMBER_SETTINGS && settings.DO_LOGIN) {
@@ -133,7 +133,7 @@ public abstract class LoginDialogPanel {
 
   private void closeDialog(final boolean doLogin) {
     stopCounter();
-    IdeaServerSettings settings = IdeaServerManagerImpl.getInstance().getIdeaServerSettings();
+    IdeaServerSettings settings = IdeaConfigurationServerManager.getInstance().getIdeaServerSettings();
     //settings.update(myLogin.getText(), new String(myPassword.getPassword()), mySession);
     rememberStartupSettings(settings, doLogin);
 
@@ -200,13 +200,13 @@ public abstract class LoginDialogPanel {
 
   private void doLogin(final boolean onTimer) {
     try {
-      IdeaServerSettings settings = IdeaServerManagerImpl.getInstance().getIdeaServerSettings();
+      IdeaServerSettings settings = IdeaConfigurationServerManager.getInstance().getIdeaServerSettings();
 
       myProxySettingsPanel.apply();
 
 
       settings.update(myLogin.getText(), new String(myPassword.getPassword()));
-      IdeaServerManagerImpl.getInstance().login();
+      IdeaConfigurationServerManager.getInstance().login();
       closeDialog(true);
     }
     catch (ConnectException e) {

@@ -32,21 +32,21 @@ public class IdeaServerProjectLoadListener implements ApplicationComponent, Sett
       myMessageBusConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
         public void beforeProjectLoaded(@NotNull final Project project) {
           if (!project.isDefault()) {
-            IdeaServerManagerImpl.getInstance().registerProjectLevelProviders(project);
+            IdeaConfigurationServerManager.getInstance().registerProjectLevelProviders(project);
           }
         }
       });
     }
 
-    IdeaServerManagerImpl.getInstance().startPing();
+    IdeaConfigurationServerManager.getInstance().startPing();
   }
 
   public void disposeComponent() {
-    IdeaServerManagerImpl.getInstance().stopPing();
+    IdeaConfigurationServerManager.getInstance().stopPing();
     myMessageBusConnection.disconnect();
   }
 
   public void save() {
-    IdeaServerManagerImpl.getInstance().getIdeaServerSettings().save();
+    IdeaConfigurationServerManager.getInstance().getIdeaServerSettings().save();
   }
 }

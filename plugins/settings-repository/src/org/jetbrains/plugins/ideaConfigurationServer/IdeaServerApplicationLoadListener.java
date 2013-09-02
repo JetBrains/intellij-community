@@ -11,7 +11,7 @@ public class IdeaServerApplicationLoadListener implements ApplicationLoadListene
 
   public void beforeApplicationLoaded(final Application application) {
     if (!application.isUnitTestMode()) {
-      IdeaServerManagerImpl.getInstance().registerApplicationLevelProviders(application);
+      IdeaConfigurationServerManager.getInstance().registerApplicationLevelProviders(application);
     }
   }
 }

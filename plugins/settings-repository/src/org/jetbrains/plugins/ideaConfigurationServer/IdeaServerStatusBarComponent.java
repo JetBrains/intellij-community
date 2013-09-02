@@ -38,24 +38,24 @@ public class IdeaServerStatusBarComponent implements StatusBarWidget, StatusBarW
   @Override
   public void install(@NotNull StatusBar statusBar) {
     myStatusBar = statusBar;
-    IdeaServerManagerImpl.getInstance().getIdeaServerSettings().addStatusListener(myStatusListener);
+    IdeaConfigurationServerManager.getInstance().getIdeaServerSettings().addStatusListener(myStatusListener);
   }
 
   @Override
   public void dispose() {
     myStatusBar = null;
-    IdeaServerManagerImpl.getInstance().getIdeaServerSettings().removeStatusListener(myStatusListener);
+    IdeaConfigurationServerManager.getInstance().getIdeaServerSettings().removeStatusListener(myStatusListener);
   }
 
   @NotNull
   @Override
   public Icon getIcon() {
-    return getStatusIcon(IdeaServerManagerImpl.getInstance().getIdeaServerSettings().getStatus());
+    return getStatusIcon(IdeaConfigurationServerManager.getInstance().getIdeaServerSettings().getStatus());
   }
 
   @Override
   public String getTooltipText() {
-    return "IntelliJ Configuration Server status: " + IdeaServerManagerImpl.getStatusText();
+    return "IntelliJ Configuration Server status: " + IdeaConfigurationServerManager.getStatusText();
   }
 
   @Override

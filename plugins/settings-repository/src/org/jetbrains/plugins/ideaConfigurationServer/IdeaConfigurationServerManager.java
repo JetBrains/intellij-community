@@ -38,19 +38,19 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.zip.ZipOutputStream;
 
-public class IdeaServerManagerImpl {
-  private static final Logger LOG = Logger.getInstance(IdeaServerManagerImpl.class);
+public class IdeaConfigurationServerManager {
+  private static final Logger LOG = Logger.getInstance(IdeaConfigurationServerManager.class);
 
   private static final String PROJECT_ID_KEY = "IDEA_SERVER_PROJECT_ID";
 
   private final IdeaServerSettings mySettings;
-  private static final IdeaServerManagerImpl ourInstance = new IdeaServerManagerImpl();
+  private static final IdeaConfigurationServerManager ourInstance = new IdeaConfigurationServerManager();
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private final Runnable myUpdateRequest;
   private final File myLocalCopyDir;
   private Map<String, String> myProjectHashToKey = null;
 
-  public IdeaServerManagerImpl() {
+  public IdeaConfigurationServerManager() {
     mySettings = new IdeaServerSettings();
     myLocalCopyDir = new File(new File(PathManager.getSystemPath(), "ideaServer"), "localCopy");
 
@@ -669,7 +669,7 @@ public class IdeaServerManagerImpl {
     return ping(createBuilder(null, null, null));
   }
 
-  public static IdeaServerManagerImpl getInstance() {
+  public static IdeaConfigurationServerManager getInstance() {
     return ourInstance;
   }
 
