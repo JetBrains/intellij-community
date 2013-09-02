@@ -42,6 +42,7 @@ public class Main {
   public static final int PLUGIN_ERROR = 5;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
+  private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
@@ -118,7 +119,7 @@ public class Main {
   }
 
   private static void installPatch() throws IOException {
-    String platform = System.getProperty("idea.platform.prefix", "idea");
+    String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
     File originalPatchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName);
     File copyPatchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName + "_copy");
@@ -165,7 +166,9 @@ public class Main {
   }
 
   public static void showMessage(String title, Throwable t) {
-    String message = "Internal error. Please report to http://youtrack.jetbrains.com\n\n" + ExceptionUtil.getThrowableText(t);
+    boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
+    String site = studio ? "code.google.com/p/android/issues" : "youtrack.jetbrains.com";
+    String message = "Internal error. Please report to http://" + site + "\n\n" + ExceptionUtil.getThrowableText(t);
     showMessage(title, message, true);
   }
 
