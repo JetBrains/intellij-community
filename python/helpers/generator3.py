@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.127"  # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.128"  # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -736,8 +736,29 @@ class ModuleRedeclarator(object):
         self._defined = {} # stores True for every name defined so far, to break circular refs in values
         self.doing_builtins = doing_builtins
         self.ret_type_cache = {}
-        self.used_imports = emptylistdict() # qual_mod_name -> [imported_names,..]: actullay used imported names
+        self.used_imports = emptylistdict() # qual_mod_name -> [imported_names,..]: actually used imported names
 
+    def initializeQApp(self):
+        try:  # QtGui should be imported _before_ QtCore package.
+            # This is done for the QWidget references from QtCore (such as QSignalMapper). Known bug in PyQt 4.7+
+            # Causes "TypeError: C++ type 'QWidget*' is not supported as a native Qt signal type"
+            import PyQt4.QtGui
+        except ImportError:
+            pass
+
+        # manually instantiate and keep reference to singleton QCoreApplication (we don't want it to be deleted during the introspection)
+        # use QCoreApplication instead of QApplication to avoid blinking app in Dock on Mac OS
+        try:
+            from PyQt4.QtCore import QCoreApplication
+            self.app = QCoreApplication([])
+            return
+        except ImportError:
+            pass
+        try:
+            from PyQt5.QtCore import QCoreApplication
+            self.app = QCoreApplication([])
+        except ImportError:
+            pass
 
     def indent(self, level):
         "Return indentation whitespace for given level."
@@ -809,6 +830,7 @@ class ModuleRedeclarator(object):
     REPLACE_MODULE_VALUES = {
         ("numpy.core.multiarray", "typeinfo"): "{}",
         ("psycopg2._psycopg", "string_types"): "{}", # badly mangled __eq__ breaks fmtValue
+        ("PyQt5.QtWidgets", "qApp") : "QApplication()",  # instead of None
     }
     if version[0] <= 2:
         REPLACE_MODULE_VALUES[(BUILTIN_MOD_NAME, "None")] = "object()"
@@ -988,7 +1010,7 @@ class ModuleRedeclarator(object):
     # known properties of modules
     # {{"module": {"class", "property" : ("letters", ("getter", "type"))}},
     # where letters is any set of r,w,d (read, write, del) and "getter" is a source of typed getter.
-    # if vlue is None, the property should be omitted.
+    # if value is None, the property should be omitted.
     # read-only properties that return an object are not listed.
     G_OBJECT = ("lambda self: object()", None)
     G_TYPE = ("lambda self: type(object)", "type")
@@ -1979,6 +2001,10 @@ class ModuleRedeclarator(object):
         @param p_name name of module
         """
         action("redoing header of module %r %r", p_name, str(self.module))
+
+        if "pyqt" in p_name.lower():   # qt specific patch
+            self.initializeQApp()
+
         self.redoSimpleHeader(p_name)
 
         # find whatever other self.imported_modules the module knows; effectively these are imports
