@@ -27,12 +27,12 @@ import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.history.LatestExistentSearcher;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
@@ -88,7 +88,7 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
 
   private String getCommitMessage(File path) throws VcsException {
     SVNPropertyData property =
-      myVcs.getFactory(path).createPropertyClient().getProperty(path, COMMIT_MESSAGE, true, null, SVNRevision.BASE);
+      myVcs.getFactory(path).createPropertyClient().getProperty(SvnTarget.fromFile(path), COMMIT_MESSAGE, true, SVNRevision.BASE);
 
     return property != null ? SVNPropertyValue.getPropertyAsString(property.getValue()) : null;
   }

@@ -20,12 +20,12 @@ import com.intellij.util.Consumer;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.IMerger;
+import org.jetbrains.idea.svn.integrate.MergeClient;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -83,18 +83,16 @@ public class BranchMerger implements IMerger {
 
   public void mergeNext() throws SVNException, VcsException {
     myAtStart = false;
-    final SVNDiffClient dc = myVcs.createDiffClient();
-    dc.setEventHandler(myHandler);
-    dc.setMergeOptions(createDiffOptions());
 
     File destination = new File(myTargetPath);
+    MergeClient client = myVcs.getFactory(destination).createMergeClient();
+
     if (myReintegrate) {
-      myVcs.getFactory(destination).createMergeClient()
-        .merge(SvnTarget.fromURL(mySourceUrl), destination, false, createDiffOptions(), myHandler);
-      //dc.doMergeReIntegrate(mySourceUrl, SVNRevision.UNDEFINED, destination, false);
+      client.merge(SvnTarget.fromURL(mySourceUrl), destination, false, createDiffOptions(), myHandler);
     } else {
-      dc.doMerge(mySourceUrl, SVNRevision.create(mySourceCopyRevision), mySourceUrl, SVNRevision.create(mySourceLatestRevision),
-                 destination, SVNDepth.INFINITY, true, true, false, false);
+      client.merge(SvnTarget.fromURL(mySourceUrl, SVNRevision.create(mySourceCopyRevision)),
+                   SvnTarget.fromURL(mySourceUrl, SVNRevision.create(mySourceLatestRevision)), destination, SVNDepth.INFINITY, false, false,
+                   true, createDiffOptions(), myHandler);
     }
   }
 

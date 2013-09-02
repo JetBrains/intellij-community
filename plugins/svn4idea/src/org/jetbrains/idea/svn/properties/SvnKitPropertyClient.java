@@ -22,16 +22,19 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
 
   @Nullable
   @Override
-  public SVNPropertyData getProperty(@NotNull File path,
+  public SVNPropertyData getProperty(@NotNull SvnTarget target,
                                      @NotNull String property,
                                      boolean revisionProperty,
-                                     @Nullable SVNRevision pegRevision,
                                      @Nullable SVNRevision revision) throws VcsException {
     try {
       if (!revisionProperty) {
-        return myVcs.createWCClient().doGetProperty(path, property, pegRevision, revision);
+        if (target.isFile()) {
+          return myVcs.createWCClient().doGetProperty(target.getFile(), property, target.getPegRevision(), revision);
+        } else {
+          return myVcs.createWCClient().doGetProperty(target.getURL(), property, target.getPegRevision(), revision);
+        }
       } else {
-        return getRevisionProperty(path, property, revision);
+        return getRevisionProperty(target, property, revision);
       }
     }
     catch (SVNException e) {
@@ -74,11 +77,10 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
     }
   }
 
-  private SVNPropertyData getRevisionProperty(@NotNull File path, @NotNull final String property, @Nullable SVNRevision revision) throws SVNException{
+  private SVNPropertyData getRevisionProperty(@NotNull SvnTarget target, @NotNull final String property, @Nullable SVNRevision revision) throws SVNException{
     final SVNWCClient client = myVcs.createWCClient();
     final SVNPropertyData[] result = new SVNPropertyData[1];
-
-    client.doGetRevisionProperty(path, null, revision, new ISVNPropertyHandler() {
+    ISVNPropertyHandler handler = new ISVNPropertyHandler() {
       @Override
       public void handleProperty(File path, SVNPropertyData property) throws SVNException {
         handle(property);
@@ -99,7 +101,14 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
           result[0] = data;
         }
       }
-    });
+    };
+
+    if (target.isFile()) {
+      client.doGetRevisionProperty(target.getFile(), null, revision, handler);
+    } else {
+      client.doGetRevisionProperty(target.getURL(), null, revision, handler);
+    }
+
     return result[0];
   }
 }
