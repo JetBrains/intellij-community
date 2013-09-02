@@ -309,7 +309,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if (referenceExpression != null && element instanceof PsiMethod) {
       final PsiClass[] memberClass = getMemberClass(referenceExpression, element);
       if (memberClass != null && memberClass.length == 1) {
-        return CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<SearchScope>() {
+        return CachedValuesManager.getManager(element.getProject()).getCachedValue(referenceExpression, new CachedValueProvider<SearchScope>() {
           @Nullable
           @Override
           public Result<SearchScope> compute() {
@@ -324,7 +324,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
             return new Result<SearchScope>(new LocalSearchScope(PsiUtilCore.toPsiElementArray(classesToSearch)), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
           }
-        }, false).getValue();
+        });
       }
     }
     return super.getSearchScope(editor, element);
