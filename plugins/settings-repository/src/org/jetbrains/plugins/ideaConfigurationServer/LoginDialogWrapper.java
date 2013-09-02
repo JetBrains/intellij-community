@@ -17,7 +17,7 @@ public class LoginDialogWrapper extends DialogWrapper {
       }
 
       @Override
-      protected void rememberStartupSettings(final IdeaServerSettings settings, final boolean doLogin) {
+      protected void rememberStartupSettings(final IdeaConfigurationServerSettings settings, final boolean doLogin) {
       }
 
       @Override

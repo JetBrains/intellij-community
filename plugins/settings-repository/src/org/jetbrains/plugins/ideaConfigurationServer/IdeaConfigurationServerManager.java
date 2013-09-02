@@ -43,7 +43,7 @@ public class IdeaConfigurationServerManager {
 
   private static final String PROJECT_ID_KEY = "IDEA_SERVER_PROJECT_ID";
 
-  private final IdeaServerSettings mySettings;
+  private final IdeaConfigurationServerSettings settings;
   private static final IdeaConfigurationServerManager ourInstance = new IdeaConfigurationServerManager();
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private final Runnable myUpdateRequest;
@@ -51,8 +51,8 @@ public class IdeaConfigurationServerManager {
   private Map<String, String> myProjectHashToKey = null;
 
   public IdeaConfigurationServerManager() {
-    mySettings = new IdeaServerSettings();
-    myLocalCopyDir = new File(new File(PathManager.getSystemPath(), "ideaServer"), "localCopy");
+    settings = new IdeaConfigurationServerSettings();
+    myLocalCopyDir = new File(PathManager.getSystemPath(), "ideaConfigurationServer");
 
     myUpdateRequest = new Runnable() {
       @Override
@@ -60,10 +60,10 @@ public class IdeaConfigurationServerManager {
         myUpdateAlarm.cancelAllRequests();
         try {
           try {
-            if (mySettings.getStatus() == IdeaServerStatus.CONNECTION_FAILED && mySettings.getUserName() != null && mySettings.getPassword() != null) {
+            if (settings.getStatus() == IdeaServerStatus.CONNECTION_FAILED && settings.getUserName() != null && settings.getPassword() != null) {
               login();
             }
-            else if (mySettings.getStatus() == IdeaServerStatus.LOGGED_IN && mySettings.getUserName() != null && mySettings.getPassword() != null) {
+            else if (settings.getStatus() == IdeaServerStatus.LOGGED_IN && settings.getUserName() != null && settings.getPassword() != null) {
               ping();
             }
           }
@@ -77,16 +77,16 @@ public class IdeaConfigurationServerManager {
       }
     };
 
-    mySettings.addStatusListener(new StatusListener() {
+    settings.addStatusListener(new StatusListener() {
       @Override
       public void statusChanged(final IdeaServerStatus status) {
         if (status == IdeaServerStatus.LOGGED_IN) {
-          if (!mySettings.wereSettingsSynchronized()) {
+          if (!settings.wereSettingsSynchronized()) {
             try {
               backupConfig();
             }
             finally {
-              mySettings.settingsWereSynchronized();
+              settings.settingsWereSynchronized();
             }
           }
           try {
@@ -202,8 +202,8 @@ public class IdeaConfigurationServerManager {
     return IdeaServerConnector.loadUserPreferences(builder);
   }
 
-  private boolean canUseLocalCopy(IdeaServerUrlBuilder builder) {
-    return myLocalCopyDir.isDirectory() && builder.getRoamingType() != RoamingType.GLOBAL;
+  private static boolean canUseLocalCopy(IdeaServerUrlBuilder builder) {
+    return builder.getRoamingType() != RoamingType.GLOBAL;
   }
 
   private static void saveUserPreferences(File file, IdeaServerUrlBuilder builder) throws IOException {
@@ -317,20 +317,20 @@ public class IdeaConfigurationServerManager {
 
   private IdeaServerUrlBuilder createBuilder(final String fileSpec, final RoamingType type, final String projectKey) {
     try {
-      return new IdeaServerUrlBuilder(fileSpec, type, projectKey, mySettings.getSessionId(), mySettings.getUserName(), mySettings.getPassword()) {
+      return new IdeaServerUrlBuilder(fileSpec, type, projectKey, settings.getSessionId(), settings.getUserName(), settings.getPassword()) {
         @Override
         protected void onSessionIdUpdated(final String id) {
-          mySettings.updateSession(id);
+          settings.updateSession(id);
         }
 
         @Override
         public void setDisconnectedStatus() {
-          mySettings.setStatus(IdeaServerStatus.CONNECTION_FAILED);
+          settings.setStatus(IdeaServerStatus.CONNECTION_FAILED);
         }
 
         @Override
         public void setUnauthorizedStatus() {
-          mySettings.setStatus(IdeaServerStatus.UNAUTHORIZED);
+          settings.setStatus(IdeaServerStatus.UNAUTHORIZED);
         }
       }.setReloginAutomatically(true);
     }
@@ -491,11 +491,11 @@ public class IdeaConfigurationServerManager {
   }
 
   public void registerApplicationLevelProviders(final Application application) {
-    mySettings.loadCredentials();
+    settings.loadCredentials();
 
-    if (mySettings.REMEMBER_SETTINGS || GraphicsEnvironment.isHeadless()) {
-      if (mySettings.DO_LOGIN) {
-        if (mySettings.getUserName() != null && mySettings.getPassword() != null) {
+    if (settings.REMEMBER_SETTINGS || GraphicsEnvironment.isHeadless()) {
+      if (settings.DO_LOGIN) {
+        if (settings.getUserName() != null && settings.getPassword() != null) {
           performLogin();
         }
         else {
@@ -527,7 +527,7 @@ public class IdeaConfigurationServerManager {
       failedMessage = e.getLocalizedMessage();
     }
 
-    if (mySettings.getSessionId() == null) {
+    if (settings.getSessionId() == null) {
       requestCredentials(failedMessage, true);
     }
   }
@@ -558,7 +558,7 @@ public class IdeaConfigurationServerManager {
   abstract class MyStreamProvider implements CurrentUserHolder, StreamProvider {
     @Override
     public String getCurrentUserName() {
-      return mySettings.getUserName();
+      return settings.getUserName();
     }
 
     @Override
@@ -648,19 +648,19 @@ public class IdeaConfigurationServerManager {
   }
 
   private boolean areProvidersEnabled() {
-    return mySettings.getSessionId() != null && mySettings.getStatus() == IdeaServerStatus.LOGGED_IN;
+    return settings.getSessionId() != null;
   }
 
   public void login() throws Exception {
     try {
       String sessionId = login(createBuilder(null, null, null));
       if (sessionId != null) {
-        mySettings.updateSession(sessionId);
-        mySettings.setStatus(IdeaServerStatus.LOGGED_IN);
+        settings.updateSession(sessionId);
+        settings.setStatus(IdeaServerStatus.LOGGED_IN);
       }
     }
     catch (Exception e) {
-      mySettings.setStatus(IdeaServerStatus.CONNECTION_FAILED);
+      settings.setStatus(IdeaServerStatus.CONNECTION_FAILED);
       throw e;
     }
   }
@@ -673,16 +673,16 @@ public class IdeaConfigurationServerManager {
     return ourInstance;
   }
 
-  public IdeaServerSettings getIdeaServerSettings() {
-    return mySettings;
+  public IdeaConfigurationServerSettings getIdeaServerSettings() {
+    return settings;
   }
 
   public void logout() {
-    mySettings.logout();
+    settings.logout();
   }
 
   public static String getStatusText() {
-    IdeaServerSettings settings = getInstance().getIdeaServerSettings();
+    IdeaConfigurationServerSettings settings = getInstance().getIdeaServerSettings();
     IdeaServerStatus serverStatus = settings.getStatus();
     switch (serverStatus) {
       case CONNECTION_FAILED:

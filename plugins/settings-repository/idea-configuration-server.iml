@@ -14,6 +14,17 @@
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="library" name="http-client-3.1" level="project" />
+    <orderEntry type="module-library">
+      <library name="jgit">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.1.0-201308312337-r.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.1.0-201308312337-r-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>
 

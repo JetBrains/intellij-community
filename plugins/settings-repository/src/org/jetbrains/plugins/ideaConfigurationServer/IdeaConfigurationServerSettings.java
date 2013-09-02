@@ -12,7 +12,7 @@ import org.jdom.Element;
 import java.io.File;
 import java.io.IOException;
 
-public class IdeaServerSettings {
+public class IdeaConfigurationServerSettings {
   private String myUserName = null;
   private String myPassword = null;
   private String mySessionId = null;
@@ -48,7 +48,7 @@ public class IdeaServerSettings {
   }
 
 
-  public IdeaServerSettings() {
+  public IdeaConfigurationServerSettings() {
     mySettingsFile = new File(PathManager.getSystemPath(), "idea-server/server-credentials.xml");
   }
 
