@@ -55,7 +55,7 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
           final List<PsiFile> fxmlWithController = 
             JavaFxControllerClassIndex.findFxmlWithController(containingClass.getProject(), qualifiedName);
           final String fieldName = field.getName();
-          for (PsiFile file : fxmlWithController) {
+          for (final PsiFile file : fxmlWithController) {
             final VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
             final SearchScope searchScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
               @Override
@@ -68,11 +68,11 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
             } else if (searchScope instanceof GlobalSearchScope) {
               if (!((GlobalSearchScope)searchScope).contains(virtualFile)) continue;
             }
-            file.accept(new XmlRecursiveElementVisitor() {
-              @Override
-              public void visitXmlAttributeValue(final XmlAttributeValue value) {
-                Runnable runnable = new Runnable() {
-                  public void run() {
+            final Runnable runnable = new Runnable() {
+              public void run() {
+                file.accept(new XmlRecursiveElementVisitor() {
+                  @Override
+                  public void visitXmlAttributeValue(final XmlAttributeValue value) {
                     final PsiReference reference = value.getReference();
                     if (reference != null) {
                       final PsiElement resolve = reference.resolve();
@@ -87,10 +87,10 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
                       }
                     }
                   }
-                };
-                ApplicationManager.getApplication().runReadAction(runnable);
+                });
               }
-            });
+            };
+            ApplicationManager.getApplication().runReadAction(runnable);
           }
         }
       }
