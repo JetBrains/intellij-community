@@ -4,6 +4,7 @@
   <resource-bundle>com.jetbrains.python.PyBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <nameSuggestionProvider implementation="com.jetbrains.python.refactoring.PyNameSuggestionProvider"/>
     <methodNavigationOffsetProvider implementation="com.jetbrains.python.codeInsight.PyMethodNavigationOffsetProvider"/>
     <copyPastePreProcessor implementation="com.jetbrains.python.editor.PythonCopyPasteProcessor"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -324,6 +325,7 @@
     <localInspection language="Python" shortName="PyDocstringTypesInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.docstring.types" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyDocstringTypesInspection"/>
     <localInspection language="Python" shortName="PyShadowingBuiltinsInspection" displayName="Shadowing built-ins" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyShadowingBuiltinsInspection"/>
     <localInspection language="Python" shortName="PyAbstractClassInspection" displayName="Class must implement all abstract methods" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyAbstractClassInspection"/>
+    <localInspection language="Python" shortName="PyPep8NamingInspection" displayName="PEP 8 naming convention violation" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="INFO" implementationClass="com.jetbrains.python.inspections.PyPep8NamingInspection"/>
 
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro"/>
