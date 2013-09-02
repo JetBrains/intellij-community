@@ -18,17 +18,14 @@ package com.intellij.idea;
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Restarter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -141,7 +138,7 @@ public class Main {
     if (Restarter.isSupported()) {
       List<String> args = new ArrayList<String>();
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         args.add(Restarter.createTempExecutable(launcher).getPath());
       }
@@ -166,10 +163,13 @@ public class Main {
   }
 
   public static void showMessage(String title, Throwable t) {
+    StringWriter message = new StringWriter();
+    message.append("Internal error. Please report to http://");
     boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
-    String site = studio ? "code.google.com/p/android/issues" : "youtrack.jetbrains.com";
-    String message = "Internal error. Please report to http://" + site + "\n\n" + ExceptionUtil.getThrowableText(t);
-    showMessage(title, message, true);
+    message.append(studio ? "code.google.com/p/android/issues" : "youtrack.jetbrains.com");
+    message.append("\n\n");
+    t.printStackTrace(new PrintWriter(message));
+    showMessage(title, message.toString(), true);
   }
 
   public static void showMessage(String title, String message, boolean error) {
