@@ -85,7 +85,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTok
       final String prevLeafText = prevLeaf.getText();
       if ("</".equals(prevLeafText) && prevLeaf.getElementType() == XML_END_TAG_START) {
         XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-        if (tag != null && StringUtil.isNotEmpty(tag.getName())) {
+        if (tag != null && StringUtil.isNotEmpty(tag.getName()) && TreeUtil.findSibling(prevLeaf, XmlTokenType.XML_NAME) == null) {
           EditorModificationUtil.insertStringAtCaret(editor, tag.getName() + ">");
           return Result.STOP;
         }
