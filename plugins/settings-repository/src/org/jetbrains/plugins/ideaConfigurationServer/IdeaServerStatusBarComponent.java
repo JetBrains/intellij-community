@@ -13,8 +13,9 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 
 public class IdeaServerStatusBarComponent implements StatusBarWidget, StatusBarWidget.IconPresentation, ApplicationComponent {
-  private final StatusListener myStatusListener = new StatusListener() {
-    public void statusChanged(final IdeaServerStatus status) {
+  private final StatusListener statusListener = new StatusListener() {
+    @Override
+    public void statusChanged(final IdeaConfigurationServerStatus status) {
       update();
     }
   };
@@ -22,7 +23,7 @@ public class IdeaServerStatusBarComponent implements StatusBarWidget, StatusBarW
   private static final Icon DISCONNECTED_ICON = AllIcons.Nodes.ExceptionClass;
   private static final Icon LOGGED_IN_ICON = AllIcons.Nodes.Read_access;
   private static final Icon LOGGED_OUT_ICON = AllIcons.Nodes.Write_access;
-  private StatusBar myStatusBar;
+  private StatusBar statusBar;
 
   @NotNull
   @Override
@@ -37,14 +38,13 @@ public class IdeaServerStatusBarComponent implements StatusBarWidget, StatusBarW
 
   @Override
   public void install(@NotNull StatusBar statusBar) {
-    myStatusBar = statusBar;
-    IdeaConfigurationServerManager.getInstance().getIdeaServerSettings().addStatusListener(myStatusListener);
+    this.statusBar = statusBar;
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(StatusListener.TOPIC, statusListener);
   }
 
   @Override
   public void dispose() {
-    myStatusBar = null;
-    IdeaConfigurationServerManager.getInstance().getIdeaServerSettings().removeStatusListener(myStatusListener);
+    statusBar = null;
   }
 
   @NotNull
@@ -68,7 +68,7 @@ public class IdeaServerStatusBarComponent implements StatusBarWidget, StatusBarW
     };
   }
 
-  private static Icon getStatusIcon(final IdeaServerStatus status) {
+  private static Icon getStatusIcon(final IdeaConfigurationServerStatus status) {
     switch (status) {
       case CONNECTION_FAILED:
         return DISCONNECTED_ICON;
@@ -84,12 +84,13 @@ public class IdeaServerStatusBarComponent implements StatusBarWidget, StatusBarW
   private void update() {
     Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
-      myStatusBar.updateWidget(this.ID());
+      statusBar.updateWidget(this.ID());
     }
     else {
       app.invokeLater(new Runnable() {
+        @Override
         public void run() {
-          myStatusBar.updateWidget(IdeaServerStatusBarComponent.this.ID());
+          statusBar.updateWidget(IdeaServerStatusBarComponent.this.ID());
         }
       });
     }
@@ -102,6 +103,7 @@ public class IdeaServerStatusBarComponent implements StatusBarWidget, StatusBarW
       setTitle("IntelliJ Configuration Server Settings");
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       return new IdeaServerPanel(this).getPanel();
     }

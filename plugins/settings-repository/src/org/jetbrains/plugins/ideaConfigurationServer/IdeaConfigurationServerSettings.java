@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.net.HttpConfigurable;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -15,19 +15,20 @@ import java.io.IOException;
 public class IdeaConfigurationServerSettings {
   private String myUserName = null;
   private String myPassword = null;
-  private String mySessionId = null;
-  private final File mySettingsFile;
+  private String sessionId = null;
+  private final File settingsFile;
+
   public boolean REMEMBER_SETTINGS = false;
   public boolean DO_LOGIN = false;
   private boolean mySettingsAlreadySynchronized = false;
+
   private static final String REMEMBER_SETTINGS_ATTR = "rememberSettings";
   private static final String DO_LOGIN_ATTR = "doLogin";
   private static final String PASSWORD = "password";
   private static final String LOGIN = "login";
   private static final String SETTINGS_LOADED_ATTR = "settingsLoaded";
 
-  private IdeaServerStatus myStatus = IdeaServerStatus.LOGGED_OUT;
-  private final EventDispatcher<StatusListener> myDispatcher = EventDispatcher.create(StatusListener.class);
+  private IdeaConfigurationServerStatus status = IdeaConfigurationServerStatus.LOGGED_OUT;
 
   private final HttpConfigurable myProxySettings = new HttpConfigurable();
 
@@ -49,13 +50,13 @@ public class IdeaConfigurationServerSettings {
 
 
   public IdeaConfigurationServerSettings() {
-    mySettingsFile = new File(PathManager.getSystemPath(), "idea-server/server-credentials.xml");
+    settingsFile = new File(PathManager.getSystemPath(), "idea-server/server-credentials.xml");
   }
 
   public void save() {
-    mySettingsFile.getParentFile().mkdirs();
+    settingsFile.getParentFile().mkdirs();
     try {
-      JDOMUtil.writeDocument(createCredentialsDocument(), mySettingsFile, "\n");
+      JDOMUtil.writeDocument(createCredentialsDocument(), settingsFile, "\n");
     }
     catch (IOException e) {
       //ignore
@@ -63,9 +64,9 @@ public class IdeaConfigurationServerSettings {
   }
 
   public void loadCredentials() {
-    if (mySettingsFile.isFile()) {
+    if (settingsFile.isFile()) {
       try {
-        Document document = JDOMUtil.loadDocument(mySettingsFile);
+        Document document = JDOMUtil.loadDocument(settingsFile);
         Element element = document.getRootElement();
         if (element != null) {
           myUserName = element.getAttributeValue(LOGIN);
@@ -96,7 +97,7 @@ public class IdeaConfigurationServerSettings {
   }
 
   public String getSessionId() {
-    return mySessionId;
+    return sessionId;
   }
 
   public void update(final String login, final String password) {
@@ -105,17 +106,17 @@ public class IdeaConfigurationServerSettings {
   }
 
   public void updateSession(final String session) {
-    mySessionId = session;
+    sessionId = session;
   }
 
-  public IdeaServerStatus getStatus() {
-    return myStatus;
+  public IdeaConfigurationServerStatus getStatus() {
+    return status;
   }
 
-  public void setStatus(final IdeaServerStatus status) {
-    if (myStatus != status) {
-      myStatus = status;
-      myDispatcher.getMulticaster().statusChanged(status);
+  public void setStatus(IdeaConfigurationServerStatus status) {
+    if (this.status != status) {
+      this.status = status;
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(StatusListener.TOPIC).statusChanged(status);
     }
   }
 
@@ -128,16 +129,8 @@ public class IdeaConfigurationServerSettings {
   }
 
   public void logout() {
-    mySessionId = null;
-    setStatus(IdeaServerStatus.LOGGED_OUT);
-  }
-
-  public void addStatusListener(final StatusListener statusListener) {
-    myDispatcher.addListener(statusListener);
-  }
-
-  public void removeStatusListener(final StatusListener statusListener) {
-    myDispatcher.removeListener(statusListener);
+    sessionId = null;
+    setStatus(IdeaConfigurationServerStatus.LOGGED_OUT);
   }
 
   public HttpConfigurable getHttpProxySettings() {

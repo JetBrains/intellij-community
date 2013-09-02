@@ -60,10 +60,10 @@ public class IdeaConfigurationServerManager {
         myUpdateAlarm.cancelAllRequests();
         try {
           try {
-            if (settings.getStatus() == IdeaServerStatus.CONNECTION_FAILED && settings.getUserName() != null && settings.getPassword() != null) {
+            if (settings.getStatus() == IdeaConfigurationServerStatus.CONNECTION_FAILED && settings.getUserName() != null && settings.getPassword() != null) {
               login();
             }
-            else if (settings.getStatus() == IdeaServerStatus.LOGGED_IN && settings.getUserName() != null && settings.getPassword() != null) {
+            else if (settings.getStatus() == IdeaConfigurationServerStatus.LOGGED_IN && settings.getUserName() != null && settings.getPassword() != null) {
               ping();
             }
           }
@@ -77,10 +77,10 @@ public class IdeaConfigurationServerManager {
       }
     };
 
-    settings.addStatusListener(new StatusListener() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(StatusListener.TOPIC, new StatusListener() {
       @Override
-      public void statusChanged(final IdeaServerStatus status) {
-        if (status == IdeaServerStatus.LOGGED_IN) {
+      public void statusChanged(final IdeaConfigurationServerStatus status) {
+        if (status == IdeaConfigurationServerStatus.LOGGED_IN) {
           if (!settings.wereSettingsSynchronized()) {
             try {
               backupConfig();
@@ -325,12 +325,12 @@ public class IdeaConfigurationServerManager {
 
         @Override
         public void setDisconnectedStatus() {
-          settings.setStatus(IdeaServerStatus.CONNECTION_FAILED);
+          settings.setStatus(IdeaConfigurationServerStatus.CONNECTION_FAILED);
         }
 
         @Override
         public void setUnauthorizedStatus() {
-          settings.setStatus(IdeaServerStatus.UNAUTHORIZED);
+          settings.setStatus(IdeaConfigurationServerStatus.UNAUTHORIZED);
         }
       }.setReloginAutomatically(true);
     }
@@ -541,7 +541,7 @@ public class IdeaConfigurationServerManager {
     }
     else {
       new LoginDialogWrapper(failedMessage).show();
-      if (getIdeaServerSettings().getStatus() == IdeaServerStatus.LOGGED_IN) {
+      if (getIdeaServerSettings().getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
         updateConfigFilesFromServer();
       }
     }
@@ -656,11 +656,11 @@ public class IdeaConfigurationServerManager {
       String sessionId = login(createBuilder(null, null, null));
       if (sessionId != null) {
         settings.updateSession(sessionId);
-        settings.setStatus(IdeaServerStatus.LOGGED_IN);
+        settings.setStatus(IdeaConfigurationServerStatus.LOGGED_IN);
       }
     }
     catch (Exception e) {
-      settings.setStatus(IdeaServerStatus.CONNECTION_FAILED);
+      settings.setStatus(IdeaConfigurationServerStatus.CONNECTION_FAILED);
       throw e;
     }
   }
@@ -683,7 +683,7 @@ public class IdeaConfigurationServerManager {
 
   public static String getStatusText() {
     IdeaConfigurationServerSettings settings = getInstance().getIdeaServerSettings();
-    IdeaServerStatus serverStatus = settings.getStatus();
+    IdeaConfigurationServerStatus serverStatus = settings.getStatus();
     switch (serverStatus) {
       case CONNECTION_FAILED:
         return "Connection failed";

@@ -28,7 +28,7 @@ public class IdeaServerPanel {
     myActionButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         try {
-          if (settings.getStatus() == IdeaServerStatus.LOGGED_IN) {
+          if (settings.getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
             IdeaConfigurationServerManager.getInstance().logout();
           }
           else {
@@ -100,7 +100,7 @@ public class IdeaServerPanel {
 
   private void update() {
     myStatusLabel.setText("Current status: " + IdeaConfigurationServerManager.getStatusText());
-    if (IdeaConfigurationServerManager.getInstance().getIdeaServerSettings().getStatus() == IdeaServerStatus.LOGGED_IN) {
+    if (IdeaConfigurationServerManager.getInstance().getIdeaServerSettings().getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
       myActionButton.setText("Logout");
     }
     else {

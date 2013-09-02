@@ -9,10 +9,10 @@
                                   
   <application-components>
     <component>
-      <implementation-class>com.intellij.openapi.project.impl.IdeaServerProjectLoadListener</implementation-class>
+      <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IdeaServerProjectLoadListener</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.project.impl.IdeaServerStatusBarComponent</implementation-class>
+      <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IdeaServerStatusBarComponent</implementation-class>
     </component>
   </application-components>
 
