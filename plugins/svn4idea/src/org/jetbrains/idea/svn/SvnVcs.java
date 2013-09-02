@@ -404,13 +404,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstanceChecked(myProject);
     plVcsManager.startBackgroundVcsOperation();
     try {
-      final SVNChangelistClient client = createChangelistClient();
       for (LocalChangeList list : lists) {
         if (!list.isDefault()) {
           final Collection<Change> changes = list.getChanges();
           for (Change change : changes) {
-            correctListForRevision(plVcsManager, change.getBeforeRevision(), client, list.getName());
-            correctListForRevision(plVcsManager, change.getAfterRevision(), client, list.getName());
+            correctListForRevision(plVcsManager, change.getBeforeRevision(), list.getName());
+            correctListForRevision(plVcsManager, change.getAfterRevision(), list.getName());
           }
         }
       }
@@ -431,16 +430,17 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
-  private static void correctListForRevision(final ProjectLevelVcsManager plVcsManager, final ContentRevision revision,
-                                             final SVNChangelistClient client, final String name) {
+  private void correctListForRevision(@NotNull final ProjectLevelVcsManager plVcsManager,
+                                      @Nullable final ContentRevision revision,
+                                      @NotNull final String name) {
     if (revision != null) {
       final FilePath path = revision.getFile();
       final AbstractVcs vcs = plVcsManager.getVcsFor(path);
       if (vcs != null && VCS_NAME.equals(vcs.getName())) {
         try {
-          client.doAddToChangelist(new File[]{path.getIOFile()}, SVNDepth.EMPTY, name, null);
+          getFactory(path.getIOFile()).createChangeListClient().add(name, path.getIOFile(), null);
         }
-        catch (SVNException e) {
+        catch (VcsException e) {
           // left in default list
         }
       }
