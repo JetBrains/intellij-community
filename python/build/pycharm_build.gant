@@ -349,7 +349,7 @@ private layoutWin(Map args, String target) {
     }
 
     dir("skeletons") {
-      fileset(dir: "$home/python/skeletons") {
+      fileset(dir: "$pythonCommunityHome/skeletons") {
         include(name: "skeletons-win*.zip")
       }
     }
@@ -390,7 +390,7 @@ private layoutMac(Map _args, String target) {
     }
 
     dir("skeletons") {
-      fileset(dir: "$home/python/skeletons") {
+      fileset(dir: "$pythonCommunityHome/skeletons") {
         include(name: "skeletons-mac*.zip")
       }
     }
