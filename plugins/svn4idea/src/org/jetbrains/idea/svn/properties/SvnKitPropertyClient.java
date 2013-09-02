@@ -40,17 +40,34 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
   }
 
   @Override
+  public void getProperty(@NotNull SvnTarget target,
+                          @NotNull String property,
+                          @Nullable SVNRevision revision,
+                          @Nullable SVNDepth depth,
+                          @Nullable ISVNPropertyHandler handler) throws VcsException {
+    runGetProperty(target, property, revision, depth, handler);
+  }
+
+  @Override
   public void list(@NotNull SvnTarget target,
                    @Nullable SVNRevision revision,
                    @Nullable SVNDepth depth,
                    @Nullable ISVNPropertyHandler handler) throws VcsException {
+    runGetProperty(target, null, revision, depth, handler);
+  }
+
+  private void runGetProperty(@NotNull SvnTarget target,
+                              @Nullable String property,
+                              @Nullable SVNRevision revision,
+                              @Nullable SVNDepth depth,
+                              @Nullable ISVNPropertyHandler handler) throws VcsException {
     SVNWCClient client = myVcs.createWCClient();
 
     try {
       if (target.isURL()) {
-        client.doGetProperty(target.getURL(), null, target.getPegRevision(), revision, depth, handler);
+        client.doGetProperty(target.getURL(), property, target.getPegRevision(), revision, depth, handler);
       } else {
-        client.doGetProperty(target.getFile(), null, target.getPegRevision(), revision, depth, handler, null);
+        client.doGetProperty(target.getFile(), property, target.getPegRevision(), revision, depth, handler, null);
       }
     } catch (SVNException e) {
       throw new VcsException(e);
