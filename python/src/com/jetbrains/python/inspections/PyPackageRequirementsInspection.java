@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -21,8 +22,6 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Function;
-import com.jetbrains.cython.psi.CythonCImportStatement;
-import com.jetbrains.cython.psi.CythonFromCImportStatement;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
@@ -111,9 +110,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public void visitPyFromImportStatement(PyFromImportStatement node) {
-      if (node instanceof CythonFromCImportStatement) {
-        return;
-      }
       final PyReferenceExpression expr = node.getImportSource();
       if (expr != null) {
         checkPackageNameInRequirements(expr);
@@ -122,9 +118,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public void visitPyImportStatement(PyImportStatement node) {
-      if (node instanceof CythonCImportStatement) {
-        return;
-      }
       for (PyImportElement element : node.getImportElements()) {
         final PyReferenceExpression expr = element.getImportReferenceExpression();
         if (expr != null) {
@@ -134,6 +127,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     private void checkPackageNameInRequirements(@NotNull PyQualifiedExpression importedExpression) {
+      for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
+        if (extension.ignorePackageNameInRequirements(importedExpression)) {
+          return;
+        }
+      }
       final List<PyExpression> expressions = PyResolveUtil.unwindQualifiers(importedExpression);
       if (!expressions.isEmpty()) {
         final PyExpression packageReferenceExpression = expressions.get(0);

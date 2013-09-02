@@ -15,9 +15,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import com.jetbrains.cython.psi.CythonFile;
-import com.jetbrains.cython.types.CythonBuiltinType;
-import com.jetbrains.cython.types.CythonType;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -233,9 +230,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
       final PsiFile file = node.getContainingFile();
-      if (file instanceof CythonFile && ((CythonFile)file).isIncludeFile()) {
-        return;
-      }
       final InjectedLanguageManager injectedLanguageManager =
         InjectedLanguageManager.getInstance(node.getProject());
       if (injectedLanguageManager.isInjectedFragment(file)) {
@@ -325,7 +319,16 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         unresolved = (target == null);
       }
       if (unresolved) {
-        registerUnresolvedReferenceProblem(node, reference, severity);
+        boolean ignoreUnresolved = false;
+        for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
+          if (extension.ignoreUnresolvedReference(node, reference)) {
+            ignoreUnresolved = true;
+            break;
+          }
+        }
+        if (!ignoreUnresolved) {
+          registerUnresolvedReferenceProblem(node, reference, severity);
+        }
         // don't highlight unresolved imports as unused
         if (node.getParent() instanceof PyImportElement) {
           myAllImports.remove(node.getParent());
@@ -477,7 +480,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (qualifier != null) {
             PyType qtype = myTypeEvalContext.getType(qualifier);
             if (qtype != null) {
-              if (ignoreUnresolvedMemberForType(qtype, reference, ref_text)) {
+              if (ignoreUnresolvedMemberForType(qtype, reference, refname)) {
                 return;
               }
               addCreateMemberFromUsageFixes(qtype, reference, ref_text, actions);
@@ -628,7 +631,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       return null;
     }
 
-    private boolean ignoreUnresolvedMemberForType(@NotNull PyType qtype, PsiReference reference, String refText) {
+    private boolean ignoreUnresolvedMemberForType(@NotNull PyType qtype, PsiReference reference, String name) {
       if (qtype instanceof PyNoneType || PyTypeChecker.isUnknown(qtype)) {
         // this almost always means that we don't know the type, so don't show an error in this case
         return true;
@@ -644,7 +647,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (overridesGetAttr(cls, myTypeEvalContext)) {
           return true;
         }
-        if (cls.findProperty(refText) != null) {
+        if (cls.findProperty(name) != null) {
           return true;
         }
         if (PyUtil.hasUnresolvedAncestors(cls, myTypeEvalContext)) {
@@ -653,15 +656,16 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (isDecoratedAsDynamic(cls, true)) {
           return true;
         }
-        if (hasUnresolvedDynamicMember((PyClassType)qtype, reference, refText)) return true;
-      }
-      if (qtype instanceof CythonBuiltinType ||
-          (qtype instanceof CythonType && reference instanceof PyOperatorReference)) {
-        return true;
+        if (hasUnresolvedDynamicMember((PyClassType)qtype, reference, name)) return true;
       }
       if (qtype instanceof PyFunctionType) {
         final Callable callable = ((PyFunctionType)qtype).getCallable();
         if (callable instanceof PyFunction && ((PyFunction)callable).getDecoratorList() != null) {
+          return true;
+        }
+      }
+      for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
+        if (extension.ignoreUnresolvedMember(qtype, name)) {
           return true;
         }
       }
@@ -670,11 +674,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     private static boolean hasUnresolvedDynamicMember(@NotNull final PyClassType qtype,
                                                       PsiReference reference,
-                                                      @NotNull final String refText) {
+                                                      @NotNull final String name) {
       for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
         final Collection<PyDynamicMember> resolveResult = provider.getMembers(qtype, reference.getElement());
         for (PyDynamicMember member : resolveResult) {
-          if (member.getName().equals(refText)) return true;
+          if (member.getName().equals(name)) return true;
         }
       }
       return false;

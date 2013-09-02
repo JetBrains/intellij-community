@@ -126,7 +126,10 @@ public class PythonSdkUpdater implements StartupActivity {
   private static void updateSysPath(final Sdk sdk) throws InvalidSdkException {
     long start_time = System.currentTimeMillis();
     final List<String> sysPath = PythonSdkType.getSysPath(sdk.getHomePath());
-    sysPath.add(PyUserSkeletonsUtil.getUserSkeletonsPath());
+    final VirtualFile file = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
+    if (file != null) {
+      sysPath.add(file.getPath());
+    }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {

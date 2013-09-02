@@ -5,9 +5,6 @@
     <content url="file://$MODULE_DIR$/ideSrc">
       <sourceFolder url="file://$MODULE_DIR$/ideSrc" isTestSource="false" />
     </content>
-    <content url="file://$MODULE_DIR$/resources">
-      <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
-    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-impl" />
@@ -22,6 +19,7 @@
     <orderEntry type="module" module-name="relaxng" scope="RUNTIME" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="webide-api" />
+    <orderEntry type="module" module-name="python-ide-community" exported="" />
   </component>
 </module>
 
