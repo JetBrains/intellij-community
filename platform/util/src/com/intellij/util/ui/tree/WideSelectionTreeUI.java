@@ -69,8 +69,35 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   }
 
   private final MouseListener mySelectionListener = new MouseAdapter() {
-    @Override
+    boolean handled = false;
     public void mousePressed(@NotNull final MouseEvent e) {
+      handled = false;
+      if (!isSelected(e)) {
+        handled = true;
+        handle(e);
+      }
+    }
+
+    @Override
+    public void mouseReleased(@NotNull final MouseEvent e) {
+      if (!handled) {
+        handle(e);
+      }
+    }
+
+    private boolean isSelected(MouseEvent e) {
+      final JTree tree = (JTree)e.getSource();
+      final int selected = tree.getClosestRowForLocation(e.getX(), e.getY());
+      for (int row : tree.getSelectionRows()) {
+        if (row == selected) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    private void handle(MouseEvent e) {
       final JTree tree = (JTree)e.getSource();
       if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger()) {
         // if we can't stop any ongoing editing, do nothing

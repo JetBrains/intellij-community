@@ -19,26 +19,26 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
  * @author peter
  */
-public class OsInfoUsageCollector extends UsagesCollector {
+public class OsNameUsageCollector extends UsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
-    return ContainerUtil.newHashSet(new UsageDescriptor(SystemInfo.OS_NAME, 1),
-                                    new UsageDescriptor(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, 1));
+    String osName = SystemInfo.isLinux ? "Linux" : SystemInfo.isMac ? "Mac OS X" : SystemInfo.isWindows ? "Windows" : SystemInfo.OS_NAME;
+    return Collections.singleton(new UsageDescriptor(osName, 1));
   }
 
   @NotNull
   @Override
   public GroupDescriptor getGroupId() {
-    return GroupDescriptor.create("user.os");
+    return GroupDescriptor.create("user.os.name");
   }
 }
