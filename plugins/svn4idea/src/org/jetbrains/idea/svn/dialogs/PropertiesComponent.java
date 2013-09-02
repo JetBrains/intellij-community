@@ -280,7 +280,7 @@ public class PropertiesComponent extends JPanel {
       SVNPropertyData propValue = null;
       try {
         propValue = myVcs.getFactory(myFile).createPropertyClient()
-          .getProperty(myFile, SVNProperty.KEYWORDS, false, SVNRevision.UNDEFINED, SVNRevision.WORKING);
+          .getProperty(SvnTarget.fromFile(myFile), SVNProperty.KEYWORDS, false, SVNRevision.WORKING);
       }
       catch (VcsException e1) {
         // show erorr message

@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -27,6 +28,7 @@ import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.*;
@@ -47,7 +49,6 @@ public class BranchInfo {
   private final String myBranchUrl;
   private final String myTrunkUrl;
   private final String myTrunkCorrected;
-  private final SVNWCClient myClient;
   private final SvnVcs myVcs;
 
   private SvnMergeInfoCache.CopyRevison myCopyRevison;
@@ -60,7 +61,6 @@ public class BranchInfo {
     myBranchUrl = branchUrl;
     myTrunkUrl = trunkUrl;
     myTrunkCorrected = trunkCorrected;
-    myClient = client;
 
     myPathMergedMap = new HashMap<String, Set<Long>>();
     myPartlyMerged = new MultiMap<Long, String>();
@@ -207,10 +207,12 @@ public class BranchInfo {
     }
 
     final SVNPropertyData mergeinfoProperty;
+    SvnTarget target = SvnTarget.fromURL(branchUrl);
+
     try {
-        mergeinfoProperty = myClient.doGetProperty(branchUrl, SVNProperty.MERGE_INFO, SVNRevision.UNDEFINED, SVNRevision.create(targetRevision));
+      mergeinfoProperty = myVcs.getFactory(target).createPropertyClient().getProperty(target, SVNProperty.MERGE_INFO, false, SVNRevision.create(targetRevision));
     }
-    catch (SVNException e) {
+    catch (VcsException e) {
       LOG.info(e);
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
@@ -280,14 +282,18 @@ public class BranchInfo {
     try {
       if (actualRevision == targetRevisionCorrected) {
         // look in WC
-        mergeinfoProperty = myClient.doGetProperty(pathFile, SVNProperty.MERGE_INFO, SVNRevision.WORKING, SVNRevision.WORKING);
+        SvnTarget target = SvnTarget.fromFile(pathFile, SVNRevision.WORKING);
+        mergeinfoProperty =
+          myVcs.getFactory(target).createPropertyClient().getProperty(target, SVNProperty.MERGE_INFO, false, SVNRevision.WORKING);
       } else {
         // in repo
         myMixedRevisionsFound = true;
-        mergeinfoProperty = myClient.doGetProperty(svnInfo.getURL(), SVNProperty.MERGE_INFO, SVNRevision.UNDEFINED, SVNRevision.create(targetRevisionCorrected));
+        SvnTarget target = SvnTarget.fromURL(svnInfo.getURL());
+        mergeinfoProperty = myVcs.getFactory(target).createPropertyClient()
+          .getProperty(target, SVNProperty.MERGE_INFO, false, SVNRevision.create(targetRevisionCorrected));
       }
     }
-    catch (SVNException e) {
+    catch (VcsException e) {
       LOG.info(e);
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }

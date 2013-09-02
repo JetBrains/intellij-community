@@ -10,18 +10,15 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-import java.io.File;
-
 /**
  * @author Konstantin Kolosovsky.
  */
 public interface PropertyClient extends SvnClient {
 
   @Nullable
-  SVNPropertyData getProperty(@NotNull final File path,
+  SVNPropertyData getProperty(@NotNull final SvnTarget target,
                               @NotNull final String property,
                               boolean revisionProperty,
-                              @Nullable SVNRevision pegRevision,
                               @Nullable SVNRevision revision) throws VcsException;
 
   void getProperty(@NotNull SvnTarget target, @NotNull String property,

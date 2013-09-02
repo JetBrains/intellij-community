@@ -68,7 +68,8 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
       public void handleProperty(File path, SVNPropertyData property) throws SVNException {
         final String key = keyFromFile(path);
         synchronized (myLock) {
-          myDataMap.put(key, SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(replaceSeparators(property.getValue().getString())), null));
+          myDataMap.put(key, SVNMergeInfoUtil
+            .parseMergeInfo(new StringBuffer(replaceSeparators(SVNPropertyValue.getPropertyAsString(property.getValue()))), null));
         }
       }
 

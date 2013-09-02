@@ -159,7 +159,7 @@ public class SvnMergeProvider implements MergeProvider {
       File ioFile = new File(file.getPath());
       PropertyClient client = vcs.getFactory(ioFile).createPropertyClient();
 
-      SVNPropertyData svnPropertyData = client.getProperty(ioFile, SVNProperty.MIME_TYPE, false, SVNRevision.UNDEFINED, SVNRevision.WORKING);
+      SVNPropertyData svnPropertyData = client.getProperty(SvnTarget.fromFile(ioFile), SVNProperty.MIME_TYPE, false, SVNRevision.WORKING);
       if (svnPropertyData != null && SVNProperty.isBinaryMimeType(SVNPropertyValue.getPropertyAsString(svnPropertyData.getValue()))) {
         return true;
       }
