@@ -11,6 +11,7 @@ import org.jetbrains.idea.svn.content.CmdContentClient;
 import org.jetbrains.idea.svn.copy.CmdCopyMoveClient;
 import org.jetbrains.idea.svn.delete.CmdDeleteClient;
 import org.jetbrains.idea.svn.history.CmdHistoryClient;
+import org.jetbrains.idea.svn.integrate.CmdMergeClient;
 import org.jetbrains.idea.svn.properties.CmdPropertyClient;
 import org.jetbrains.idea.svn.revert.CmdRevertClient;
 
@@ -34,6 +35,7 @@ public class CmdClientFactory extends ClientFactory {
     copyMoveClient = new CmdCopyMoveClient();
     conflictClient = new CmdConflictClient();
     propertyClient = new CmdPropertyClient();
+    mergeClient = new CmdMergeClient();
     statusClient = new SvnCommandLineStatusClient(myVcs.getProject());
     infoClient = new SvnCommandLineInfoClient(myVcs.getProject());
   }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -36,6 +37,10 @@ import java.util.regex.Pattern;
  * Time: 5:13 PM
  */
 public class UpdateOutputLineConverter {
+
+  private final static String MERGING = "--- Merging";
+  private final static String RECORDING_MERGE_INFO = "--- Recording mergeinfo";
+
   private final static String UPDATING = "Updating";
   private final static String AT_REVISION = "At revision (\\d+)\\.";
   private final static String UPDATED_TO_REVISION = "Updated to revision (\\d+)\\.";
@@ -66,7 +71,9 @@ public class UpdateOutputLineConverter {
     // TODO: Now it works ok because parseNormalLine could not determine necessary statuses from that and further lines
     if (StringUtil.isEmptyOrSpaces(line)) return null;
 
-    if (line.startsWith(UPDATING)) {
+    if (line.startsWith(MERGING) || line.startsWith(RECORDING_MERGE_INFO)) {
+      return null;
+    } else if (line.startsWith(UPDATING)) {
       myCurrentFile = parseForPath(line);
       return new SVNEvent(myCurrentFile, myCurrentFile == null ? null : (myCurrentFile.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE),
                     null, -1, null, null, null, null, SVNEventAction.UPDATE_NONE, SVNEventAction.UPDATE_NONE, null, null, null, null, null);
@@ -116,7 +123,7 @@ public class UpdateOutputLineConverter {
 
     final String path = line.substring(4).trim();
     if (StringUtil.isEmptyOrSpaces(path)) return null;
-    final File file = new File(myBase, path);
+    final File file = createFile(path);
     if (SVNStatusType.STATUS_OBSTRUCTED.equals(contentsStatus)) {
       // obstructed
       return new SVNEvent(file, file.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE,
@@ -140,6 +147,10 @@ public class UpdateOutputLineConverter {
 
     return new SVNEvent(file, file.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE, null, -1, contentsStatus, propertiesStatus, null,
                         null, action, expectedAction, null, null, null, null, null);
+  }
+
+  private File createFile(String path) {
+    return FileUtil.isAbsolute(path) ? new File(path) : new File(myBase, path);
   }
 
   @Nullable
@@ -174,6 +185,6 @@ public class UpdateOutputLineConverter {
     if (idx2 == -1) return null;
     final String substring = line.substring(idx1 + 1, idx2);
     if (".".equals(substring)) return myBase;
-    return new File(myBase, substring);
+    return createFile(substring);
   }
 }
