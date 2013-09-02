@@ -17,6 +17,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -25,28 +26,33 @@ import java.io.InputStream;
 public interface StreamProvider {
   StreamProvider[] EMPTY_ARRAY = new StreamProvider[0];
   StreamProvider DEFAULT = new StreamProvider(){
-    public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType, boolean async) throws IOException {
+    @Override
+    public void saveContent(final String fileSpec, @NotNull final InputStream content, final long size, final RoamingType roamingType, boolean async) throws IOException {
 
     }
 
+    @Override
     public InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException {
       return null;
     }
 
+    @Override
     public String[] listSubFiles(final String fileSpec) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
+    @Override
     public void deleteFile(final String fileSpec, final RoamingType roamingType) {
 
     }
 
+    @Override
     public boolean isEnabled() {
       return false;
     }
   };
 
-  void saveContent(String fileSpec, InputStream content, final long size, final RoamingType roamingType, boolean async) throws IOException;
+  void saveContent(String fileSpec, @NotNull InputStream content, final long size, final RoamingType roamingType, boolean async) throws IOException;
 
   @Nullable
   InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException;
