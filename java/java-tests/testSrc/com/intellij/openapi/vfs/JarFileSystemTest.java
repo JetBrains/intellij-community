@@ -68,6 +68,7 @@ public class JarFileSystemTest extends IdeaTestCase {
 
   public void testJarRefresh() throws IOException {
     File jar = IoTestUtil.createTestJar();
+    assertTrue(jar.setLastModified(jar.lastModified() - 1000));
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
     assertNotNull(vFile);
 
