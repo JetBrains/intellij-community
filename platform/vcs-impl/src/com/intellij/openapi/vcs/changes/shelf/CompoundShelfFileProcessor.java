@@ -168,7 +168,7 @@ public class CompoundShelfFileProcessor {
     }
   }
 
-  private void copyFileContentToProviders(final String newFilePath, final StreamProvider serverStreamProvider, final File file)
+  private static void copyFileContentToProviders(final String newFilePath, final StreamProvider serverStreamProvider, final File file)
       throws IOException {
     FileInputStream input = new FileInputStream(file);
     try {
@@ -181,7 +181,7 @@ public class CompoundShelfFileProcessor {
     }
   }
 
-  private void copyFileToStream(final InputStream stream, final File file) throws IOException {
+  private static void copyFileToStream(final InputStream stream, final File file) throws IOException {
     FileOutputStream out = new FileOutputStream(file);
     try {
       FileUtil.copy(stream, out);
@@ -191,7 +191,7 @@ public class CompoundShelfFileProcessor {
     }
   }
 
-  private String getNewFileName(final String serverFileName, final List<String> serverFileNames, final List<String> localFileNames) {
+  private static String getNewFileName(final String serverFileName, final List<String> serverFileNames, final List<String> localFileNames) {
     String name = FileUtil.getNameWithoutExtension(serverFileName);
     String ext = FileUtilRt.getExtension(serverFileName);
     for (int i = 1; ;i++) {

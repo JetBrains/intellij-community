@@ -315,7 +315,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Override
-  public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType, boolean async) {
+  public void saveContent(final String fileSpec, @NotNull final InputStream content, final long size, final RoamingType roamingType, boolean async) {
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
         if (streamProvider.isEnabled()) {
