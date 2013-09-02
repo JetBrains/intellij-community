@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
@@ -9,6 +9,16 @@ import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.filter.PathFilter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.ConnectException;
@@ -16,46 +26,39 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-class IdeaServerConnector {
+final class IdeaServerConnector {
   private static final int TIMEOUT = 10000;
+  private final Repository repository;
 
-  private IdeaServerConnector() {
+  public IdeaServerConnector() throws IOException {
+    File gitDir = new File(PathManager.getSystemPath(), "ideaConfigurationServer/data");
+    FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
+    repositoryBuilder.setGitDir(new File(gitDir, Constants.DOT_GIT));
+    repository = repositoryBuilder.build();
+    if (!gitDir.exists()) {
+      repository.create();
+    }
+
+    // todo sync with remote
   }
 
   public static void send(File file, IdeaServerUrlBuilder builder) throws IOException {
     doPost(builder, "upload", file, ContentProcessor.EMPTY);
   }
 
-  public static InputStream loadUserPreferences(final IdeaServerUrlBuilder builder) throws IOException {
-    final File tempFile = FileUtil.createTempFile("configr", "download");
-    tempFile.deleteOnExit();
-    final OutputStream result = new FileOutputStream(tempFile);
-    try {
-      doPost(builder, "download", null, new ContentProcessor() {
-        public void processStream(final InputStream line) throws IOException {
-          FileUtil.copy(line, result);
-        }
-      });
-    }
-    finally {
-      result.close();
+  @Nullable
+  public InputStream loadUserPreferences(@NotNull String path) throws IOException {
+    TreeWalk treeWalk = new TreeWalk(repository);
+    treeWalk.addTree(new RevWalk(repository).parseCommit(repository.resolve(Constants.HEAD)).getTree());
+    treeWalk.setRecursive(true);
+    treeWalk.setFilter(PathFilter.create(path));
+    if (!treeWalk.next()) {
+      return null;
     }
 
-    return new FileInputStream(tempFile) {
-      @Override
-      public void close() throws IOException {
-        try {
-          super.close();
-        }
-        finally {
-          FileUtil.delete(tempFile);
-        }
-      }
-    };
-  }
-
-  public static void logout(final IdeaServerUrlBuilder builderLogout) throws IOException {
-    doPost(builderLogout, "logout", null, ContentProcessor.EMPTY);
+    ObjectId objectId = treeWalk.getObjectId(0);
+    ObjectLoader loader = repository.open(objectId);
+    return loader.openStream();
   }
 
   public static void loadAllFiles(IdeaServerUrlBuilder builder, final ContentProcessor processor) throws IOException {
@@ -66,6 +69,7 @@ class IdeaServerConnector {
     void processStream(InputStream line) throws IOException;
 
     ContentProcessor EMPTY = new ContentProcessor() {
+      @Override
       public void processStream(final InputStream line) {
 
       }
@@ -74,10 +78,10 @@ class IdeaServerConnector {
 
   private static void doPost(final IdeaServerUrlBuilder builder, final String actionName, File input, ContentProcessor processor)
     throws IOException {
-    doPostImpl(builder, actionName, input, processor, builder.isReloginAutomatically());
+    doPostImpl(builder, actionName, input, processor);
   }
 
-  private static void doPostImpl(final IdeaServerUrlBuilder builder, final String actionName, File file, ContentProcessor processor, boolean relogin)
+  private static void doPostImpl(final IdeaServerUrlBuilder builder, final String actionName, File file, ContentProcessor processor)
     throws IOException {
     try {
       final Pair<HttpClient, HttpConnection> pair = createConnection(builder);
@@ -103,15 +107,7 @@ class IdeaServerConnector {
           if (code != HttpStatus.SC_OK) {
 
             String reason = postMethod.getResponseBodyAsString().trim();
-
-            if (relogin && HttpStatus.SC_UNAUTHORIZED == code && ("Session expired".equals(reason) || "Session disconnected".equals(reason))) {
-              String sessionId = login(builder.createLoginBuilder());
-              builder.updateSessionId(sessionId);
-              doPostImpl(builder, actionName, file, processor, false);
-              return;
-            }
-
-            else if (HttpStatus.SC_UNAUTHORIZED == code) {
+            if (HttpStatus.SC_UNAUTHORIZED == code) {
               builder.setUnauthorizedStatus();
               return;
             }
@@ -191,6 +187,7 @@ class IdeaServerConnector {
   public static String[] listSubFileNames(IdeaServerUrlBuilder builder) throws IOException {
     final List<String> result = new ArrayList<String>();
     doPost(builder, "list", null, new ContentProcessor() {
+      @Override
       public void processStream(final InputStream stream) throws IOException {
         final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
         String line;
@@ -202,32 +199,6 @@ class IdeaServerConnector {
       }
     });
     return ArrayUtil.toStringArray(result);
-  }
-
-  public static String login(final IdeaServerUrlBuilder builder) throws IOException {
-    final Pair<HttpClient, HttpConnection> pair = createConnection(builder);
-
-    try {
-      final PostMethod postMethod = new PostMethod(builder.getServerUrl() + "/" + "login");
-
-      postMethod.setQueryString(builder.getLoginQueryString());
-      /*an attempt to pass proxy credentials to Apache HttpClient API used for connection
-      -> with no success since Apache only pass credentials if secure connection protocol is used (a bug)
-       did not work before common proxy, so keep as is for now*/
-      postMethod.execute(pair.getFirst().getState(), pair.getSecond());
-
-      String response = postMethod.getResponseBodyAsString();
-      int rc = postMethod.getStatusCode();
-
-      if (rc != HttpStatus.SC_OK) {
-        // TODO: It may worth logging response string somewhere. See IDEADEV-34868
-        throw new IOException("Login failed. Server responds with error code " + rc);
-      }
-      return response.trim();
-    }
-    finally {
-      pair.getSecond().close();
-    }
   }
 
   public static String ping(final IdeaServerUrlBuilder builder) throws IOException {

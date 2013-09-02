@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.*;
-import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -41,14 +40,19 @@ import java.util.zip.ZipOutputStream;
 public class IdeaConfigurationServerManager {
   private static final Logger LOG = Logger.getInstance(IdeaConfigurationServerManager.class);
 
+  private static final ExecutorService ourThreadExecutorsService = ConcurrencyUtil.newSingleThreadExecutor("IdeaServer executor");
+
   private static final String PROJECT_ID_KEY = "IDEA_SERVER_PROJECT_ID";
 
+  private static final IdeaConfigurationServerManager instance = new IdeaConfigurationServerManager();
+
   private final IdeaConfigurationServerSettings settings;
-  private static final IdeaConfigurationServerManager ourInstance = new IdeaConfigurationServerManager();
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private final Runnable myUpdateRequest;
   private final File myLocalCopyDir;
-  private Map<String, String> myProjectHashToKey = null;
+  private Map<String, String> myProjectHashToKey;
+
+  private IdeaServerConnector serverConnector;
 
   public IdeaConfigurationServerManager() {
     settings = new IdeaConfigurationServerSettings();
@@ -101,6 +105,10 @@ public class IdeaConfigurationServerManager {
         }
       }
     });
+  }
+
+  public static IdeaConfigurationServerManager getInstance() {
+    return instance;
   }
 
   private static void backupConfig() {
@@ -196,10 +204,9 @@ public class IdeaConfigurationServerManager {
         return new FileInputStream(localFileCopy);
       }
     }
-    catch (FileNotFoundException e) {
-      return IdeaServerConnector.loadUserPreferences(builder);
+    catch (FileNotFoundException ignored) {
     }
-    return IdeaServerConnector.loadUserPreferences(builder);
+    return serverConnector.loadUserPreferences(builder.buildPath());
   }
 
   private static boolean canUseLocalCopy(IdeaServerUrlBuilder builder) {
@@ -253,15 +260,11 @@ public class IdeaConfigurationServerManager {
     return ArrayUtil.toStringArray(result);
   }
 
-  public static String login(IdeaServerUrlBuilder urlBuilder) throws IOException {
-    return IdeaServerConnector.login(urlBuilder);
-  }
-
   private static String ping(IdeaServerUrlBuilder urlBuilder) throws IOException {
     return IdeaServerConnector.ping(urlBuilder);
   }
 
-  private static String getProjectKey(final Project project) {
+  private static String getProjectId(final Project project) {
     String id = PropertiesComponent.getInstance(project).getValue(PROJECT_ID_KEY);
     if (id == null) {
       id = UUID.randomUUID().toString();
@@ -270,58 +273,39 @@ public class IdeaConfigurationServerManager {
     return id;
   }
 
-  public void registerProjectLevelProviders(Project project) {
-    final String projectKey = getProjectKey(project);
-    final StateStorageManager manager = ((ProjectEx)project).getStateStore().getStateStorageManager();
-    manager.registerStreamProvider(new MyStreamProvider() {
-      @Override
-      public void saveContent(String fileSpec, @NotNull InputStream content, long size, RoamingType roamingType, boolean async) throws IOException {
-        saveFileContent(content, size, createBuilder(fileSpec, RoamingType.PER_PLATFORM, projectKey), async);
-      }
+  public void registerApplicationLevelProviders(Application application) {
+    settings.load();
 
-      @Override
-      protected IdeaServerUrlBuilder createBuilderInt(final String fileSpec) {
-        return createBuilder(fileSpec, RoamingType.PER_PLATFORM, projectKey);
-      }
-
-      @Override
-      public InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException {
-        return loadUserPreferences(createBuilder(fileSpec, RoamingType.PER_PLATFORM, projectKey));
-      }
-    }, RoamingType.PER_PLATFORM);
-
-    manager.registerStreamProvider(new MyStreamProvider() {
-      @Override
-      public void saveContent(final String fileSpec, @NotNull final InputStream content, final long size, final RoamingType roamingType,
-                              boolean async) throws IOException {
-
-        saveFileContent(content, size, createBuilder(fileSpec, RoamingType.PER_USER, projectKey), async);
-      }
-
-      @Override
-      protected IdeaServerUrlBuilder createBuilderInt(final String fileSpec) {
-        return createBuilder(fileSpec, RoamingType.PER_USER, projectKey);
-      }
-
-      @Override
-      public InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException {
-        if (StoragePathMacros.WORKSPACE_FILE.equals(fileSpec)) {
-          return loadUserPreferences(createBuilderInt(fileSpec));
+    if (settings.REMEMBER_SETTINGS || GraphicsEnvironment.isHeadless()) {
+      if (settings.DO_LOGIN) {
+        if (settings.getUserName() != null && settings.getPassword() != null) {
+          login();
         }
         else {
-          return null;
+          requestCredentials("Login failed, user name and password should not be empty", true);
         }
       }
-    }, RoamingType.PER_USER);
+    }
+    else {
+      requestCredentials(null, true);
+    }
+
+    StateStorageManager storageManager = ((ApplicationImpl)application).getStateStore().getStateStorageManager();
+    registerProvider(storageManager, RoamingType.PER_USER);
+    registerProvider(storageManager, RoamingType.PER_PLATFORM);
+    registerProvider(storageManager, RoamingType.GLOBAL);
+  }
+
+  public void registerProjectLevelProviders(Project project) {
+    String projectKey = getProjectId(project);
+    StateStorageManager manager = ((ProjectEx)project).getStateStore().getStateStorageManager();
+    manager.registerStreamProvider(new ICSStreamProvider(projectKey, RoamingType.PER_PLATFORM), RoamingType.PER_PLATFORM);
+    manager.registerStreamProvider(new ICSStreamProvider(projectKey, RoamingType.PER_USER), RoamingType.PER_USER);
   }
 
   private IdeaServerUrlBuilder createBuilder(final String fileSpec, final RoamingType type, final String projectKey) {
     try {
-      return new IdeaServerUrlBuilder(fileSpec, type, projectKey, settings.getSessionId(), settings.getUserName(), settings.getPassword()) {
-        @Override
-        protected void onSessionIdUpdated(final String id) {
-          settings.updateSession(id);
-        }
+      return new IdeaServerUrlBuilder(fileSpec, type, projectKey) {
 
         @Override
         public void setDisconnectedStatus() {
@@ -332,7 +316,7 @@ public class IdeaConfigurationServerManager {
         public void setUnauthorizedStatus() {
           settings.setStatus(IdeaConfigurationServerStatus.UNAUTHORIZED);
         }
-      }.setReloginAutomatically(true);
+      };
     }
     finally {
       if (projectKey != null) {
@@ -483,53 +467,8 @@ public class IdeaConfigurationServerManager {
     });
   }
 
-  private static final ExecutorService ourThreadExecutorsService = ConcurrencyUtil.newSingleThreadExecutor("IdeaServer executor");
-
-
   private static void executeOnPooledThread(final Runnable runnable) {
     ourThreadExecutorsService.submit(runnable);
-  }
-
-  public void registerApplicationLevelProviders(final Application application) {
-    settings.loadCredentials();
-
-    if (settings.REMEMBER_SETTINGS || GraphicsEnvironment.isHeadless()) {
-      if (settings.DO_LOGIN) {
-        if (settings.getUserName() != null && settings.getPassword() != null) {
-          performLogin();
-        }
-        else {
-          requestCredentials("Login failed, user name and password should not be empty", true);
-        }
-      }
-    }
-    else {
-      requestCredentials(null, true);
-    }
-
-
-    StateStorageManager storageManager = ((ApplicationImpl)application).getStateStore().getStateStorageManager();
-    registerProvider(storageManager, RoamingType.PER_USER);
-    registerProvider(storageManager, RoamingType.PER_PLATFORM);
-    registerProvider(storageManager, RoamingType.GLOBAL);
-  }
-
-  public void performLogin() {
-    String failedMessage = null;
-    try {
-      login();
-    }
-    catch (ConnectException e) {
-      ErrorMessageDialog.show("Login to IntelliJ Configuration Server", e.getLocalizedMessage(), true);
-      return;
-    }
-    catch (Exception e) {
-      failedMessage = e.getLocalizedMessage();
-    }
-
-    if (settings.getSessionId() == null) {
-      requestCredentials(failedMessage, true);
-    }
   }
 
   public void requestCredentials(final String failedMessage, boolean isStartupMode) {
@@ -563,7 +502,8 @@ public class IdeaConfigurationServerManager {
 
     @Override
     public boolean isEnabled() {
-      return areProvidersEnabled();
+      // todo configurable
+      return true;
     }
 
     @Override
@@ -573,39 +513,19 @@ public class IdeaConfigurationServerManager {
 
     @Override
     public void deleteFile(final String fileSpec, final RoamingType roamingType) {
-      //do nothing
     }
-
-    protected abstract IdeaServerUrlBuilder createBuilderInt(String fileSpec);
   }
 
-  private void registerProvider(final StateStorageManager storageManager, final RoamingType type) {
-    storageManager.registerStreamProvider(new MyStreamProvider() {
-      @Override
-      public void saveContent(final String fileSpec, @NotNull final InputStream content, final long size, final RoamingType roamingType,
-                              boolean async) throws IOException {
-
-        saveFileContent(content, size, createBuilder(fileSpec, type, null), async);
-      }
-
-      @Override
-      public InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException {
-        return loadUserPreferences(createBuilder(fileSpec, type, null));
-      }
-
+  private void registerProvider(StateStorageManager storageManager, RoamingType type) {
+    storageManager.registerStreamProvider(new ICSStreamProvider(null, type) {
       @Override
       public String[] listSubFiles(final String fileSpec) {
-        return listSubFileNames(createBuilder(fileSpec, type, null));
+        return listSubFileNames(createBuilder(fileSpec, roamingType, null));
       }
 
       @Override
-      public void deleteFile(final String fileSpec, final RoamingType roamingType) {
-        deleteUserPreferencesAsync(createBuilder(fileSpec, type, null));
-      }
-
-      @Override
-      protected IdeaServerUrlBuilder createBuilderInt(final String fileSpec) {
-        return createBuilder(fileSpec, type, null);
+      public void deleteFile(String fileSpec, RoamingType roamingType) {
+        deleteUserPreferencesAsync(createBuilder(fileSpec, this.roamingType, null));
       }
     }, type);
   }
@@ -647,30 +567,19 @@ public class IdeaConfigurationServerManager {
     }
   }
 
-  private boolean areProvidersEnabled() {
-    return settings.getSessionId() != null;
-  }
-
-  public void login() throws Exception {
+  public void login() {
     try {
-      String sessionId = login(createBuilder(null, null, null));
-      if (sessionId != null) {
-        settings.updateSession(sessionId);
-        settings.setStatus(IdeaConfigurationServerStatus.LOGGED_IN);
-      }
+      serverConnector = new IdeaServerConnector();
+      settings.setStatus(IdeaConfigurationServerStatus.LOGGED_IN);
     }
-    catch (Exception e) {
+    catch (IOException e) {
       settings.setStatus(IdeaConfigurationServerStatus.CONNECTION_FAILED);
-      throw e;
+      LOG.error(e);
     }
   }
 
   public String ping() throws IOException {
     return ping(createBuilder(null, null, null));
-  }
-
-  public static IdeaConfigurationServerManager getInstance() {
-    return ourInstance;
   }
 
   public IdeaConfigurationServerSettings getIdeaServerSettings() {
@@ -739,6 +648,40 @@ public class IdeaConfigurationServerManager {
         catch (Throwable e) {
           LOG.debug(e);
         }
+      }
+    }
+  }
+
+  private class ICSStreamProvider extends MyStreamProvider {
+    private final String projectId;
+    // todo StreamProvider must be general and use passed roamingType
+    protected final RoamingType roamingType;
+
+    public ICSStreamProvider(@Nullable String projectId, @NotNull RoamingType roamingType) {
+      this.projectId = projectId;
+      this.roamingType = roamingType;
+    }
+
+    @Override
+    public void saveContent(String fileSpec, @NotNull InputStream content, long size, RoamingType roamingType, boolean async) throws IOException {
+      saveFileContent(content, size, createBuilder(fileSpec, this.roamingType, projectId), async);
+    }
+
+    private IdeaServerUrlBuilder createBuilderInt(String fileSpec) {
+      return createBuilder(fileSpec, roamingType, projectId);
+    }
+
+    @Override
+    @Nullable
+    public InputStream loadContent(String fileSpec, RoamingType roamingType) throws IOException {
+      if (projectId == null || roamingType == RoamingType.PER_PLATFORM) {
+        return loadUserPreferences(createBuilder(fileSpec, this.roamingType, projectId));
+      }
+      else if (StoragePathMacros.WORKSPACE_FILE.equals(fileSpec)) {
+        return loadUserPreferences(createBuilderInt(fileSpec));
+      }
+      else {
+        return null;
       }
     }
   }

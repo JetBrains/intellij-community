@@ -12,7 +12,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.net.ConnectException;
 
 
 public abstract class LoginDialogPanel {
@@ -208,15 +207,6 @@ public abstract class LoginDialogPanel {
       settings.update(myLogin.getText(), new String(myPassword.getPassword()));
       IdeaConfigurationServerManager.getInstance().login();
       closeDialog(true);
-    }
-    catch (ConnectException e) {
-      showErrorMessage(prepareMessage(exceptionMessage(e)), onTimer);
-      if (onTimer) {
-        closeDialog(true);
-      }
-      else {
-        myTimerLabel.stopCounter();
-      }
     }
     catch (Exception e) {
       showErrorMessage(prepareMessage(exceptionMessage(e)), onTimer);

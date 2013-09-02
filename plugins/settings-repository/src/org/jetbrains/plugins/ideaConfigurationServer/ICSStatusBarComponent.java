@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 
-public class IdeaServerStatusBarComponent implements StatusBarWidget, StatusBarWidget.IconPresentation, ApplicationComponent {
+public class IcsStatusBarComponent implements StatusBarWidget, StatusBarWidget.IconPresentation, ApplicationComponent {
   private final StatusListener statusListener = new StatusListener() {
     @Override
     public void statusChanged(final IdeaConfigurationServerStatus status) {
@@ -90,7 +90,7 @@ public class IdeaServerStatusBarComponent implements StatusBarWidget, StatusBarW
       app.invokeLater(new Runnable() {
         @Override
         public void run() {
-          statusBar.updateWidget(IdeaServerStatusBarComponent.this.ID());
+          statusBar.updateWidget(IcsStatusBarComponent.this.ID());
         }
       });
     }
@@ -120,7 +120,7 @@ public class IdeaServerStatusBarComponent implements StatusBarWidget, StatusBarW
     WindowManager.getInstance().addListener(new WindowManagerListener() {
       @Override
       public void frameCreated(IdeFrame frame) {
-        frame.getStatusBar().addWidget(IdeaServerStatusBarComponent.this);
+        frame.getStatusBar().addWidget(IcsStatusBarComponent.this);
         WindowManager.getInstance().removeListener(this);
       }
 

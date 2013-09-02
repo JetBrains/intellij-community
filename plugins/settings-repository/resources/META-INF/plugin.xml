@@ -9,15 +9,15 @@
                                   
   <application-components>
     <component>
-      <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IdeaServerProjectLoadListener</implementation-class>
+      <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IcsProjectLoadListener</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IdeaServerStatusBarComponent</implementation-class>
+      <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IcsStatusBarComponent</implementation-class>
     </component>
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
-    <ApplicationLoadListener implementation="com.intellij.openapi.project.impl.IdeaServerApplicationLoadListener"/>
+    <ApplicationLoadListener implementation="org.jetbrains.plugins.ideaConfigurationServer.IcsApplicationLoadListener"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
 </idea-plugin>
