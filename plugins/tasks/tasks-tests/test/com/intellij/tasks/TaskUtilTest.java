@@ -32,6 +32,7 @@ public class TaskUtilTest {
   public void testDateParsings() throws Exception {
     final Date expected = FORMATTER.parse("2013-08-23 10:11:12.000");
     final Date expectedWithMillis = FORMATTER.parse("2013-08-23 10:11:12.100");
+    final Date expectedDateOnly = FORMATTER.parse("2013-08-23 00:00:00.000");
     // JIRA, Redmine and Pivotal
     compareDates(expectedWithMillis, "2013-08-23T14:11:12.100+0400");
     // Trello
@@ -41,11 +42,13 @@ public class TaskUtilTest {
 
     // Formatting variations
     compareDates(expected, "2013/08/23 10:11:12");
+    compareDates(expectedDateOnly, "2013-08-23");
     compareDates(expectedWithMillis, "2013-08-23 14:11:12.100123+04");
 
     // Malformed date
     assertNull(TaskUtil.parseDate("Fri Aug 23 14:11:12 MSK 2013"));
-    assertNull(TaskUtil.parseDate("2013/00/23"));
+    assertNull(TaskUtil.parseDate("2013:00:23"));
     assertNull(TaskUtil.parseDate("2013/08/23 10:11:12 GMT+04:00"));
+    assertNull(TaskUtil.parseDate("2013-08-23+0400"));
   }
 }
