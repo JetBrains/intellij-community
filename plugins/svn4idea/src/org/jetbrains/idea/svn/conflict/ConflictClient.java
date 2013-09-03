@@ -11,5 +11,5 @@ import java.io.File;
  */
 public interface ConflictClient extends SvnClient {
 
-  void resolve(@NotNull File path, boolean resolvePropertyConflicts) throws VcsException;
+  void resolve(@NotNull File path, boolean resolveProperty, boolean resolveContent, boolean resolveTree) throws VcsException;
 }

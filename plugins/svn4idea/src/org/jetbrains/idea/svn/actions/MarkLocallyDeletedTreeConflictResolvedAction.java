@@ -97,12 +97,13 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends AnAction {
   }
 
   private void resolve(Project project, Ref<VcsException> exception, FilePath path) {
-    final SVNWCClient client = SvnVcs.getInstance(project).createWCClient();
+    SvnVcs vcs = SvnVcs.getInstance(project);
+
     try {
-      client.doResolve(path.getIOFile(), SVNDepth.EMPTY, false, false, true, SVNConflictChoice.MERGED);
+      vcs.getFactory(path.getIOFile()).createConflictClient().resolve(path.getIOFile(), false, false, true);
     }
-    catch (SVNException e1) {
-      exception.set(new VcsException(e1));
+    catch (VcsException e) {
+      exception.set(e);
     }
   }
 
