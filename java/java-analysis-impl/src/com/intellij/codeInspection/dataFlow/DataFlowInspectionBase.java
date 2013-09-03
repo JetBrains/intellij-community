@@ -47,6 +47,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -133,11 +134,27 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder) {
     if (scope == null) return;
+
+    PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class);
+    if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) return;
+
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
+    analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Arrays.asList(dfaRunner.createMemoryState()));
+  }
+
+  private void analyzeDfaWithNestedClosures(PsiElement scope,
+                                            ProblemsHolder holder,
+                                            StandardDataFlowRunner dfaRunner,
+                                            Collection<DfaMemoryState> initialStates) {
     final StandardInstructionVisitor visitor = new DataFlowInstructionVisitor(dfaRunner);
-    final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS);
+    final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS, initialStates);
     if (rc == RunnerResult.OK) {
       createDescription(dfaRunner, holder, visitor);
+
+      MultiMap<PsiElement,DfaMemoryState> nestedClosures = dfaRunner.getNestedClosures();
+      for (PsiElement closure : nestedClosures.keySet()) {
+        analyzeDfaWithNestedClosures(closure, holder, dfaRunner, nestedClosures.get(closure));
+      }
     }
     else if (rc == RunnerResult.TOO_COMPLEX) {
       if (scope.getParent() instanceof PsiMethod) {
