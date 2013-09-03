@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -24,7 +23,7 @@ public class IcsSettings {
   private final File settingsFile;
 
   public IcsSettings() {
-    settingsFile = new File(PathManager.getSystemPath(), "ideaConfigurationServer/state.xml");
+    settingsFile = new File(IcsManager.PLUGIN_SYSTEM_DIR, "state.xml");
   }
 
   public void save() {

@@ -4,6 +4,7 @@ import com.intellij.ide.ApplicationLoadListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
@@ -21,6 +22,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -32,6 +34,8 @@ public class IcsManager {
   private static final String PROJECT_ID_KEY = "IDEA_SERVER_PROJECT_ID";
 
   private static final IcsManager instance = new IcsManager();
+
+  public static final File PLUGIN_SYSTEM_DIR = new File(PathManager.getSystemPath(), "ideaConfigurationServer");
 
   private final IcsSettings settings;
   private final Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());

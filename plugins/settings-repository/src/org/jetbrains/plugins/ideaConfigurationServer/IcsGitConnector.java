@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
@@ -35,7 +34,7 @@ final class IcsGitConnector {
   private final Set<String> filesToAdd = new THashSet<String>();
 
   public IcsGitConnector() throws IOException {
-    File gitDir = new File(PathManager.getSystemPath(), "ideaConfigurationServer/data");
+    File gitDir = new File(IcsManager.PLUGIN_SYSTEM_DIR, "data");
     FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
     repositoryBuilder.setGitDir(new File(gitDir, Constants.DOT_GIT));
     Repository repository = repositoryBuilder.build();
