@@ -15,13 +15,11 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
-import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
