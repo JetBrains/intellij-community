@@ -1,6 +1,7 @@
 package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
+import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -138,7 +139,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     consoleRunner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
       @Override
-      public void handleConsoleInitialized(LanguageConsoleViewImpl consoleView) {
+      public void handleConsoleInitialized(LanguageConsoleView consoleView) {
         mySemaphore0.release();
       }
     });
