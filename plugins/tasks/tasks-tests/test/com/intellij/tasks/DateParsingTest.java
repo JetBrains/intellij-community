@@ -14,7 +14,7 @@ import static org.junit.Assert.assertNull;
 /**
  * @author Mikhail Golubev
  */
-public class TaskUtilTest {
+public class DateParsingTest {
   private static final SimpleDateFormat FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
   static {
     FORMATTER.setTimeZone(TimeZone.getTimeZone("GMT"));
