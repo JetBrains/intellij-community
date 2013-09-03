@@ -40,7 +40,8 @@ import java.util.Comparator;
 /**
  * @author nik
  */
-public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode {
+public class XValueNodeImpl extends XValueContainerNode<XValue>
+  implements XValueNode, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode {
   public static final Comparator<XValueNodeImpl> COMPARATOR = new Comparator<XValueNodeImpl>() {
     @Override
     public int compare(XValueNodeImpl o1, XValueNodeImpl o2) {
@@ -170,11 +171,13 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   private void updateText() {
     myText.clear();
-    XValueMarkers<?,?> markers = ((XDebugSessionImpl)myTree.getSession()).getValueMarkers();
-    if (markers != null) {
-      ValueMarkup markup = markers.getMarkup(myValueContainer);
-      if (markup != null) {
-        myText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
+    if (myTree.getSession() instanceof XDebugSessionImpl) {
+      XValueMarkers<?, ?> markers = ((XDebugSessionImpl)myTree.getSession()).getValueMarkers();
+      if (markers != null) {
+        ValueMarkup markup = markers.getMarkup(myValueContainer);
+        if (markup != null) {
+          myText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
+        }
       }
     }
     appendName();
