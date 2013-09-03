@@ -37,14 +37,14 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.zip.ZipOutputStream;
 
-public class IdeaConfigurationServerManager {
-  private static final Logger LOG = Logger.getInstance(IdeaConfigurationServerManager.class);
+public class IcsManager {
+  private static final Logger LOG = Logger.getInstance(IcsManager.class);
 
   private static final ExecutorService ourThreadExecutorsService = ConcurrencyUtil.newSingleThreadExecutor("IdeaServer executor");
 
   private static final String PROJECT_ID_KEY = "IDEA_SERVER_PROJECT_ID";
 
-  private static final IdeaConfigurationServerManager instance = new IdeaConfigurationServerManager();
+  private static final IcsManager instance = new IcsManager();
 
   private final IdeaConfigurationServerSettings settings;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
@@ -54,7 +54,7 @@ public class IdeaConfigurationServerManager {
 
   private IcsGitConnector serverConnector;
 
-  public IdeaConfigurationServerManager() {
+  public IcsManager() {
     settings = new IdeaConfigurationServerSettings();
     myLocalCopyDir = new File(PathManager.getSystemPath(), "ideaConfigurationServer");
 
@@ -107,7 +107,7 @@ public class IdeaConfigurationServerManager {
     });
   }
 
-  public static IdeaConfigurationServerManager getInstance() {
+  public static IcsManager getInstance() {
     return instance;
   }
 

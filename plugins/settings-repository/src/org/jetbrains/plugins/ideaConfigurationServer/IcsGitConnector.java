@@ -161,7 +161,7 @@ final class IcsGitConnector {
 
     URI uri = new URI(builder.getServerUrl(), false);
 
-    HttpConfigurable proxySettings = IdeaConfigurationServerManager.getInstance().getIdeaServerSettings().getHttpProxySettings();
+    HttpConfigurable proxySettings = IcsManager.getInstance().getIdeaServerSettings().getHttpProxySettings();
     //proxySettings.prepareURL(uri.toString());
     CommonProxy.getInstance().ensureAuthenticator();
 //    CommonProxy.getInstance().setCustomAuth(proxySettings);

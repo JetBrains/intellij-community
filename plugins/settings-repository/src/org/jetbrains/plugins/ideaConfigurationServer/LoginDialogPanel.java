@@ -71,7 +71,7 @@ public abstract class LoginDialogPanel {
 
     myCreateAccountLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-    myProxySettingsPanel = new HTTPProxySettingsPanel(IdeaConfigurationServerManager.getInstance().getIdeaServerSettings().getHttpProxySettings());
+    myProxySettingsPanel = new HTTPProxySettingsPanel(IcsManager.getInstance().getIdeaServerSettings().getHttpProxySettings());
     myProxyPanel.add(myProxySettingsPanel.createComponent(), BorderLayout.CENTER);
   }
 
@@ -114,7 +114,7 @@ public abstract class LoginDialogPanel {
       myFailedMessage.setVisible(true);
       myFailedMessage.setText(failedMessage);
     }
-    IdeaConfigurationServerSettings settings = IdeaConfigurationServerManager.getInstance().getIdeaServerSettings();
+    IdeaConfigurationServerSettings settings = IcsManager.getInstance().getIdeaServerSettings();
     myLogin.setText(settings.getUserName());
     myPassword.setText(settings.getPassword());
     if (settings.REMEMBER_SETTINGS && settings.DO_LOGIN) {
@@ -132,7 +132,7 @@ public abstract class LoginDialogPanel {
 
   private void closeDialog(final boolean doLogin) {
     stopCounter();
-    IdeaConfigurationServerSettings settings = IdeaConfigurationServerManager.getInstance().getIdeaServerSettings();
+    IdeaConfigurationServerSettings settings = IcsManager.getInstance().getIdeaServerSettings();
     //settings.update(myLogin.getText(), new String(myPassword.getPassword()), mySession);
     rememberStartupSettings(settings, doLogin);
 
@@ -199,13 +199,13 @@ public abstract class LoginDialogPanel {
 
   private void doLogin(final boolean onTimer) {
     try {
-      IdeaConfigurationServerSettings settings = IdeaConfigurationServerManager.getInstance().getIdeaServerSettings();
+      IdeaConfigurationServerSettings settings = IcsManager.getInstance().getIdeaServerSettings();
 
       myProxySettingsPanel.apply();
 
 
       settings.update(myLogin.getText(), new String(myPassword.getPassword()));
-      IdeaConfigurationServerManager.getInstance().login();
+      IcsManager.getInstance().login();
       closeDialog(true);
     }
     catch (Exception e) {

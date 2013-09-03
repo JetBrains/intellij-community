@@ -13,16 +13,16 @@ final class IcsProjectLoadListener implements ApplicationComponent, SettingsSavi
 
   @Override
   public void initComponent() {
-    IdeaConfigurationServerManager.getInstance().startPing();
+    IcsManager.getInstance().startPing();
   }
 
   @Override
   public void disposeComponent() {
-    IdeaConfigurationServerManager.getInstance().stopPing();
+    IcsManager.getInstance().stopPing();
   }
 
   @Override
   public void save() {
-    IdeaConfigurationServerManager.getInstance().getIdeaServerSettings().save();
+    IcsManager.getInstance().getIdeaServerSettings().save();
   }
 }

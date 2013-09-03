@@ -29,10 +29,10 @@ public class IdeaServerPanel {
       public void actionPerformed(ActionEvent e) {
         try {
           if (settings.getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
-            IdeaConfigurationServerManager.getInstance().logout();
+            IcsManager.getInstance().logout();
           }
           else {
-            IdeaConfigurationServerManager.getInstance().requestCredentials(null, false);
+            IcsManager.getInstance().requestCredentials(null, false);
           }
         }
         finally {
@@ -94,13 +94,13 @@ public class IdeaServerPanel {
   }
 
   private IdeaConfigurationServerSettings getSettings() {
-    return IdeaConfigurationServerManager.getInstance().getIdeaServerSettings();
+    return IcsManager.getInstance().getIdeaServerSettings();
   }
 
 
   private void update() {
-    myStatusLabel.setText("Current status: " + IdeaConfigurationServerManager.getStatusText());
-    if (IdeaConfigurationServerManager.getInstance().getIdeaServerSettings().getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
+    myStatusLabel.setText("Current status: " + IcsManager.getStatusText());
+    if (IcsManager.getInstance().getIdeaServerSettings().getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
       myActionButton.setText("Logout");
     }
     else {
