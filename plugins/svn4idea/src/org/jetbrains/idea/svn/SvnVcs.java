@@ -956,6 +956,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       result = client.doInfo(ioFile, SVNRevision.UNDEFINED);
       SVNInfo localInfo = result;
       if (result == null || result.getRepositoryRootURL() == null) {
+        LOG.info("Failed to get local info for " + ioFile + ". Trying to get HEAD info.");
         result = client.doInfo(ioFile, SVNRevision.HEAD);
         if (result != null) {
           LOG.info("Local info was " + localInfo + ", HEAD info was " + result);
@@ -987,9 +988,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
 
     if (SVNErrorCode.WC_PATH_NOT_FOUND.equals(errorCode) ||
-        SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode) || SVNErrorCode.WC_NOT_WORKING_COPY.equals(errorCode)) {
+        SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode) ||
+        SVNErrorCode.WC_NOT_WORKING_COPY.equals(errorCode) ||
+        // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
+        SVNErrorCode.ILLEGAL_TARGET.equals(errorCode)) {
       LOG.debug(e);
-    } else {
+    }
+    else {
       LOG.error(e);
     }
   }

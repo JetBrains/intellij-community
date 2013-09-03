@@ -122,6 +122,9 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
         } else {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, e), e);
         }
+      // svn: E200009: Could not display info for all targets because some targets don't exist
+      } else if (notEmpty && text.contains("some targets don't exist")) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, e), e);
       }
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
