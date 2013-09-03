@@ -36,9 +36,12 @@ import java.util.regex.Pattern;
  */
 public class TaskUtil {
   private static SimpleDateFormat ISO8601_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-  // Almost ISO-8601 strict except date parts may be separated by '/' as well
+  // Almost ISO-8601 strict except date parts may be separated by '/'
+  // and date only also allowed just in case
   private static Pattern ISO8601_DATE_PATTERN = Pattern.compile(
-    "(\\d{4}[/-]\\d{2}[/-]\\d{2})[ T](\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)?");
+    "(\\d{4}[/-]\\d{2}[/-]\\d{2})" +                  // date
+    "(?:[ T](\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?" +      // optional time and milliseconds
+    "([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)?)?");// optional timezone info
 
   public static String formatTask(@NotNull Task task, String format) {
     return format.replace("{id}", task.getId()).replace("{number}", task.getNumber())
@@ -58,7 +61,8 @@ public class TaskUtil {
     String text;
     if (task.isIssue()) {
       text = task.getId() + ": " + task.getSummary();
-    } else {
+    }
+    else {
       text = task.getSummary();
     }
     return StringUtil.first(text, 60, true);
@@ -75,15 +79,20 @@ public class TaskUtil {
     }
     String datePart = m.group(1).replace('/', '-');
     String timePart = m.group(2);
+    if (timePart == null) {
+      timePart = "00:00:00";
+    }
     String milliseconds = m.group(3);
-    milliseconds = milliseconds == null? "000" : milliseconds.substring(1, 4);
+    milliseconds = milliseconds == null ? "000" : milliseconds.substring(1, 4);
     String timezone = m.group(4);
     if (timezone == null || timezone.equals("Z")) {
       timezone = "+0000";
-    } else if (timezone.length() == 3) {
+    }
+    else if (timezone.length() == 3) {
       // [+-]HH
       timezone += "00";
-    } else if (timezone.length() == 6) {
+    }
+    else if (timezone.length() == 6) {
       // [+-]HH:MM
       timezone = timezone.substring(0, 3) + timezone.substring(4, 6);
     }
