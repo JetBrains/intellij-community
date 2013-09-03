@@ -86,7 +86,6 @@ class GitLogRecord {
 
   // trivial access methods
   String getHash() { return lookup(HASH); }
-  String getShortHash() { return lookup(SHORT_HASH); }
   String getAuthorName() { return lookup(AUTHOR_NAME); }
   String getAuthorEmail() { return lookup(AUTHOR_EMAIL); }
   String getCommitterName() { return lookup(COMMITTER_NAME); }
