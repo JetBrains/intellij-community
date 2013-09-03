@@ -3,23 +3,21 @@
   <problem>
     <file>dupes.py</file>
     <line>2</line>
-    <description>Shadows same-named class above</description>
+    <description>Shadows a class with the same name defined above</description>
   </problem>
   <problem>
     <file>dupes.py</file>
     <line>5</line>
-    <description>Shadows same-named function above</description>
+    <description>Shadows a function with the same name defined above</description>
   </problem>
   <problem>
     <file>dupes.py</file>
     <line>8</line>
-    <description>Shadows same-named function above</description>
+    <description>Shadows a function with the same name defined above</description>
   </problem>
-  <!--
   <problem>
     <file>dupes.py</file>
     <line>9</line>
-    <description>Shadows same-named variable above</description>
+    <description>Shadows a variable with the same name defined above</description>
   </problem>
-  -->
 </problems>
