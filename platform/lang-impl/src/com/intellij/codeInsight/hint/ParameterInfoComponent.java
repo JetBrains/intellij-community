@@ -31,6 +31,7 @@ import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -253,14 +254,14 @@ public class ParameterInfoComponent extends JPanel {
 
         myOneLineComponents[i] = new OneLineComponent();
 
-        int startOffset = -1;
-        int endOffset = -1;
+        TextRange range = null;
         if (highlightStartOffset >= 0 && highlightEndOffset > lineOffset && highlightStartOffset < lineOffset + line.length()) {
-          startOffset = Math.max(highlightStartOffset - lineOffset, 0);
-          endOffset = Math.min(highlightEndOffset - lineOffset, line.length());
+          int startOffset = Math.max(highlightStartOffset - lineOffset, 0);
+          int endOffset = Math.min(highlightEndOffset - lineOffset, line.length());
+          range = TextRange.create(startOffset, endOffset);
         }
 
-        buf.append(myOneLineComponents[i].setup(line, startOffset, endOffset, isDisabled, strikeout, background));
+        buf.append(myOneLineComponents[i].setup(line, isDisabled, strikeout, background, range));
 
         if (isDisabledBeforeHighlight) {
           if (highlightStartOffset < 0 || highlightEndOffset > lineOffset) {
@@ -341,11 +342,13 @@ public class ParameterInfoComponent extends JPanel {
                                           new Insets(0, 0, 0, 0), 0, 0));
     }
 
-    private String setup(String text, int startOffset, int endOffset, boolean isDisabled, boolean isStrikeout, Color background) {
+    private String setup(String text,
+                         boolean isDisabled,
+                         boolean isStrikeout,
+                         Color background, @Nullable TextRange range) {
       Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap = new TreeMap<TextRange, ParameterInfoUIContextEx.Flag>(TEXT_RANGE_COMPARATOR);
-      final TextRange highlight = TextRange.create(startOffset, endOffset);
-      if (!highlight.isEmpty())
-        flagsMap.put(highlight, ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+      if (range != null)
+        flagsMap.put(range, ParameterInfoUIContextEx.Flag.HIGHLIGHT);
       if (isDisabled)
         flagsMap.put(TextRange.create(0, text.length()), ParameterInfoUIContextEx.Flag.DISABLE);
       if (isStrikeout)
