@@ -20,7 +20,7 @@ public class IdeaServerPanel {
 
   public IdeaServerPanel(DialogWrapper parent) {
     myParent = parent;
-    final IdeaConfigurationServerSettings settings = getSettings();
+    final IcsSettings settings = getSettings();
 
     final TitledBorder border = (TitledBorder)myStartupPanel.getBorder();
     border.setTitle("On next " + ApplicationNamesInfo.getInstance().getProductName() + " startup");
@@ -45,7 +45,7 @@ public class IdeaServerPanel {
 
     ActionListener actionListener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        IdeaConfigurationServerSettings settings = getSettings();
+        IcsSettings settings = getSettings();
         settings.REMEMBER_SETTINGS = myLoginSilently.isSelected() || myDoNotLogin.isSelected();
         settings.DO_LOGIN = myLoginSilently.isSelected() || myShowDialog.isSelected();
       }
@@ -75,7 +75,7 @@ public class IdeaServerPanel {
   }
 
   private void apply() {
-    final IdeaConfigurationServerSettings settings = getSettings();
+    final IcsSettings settings = getSettings();
 
     if (myLoginSilently.isSelected()) {
       settings.REMEMBER_SETTINGS = true;
@@ -93,7 +93,7 @@ public class IdeaServerPanel {
     }
   }
 
-  private IdeaConfigurationServerSettings getSettings() {
+  private IcsSettings getSettings() {
     return IcsManager.getInstance().getIdeaServerSettings();
   }
 

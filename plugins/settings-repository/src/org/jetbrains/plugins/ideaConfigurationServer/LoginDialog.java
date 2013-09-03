@@ -20,7 +20,7 @@ public class LoginDialog extends DialogBase {
       }
 
       @Override
-      protected void rememberStartupSettings(final IdeaConfigurationServerSettings settings, final boolean doLogin) {
+      protected void rememberStartupSettings(final IcsSettings settings, final boolean doLogin) {
         settings.REMEMBER_SETTINGS = myLoginSilently.isSelected() || myDoNotLogin.isSelected();
         settings.DO_LOGIN = myLoginSilently.isSelected() || myShowDialog.isSelected();
       }

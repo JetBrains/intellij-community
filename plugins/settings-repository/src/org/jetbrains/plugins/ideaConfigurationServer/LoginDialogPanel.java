@@ -111,7 +111,7 @@ public abstract class LoginDialogPanel {
       myFailedMessage.setVisible(true);
       myFailedMessage.setText(failedMessage);
     }
-    IdeaConfigurationServerSettings settings = IcsManager.getInstance().getIdeaServerSettings();
+    IcsSettings settings = IcsManager.getInstance().getIdeaServerSettings();
     myLogin.setText(settings.getUserName());
     myPassword.setText(settings.getPassword());
     myShowDialog.setSelected(true);
@@ -120,7 +120,7 @@ public abstract class LoginDialogPanel {
 
   private void closeDialog(final boolean doLogin) {
     stopCounter();
-    IdeaConfigurationServerSettings settings = IcsManager.getInstance().getIdeaServerSettings();
+    IcsSettings settings = IcsManager.getInstance().getIdeaServerSettings();
     //settings.update(myLogin.getText(), new String(myPassword.getPassword()), mySession);
     rememberStartupSettings(settings, doLogin);
 
@@ -136,7 +136,7 @@ public abstract class LoginDialogPanel {
     return myLoginButton;
   }
 
-  protected abstract void rememberStartupSettings(final IdeaConfigurationServerSettings settings, final boolean doLogin);
+  protected abstract void rememberStartupSettings(final IcsSettings settings, final boolean doLogin);
 
   protected abstract void closeDialog();
 
@@ -188,7 +188,7 @@ public abstract class LoginDialogPanel {
 
   private void doLogin(final boolean onTimer) {
     try {
-      IdeaConfigurationServerSettings settings = IcsManager.getInstance().getIdeaServerSettings();
+      IcsSettings settings = IcsManager.getInstance().getIdeaServerSettings();
 
       myProxySettingsPanel.apply();
 

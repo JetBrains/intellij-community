@@ -38,14 +38,14 @@ public class IcsManager {
 
   private static final IcsManager instance = new IcsManager();
 
-  private final IdeaConfigurationServerSettings settings;
+  private final IcsSettings settings;
   private final Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private final Runnable updateRequest;
 
   private IcsGitConnector serverConnector;
 
   public IcsManager() {
-    settings = new IdeaConfigurationServerSettings();
+    settings = new IcsSettings();
     updateRequest = new Runnable() {
       @SuppressWarnings("StatementWithEmptyBody")
       @Override
@@ -167,7 +167,7 @@ public class IcsManager {
     }
   }
 
-  public IdeaConfigurationServerSettings getIdeaServerSettings() {
+  public IcsSettings getIdeaServerSettings() {
     return settings;
   }
 
@@ -176,7 +176,7 @@ public class IcsManager {
   }
 
   public static String getStatusText() {
-    IdeaConfigurationServerSettings settings = getInstance().getIdeaServerSettings();
+    IcsSettings settings = getInstance().getIdeaServerSettings();
     IdeaConfigurationServerStatus serverStatus = settings.getStatus();
     switch (serverStatus) {
       case CONNECTION_FAILED:

@@ -14,7 +14,7 @@ import org.jdom.JDOMException;
 import java.io.File;
 import java.io.IOException;
 
-public class IdeaConfigurationServerSettings {
+public class IcsSettings {
   private static final String PASSWORD = "password";
   private static final String LOGIN = "login";
 
@@ -26,7 +26,7 @@ public class IdeaConfigurationServerSettings {
 
   private final HttpConfigurable proxySettings = new HttpConfigurable();
 
-  public IdeaConfigurationServerSettings() {
+  public IcsSettings() {
     settingsFile = new File(PathManager.getSystemPath(), "ideaConfigurationServer/state.xml");
   }
 
