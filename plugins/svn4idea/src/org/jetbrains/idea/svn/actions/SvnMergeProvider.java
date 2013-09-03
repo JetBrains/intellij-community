@@ -140,7 +140,8 @@ public class SvnMergeProvider implements MergeProvider {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
     File path = new File(file.getPath());
     try {
-      vcs.getFactory(path).createConflictClient().resolve(path, false);
+      // TODO: Probably false should be passed to "resolveTree", but previous logic used true implicitly
+      vcs.getFactory(path).createConflictClient().resolve(path, false, true, true);
     }
     catch (VcsException e) {
       LOG.warn(e);
