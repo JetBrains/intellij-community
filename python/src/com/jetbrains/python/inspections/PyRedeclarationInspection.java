@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -32,7 +33,6 @@ public class PyRedeclarationInspection extends PyInspection {
   public String getDisplayName() {
     return PyBundle.message("INSP.NAME.redeclaration");
   }
-
 
   @NotNull
   @Override
@@ -69,6 +69,11 @@ public class PyRedeclarationInspection extends PyInspection {
       }
     }
 
+    private static boolean isConditional(@NotNull PsiElement node) {
+      return PsiTreeUtil.getParentOfType(node, PyIfStatement.class, PyConditionalExpression.class, PyLoopStatement.class,
+                                         PyComprehensionElement.class, PyTryExceptStatement.class) != null;
+    }
+
     private static boolean isDecorated(@NotNull PyDecoratable node) {
       boolean isDecorated = false;
       final PyDecoratorList decoratorList = node.getDecoratorList();
@@ -82,6 +87,9 @@ public class PyRedeclarationInspection extends PyInspection {
     }
 
     private void processElement(@NotNull final PsiNameIdentifierOwner element) {
+      if (isConditional(element)) {
+        return;
+      }
       final String name = element.getName();
       final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
       if (owner != null && name != null) {
@@ -94,10 +102,9 @@ public class PyRedeclarationInspection extends PyInspection {
               final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
               if (name.equals(rwInstruction.getName())) {
                 if (rwInstruction.getAccess().isWriteAccess()) {
-                  final PsiElement shadowed = rwInstruction.getElement();
                   final PsiElement identifier = element.getNameIdentifier();
                   registerProblem(identifier != null ? identifier : element,
-                                  PyBundle.message("INSP.shadows.same.named.$0.above", getKind(shadowed)));
+                                  PyBundle.message("INSP.redeclared.name"));
                 }
                 return ControlFlowUtil.Operation.BREAK;
               }
@@ -106,19 +113,6 @@ public class PyRedeclarationInspection extends PyInspection {
           }
         });
       }
-    }
-  }
-
-  @NotNull
-  private static String getKind(@Nullable PsiElement element) {
-    if (element instanceof PyFunction) {
-      return PyBundle.message("GNAME.function");
-    }
-    else if (element instanceof PyClass) {
-      return PyBundle.message("GNAME.class");
-    }
-    else {
-      return PyBundle.message("GNAME.var");
     }
   }
 }
