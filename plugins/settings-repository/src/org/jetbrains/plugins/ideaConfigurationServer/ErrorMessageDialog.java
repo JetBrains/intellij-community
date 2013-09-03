@@ -8,7 +8,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class ErrorMessageDialog extends DialogBase {
-
   private JButton myCloseButton;
   private JLabel myErrorMessageLabel;
   private JPanel myTimerLabelPanel;
@@ -28,6 +27,7 @@ public class ErrorMessageDialog extends DialogBase {
       myTimerLabelPanel.add(timerLabel.getTimerLabel(), BorderLayout.CENTER);
 
       timerLabel.startCounter(CANCEL_INTERVAL, new Runnable() {
+        @Override
         public void run() {
           dispose();
         }
@@ -35,6 +35,7 @@ public class ErrorMessageDialog extends DialogBase {
     }
 
     myCloseButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         dispose();
       }
@@ -43,10 +44,12 @@ public class ErrorMessageDialog extends DialogBase {
     init();
   }
 
+  @Override
   protected JButton getDefaultButton() {
     return myCloseButton;
   }
 
+  @Override
   protected JPanel getCenterPanel() {
     return myPanel;
   }

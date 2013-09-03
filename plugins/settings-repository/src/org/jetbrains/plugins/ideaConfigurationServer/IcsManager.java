@@ -3,7 +3,6 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
@@ -17,25 +16,22 @@ import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.io.ZipUtil;
-import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.*;
-import java.net.SocketTimeoutException;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.zip.ZipOutputStream;
 
 public class IcsManager {
   private static final Logger LOG = Logger.getInstance(IcsManager.class);
@@ -47,28 +43,25 @@ public class IcsManager {
   private static final IcsManager instance = new IcsManager();
 
   private final IdeaConfigurationServerSettings settings;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
-  private final Runnable myUpdateRequest;
-  private final File myLocalCopyDir;
-  private Map<String, String> myProjectHashToKey;
+  private final Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
+  private final Runnable updateRequest;
 
   private IcsGitConnector serverConnector;
 
   public IcsManager() {
     settings = new IdeaConfigurationServerSettings();
-    myLocalCopyDir = new File(PathManager.getSystemPath(), "ideaConfigurationServer");
-
-    myUpdateRequest = new Runnable() {
+    updateRequest = new Runnable() {
+      @SuppressWarnings("StatementWithEmptyBody")
       @Override
       public void run() {
-        myUpdateAlarm.cancelAllRequests();
+        updateAlarm.cancelAllRequests();
         try {
           try {
             if (settings.getStatus() == IdeaConfigurationServerStatus.CONNECTION_FAILED && settings.getUserName() != null && settings.getPassword() != null) {
               login();
             }
             else if (settings.getStatus() == IdeaConfigurationServerStatus.LOGGED_IN && settings.getUserName() != null && settings.getPassword() != null) {
-              ping();
+              //ping();
             }
           }
           catch (Exception e) {
@@ -76,7 +69,7 @@ public class IcsManager {
           }
         }
         finally {
-          myUpdateAlarm.addRequest(myUpdateRequest, 30 * 1000);
+          updateAlarm.addRequest(updateRequest, 30 * 1000);
         }
       }
     };
@@ -85,23 +78,7 @@ public class IcsManager {
       @Override
       public void statusChanged(final IdeaConfigurationServerStatus status) {
         if (status == IdeaConfigurationServerStatus.LOGGED_IN) {
-          if (!settings.wereSettingsSynchronized()) {
-            try {
-              backupConfig();
-            }
-            finally {
-              settings.settingsWereSynchronized();
-            }
-          }
-          try {
-            saveSettingsLocalCopy(myLocalCopyDir);
-          }
-          catch (SocketTimeoutException timeout) {
-            //ignore
-          }
-          catch (IOException e) {
-            LOG.info(e); // Do not LOG.error() since server may respond with error code, like 503
-          }
+          serverConnector.updateRepo();
         }
       }
     });
@@ -109,155 +86,6 @@ public class IcsManager {
 
   public static IcsManager getInstance() {
     return instance;
-  }
-
-  private static void backupConfig() {
-    String configPath = PathManager.getConfigPath();
-    File configDir = new File(configPath);
-    if (configDir.exists() && configDir.listFiles().length > 0) {
-      File backupFile = createBackupFile(configDir);
-      try {
-        ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(backupFile));
-        try {
-          ZipUtil.addDirToZipRecursively(zipOutputStream,
-                                         backupFile,
-                                         configDir,
-                                         "",
-                                         null,
-                                         null);
-        }
-        finally {
-          zipOutputStream.close();
-        }
-      }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
-    }
-  }
-
-  private static File createBackupFile(File configDir) {
-    for (int i = 1; ; i++) {
-      File candidate = getBackupFile(configDir, i);
-      if (!candidate.exists()) {
-        return candidate;
-      }
-    }
-  }
-
-  private static File getBackupFile(File configDir, int i) {
-    if (i != 1) {
-      return new File(configDir.getParentFile(), "idea_" + configDir.getName() + "_backup" + i + ".zip");
-    }
-    else {
-      return new File(configDir.getParentFile(), "idea_" + configDir.getName() + "_backup.zip");
-    }
-  }
-
-  private void saveSettingsLocalCopy(final File localCopyDir) throws IOException {
-    if (localCopyDir.exists()) {
-      FileUtil.delete(localCopyDir);
-    }
-
-    localCopyDir.mkdirs();
-
-    IcsGitConnector.loadAllFiles(createBuilder("", null, null), new IcsGitConnector.ContentProcessor() {
-      @Override
-      public void processStream(InputStream line) throws IOException {
-        File tempFile = FileUtil.createTempFile("temp", "settings");
-        try {
-          FileOutputStream out = new FileOutputStream(tempFile);
-          try {
-            FileUtil.copy(line, out);
-          }
-          finally {
-            out.close();
-          }
-
-          if (tempFile.length() > 0) {
-            ZipUtil.extract(tempFile, localCopyDir, null);
-          }
-        }
-        finally {
-          FileUtil.delete(tempFile);
-        }
-      }
-    });
-
-    myProjectHashToKey = readHashToKeyMap(getMappingsFile());
-
-    //unzipFiles(localCopyDir);
-  }
-
-  private File getMappingsFile() {
-    return new File(new File(myLocalCopyDir, "projects"), "mapping.txt");
-  }
-
-  @Nullable
-  private InputStream loadUserPreferences(IcsUrlBuilder builder) throws IOException {
-    try {
-      if (canUseLocalCopy(builder)) {
-        File localFileCopy = new File(myLocalCopyDir, builder.buildPath());
-        if (!localFileCopy.isFile()) {
-          return null;
-        }
-        return new FileInputStream(localFileCopy);
-      }
-    }
-    catch (FileNotFoundException ignored) {
-    }
-    return serverConnector.loadUserPreferences(builder.buildPath());
-  }
-
-  private static boolean canUseLocalCopy(IcsUrlBuilder builder) {
-    return builder.getRoamingType() != RoamingType.GLOBAL;
-  }
-
-  private void deleteUserPreferences(IcsUrlBuilder builder) throws IOException {
-    try {
-      if (canUseLocalCopy(builder)) {
-        File localCopy = new File(myLocalCopyDir, builder.buildPath());
-        FileUtil.delete(localCopy);
-      }
-    }
-    finally {
-      IcsGitConnector.delete(builder);
-    }
-  }
-
-  private String[] listSubFileNames(IcsUrlBuilder urlBuilder) {
-    try {
-      if (canUseLocalCopy(urlBuilder)) {
-        File localFile = new File(myLocalCopyDir, urlBuilder.buildPath());
-        return collectSubFileNames(localFile);
-      }
-      else {
-        return IcsGitConnector.listSubFileNames(urlBuilder);
-      }
-    }
-    catch (Exception e) {
-      try {
-        return IcsGitConnector.listSubFileNames(urlBuilder);
-      }
-      catch (IOException e1) {
-        return ArrayUtil.EMPTY_STRING_ARRAY;
-      }
-    }
-  }
-
-  private static String[] collectSubFileNames(File localFile) {
-    ArrayList<String> result = new ArrayList<String>();
-    File[] files = localFile.listFiles();
-    if (files != null) {
-      for (File file : files) {
-        result.add(file.getName());
-      }
-    }
-    return ArrayUtil.toStringArray(result);
-  }
-
-  private static String ping(IcsUrlBuilder urlBuilder) throws IOException {
-    return IcsGitConnector.ping(urlBuilder);
   }
 
   private static String getProjectId(final Project project) {
@@ -299,129 +127,6 @@ public class IcsManager {
     manager.registerStreamProvider(new ICSStreamProvider(projectKey, RoamingType.PER_USER), RoamingType.PER_USER);
   }
 
-  private IcsUrlBuilder createBuilder(final String fileSpec, final RoamingType type, final String projectKey) {
-    try {
-      return new IcsUrlBuilder(fileSpec, type, projectKey) {
-
-        @Override
-        public void setDisconnectedStatus() {
-          settings.setStatus(IdeaConfigurationServerStatus.CONNECTION_FAILED);
-        }
-
-        @Override
-        public void setUnauthorizedStatus() {
-          settings.setStatus(IdeaConfigurationServerStatus.UNAUTHORIZED);
-        }
-      };
-    }
-    finally {
-      if (projectKey != null) {
-        checkIfProjectKeyMappingIsStored(projectKey);
-      }
-    }
-  }
-
-  private void checkIfProjectKeyMappingIsStored(String projectKey) {
-    if (myProjectHashToKey != null) {
-      String hash = String.valueOf(StringHash.calc(projectKey));
-      if (!myProjectHashToKey.containsKey(hash)) {
-        myProjectHashToKey.put(hash, projectKey);
-        try {
-          if (!saveHashToKeyMap()) {
-            myProjectHashToKey.remove(hash);
-          }
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-      }
-    }
-  }
-
-  private boolean saveHashToKeyMap() throws IOException {
-    File mappingsFile = getMappingsFile();
-
-    saveNewMappings(mappingsFile);
-
-    FileInputStream input = new FileInputStream(mappingsFile);
-    try {
-      IcsGitConnector.send(mappingsFile, createBuilder("projects/mapping.txt",
-                                                        RoamingType.PER_USER,
-                                                        null));
-      return true;
-    }
-    catch (Throwable t) {
-      return false;
-    }
-    finally {
-      input.close();
-    }
-  }
-
-  private void saveNewMappings(File mappingsFile) throws IOException {
-    FileOutputStream output = new FileOutputStream(mappingsFile);
-    try {
-      for (String hash : myProjectHashToKey.keySet()) {
-        output.write((hash + " " + myProjectHashToKey.get(hash) + "\n").getBytes());
-      }
-    }
-    finally {
-      output.close();
-    }
-  }
-
-  private static Map<String, String> readHashToKeyMap(File mappingFile) {
-    LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
-
-    try {
-      FileInputStream input = new FileInputStream(mappingFile);
-      try {
-        for (byte[] bytes : new LineReader(input).readLines()) {
-          String line = new String(bytes);
-          int separator = line.indexOf(" ");
-          if (separator > 0) {
-            String hash = line.substring(0, separator);
-            String key = line.substring(separator + 1);
-
-            if (hash.length() > 0 && key.length() > 0) {
-              result.put(hash, key);
-            }
-          }
-        }
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-      finally {
-        try {
-          input.close();
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-      }
-    }
-    catch (FileNotFoundException e) {
-      //ignore
-    }
-
-    return result;
-  }
-
-  public void deleteUserPreferencesAsync(final IcsUrlBuilder builder) {
-    executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          deleteUserPreferences(builder);
-        }
-        catch (IOException e) {
-          LOG.debug(e);
-        }
-      }
-    });
-  }
-
   private static void executeOnPooledThread(final Runnable runnable) {
     ourThreadExecutorsService.submit(runnable);
   }
@@ -442,23 +147,34 @@ public class IcsManager {
   }
 
   public void startPing() {
-    myUpdateAlarm.addRequest(myUpdateRequest, 30 * 1000);
+    updateAlarm.addRequest(updateRequest, 30 * 1000);
   }
 
   public void stopPing() {
-    myUpdateAlarm.cancelAllRequests();
+    updateAlarm.cancelAllRequests();
   }
 
   private void registerProvider(StateStorageManager storageManager, RoamingType type) {
     storageManager.registerStreamProvider(new ICSStreamProvider(null, type) {
       @Override
       public String[] listSubFiles(final String fileSpec) {
-        return listSubFileNames(createBuilder(fileSpec, roamingType, null));
+        return serverConnector.listSubFileNames(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
       }
 
       @Override
       public void deleteFile(String fileSpec, RoamingType roamingType) {
-        deleteUserPreferencesAsync(createBuilder(fileSpec, this.roamingType, null));
+        final String path = IcsUrlBuilder.buildPath(fileSpec, this.roamingType, null);
+        executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              serverConnector.delete(path);
+            }
+            catch (IOException e) {
+              LOG.debug(e);
+            }
+          }
+        });
       }
     }, type);
   }
@@ -472,10 +188,6 @@ public class IcsManager {
       settings.setStatus(IdeaConfigurationServerStatus.CONNECTION_FAILED);
       LOG.error(e);
     }
-  }
-
-  public String ping() throws IOException {
-    return ping(createBuilder(null, null, null));
   }
 
   public IdeaConfigurationServerSettings getIdeaServerSettings() {
@@ -560,7 +272,7 @@ public class IcsManager {
 
     @Override
     public void saveContent(String fileSpec, @NotNull final InputStream content, long size, RoamingType roamingType, boolean async) throws IOException {
-      final String path = createBuilder(fileSpec, this.roamingType, projectId).buildPath();
+      final String path = IcsUrlBuilder.buildPath(fileSpec, this.roamingType, projectId);
       if (async) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
@@ -579,18 +291,14 @@ public class IcsManager {
       }
     }
 
-    private IcsUrlBuilder createBuilderInt(String fileSpec) {
-      return createBuilder(fileSpec, roamingType, projectId);
-    }
-
     @Override
     @Nullable
     public InputStream loadContent(String fileSpec, RoamingType roamingType) throws IOException {
       if (projectId == null || roamingType == RoamingType.PER_PLATFORM) {
-        return loadUserPreferences(createBuilder(fileSpec, this.roamingType, projectId));
+        return serverConnector.loadUserPreferences(IcsUrlBuilder.buildPath(fileSpec, this.roamingType, projectId));
       }
       else if (StoragePathMacros.WORKSPACE_FILE.equals(fileSpec)) {
-        return loadUserPreferences(createBuilderInt(fileSpec));
+        return serverConnector.loadUserPreferences(IcsUrlBuilder.buildPath(fileSpec, this.roamingType, projectId));
       }
       else {
         return null;

@@ -18,7 +18,7 @@ import java.awt.event.KeyEvent;
 public abstract class DialogBase extends JDialog {
   protected static final int CANCEL_INTERVAL = 60;
 
-  protected DialogBase(Frame frame, String title) throws java.awt.HeadlessException {
+  protected DialogBase(Frame frame, String title) throws HeadlessException {
     super(frame, title, true);
   }
 
@@ -35,13 +35,14 @@ public abstract class DialogBase extends JDialog {
     getRootPane().setDefaultButton(getDefaultButton());
 
     ActionListener actionListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent actionEvent) {
         setVisible(false);
       }
     };
     getRootPane().registerKeyboardAction(actionListener, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
     pack();
     setLocationRelativeTo(null);

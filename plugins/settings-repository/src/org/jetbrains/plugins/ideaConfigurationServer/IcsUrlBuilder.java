@@ -2,9 +2,8 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.util.SystemInfo;
-import org.apache.commons.httpclient.NameValuePair;
 
-public abstract class IcsUrlBuilder {
+final class IcsUrlBuilder {
   private static final String WINDOWS = "windows";
   private static final String OS2 = "os2";
   private static final String MAC = "mac";
@@ -13,20 +12,7 @@ public abstract class IcsUrlBuilder {
   private static final String UNIX = "unix";
   private static final String UNKNOWN = "unknown";
 
-  private static final String ALTERNATIVE_URL = System.getProperty("idea.server.alternative.url");
-  private static final String ourIdeaServerUrl = ALTERNATIVE_URL != null ? ALTERNATIVE_URL : "http://configr.jetbrains.com";
-
-  private final String filePath;
-  private final RoamingType roamingType;
-  private final String projectKey;
-
-  public IcsUrlBuilder(final String filePath, final RoamingType roamingType, String projectKey) {
-    this.filePath = filePath;
-    this.roamingType = roamingType;
-    this.projectKey = projectKey;
-  }
-
-  private static String getPlatformName() {
+  static String getPlatformName() {
     if (SystemInfo.isWindows) {
       return WINDOWS;
     }
@@ -39,30 +25,7 @@ public abstract class IcsUrlBuilder {
     return UNKNOWN;
   }
 
-  public String getServerUrl() {
-    return ourIdeaServerUrl;
-  }
-
-  public NameValuePair[] getQueryString() {
-    if (roamingType != RoamingType.GLOBAL) {
-      return new NameValuePair[]{
-        new NameValuePair("path", buildPath())
-      };
-    }
-    else {
-      return new NameValuePair[]{
-        new NameValuePair("path", buildPath()),
-        new NameValuePair("global", "true")
-      };
-    }
-  }
-
-  public NameValuePair[] getPingQueryString() {
-    return new NameValuePair[]{
-    };
-  }
-
-  public String buildPath() {
+  static String buildPath(String filePath, RoamingType roamingType, String projectKey) {
     StringBuilder result = new StringBuilder();
     if (projectKey != null) {
       result.append("projects/").append(projectKey).append("/");
@@ -80,13 +43,5 @@ public abstract class IcsUrlBuilder {
       result.append(filePath);
     }
     return result.toString();
-  }
-
-  public abstract void setDisconnectedStatus();
-
-  public abstract void setUnauthorizedStatus();
-
-  public RoamingType getRoamingType() {
-    return roamingType;
   }
 }

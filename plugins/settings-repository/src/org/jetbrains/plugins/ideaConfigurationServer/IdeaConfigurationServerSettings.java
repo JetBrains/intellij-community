@@ -17,7 +17,6 @@ public class IdeaConfigurationServerSettings {
   private static final String DO_LOGIN_ATTR = "doLogin";
   private static final String PASSWORD = "password";
   private static final String LOGIN = "login";
-  private static final String SETTINGS_LOADED_ATTR = "settingsLoaded";
 
   private String userName;
   private String password;
@@ -25,7 +24,6 @@ public class IdeaConfigurationServerSettings {
 
   public boolean REMEMBER_SETTINGS ;
   public boolean DO_LOGIN;
-  private boolean settingsAlreadySynchronized;
 
   private IdeaConfigurationServerStatus status = IdeaConfigurationServerStatus.LOGGED_OUT;
 
@@ -45,7 +43,6 @@ public class IdeaConfigurationServerSettings {
     }
     user.setAttribute(REMEMBER_SETTINGS_ATTR, String.valueOf(REMEMBER_SETTINGS));
     user.setAttribute(DO_LOGIN_ATTR, String.valueOf(DO_LOGIN));
-    user.setAttribute(SETTINGS_LOADED_ATTR, String.valueOf(settingsAlreadySynchronized));
     try {
       proxySettings.writeExternal(user);
     }
@@ -74,7 +71,6 @@ public class IdeaConfigurationServerSettings {
         if (element != null) {
           userName = element.getAttributeValue(LOGIN);
           password = element.getAttributeValue(PASSWORD);
-          settingsAlreadySynchronized = Boolean.valueOf(element.getAttributeValue(SETTINGS_LOADED_ATTR));
           if (password != null) {
             password = PasswordUtil.decodePassword(password);
           }
@@ -113,14 +109,6 @@ public class IdeaConfigurationServerSettings {
       this.status = status;
       ApplicationManager.getApplication().getMessageBus().syncPublisher(StatusListener.TOPIC).statusChanged(status);
     }
-  }
-
-  public boolean wereSettingsSynchronized() {
-    return settingsAlreadySynchronized;
-  }
-
-  public void settingsWereSynchronized() {
-    settingsAlreadySynchronized = true;
   }
 
   public void logout() {
