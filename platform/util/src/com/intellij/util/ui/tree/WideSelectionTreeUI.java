@@ -72,6 +72,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     boolean handled = false;
     public void mousePressed(@NotNull final MouseEvent e) {
       handled = false;
+      if (!(e.getSource() instanceof JTree)) return;
       if (!isSelected(e)) {
         handled = true;
         handle(e);
@@ -80,6 +81,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
     @Override
     public void mouseReleased(@NotNull final MouseEvent e) {
+      if (!(e.getSource() instanceof JTree)) return;
       if (!handled) {
         handle(e);
       }
