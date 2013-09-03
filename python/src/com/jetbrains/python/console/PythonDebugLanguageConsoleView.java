@@ -46,7 +46,6 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
 
   private ProcessHandler myProcessHandler;
 
-
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk, ConsoleView consoleView) {
     super(new CardLayout());
     myPydevConsoleView = createConsoleView(project, sdk);
@@ -140,8 +139,8 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
 
   @Override
   public void scrollTo(int offset) {
-    myPydevConsoleView.getConsole().getHistoryViewer().getCaretModel().moveToOffset(offset);
-    myPydevConsoleView.getConsole().getHistoryViewer().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    myPydevConsoleView.getLanguageConsole().getHistoryViewer().getCaretModel().moveToOffset(offset);
+    myPydevConsoleView.getLanguageConsole().getHistoryViewer().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     myTextConsole.scrollTo(offset);
   }
 

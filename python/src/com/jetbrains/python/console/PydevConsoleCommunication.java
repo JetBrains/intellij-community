@@ -12,13 +12,19 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.*;
+import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.PyDebuggerException;
+import com.jetbrains.python.debugger.PyEvaluator;
 import com.jetbrains.python.debugger.PydevXmlUtils;
+import com.jetbrains.python.debugger.pydev.ProtocolParser;
 import org.apache.xmlrpc.WebServer;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.XmlRpcHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.util.Collections;
@@ -30,11 +36,13 @@ import java.util.Vector;
  *
  * @author Fabio
  */
-public class PydevConsoleCommunication extends AbstractConsoleCommunication implements IScriptConsoleCommunication, XmlRpcHandler {
+public class PydevConsoleCommunication extends AbstractConsoleCommunication implements IScriptConsoleCommunication, XmlRpcHandler,
+                                                                                       PyEvaluator {
 
   private static final String EXEC_LINE = "execLine";
   private static final String GET_COMPLETIONS = "getCompletions";
   private static final String GET_DESCRIPTION = "getDescription";
+  private static final String GET_FRAME = "getFrame";
   private static final String HANDSHAKE = "handshake";
   private static final String CLOSE = "close";
   /**
@@ -408,5 +416,33 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   @Override
   public boolean isExecuting() {
     return myExecuting;
+  }
+
+  @Override
+  public PyDebugValue evaluate(String expression, boolean execute, boolean doTrunc) throws PyDebuggerException {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Nullable
+  @Override
+  public XValueChildrenList loadFrame() throws PyDebuggerException {
+    if (myClient != null) {
+      try {
+        Object ret = myClient.execute(GET_FRAME, new Object[]{});
+        if (ret instanceof String) {
+          final List<PyDebugValue> values = ProtocolParser.parseValues((String)ret);
+          XValueChildrenList list = new XValueChildrenList(values.size());
+          for (PyDebugValue v: values) {
+            list.add(v.getName(), v);
+          }
+          return list;
+        }
+      }
+      catch (XmlRpcException e) {
+        throw new PyDebuggerException("Get frame from console failed", e);
+      }
+    }
+    //list.add("X", new PyDebugValue("X", "int", "1000000", false, false));
+    return new XValueChildrenList();
   }
 }

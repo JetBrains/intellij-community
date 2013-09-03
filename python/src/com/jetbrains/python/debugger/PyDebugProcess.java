@@ -455,6 +455,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  @Override
   @Nullable
   public XValueChildrenList loadFrame() throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
@@ -646,7 +647,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {
-    return new PyStackFrame(this, frameInfo);
+    return new PyStackFrame(this.getSession().getProject(), this, frameInfo,
+                            getPositionConverter().convertFromPython(frameInfo.getPosition()));
   }
 
   @Override

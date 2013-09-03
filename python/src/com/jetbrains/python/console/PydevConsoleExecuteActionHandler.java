@@ -2,6 +2,7 @@ package com.jetbrains.python.console;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
@@ -32,7 +33,7 @@ import java.util.Scanner;
  */
 public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandler implements ConsoleCommunicationListener {
 
-  private final LanguageConsoleViewImpl myConsoleView;
+  private final LanguageConsoleView myConsoleView;
 
   private String myInMultilineStringState = null;
   private StringBuilder myInputBuffer;
@@ -41,7 +42,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   private final ConsoleCommunication myConsoleCommunication;
   private boolean myEnabled = false;
 
-  public PydevConsoleExecuteActionHandler(LanguageConsoleViewImpl consoleView,
+  public PydevConsoleExecuteActionHandler(LanguageConsoleView consoleView,
                                           ProcessHandler myProcessHandler,
                                           ConsoleCommunication consoleCommunication) {
     super(myProcessHandler, false);
