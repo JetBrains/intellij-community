@@ -98,14 +98,9 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
         for (PsiMethod method : methods) {
           PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
           if (dataProviderAnnotation != null) {
-            PsiNameValuePair[] values = dataProviderAnnotation.getParameterList().getAttributes();
-            for (PsiNameValuePair value : values) {
-              if ("name".equals(value.getName())) {
-                final PsiAnnotationMemberValue dataProviderMethodName = value.getValue();
-                if (dataProviderMethodName != null && val.equals(StringUtil.unquoteString(dataProviderMethodName.getText()))) {
-                  return method;
-                }
-              }
+            final PsiAnnotationMemberValue dataProviderMethodName = dataProviderAnnotation.findAttributeValue("name");
+            if (dataProviderMethodName != null && val.equals(StringUtil.unquoteString(dataProviderMethodName.getText()))) {
+              return method;
             }
             if (val.equals(method.getName())) {
               return method;
@@ -135,18 +130,9 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
           final PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
           if (dataProviderAnnotation != null) {
             boolean nameFoundInAttributes = false;
-            PsiNameValuePair[] values = dataProviderAnnotation.getParameterList().getAttributes();
-            for (PsiNameValuePair value : values) {
-              if ("name".equals(value.getName())) {
-                final PsiAnnotationMemberValue memberValue = value.getValue();
-                if (memberValue != null) {
-                  list.add(LookupValueFactory.createLookupValue(StringUtil.unquoteString(memberValue.getText()), null));
-                  nameFoundInAttributes = true;
-                  break;
-                }
-              }
-            }
-            if (!nameFoundInAttributes) {
+            final PsiAnnotationMemberValue memberValue = dataProviderAnnotation.findAttributeValue("name");
+            if (memberValue != null) {
+              list.add(LookupValueFactory.createLookupValue(StringUtil.unquoteString(memberValue.getText()), null));
               list.add(LookupValueFactory.createLookupValue(method.getName(), null));
             }
           }
@@ -156,19 +142,14 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     }
 
     private PsiClass getProviderClass(final PsiClass topLevelClass) {
-      final PsiAnnotationParameterList parameterList = PsiTreeUtil.getParentOfType(getElement(), PsiAnnotationParameterList.class);
-      if (parameterList != null) {
-        for (PsiNameValuePair nameValuePair : parameterList.getAttributes()) {
-          if (Comparing.strEqual(nameValuePair.getName(), "dataProviderClass")) {
-            final PsiAnnotationMemberValue value = nameValuePair.getValue();
-            if (value instanceof PsiClassObjectAccessExpression) {
-              final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
-              final PsiClass psiClass = PsiUtil.resolveClassInType(operand.getType());
-              if (psiClass != null) {
-                return psiClass;
-              }
-            }
-            break;
+      final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(getElement(), PsiAnnotation.class);
+      if (annotation != null) {
+        final PsiAnnotationMemberValue value = annotation.findAttributeValue("dataProviderClass");
+        if (value instanceof PsiClassObjectAccessExpression) {
+          final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
+          final PsiClass psiClass = PsiUtil.resolveClassInType(operand.getType());
+          if (psiClass != null) {
+            return psiClass;
           }
         }
       }

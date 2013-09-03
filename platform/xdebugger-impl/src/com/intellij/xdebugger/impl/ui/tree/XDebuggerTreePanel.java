@@ -60,22 +60,26 @@ public class XDebuggerTreePanel implements DnDSource {
     return myMainPanel;
   }
 
+  @Override
   public boolean canStartDragging(final DnDAction action, final Point dragOrigin) {
     return getNodesToDrag().length > 0;
   }
 
   private XValueNodeImpl[] getNodesToDrag() {
     return myTree.getSelectedNodes(XValueNodeImpl.class, new Tree.NodeFilter<XValueNodeImpl>() {
+      @Override
       public boolean accept(final XValueNodeImpl node) {
         return node.getValueContainer().getEvaluationExpression() != null;
       }
     });
   }
 
+  @Override
   public DnDDragStartBean startDragging(final DnDAction action, final Point dragOrigin) {
     return new DnDDragStartBean(getNodesToDrag());
   }
 
+  @Override
   public Pair<Image, Point> createDraggedImage(final DnDAction action, final Point dragOrigin) {
     XValueNodeImpl[] nodes = getNodesToDrag();
     if (nodes.length == 1) {
@@ -84,9 +88,11 @@ public class XDebuggerTreePanel implements DnDSource {
     return DnDAwareTree.getDragImage(myTree, XDebuggerBundle.message("xdebugger.drag.text.0.elements", nodes.length), dragOrigin);
   }
 
+  @Override
   public void dragDropEnd() {
   }
 
+  @Override
   public void dropActionChanged(final int gestureModifiers) {
   }
 }

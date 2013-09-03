@@ -448,7 +448,7 @@ public class GenericsUtil {
           PsiType substituted = resolveResult.getSubstitutor().substitute(typeParam);
           if (substituted instanceof PsiWildcardType) {
             substituted = ((PsiWildcardType)substituted).getBound();
-            if (substituted == null) substituted = PsiType.getJavaLangObject(manager, aClass.getResolveScope());
+            if (substituted == null) substituted = TypeConversionUtil.typeParameterErasure(typeParam);
           }
           map.put(typeParam, substituted);
         }

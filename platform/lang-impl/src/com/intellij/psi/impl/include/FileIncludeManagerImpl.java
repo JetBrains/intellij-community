@@ -239,10 +239,10 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     @Override
     public CachedValueProvider.Result<VirtualFile[]> compute(PsiFile psiFile) {
       VirtualFile[] value = computeFiles(psiFile, myRuntimeOnly);
-      // todo: we need "url modification tracker" for VirtualFile 
-      Object[] deps = new Object[value.length + 2];
-      deps[deps.length - 2] = psiFile;
-      deps[deps.length - 1] = VirtualFileManager.getInstance();
+      // todo: we need "url modification tracker" for VirtualFile
+      List<Object> deps = new ArrayList<Object>(Arrays.asList(value));
+      deps.add(psiFile);
+      deps.add(VirtualFileManager.getInstance());
 
       return CachedValueProvider.Result.create(value, deps);
     }

@@ -74,15 +74,15 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testMethodScope2() throws Exception { doTest(1, "final", "public", "static", "volatile", "abstract"); }
   public void testMethodScope3() throws Exception { doTest(1, "final", "public", "static", "volatile", "abstract", "throws", "instanceof"); }
   public void testMethodScope4() throws Exception { doTest(6, "final", "try", "for", "while", "return", "throw"); }
-  public void testMethodScope5() throws Exception { doTest(true); }
+  public void testMethodScope5() throws Exception { doTest(false); }
   public void testExtraBracketAfterFinally1() throws Exception { doTest(false); }
   public void testExtraBracketAfterFinally2() throws Exception { doTest(false); }
   public void testExtendsInCastTypeParameters() throws Exception { doTest(false); }
   public void testExtendsInCastTypeParameters2() throws Exception { doTest(2, "extends", "super"); }
   public void testExtendsWithRightContextInClassTypeParameters() throws Exception { doTest(false); }
-  public void testTrueInVariableDeclaration() throws Exception { doTest(true); }
-  public void testNullInIf() throws Exception { doTest(true); }
-  public void testNullInReturn() throws Exception { doTest(true); }
+  public void testTrueInVariableDeclaration() throws Exception { doTest(false); }
+  public void testNullInIf() throws Exception { doTest(false); }
+  public void testNullInReturn() throws Exception { doTest(false); }
   public void testExtendsInMethodParameters() throws Exception { doTest(false); }
   public void testInstanceOf1() throws Exception { doTest(false); }
   public void testInstanceOf2() throws Exception { doTest(false); }
@@ -91,9 +91,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testSuper1() throws Exception { doTest(1, "super"); }
   public void testSuper2() throws Exception { doTest(0, "super"); }
   public void testContinue() throws Exception { doTest(false); }
-  public void testThrowsOnSeparateLine() throws Exception { doTest(true); }
+  public void testThrowsOnSeparateLine() throws Exception { doTest(false); }
   public void testDefaultInAnno() throws Exception { doTest(false); }
-  public void testNullInMethodCall() throws Exception { doTest(true); }
+  public void testNullInMethodCall() throws Exception { doTest(false); }
   public void testNullInMethodCall2() throws Exception { doTest(false); }
   public void testNewInMethodRefs() throws Exception { doTest(1, "new"); }
   public void testSpaceAfterInstanceof() throws Exception { doTest(false); }

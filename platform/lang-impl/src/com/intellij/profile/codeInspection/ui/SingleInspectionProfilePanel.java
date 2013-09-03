@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,7 +196,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private boolean wereToolSettingsModified(Descriptor descriptor) {
     InspectionToolWrapper toolWrapper = descriptor.getToolWrapper();
-    if (toolWrapper == null || !mySelectedProfile.isToolEnabled(descriptor.getKey())) {
+    if (!mySelectedProfile.isToolEnabled(descriptor.getKey(), descriptor.getScope(), myProjectProfileManager.getProject())) {
       return false;
     }
     Element oldConfig = descriptor.getConfig();
@@ -722,9 +722,8 @@ public class SingleInspectionProfilePanel extends JPanel {
       final InspectionConfigTreeNode node = new InspectionConfigTreeNode(descriptor, null, !hasNonDefaultScope, enabled, !hasNonDefaultScope);
       getGroupNode(myRoot, descriptor.getGroup()).add(node);
       if (hasNonDefaultScope) {
-        for (ScopeToolState nonDefaultState : nonDefaultTools) {
-          node.add(new InspectionConfigTreeNode(new Descriptor(nonDefaultState, mySelectedProfile,
-                                                               project), nonDefaultState, false, false));
+        for (Descriptor desc : myDescriptors.get(descriptor)) {
+          node.add(new InspectionConfigTreeNode(desc, desc.getState(), false, false));
         }
         node.add(new InspectionConfigTreeNode(descriptor, descriptor.getState(), true, false));
       }

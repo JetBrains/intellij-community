@@ -384,7 +384,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
                                                ExternalResourceManager.getInstance());
           }
         }
-        return new Result<XmlNSDescriptor>(null, XmlTagImpl.this, currentFile, ExternalResourceManager.getInstance());
+        return new Result<XmlNSDescriptor>(null, XmlTagImpl.this, currentFile == null ? XmlTagImpl.this : currentFile, ExternalResourceManager.getInstance());
       }
     }, false));
 

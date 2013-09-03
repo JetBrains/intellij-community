@@ -192,12 +192,13 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testReferenceParameters() throws Exception {
     configureByFile("ReferenceParameters.java");
     assertNotNull(myItems);
-    assert myFixture.lookupElementStrings == ['AAAA', 'AAAB']
+    myFixture.assertPreferredCompletionItems 0, 'AAAA', 'AAAB'
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true
+    CodeInsightSettings.instance.AUTOCOMPLETE_ON_CODE_COMPLETION = true
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
     super.tearDown()
   }
 
@@ -273,7 +274,6 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testMethodInAnnotation() throws Exception {
     configureByFile("Annotation.java");
-    myFixture.type('\n')
     checkResultByFile("Annotation_after.java");
   }
 
@@ -440,7 +440,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testAtUnderClass() throws Throwable {
-    doTest('\n');
+    doTest();
   }
 
   public void testLocalClassName() throws Throwable { doTest(); }
@@ -694,15 +694,15 @@ public class ListUtils {
   public void testBreakInSwitch() throws Throwable { doTest() }
 
   public void testSuperInConstructor() throws Throwable {
-    doTest('\n');
+    doTest();
   }
 
   public void testSuperInConstructorWithParams() throws Throwable {
-    doTest('\n');
+    doTest();
   }
 
   public void testSuperInMethod() throws Throwable {
-    doTest('\n');
+    doTest();
   }
 
   public void testSecondMethodParameterName() throws Throwable {
@@ -771,7 +771,7 @@ public class ListUtils {
   }
 
   public void testSameNamedVariableInNestedClasses() throws Throwable {
-    doTest('\n');
+    doTest();
   }
 
   public void testHonorUnderscoreInPrefix() throws Throwable {
@@ -843,13 +843,12 @@ public class ListUtils {
     final String path = getTestName(false) + ".java";
     configureByFile(path);
     checkResultByFile(path);
-    assertStringItems("fai1", "fai2", "FunctionalInterface");
+    assertStringItems("fai1", "fai2");
   }
 
   public void testProtectedInaccessibleOnSecondInvocation() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC, 2);
-    myFixture.type('\n')
     checkResult()
   }
 
@@ -922,17 +921,12 @@ public class ListUtils {
   public void testClassReferenceInFor2() throws Throwable { doTest ' ' }
   public void testClassReferenceInFor3() throws Throwable {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
-    try {
-      doTest ' '
-    }
-    finally {
-      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-    }
+    doTest ' '
   }
 
   public void testEnumConstantFromEnumMember() throws Throwable { doTest(); }
 
-  public void testPrimitiveMethodParameter() throws Throwable { doTest('\n'); }
+  public void testPrimitiveMethodParameter() throws Throwable { doTest(); }
 
   public void testNewExpectedClassParens() throws Throwable { doTest('\n'); }
 
@@ -979,7 +973,7 @@ public class ListUtils {
   public void testLiveTemplatePrefixTab() throws Throwable {doTest('\t') }
 
   public void testOnlyAnnotationsAfterAt() throws Throwable { doTest() }
-  public void testOnlyAnnotationsAfterAt2() throws Throwable { doTest() }
+  public void testOnlyAnnotationsAfterAt2() throws Throwable { doTest('\n') }
 
   public void testOnlyExceptionsInCatch1() throws Exception { doTest('\n') }
   public void testOnlyExceptionsInCatch2() throws Exception { doTest('\n') }
@@ -1189,19 +1183,14 @@ class XInternalError {}
 
   public void testDontPreselectCaseInsensitivePrefixMatch() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
-    try {
-      myFixture.configureByText "a.java", "import java.io.*; class Foo {{ int fileSize; fil<caret>x }}"
-      myFixture.completeBasic()
-      assert lookup.currentItem.lookupString == 'fileSize'
-      myFixture.type('e')
-      
-      assert lookup.items[0].lookupString == 'File'
-      assert lookup.items[1].lookupString == 'fileSize'
-      assert lookup.currentItem == lookup.items[1]
-    }
-    finally {
-      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-    }
+    myFixture.configureByText "a.java", "import java.io.*; class Foo {{ int fileSize; fil<caret>x }}"
+    myFixture.completeBasic()
+    assert lookup.currentItem.lookupString == 'fileSize'
+    myFixture.type('e')
+
+    assert lookup.items[0].lookupString == 'File'
+    assert lookup.items[1].lookupString == 'fileSize'
+    assert lookup.currentItem == lookup.items[1]
   }
 
   public void testNoGenericsWhenChoosingWithParen() { doTest('Ma(') }

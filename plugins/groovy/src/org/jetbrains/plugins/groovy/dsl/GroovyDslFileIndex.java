@@ -434,7 +434,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       @Override
       public Result<List<GroovyDslScript>> compute() {
         if (stopGdsl) {
-          return Result.create(Collections.<GroovyDslScript>emptyList());
+          return Result.create(Collections.<GroovyDslScript>emptyList(), Collections.emptyList());
         }
 
         int count = 0;
@@ -443,7 +443,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
         List<Pair<File, GroovyDslExecutor>> standardScripts = getStandardScripts();
         if (stopGdsl) {
-          return Result.create(Collections.<GroovyDslScript>emptyList());
+          return Result.create(Collections.<GroovyDslScript>emptyList(), Collections.emptyList());
         }
         assert standardScripts != null;
         for (Pair<File, GroovyDslExecutor> pair : standardScripts) {

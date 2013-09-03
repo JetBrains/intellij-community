@@ -56,7 +56,6 @@ public class LambdaCompletionProvider extends CompletionProvider<CompletionParam
               public void handleInsert(InsertionContext context, LookupElement item) {
                 final Editor editor = context.getEditor();
                 EditorModificationUtil.insertStringAtCaret(editor, " -> ");
-                PsiDocumentManager.getInstance(context.getProject()).commitDocument(editor.getDocument());
               }
             });
           result.addElement(builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));

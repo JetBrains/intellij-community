@@ -29,4 +29,10 @@ public interface ModificationTracker {
       return myCounter++;
     }
   };
+  ModificationTracker NEVER_CHANGED = new ModificationTracker() {
+    @Override
+    public long getModificationCount() {
+      return 0;
+    }
+  };
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -546,7 +546,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   private List<InspectionToolWrapper> createTools(Project project) {
     if (mySource != null) {
-      return ContainerUtil.map(mySource.getAllTools(project), new Function<ScopeToolState, InspectionToolWrapper>() {
+      return ContainerUtil.map(mySource.getDefaultStates(project), new Function<ScopeToolState, InspectionToolWrapper>() {
         @NotNull
         @Override
         public InspectionToolWrapper fun(@NotNull ScopeToolState state) {

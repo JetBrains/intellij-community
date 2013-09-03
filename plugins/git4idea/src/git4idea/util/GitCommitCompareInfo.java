@@ -33,6 +33,15 @@ public class GitCommitCompareInfo {
   
   private final Map<GitRepository, Pair<List<GitCommit>, List<GitCommit>>> myInfo = new HashMap<GitRepository, Pair<List<GitCommit>, List<GitCommit>>>();
   private final Map<GitRepository, Collection<Change>> myTotalDiff = new HashMap<GitRepository, Collection<Change>>();
+  private final InfoType myInfoType;
+
+  public GitCommitCompareInfo() {
+    this(InfoType.BOTH);
+  }
+
+  public GitCommitCompareInfo(@NotNull InfoType infoType) {
+    myInfoType = infoType;
+  }
 
   public void put(@NotNull GitRepository repository, @NotNull Pair<List<GitCommit>, List<GitCommit>> commits) {
     myInfo.put(repository, commits);
@@ -71,6 +80,10 @@ public class GitCommitCompareInfo {
     return myInfo.isEmpty();
   }
 
+  public InfoType getInfoType() {
+    return myInfoType;
+  }
+
   @NotNull
   public List<Change> getTotalDiff() {
     List<Change> changes = new ArrayList<Change>();
@@ -78,5 +91,9 @@ public class GitCommitCompareInfo {
       changes.addAll(changeCollection);
     }
     return changes;
+  }
+
+  public enum InfoType {
+    BOTH, HEAD_TO_BRANCH, BRANCH_TO_HEAD
   }
 }

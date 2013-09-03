@@ -73,6 +73,22 @@ import java.util.Set;
  */
 @SuppressWarnings({"SSBasedInspection", "MethodMayBeStatic", "UnusedDeclaration"})
 public abstract class DialogWrapper {
+
+  public static enum IdeModalityType {
+    IDE,
+    PROJECT,
+    MODELESS;
+
+    public Dialog.ModalityType toAwtModality () {
+      switch (this) {
+        case IDE: return Dialog.ModalityType.APPLICATION_MODAL;
+        case PROJECT: return Dialog.ModalityType.DOCUMENT_MODAL;
+        case MODELESS: return Dialog.ModalityType.MODELESS;
+      }
+      return null;
+    }
+  }
+
   /**
    * The default exit code for "OK" action.
    */
@@ -180,7 +196,11 @@ public abstract class DialogWrapper {
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   protected DialogWrapper(@Nullable Project project, boolean canBeParent) {
-    myPeer = createPeer(project, canBeParent);
+    this(project, canBeParent, IdeModalityType.IDE);
+  }
+
+  protected DialogWrapper(@Nullable Project project, boolean canBeParent, IdeModalityType ideModalityType) {
+    myPeer = createPeer(project, canBeParent, ideModalityType);
     final Window window = myPeer.getWindow();
     if (window != null) {
       myResizeListener = new ComponentAdapter() {
@@ -303,16 +323,16 @@ public abstract class DialogWrapper {
 
     myErrorPainter.setValidationInfo(info);
     if (! myErrorText.isTextSet(info.message)) {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myDisposed) return;
-        setErrorText(info.message);
-        myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(false);
-      }
-    });
-  }
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (myDisposed) return;
+          setErrorText(info.message);
+          myPeer.getRootPane().getGlassPane().repaint();
+          getOKAction().setEnabled(false);
+        }
+      });
+    }
   }
 
   private void installErrorPainter() {
@@ -725,8 +745,17 @@ public abstract class DialogWrapper {
     return createPeer(null, canBeParent, applicationModalIfPossible);
   }
 
+  protected DialogWrapperPeer createPeer(final Window owner, final boolean canBeParent, final IdeModalityType ideModalityType) {
+    return DialogWrapperPeerFactory.getInstance().createPeer(this, owner, canBeParent, ideModalityType);
+  }
+
+  @Deprecated
   protected DialogWrapperPeer createPeer(final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
-    return DialogWrapperPeerFactory.getInstance().createPeer(this, owner, canBeParent, applicationModalIfPossible);
+    return DialogWrapperPeerFactory.getInstance().createPeer(this, owner, canBeParent, applicationModalIfPossible ? IdeModalityType.IDE : IdeModalityType.PROJECT);
+  }
+
+  protected DialogWrapperPeer createPeer(@Nullable final Project project, final boolean canBeParent, final IdeModalityType ideModalityType) {
+    return DialogWrapperPeerFactory.getInstance().createPeer(this, project, canBeParent, ideModalityType);
   }
 
   protected DialogWrapperPeer createPeer(@Nullable final Project project, final boolean canBeParent) {

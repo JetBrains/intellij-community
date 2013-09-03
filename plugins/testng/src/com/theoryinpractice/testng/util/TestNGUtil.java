@@ -309,14 +309,12 @@ public class TestNGUtil
   }
 
   public static boolean isAnnotatedWithParameter(PsiAnnotation annotation, String parameter, Set<String> values) {
-    PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
-    for (PsiNameValuePair aPair : pair) {
-      if (parameter.equals(aPair.getName())) {
-        Collection<String> matches = extractValuesFromParameter(aPair);
-        for (String s : matches) {
-          if (values.contains(s)) {
-            return true;
-          }
+    final PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue(parameter);
+    if (attributeValue != null) {
+      Collection<String> matches = extractValuesFromParameter(attributeValue);
+      for (String s : matches) {
+        if (values.contains(s)) {
+          return true;
         }
       }
     }
@@ -371,11 +369,9 @@ public class TestNGUtil
                                                       final PsiAnnotation annotation,
                                                       final PsiDocCommentOwner commentOwner) {
     if (annotation != null) {
-      PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
-      for (PsiNameValuePair aPair : pair) {
-        if (parameter.equals(aPair.getName())) {
-          results.addAll(extractValuesFromParameter(aPair));
-        }
+      final PsiAnnotationMemberValue value = annotation.findAttributeValue(parameter);
+      if (value != null) {
+        results.addAll(extractValuesFromParameter(value));
       }
     } else {
       results.addAll(extractAnnotationValuesFromJavaDoc(getTextJavaDoc(commentOwner), parameter));
@@ -398,9 +394,8 @@ public class TestNGUtil
     return results;
   }
 
-  private static Collection<String> extractValuesFromParameter(PsiNameValuePair aPair) {
+  private static Collection<String> extractValuesFromParameter(PsiAnnotationMemberValue value) {
     Collection<String> results = new ArrayList<String>();
-    PsiAnnotationMemberValue value = aPair.getValue();
     if (value instanceof PsiArrayInitializerMemberValue) {
       for (PsiElement child : value.getChildren()) {
         if (child instanceof PsiLiteralExpression) {

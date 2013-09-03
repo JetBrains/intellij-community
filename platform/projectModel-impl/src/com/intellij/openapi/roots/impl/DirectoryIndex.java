@@ -23,6 +23,7 @@ import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 public abstract class DirectoryIndex {
   public static DirectoryIndex getInstance(Project project) {
@@ -34,6 +35,9 @@ public abstract class DirectoryIndex {
   public abstract void checkConsistency();
 
   public abstract DirectoryInfo getInfoForDirectory(@NotNull VirtualFile dir);
+
+  @Nullable
+  public abstract JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info);
 
   public abstract boolean isProjectExcludeRoot(@NotNull VirtualFile dir);
 

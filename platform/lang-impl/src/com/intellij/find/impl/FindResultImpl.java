@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -27,7 +26,7 @@ public class FindResultImpl extends FindResult {
   }
 
   public FindResultImpl() {
-    super(-1, -1);
+    super(0, 0);
     isStringFound = false;
   }
 

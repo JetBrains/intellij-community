@@ -284,7 +284,7 @@ public class VfsUtil extends VfsUtilCore {
   public static VirtualFile findFileByIoFile(@NotNull File file, boolean refreshIfNeeded) {
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     VirtualFile virtualFile = fileSystem.findFileByIoFile(file);
-    if (virtualFile == null && refreshIfNeeded) {
+    if (refreshIfNeeded && (virtualFile == null || !virtualFile.isValid())) {
       virtualFile = fileSystem.refreshAndFindFileByIoFile(file);
     }
     return virtualFile;

@@ -53,7 +53,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
   @NonNls static final String LAST_SELECTED_CONFIGURABLE = "options.lastSelected";
 
   /** This constructor should be eliminated after the new modality approach
-   *  will have been checked. See a {@code Registry} key ide.mac.modalDialogsOnFullscreen
+   *  will have been checked. See a {@code Registry} key ide.perProjectModality
    *  @deprecated
    */
   public OptionsEditorDialog(Project project, ConfigurableGroup[] groups,
@@ -63,7 +63,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
   }
 
   /** This constructor should be eliminated after the new modality approach
-   *  will have been checked. See a {@code Registry} key ide.mac.modalDialogsOnFullscreen
+   *  will have been checked. See a {@code Registry} key ide.perProjectModality
    *  @deprecated
    */
   public OptionsEditorDialog(Project project, ConfigurableGroup[] groups,

@@ -29,4 +29,10 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     myFixture.type('/');
     myFixture.checkResult("<foo></foo>");
   }
+
+  public void testGreedyClosing() {
+    myFixture.configureByText(XmlFileType.INSTANCE, "<foo><<caret>foo>");
+    myFixture.type('/');
+    myFixture.checkResult("<foo></foo>");
+  }
 }

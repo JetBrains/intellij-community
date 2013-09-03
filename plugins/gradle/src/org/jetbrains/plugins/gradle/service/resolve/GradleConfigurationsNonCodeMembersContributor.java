@@ -45,11 +45,11 @@ public class GradleConfigurationsNonCodeMembersContributor extends NonCodeMember
                                      PsiScopeProcessor processor,
                                      PsiElement place,
                                      ResolveState state) {
-    if (place == null) {
+    if (place == null || aClass == null) {
       return;
     }
 
-    if (!ConfigurationContainer.class.getName().equals(aClass.getQualifiedName())) {
+    if (aClass == null || !ConfigurationContainer.class.getName().equals(aClass.getQualifiedName())) {
       return;
     }
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -88,25 +87,12 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
         }
 
         if (!rootsToRefresh.isEmpty()) {
-          final Application app = ApplicationManager.getApplication();
-          Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-              if (app.isDisposed()) return;
-              for (VirtualFile root : rootsToRefresh) {
-                if (root.isValid()) {
-                  ((NewVirtualFile)root).markDirtyRecursively();
-                }
-              }
-              RefreshQueue.getInstance().refresh(false, true, null, rootsToRefresh);
+          for (VirtualFile root : rootsToRefresh) {
+            if (root.isValid()) {
+              ((NewVirtualFile)root).markDirtyRecursively();
             }
-          };
-          if (app.isUnitTestMode()) {
-            runnable.run();
           }
-          else {
-            app.invokeLater(runnable, ModalityState.NON_MODAL);
-          }
+          RefreshQueue.getInstance().refresh(!ApplicationManager.getApplication().isUnitTestMode(), true, null, rootsToRefresh);
         }
       }
     });
@@ -316,7 +302,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @Override
-  public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
+  public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vFile.getUrl()));
   }
 

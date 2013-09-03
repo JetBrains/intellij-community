@@ -40,7 +40,7 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
 
   public void testSingletonTransform() throws Throwable { doVariantsTest('instance', 'newInstance', 'newInstance', 'isInstance', 'getInstance', 'setInstance') }
 
-  public void testCategoryTransform() throws Throwable { doVariantsTest('name', 'getName', 'FileNameByRegexFinder', 'FileNameFinder', 'FilenameFilter', 'IFileNameFinder') }
+  public void testCategoryTransform() throws Throwable { doVariantsTest('name', 'getName') }
 
   public void testMixinTransform() throws Throwable { doPlainTest() }
 

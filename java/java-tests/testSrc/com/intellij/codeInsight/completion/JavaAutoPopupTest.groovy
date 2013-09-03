@@ -1289,14 +1289,13 @@ class Foo {
 
   public void testBackspaceShouldShowPreviousVariants() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
-    myFixture.addClass("class OuterX { static class TrueLine {} }")
-    myFixture.configureByText 'a.java', 'class Foo{ void foo(int truex) { return tr<caret> }}'
-    type 'ue'
-    assert myFixture.lookupElementStrings == ['true', 'truex']
-    type 'l'
-    assert myFixture.lookupElementStrings == ['TrueLine']
+    myFixture.configureByText 'a.java', 'class Foo{ void foo(int itera, int itex) { it<caret> }}'
+    type 'e'
+    myFixture.assertPreferredCompletionItems 0, 'itera', 'itex'
+    type 'r'
+    myFixture.assertPreferredCompletionItems 0, 'itera', 'iter'
     type '\b'
-    assert myFixture.lookupElementStrings == ['true', 'truex']
+    myFixture.assertPreferredCompletionItems 0, 'itera', 'itex'
   }
 
   public void testBackspaceUntilDot() {

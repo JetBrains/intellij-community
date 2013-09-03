@@ -18,17 +18,14 @@ package com.intellij.idea;
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Restarter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +39,7 @@ public class Main {
   public static final int PLUGIN_ERROR = 5;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
+  private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
@@ -118,7 +116,7 @@ public class Main {
   }
 
   private static void installPatch() throws IOException {
-    String platform = System.getProperty("idea.platform.prefix", "idea");
+    String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
     File originalPatchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName);
     File copyPatchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName + "_copy");
@@ -140,7 +138,7 @@ public class Main {
     if (Restarter.isSupported()) {
       List<String> args = new ArrayList<String>();
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
         args.add(Restarter.createTempExecutable(launcher).getPath());
       }
@@ -165,10 +163,16 @@ public class Main {
   }
 
   public static void showMessage(String title, Throwable t) {
-    String message = "Internal error. Please report to http://youtrack.jetbrains.com\n\n" + ExceptionUtil.getThrowableText(t);
-    showMessage(title, message, true);
+    StringWriter message = new StringWriter();
+    message.append("Internal error. Please report to http://");
+    boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
+    message.append(studio ? "code.google.com/p/android/issues" : "youtrack.jetbrains.com");
+    message.append("\n\n");
+    t.printStackTrace(new PrintWriter(message));
+    showMessage(title, message.toString(), true);
   }
 
+  @SuppressWarnings({"UseJBColor", "UndesirableClassUsage"})
   public static void showMessage(String title, String message, boolean error) {
     if (isCommandLine()) {
       PrintStream stream = error ? System.err : System.out;
@@ -181,10 +185,21 @@ public class Main {
       JTextPane textPane = new JTextPane();
       textPane.setEditable(false);
       textPane.setText(message.replaceAll("\t", "    "));
-      textPane.setBackground(UIManager.getColor("Panel.background"));
+      textPane.setBackground(Color.white);
+      textPane.setCaretPosition(0);
+      JScrollPane scrollPane = new JScrollPane(
+        textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+      int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height - 150;
+      Dimension component = scrollPane.getPreferredSize();
+      if (component.height >= maxHeight) {
+        Object setting = UIManager.get("ScrollBar.width");
+        int width = setting instanceof Integer ? ((Integer)setting).intValue() : 20;
+        scrollPane.setPreferredSize(new Dimension(component.width + width, maxHeight));
+      }
 
       int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), textPane, title, type);
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
     }
   }
 }
