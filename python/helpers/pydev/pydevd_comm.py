@@ -604,7 +604,7 @@ class NetCommandFactory:
                     #print "line is ", myLine
 
                     #the variables are all gotten 'on-demand'
-                    #variables = pydevd_vars.frameVarsToXML(curFrame)
+                    #variables = pydevd_vars.frameVarsToXML(curFrame.f_locals)
 
                     variables = ''
                     cmdTextList.append('<frame id="%s" name="%s" ' % (myId , pydevd_vars.makeValidXmlValue(myName)))
@@ -839,7 +839,7 @@ class InternalGetFrame(InternalThreadCommand):
             frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
             if frame is not None:
                 xml = "<xml>"
-                xml += pydevd_vars.frameVarsToXML(frame)
+                xml += pydevd_vars.frameVarsToXML(frame.f_locals)
                 del frame
                 xml += "</xml>"
                 cmd = dbg.cmdFactory.makeGetFrameMessage(self.sequence, xml)

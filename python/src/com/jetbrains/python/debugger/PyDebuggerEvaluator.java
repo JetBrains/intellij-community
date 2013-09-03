@@ -14,9 +14,11 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
 
   private static final PyDebugValue NONE = new PyDebugValue("", "NoneType", "None", false, false, null, null);
 
-  private final PyDebugProcess myDebugProcess;
+  private Project myProject;
+  private final PyEvaluator myDebugProcess;
 
-  public PyDebuggerEvaluator(@NotNull final PyDebugProcess debugProcess) {
+  public PyDebuggerEvaluator(@NotNull Project project, @NotNull final PyEvaluator debugProcess) {
+    myProject = project;
     myDebugProcess = debugProcess;
   }
 
@@ -32,8 +34,7 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
       return;
     }
 
-    final Project project = myDebugProcess.getSession().getProject();
-    final boolean isExpression = PyDebugSupportUtils.isExpression(project, expression);
+    final boolean isExpression = PyDebugSupportUtils.isExpression(myProject, expression);
     try {
       // todo: think on getting results from EXEC
       final PyDebugValue value = myDebugProcess.evaluate(expression, !isExpression, doTrunc);

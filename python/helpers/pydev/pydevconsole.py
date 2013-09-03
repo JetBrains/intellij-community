@@ -17,6 +17,8 @@ import traceback
 import fix_getpass
 fix_getpass.fixGetpass()
 
+import pydevd_xml
+
 try:
     if USE_LIB_COPY:
         import _pydev_Queue as _queue
@@ -162,7 +164,13 @@ class InterpreterInterface(BaseInterpreterInterface):
 
             traceback.print_exc()
             return []
-
+            
+    def getFrame(self):    
+        xml = "<xml>"
+        xml += pydevd_xml.frameVarsToXML(self.namespace)
+        xml += "</xml>"
+        
+        return xml
 
     def close(self):
         sys.exit(0)
@@ -265,6 +273,7 @@ def start_server(host, port, interpreter):
 
     server.register_function(interpreter.execLine)
     server.register_function(interpreter.getCompletions)
+    server.register_function(interpreter.getFrame)
     server.register_function(interpreter.getDescription)
     server.register_function(interpreter.close)
     server.register_function(interpreter.interrupt)
@@ -323,6 +332,8 @@ def get_completions(text, token, globals, locals):
 
     return interpreterInterface.getCompletions(text, token)
 
+def get_frame(globals, locals):
+    return interpreterInterface.getFrame()
 
 def exec_expression(expression, globals, locals):
     interpreterInterface = get_interpreter()

@@ -2,13 +2,14 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
 /**
  * @author yole
  */
-public interface IPyDebugProcess {
+public interface IPyDebugProcess extends PyEvaluator {
   PyPositionConverter getPositionConverter();
 
   void threadSuspended(PyThreadInfo thread);
@@ -20,8 +21,6 @@ public interface IPyDebugProcess {
   boolean isVariable(String name);
 
   void threadResumed(PyThreadInfo thread);
-
-  PyDebugValue evaluate(String expression, boolean exec, boolean doTrunc) throws PyDebuggerException;
 
   void printToConsole(String text, ConsoleViewContentType contentType);
 

@@ -6,6 +6,7 @@ except:
     from urllib.parse import quote
 
 import pydevd_constants
+import pydev_log
 
 def to_number(x):
     if is_string(x):
@@ -92,4 +93,7 @@ def quote_smart(s, safe='/'):
             s =  s.encode('utf-8')
 
         return quote(s, safe)
+        
+        
+
 
