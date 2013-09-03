@@ -18,7 +18,6 @@ package org.jetbrains.plugins.gradle.service.resolve;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -45,12 +44,12 @@ public class GradleArtifactsContributor implements GradleMethodContextContributo
     }
     final String text = place.getText();
     if (!methodCallInfo.contains(text) && place instanceof GrReferenceExpressionImpl) {
-      GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, Object.class);
+      GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, Object.class.getName());
       return;
     }
 
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-    PsiClass contributorClass = psiManager.findClassWithCache(ArtifactHandler.class.getName(), place.getResolveScope());
+    PsiClass contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.ARTIFACT_HANDLER, place.getResolveScope());
     if (contributorClass != null) {
       contributorClass.processDeclarations(processor, state, null, place);
       // assuming that the method call is addition of an artifact to the given configuration.

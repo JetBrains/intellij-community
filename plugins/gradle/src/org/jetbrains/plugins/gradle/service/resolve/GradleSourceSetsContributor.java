@@ -21,9 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.ContainerUtil;
-import org.gradle.api.file.SourceDirectorySet;
-import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.SourceSetContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
@@ -59,28 +56,30 @@ public class GradleSourceSetsContributor implements GradleMethodContextContribut
     }
 
     final String methodCall = methodCallInfo.get(0);
-    Class configureClosureClazz = null;
-    Class contributorClass = null;
+    String configureClosureClazz = null;
+    String contributorClass = null;
     if (methodCallInfo.size() == SOURCE_SET_CONTAINER_LEVEL) {
-      configureClosureClazz = SourceSetContainer.class;
+      configureClosureClazz = GradleCommonClassNames.SOURCE_SET_CONTAINER;
       if (place instanceof GrReferenceExpressionImpl) {
-        Class varClazz = StringUtil.startsWith(methodCall, SOURCE_SETS + '.') ? SourceSetContainer.class : SourceSet.class;
+        String varClazz = StringUtil.startsWith(methodCall, SOURCE_SETS + '.')
+                          ? GradleCommonClassNames.SOURCE_SET_CONTAINER
+                          : GradleCommonClassNames.SOURCE_SET;
         GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, varClazz);
       }
       else {
-        contributorClass = SourceSetContainer.class;
+        contributorClass = GradleCommonClassNames.SOURCE_SET_CONTAINER;
       }
     }
     else if (methodCallInfo.size() == SOURCE_SET_LEVEL) {
-      configureClosureClazz = SourceSet.class;
-      contributorClass = SourceSet.class;
+      configureClosureClazz = GradleCommonClassNames.SOURCE_SET;
+      contributorClass = GradleCommonClassNames.SOURCE_SET;
     }
     else if (methodCallInfo.size() == SOURCE_DIRECTORY_LEVEL) {
-      configureClosureClazz = SourceDirectorySet.class;
-      contributorClass = SourceDirectorySet.class;
+      configureClosureClazz = GradleCommonClassNames.SOURCE_DIRECTORY_SET;
+      contributorClass = GradleCommonClassNames.SOURCE_DIRECTORY_SET;
     }
     else if (methodCallInfo.size() == SOURCE_DIRECTORY_CLOSURE_LEVEL) {
-      contributorClass = SourceDirectorySet.class;
+      contributorClass = GradleCommonClassNames.SOURCE_DIRECTORY_SET;
     }
 
     if (configureClosureClazz != null) {
@@ -90,7 +89,7 @@ public class GradleSourceSetsContributor implements GradleMethodContextContribut
     }
     if (contributorClass != null) {
       GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-      PsiClass psiClass = psiManager.findClassWithCache(contributorClass.getName(), place.getResolveScope());
+      PsiClass psiClass = psiManager.findClassWithCache(contributorClass, place.getResolveScope());
       if (psiClass != null) {
         psiClass.processDeclarations(processor, state, null, place);
       }

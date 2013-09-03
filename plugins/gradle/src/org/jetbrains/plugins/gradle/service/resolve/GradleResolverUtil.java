@@ -54,12 +54,14 @@ public class GradleResolverUtil {
   public static void addImplicitVariable(@NotNull PsiScopeProcessor processor,
                                          @NotNull ResolveState state,
                                          @NotNull GrReferenceExpressionImpl expression,
-                                         @NotNull Class<?> clazz) {
-    PsiVariable myPsi = new GrImplicitVariableImpl(expression.getManager(), expression.getCanonicalText(), clazz.getName(), expression);
-    processor.execute(myPsi, state);
+                                         @NotNull String type) {
+    if (expression.getQualifier() == null) {
+      PsiVariable myPsi = new GrImplicitVariableImpl(expression.getManager(), expression.getReferenceName(), type, expression);
+      processor.execute(myPsi, state);
+    }
   }
 
-  public static GrLightMethodBuilder createMethodWithClosure(@NotNull String name, @NotNull PsiElement place, @Nullable Class returnType) {
+  public static GrLightMethodBuilder createMethodWithClosure(@NotNull String name, @NotNull PsiElement place, @Nullable String returnType) {
     GrLightMethodBuilder methodWithClosure = new GrLightMethodBuilder(place.getManager(), name);
     PsiElementFactory factory = JavaPsiFacade.getInstance(place.getManager().getProject()).getElementFactory();
     PsiClassType closureType = factory.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place.getResolveScope());
@@ -67,7 +69,7 @@ public class GradleResolverUtil {
     methodWithClosure.addParameter(closureParameter);
 
     if (returnType != null) {
-      PsiClassType retType = factory.createTypeByFQClassName(returnType.getName(), place.getResolveScope());
+      PsiClassType retType = factory.createTypeByFQClassName(returnType, place.getResolveScope());
       methodWithClosure.setReturnType(retType);
     }
     return methodWithClosure;

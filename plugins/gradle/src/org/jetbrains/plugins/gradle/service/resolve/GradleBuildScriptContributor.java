@@ -15,14 +15,12 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
-import org.gradle.api.initialization.dsl.ScriptHandler;
-
 /**
  * @author Vladislav.Soroka
  * @since 8/30/13
  */
 public class GradleBuildScriptContributor extends GradleSimpleContributor {
   public GradleBuildScriptContributor() {
-    super("buildscript", ScriptHandler.class);
+    super("buildscript", GradleCommonClassNames.SCRIPT_HANDLER);
   }
 }

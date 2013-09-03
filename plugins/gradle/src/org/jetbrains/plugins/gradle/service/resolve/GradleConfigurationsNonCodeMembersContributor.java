@@ -19,9 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import groovy.lang.Closure;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ConfigurationContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -30,6 +27,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariableIm
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
+
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.CONFIGURATION;
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.CONFIGURATION_CONTAINER;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 
 /**
  * @author Vladislav.Soroka
@@ -49,7 +50,7 @@ public class GradleConfigurationsNonCodeMembersContributor extends NonCodeMember
       return;
     }
 
-    if (!ConfigurationContainer.class.getName().equals(aClass.getQualifiedName())) {
+    if (!CONFIGURATION_CONTAINER.equals(aClass.getQualifiedName())) {
       return;
     }
 
@@ -68,7 +69,7 @@ public class GradleConfigurationsNonCodeMembersContributor extends NonCodeMember
       // TODO replace with groovy implicit method
       GrReferenceExpressionImpl expression = (GrReferenceExpressionImpl)place;
       String expr = expression.getCanonicalText();
-      GrImplicitVariableImpl myPsi = new GrImplicitVariableImpl(place.getManager(), expr, Configuration.class.getName(), place);
+      GrImplicitVariableImpl myPsi = new GrImplicitVariableImpl(place.getManager(), expr, CONFIGURATION, place);
       processor.execute(myPsi, state);
       setNavigation(myPsi, dependencyHandlerClass, METHOD_GET_BY_NAME, 1);
       return;
@@ -97,7 +98,7 @@ public class GradleConfigurationsNonCodeMembersContributor extends NonCodeMember
     for (PsiMethod method : dependencyHandlerClass.findMethodsByName(methodName, false)) {
       int methodParameterCount = method.getParameterList().getParametersCount();
       if (methodParameterCount == parametersCount &&
-          method.getParameterList().getParameters()[methodParameterCount - 1].getType().equalsToText(Closure.class.getName())) {
+          method.getParameterList().getParameters()[methodParameterCount - 1].getType().equalsToText(GROOVY_LANG_CLOSURE)) {
         element.setNavigationElement(method);
       }
     }

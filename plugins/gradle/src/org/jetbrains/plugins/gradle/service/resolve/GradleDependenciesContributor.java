@@ -18,7 +18,6 @@ package org.jetbrains.plugins.gradle.service.resolve;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -50,7 +49,7 @@ public class GradleDependenciesContributor implements GradleMethodContextContrib
 
     // Assuming that the method call is addition of new dependency into configuration.
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-    PsiClass contributorClass = psiManager.findClassWithCache(DependencyHandler.class.getName(), place.getResolveScope());
+    PsiClass contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.DEPENDENCY_HANDLER, place.getResolveScope());
     if (contributorClass == null) {
       return;
     }

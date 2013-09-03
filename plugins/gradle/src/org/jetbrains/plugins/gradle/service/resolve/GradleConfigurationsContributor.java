@@ -19,8 +19,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ConfigurationContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
@@ -49,21 +47,21 @@ public class GradleConfigurationsContributor implements GradleMethodContextContr
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
     if (methodCallInfo.size() == 1) {
       if (methodCall.startsWith(CONFIGURATIONS + '.')) {
-        contributorClass = psiManager.findClassWithCache(Configuration.class.getName(), place.getResolveScope());
+        contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.CONFIGURATION, place.getResolveScope());
       }
       else if (CONFIGURATIONS.equals(methodCall)) {
-        contributorClass = psiManager.findClassWithCache(ConfigurationContainer.class.getName(), place.getResolveScope());
+        contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.CONFIGURATION_CONTAINER, place.getResolveScope());
         if (place instanceof GrReferenceExpressionImpl) {
-          GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, Configuration.class);
+          GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, GradleCommonClassNames.CONFIGURATION);
           return;
         }
       }
     }
     else if (methodCallInfo.size() == 2) {
       if (CONFIGURATIONS.equals(methodCallInfo.get(1))) {
-        contributorClass = psiManager.findClassWithCache(ConfigurationContainer.class.getName(), place.getResolveScope());
+        contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.CONFIGURATION_CONTAINER, place.getResolveScope());
         if (place instanceof GrReferenceExpressionImpl) {
-          GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, Configuration.class);
+          GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, GradleCommonClassNames.CONFIGURATION);
           return;
         }
       }
