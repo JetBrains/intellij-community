@@ -13,17 +13,17 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 
 public class IcsStatusBarComponent implements StatusBarWidget, StatusBarWidget.IconPresentation, ApplicationComponent {
+  private static final Icon DISCONNECTED_ICON = AllIcons.Nodes.ExceptionClass;
+  private static final Icon LOGGED_IN_ICON = AllIcons.Nodes.Read_access;
+  private static final Icon LOGGED_OUT_ICON = AllIcons.Nodes.Write_access;
+  private StatusBar statusBar;
+
   private final StatusListener statusListener = new StatusListener() {
     @Override
     public void statusChanged(final IdeaConfigurationServerStatus status) {
       update();
     }
   };
-
-  private static final Icon DISCONNECTED_ICON = AllIcons.Nodes.ExceptionClass;
-  private static final Icon LOGGED_IN_ICON = AllIcons.Nodes.Read_access;
-  private static final Icon LOGGED_OUT_ICON = AllIcons.Nodes.Write_access;
-  private StatusBar statusBar;
 
   @NotNull
   @Override

@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
+import com.intellij.ide.ApplicationLoadListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +15,7 @@ import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Alarm;
@@ -344,6 +346,26 @@ public class IcsManager {
     @Override
     public void save() {
       getInstance().getIdeaServerSettings().save();
+    }
+  }
+
+  static final class IcsApplicationLoadListener implements ApplicationLoadListener {
+    @Override
+    public void beforeApplicationLoaded(Application application) {
+      if (application.isUnitTestMode()) {
+        return;
+      }
+
+      getInstance().registerApplicationLevelProviders(application);
+
+      ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+        @Override
+        public void beforeProjectLoaded(@NotNull Project project) {
+          if (!project.isDefault()) {
+            getInstance().registerProjectLevelProviders(project);
+          }
+        }
+      });
     }
   }
 }

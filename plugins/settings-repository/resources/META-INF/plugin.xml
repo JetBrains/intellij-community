@@ -16,7 +16,7 @@
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
-    <ApplicationLoadListener implementation="org.jetbrains.plugins.ideaConfigurationServer.IcsApplicationLoadListener"/>
+    <ApplicationLoadListener implementation="org.jetbrains.plugins.ideaConfigurationServer.IcsManager$IcsApplicationLoadListener"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
 </idea-plugin>
