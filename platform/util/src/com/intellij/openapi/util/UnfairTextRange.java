@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.util;
 
-package com.intellij.find.impl;
+/**
+ * @author Dmitry Avdeev
+ *         Date: 30.08.13
+ */
+public class UnfairTextRange extends TextRange {
 
-import com.intellij.find.FindResult;
-
-public class FindResultImpl extends FindResult {
-  private boolean isStringFound = true;
-
-  public FindResultImpl(int startOffset, int endOffset) {
-    super(startOffset, endOffset);
-  }
-
-  public FindResultImpl() {
-    super(0, 0);
-    isStringFound = false;
-  }
-
-  @Override
-  public boolean isStringFound() {
-    return isStringFound;
+  public UnfairTextRange(int startOffset, int endOffset) {
+    super(startOffset, endOffset, false);
   }
 }
-
-
-

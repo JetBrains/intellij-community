@@ -497,12 +497,12 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         }
         //in prefix/suffix or spills over to next fragment
         if (range.getStartOffset() < prevHostEndOffset + prefixLength) {
-          range = new TextRange(prevHostEndOffset + prefixLength, range.getEndOffset());
+          range = new UnfairTextRange(prevHostEndOffset + prefixLength, range.getEndOffset());
         }
         TextRange spilled = null;
         if (range.getEndOffset() > shredEndOffset - suffixLength) {
-          spilled = new TextRange(shredEndOffset, range.getEndOffset());
-          range = new TextRange(range.getStartOffset(), shredEndOffset-suffixLength);
+          spilled = new UnfairTextRange(shredEndOffset, range.getEndOffset());
+          range = new UnfairTextRange(range.getStartOffset(), shredEndOffset-suffixLength);
         }
         if (!range.isEmpty()) {
           int start = escaper.getOffsetInHost(range.getStartOffset() - prevHostEndOffset - prefixLength, rangeInsideHost);
