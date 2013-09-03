@@ -90,12 +90,29 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
   private void changeStateAndCheck(String url, String key) throws Exception {
     myRepository.setUrl(url);
     Task task = myRepository.findTask(key);
-    myRepository.setTaskState(task, TaskState.IN_PROGRESS);
-    assertEquals(myRepository.findTask(key).getState(), TaskState.IN_PROGRESS);
-    myRepository.setTaskState(task, TaskState.RESOLVED);
-    assertEquals(myRepository.findTask(key).getState(), TaskState.RESOLVED);
-    myRepository.setTaskState(task, TaskState.REOPENED);
-    assertEquals(myRepository.findTask(key).getState(), TaskState.REOPENED);
+    try {
+      myRepository.setTaskState(task, TaskState.IN_PROGRESS);
+      assertEquals(myRepository.findTask(key).getState(), TaskState.IN_PROGRESS);
+      myRepository.setTaskState(task, TaskState.RESOLVED);
+      assertEquals(myRepository.findTask(key).getState(), TaskState.RESOLVED);
+      myRepository.setTaskState(task, TaskState.REOPENED);
+      assertEquals(myRepository.findTask(key).getState(), TaskState.REOPENED);
+    }
+    catch (Exception e) {
+      // always attempt to restore original state of the issue
+      try {
+        // transition to Resolved state usually is possible from any other
+        myRepository.setTaskState(task, TaskState.RESOLVED);
+      }
+      catch (Exception ignored) {
+      }
+      try {
+        myRepository.setTaskState(task, TaskState.REOPENED);
+      }
+      catch (Exception ignored) {
+      }
+      throw e;
+    }
   }
 
   @Override
