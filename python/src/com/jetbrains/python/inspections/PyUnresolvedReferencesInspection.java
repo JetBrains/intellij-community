@@ -379,7 +379,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
     }
 
-    private void registerUnresolvedReferenceProblem(@NotNull PyElement node, @NotNull PsiReference reference,
+    private void registerUnresolvedReferenceProblem(@NotNull PyElement node, @NotNull final PsiReference reference,
                                                     @NotNull HighlightSeverity severity) {
       if (reference instanceof DocStringTypeReference) {
         return;
@@ -535,9 +535,17 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       addPluginQuickFixes(reference, actions);
 
-      PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
-      if (point == null) point = node;
-      TextRange range = reference.getRangeInElement().shiftRight(-point.getStartOffsetInParent());
+      final PsiElement point;
+      final TextRange range;
+      if (reference instanceof PyOperatorReference) {
+        point = node;
+        range = rangeInElement;
+      }
+      else {
+        final PsiElement lastChild = node.getLastChild();
+        point = lastChild != null ? lastChild : node; // usually the identifier at the end of qual ref
+        range = rangeInElement.shiftRight(-point.getStartOffsetInParent());
+      }
       if (reference instanceof PyImportReference && refname != null) {
         // TODO: Ignore references in the second part of the 'from ... import ...' expression
         final PyQualifiedName qname = PyQualifiedName.fromDottedString(refname);
