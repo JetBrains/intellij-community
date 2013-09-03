@@ -23,9 +23,7 @@ public abstract class LoginDialogPanel {
   private JPanel myPanel;
   private JPanel myTimerPanel;
   private JLabel myCreateAccountLabel;
-  protected JRadioButton myShowDialog;
-  protected JRadioButton myLoginSilently;
-  protected JRadioButton myDoNotLogin;
+  protected JCheckBox myShowDialog;
   private JPanel myLoginModePanel;
   private JPanel myProxyPanel;
   private JButton myHelpButton;
@@ -37,18 +35,21 @@ public abstract class LoginDialogPanel {
 
   public LoginDialogPanel() {
     myLoginButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         doOk();
       }
     });
 
     myCancelButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         doCancel();
       }
     });
 
     myHelpButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         doHelp();
       }
@@ -90,8 +91,6 @@ public abstract class LoginDialogPanel {
     myCancelButton.setText("Skip");
     myLoginModePanel.setVisible(true);
     myShowDialog.setVisible(true);
-    myLoginSilently.setVisible(true);
-    myDoNotLogin.setVisible(true);
     myLoginButton.setVisible(true);
     myCancelButton.setVisible(true);
     myHelpButton.setVisible(true);
@@ -102,8 +101,6 @@ public abstract class LoginDialogPanel {
     myCancelButton.setText("Cancel");
     myLoginModePanel.setVisible(false);
     myShowDialog.setVisible(false);
-    myLoginSilently.setVisible(false);
-    myDoNotLogin.setVisible(false);
     myLoginButton.setVisible(false);
     myCancelButton.setVisible(false);
     myHelpButton.setVisible(false);
@@ -117,16 +114,7 @@ public abstract class LoginDialogPanel {
     IdeaConfigurationServerSettings settings = IcsManager.getInstance().getIdeaServerSettings();
     myLogin.setText(settings.getUserName());
     myPassword.setText(settings.getPassword());
-    if (settings.REMEMBER_SETTINGS && settings.DO_LOGIN) {
-      myLoginSilently.setSelected(true);
-    }
-    else if (settings.REMEMBER_SETTINGS && !settings.DO_LOGIN) {
-      myDoNotLogin.setSelected(true);
-    }
-    else {
-      myShowDialog.setSelected(true);
-    }
-
+    myShowDialog.setSelected(true);
     myProxySettingsPanel.reset();
   }
 
@@ -156,19 +144,20 @@ public abstract class LoginDialogPanel {
 
   public void addActionListener(final ActionListener actionListener) {
     myShowDialog.addActionListener(actionListener);
-    myLoginSilently.addActionListener(actionListener);
-    myDoNotLogin.addActionListener(actionListener);
     myLogin.addActionListener(actionListener);
     myPassword.addActionListener(actionListener);
     DocumentListener docListener = new DocumentListener() {
+      @Override
       public void insertUpdate(final DocumentEvent e) {
         actionListener.actionPerformed(null);
       }
 
+      @Override
       public void removeUpdate(final DocumentEvent e) {
         actionListener.actionPerformed(null);
       }
 
+      @Override
       public void changedUpdate(final DocumentEvent e) {
         actionListener.actionPerformed(null);
       }
@@ -205,7 +194,7 @@ public abstract class LoginDialogPanel {
 
 
       settings.update(myLogin.getText(), new String(myPassword.getPassword()));
-      IcsManager.getInstance().login();
+      IcsManager.getInstance().connectAndUpdateStorage();
       closeDialog(true);
     }
     catch (Exception e) {

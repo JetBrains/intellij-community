@@ -25,6 +25,7 @@ public class LoginDialogWrapper extends DialogWrapper {
         close(OK_EXIT_CODE);
       }
 
+      @Override
       protected void doHelp() {
         doHelpAction();
       }
@@ -43,6 +44,7 @@ public class LoginDialogWrapper extends DialogWrapper {
     return "reference.shared.settings.login";
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myLoginDialogPanel.getPanel();
   }

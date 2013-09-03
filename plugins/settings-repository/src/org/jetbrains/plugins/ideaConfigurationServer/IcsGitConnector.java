@@ -35,14 +35,20 @@ final class IcsGitConnector {
     FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
     repositoryBuilder.setGitDir(new File(gitDir, Constants.DOT_GIT));
     Repository repository = repositoryBuilder.build();
-    git = new Git(repository);
     if (!gitDir.exists()) {
       repository.create();
     }
+
+    git = new Git(repository);
   }
 
-  public void updateRepo() {
-    // todo sync with remote
+  public void updateRepo() throws IOException {
+    try {
+      git.fetch().setRemoveDeletedRefs(true).call();
+    }
+    catch (GitAPIException e) {
+      throw new IOException(e);
+    }
   }
 
   @SuppressWarnings("UnusedDeclaration")

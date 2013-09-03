@@ -2,28 +2,25 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.net.HttpConfigurable;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 
 import java.io.File;
 import java.io.IOException;
 
 public class IdeaConfigurationServerSettings {
-  private static final String REMEMBER_SETTINGS_ATTR = "rememberSettings";
-  private static final String DO_LOGIN_ATTR = "doLogin";
   private static final String PASSWORD = "password";
   private static final String LOGIN = "login";
 
   private String userName;
   private String password;
   private final File settingsFile;
-
-  public boolean REMEMBER_SETTINGS ;
-  public boolean DO_LOGIN;
 
   private IdeaConfigurationServerStatus status = IdeaConfigurationServerStatus.LOGGED_OUT;
 
@@ -41,8 +38,6 @@ public class IdeaConfigurationServerSettings {
     if (password != null) {
       user.setAttribute(PASSWORD, PasswordUtil.encodePassword(password));
     }
-    user.setAttribute(REMEMBER_SETTINGS_ATTR, String.valueOf(REMEMBER_SETTINGS));
-    user.setAttribute(DO_LOGIN_ATTR, String.valueOf(DO_LOGIN));
     try {
       proxySettings.writeExternal(user);
     }
@@ -63,29 +58,23 @@ public class IdeaConfigurationServerSettings {
     }
   }
 
-  public void load() {
-    if (settingsFile.isFile()) {
-      try {
-        Document document = JDOMUtil.loadDocument(settingsFile);
-        Element element = document.getRootElement();
-        if (element != null) {
-          userName = element.getAttributeValue(LOGIN);
-          password = element.getAttributeValue(PASSWORD);
-          if (password != null) {
-            password = PasswordUtil.decodePassword(password);
-          }
-          REMEMBER_SETTINGS = Boolean.valueOf(element.getAttributeValue(REMEMBER_SETTINGS_ATTR));
-          DO_LOGIN = Boolean.valueOf(element.getAttributeValue(DO_LOGIN_ATTR));
+  public void load() throws JDOMException, IOException, InvalidDataException {
+    if (!settingsFile.exists()) {
+      return;
+    }
 
-          proxySettings.readExternal(element);
-        }
+    Document document = JDOMUtil.loadDocument(settingsFile);
+    Element element = document.getRootElement();
+    if (element != null) {
+      userName = element.getAttributeValue(LOGIN);
+      password = element.getAttributeValue(PASSWORD);
+      if (password != null) {
+        password = PasswordUtil.decodePassword(password);
       }
-      catch (Exception e) {
-        //ignore
-      }
+
+      proxySettings.readExternal(element);
     }
   }
-
 
   public String getUserName() {
     return userName;

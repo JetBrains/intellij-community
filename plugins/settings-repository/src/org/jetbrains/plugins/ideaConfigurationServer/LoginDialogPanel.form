@@ -156,7 +156,7 @@
               <text value="Do not login"/>
             </properties>
           </component>
-          <component id="96e9" class="javax.swing.JRadioButton" binding="myShowDialog">
+          <component id="96e9" class="javax.swing.JCheckBox" binding="myShowDialog">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>

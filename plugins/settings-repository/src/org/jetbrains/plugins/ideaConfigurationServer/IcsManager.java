@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,12 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
 
 public class IcsManager {
   private static final Logger LOG = Logger.getInstance(IcsManager.class);
-
-  private static final ExecutorService ourThreadExecutorsService = ConcurrencyUtil.newSingleThreadExecutor("IdeaServer executor");
 
   private static final String PROJECT_ID_KEY = "IDEA_SERVER_PROJECT_ID";
 
@@ -58,7 +54,7 @@ public class IcsManager {
         try {
           try {
             if (settings.getStatus() == IdeaConfigurationServerStatus.CONNECTION_FAILED && settings.getUserName() != null && settings.getPassword() != null) {
-              login();
+              connectAndUpdateStorage();
             }
             else if (settings.getStatus() == IdeaConfigurationServerStatus.LOGGED_IN && settings.getUserName() != null && settings.getPassword() != null) {
               //ping();
@@ -73,15 +69,6 @@ public class IcsManager {
         }
       }
     };
-
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(StatusListener.TOPIC, new StatusListener() {
-      @Override
-      public void statusChanged(final IdeaConfigurationServerStatus status) {
-        if (status == IdeaConfigurationServerStatus.LOGGED_IN) {
-          serverConnector.updateRepo();
-        }
-      }
-    });
   }
 
   public static IcsManager getInstance() {
@@ -98,21 +85,14 @@ public class IcsManager {
   }
 
   public void registerApplicationLevelProviders(Application application) {
-    settings.load();
+    try {
+      settings.load();
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
 
-    if (settings.REMEMBER_SETTINGS || GraphicsEnvironment.isHeadless()) {
-      if (settings.DO_LOGIN) {
-        if (settings.getUserName() != null && settings.getPassword() != null) {
-          login();
-        }
-        else {
-          requestCredentials("Login failed, user name and password should not be empty", true);
-        }
-      }
-    }
-    else {
-      requestCredentials(null, true);
-    }
+    connectAndUpdateStorage();
 
     StateStorageManager storageManager = ((ApplicationImpl)application).getStateStore().getStateStorageManager();
     registerProvider(storageManager, RoamingType.PER_USER);
@@ -125,10 +105,6 @@ public class IcsManager {
     StateStorageManager manager = ((ProjectEx)project).getStateStore().getStateStorageManager();
     manager.registerStreamProvider(new ICSStreamProvider(projectKey, RoamingType.PER_PLATFORM), RoamingType.PER_PLATFORM);
     manager.registerStreamProvider(new ICSStreamProvider(projectKey, RoamingType.PER_USER), RoamingType.PER_USER);
-  }
-
-  private static void executeOnPooledThread(final Runnable runnable) {
-    ourThreadExecutorsService.submit(runnable);
   }
 
   public void requestCredentials(final String failedMessage, boolean isStartupMode) {
@@ -164,7 +140,7 @@ public class IcsManager {
       @Override
       public void deleteFile(String fileSpec, RoamingType roamingType) {
         final String path = IcsUrlBuilder.buildPath(fileSpec, this.roamingType, null);
-        executeOnPooledThread(new Runnable() {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {
             try {
@@ -179,9 +155,10 @@ public class IcsManager {
     }, type);
   }
 
-  public void login() {
+  public void connectAndUpdateStorage() {
     try {
       serverConnector = new IcsGitConnector();
+      serverConnector.updateRepo();
       settings.setStatus(IdeaConfigurationServerStatus.LOGGED_IN);
     }
     catch (IOException e) {
