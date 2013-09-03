@@ -24,18 +24,4 @@ public abstract class GenericSubtypeTestCase extends TaskManagerTestCase {
 
   @NotNull
   protected abstract GenericRepository createRepository(GenericRepositoryType genericType);
-
-  protected static void  assertTasksEqual(@NotNull Task t1, @NotNull Task t2) {
-    assertTrue(TaskUtil.tasksEqual(t1, t2));
-  }
-
-  protected static void  assertTasksEqual(@NotNull List<? extends Task> t1, @NotNull List<? extends Task> t2) {
-    assertTrue(TaskUtil.tasksEqual(t1, t2));
-  }
-
-  protected static void  assertTasksEqual(@NotNull Task[] t1, @NotNull Task[] t2) {
-    assertTrue(TaskUtil.tasksEqual(t1, t2));
-  }
-
-
 }

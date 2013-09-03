@@ -16,6 +16,7 @@
 package com.intellij.tasks.integration;
 
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskTestUtil;
 import com.intellij.tasks.generic.GenericRepository;
 import com.intellij.tasks.generic.GenericRepositoryType;
 import com.intellij.tasks.generic.GenericTask;
@@ -25,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.tasks.TaskTestUtil.TaskBuilder;
+import static com.intellij.tasks.TaskTestUtil.assertTasksEqual;
 
 /**
  * @author Mikhail Golubev
@@ -97,11 +101,13 @@ public class AsanaIntegrationTest extends GenericSubtypeTestCase {
   public void testParsingSingleTask() throws Exception {
     Task task = myRepository.getActiveResponseHandler().parseIssue(SINGLE_TASK_RESPONSE);
     assertNotNull(task);
-    GenericTask expected = new GenericTask("7119324862208", "Task #2", myRepository);
-    expected.setDescription("This is task #2 description");
-    expected.setCreated(TaskUtil.parseDate("2013-08-02T12:13:20.372Z"));
-    expected.setUpdated(TaskUtil.parseDate("2013-08-21T16:36:36.290Z"));
-    expected.setClosed(true);
-    assertTasksEqual(expected, task);
+    assertTasksEqual(
+      new TaskBuilder("7119324862208", "Task #2")
+        .withRepository(myRepository)
+        .withDescription("This is task #2 description")
+        .withClosed(true)
+        .withCreated("2013-08-02T12:13:20.372Z")
+        .withUpdated("2013-08-21T16:36:36.290Z"),
+      task);
   }
 }
