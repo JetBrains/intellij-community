@@ -74,36 +74,24 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
 
         for (PsiAnnotation annotation : annotations) {
             PsiNameValuePair dep = null;
-            PsiNameValuePair[] params = annotation.getParameterList().getAttributes();
-            for (PsiNameValuePair param : params) {
-                if ("dependsOnMethods".equals(param.getName())) {
-                    dep = param;
-                    break;
+          final PsiAnnotationMemberValue value = annotation.findAttributeValue("dependsOnMethods");
+          if (value != null) {
+            String text = value.getText();
+            if (value instanceof PsiReferenceExpression) {
+              final PsiElement resolve = ((PsiReferenceExpression)value).resolve();
+              if (resolve instanceof PsiField && ((PsiField)resolve).hasModifierProperty(PsiModifier.STATIC) && ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL)) {
+                final PsiExpression initializer = ((PsiField)resolve).getInitializer();
+                if (initializer != null) {
+                  text = initializer.getText();
                 }
+              }
             }
-
-            if (dep != null) {
-                if (dep.getValue() != null) {
-                  final PsiAnnotationMemberValue value = dep.getValue();
-                  if (value != null) {
-                    String text = value.getText();
-                    if (value instanceof PsiReferenceExpression) {
-                      final PsiElement resolve = ((PsiReferenceExpression)value).resolve();
-                      if (resolve instanceof PsiField && ((PsiField)resolve).hasModifierProperty(PsiModifier.STATIC) && ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL)) {
-                        final PsiExpression initializer = ((PsiField)resolve).getInitializer();
-                        if (initializer != null) {
-                          text = initializer.getText();
-                        }
-                      }
-                    }
-                    Matcher matcher = PATTERN.matcher(text);
-                    while (matcher.find()) {
-                        String methodName = matcher.group(1);
-                        checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors, isOnTheFly);
-                    }
-                  }
-                }
+            Matcher matcher = PATTERN.matcher(text);
+            while (matcher.find()) {
+                String methodName = matcher.group(1);
+                checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors, isOnTheFly);
             }
+          }
         }
         
         return problemDescriptors.toArray(new ProblemDescriptor[] {} );
