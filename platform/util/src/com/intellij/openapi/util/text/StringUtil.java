@@ -1233,7 +1233,7 @@ public class StringUtil extends StringUtilRt {
   public static void join(@NotNull Collection<? extends String> strings, @NotNull String separator, @NotNull StringBuilder result) {
     boolean isFirst = true;
     for (String string : strings) {
-      if (string != null && !string.isEmpty()) {
+      if (string != null) {
         if (isFirst) {
           isFirst = false;
         }
