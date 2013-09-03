@@ -194,7 +194,7 @@ public class IcsManager {
   }
 
   @Nullable
-  private InputStream loadUserPreferences(IdeaServerUrlBuilder builder) throws IOException {
+  private InputStream loadUserPreferences(IcsUrlBuilder builder) throws IOException {
     try {
       if (canUseLocalCopy(builder)) {
         File localFileCopy = new File(myLocalCopyDir, builder.buildPath());
@@ -209,11 +209,11 @@ public class IcsManager {
     return serverConnector.loadUserPreferences(builder.buildPath());
   }
 
-  private static boolean canUseLocalCopy(IdeaServerUrlBuilder builder) {
+  private static boolean canUseLocalCopy(IcsUrlBuilder builder) {
     return builder.getRoamingType() != RoamingType.GLOBAL;
   }
 
-  private void deleteUserPreferences(IdeaServerUrlBuilder builder) throws IOException {
+  private void deleteUserPreferences(IcsUrlBuilder builder) throws IOException {
     try {
       if (canUseLocalCopy(builder)) {
         File localCopy = new File(myLocalCopyDir, builder.buildPath());
@@ -225,7 +225,7 @@ public class IcsManager {
     }
   }
 
-  private String[] listSubFileNames(IdeaServerUrlBuilder urlBuilder) {
+  private String[] listSubFileNames(IcsUrlBuilder urlBuilder) {
     try {
       if (canUseLocalCopy(urlBuilder)) {
         File localFile = new File(myLocalCopyDir, urlBuilder.buildPath());
@@ -256,7 +256,7 @@ public class IcsManager {
     return ArrayUtil.toStringArray(result);
   }
 
-  private static String ping(IdeaServerUrlBuilder urlBuilder) throws IOException {
+  private static String ping(IcsUrlBuilder urlBuilder) throws IOException {
     return IcsGitConnector.ping(urlBuilder);
   }
 
@@ -299,9 +299,9 @@ public class IcsManager {
     manager.registerStreamProvider(new ICSStreamProvider(projectKey, RoamingType.PER_USER), RoamingType.PER_USER);
   }
 
-  private IdeaServerUrlBuilder createBuilder(final String fileSpec, final RoamingType type, final String projectKey) {
+  private IcsUrlBuilder createBuilder(final String fileSpec, final RoamingType type, final String projectKey) {
     try {
-      return new IdeaServerUrlBuilder(fileSpec, type, projectKey) {
+      return new IcsUrlBuilder(fileSpec, type, projectKey) {
 
         @Override
         public void setDisconnectedStatus() {
@@ -408,7 +408,7 @@ public class IcsManager {
     return result;
   }
 
-  public void deleteUserPreferencesAsync(final IdeaServerUrlBuilder builder) {
+  public void deleteUserPreferencesAsync(final IcsUrlBuilder builder) {
     executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
@@ -579,7 +579,7 @@ public class IcsManager {
       }
     }
 
-    private IdeaServerUrlBuilder createBuilderInt(String fileSpec) {
+    private IcsUrlBuilder createBuilderInt(String fileSpec) {
       return createBuilder(fileSpec, roamingType, projectId);
     }
 

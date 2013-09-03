@@ -4,7 +4,7 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.util.SystemInfo;
 import org.apache.commons.httpclient.NameValuePair;
 
-public abstract class IdeaServerUrlBuilder {
+public abstract class IcsUrlBuilder {
   private static final String WINDOWS = "windows";
   private static final String OS2 = "os2";
   private static final String MAC = "mac";
@@ -20,7 +20,7 @@ public abstract class IdeaServerUrlBuilder {
   private final RoamingType roamingType;
   private final String projectKey;
 
-  public IdeaServerUrlBuilder(final String filePath, final RoamingType roamingType, String projectKey) {
+  public IcsUrlBuilder(final String filePath, final RoamingType roamingType, String projectKey) {
     this.filePath = filePath;
     this.roamingType = roamingType;
     this.projectKey = projectKey;

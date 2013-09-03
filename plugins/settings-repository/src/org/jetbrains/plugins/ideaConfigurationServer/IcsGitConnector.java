@@ -66,11 +66,11 @@ final class IcsGitConnector {
     }
   }
 
-  public static void send(File file, IdeaServerUrlBuilder builder) throws IOException {
+  public static void send(File file, IcsUrlBuilder builder) throws IOException {
     doPost(builder, "upload", file, ContentProcessor.EMPTY);
   }
 
-  public static void loadAllFiles(IdeaServerUrlBuilder builder, final ContentProcessor processor) throws IOException {
+  public static void loadAllFiles(IcsUrlBuilder builder, final ContentProcessor processor) throws IOException {
     doPost(builder, "loadAll", null, processor);
   }
 
@@ -85,12 +85,12 @@ final class IcsGitConnector {
     };
   }
 
-  private static void doPost(final IdeaServerUrlBuilder builder, final String actionName, File input, ContentProcessor processor)
+  private static void doPost(final IcsUrlBuilder builder, final String actionName, File input, ContentProcessor processor)
     throws IOException {
     doPostImpl(builder, actionName, input, processor);
   }
 
-  private static void doPostImpl(final IdeaServerUrlBuilder builder, final String actionName, File file, ContentProcessor processor)
+  private static void doPostImpl(final IcsUrlBuilder builder, final String actionName, File file, ContentProcessor processor)
     throws IOException {
     try {
       final Pair<HttpClient, HttpConnection> pair = createConnection(builder);
@@ -154,12 +154,12 @@ final class IcsGitConnector {
     }
   }
 
-  public static void delete(IdeaServerUrlBuilder builder) throws IOException {
+  public static void delete(IcsUrlBuilder builder) throws IOException {
 
     doPost(builder, "delete", null, ContentProcessor.EMPTY);
   }
 
-  private static Pair<HttpClient, HttpConnection> createConnection(final IdeaServerUrlBuilder builder) throws IOException {
+  private static Pair<HttpClient, HttpConnection> createConnection(final IcsUrlBuilder builder) throws IOException {
     //final SimpleHttpConnectionManager manager = new SimpleHttpConnectionManager();
     HttpClient httpClient = new HttpClient();
 
@@ -193,7 +193,7 @@ final class IcsGitConnector {
     return new Pair<HttpClient, HttpConnection>(httpClient, connection);
   }
 
-  public static String[] listSubFileNames(IdeaServerUrlBuilder builder) throws IOException {
+  public static String[] listSubFileNames(IcsUrlBuilder builder) throws IOException {
     final List<String> result = new ArrayList<String>();
     doPost(builder, "list", null, new ContentProcessor() {
       @Override
@@ -210,7 +210,7 @@ final class IcsGitConnector {
     return ArrayUtil.toStringArray(result);
   }
 
-  public static String ping(final IdeaServerUrlBuilder builder) throws IOException {
+  public static String ping(final IcsUrlBuilder builder) throws IOException {
     final Pair<HttpClient, HttpConnection> pair = createConnection(builder);
 
     try {
