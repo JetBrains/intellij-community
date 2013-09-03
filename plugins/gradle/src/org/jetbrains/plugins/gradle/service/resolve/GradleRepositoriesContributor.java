@@ -15,14 +15,12 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
-import org.gradle.api.artifacts.dsl.RepositoryHandler;
-
 /**
  * @author Denis Zhdanov
  * @since 8/14/13 12:56 PM
  */
 public class GradleRepositoriesContributor extends GradleSimpleContributor {
   public GradleRepositoriesContributor() {
-    super("repositories", RepositoryHandler.class);
+    super("repositories", GradleCommonClassNames.REPOSITORY_HANDLER);
   }
 }

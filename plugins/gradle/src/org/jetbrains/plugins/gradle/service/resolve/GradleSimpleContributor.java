@@ -31,11 +31,11 @@ import java.util.List;
 public abstract class GradleSimpleContributor implements GradleMethodContextContributor {
 
   private final String blockName;
-  private final Class<?> contributorClazz;
+  private final String fqName;
 
-  protected GradleSimpleContributor(String blockName, Class<?> contributorClazz) {
+  protected GradleSimpleContributor(@NotNull String blockName, @NotNull String fqName) {
     this.blockName = blockName;
-    this.contributorClazz = contributorClazz;
+    this.fqName = fqName;
   }
 
   @Override
@@ -47,7 +47,7 @@ public abstract class GradleSimpleContributor implements GradleMethodContextCont
       return;
     }
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-    PsiClass contributorClass = psiManager.findClassWithCache(contributorClazz.getName(), place.getResolveScope());
+    PsiClass contributorClass = psiManager.findClassWithCache(fqName, place.getResolveScope());
     if (contributorClass != null) {
       contributorClass.processDeclarations(processor, state, null, place);
     }
