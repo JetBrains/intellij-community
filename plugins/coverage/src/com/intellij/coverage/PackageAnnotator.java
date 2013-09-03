@@ -22,6 +22,7 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
@@ -271,7 +272,8 @@ public class PackageAnnotator {
               containingFile[0] = aClass.getContainingFile().getVirtualFile();
               assert containingFile[0] != null;
               final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-              return fileIndex.isInSourceContent(containingFile[0]) && (trackTestFolders || !fileIndex.isInTestSourceContent(containingFile[0]));
+              return fileIndex.isUnderSourceRootOfType(containingFile[0], JavaModuleSourceRootTypes.SOURCES)
+                     && (trackTestFolders || !fileIndex.isInTestSourceContent(containingFile[0]));
             }
           });
           if (isInSource != null && isInSource.booleanValue()) {
