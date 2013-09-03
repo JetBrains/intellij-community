@@ -2,9 +2,11 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.AppUIUtil;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -20,19 +22,20 @@ public class IdeaServerPanel {
 
   public IdeaServerPanel(DialogWrapper parent) {
     myParent = parent;
-    final IcsSettings settings = getSettings();
+    final IcsSettings settings = IcsManager.getInstance().getIdeaServerSettings();
 
     final TitledBorder border = (TitledBorder)myStartupPanel.getBorder();
     border.setTitle("On next " + ApplicationNamesInfo.getInstance().getProductName() + " startup");
 
     myActionButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         try {
-          if (settings.getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
+          if (IcsManager.getInstance().getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
             IcsManager.getInstance().logout();
           }
           else {
-            IcsManager.getInstance().requestCredentials(null, false);
+            requestCredentials(null, false);
           }
         }
         finally {
@@ -44,29 +47,19 @@ public class IdeaServerPanel {
     update();
 
     ActionListener actionListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        IcsSettings settings = getSettings();
-        settings.REMEMBER_SETTINGS = myLoginSilently.isSelected() || myDoNotLogin.isSelected();
-        settings.DO_LOGIN = myLoginSilently.isSelected() || myShowDialog.isSelected();
+        IcsSettings settings = IcsManager.getInstance().getIdeaServerSettings();
       }
     };
     myLoginSilently.addActionListener(actionListener);
     myShowDialog.addActionListener(actionListener);
     myDoNotLogin.addActionListener(actionListener);
 
-    if (settings.REMEMBER_SETTINGS && settings.DO_LOGIN) {
-      myLoginSilently.setSelected(true);
-    }
-    else if (settings.REMEMBER_SETTINGS && !settings.DO_LOGIN) {
-      myDoNotLogin.setSelected(true);
-    }
-    else {
-      myShowDialog.setSelected(true);
-    }
-
     ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        apply();
+        final IcsSettings settings1 = IcsManager.getInstance().getIdeaServerSettings();
       }
     };
     myLoginSilently.addActionListener(listener);
@@ -74,33 +67,24 @@ public class IdeaServerPanel {
     myShowDialog.addActionListener(listener);
   }
 
-  private void apply() {
-    final IcsSettings settings = getSettings();
-
-    if (myLoginSilently.isSelected()) {
-      settings.REMEMBER_SETTINGS = true;
-      settings.DO_LOGIN = true;
+  private static void requestCredentials(final String failedMessage, boolean isStartupMode) {
+    if (isStartupMode) {
+      LoginDialog dialog = new LoginDialog(failedMessage);
+      dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
+      AppUIUtil.updateWindowIcon(dialog);
+      dialog.setVisible(true);
     }
-
-    else if (myDoNotLogin.isSelected()) {
-      settings.REMEMBER_SETTINGS = true;
-      settings.DO_LOGIN = false;
-    }
-
-    else if (myShowDialog.isSelected()) {
-      settings.REMEMBER_SETTINGS = false;
-      settings.DO_LOGIN = true;
+    else {
+      new LoginDialogWrapper(failedMessage).show();
+      //if (getIdeaServerSettings().getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
+      //  updateConfigFilesFromServer();
+      //}
     }
   }
-
-  private IcsSettings getSettings() {
-    return IcsManager.getInstance().getIdeaServerSettings();
-  }
-
 
   private void update() {
-    myStatusLabel.setText("Current status: " + IcsManager.getStatusText());
-    if (IcsManager.getInstance().getIdeaServerSettings().getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
+    myStatusLabel.setText("Current status: " + IcsManager.getInstance().getStatusText());
+    if (IcsManager.getInstance().getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
       myActionButton.setText("Logout");
     }
     else {

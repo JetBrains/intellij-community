@@ -5,24 +5,23 @@ import com.intellij.ide.BrowserUtil;
 import javax.swing.*;
 
 public class LoginDialog extends DialogBase {
-  private LoginDialogPanel myLoginDialogPanel;
+  private LoginDialogPanel loginDialogPanel;
 
-  public LoginDialog(final String failedMessage) {
+  public LoginDialog(String failedMessage) {
     super("Login to IntelliJ Configuration Server");
+
     initDialog(failedMessage);
   }
 
   private void initDialog(String failedMessage) {
-    myLoginDialogPanel = new LoginDialogPanel() {
+    loginDialogPanel = new LoginDialogPanel() {
       @Override
-      protected void showErrorMessage(final String text, final boolean closeOnTimer) {
+      protected void showErrorMessage(String text, boolean closeOnTimer) {
         ErrorMessageDialog.show("Login to IntelliJ Configuration Server", text, closeOnTimer);
       }
 
       @Override
-      protected void rememberStartupSettings(final IcsSettings settings, final boolean doLogin) {
-        settings.REMEMBER_SETTINGS = myLoginSilently.isSelected() || myDoNotLogin.isSelected();
-        settings.DO_LOGIN = myLoginSilently.isSelected() || myShowDialog.isSelected();
+      protected void rememberStartupSettings(IcsSettings settings, boolean doLogin) {
       }
 
       @Override
@@ -30,22 +29,25 @@ public class LoginDialog extends DialogBase {
         dispose();
       }
 
+      @Override
       protected void doHelp() {
         BrowserUtil.launchBrowser("http://www.jetbrains.com/idea/serverhelp/");
       }
     };
 
-    myLoginDialogPanel.switchToStartUpMode();
-    myLoginDialogPanel.reset(failedMessage);
+    loginDialogPanel.switchToStartUpMode();
+    loginDialogPanel.reset(failedMessage);
 
     init();
   }
 
+  @Override
   protected JButton getDefaultButton() {
-    return myLoginDialogPanel.getDefaultButton();
+    return loginDialogPanel.getDefaultButton();
   }
 
+  @Override
   protected JPanel getCenterPanel() {
-    return myLoginDialogPanel.getPanel();
+    return loginDialogPanel.getPanel();
   }
 }

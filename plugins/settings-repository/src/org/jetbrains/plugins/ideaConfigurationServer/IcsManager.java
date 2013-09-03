@@ -16,16 +16,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -44,6 +39,8 @@ public class IcsManager {
 
   private IcsGitConnector serverConnector;
 
+  private IdeaConfigurationServerStatus status;
+
   public IcsManager() {
     settings = new IcsSettings();
     updateRequest = new Runnable() {
@@ -53,10 +50,10 @@ public class IcsManager {
         updateAlarm.cancelAllRequests();
         try {
           try {
-            if (settings.getStatus() == IdeaConfigurationServerStatus.CONNECTION_FAILED && settings.getUserName() != null && settings.getPassword() != null) {
+            if (status == IdeaConfigurationServerStatus.CONNECTION_FAILED && settings.getLogin() != null && settings.getToken() != null) {
               connectAndUpdateStorage();
             }
-            else if (settings.getStatus() == IdeaConfigurationServerStatus.LOGGED_IN && settings.getUserName() != null && settings.getPassword() != null) {
+            else if (status == IdeaConfigurationServerStatus.LOGGED_IN && settings.getLogin() != null && settings.getToken() != null) {
               //ping();
             }
           }
@@ -84,6 +81,18 @@ public class IcsManager {
     return id;
   }
 
+  public IdeaConfigurationServerStatus getStatus() {
+    return status;
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  public void setStatus(@NotNull IdeaConfigurationServerStatus value) {
+    if (status != value) {
+      status = value;
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(StatusListener.TOPIC).statusChanged(value);
+    }
+  }
+
   public void registerApplicationLevelProviders(Application application) {
     try {
       settings.load();
@@ -105,21 +114,6 @@ public class IcsManager {
     StateStorageManager manager = ((ProjectEx)project).getStateStore().getStateStorageManager();
     manager.registerStreamProvider(new ICSStreamProvider(projectKey, RoamingType.PER_PLATFORM), RoamingType.PER_PLATFORM);
     manager.registerStreamProvider(new ICSStreamProvider(projectKey, RoamingType.PER_USER), RoamingType.PER_USER);
-  }
-
-  public void requestCredentials(final String failedMessage, boolean isStartupMode) {
-    if (isStartupMode) {
-      LoginDialog dialog = new LoginDialog(failedMessage);
-      dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
-      AppUIUtil.updateWindowIcon(dialog);
-      dialog.setVisible(true);
-    }
-    else {
-      new LoginDialogWrapper(failedMessage).show();
-      if (getIdeaServerSettings().getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
-        updateConfigFilesFromServer();
-      }
-    }
   }
 
   public void startPing() {
@@ -159,11 +153,25 @@ public class IcsManager {
     try {
       serverConnector = new IcsGitConnector();
       serverConnector.updateRepo();
-      settings.setStatus(IdeaConfigurationServerStatus.LOGGED_IN);
+      //settings.setStatus(IdeaConfigurationServerStatus.LOGGED_IN);
     }
     catch (IOException e) {
-      settings.setStatus(IdeaConfigurationServerStatus.CONNECTION_FAILED);
+      //settings.setStatus(IdeaConfigurationServerStatus.CONNECTION_FAILED);
       LOG.error(e);
+    }
+
+    StateStorageManager appStorageManager = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager();
+    Collection<String> storageFileNames = appStorageManager.getStorageFileNames();
+    if (!storageFileNames.isEmpty()) {
+      processStorages(appStorageManager, storageFileNames);
+
+      Project[] projects = ProjectManager.getInstance().getOpenProjects();
+      for (Project project : projects) {
+        StateStorageManager storageManager = ((ProjectEx)project).getStateStore().getStateStorageManager();
+        processStorages(storageManager, storageManager.getStorageFileNames());
+      }
+
+      SchemesManagerFactory.getInstance().updateConfigFilesFromStreamProviders();
     }
   }
 
@@ -172,17 +180,16 @@ public class IcsManager {
   }
 
   public void logout() {
-    settings.logout();
+    //settings.logout();
   }
 
-  public static String getStatusText() {
+  public String getStatusText() {
     IcsSettings settings = getInstance().getIdeaServerSettings();
-    IdeaConfigurationServerStatus serverStatus = settings.getStatus();
-    switch (serverStatus) {
+    switch (status) {
       case CONNECTION_FAILED:
         return "Connection failed";
       case LOGGED_IN:
-        return "Logged in as " + settings.getUserName();
+        return "Logged in as " + settings.getLogin();
       case LOGGED_OUT:
         return "Logged out";
       case UNAUTHORIZED:
@@ -194,41 +201,14 @@ public class IcsManager {
     }
   }
 
-  public static void updateConfigFilesFromServer() {
-    final ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
-    StateStorageManager appStorageManager = app.getStateStore().getStateStorageManager();
-    Collection<String> storageFileNames =
-      appStorageManager.getStorageFileNames();
-    if (!storageFileNames.isEmpty()) {
-      HashSet<File> filesToUpdate = new HashSet<File>();
-      processStorages(appStorageManager, storageFileNames, filesToUpdate);
-
-      Project[] projects = ProjectManager.getInstance().getOpenProjects();
-      for (Project project : projects) {
-        StateStorageManager storageManager = ((ProjectEx)project).getStateStore().getStateStorageManager();
-        processStorages(storageManager, storageManager.getStorageFileNames(), filesToUpdate);
-      }
-
-      if (!filesToUpdate.isEmpty()) {
-        LocalFileSystem.getInstance().refreshIoFiles(filesToUpdate);
-      }
-
-
-      SchemesManagerFactory.getInstance().updateConfigFilesFromStreamProviders();
-    }
-  }
-
-  private static void processStorages(final StateStorageManager appStorageManager, final Collection<String> storageFileNames, Collection<File> filesToUpdate) {
+  private static void processStorages(final StateStorageManager appStorageManager, final Collection<String> storageFileNames) {
     for (String storageFileName : storageFileNames) {
       StateStorage stateStorage = appStorageManager.getFileStateStorage(storageFileName);
       if (stateStorage instanceof FileBasedStorage) {
         try {
           FileBasedStorage fileBasedStorage = (FileBasedStorage)stateStorage;
           fileBasedStorage.resetProviderCache();
-          File fileToUpdate = fileBasedStorage.updateFileExternallyFromStreamProviders();
-          if (fileToUpdate != null) {
-            filesToUpdate.add(fileToUpdate);
-          }
+          fileBasedStorage.updateFileExternallyFromStreamProviders();
         }
         catch (Throwable e) {
           LOG.debug(e);
@@ -284,7 +264,7 @@ public class IcsManager {
 
     @Override
     public String getCurrentUserName() {
-      return settings.getUserName();
+      return settings.getLogin();
     }
 
     @Override

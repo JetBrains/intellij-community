@@ -1,12 +1,14 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -25,6 +27,8 @@ import java.util.Set;
 
 
 final class IcsGitConnector {
+  private static final Logger LOG = Logger.getInstance(IcsGitConnector.class);
+
   private final Git git;
 
   // avoid FS recursive scan
@@ -45,6 +49,10 @@ final class IcsGitConnector {
   public void updateRepo() throws IOException {
     try {
       git.fetch().setRemoveDeletedRefs(true).call();
+    }
+    catch (InvalidRemoteException ignored) {
+      // remote repo is not configured
+      LOG.debug(ignored.getMessage());
     }
     catch (GitAPIException e) {
       throw new IOException(e);

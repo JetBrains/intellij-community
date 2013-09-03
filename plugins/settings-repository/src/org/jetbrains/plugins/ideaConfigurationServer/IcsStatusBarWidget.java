@@ -50,12 +50,12 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
   @NotNull
   @Override
   public Icon getIcon() {
-    return getStatusIcon(IcsManager.getInstance().getIdeaServerSettings().getStatus());
+    return getStatusIcon(IcsManager.getInstance().getStatus());
   }
 
   @Override
   public String getTooltipText() {
-    return "IntelliJ Configuration Server status: " + IcsManager.getStatusText();
+    return "IntelliJ Configuration Server status: " + IcsManager.getInstance().getStatusText();
   }
 
   @Override

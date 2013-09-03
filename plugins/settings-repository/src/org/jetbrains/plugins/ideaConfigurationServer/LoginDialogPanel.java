@@ -3,7 +3,6 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.ui.ClickListener;
-import com.intellij.util.net.HTTPProxySettingsPanel;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -13,25 +12,22 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 
-
 public abstract class LoginDialogPanel {
   private JButton myLoginButton;
   private JButton myCancelButton;
   private JTextField myLogin;
-  private JPasswordField myPassword;
+  private JTextField token;
   private JLabel myFailedMessage;
   private JPanel myPanel;
   private JPanel myTimerPanel;
   private JLabel myCreateAccountLabel;
   protected JCheckBox myShowDialog;
   private JPanel myLoginModePanel;
-  private JPanel myProxyPanel;
   private JButton myHelpButton;
   private JLabel myPromptLabel;
   private ActionListener myActionListener;
 
   private final TimerLabel myTimerLabel = new TimerLabel();
-  private final HTTPProxySettingsPanel myProxySettingsPanel;
 
   public LoginDialogPanel() {
     myLoginButton.addActionListener(new ActionListener() {
@@ -71,9 +67,6 @@ public abstract class LoginDialogPanel {
     }.installOn(myCreateAccountLabel);
 
     myCreateAccountLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-    myProxySettingsPanel = new HTTPProxySettingsPanel(IcsManager.getInstance().getIdeaServerSettings().getHttpProxySettings());
-    myProxyPanel.add(myProxySettingsPanel.createComponent(), BorderLayout.CENTER);
   }
 
   protected abstract void doHelp();
@@ -112,19 +105,15 @@ public abstract class LoginDialogPanel {
       myFailedMessage.setText(failedMessage);
     }
     IcsSettings settings = IcsManager.getInstance().getIdeaServerSettings();
-    myLogin.setText(settings.getUserName());
-    myPassword.setText(settings.getPassword());
+    myLogin.setText(settings.getLogin());
+    token.setText(settings.getToken());
     myShowDialog.setSelected(true);
-    myProxySettingsPanel.reset();
   }
 
   private void closeDialog(final boolean doLogin) {
     stopCounter();
-    IcsSettings settings = IcsManager.getInstance().getIdeaServerSettings();
-    //settings.update(myLogin.getText(), new String(myPassword.getPassword()), mySession);
-    rememberStartupSettings(settings, doLogin);
+    rememberStartupSettings(IcsManager.getInstance().getIdeaServerSettings(), doLogin);
 
-    //settings.setStatus(serverStatus);
     closeDialog();
   }
 
@@ -145,7 +134,7 @@ public abstract class LoginDialogPanel {
   public void addActionListener(final ActionListener actionListener) {
     myShowDialog.addActionListener(actionListener);
     myLogin.addActionListener(actionListener);
-    myPassword.addActionListener(actionListener);
+    token.addActionListener(actionListener);
     DocumentListener docListener = new DocumentListener() {
       @Override
       public void insertUpdate(final DocumentEvent e) {
@@ -163,10 +152,8 @@ public abstract class LoginDialogPanel {
       }
     };
     myLogin.getDocument().addDocumentListener(docListener);
-    myPassword.getDocument().addDocumentListener(docListener);
+    token.getDocument().addDocumentListener(docListener);
     myActionListener = actionListener;
-
-    myProxySettingsPanel.addActionListener(actionListener);
   }
 
   public void stopCounter() {
@@ -188,12 +175,7 @@ public abstract class LoginDialogPanel {
 
   private void doLogin(final boolean onTimer) {
     try {
-      IcsSettings settings = IcsManager.getInstance().getIdeaServerSettings();
-
-      myProxySettingsPanel.apply();
-
-
-      settings.update(myLogin.getText(), new String(myPassword.getPassword()));
+      IcsManager.getInstance().getIdeaServerSettings().update(myLogin.getText(), token.getText());
       IcsManager.getInstance().connectAndUpdateStorage();
       closeDialog(true);
     }

@@ -1,110 +1,65 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.PasswordUtil;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Document;
-import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 
 public class IcsSettings {
-  private static final String PASSWORD = "password";
-  private static final String LOGIN = "login";
+  @Tag
+  private String login;
+  @Tag
+  private String url;
+  @Tag
+  private String token;
 
-  private String userName;
-  private String password;
+  @Transient
   private final File settingsFile;
-
-  private IdeaConfigurationServerStatus status = IdeaConfigurationServerStatus.LOGGED_OUT;
-
-  private final HttpConfigurable proxySettings = new HttpConfigurable();
 
   public IcsSettings() {
     settingsFile = new File(PathManager.getSystemPath(), "ideaConfigurationServer/state.xml");
   }
 
-  private Document createCredentialsDocument() {
-    Element user = new Element("user");
-    if (userName != null) {
-      user.setAttribute(LOGIN, userName);
-    }
-    if (password != null) {
-      user.setAttribute(PASSWORD, PasswordUtil.encodePassword(password));
-    }
-    try {
-      proxySettings.writeExternal(user);
-    }
-    catch (WriteExternalException e) {
-      //ignore
-    }
-    return new Document(user);
-  }
-
   public void save() {
     //noinspection ResultOfMethodCallIgnored
     settingsFile.getParentFile().mkdirs();
+
+    XmlSerializer.serialize(this);
     try {
-      JDOMUtil.writeDocument(createCredentialsDocument(), settingsFile, "\n");
+      JDOMUtil.writeDocument(new Document(XmlSerializer.serialize(this)), settingsFile, "\n");
     }
     catch (IOException e) {
       //ignore
     }
   }
 
-  public void load() throws JDOMException, IOException, InvalidDataException {
+  public void load() throws JDOMException, IOException {
     if (!settingsFile.exists()) {
       return;
     }
 
-    Document document = JDOMUtil.loadDocument(settingsFile);
-    Element element = document.getRootElement();
-    if (element != null) {
-      userName = element.getAttributeValue(LOGIN);
-      password = element.getAttributeValue(PASSWORD);
-      if (password != null) {
-        password = PasswordUtil.decodePassword(password);
-      }
-
-      proxySettings.readExternal(element);
-    }
+    XmlSerializer.deserializeInto(this, JDOMUtil.loadDocument(settingsFile).getRootElement());
   }
 
-  public String getUserName() {
-    return userName;
+  @Nullable
+  public String getLogin() {
+    return login;
   }
 
-  public String getPassword() {
-    return password;
+  @Nullable
+  public String getToken() {
+    return token;
   }
 
-  public void update(final String login, final String password) {
-    userName = login;
-    this.password = password;
-  }
-
-  public IdeaConfigurationServerStatus getStatus() {
-    return status;
-  }
-
-  public void setStatus(IdeaConfigurationServerStatus status) {
-    if (this.status != status) {
-      this.status = status;
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(StatusListener.TOPIC).statusChanged(status);
-    }
-  }
-
-  public void logout() {
-    setStatus(IdeaConfigurationServerStatus.LOGGED_OUT);
-  }
-
-  public HttpConfigurable getHttpProxySettings() {
-    return proxySettings;
+  public void update(@Nullable String login, @Nullable String token) {
+    this.token = login;
+    this.token = token;
   }
 }
