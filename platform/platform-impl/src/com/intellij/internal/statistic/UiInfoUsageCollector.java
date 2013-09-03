@@ -20,6 +20,7 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +59,7 @@ public class UiInfoUsageCollector extends UsagesCollector {
     add(set, "Tabs Bottom", tabPlace() == SwingConstants.BOTTOM ? 1 : 0);
     add(set, "Tabs Left", tabPlace() == SwingConstants.LEFT ? 1 : 0);
     add(set, "Tabs Right", tabPlace() == SwingConstants.RIGHT ? 1 : 0);
+    add(set, "Retina", UIUtil.isRetina() ? 1 : 0);
 
     return set;
   }
