@@ -8,7 +8,7 @@
                                   
   <application-components>
     <component>
-      <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IcsProjectLoadListener</implementation-class>
+      <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IcsManager$IcsProjectLoadListener</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IcsStatusBarComponent</implementation-class>

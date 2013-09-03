@@ -4,9 +4,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -323,6 +321,29 @@ public class IcsManager {
 
     @Override
     public void deleteFile(final String fileSpec, final RoamingType roamingType) {
+    }
+  }
+
+  static final class IcsProjectLoadListener implements ApplicationComponent, SettingsSavingComponent {
+    @Override
+    @NotNull
+    public String getComponentName() {
+      return "IcsProjectLoadListener";
+    }
+
+    @Override
+    public void initComponent() {
+      getInstance().startPing();
+    }
+
+    @Override
+    public void disposeComponent() {
+      getInstance().stopPing();
+    }
+
+    @Override
+    public void save() {
+      getInstance().getIdeaServerSettings().save();
     }
   }
 }
