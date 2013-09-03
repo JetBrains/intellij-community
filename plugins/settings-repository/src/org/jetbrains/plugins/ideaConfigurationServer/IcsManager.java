@@ -213,10 +213,6 @@ public class IcsManager {
     return builder.getRoamingType() != RoamingType.GLOBAL;
   }
 
-  private static void saveUserPreferences(File file, IdeaServerUrlBuilder builder) throws IOException {
-    IcsGitConnector.send(file, builder);
-  }
-
   private void deleteUserPreferences(IdeaServerUrlBuilder builder) throws IOException {
     try {
       if (canUseLocalCopy(builder)) {
@@ -349,9 +345,9 @@ public class IcsManager {
 
     FileInputStream input = new FileInputStream(mappingsFile);
     try {
-      saveUserPreferences(mappingsFile, createBuilder("projects/mapping.txt",
-                                                      RoamingType.PER_USER,
-                                                      null));
+      IcsGitConnector.send(mappingsFile, createBuilder("projects/mapping.txt",
+                                                        RoamingType.PER_USER,
+                                                        null));
       return true;
     }
     catch (Throwable t) {
@@ -412,47 +408,6 @@ public class IcsManager {
     return result;
   }
 
-  public static void saveUserPreferencesAsync(final File file, final IdeaServerUrlBuilder builder) {
-    executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          saveUserPreferences(file, builder);
-        }
-        catch (IOException e) {
-          LOG.debug(e);
-        }
-        finally {
-          FileUtil.delete(file);
-        }
-      }
-    });
-  }
-
-  private static File copyStreamToTempFile(final InputStream bytes, final long size) throws IOException {
-    File tempFile = FileUtil.createTempFile("configr", "temp");
-    try {
-      FileOutputStream out = new FileOutputStream(tempFile);
-      try {
-        FileUtil.copy(bytes, (int)size, out);
-      }
-      finally {
-        out.close();
-      }
-
-      return tempFile;
-    }
-    catch (IOException e) {
-      FileUtil.delete(tempFile);
-      throw e;
-    }
-    catch (Throwable e) {
-      FileUtil.delete(tempFile);
-      LOG.info(e);
-      throw new IOException(e.getLocalizedMessage());
-    }
-  }
-
   public void deleteUserPreferencesAsync(final IdeaServerUrlBuilder builder) {
     executeOnPooledThread(new Runnable() {
       @Override
@@ -494,28 +449,6 @@ public class IcsManager {
     myUpdateAlarm.cancelAllRequests();
   }
 
-  abstract class MyStreamProvider implements CurrentUserHolder, StreamProvider {
-    @Override
-    public String getCurrentUserName() {
-      return settings.getUserName();
-    }
-
-    @Override
-    public boolean isEnabled() {
-      // todo configurable
-      return true;
-    }
-
-    @Override
-    public String[] listSubFiles(final String fileSpec) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-
-    @Override
-    public void deleteFile(final String fileSpec, final RoamingType roamingType) {
-    }
-  }
-
   private void registerProvider(StateStorageManager storageManager, RoamingType type) {
     storageManager.registerStreamProvider(new ICSStreamProvider(null, type) {
       @Override
@@ -528,43 +461,6 @@ public class IcsManager {
         deleteUserPreferencesAsync(createBuilder(fileSpec, this.roamingType, null));
       }
     }, type);
-  }
-
-  private void saveFileContent(InputStream content, long size, IdeaServerUrlBuilder builder, boolean async) throws IOException {
-    File tmpFile = null;
-    try {
-      if (canUseLocalCopy(builder)) {
-        File localFile = new File(myLocalCopyDir, builder.buildPath());
-        localFile.getParentFile().mkdirs();
-        FileOutputStream out = new FileOutputStream(localFile);
-        try {
-          FileUtil.copy(content, (int)size, out);
-        }
-        finally {
-          out.close();
-        }
-        tmpFile = FileUtil.createTempFile("configr", "temp");
-        FileUtil.copy(localFile, tmpFile);
-      }
-      else {
-        tmpFile = copyStreamToTempFile(content, size);
-      }
-    }
-    finally {
-      if (tmpFile != null) {
-        if (async) {
-          saveUserPreferencesAsync(tmpFile, builder);
-        }
-        else {
-          try {
-            saveUserPreferences(tmpFile, builder);
-          }
-          finally {
-            FileUtil.delete(tmpFile);
-          }
-        }
-      }
-    }
   }
 
   public void login() {
@@ -652,7 +548,7 @@ public class IcsManager {
     }
   }
 
-  private class ICSStreamProvider extends MyStreamProvider {
+  private class ICSStreamProvider implements CurrentUserHolder, StreamProvider {
     private final String projectId;
     // todo StreamProvider must be general and use passed roamingType
     protected final RoamingType roamingType;
@@ -663,8 +559,24 @@ public class IcsManager {
     }
 
     @Override
-    public void saveContent(String fileSpec, @NotNull InputStream content, long size, RoamingType roamingType, boolean async) throws IOException {
-      saveFileContent(content, size, createBuilder(fileSpec, this.roamingType, projectId), async);
+    public void saveContent(String fileSpec, @NotNull final InputStream content, long size, RoamingType roamingType, boolean async) throws IOException {
+      final String path = createBuilder(fileSpec, this.roamingType, projectId).buildPath();
+      if (async) {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              serverConnector.save(content, path);
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+          }
+        });
+      }
+      else {
+        serverConnector.save(content, path);
+      }
     }
 
     private IdeaServerUrlBuilder createBuilderInt(String fileSpec) {
@@ -683,6 +595,26 @@ public class IcsManager {
       else {
         return null;
       }
+    }
+
+    @Override
+    public String getCurrentUserName() {
+      return settings.getUserName();
+    }
+
+    @Override
+    public boolean isEnabled() {
+      // todo configurable
+      return true;
+    }
+
+    @Override
+    public String[] listSubFiles(final String fileSpec) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+
+    @Override
+    public void deleteFile(final String fileSpec, final RoamingType roamingType) {
     }
   }
 }

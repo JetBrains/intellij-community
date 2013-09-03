@@ -14,13 +14,13 @@ final class IcsApplicationLoadListener implements ApplicationLoadListener {
       return;
     }
 
-    IdeaConfigurationServerManager.getInstance().registerApplicationLevelProviders(application);
+    IcsManager.getInstance().registerApplicationLevelProviders(application);
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
       @Override
       public void beforeProjectLoaded(@NotNull Project project) {
         if (!project.isDefault()) {
-          IdeaConfigurationServerManager.getInstance().registerProjectLevelProviders(project);
+          IcsManager.getInstance().registerProjectLevelProviders(project);
         }
       }
     });

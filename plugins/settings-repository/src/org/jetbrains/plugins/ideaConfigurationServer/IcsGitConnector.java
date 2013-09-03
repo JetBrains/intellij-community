@@ -2,21 +2,20 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
+import gnu.trove.THashSet;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,11 +23,15 @@ import java.io.*;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 
 final class IcsGitConnector {
   private static final int TIMEOUT = 10000;
   private final Repository repository;
+
+  // avoid FS recursive scan
+  private final Set<String> filesToAdd = new THashSet<String>();
 
   public IcsGitConnector() throws IOException {
     File gitDir = new File(PathManager.getSystemPath(), "ideaConfigurationServer/data");
@@ -42,23 +45,29 @@ final class IcsGitConnector {
     // todo sync with remote
   }
 
-  public static void send(File file, IdeaServerUrlBuilder builder) throws IOException {
-    doPost(builder, "upload", file, ContentProcessor.EMPTY);
-  }
-
   @Nullable
   public InputStream loadUserPreferences(@NotNull String path) throws IOException {
-    TreeWalk treeWalk = new TreeWalk(repository);
-    treeWalk.addTree(new RevWalk(repository).parseCommit(repository.resolve(Constants.HEAD)).getTree());
-    treeWalk.setRecursive(true);
-    treeWalk.setFilter(PathFilter.create(path));
-    if (!treeWalk.next()) {
+    TreeWalk treeWalk = TreeWalk.forPath(repository, path, new RevWalk(repository).parseCommit(repository.resolve(Constants.HEAD)).getTree());
+    if (treeWalk == null) {
       return null;
     }
+    return repository.open(treeWalk.getObjectId(0)).openStream();
+  }
 
-    ObjectId objectId = treeWalk.getObjectId(0);
-    ObjectLoader loader = repository.open(objectId);
-    return loader.openStream();
+  public void save(@NotNull InputStream content, @NotNull String path) throws IOException {
+    File file = new File(repository.getDirectory().getParent(), path);
+    FileOutputStream out = new FileOutputStream(file);
+    try {
+      FileUtilRt.copy(content, out);
+      filesToAdd.add(path);
+    }
+    finally {
+      out.close();
+    }
+  }
+
+  public static void send(File file, IdeaServerUrlBuilder builder) throws IOException {
+    doPost(builder, "upload", file, ContentProcessor.EMPTY);
   }
 
   public static void loadAllFiles(IdeaServerUrlBuilder builder, final ContentProcessor processor) throws IOException {
