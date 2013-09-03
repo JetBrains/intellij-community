@@ -20,8 +20,6 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="dvcs" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="xml-openapi" />
-    <orderEntry type="module" module-name="xml" />
   </component>
 </module>
 

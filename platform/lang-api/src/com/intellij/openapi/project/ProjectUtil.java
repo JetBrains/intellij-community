@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.InternalFileType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
@@ -83,6 +84,22 @@ public class ProjectUtil {
   @Nullable
   public static Project guessProjectForFile(VirtualFile file) {
     return ProjectLocator.getInstance().guessProjectForFile(file);
+  }
+
+  @Nullable
+  // guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned
+  public static Project guessProjectForContentFile(@NotNull VirtualFile file) {
+    if (isProjectOrWorkspaceFile(file)) {
+      return null;
+    }
+
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (!project.isDefault() && project.isInitialized() && !project.isDisposed() && ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+        return project;
+      }
+    }
+
+    return null;
   }
 
   public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {

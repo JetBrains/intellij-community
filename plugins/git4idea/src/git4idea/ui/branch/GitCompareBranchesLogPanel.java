@@ -83,13 +83,24 @@ class GitCompareBranchesLogPanel extends JPanel {
     JPanel htb = layoutCommitListPanel(myCurrentBranchName, true);
     JPanel bth = layoutCommitListPanel(myCurrentBranchName, false);
 
-    Splitter lists = new Splitter(true, 0.5f);
-    lists.setFirstComponent(htb);
-    lists.setSecondComponent(bth);
+    JPanel listPanel = null;
+    switch (getInfoType()) {
+      case HEAD_TO_BRANCH:
+        listPanel = htb;
+        break;
+      case BRANCH_TO_HEAD:
+        listPanel = bth;
+        break;
+      case BOTH:
+        Splitter lists = new Splitter(true, 0.5f);
+        lists.setFirstComponent(htb);
+        lists.setSecondComponent(bth);
+        listPanel = lists;
+    }
 
     Splitter rootPanel = new Splitter(false, 0.7f);
     rootPanel.setSecondComponent(changesBrowser);
-    rootPanel.setFirstComponent(lists);
+    rootPanel.setFirstComponent(listPanel);
     return rootPanel;
   }
 
@@ -128,6 +139,9 @@ class GitCompareBranchesLogPanel extends JPanel {
     return new ArrayList<GitCommit>(myCompareInfo.getHeadToBranchCommits(selectedRepo));
   }
 
+  private GitCommitCompareInfo.InfoType getInfoType() {
+    return myCompareInfo.getInfoType();
+  }
 
   private static void addSelectionListener(@NotNull GitCommitListPanel sourcePanel,
                                            @NotNull final GitCommitListPanel otherPanel,

@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
@@ -103,7 +104,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
 
       newExpression = (PsiNewExpression)factory.createExpressionFromText(text, originalExpression);
       if (caretOffset < 0) {
-        selection = new TextRange(caretOffset, caretOffset+1);
+        selection = new UnfairTextRange(caretOffset, caretOffset+1);
       } else {
         selection = null;
       }

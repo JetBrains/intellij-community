@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,15 @@
 package com.intellij.openapi.util;
 
 /**
- * @author dyoma
+ * TextRange with arbitrary offsets, not intended to be checked by {@link com.intellij.openapi.util.TextRange#assertProperRange(int, int, Object)}.
+ * Please use with caution.
+ *
+ * @author Dmitry Avdeev
+ *         Date: 30.08.13
  */
-public interface ModificationTracker {
-  long getModificationCount();
+public class UnfairTextRange extends TextRange {
 
-  ModificationTracker EVER_CHANGED = new ModificationTracker() {
-    private long myCounter = 0;
-
-    @Override
-    public long getModificationCount() {
-      return myCounter++;
-    }
-  };
-  ModificationTracker NEVER_CHANGED = new ModificationTracker() {
-    @Override
-    public long getModificationCount() {
-      return 0;
-    }
-  };
+  public UnfairTextRange(int startOffset, int endOffset) {
+    super(startOffset, endOffset, false);
+  }
 }

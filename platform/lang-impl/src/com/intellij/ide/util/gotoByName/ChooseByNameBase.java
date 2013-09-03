@@ -168,7 +168,14 @@ public abstract class ChooseByNameBase {
   public void setDisposed(boolean disposedFlag) {
     myDisposedFlag = disposedFlag;
     if (disposedFlag) {
-      myNames[0] = myNames[1] = null;
+      setNamesSync(true, null);
+      setNamesSync(false, null);
+    }
+  }
+
+  private void setNamesSync(boolean checkboxState, @Nullable String[] value) {
+    synchronized (myNames) {
+      myNames[checkboxState ? 1 : 0] = value;
     }
   }
 
@@ -787,8 +794,7 @@ public abstract class ChooseByNameBase {
   }
 
   private synchronized void ensureNamesLoaded(boolean checkboxState) {
-    int index = checkboxState ? 1 : 0;
-    if (myNames[index] != null) return;
+    if (getNamesSync(checkboxState) != null) return;
 
     Window window = (Window)SwingUtilities.getAncestorOfClass(Window.class, myTextField);
     //LOG.assertTrue (myTextField != null);
@@ -802,17 +808,17 @@ public abstract class ChooseByNameBase {
       }
     }
 
-    if (index == 1 &&
+    if (checkboxState &&
         myModel instanceof ContributorsBasedGotoByModel &&
         ((ContributorsBasedGotoByModel)myModel).sameNamesForProjectAndLibraries() &&
-        myNames[0] != null) {
+        getNamesSync(false) != null) {
       // there is no way in indices to have different keys for project symbols vs libraries, we always have same ones
-      myNames[1] = myNames[0];
+      setNamesSync(true, getNamesSync(false));
       return;
-    } else {
-      myNames[index] = myModel.getNames(checkboxState);
-      assert myNames[index] != null : "Model "+myModel+ "("+myModel.getClass()+") returned null names";
     }
+
+    setNamesSync(checkboxState, myModel.getNames(checkboxState));
+    assert getNamesSync(checkboxState) != null : "Model "+myModel+ "("+myModel.getClass()+") returned null names";
 
     if (window != null) {
       window.setCursor(Cursor.getDefaultCursor());
@@ -825,12 +831,17 @@ public abstract class ChooseByNameBase {
   @NotNull
   public String[] getNames(boolean checkboxState) {
     if (ourLoadNamesEachTime) {
-      myNames[checkboxState ? 1 : 0] = null;
+      setNamesSync(checkboxState, null);
       ensureNamesLoaded(checkboxState);
     }
-    return checkboxState ? myNames[1] : myNames[0];
+    return getNamesSync(checkboxState);
   }
 
+  private String[] getNamesSync(boolean checkboxState) {
+    synchronized (myNames) {
+      return myNames[checkboxState ? 1 : 0];
+    }
+  }
 
   @NotNull
   protected Set<Object> filter(@NotNull Set<Object> elements) {
@@ -1212,7 +1223,7 @@ public abstract class ChooseByNameBase {
     if (text.length() == 0) return Collections.emptyList();
     final boolean checkBoxState = myCheckBox.isSelected();
     if (ourLoadNamesEachTime) ensureNamesLoaded(checkBoxState);
-    final String[] names = checkBoxState ? myNames[1] : myNames[0];
+    final String[] names = getNamesSync(checkBoxState);
     if (names == null) return Collections.emptyList();
 
     Object uniqueElement = null;
