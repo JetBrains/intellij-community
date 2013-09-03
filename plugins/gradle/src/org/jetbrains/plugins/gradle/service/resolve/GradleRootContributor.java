@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
@@ -27,28 +28,44 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import java.util.List;
 import java.util.Set;
 
+import static org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContributor.SOURCE_SETS;
+
 /**
  * @author Denis Zhdanov
  * @since 8/14/13 1:03 PM
  */
 public class GradleRootContributor implements GradleMethodContextContributor {
 
-  private final static Set<String> PROJECT_ACTIONS = ContainerUtil.newHashSet(
+  private final GradleSourceSetsContributor mySourceSetsContributor;
+
+  public GradleRootContributor(GradleSourceSetsContributor sourceSetsContributor) {
+    mySourceSetsContributor = sourceSetsContributor;
+  }
+
+  private final static Set<String> BUILD_SCRIPT_BLOCKS = ContainerUtil.newHashSet(
     "subprojects",
     "allprojects",
     "beforeEvaluate",
-    "afterEvaluate");
+    "afterEvaluate",
+    SOURCE_SETS);
 
   @Override
   public void process(@NotNull List<String> methodCallInfo,
                       @NotNull PsiScopeProcessor processor,
                       @NotNull ResolveState state,
                       @NotNull PsiElement place) {
-    if(methodCallInfo.size() > 2) {
+    if (methodCallInfo.size() > 2) {
       return;
     }
 
-    if (methodCallInfo.size() == 2 && !PROJECT_ACTIONS.contains(methodCallInfo.get(1))) {
+    if (methodCallInfo.size() == 2 && !BUILD_SCRIPT_BLOCKS.contains(methodCallInfo.get(1))) {
+      return;
+    }
+    if (methodCallInfo.size() > 0) {
+      String method = ContainerUtil.getLastItem(methodCallInfo);
+      if (method != null && StringUtil.startsWith(method, SOURCE_SETS)) {
+        mySourceSetsContributor.process(methodCallInfo, processor, state, place);
+      }
       return;
     }
 

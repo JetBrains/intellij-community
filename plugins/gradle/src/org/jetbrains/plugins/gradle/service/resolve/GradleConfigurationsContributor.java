@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.service.resolve;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiVariable;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.gradle.api.artifacts.Configuration;
@@ -25,7 +24,6 @@ import org.gradle.api.artifacts.ConfigurationContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariableImpl;
 
 import java.util.List;
 
@@ -56,7 +54,7 @@ public class GradleConfigurationsContributor implements GradleMethodContextContr
       else if (CONFIGURATIONS.equals(methodCall)) {
         contributorClass = psiManager.findClassWithCache(ConfigurationContainer.class.getName(), place.getResolveScope());
         if (place instanceof GrReferenceExpressionImpl) {
-          addImplicitConfiguration(processor, state, (GrReferenceExpressionImpl)place);
+          GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, Configuration.class);
           return;
         }
       }
@@ -65,7 +63,7 @@ public class GradleConfigurationsContributor implements GradleMethodContextContr
       if (CONFIGURATIONS.equals(methodCallInfo.get(1))) {
         contributorClass = psiManager.findClassWithCache(ConfigurationContainer.class.getName(), place.getResolveScope());
         if (place instanceof GrReferenceExpressionImpl) {
-          addImplicitConfiguration(processor, state, (GrReferenceExpressionImpl)place);
+          GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, Configuration.class);
           return;
         }
       }
@@ -73,14 +71,5 @@ public class GradleConfigurationsContributor implements GradleMethodContextContr
     if (contributorClass != null) {
       contributorClass.processDeclarations(processor, state, null, place);
     }
-  }
-
-  @SuppressWarnings("MethodMayBeStatic")
-  private void addImplicitConfiguration(@NotNull PsiScopeProcessor processor,
-                                        @NotNull ResolveState state,
-                                        @NotNull GrReferenceExpressionImpl expression) {
-    String expr = expression.getCanonicalText();
-    PsiVariable myPsi = new GrImplicitVariableImpl(expression.getManager(), expr, Configuration.class.getName(), expression);
-    processor.execute(myPsi, state);
   }
 }

@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -40,8 +39,7 @@ public class GradleScriptContributor extends NonCodeMembersContributor {
                                      PsiClass aClass,
                                      PsiScopeProcessor processor,
                                      PsiElement place,
-                                     ResolveState state)
-  {
+                                     ResolveState state) {
     if (place == null) {
       return;
     }
@@ -58,8 +56,7 @@ public class GradleScriptContributor extends NonCodeMembersContributor {
     List<String> methodInfo = ContainerUtilRt.newArrayList();
     for (GrMethodCall current = PsiTreeUtil.getParentOfType(place, GrMethodCall.class);
          current != null;
-         current = PsiTreeUtil.getParentOfType(current, GrMethodCall.class))
-    {
+         current = PsiTreeUtil.getParentOfType(current, GrMethodCall.class)) {
       GrExpression expression = current.getInvokedExpression();
       if (expression == null) {
         continue;

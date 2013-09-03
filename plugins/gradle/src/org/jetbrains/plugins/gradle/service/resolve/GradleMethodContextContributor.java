@@ -36,25 +36,26 @@ import java.util.List;
  *     }
  *   }
  * </pre>
- * Here <code>'subprojects'</code> should be resolved at context of a global script; <code>'repositories'</code> in a context of 
+ * Here <code>'subprojects'</code> should be resolved at context of a global script; <code>'repositories'</code> in a context of
  * <code>'subprojects'</code> and <code>'mavenCentral'</code> in a context of <code>'repositories'</code>. Every such context
  * is expected to be backed by corresponding implementation of the current interface.
- * 
+ *
  * @author Denis Zhdanov
  * @since 7/23/13 7:32 PM
  */
 public interface GradleMethodContextContributor {
 
-  ExtensionPointName<GradleMethodContextContributor> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.resolve.contributor");
-  
+  ExtensionPointName<GradleMethodContextContributor> EP_NAME =
+    ExtensionPointName.create("org.jetbrains.plugins.gradle.resolve.contributor");
+
   /**
    * Tries to resolve target element.
-   * 
-   * @param methodCallInfo   information about method call hierarchy which points to the target place. Every entry is a method name
-   *                         and the deepest one is assumed to be added the head
-   * @param processor        the processor receiving the declarations.
-   * @param state            current resolve state
-   * @param place            the original element from which the tree up walk was initiated.
+   *
+   * @param methodCallInfo information about method call hierarchy which points to the target place. Every entry is a method name
+   *                       and the deepest one is assumed to be added the head
+   * @param processor      the processor receiving the declarations.
+   * @param state          current resolve state
+   * @param place          the original element from which the tree up walk was initiated.
    */
   void process(@NotNull List<String> methodCallInfo,
                @NotNull PsiScopeProcessor processor,
