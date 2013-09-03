@@ -33,6 +33,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -352,12 +353,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     }
   }
 
-  public static void updateMethodPresentation(PsiMethod method, @Nullable PsiSubstitutor substitutor, ParameterInfoUIContext context) {
+  public static String updateMethodPresentation(PsiMethod method, @Nullable PsiSubstitutor substitutor, ParameterInfoUIContext context) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
     if (!method.isValid() || substitutor != null && !substitutor.isValid()) {
       context.setUIComponentEnabled(false);
-      return;
+      return null;
     }
 
     StringBuilder buffer = new StringBuilder();
@@ -397,7 +398,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             paramType = substitutor.substitute(paramType);
           }
           appendModifierList(buffer, param);
-          buffer.append(StringUtil.escapeXml(paramType.getPresentableText()));
+          buffer.append(paramType.getPresentableText());
           String name = param.getName();
           if (name != null) {
             buffer.append(" ");
@@ -405,7 +406,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           }
         }
 
-        int endOffset = buffer.length();
+        int endOffset = XmlStringUtil.escapeString(buffer.toString()).length();
 
         if (j < numParams - 1) {
           buffer.append(", ");
@@ -426,7 +427,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       buffer.append(")");
     }
 
-    context.setupUIComponentPresentation(
+    return context.setupUIComponentPresentation(
       buffer.toString(),
       highlightStartOffset,
       highlightEndOffset,

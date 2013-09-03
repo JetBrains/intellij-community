@@ -18,8 +18,12 @@ package com.intellij.xml.util;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiSoftReferenceDecorator;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.impl.XmlEnumerationDescriptor;
@@ -56,7 +60,8 @@ public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends P
           enumerationDescriptor.isEnumerated((XmlElement)element) ||
           unquotedValue.equals(enumerationDescriptor.getDefaultValue())) { // todo case insensitive
         //noinspection unchecked
-        return enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue);
+        //return enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue);
+        return PsiSoftReferenceDecorator.create(enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue), true);
       }
     }
     return PsiReference.EMPTY_ARRAY;

@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -169,7 +170,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     if (element == null) return null;
     if (element.getPrevSibling() instanceof PsiWhiteSpace) element = element.getPrevSibling();
     if (element == null || element.equals(first)) return null;
-    return new TextRange(first.getTextOffset(), element.getTextOffset());
+    return new UnfairTextRange(first.getTextOffset(), element.getTextOffset());
   }
 
   private void addAnnotationsToFold(PsiModifierList modifierList, List<FoldingDescriptor> foldElements, Document document) {

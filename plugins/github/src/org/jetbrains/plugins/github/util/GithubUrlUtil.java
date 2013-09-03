@@ -174,4 +174,9 @@ public class GithubUrlUtil {
     }
     return url;
   }
+
+  @NotNull
+  public static String getCloneUrl(@NotNull GithubFullPath path) {
+    return getGitHost() + "/" + path.getUser() + "/" + path.getRepository() + ".git";
+  }
 }

@@ -162,9 +162,16 @@ public class JarHandlerBase {
       return new JarFile() {
         @Override
         public JarFile.JarEntry getEntry(String name) {
-          ZipEntry entry = zipFile.getEntry(name);
-          if (entry == null) return null;
-          return new MyJarEntry(entry);
+          try {
+            ZipEntry entry = zipFile.getEntry(name);
+            if (entry != null) {
+              return new MyJarEntry(entry);
+            }
+          }
+          catch (IllegalArgumentException e) {
+            LOG.warn(e);
+          }
+          return null;
         }
 
         @Override
@@ -174,8 +181,9 @@ public class JarHandlerBase {
 
         @Override
         public Enumeration<? extends JarFile.JarEntry> entries() {
-          final Enumeration<? extends ZipEntry> entries = zipFile.entries();
           return new Enumeration<JarEntry>() {
+            private final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+
             @Override
             public boolean hasMoreElements() {
               return entries.hasMoreElements();
@@ -183,10 +191,16 @@ public class JarHandlerBase {
 
             @Override
             public JarEntry nextElement() {
-              ZipEntry entry = entries.nextElement();
-              if (entry == null)
-                return null;
-              return new MyJarEntry(entry);
+              try {
+                ZipEntry entry = entries.nextElement();
+                if (entry != null) {
+                  return new MyJarEntry(entry);
+                }
+              }
+              catch (IllegalArgumentException e) {
+                LOG.warn(e);
+              }
+              return null;
             }
           };
         }

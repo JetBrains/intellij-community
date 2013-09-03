@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.Convertor;
 import git4idea.GitUtil;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
@@ -262,6 +263,18 @@ public class GithubUtil {
     if (!exceptionRef.isNull()) {
       throw exceptionRef.get();
     }
+    return dataRef.get();
+  }
+
+  public static <T> T computeValueInModal(@NotNull Project project,
+                                          @NotNull String caption,
+                                          @NotNull final Convertor<ProgressIndicator, T> task) {
+    final Ref<T> dataRef = new Ref<T>();
+    ProgressManager.getInstance().run(new Task.Modal(project, caption, true) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        dataRef.set(task.convert(indicator));
+      }
+    });
     return dataRef.get();
   }
 
