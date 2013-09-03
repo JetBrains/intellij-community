@@ -36,6 +36,7 @@ public class IcsManager {
   private static final IcsManager instance = new IcsManager();
 
   public static final File PLUGIN_SYSTEM_DIR = new File(PathManager.getSystemPath(), "ideaConfigurationServer");
+  public static final String PLUGIN_NAME = "Idea Configuration Server";
 
   private final IcsSettings settings;
   private final Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
@@ -56,9 +57,6 @@ public class IcsManager {
           try {
             if (status == IdeaConfigurationServerStatus.CONNECTION_FAILED && settings.getLogin() != null && settings.getToken() != null) {
               connectAndUpdateStorage();
-            }
-            else if (status == IdeaConfigurationServerStatus.LOGGED_IN && settings.getLogin() != null && settings.getToken() != null) {
-              //ping();
             }
           }
           catch (Exception e) {
@@ -183,23 +181,10 @@ public class IcsManager {
     return settings;
   }
 
-  public void logout() {
-    //settings.logout();
-  }
-
   public String getStatusText() {
-    IcsSettings settings = getInstance().getIdeaServerSettings();
     switch (status) {
       case CONNECTION_FAILED:
         return "Connection failed";
-      case LOGGED_IN:
-        return "Logged in as " + settings.getLogin();
-      case LOGGED_OUT:
-        return "Logged out";
-      case UNAUTHORIZED:
-        return "Authorization failed";
-      case UNKNOWN:
-        return "Unknown status";
       default:
         return "Unknown";
     }

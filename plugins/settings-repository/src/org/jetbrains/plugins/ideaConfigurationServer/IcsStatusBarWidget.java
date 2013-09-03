@@ -13,14 +13,11 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 
 public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation, ApplicationComponent {
-  private static final Icon DISCONNECTED_ICON = AllIcons.Nodes.ExceptionClass;
-  private static final Icon LOGGED_IN_ICON = AllIcons.Nodes.Read_access;
-  private static final Icon LOGGED_OUT_ICON = AllIcons.Nodes.Write_access;
   private StatusBar statusBar;
 
   private final StatusListener statusListener = new StatusListener() {
     @Override
-    public void statusChanged(final IdeaConfigurationServerStatus status) {
+    public void statusChanged(IdeaConfigurationServerStatus status) {
       update();
     }
   };
@@ -71,13 +68,9 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
   private static Icon getStatusIcon(final IdeaConfigurationServerStatus status) {
     switch (status) {
       case CONNECTION_FAILED:
-        return DISCONNECTED_ICON;
-      case LOGGED_IN:
-        return LOGGED_IN_ICON;
-      case LOGGED_OUT:
-        return LOGGED_OUT_ICON;
+        return AllIcons.Nodes.ExceptionClass;
       default:
-        return DISCONNECTED_ICON;
+        return AllIcons.Nodes.Read_access;
     }
   }
 
@@ -99,8 +92,9 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
   private static class MySettingsDialog extends DialogWrapper {
     public MySettingsDialog() {
       super(true);
+
       init();
-      setTitle("IntelliJ Configuration Server Settings");
+      setTitle(IcsManager.PLUGIN_NAME + " Settings");
     }
 
     @Override

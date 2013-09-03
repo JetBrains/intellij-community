@@ -31,12 +31,9 @@ public class IdeaServerPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         try {
-          if (IcsManager.getInstance().getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
-            IcsManager.getInstance().logout();
-          }
-          else {
-            requestCredentials(null, false);
-          }
+          //if (IcsManager.getInstance().getStatus() != IdeaConfigurationServerStatus.LOGGED_IN) {
+          //  requestCredentials(null, false);
+          //}
         }
         finally {
           update();
@@ -84,13 +81,6 @@ public class IdeaServerPanel {
 
   private void update() {
     myStatusLabel.setText("Current status: " + IcsManager.getInstance().getStatusText());
-    if (IcsManager.getInstance().getStatus() == IdeaConfigurationServerStatus.LOGGED_IN) {
-      myActionButton.setText("Logout");
-    }
-    else {
-      myActionButton.setText("Login...");
-    }
-
     if (myParent != null) {
       myParent.pack();
     }
