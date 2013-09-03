@@ -1,5 +1,6 @@
 package com.jetbrains.python.codeInsight.imports;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -47,8 +48,9 @@ public class AddImportHelper {
     boolean skippedOverImports = false;
     boolean skippedOverDoc = false;
     PsiElement seeker = feeler;
+    final boolean isInjected = InjectedLanguageManager.getInstance(feeler.getProject()).isInjectedFragment(feeler.getContainingFile());
     do {
-      if (feeler instanceof PyImportStatementBase) {
+      if (feeler instanceof PyImportStatementBase && !isInjected) {
         if (nameToImport != null && priority != null && shouldInsertBefore(file, (PyImportStatementBase)feeler, nameToImport, priority)) {
           break;
         }
@@ -172,17 +174,21 @@ public class AddImportHelper {
    * @param asName optional name for 'as' clause
    */
   public static void addImportFromStatement(PsiFile file, String from, String name, @Nullable String asName, ImportPriority priority) {
-    String asClause;
-    if (asName == null) {
-      asClause = "";
-    }
-    else {
-      asClause = " as " + asName;
-    }
+    String asClause = asName == null ? "" : " as " + asName;
+
     final PyFromImportStatement importNodeToInsert = PyElementGenerator.getInstance(file.getProject()).createFromText(
       LanguageLevel.forElement(file), PyFromImportStatement.class, "from " + from + " import " + name + asClause);
     try {
-      file.addBefore(importNodeToInsert, getInsertPosition(file, from, priority));
+      if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
+        final PsiElement element = file.addBefore(importNodeToInsert, getInsertPosition(file, from, priority));
+        PsiElement whitespace = element.getNextSibling();
+        if (!(whitespace instanceof PsiWhiteSpace))
+          whitespace = PsiParserFacade.SERVICE.getInstance(file.getProject()).createWhiteSpaceFromText("  >>> ");
+        file.addBefore(whitespace, element);
+      }
+      else {
+        file.addBefore(importNodeToInsert, getInsertPosition(file, from, priority));
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
