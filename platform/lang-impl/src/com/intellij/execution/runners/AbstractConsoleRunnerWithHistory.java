@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.*;
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
@@ -47,7 +48,7 @@ import java.util.List;
  *         This class provides basic functionality for running consoles.
  *         It launches external process and handles line input with history
  */
-public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsoleViewImpl> {
+public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsoleView> {
   private final Project myProject;
   private final String myConsoleTitle;
 
@@ -86,8 +87,9 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   private void initConsoleUI(Process process) {
     // Init console view
     myConsoleView = createConsoleView();
-    myConsoleView.setBorder(new SideBorder(UIUtil.getBorderColor(), SideBorder.LEFT));
-
+    if (myConsoleView instanceof LanguageConsoleViewImpl) {
+      ((LanguageConsoleViewImpl)myConsoleView).setBorder(new SideBorder(UIUtil.getBorderColor(), SideBorder.LEFT));
+    }
     myProcessHandler = createProcessHandler(process);
 
     myConsoleExecuteActionHandler = createConsoleExecuteActionHandler();
@@ -310,5 +312,4 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   public ConsoleExecuteActionHandler getConsoleExecuteActionHandler() {
     return myConsoleExecuteActionHandler;
   }
-
 }
