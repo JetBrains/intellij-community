@@ -16,6 +16,9 @@
 package com.intellij.openapi.util;
 
 /**
+ * TextRange with arbitrary offsets, not intended to be checked by {@link com.intellij.openapi.util.TextRange#assertProperRange(int, int, Object)}.
+ * Please use with caution.
+ *
  * @author Dmitry Avdeev
  *         Date: 30.08.13
  */
