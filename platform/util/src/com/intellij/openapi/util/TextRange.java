@@ -32,10 +32,14 @@ public class TextRange implements Segment, Serializable {
     this(startOffset, endOffset, true);
   }
 
-  protected TextRange(int startOffset, int endOffset, boolean checkIt) {
+  /**
+   * @param checkForProperTextRange <code>true</code> if offsets should be checked by {@link #assertProperRange(int, int, Object)}
+   * @see com.intellij.openapi.util.UnfairTextRange
+   */
+  protected TextRange(int startOffset, int endOffset, boolean checkForProperTextRange) {
     myStartOffset = startOffset;
     myEndOffset = endOffset;
-    if (checkIt) {
+    if (checkForProperTextRange) {
       assertProperRange(this);
     }
   }
