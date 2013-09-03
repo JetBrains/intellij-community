@@ -26,11 +26,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-final class IdeaServerConnector {
+final class IcsGitConnector {
   private static final int TIMEOUT = 10000;
   private final Repository repository;
 
-  public IdeaServerConnector() throws IOException {
+  public IcsGitConnector() throws IOException {
     File gitDir = new File(PathManager.getSystemPath(), "ideaConfigurationServer/data");
     FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
     repositoryBuilder.setGitDir(new File(gitDir, Constants.DOT_GIT));

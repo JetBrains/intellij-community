@@ -52,7 +52,7 @@ public class IdeaConfigurationServerManager {
   private final File myLocalCopyDir;
   private Map<String, String> myProjectHashToKey;
 
-  private IdeaServerConnector serverConnector;
+  private IcsGitConnector serverConnector;
 
   public IdeaConfigurationServerManager() {
     settings = new IdeaConfigurationServerSettings();
@@ -161,7 +161,7 @@ public class IdeaConfigurationServerManager {
 
     localCopyDir.mkdirs();
 
-    IdeaServerConnector.loadAllFiles(createBuilder("", null, null), new IdeaServerConnector.ContentProcessor() {
+    IcsGitConnector.loadAllFiles(createBuilder("", null, null), new IcsGitConnector.ContentProcessor() {
       @Override
       public void processStream(InputStream line) throws IOException {
         File tempFile = FileUtil.createTempFile("temp", "settings");
@@ -214,7 +214,7 @@ public class IdeaConfigurationServerManager {
   }
 
   private static void saveUserPreferences(File file, IdeaServerUrlBuilder builder) throws IOException {
-    IdeaServerConnector.send(file, builder);
+    IcsGitConnector.send(file, builder);
   }
 
   private void deleteUserPreferences(IdeaServerUrlBuilder builder) throws IOException {
@@ -225,7 +225,7 @@ public class IdeaConfigurationServerManager {
       }
     }
     finally {
-      IdeaServerConnector.delete(builder);
+      IcsGitConnector.delete(builder);
     }
   }
 
@@ -236,12 +236,12 @@ public class IdeaConfigurationServerManager {
         return collectSubFileNames(localFile);
       }
       else {
-        return IdeaServerConnector.listSubFileNames(urlBuilder);
+        return IcsGitConnector.listSubFileNames(urlBuilder);
       }
     }
     catch (Exception e) {
       try {
-        return IdeaServerConnector.listSubFileNames(urlBuilder);
+        return IcsGitConnector.listSubFileNames(urlBuilder);
       }
       catch (IOException e1) {
         return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -261,7 +261,7 @@ public class IdeaConfigurationServerManager {
   }
 
   private static String ping(IdeaServerUrlBuilder urlBuilder) throws IOException {
-    return IdeaServerConnector.ping(urlBuilder);
+    return IcsGitConnector.ping(urlBuilder);
   }
 
   private static String getProjectId(final Project project) {
@@ -569,7 +569,7 @@ public class IdeaConfigurationServerManager {
 
   public void login() {
     try {
-      serverConnector = new IdeaServerConnector();
+      serverConnector = new IcsGitConnector();
       settings.setStatus(IdeaConfigurationServerStatus.LOGGED_IN);
     }
     catch (IOException e) {
