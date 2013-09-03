@@ -146,6 +146,11 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
     runTest(new SkeletonsTask() {
       @Override
       protected void runTestOn(@NotNull Sdk sdk) {
+        final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+        // We rely on int.real property that is not explicitly annotated in the skeletons generator
+        if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
+          return;
+        }
         final Project project = myFixture.getProject();
         final PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
         assertNotNull(builtins);
