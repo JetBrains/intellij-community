@@ -220,6 +220,9 @@ public class DataFlowRunner {
     for (PsiClassInitializer initializer : nestedClass.getInitializers()) {
       myNestedClosures.putValue(initializer.getBody(), closureState);
     }
+    for (PsiField field : nestedClass.getFields()) {
+      myNestedClosures.putValue(field, closureState);
+    }
   }
 
   protected ControlFlowAnalyzer createControlFlowAnalyzer() {
