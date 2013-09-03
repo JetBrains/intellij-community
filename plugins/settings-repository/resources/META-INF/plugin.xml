@@ -11,7 +11,7 @@
       <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IcsManager$IcsProjectLoadListener</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IcsStatusBarComponent</implementation-class>
+      <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IcsStatusBarWidget</implementation-class>
     </component>
   </application-components>
 

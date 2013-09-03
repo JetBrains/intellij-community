@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 
-public class IcsStatusBarComponent implements StatusBarWidget, StatusBarWidget.IconPresentation, ApplicationComponent {
+public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation, ApplicationComponent {
   private static final Icon DISCONNECTED_ICON = AllIcons.Nodes.ExceptionClass;
   private static final Icon LOGGED_IN_ICON = AllIcons.Nodes.Read_access;
   private static final Icon LOGGED_OUT_ICON = AllIcons.Nodes.Write_access;
@@ -90,7 +90,7 @@ public class IcsStatusBarComponent implements StatusBarWidget, StatusBarWidget.I
       app.invokeLater(new Runnable() {
         @Override
         public void run() {
-          statusBar.updateWidget(IcsStatusBarComponent.this.ID());
+          statusBar.updateWidget(IcsStatusBarWidget.this.ID());
         }
       });
     }
@@ -120,7 +120,7 @@ public class IcsStatusBarComponent implements StatusBarWidget, StatusBarWidget.I
     WindowManager.getInstance().addListener(new WindowManagerListener() {
       @Override
       public void frameCreated(IdeFrame frame) {
-        frame.getStatusBar().addWidget(IcsStatusBarComponent.this);
+        frame.getStatusBar().addWidget(IcsStatusBarWidget.this);
         WindowManager.getInstance().removeListener(this);
       }
 
