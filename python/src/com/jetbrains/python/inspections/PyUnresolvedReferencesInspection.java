@@ -8,7 +8,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -552,7 +552,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         final List<String> components = qname.getComponents();
         if (!components.isEmpty()) {
           final String packageName = components.get(0);
-          final Module module = ModuleUtil.findModuleForPsiElement(node);
+          final Module module = ModuleUtilCore.findModuleForPsiElement(node);
           final Sdk sdk = PythonSdkType.findPythonSdk(module);
           if (module != null && sdk != null) {
             if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
