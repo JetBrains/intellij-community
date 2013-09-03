@@ -15,8 +15,11 @@
  */
 package com.intellij.tasks.jira;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
+import com.intellij.tasks.impl.TaskUtil;
+
+import java.lang.reflect.Type;
+import java.util.Date;
 
 /**
  * @author Mikhail Golubev
@@ -26,8 +29,14 @@ public class JiraUtil {
 
   private static Gson buildGson() {
     GsonBuilder gson = new GsonBuilder();
-    // ISO-8601 with timezone info
-    gson.setDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSZ");
+    gson.registerTypeAdapter(Date.class, new DateDeserializer());
     return gson.create();
+  }
+
+  private static class DateDeserializer implements JsonDeserializer<Date> {
+    @Override
+    public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+      return TaskUtil.parseDate(json.getAsString());
+    }
   }
 }
