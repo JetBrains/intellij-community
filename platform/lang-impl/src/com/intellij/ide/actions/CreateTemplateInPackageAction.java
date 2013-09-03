@@ -29,18 +29,21 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
+import java.util.Set;
 
 /**
  * @author peter
  */
 public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends CreateFromTemplateAction<T> {
-  private final boolean myInSourceOnly;
+  private Set<? extends JpsModuleSourceRootType<?>> mySourceRootTypes;
 
-  protected CreateTemplateInPackageAction(String text, String description, Icon icon, boolean inSourceOnly) {
+  protected CreateTemplateInPackageAction(String text, String description, Icon icon,
+                                          final Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     super(text, description, icon);
-    myInSourceOnly = inSourceOnly;
+    mySourceRootTypes = rootTypes;
   }
 
   @Override
@@ -60,13 +63,13 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
       return false;
     }
 
-    if (!myInSourceOnly) {
+    if (mySourceRootTypes == null) {
       return true;
     }
 
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (PsiDirectory dir : view.getDirectories()) {
-      if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && checkPackageExists(dir)) {
+      if (projectFileIndex.isUnderSourceRootOfType(dir.getVirtualFile(), mySourceRootTypes) && checkPackageExists(dir)) {
         return true;
       }
     }

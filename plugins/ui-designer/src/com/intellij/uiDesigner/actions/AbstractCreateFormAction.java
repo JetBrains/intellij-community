@@ -33,6 +33,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -56,7 +57,7 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase i
         final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         final PsiDirectory[] dirs = view.getDirectories();
         for (final PsiDirectory dir : dirs) {
-          if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && JavaDirectoryService.getInstance().getPackage(dir) != null) {
+          if (projectFileIndex.isUnderSourceRootOfType(dir.getVirtualFile(), JavaModuleSourceRootTypes.SOURCES) && JavaDirectoryService.getInstance().getPackage(dir) != null) {
             return;
           }
         }

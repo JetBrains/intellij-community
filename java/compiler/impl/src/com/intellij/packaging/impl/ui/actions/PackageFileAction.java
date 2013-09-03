@@ -21,6 +21,7 @@ import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
 import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ public class PackageFileAction extends AnAction {
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
     for (VirtualFile file : files) {
       if (file == null || file.isDirectory() ||
-          fileIndex.isInSourceContent(file) && compilerManager.isCompilableFileType(file.getFileType())) {
+          fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) && compilerManager.isCompilableFileType(file.getFileType())) {
         return Collections.emptyList();
       }
       final Collection<? extends Artifact> artifacts = ArtifactBySourceFileFinder.getInstance(project).findArtifacts(file);
