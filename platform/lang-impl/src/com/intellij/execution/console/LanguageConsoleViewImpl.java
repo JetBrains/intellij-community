@@ -27,7 +27,7 @@ import javax.swing.*;
 /**
  * @author Gregory.Shrago
  */
-public class LanguageConsoleViewImpl extends ConsoleViewImpl {
+public class LanguageConsoleViewImpl extends ConsoleViewImpl implements LanguageConsoleView {
   @NotNull
   protected LanguageConsoleImpl myConsole;
 
@@ -41,6 +41,7 @@ public class LanguageConsoleViewImpl extends ConsoleViewImpl {
     Disposer.register(this, myConsole);
   }
 
+  @Override
   @NotNull
   public LanguageConsoleImpl getConsole() {
     return myConsole;
