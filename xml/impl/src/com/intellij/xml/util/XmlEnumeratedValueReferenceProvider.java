@@ -56,11 +56,12 @@ public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends P
     @SuppressWarnings("unchecked") final Object descriptor = getDescriptor((T)element);
     if (descriptor instanceof XmlEnumerationDescriptor) {
       XmlEnumerationDescriptor enumerationDescriptor = (XmlEnumerationDescriptor)descriptor;
-      if (enumerationDescriptor.isFixed() ||
-          enumerationDescriptor.isEnumerated((XmlElement)element) ||
-          unquotedValue.equals(enumerationDescriptor.getDefaultValue())) { // todo case insensitive
+
+      if (enumerationDescriptor.isFixed() || enumerationDescriptor.isEnumerated((XmlElement)element)) {
         //noinspection unchecked
-        //return enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue);
+        return enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue);
+      }
+      else if (unquotedValue.equals(enumerationDescriptor.getDefaultValue())) {  // todo case insensitive
         return PsiSoftReferenceDecorator.create(enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue), true);
       }
     }
