@@ -73,7 +73,6 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
 
         for (PsiAnnotation annotation : annotations) {
-            PsiNameValuePair dep = null;
           final PsiAnnotationMemberValue value = annotation.findAttributeValue("dependsOnMethods");
           if (value != null) {
             String text = value.getText();
@@ -89,22 +88,22 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
             Matcher matcher = PATTERN.matcher(text);
             while (matcher.find()) {
                 String methodName = matcher.group(1);
-                checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors, isOnTheFly);
+                checkMethodNameDependency(manager, psiClass, methodName, value, problemDescriptors, isOnTheFly);
             }
           }
         }
         
-        return problemDescriptors.toArray(new ProblemDescriptor[] {} );
+        return problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]);
     }
 
-    private static void checkMethodNameDependency(InspectionManager manager, PsiClass psiClass, String methodName, PsiNameValuePair dep,
+    private static void checkMethodNameDependency(InspectionManager manager, PsiClass psiClass, String methodName, PsiAnnotationMemberValue value,
                                                   List<ProblemDescriptor> problemDescriptors, boolean onTheFly) {
         LOGGER.debug("Found dependsOnMethods with text: " + methodName);
         if (methodName.length() > 0 && methodName.charAt(methodName.length() - 1) == ')') {
 
             LOGGER.debug("dependsOnMethods contains ()" + psiClass.getName());
             // TODO Add quick fix for removing brackets on annotation
-            ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(value,
                                                                "Method '" + methodName + "' should not include () characters.",
                                                                (LocalQuickFix) null,
                                                                ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly);
@@ -112,11 +111,11 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
             problemDescriptors.add(descriptor);
 
         } else {
-            final String configAnnotation = TestNGUtil.getConfigAnnotation(PsiTreeUtil.getParentOfType(dep, PsiMethod.class));
+            final String configAnnotation = TestNGUtil.getConfigAnnotation(PsiTreeUtil.getParentOfType(value, PsiMethod.class));
             PsiMethod[] foundMethods = psiClass.findMethodsByName(methodName, true);
             if (foundMethods.length == 0) {
                 LOGGER.debug("dependsOnMethods method doesn't exist:" + methodName);
-                ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
+                ProblemDescriptor descriptor = manager.createProblemDescriptor(value,
                                                                    "Method '" + methodName + "' unknown.",
                                                                    (LocalQuickFix) null,
                                                                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly);
@@ -133,7 +132,7 @@ public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
               }
 
               if (!hasTestsOrConfigs) {
-                ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
+                ProblemDescriptor descriptor = manager.createProblemDescriptor(value,
                                                                      configAnnotation == null ? "Method '" + methodName + "' is not a test or configuration method." :
                                                                                                 "Method '" + methodName + "' is not annotated with @" + configAnnotation,
                                                                      (LocalQuickFix) null,
