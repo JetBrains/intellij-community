@@ -254,11 +254,11 @@ public class ImportUtils {
         continue;
       }
       final PsiPackage aPackage = (PsiPackage)element;
+      if (!strict) {
+        return aPackage.containsClassNamed(shortName);
+      }
       final PsiClass[] classes = aPackage.findClassByShortName(shortName, file.getResolveScope());
       for (final PsiClass aClass : classes) {
-        if (!strict) {
-          return true;
-        }
         final String qualifiedClassName = aClass.getQualifiedName();
         if (qualifiedClassName == null || fqName.equals(qualifiedClassName)) {
           continue;
