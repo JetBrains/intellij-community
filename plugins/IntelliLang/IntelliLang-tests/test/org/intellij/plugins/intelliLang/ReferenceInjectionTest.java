@@ -5,6 +5,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
@@ -19,9 +20,7 @@ import org.jdom.Element;
  *         Date: 02.08.13
  */
 public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
-
   public void testInjectReference() throws Exception {
-
     myFixture.configureByText("foo.xml", "<foo xmlns=\"http://foo.bar\" \n" +
                                          "     xxx=\"ba<caret>r\"/>");
     assertNull(myFixture.getReferenceAtCaretPosition());
@@ -29,7 +28,7 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     assertFalse(new UnInjectLanguageAction().isAvailable(getProject(), myFixture.getEditor(), myFixture.getFile()));
 
     InjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile(), new FileReferenceInjector());
-    assertNotNull(myFixture.getReferenceAtCaretPosition());
+    assertTrue(myFixture.getReferenceAtCaretPosition() instanceof FileReference);
     assertFalse(new InjectLanguageAction().isAvailable(getProject(), myFixture.getEditor(), myFixture.getFile()));
     assertTrue(new UnInjectLanguageAction().isAvailable(getProject(), myFixture.getEditor(), myFixture.getFile()));
 
@@ -48,14 +47,14 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     assertNull(myFixture.getReferenceAtCaretPosition());
 
     InjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile(), new FileReferenceInjector());
-    assertNotNull(myFixture.getReferenceAtCaretPosition());
+    assertTrue(myFixture.getReferenceAtCaretPosition() instanceof FileReference);
 
     Configuration configuration = Configuration.getInstance();
     Element element = configuration.getState();
     configuration.loadState(element);
 
     ((PsiModificationTrackerImpl)PsiManager.getInstance(getProject()).getModificationTracker()).incCounter();
-    assertNotNull(myFixture.getReferenceAtCaretPosition());
+    assertTrue(myFixture.getReferenceAtCaretPosition() instanceof FileReference);
 
     UnInjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile());
     assertNull(myFixture.getReferenceAtCaretPosition());
@@ -66,7 +65,7 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     assertNull(myFixture.getReferenceAtCaretPosition());
 
     InjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile(), new FileReferenceInjector());
-    assertNotNull(myFixture.getReferenceAtCaretPosition());
+    assertTrue(myFixture.getReferenceAtCaretPosition() instanceof FileReference);
 
     UnInjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile());
     assertNull(myFixture.getReferenceAtCaretPosition());
@@ -81,7 +80,9 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     assertNull(getInjectedReferences());
 
     InjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile(), new FileReferenceInjector());
-    assertNotNull(getInjectedReferences());
+    PsiReference[] references = getInjectedReferences();
+    PsiReference reference = assertOneElement(references);
+    assertTrue(reference instanceof FileReference);
 
     UnInjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile());
     assertNull(getInjectedReferences());
