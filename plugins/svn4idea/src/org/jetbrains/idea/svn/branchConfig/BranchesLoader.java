@@ -42,9 +42,10 @@ public class BranchesLoader {
     final SvnVcs vcs = SvnVcs.getInstance(project);
     final ISVNAuthenticationManager passiveManager = passive ?
       configuration.getPassiveAuthenticationManager(project) : configuration.getInteractiveManager(vcs);
-
-    final SVNLogClient logClient = vcs.createLogClient(passiveManager);
     final SVNURL branchesUrl = SVNURL.parseURIEncoded(url);
+
+    // TODO: Currently this method works for 1.8 - but should be updated to command line implementation
+    final SVNLogClient logClient = vcs.createLogClient(passiveManager);
     logClient.doList(branchesUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, new ISVNDirEntryHandler() {
       public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
         final SVNURL currentUrl = dirEntry.getURL();

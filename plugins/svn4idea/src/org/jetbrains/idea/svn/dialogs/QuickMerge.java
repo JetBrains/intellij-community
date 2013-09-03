@@ -272,7 +272,7 @@ public class QuickMerge {
       try {
         calculator = new MergeCalculator(myWcInfo, mySourceUrl, myBranchName);
       }
-      catch (SVNException e) {
+      catch (VcsException e) {
         finishWithError(context, e.getMessage(), true);
         return;
       }
@@ -532,7 +532,7 @@ public class QuickMerge {
       myCopyData.set(value);
     }
 
-    private MergeCalculator(WCInfo wcInfo, String sourceUrl, String branchName) throws SVNException {
+    private MergeCalculator(WCInfo wcInfo, String sourceUrl, String branchName) throws VcsException {
       super("Calculating not merged revisions", Where.POOLED);
       myWcInfo = wcInfo;
       mySourceUrl = sourceUrl;

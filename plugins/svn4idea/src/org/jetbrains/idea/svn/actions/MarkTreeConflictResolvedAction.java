@@ -115,12 +115,13 @@ public class MarkTreeConflictResolvedAction extends AnAction implements DumbAwar
         public void run(@NotNull ProgressIndicator indicator) {
           final ConflictedSvnChange change = checker.getChange();
           final FilePath path = change.getTreeConflictMarkHolder();
-          final SVNWCClient client = SvnVcs.getInstance(checker.getProject()).createWCClient();
+          SvnVcs vcs = SvnVcs.getInstance(checker.getProject());
+
           try {
-            client.doResolve(path.getIOFile(), SVNDepth.EMPTY, false, false, true, SVNConflictChoice.MERGED);
+            vcs.getFactory(path.getIOFile()).createConflictClient().resolve(path.getIOFile(), false, false, true);
           }
-          catch (SVNException e1) {
-            exception.set(new VcsException(e1));
+          catch (VcsException e) {
+            exception.set(e);
           }
           VcsDirtyScopeManager.getInstance(checker.getProject()).filePathsDirty(getDistinctFiles(change), null);
         }

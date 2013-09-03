@@ -555,20 +555,6 @@ public class SvnChangeList implements CommittedChangeList {
     change.addAdditionalLayerElement(SvnChangeProvider.PROPERTY_LAYER, additional);
   }
 
-  private SimpleContentRevision createRevisionForProperty(final SVNURL url, final ContentRevision changeRevision, final FilePath newPath) {
-    if (changeRevision == null) return null;
-    final SVNWCClient client = myVcs.createWCClient();
-    String list;
-    try {
-      list =
-        AbstractShowPropertiesDiffAction.getPropertyList(url, ((SvnRevisionNumber)changeRevision.getRevisionNumber()).getRevision(), client);
-    }
-    catch (SVNException e) {
-      list = "Can not get properties: " + e.getMessage();
-    }
-    return new SimpleContentRevision(list, newPath, changeRevision.getRevisionNumber().asString());
-  }
-
   @NotNull
   public String getName() {
     return myMessage;
