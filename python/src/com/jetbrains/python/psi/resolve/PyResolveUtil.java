@@ -103,7 +103,7 @@ public class PyResolveUtil {
     scopeCrawlUp(processor, scopeOwner, scopeOwner, name, roof);
   }
 
-  private static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @Nullable ScopeOwner scopeOwner,
+  public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @Nullable ScopeOwner scopeOwner,
                                   @Nullable ScopeOwner originalScopeOwner, @Nullable String name, @Nullable PsiElement roof) {
     while (scopeOwner != null) {
       if (!(scopeOwner instanceof PyClass) || scopeOwner == originalScopeOwner) {
