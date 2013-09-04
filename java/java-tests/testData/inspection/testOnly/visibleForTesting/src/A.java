@@ -11,11 +11,11 @@ public class A {
 
   @com.android.annotations.VisibleForTesting(visibility=com.android.annotations.VisibleForTesting.Visibility.PROTECTED)
   void visibleMethod(int a) {
-
+    relaxedToPackageLevel(a);
   }
   
   @com.google.common.annotations.VisibleForTesting
-  void unknownRealVisibilityMethod(int a) {
+  void relaxedToPackageLevel(int a) {
 
   }
 }
