@@ -46,14 +46,10 @@ public class TaskTestUtil {
     private boolean myClosed = false;
     private boolean myIssue = true;
 
-    public TaskBuilder(@NotNull String id, @NotNull String summary) {
+    public TaskBuilder(String id, String summary, TaskRepository repository) {
       myId = id;
       mySummary = summary;
-    }
-
-    public TaskBuilder withRepository(@Nullable TaskRepository repository) {
       myRepository = repository;
-      return this;
     }
 
     public TaskBuilder withDescription(@Nullable String description) {
