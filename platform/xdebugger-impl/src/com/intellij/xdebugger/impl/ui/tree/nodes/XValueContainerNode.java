@@ -66,11 +66,6 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   @Override
-  public boolean isAlreadySorted() {
-    return myAlreadySorted;
-  }
-
-  @Override
   public void setAlreadySorted(boolean alreadySorted) {
     myAlreadySorted = alreadySorted;
   }
@@ -81,7 +76,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
       @Override
       public void run() {
         if (myValueChildren == null) {
-          if (!isAlreadySorted() && XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
+          if (!myAlreadySorted && XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
             myValueChildren = new SortedList<XValueNodeImpl>(XValueNodeImpl.COMPARATOR);
           }
           else {

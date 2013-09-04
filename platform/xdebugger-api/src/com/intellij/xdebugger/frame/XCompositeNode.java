@@ -50,8 +50,6 @@ public interface XCompositeNode extends Obsolescent {
    */
   void tooManyChildren(int remaining);
 
-  boolean isAlreadySorted();
-
   /**
    * Use sort specified in data view settings (alreadySorted false, by default) or not
    */
