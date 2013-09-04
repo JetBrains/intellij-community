@@ -145,12 +145,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return aPackage.getQualifiedName();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String generateClassInfo(PsiClass aClass) {
-    StringBuilder buffer = new StringBuilder();
-
-    if (aClass instanceof PsiAnonymousClass) return LangBundle.message("java.terms.anonymous.class");
-
+  private static void generatePackageInfo(StringBuilder buffer, @NotNull PsiClass aClass) {
     PsiFile file = aClass.getContainingFile();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(aClass.getProject()).getFileIndex();
     VirtualFile vFile = file.getVirtualFile();
@@ -175,7 +170,15 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         newLine(buffer);
       }
     }
+  }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static String generateClassInfo(PsiClass aClass) {
+    StringBuilder buffer = new StringBuilder();
+
+    if (aClass instanceof PsiAnonymousClass) return LangBundle.message("java.terms.anonymous.class");
+
+    generatePackageInfo(buffer, aClass);
     generateModifiers(buffer, aClass);
 
     final String classString = aClass.isAnnotationType() ? "java.terms.annotation.interface"
@@ -264,6 +267,10 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     PsiClass parentClass = method.getContainingClass();
 
     if (parentClass != null) {
+      if (method.isConstructor() && !(parentClass instanceof PsiAnonymousClass)) {
+        generatePackageInfo(buffer, parentClass);
+      }
+
       buffer.append(JavaDocUtil.getShortestClassName(parentClass, method));
       newLine(buffer);
     }
