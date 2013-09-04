@@ -21,11 +21,6 @@ public class XTestCompositeNode extends XTestContainer<XValue> implements XCompo
   }
 
   @Override
-  public boolean isAlreadySorted() {
-    return myAlreadySorted;
-  }
-
-  @Override
   public void setAlreadySorted(boolean alreadySorted) {
     myAlreadySorted = alreadySorted;
   }
