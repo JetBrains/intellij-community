@@ -31,6 +31,11 @@ import javax.swing.*;
  */
 public interface XCompositeNode extends Obsolescent {
   /**
+   * If node has more children than this constant it's recommended to stop adding children and call {@link #tooManyChildren(int)} method
+   */
+  int MAX_CHILDREN_TO_SHOW = 100;
+
+  /**
    * Add children to the node.
    * @param children child nodes to add
    * @param last <code>true</code> if all children added
@@ -41,6 +46,7 @@ public interface XCompositeNode extends Obsolescent {
    * Add an ellipsis node ("...") indicating that the node has too many children. If user double-click on that node
    * {@link XValueContainer#computeChildren(XCompositeNode)} method will be called again to add next children.
    * @param remaining number of remaining children or <code>-1</code> if unknown
+   * @see #MAX_CHILDREN_TO_SHOW
    */
   void tooManyChildren(int remaining);
 
