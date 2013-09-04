@@ -349,21 +349,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Override
   public StreamProvider[] getStreamProviders(RoamingType type) {
     synchronized (myStreamProviders) {
-      final Collection<StreamProvider> providers = myStreamProviders.get(type);
+      Collection<StreamProvider> providers = myStreamProviders.get(type);
       return providers.isEmpty() ? EMPTY_ARRAY : providers.toArray(new StreamProvider[providers.size()]);
-    }
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  @Deprecated
-  /**
-   * @deprecated This method is incorrect, returned collection can contain duplicated values
-   * remove in idea 14
-   */
-  public Collection<StreamProvider> getStreamProviders() {
-    synchronized (myStreamProviders) {
-      return Collections.unmodifiableCollection(myStreamProviders.values());
     }
   }
 
