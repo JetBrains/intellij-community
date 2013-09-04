@@ -656,6 +656,12 @@ public class PyUtil {
     }
   }
 
+  public static boolean isOwnScopeComprehension(@NotNull PyComprehensionElement comprehension) {
+    final boolean isAtLeast30 = LanguageLevel.forElement(comprehension).isAtLeast(LanguageLevel.PYTHON30);
+    final boolean isListComprehension = comprehension instanceof PyListCompExpression;
+    return !isListComprehension || isAtLeast30;
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
