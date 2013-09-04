@@ -67,9 +67,7 @@ public abstract class XDebuggerEvaluator {
    * @param expression expression to evaluate
    * @param callback   used to notify that the expression has been evaluated or an error occurs
    */
-  public void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
-    evaluate(expression, callback);
-  }
+  public abstract void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition);
 
   /**
      * Start evaluating expression.
@@ -81,13 +79,6 @@ public abstract class XDebuggerEvaluator {
      */
   public void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition, @NotNull EvaluationMode mode) {
     evaluate(expression, callback, expressionPosition);
-  }
-
-  /**
-   * @deprecated override {@link #evaluate(String, XEvaluationCallback, com.intellij.xdebugger.XSourcePosition)} instead
-   */
-  @Deprecated
-  public void evaluate(@NotNull String expression, XEvaluationCallback callback) {
   }
 
   /**
