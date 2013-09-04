@@ -140,7 +140,8 @@ public class SvnMergeProvider implements MergeProvider {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
     File path = new File(file.getPath());
     try {
-      vcs.getFactory(path).createConflictClient().resolve(path, false);
+      // TODO: Probably false should be passed to "resolveTree", but previous logic used true implicitly
+      vcs.getFactory(path).createConflictClient().resolve(path, false, true, true);
     }
     catch (VcsException e) {
       LOG.warn(e);
@@ -159,7 +160,7 @@ public class SvnMergeProvider implements MergeProvider {
       File ioFile = new File(file.getPath());
       PropertyClient client = vcs.getFactory(ioFile).createPropertyClient();
 
-      SVNPropertyData svnPropertyData = client.getProperty(ioFile, SVNProperty.MIME_TYPE, false, SVNRevision.UNDEFINED, SVNRevision.WORKING);
+      SVNPropertyData svnPropertyData = client.getProperty(SvnTarget.fromFile(ioFile), SVNProperty.MIME_TYPE, false, SVNRevision.WORKING);
       if (svnPropertyData != null && SVNProperty.isBinaryMimeType(SVNPropertyValue.getPropertyAsString(svnPropertyData.getValue()))) {
         return true;
       }

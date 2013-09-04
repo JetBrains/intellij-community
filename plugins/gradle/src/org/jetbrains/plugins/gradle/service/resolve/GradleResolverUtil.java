@@ -15,9 +15,18 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
+import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariableImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
  * @author Vladislav.Soroka
@@ -25,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
  */
 public class GradleResolverUtil {
 
-  public static int getGrMethodArumentsCount(GrArgumentList args) {
+  public static int getGrMethodArumentsCount(@NotNull GrArgumentList args) {
     int argsCount = 0;
     boolean namedArgProcessed = false;
     for (GroovyPsiElement arg : args.getAllArguments()) {
@@ -40,5 +49,29 @@ public class GradleResolverUtil {
       }
     }
     return argsCount;
+  }
+
+  public static void addImplicitVariable(@NotNull PsiScopeProcessor processor,
+                                         @NotNull ResolveState state,
+                                         @NotNull GrReferenceExpressionImpl expression,
+                                         @NotNull String type) {
+    if (expression.getQualifier() == null) {
+      PsiVariable myPsi = new GrImplicitVariableImpl(expression.getManager(), expression.getReferenceName(), type, expression);
+      processor.execute(myPsi, state);
+    }
+  }
+
+  public static GrLightMethodBuilder createMethodWithClosure(@NotNull String name, @NotNull PsiElement place, @Nullable String returnType) {
+    GrLightMethodBuilder methodWithClosure = new GrLightMethodBuilder(place.getManager(), name);
+    PsiElementFactory factory = JavaPsiFacade.getInstance(place.getManager().getProject()).getElementFactory();
+    PsiClassType closureType = factory.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place.getResolveScope());
+    GrLightParameter closureParameter = new GrLightParameter("closure", closureType, methodWithClosure);
+    methodWithClosure.addParameter(closureParameter);
+
+    if (returnType != null) {
+      PsiClassType retType = factory.createTypeByFQClassName(returnType, place.getResolveScope());
+      methodWithClosure.setReturnType(retType);
+    }
+    return methodWithClosure;
   }
 }

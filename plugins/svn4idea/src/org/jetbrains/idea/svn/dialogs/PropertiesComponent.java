@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,12 +31,14 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -118,22 +121,7 @@ public class PropertiesComponent extends JPanel {
     if (file != null) {
       myFile = file;
       myVcs = vcs;
-      try {
-        vcs.createWCClient().doGetProperty(file, null, SVNRevision.UNDEFINED, SVNRevision.WORKING, SVNDepth.EMPTY, new ISVNPropertyHandler() {
-          public void handleProperty(File path, SVNPropertyData property) throws SVNException {
-            final SVNPropertyValue value = property.getValue();
-            if (value != null) {
-              props.put(property.getName(), SVNPropertyValue.getPropertyAsString(property.getValue()));
-            }
-          }
-          public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
-          }
-          public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
-          }
-        }, null);
-      } catch (SVNException e) {
-        props.clear();
-      }
+      collectProperties(vcs, file, props);
     }
     DefaultTableModel model = (DefaultTableModel) myTable.getModel();
     model.setDataVector(createTableModel(props), new Object[] {"Name", "Value"});
@@ -157,6 +145,30 @@ public class PropertiesComponent extends JPanel {
     }
     if (myTable.getRowCount() > 0) {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
+    }
+  }
+
+  private void collectProperties(@NotNull SvnVcs vcs, @NotNull File file, @NotNull final Map<String, String> props) {
+    try {
+      ISVNPropertyHandler handler = new ISVNPropertyHandler() {
+        public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+          final SVNPropertyValue value = property.getValue();
+          if (value != null) {
+            props.put(property.getName(), SVNPropertyValue.getPropertyAsString(property.getValue()));
+          }
+        }
+
+        public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+        }
+
+        public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+        }
+      };
+      vcs.getFactory(file).createPropertyClient().list(SvnTarget.fromFile(file, SVNRevision.UNDEFINED), SVNRevision.WORKING, SVNDepth.EMPTY,
+                                                       handler);
+    }
+    catch (VcsException e) {
+      props.clear();
     }
   }
 
@@ -267,11 +279,13 @@ public class PropertiesComponent extends JPanel {
       SVNWCClient wcClient = myVcs.createWCClient();
       SVNPropertyData propValue = null;
       try {
-        propValue = wcClient.doGetProperty(myFile, SVNProperty.KEYWORDS, SVNRevision.UNDEFINED, SVNRevision.WORKING);
-      } catch (SVNException e1) {
-        // show error message
+        propValue = myVcs.getFactory(myFile).createPropertyClient()
+          .getProperty(SvnTarget.fromFile(myFile), SVNProperty.KEYWORDS, false, SVNRevision.WORKING);
       }
-      
+      catch (VcsException e1) {
+        // show erorr message
+      }
+
       SetKeywordsDialog dialog = new SetKeywordsDialog(project,
                                                        propValue != null ? SVNPropertyValue.getPropertyAsString(propValue.getValue()) : null);
       dialog.show();

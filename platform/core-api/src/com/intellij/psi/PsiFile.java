@@ -44,17 +44,17 @@ public interface PsiFile extends PsiFileSystemItem {
    * @return the virtual file, or null if the file exists only in memory.
    */
   @Override
-  @Nullable VirtualFile getVirtualFile();
+  VirtualFile getVirtualFile();
 
   /**
    * Returns the directory containing the file.
    *
    * @return the containing directory, or null if the file exists only in memory.
    */
-  @Nullable PsiDirectory getContainingDirectory();
+  PsiDirectory getContainingDirectory();
 
   @Override
-  @Nullable PsiDirectory getParent();
+  PsiDirectory getParent();
 
   /**
    * Gets the modification stamp value. Modification stamp is a value changed by any modification
@@ -71,14 +71,16 @@ public interface PsiFile extends PsiFileSystemItem {
    *
    * @return the original file of a copy, or the same file if the file is not a copy.
    */
-  @NotNull PsiFile getOriginalFile();
+  @NotNull
+  PsiFile getOriginalFile();
 
   /**
    * Returns the file type for the file.
    *
    * @return the file type instance.
    */
-  @NotNull FileType getFileType();
+  @NotNull
+  FileType getFileType();
 
   /**
    * If the file contains multiple interspersed languages, returns the roots for
@@ -89,9 +91,12 @@ public interface PsiFile extends PsiFileSystemItem {
    * if the file has only a single language.
    * @deprecated Use {@link FileViewProvider#getAllFiles()} instead.
    */
-  @NotNull PsiFile[] getPsiRoots();
+  @Deprecated
+  @NotNull
+  PsiFile[] getPsiRoots();
 
-  @NotNull FileViewProvider getViewProvider();
+  @NotNull
+  FileViewProvider getViewProvider();
 
   @Override
   FileASTNode getNode();

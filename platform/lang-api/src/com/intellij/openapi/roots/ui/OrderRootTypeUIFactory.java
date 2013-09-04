@@ -24,13 +24,14 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.KeyedExtensionFactory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public interface OrderRootTypeUIFactory {
   KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType> FACTORY = new KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType>(OrderRootTypeUIFactory.class, "com.intellij.OrderRootTypeUI") {
     @Override
-    public String getKey(final OrderRootType key) {
+    public String getKey(@NotNull final OrderRootType key) {
       return key.name();
     }
   };

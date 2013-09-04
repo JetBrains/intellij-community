@@ -14,8 +14,13 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 import java.io.File;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -96,12 +101,16 @@ public class CommandUtil {
     StringBuilder builder = new StringBuilder(path);
 
     if (pegRevision != null && !SVNRevision.UNDEFINED.equals(pegRevision) && !SVNRevision.WORKING.equals(pegRevision) &&
-        pegRevision.getNumber() > 0) {
+        pegRevision.isValid() && pegRevision.getNumber() != 0) {
       builder.append("@");
       builder.append(pegRevision);
     }
 
     parameters.add(builder.toString());
+  }
+
+  public static void put(@NotNull List<String> parameters, @NotNull SvnTarget target) {
+    put(parameters, target.getPathOrUrlString(), target.getPegRevision());
   }
 
   public static void put(@NotNull List<String> parameters, @NotNull File... paths) {
@@ -118,7 +127,7 @@ public class CommandUtil {
   }
 
   public static void put(@NotNull List<String> parameters, @Nullable SVNRevision revision) {
-    if (revision != null && !SVNRevision.UNDEFINED.equals(revision) && !SVNRevision.WORKING.equals(revision) && revision.getNumber() >= 0) {
+    if (revision != null && !SVNRevision.UNDEFINED.equals(revision) && !SVNRevision.WORKING.equals(revision) && revision.isValid()) {
       parameters.add("--revision");
       parameters.add(revision.toString());
     }
@@ -147,6 +156,13 @@ public class CommandUtil {
     }
   }
 
+  public static <T> T parse(@NotNull String data, @NotNull Class<T> type) throws JAXBException {
+    JAXBContext context = JAXBContext.newInstance(type);
+    Unmarshaller unmarshaller = context.createUnmarshaller();
+
+    return (T) unmarshaller.unmarshal(new StringReader(data));
+  }
+
   /**
    * Utility method for running commands changing certain file status information.
    * // TODO: Should be replaced with non-static analogue.
@@ -160,14 +176,15 @@ public class CommandUtil {
   public static SvnCommand execute(@NotNull SvnVcs vcs,
                                    @NotNull SvnCommandName name,
                                    @NotNull List<String> parameters,
-                                   @Nullable FileStatusResultParser parser)
-    throws VcsException {
+                                   @Nullable FileStatusResultParser parser,
+                                   @Nullable LineCommandListener listener)
+  throws VcsException {
     String exe = resolveExePath();
     File base = resolveBaseDirectory(null, exe);
     SVNURL url = resolveRepositoryUrl(vcs, null);
 
     SvnLineCommand command = SvnLineCommand.runWithAuthenticationAttempt(
-      exe, base, url, name, new SvnCommitRunner.CommandListener(null),
+      exe, base, url, name, listener != null ? listener : new SvnCommitRunner.CommandListener(null),
       new IdeaSvnkitBasedAuthenticationCallback(vcs),
       ArrayUtil.toStringArray(parameters));
 
@@ -176,6 +193,13 @@ public class CommandUtil {
     }
 
     return command;
+  }
+
+  public static SvnCommand execute(@NotNull SvnVcs vcs,
+                                   @NotNull SvnCommandName name,
+                                   @NotNull List<String> parameters,
+                                   @Nullable FileStatusResultParser parser) throws VcsException {
+    return execute(vcs, name, parameters, parser, null);
   }
 
   /**

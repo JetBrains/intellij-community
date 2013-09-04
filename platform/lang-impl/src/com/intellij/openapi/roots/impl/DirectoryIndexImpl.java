@@ -904,6 +904,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
 
       int id = myRootTypes.size();
+      if (id > DirectoryInfo.MAX_ROOT_TYPE_ID) {
+        LOG.error("Too many different types of module source roots (" + id  + ") registered: " + myRootTypes);
+      }
       myRootTypes.add(rootType);
       myRootTypeId.put(rootType, id);
       return id;

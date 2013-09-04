@@ -38,6 +38,11 @@ public class MultiMap<K, V> implements Serializable {
     myMap = createMap();
   }
 
+  public MultiMap(MultiMap<? extends K, ? extends V> toCopy) {
+    this();
+    putAllValues(toCopy);
+  }
+
   public MultiMap(int i, float v) {
     myMap = createMap(i, v);
   }

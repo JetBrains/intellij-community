@@ -39,7 +39,10 @@ public enum SvnCommandName {
   move("move", true),
   resolve("resolve", true),
   propget("propget", false),
-  blame("blame", false);
+  proplist("proplist", false),
+  blame("blame", false),
+  merge("merge", true),
+  changelist("changelist", true);
 
   private final String myName;
   private final boolean myWriteable;

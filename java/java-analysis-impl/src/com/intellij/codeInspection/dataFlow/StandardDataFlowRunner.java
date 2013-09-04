@@ -33,7 +33,6 @@ import com.intellij.psi.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -59,9 +58,7 @@ public class StandardDataFlowRunner extends AnnotationsAwareDataFlowRunner {
   }
 
   @Override
-  protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
-    final Collection<DfaMemoryState> initialStates = super.createInitialStates(psiBlock, visitor);
-
+  protected void prepareAnalysis(@NotNull PsiElement psiBlock, Iterable<DfaMemoryState> initialStates) {
     myIsInMethod = psiBlock.getParent() instanceof PsiMethod;
     if (myIsInMethod) {
       PsiMethod method = (PsiMethod)psiBlock.getParent();
@@ -78,8 +75,6 @@ public class StandardDataFlowRunner extends AnnotationsAwareDataFlowRunner {
     myNullableAssignments.clear();
     myNullableReturns.clear();
     myUnboxedNullables.clear();
-
-    return initialStates;
   }
 
   public void onInstructionProducesNPE(Instruction instruction) {

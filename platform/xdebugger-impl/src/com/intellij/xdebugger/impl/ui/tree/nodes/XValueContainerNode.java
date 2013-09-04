@@ -18,10 +18,7 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
-import com.intellij.xdebugger.frame.XValueChildrenProvider;
-import com.intellij.xdebugger.frame.XValueContainer;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -69,22 +66,17 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   @Override
-  public boolean isAlreadySorted() {
-    return myAlreadySorted;
-  }
-
-  @Override
   public void setAlreadySorted(boolean alreadySorted) {
     myAlreadySorted = alreadySorted;
   }
 
   @Override
-  public void addChildren(@NotNull final XValueChildrenProvider children, final boolean last) {
+  public void addChildren(@NotNull final XValueChildrenList children, final boolean last) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       @Override
       public void run() {
         if (myValueChildren == null) {
-          if (!isAlreadySorted() && XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
+          if (!myAlreadySorted && XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
             myValueChildren = new SortedList<XValueNodeImpl>(XValueNodeImpl.COMPARATOR);
           }
           else {

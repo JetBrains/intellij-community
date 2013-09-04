@@ -104,7 +104,7 @@ public class SvnCommitRunner {
       }
     }
 
-    private long getCommittedRevision() {
+    public long getCommittedRevision() {
       return myCommittedRevision;
     }
 
@@ -163,7 +163,8 @@ public class SvnCommitRunner {
         }
       } else {
         if (myHandler == null) return;
-        final int idxSpace = line.indexOf(' ');
+        // status and path are separated by several spaces
+        final int idxSpace = line.indexOf("  ");
         if (idxSpace == -1) {
           LOG.info("Can not parse event type: " + line);
           return;
@@ -173,7 +174,10 @@ public class SvnCommitRunner {
           LOG.info("Can not parse event type: " + line);
           return;
         }
-        final File target = new File(myBase, new String(line.substring(idxSpace + 1).trim()));
+        File target = new File(new String(line.substring(idxSpace + 1).trim()));
+        if (!target.isAbsolute()) {
+          target = new File(myBase, target.getPath());
+        }
         myHandler.commitEvent(type, target);
       }
     }

@@ -79,6 +79,7 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMethodRefAcceptance() { doTest(); }
   public void testVarargsMethodRef() { doTest(); }
   public void testExprReceiver() { doTest(); }
+  public void testVoidReturnTypeAmbiguity() { doTest(true); }
 
   public void testTypeParameterWithExtendsList() throws Exception {
     doTest();

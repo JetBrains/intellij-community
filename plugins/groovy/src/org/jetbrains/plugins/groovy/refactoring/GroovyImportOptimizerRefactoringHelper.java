@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) continue;
       PsiFile file = usage.getFile();
-      if (file instanceof GroovyFile && file.isValid()) {
+      if (file instanceof GroovyFile && file.isValid() && file.isPhysical()) {
         files.add((GroovyFile)file);
       }
     }

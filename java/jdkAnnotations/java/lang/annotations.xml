@@ -50,6 +50,15 @@
   <item name="java.lang.Comparable int compareTo(T) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.lang.Enum T valueOf(java.lang.Class&lt;T&gt;, java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Enum T valueOf(java.lang.Class&lt;T&gt;, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Enum T valueOf(java.lang.Class&lt;T&gt;, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.lang.Iterable Iterator&lt;T&gt; iterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>

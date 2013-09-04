@@ -60,13 +60,17 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+import org.jetbrains.plugins.groovy.refactoring.introduce.field.GroovyFieldValidator;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Maxim.Medvedev
@@ -371,6 +375,46 @@ public class GroovyIntroduceParameterUtil {
     }
 
     return (GrExpression)parent.addAfter(initializer, anchor);
+  }
+
+  @Nullable
+  static GrVariable findVar(IntroduceParameterInfo info) {
+    final GrStatement[] statements = info.getStatements();
+    if (statements.length != 1) return null;
+    return GrIntroduceHandlerBase.findVariable(statements[0]);
+  }
+
+  @Nullable
+  static GrExpression findExpr(IntroduceParameterInfo info) {
+    final GrStatement[] statements = info.getStatements();
+    if (statements.length != 1) return null;
+    return GrIntroduceHandlerBase.findExpression(statements[0]);
+  }
+
+  static LinkedHashSet<String> suggestNames(GrVariable var,
+                                            GrExpression expr,
+                                            StringPartInfo stringPart,
+                                            GrParametersOwner scope,
+                                            Project project) {
+    if (expr != null) {
+      final GrIntroduceContext
+        introduceContext = new GrIntroduceContextImpl(project, null, expr, var, stringPart, PsiElement.EMPTY_ARRAY, scope);
+      final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
+      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expr, validator, true)));
+    }
+    else if (var != null) {
+      final GrIntroduceContext introduceContext = new GrIntroduceContextImpl(project, null, expr, var, stringPart, PsiElement.EMPTY_ARRAY, scope);
+      final GroovyFieldValidator validator = new GroovyFieldValidator(introduceContext);
+      LinkedHashSet<String> names = new LinkedHashSet<String>();
+      names.add(var.getName());
+      ContainerUtil.addAll(names, GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), validator));
+      return names;
+    }
+    else {
+      LinkedHashSet<String> names = new LinkedHashSet<String>();
+      names.add("closure");
+      return names;
+    }
   }
 
   private static class FieldSearcher extends GroovyRecursiveElementVisitor {

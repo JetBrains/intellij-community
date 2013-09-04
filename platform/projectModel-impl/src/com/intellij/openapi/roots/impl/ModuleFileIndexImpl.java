@@ -27,9 +27,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileIndex {
   private final Module myModule;
@@ -95,6 +97,13 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
     return info != null && info.isInModuleSource() && myModule.equals(info.getModule())
            && JavaModuleSourceRootTypes.isTestSourceOrResource(myDirectoryIndex.getSourceRootType(info));
+  }
+
+  @Override
+  public boolean isUnderSourceRootOfType(@NotNull VirtualFile fileOrDir, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
+    return info != null && info.isInModuleSource() && myModule.equals(info.getModule())
+           && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
   }
 
   private class ContentFilter implements VirtualFileFilter {

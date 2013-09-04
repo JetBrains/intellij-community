@@ -36,6 +36,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class DirectoryInfo {
+  public static final int MAX_ROOT_TYPE_ID = (1 << (Byte.SIZE - 2)) - 1;
   private final Module module; // module to which content it belongs or null
   private final VirtualFile libraryClassRoot; // class root in library
   private final VirtualFile contentRoot;
@@ -331,6 +332,9 @@ public final class DirectoryInfo {
   }
 
   public static int createSourceRootTypeData(boolean isInModuleSources, boolean isInLibrarySource, int moduleSourceRootTypeId) {
+    if (moduleSourceRootTypeId > MAX_ROOT_TYPE_ID) {
+      throw new IllegalArgumentException("Module source root type id " + moduleSourceRootTypeId + " exceeds the maximum allowable value (" + MAX_ROOT_TYPE_ID + ")");
+    }
     return (isInModuleSources ? MODULE_SOURCE_FLAG : 0) | (isInLibrarySource ? LIBRARY_SOURCE_FLAG : 0) | moduleSourceRootTypeId << 2;
   }
 }

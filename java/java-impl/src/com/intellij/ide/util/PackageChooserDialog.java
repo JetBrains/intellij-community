@@ -51,6 +51,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -277,7 +278,7 @@ public class PackageChooserDialog extends PackageChooser {
     fileIndex.iterateContent(
       new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
-          if (fileOrDir.isDirectory() && fileIndex.isInSourceContent(fileOrDir)){
+          if (fileOrDir.isDirectory() && fileIndex.isUnderSourceRootOfType(fileOrDir, JavaModuleSourceRootTypes.SOURCES)) {
             final PsiDirectory psiDirectory = psiManager.findDirectory(fileOrDir);
             LOG.assertTrue(psiDirectory != null);
             PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);

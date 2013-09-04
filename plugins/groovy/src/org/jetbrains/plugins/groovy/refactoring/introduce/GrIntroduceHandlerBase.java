@@ -150,7 +150,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   protected abstract Settings getSettingsForInplace(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice);
 
-  protected Map<OccurrencesChooser.ReplaceChoice, List<Object>> fillChoice(GrIntroduceContext context) {
+  public static Map<OccurrencesChooser.ReplaceChoice, List<Object>> fillChoice(GrIntroduceContext context) {
     HashMap<OccurrencesChooser.ReplaceChoice, List<Object>> map = ContainerUtil.newLinkedHashMap();
 
     if (context.getExpression() != null) {
@@ -344,7 +344,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       checkOccurrences(context.getOccurrences());
 
 
-      final boolean isInplace = isInplace(context);
+      final boolean isInplace = isInplace(context.getEditor(), context.getPlace());
       Pass<OccurrencesChooser.ReplaceChoice> callback = new Pass<OccurrencesChooser.ReplaceChoice>() {
         @Override
         public void pass(final OccurrencesChooser.ReplaceChoice choice) {
@@ -386,7 +386,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
         }
       };
 
-      if (isInplace(context)) {
+      if (isInplace(context.getEditor(), context.getPlace())) {
         Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = fillChoice(context);
         new OccurrencesChooser<Object>(editor) {
           @Override
@@ -457,7 +457,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     getContextAndInvoke(project, editor, selectedExpr, variable, stringPart);
   }
 
-  private static RangeMarker createRange(Document document, StringPartInfo part) {
+  public static RangeMarker createRange(Document document, StringPartInfo part) {
     if (part == null) {
       return null;
     }
@@ -467,7 +467,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @Nullable
-  private static RangeMarker createRange(@NotNull Document document, @Nullable PsiElement expression) {
+  public static RangeMarker createRange(@NotNull Document document, @Nullable PsiElement expression) {
     if (expression == null) {
       return null;
     }
@@ -476,11 +476,11 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
 
-  protected boolean isInplace(GrIntroduceContext context) {
-    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(context.getPlace().getLanguage());
+  public static boolean isInplace(@NotNull Editor editor, @NotNull PsiElement place) {
+    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(place.getLanguage());
     return supportProvider != null &&
-           context.getEditor().getSettings().isVariableInplaceRenameEnabled() &&
-           supportProvider.isInplaceIntroduceAvailable(context.getPlace(), context.getPlace()) &&
+           editor.getSettings().isVariableInplaceRenameEnabled() &&
+           supportProvider.isInplaceIntroduceAvailable(place, place) &&
            !ApplicationManager.getApplication().isUnitTestMode();
   }
 
