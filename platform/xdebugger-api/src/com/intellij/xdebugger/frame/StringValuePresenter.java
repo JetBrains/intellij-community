@@ -54,8 +54,7 @@ public class StringValuePresenter extends XValuePresenter {
     for (int i = 0; i < length; i++) {
       char ch = value.charAt(i);
       int additionalCharIndex = -1;
-      if (ch == '\n' || ch == '\r' || ch == '\t' || ch == '\b' || ch == '\f' || (additionalChars != null && (additionalCharIndex = additionalChars
-        .indexOf(ch)) != -1)) {
+      if (ch == '\n' || ch == '\r' || ch == '\t' || ch == '\b' || ch == '\f' || (additionalChars != null && (additionalCharIndex = additionalChars.indexOf(ch)) != -1)) {
         if (i > lastOffset) {
           text.append(value.substring(lastOffset, i), attributes);
         }
@@ -75,45 +74,23 @@ public class StringValuePresenter extends XValuePresenter {
           text.append("\\", escapeAttributes);
         }
 
-        String string;
-        switch (ch) {
-          case '"':
-            string = "\"";
-            break;
-
-          case '\\':
-            string = "\\";
-            break;
-
-          case '\n':
-            string = "n";
-            break;
-
-          case '\r':
-            string = "r";
-            break;
-
-          case '\t':
-            string = "t";
-            break;
-
-          case '\b':
-            string = "b";
-            break;
-
-          case '\f':
-            string = "f";
-            break;
-
-          default:
-            string = String.valueOf(ch);
-        }
-        text.append(string, escapeAttributes);
+        text.append(String.valueOf(getEscapingSymbol(ch)), escapeAttributes);
       }
     }
 
     if (lastOffset < length) {
       text.append(value.substring(lastOffset, length), attributes);
+    }
+  }
+
+  private static char getEscapingSymbol(char ch) {
+    switch (ch) {
+      case '\n': return 'n';
+      case '\r': return 'r';
+      case '\t': return 't';
+      case '\b': return 'b';
+      case '\f': return 'f';
+      default: return ch;
     }
   }
 }
