@@ -39,6 +39,6 @@ public class SvnKitClientFactory extends ClientFactory {
     mergeClient = new SvnKitMergeClient();
     changeListClient = new SvnKitChangeListClient();
     statusClient = new SvnkitSvnStatusClient(myVcs.createStatusClient());
-    infoClient = new SvnkitSvnWcClient(myVcs.createWCClient());
+    infoClient = new SvnkitSvnWcClient(myVcs);
   }
 }
