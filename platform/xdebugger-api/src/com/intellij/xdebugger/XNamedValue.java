@@ -15,19 +15,13 @@
  */
 package com.intellij.xdebugger;
 
-import com.intellij.xdebugger.frame.XValue;
+import com.intellij.openapi.util.text.StringUtil;
 
 /**
  * @author traff
  */
-public abstract class XNamedValue extends XValue {
-  protected final String myName;
-
+public abstract class XNamedValue extends com.intellij.xdebugger.frame.XNamedValue {
   public XNamedValue(String name) {
-    myName = name;
-  }
-
-  public String getName() {
-    return myName;
+    super(StringUtil.notNullize(name));
   }
 }

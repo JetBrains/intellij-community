@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,16 @@ package com.intellij.xdebugger.frame;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author nik
+ * @author traff
  */
-public abstract class XValueContainer {
-  /**
-   * Start computing children of the value. Call {@link XCompositeNode#addChildren(XValueChildrenList, boolean)} to add child nodes.
-   * Note that this method is called from the Event Dispatch thread so it should return quickly. 
-   * @param node node in the tree
-   */
-  public void computeChildren(@NotNull XCompositeNode node) {
-    node.addChildren(XValueChildrenList.EMPTY, true);
+public abstract class XNamedValue extends XValue {
+  protected final String myName;
+
+  protected XNamedValue(@NotNull String name) {
+    myName = name;
+  }
+
+  public final String getName() {
+    return myName;
   }
 }
