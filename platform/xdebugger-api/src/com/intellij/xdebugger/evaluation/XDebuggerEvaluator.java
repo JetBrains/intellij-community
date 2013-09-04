@@ -101,16 +101,6 @@ public abstract class XDebuggerEvaluator {
   }
 
   /**
-   * @deprecated override {@link #getExpressionRangeAtOffset(com.intellij.openapi.project.Project, com.intellij.openapi.editor.Document, int, boolean)} instead
-   */
-  @Nullable
-  @Deprecated
-  @SuppressWarnings({"MethodMayBeStatic"})
-  public TextRange getExpressionRangeAtOffset(final Project project, final Document document, int offset) {
-    return null;
-  }
-
-  /**
    * Return text range of expression which can be evaluated.
    *
    * @param project            project
@@ -122,7 +112,7 @@ public abstract class XDebuggerEvaluator {
    */
   @Nullable
   public TextRange getExpressionRangeAtOffset(final Project project, final Document document, int offset, boolean sideEffectsAllowed) {
-    return sideEffectsAllowed ? null : getExpressionRangeAtOffset(project, document, offset);
+    return null;
   }
 
   /**
