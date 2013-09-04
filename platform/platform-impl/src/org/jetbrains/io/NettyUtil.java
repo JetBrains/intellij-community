@@ -113,6 +113,7 @@ public final class NettyUtil {
     return bootstrap;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   public static Bootstrap nioClientBootstrap() {
     Bootstrap bootstrap = new Bootstrap().group(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE)).channel(NioSocketChannel.class);
     bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);

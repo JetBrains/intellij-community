@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
@@ -50,11 +51,12 @@ import java.util.List;
 public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient");
+
+  @NotNull
   private final Project myProject;
 
-  public SvnCommandLineInfoClient(final Project project) {
-    // TODO: Remove svn kit client instantiation
-    super(SvnVcs.getInstance(project).createWCClient());
+  public SvnCommandLineInfoClient(@NotNull final Project project) {
+    super(SvnVcs.getInstance(project));
     myProject = project;
   }
 

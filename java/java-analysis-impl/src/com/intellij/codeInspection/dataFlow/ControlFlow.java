@@ -54,6 +54,16 @@ public class ControlFlow {
     return myInstructions.size();
   }
 
+  public ControlFlowOffset getNextOffset() {
+    final int currentSize = myInstructions.size();
+    return new ControlFlowOffset() {
+      @Override
+      public int getInstructionOffset() {
+        return currentSize;
+      }
+    };
+  }
+
   public void startElement(PsiElement psiElement) {
     myElementToStartOffsetMap.put(psiElement, myInstructions.size());
   }
@@ -72,14 +82,22 @@ public class ControlFlow {
     addInstruction(new FlushVariableInstruction(var));
   }
 
-  public int getStartOffset(PsiElement element){
-    if (!myElementToStartOffsetMap.containsKey(element)) return -1;
-    return myElementToStartOffsetMap.get(element);
+  public ControlFlowOffset getStartOffset(final PsiElement element) {
+    return new ControlFlowOffset() {
+      @Override
+      public int getInstructionOffset() {
+        return myElementToStartOffsetMap.get(element);
+      }
+    };
   }
 
-  public int getEndOffset(PsiElement element){
-    if (!myElementToEndOffsetMap.containsKey(element)) return -1;
-    return myElementToEndOffsetMap.get(element);
+  public ControlFlowOffset getEndOffset(final PsiElement element) {
+    return new ControlFlowOffset() {
+      @Override
+      public int getInstructionOffset() {
+        return myElementToEndOffsetMap.get(element);
+      }
+    };
   }
 
   public DfaVariableValue[] getFields() {
@@ -102,4 +120,18 @@ public class ControlFlow {
     }
     return result.toString();
   }
+
+  public interface ControlFlowOffset {
+    int getInstructionOffset();
+  }
+
+  static ControlFlowOffset deltaOffset(final ControlFlowOffset delegate, final int delta) {
+    return new ControlFlowOffset() {
+      @Override
+      public int getInstructionOffset() {
+        return delegate.getInstructionOffset() + delta;
+      }
+    };
+  }
+
 }
