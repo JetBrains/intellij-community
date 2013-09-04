@@ -431,13 +431,13 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-8788
   public void testRenameShadowingBuiltins() {
-    doInspectionTest("RenameShadowingBuiltins.py", PyShadowingBuiltinsInspection.class,
+    doInspectionTest("RenameShadowingBuiltins.py", PyShadowingNamesInspection.class,
                      "Rename element", true, true);
   }
 
   // PY-8788
   public void testRenameFunctionShadowingBuiltins() {
-    doInspectionTest("RenameFunctionShadowingBuiltins.py", PyShadowingBuiltinsInspection.class,
+    doInspectionTest("RenameFunctionShadowingBuiltins.py", PyShadowingNamesInspection.class,
                      "Rename element", true, true);
 
   }
