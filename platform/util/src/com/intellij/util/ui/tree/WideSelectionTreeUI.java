@@ -88,9 +88,12 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     private boolean isSelected(MouseEvent e) {
       final JTree tree = (JTree)e.getSource();
       final int selected = tree.getClosestRowForLocation(e.getX(), e.getY());
-      for (int row : tree.getSelectionRows()) {
-        if (row == selected) {
-          return true;
+      final int[] rows = tree.getSelectionRows();
+      if (rows != null) {
+        for (int row : rows) {
+          if (row == selected) {
+            return true;
+          }
         }
       }
 

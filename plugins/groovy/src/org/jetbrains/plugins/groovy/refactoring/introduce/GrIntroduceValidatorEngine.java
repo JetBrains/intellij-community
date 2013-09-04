@@ -131,8 +131,8 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
    * @param varName      Variable name
    * @param startOffset
    */
-  private void validateOccurrencesDown(PsiElement startElement,
-                                       MultiMap<PsiElement, String> conflicts,
+  private void validateOccurrencesDown(@NotNull PsiElement startElement,
+                                       @NotNull MultiMap<PsiElement, String> conflicts,
                                        @NotNull String varName,
                                        double startOffset) {
     PsiElement child = startElement.getFirstChild();

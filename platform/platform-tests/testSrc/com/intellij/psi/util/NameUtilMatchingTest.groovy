@@ -289,7 +289,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("*get*A", "getClass");
     assertMatches("*git", "BlaGitBla");
     assertMatches("*Git", "BlaGitBla");
-    assertFalse(firstLetterMatcher("*Git").matches("BlagitBla"));
+    assertTrue(firstLetterMatcher("*Git").matches("BlagitBla"));
     assertMatches("*git", "BlagitBla");
     assertMatches("*Git*", "AtpGenerationItem");
     assertMatches("Collec*Util*", "CollectionUtils");
@@ -302,6 +302,16 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches(" File. _sepa", "File._separator");
     assertMatches(" _fo", "_foo");
     assertMatches("*BComp", "BaseComponent");
+  }
+
+  public void "test uppercase prefix with middle matching"() {
+    assertMatches("*OS", "ios");
+    assertMatches("*OS", "IOS");
+    assertMatches("*OS", "osx");
+    assertMatches("*OS", "OSX");
+
+    assertTrue(firstLetterMatcher("*I").matches("ID"));
+    assertFalse(firstLetterMatcher("*I").matches("id"));
   }
 
   public void testMiddleMatchingFirstLetterSensitive() {

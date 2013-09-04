@@ -44,7 +44,7 @@ public class RegisterExtensionFixProvider implements UnusedDeclarationFixProvide
 
   @NotNull
   @Override
-  public IntentionAction[] getQuickFixes(PsiElement element) {
+  public IntentionAction[] getQuickFixes(@NotNull PsiElement element) {
     if (!(element instanceof PsiIdentifier)) return IntentionAction.EMPTY_ARRAY;
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiClass)) return IntentionAction.EMPTY_ARRAY;

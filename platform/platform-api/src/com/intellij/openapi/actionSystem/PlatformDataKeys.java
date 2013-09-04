@@ -19,12 +19,10 @@ import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.DiffViewer;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.pom.Navigatable;
 import com.intellij.ui.content.ContentManager;
 
 import java.awt.*;
@@ -33,18 +31,7 @@ import java.util.Comparator;
 /**
  * @author yole
  */
-public class PlatformDataKeys {
-  public static final DataKey<Project> PROJECT = DataKey.create("project");
-  public static final DataKey<Editor> EDITOR = DataKey.create("editor");
-
-  /**
-   * Returns com.intellij.openapi.editor.Editor even if focus currently is in find bar
-   */
-  public static final DataKey<Editor> EDITOR_EVEN_IF_INACTIVE = DataKey.create("editor.even.if.inactive");
-  public static final DataKey<Navigatable> NAVIGATABLE = DataKey.create("Navigatable");
-  public static final DataKey<Navigatable[]> NAVIGATABLE_ARRAY = DataKey.create("NavigatableArray");
-  public static final DataKey<VirtualFile> VIRTUAL_FILE = DataKey.create("virtualFile");
-  public static final DataKey<VirtualFile[]> VIRTUAL_FILE_ARRAY = DataKey.create("virtualFileArray");
+public class PlatformDataKeys extends CommonDataKeys {
   public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create("fileEditor");
 
   /**

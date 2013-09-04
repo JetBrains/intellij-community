@@ -203,7 +203,7 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
 
   @Override
   public LinkedHashSet<String> suggestNames(GrIntroduceContext context) {
-    return new GrFieldNameSuggester(context , new GroovyInplaceFieldValidator(context)).suggestNames();
+    return new GrFieldNameSuggester(context , new GroovyInplaceFieldValidator(context), false).suggestNames();
   }
 
   public class GrInplaceIntroduceFieldPanel {

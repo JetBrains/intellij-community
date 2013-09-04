@@ -27,12 +27,12 @@ import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.history.LatestExistentSearcher;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
@@ -88,7 +88,7 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
 
   private String getCommitMessage(File path) throws VcsException {
     SVNPropertyData property =
-      myVcs.getFactory(path).createPropertyClient().getProperty(path, COMMIT_MESSAGE, true, null, SVNRevision.BASE);
+      myVcs.getFactory(path).createPropertyClient().getProperty(SvnTarget.fromFile(path), COMMIT_MESSAGE, true, SVNRevision.BASE);
 
     return property != null ? SVNPropertyValue.getPropertyAsString(property.getValue()) : null;
   }
@@ -124,29 +124,10 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
   }
 
   private SVNStatus getFileStatus(File file, boolean remote) {
-    WorkingCopyFormat format = myVcs.getWorkingCopyFormat(file);
-
-    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ? getStatusCommandLine(file, remote) : getStatusWithSvnKit(file, remote);
-  }
-
-  private SVNStatus getStatusWithSvnKit(File file, boolean remote) {
     SVNStatus result = null;
 
     try {
-      result = myVcs.createStatusClient().doStatus(file, remote, false);
-    }
-    catch (SVNException e) {
-      LOG.debug(e);    // most likely the file is unversioned
-    }
-
-    return result;
-  }
-
-  private SVNStatus getStatusCommandLine(File file, boolean remote) {
-    SVNStatus result = null;
-
-    try {
-      result = new SvnCommandLineStatusClient(myVcs.getProject()).doStatus(file, remote, false);
+      result = myVcs.getFactory(file).createStatusClient().doStatus(file, remote, false);
     }
     catch (SVNException e) {
       LOG.debug(e);
@@ -177,9 +158,17 @@ public class SvnDiffProvider implements DiffProvider, DiffMixin {
     }
     final boolean exists = itemExists(svnStatus);
     if (! exists) {
-      // get really latest revision
-      final LatestExistentSearcher searcher = new LatestExistentSearcher(myVcs, svnStatus.getURL());
-      final long revision = searcher.getDeletionRevision();
+      WorkingCopyFormat format = myVcs.getWorkingCopyFormat(file);
+      long revision = -1;
+
+      // skipped for 1.8
+      if (!WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)) {
+        // get really latest revision
+        // TODO: Algorithm seems not to be correct in all cases - for instance, when some subtree was deleted and replaced by other
+        // TODO: with same names. pegRevision should be used somehow but this complicates the algorithm
+        final LatestExistentSearcher searcher = new LatestExistentSearcher(myVcs, svnStatus.getURL());
+        revision = searcher.getDeletionRevision();
+      }
 
       return createResult(SVNRevision.create(revision), exists, false);
     }

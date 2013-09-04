@@ -21,10 +21,9 @@
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
@@ -56,7 +55,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     final Set<PsiElement> result = new LinkedHashSet<PsiElement>();
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile psiRoot = viewProvider.getPsi(language);
-      if (HighlightLevelUtil.shouldInspect(psiRoot)) {
+      if (HighlightingLevelManager.getInstance(file.getProject()).shouldInspect(psiRoot)) {
         result.addAll(CollectHighlightsUtil.getElementsInRange(psiRoot, startOffset, endOffset, true));
       }
     }

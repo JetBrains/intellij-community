@@ -1,0 +1,747 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.codeInsight.daemon.impl.analysis;
+
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.annotation.RetentionPolicy;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+
+/**
+ * @author ven
+ */
+public class AnnotationsHighlightUtil {
+  private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil");
+
+  @Nullable
+  public static HighlightInfo checkNameValuePair(PsiNameValuePair pair) {
+    PsiReference ref = pair.getReference();
+    if (ref == null) return null;
+    PsiMethod method = (PsiMethod)ref.resolve();
+    if (method == null) {
+      if (pair.getName() != null) {
+        final String description = JavaErrorMessages.message("annotation.unknown.method", ref.getCanonicalText());
+        PsiElement element = ref.getElement();
+        final HighlightInfo highlightInfo =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(element).descriptionAndTooltip(description).create();
+        QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createCreateAnnotationMethodFromUsageFix(pair));
+        return highlightInfo;
+      }
+      else {
+        String description = JavaErrorMessages.message("annotation.missing.method", ref.getCanonicalText());
+        PsiElement element = ref.getElement();
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+      }
+    }
+    else {
+      PsiType returnType = method.getReturnType();
+      assert returnType != null : method;
+      PsiAnnotationMemberValue value = pair.getValue();
+      HighlightInfo info = checkMemberValueType(value, returnType);
+      if (info != null) return info;
+
+      return checkDuplicateAttribute(pair);
+    }
+  }
+
+  @Nullable
+  private static HighlightInfo checkDuplicateAttribute(PsiNameValuePair pair) {
+    PsiAnnotationParameterList annotation = (PsiAnnotationParameterList)pair.getParent();
+    PsiNameValuePair[] attributes = annotation.getAttributes();
+    for (PsiNameValuePair attribute : attributes) {
+      if (attribute == pair) break;
+      String name = pair.getName();
+      if (Comparing.equal(attribute.getName(), name)) {
+        String description = JavaErrorMessages.message("annotation.duplicate.attribute",
+                                                       name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name);
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pair).descriptionAndTooltip(description).create();
+      }
+    }
+
+    return null;
+  }
+
+  private static String formatReference(PsiJavaCodeReferenceElement ref) {
+    return ref.getCanonicalText();
+  }
+
+  @Nullable
+  public static HighlightInfo checkMemberValueType(@Nullable PsiAnnotationMemberValue value, PsiType expectedType) {
+    if (value == null) return null;
+
+    if (expectedType instanceof PsiClassType && expectedType.equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
+      if (!(value instanceof PsiClassObjectAccessExpression)) {
+        String description = JavaErrorMessages.message("annotation.non.class.literal.attribute.value");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
+      }
+    }
+
+    if (value instanceof PsiAnnotation) {
+      PsiJavaCodeReferenceElement nameRef = ((PsiAnnotation)value).getNameReferenceElement();
+      if (nameRef == null) return null;
+
+      if (expectedType instanceof PsiClassType) {
+        PsiClass aClass = ((PsiClassType)expectedType).resolve();
+        if (aClass != null && nameRef.isReferenceTo(aClass)) return null;
+      }
+
+      if (expectedType instanceof PsiArrayType) {
+        PsiType componentType = ((PsiArrayType)expectedType).getComponentType();
+        if (componentType instanceof PsiClassType) {
+          PsiClass aClass = ((PsiClassType)componentType).resolve();
+          if (aClass != null && nameRef.isReferenceTo(aClass)) return null;
+        }
+      }
+
+      String description = JavaErrorMessages.message("annotation.incompatible.types",
+                                                     formatReference(nameRef), JavaHighlightUtil.formatType(expectedType));
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
+    }
+    if (value instanceof PsiArrayInitializerMemberValue) {
+      if (expectedType instanceof PsiArrayType) return null;
+      String description = JavaErrorMessages.message("annotation.illegal.array.initializer", JavaHighlightUtil.formatType(expectedType));
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
+    }
+    if (value instanceof PsiExpression) {
+      PsiExpression expr = (PsiExpression)value;
+      PsiType type = expr.getType();
+      if (type != null && TypeConversionUtil.areTypesAssignmentCompatible(expectedType, expr) ||
+          expectedType instanceof PsiArrayType &&
+          TypeConversionUtil.areTypesAssignmentCompatible(((PsiArrayType)expectedType).getComponentType(), expr)) {
+        return null;
+      }
+
+      String description = JavaErrorMessages.message("annotation.incompatible.types",
+                                                     JavaHighlightUtil.formatType(type), JavaHighlightUtil.formatType(expectedType));
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
+    }
+
+    LOG.error("Unknown annotation member value: " + value);
+    return null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkDuplicateAnnotations(PsiAnnotation annotationToCheck) {
+    PsiAnnotationOwner owner = annotationToCheck.getOwner();
+    if (owner == null) return null;
+
+    PsiJavaCodeReferenceElement element = annotationToCheck.getNameReferenceElement();
+    if (element == null) return null;
+    PsiElement resolved = element.resolve();
+    if (!(resolved instanceof PsiClass)) return null;
+
+    for (PsiAnnotation annotation : owner.getAnnotations()) {
+      if (annotation == annotationToCheck) continue;
+      PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
+      if (nameRef == null) continue;
+      PsiElement aClass = nameRef.resolve();
+      if (!resolved.equals(aClass)) continue;
+
+      if (!PsiUtil.isLanguageLevel8OrHigher(annotationToCheck)) {
+        String description = JavaErrorMessages.message("annotation.duplicate.annotation");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+      }
+
+      PsiClass annotationType = (PsiClass)resolved;
+      PsiAnnotation metaAnno = PsiImplUtil.findAnnotation(annotationType.getModifierList(), CommonClassNames.JAVA_LANG_ANNOTATION_REPEATABLE);
+      if (metaAnno == null) {
+        String explanation = JavaErrorMessages.message("annotation.non.repeatable", annotationType.getQualifiedName());
+        String description = JavaErrorMessages.message("annotation.duplicate.explained", explanation);
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+      }
+
+      String explanation = doCheckRepeatableAnnotation(metaAnno);
+      if (explanation != null) {
+        String description = JavaErrorMessages.message("annotation.duplicate.explained", explanation);
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+      }
+
+      PsiClass container = getRepeatableContainer(metaAnno);
+      if (container != null) {
+        String containerName = container.getQualifiedName();
+        if (containerName != null) {
+          PsiAnnotation containerAnno = owner.findAnnotation(containerName);
+          if (containerAnno != null) {
+            String description = JavaErrorMessages.message("annotation.container.wrong.place", containerName);
+            return annotationError(containerAnno, description);
+          }
+        }
+
+        PsiAnnotation.TargetType[] targets = PsiImplUtil.getTargetsForLocation(owner);
+        PsiAnnotation.TargetType applicable = PsiImplUtil.findApplicableTarget(container, targets);
+        if (applicable == null) {
+          String target = JavaErrorMessages.message("annotation.target." + targets[0]);
+          String message = JavaErrorMessages.message("annotation.container.not.applicable", containerName, target);
+          return annotationError(annotation, message);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkMissingAttributes(PsiAnnotation annotation) {
+    PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
+    if (nameRef == null) return null;
+    PsiClass aClass = (PsiClass)nameRef.resolve();
+    if (aClass != null && aClass.isAnnotationType()) {
+      Set<String> names = new HashSet<String>();
+      PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+      for (PsiNameValuePair attribute : attributes) {
+        final String name = attribute.getName();
+        if (name != null) {
+          names.add(name);
+        }
+        else {
+          names.add(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+        }
+      }
+
+      PsiMethod[] annotationMethods = aClass.getMethods();
+      List<String> missed = new ArrayList<String>();
+      for (PsiMethod method : annotationMethods) {
+        if (PsiUtil.isAnnotationMethod(method)) {
+          PsiAnnotationMethod annotationMethod = (PsiAnnotationMethod)method;
+          if (annotationMethod.getDefaultValue() == null) {
+            if (!names.contains(annotationMethod.getName())) {
+              missed.add(annotationMethod.getName());
+            }
+          }
+        }
+      }
+
+      if (!missed.isEmpty()) {
+        StringBuffer buff = new StringBuffer("'" + missed.get(0) + "'");
+        for (int i = 1; i < missed.size(); i++) {
+          buff.append(", ");
+          buff.append("'").append(missed.get(i)).append("'");
+        }
+
+        String description = JavaErrorMessages.message("annotation.missing.attribute", buff);
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameRef).descriptionAndTooltip(description).create();
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkConstantExpression(PsiExpression expression) {
+    final PsiElement parent = expression.getParent();
+    if (PsiUtil.isAnnotationMethod(parent) || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
+      if (!PsiUtil.isConstantExpression(expression)) {
+        String description = JavaErrorMessages.message("annotation.non.constant.attribute.value");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkValidAnnotationType(final PsiTypeElement typeElement) {
+    PsiType type = typeElement.getType();
+    if (type.accept(AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
+      return null;
+    }
+    String description = JavaErrorMessages.message("annotation.invalid.annotation.member.type");
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
+  }
+
+  private static final ElementPattern<PsiElement> ANY_ANNOTATION_ALLOWED = psiElement().andOr(
+    psiElement().withParent(PsiNameValuePair.class),
+    psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiNameValuePair.class),
+    psiElement().withParent(PsiAnnotationMethod.class).afterLeaf(PsiKeyword.DEFAULT)
+  );
+
+  @Nullable
+  public static HighlightInfo checkApplicability(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel,@NotNull PsiFile containingFile) {
+    if (ANY_ANNOTATION_ALLOWED.accepts(annotation)) {
+      return null;
+    }
+
+    PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
+    if (nameRef == null) return null;
+
+    PsiAnnotationOwner owner = annotation.getOwner();
+    PsiAnnotation.TargetType[] targets = PsiImplUtil.getTargetsForLocation(owner);
+    if (owner == null || targets.length == 0) {
+      String message = JavaErrorMessages.message("annotation.not.allowed.here");
+      return annotationError(annotation, message);
+    }
+
+    if (!(owner instanceof PsiModifierList)) {
+      HighlightInfo info = HighlightUtil.checkTypeAnnotationFeature(annotation, languageLevel,containingFile);
+      if (info != null) return info;
+    }
+
+    PsiAnnotation.TargetType applicable = PsiImplUtil.findApplicableTarget(annotation, targets);
+    if (applicable == PsiAnnotation.TargetType.UNKNOWN) return null;
+
+    if (applicable == null) {
+      String target = JavaErrorMessages.message("annotation.target." + targets[0]);
+      String message = JavaErrorMessages.message("annotation.not.applicable", nameRef.getText(), target);
+      return annotationError(annotation, message);
+    }
+
+    if (applicable == PsiAnnotation.TargetType.TYPE_USE) {
+      if (owner instanceof PsiClassReferenceType) {
+        PsiJavaCodeReferenceElement ref = ((PsiClassReferenceType)owner).getReference();
+        HighlightInfo info = checkReferenceTarget(annotation, ref);
+        if (info != null) return info;
+      }
+      else if (owner instanceof PsiModifierList) {
+        PsiElement nextElement = PsiTreeUtil.skipSiblingsForward((PsiModifierList)owner,
+                                                                 PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
+        if (nextElement instanceof PsiTypeElement) {
+          PsiTypeElement typeElement = (PsiTypeElement)nextElement;
+          PsiType type = typeElement.getType();
+          if (PsiType.VOID.equals(type)) {
+            String message = JavaErrorMessages.message("annotation.not.allowed.void");
+            return annotationError(annotation, message);
+          }
+          if (!(type instanceof PsiPrimitiveType)) {
+            PsiJavaCodeReferenceElement ref = getOutermostReferenceElement(typeElement.getInnermostComponentReferenceElement());
+            HighlightInfo info = checkReferenceTarget(annotation, ref);
+            if (info != null) return info;
+          }
+        }
+      }
+      else if (owner instanceof PsiTypeElement) {
+        PsiElement context = PsiTreeUtil.skipParentsOfType((PsiTypeElement)owner, PsiTypeElement.class);
+        if (context instanceof PsiClassObjectAccessExpression) {
+          String message = JavaErrorMessages.message("annotation.not.allowed.class");
+          return annotationError(annotation, message);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private static HighlightInfo annotationError(PsiAnnotation annotation, String message) {
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(message).create();
+    QuickFixAction.registerQuickFixAction(info, new DeleteAnnotationAction(annotation));
+    return info;
+  }
+
+  @Nullable
+  private static HighlightInfo checkReferenceTarget(PsiAnnotation annotation, @Nullable PsiJavaCodeReferenceElement ref) {
+    if (ref == null) return null;
+    PsiElement refTarget = ref.resolve();
+    if (refTarget == null) return null;
+
+    String message = null;
+    if (!(refTarget instanceof PsiClass)) {
+      message = JavaErrorMessages.message("annotation.not.allowed.ref");
+    }
+    else {
+      PsiElement parent = ref.getParent();
+      if (parent instanceof PsiJavaCodeReferenceElement) {
+        PsiElement qualified = ((PsiJavaCodeReferenceElement)parent).resolve();
+        if (qualified instanceof PsiMember && ((PsiMember)qualified).hasModifierProperty(PsiModifier.STATIC)) {
+          message = JavaErrorMessages.message("annotation.not.allowed.static");
+        }
+      }
+    }
+
+    return message != null ? annotationError(annotation, message) : null;
+  }
+
+  @Nullable
+  private static PsiJavaCodeReferenceElement getOutermostReferenceElement(@Nullable PsiJavaCodeReferenceElement ref) {
+    if (ref == null) return null;
+
+    PsiElement qualifier;
+    while ((qualifier = ref.getQualifier()) instanceof PsiJavaCodeReferenceElement) {
+      ref = (PsiJavaCodeReferenceElement)qualifier;
+    }
+    return ref;
+  }
+
+  public static HighlightInfo checkForeignInnerClassesUsed(final PsiAnnotation annotation) {
+    final HighlightInfo[] infos = new HighlightInfo[1];
+    final PsiAnnotationOwner owner = annotation.getOwner();
+    if (owner instanceof PsiModifierList) {
+      final PsiElement parent = ((PsiModifierList)owner).getParent();
+      if (parent instanceof PsiClass) {
+        annotation.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitElement(PsiElement element) {
+            if (infos[0] != null) return;
+            super.visitElement(element);
+          }
+
+          @Override
+          public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+            super.visitClassObjectAccessExpression(expression);
+            final PsiTypeElement operand = expression.getOperand();
+            final PsiClass classType = PsiUtil.resolveClassInType(operand.getType());
+            if (classType != null) {
+              checkAccessibility(expression, classType, HighlightUtil.formatClass(classType));
+            }
+          }
+
+          @Override
+          public void visitReferenceExpression(PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            final PsiElement resolve = expression.resolve();
+            if (resolve instanceof PsiField) {
+              checkAccessibility(expression, (PsiMember)resolve, HighlightUtil.formatField((PsiField)resolve));
+            }
+          }
+
+          private void checkAccessibility(PsiExpression expression, PsiMember resolve, String memberString) {
+            if (resolve.hasModifierProperty(PsiModifier.PRIVATE) &&
+                PsiTreeUtil.isAncestor(parent, resolve, true)) {
+              String description = JavaErrorMessages.message("private.symbol",
+                                                             memberString,
+                                                             HighlightUtil.formatClass((PsiClass)parent));
+              infos[0] =
+                HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+            }
+          }
+        });
+      }
+    }
+    return infos[0];
+  }
+
+  @Nullable
+  public static HighlightInfo checkAnnotationType(PsiAnnotation annotation) {
+    PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
+    if (nameReferenceElement != null) {
+      PsiElement resolved = nameReferenceElement.resolve();
+      if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) {
+        String description = JavaErrorMessages.message("annotation.annotation.type.expected");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameReferenceElement).descriptionAndTooltip(description).create();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkCyclicMemberType(PsiTypeElement typeElement, PsiClass aClass) {
+    LOG.assertTrue(aClass.isAnnotationType());
+    PsiType type = typeElement.getType();
+    final Set<PsiClass> checked = new HashSet<PsiClass>();
+    if (cyclicDependencies(aClass, type, checked, aClass.getManager())) {
+      String description = JavaErrorMessages.message("annotation.cyclic.element.type");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
+    }
+    return null;
+  }
+
+  private static boolean cyclicDependencies(PsiClass aClass, PsiType type, @NotNull Set<PsiClass> checked,@NotNull PsiManager manager) {
+    final PsiClass resolvedClass = PsiUtil.resolveClassInType(type);
+    if (resolvedClass != null && resolvedClass.isAnnotationType()) {
+      if (aClass == resolvedClass) {
+        return true;
+      }
+      if (!checked.add(resolvedClass) || !manager.isInProject(resolvedClass)) return false;
+      final PsiMethod[] methods = resolvedClass.getMethods();
+      for (PsiMethod method : methods) {
+        if (cyclicDependencies(aClass, method.getReturnType(), checked,manager)) return true;
+      }
+    }
+    return false;
+  }
+
+  public static HighlightInfo checkClashesWithSuperMethods(@NotNull PsiAnnotationMethod psiMethod) {
+    final PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
+    if (nameIdentifier != null) {
+      final PsiMethod[] methods = psiMethod.findDeepestSuperMethods();
+      for (PsiMethod method : methods) {
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null) {
+          final String qualifiedName = containingClass.getQualifiedName();
+          if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName) || CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(qualifiedName)) {
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameIdentifier).descriptionAndTooltip(
+              "@interface member clashes with '" + JavaHighlightUtil.formatMethod(method) + "' in " + HighlightUtil.formatClass(containingClass)).create();
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkAnnotationDeclaration(final PsiElement parent, final PsiReferenceList list) {
+    if (PsiUtil.isAnnotationMethod(parent)) {
+      PsiAnnotationMethod method = (PsiAnnotationMethod)parent;
+      if (list == method.getThrowsList()) {
+        String description = JavaErrorMessages.message("annotation.members.may.not.have.throws.list");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).create();
+      }
+    }
+    else if (parent instanceof PsiClass && ((PsiClass)parent).isAnnotationType()) {
+      if (PsiKeyword.EXTENDS.equals(list.getFirstChild().getText())) {
+        String description = JavaErrorMessages.message("annotation.may.not.have.extends.list");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).create();
+      }
+    }
+    return null;
+  }
+
+
+  @Nullable
+  public static HighlightInfo checkPackageAnnotationContainingFile(final PsiPackageStatement statement) {
+    if (statement.getAnnotationList() == null) {
+      return null;
+    }
+    PsiFile file = statement.getContainingFile();
+    if (file != null && !PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
+      String description = JavaErrorMessages.message("invalid.package.annotation.containing.file");
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR);
+      builder.range(statement.getAnnotationList().getTextRange());
+      builder.descriptionAndTooltip(description);
+      return builder.create();
+    }
+    return null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkTargetAnnotationDuplicates(PsiAnnotation annotation) {
+    PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
+    if (nameRef == null) return null;
+
+    PsiElement resolved = nameRef.resolve();
+    if (!(resolved instanceof PsiClass) || !CommonClassNames.JAVA_LANG_ANNOTATION_TARGET.equals(((PsiClass)resolved).getQualifiedName())) {
+      return null;
+    }
+
+    PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+    if (attributes.length < 1) return null;
+    PsiAnnotationMemberValue value = attributes[0].getValue();
+    if (!(value instanceof PsiArrayInitializerMemberValue)) return null;
+    PsiAnnotationMemberValue[] arrayInitializers = ((PsiArrayInitializerMemberValue) value).getInitializers();
+    Set<PsiElement> targets = new HashSet<PsiElement>();
+    for (PsiAnnotationMemberValue initializer : arrayInitializers) {
+      if (initializer instanceof PsiReferenceExpression) {
+        PsiElement target = ((PsiReferenceExpression) initializer).resolve();
+        if (target != null) {
+          if (targets.contains(target)) {
+            String description = JavaErrorMessages.message("repeated.annotation.target");
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(initializer).descriptionAndTooltip(description).create();
+          }
+          targets.add(target);
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
+    final String errorMessage = LambdaUtil.checkFunctionalInterface(annotation, languageLevel);
+    if (errorMessage != null) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(annotation).descriptionAndTooltip(errorMessage).create();
+    }
+    return null;
+  }
+
+  @Nullable
+  public static HighlightInfo checkRepeatableAnnotation(PsiAnnotation annotation) {
+    String qualifiedName = annotation.getQualifiedName();
+    if (!CommonClassNames.JAVA_LANG_ANNOTATION_REPEATABLE.equals(qualifiedName)) return null;
+
+    String description = doCheckRepeatableAnnotation(annotation);
+    if (description != null) {
+      PsiAnnotationMemberValue containerRef = PsiImplUtil.findAttributeValue(annotation, null);
+      if (containerRef != null) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(containerRef).descriptionAndTooltip(description).create();
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static String doCheckRepeatableAnnotation(PsiAnnotation annotation) {
+    PsiAnnotationOwner owner = annotation.getOwner();
+    if (!(owner instanceof PsiModifierList)) return null;
+    PsiElement target = ((PsiModifierList)owner).getParent();
+    if (!(target instanceof PsiClass) || !((PsiClass)target).isAnnotationType()) return null;
+    PsiClass container = getRepeatableContainer(annotation);
+    if (container == null) return null;
+
+    PsiMethod[] methods = container.findMethodsByName("value", false);
+    if (methods.length == 0) {
+      return JavaErrorMessages.message("annotation.container.no.value", container.getQualifiedName());
+    }
+
+    if (methods.length == 1) {
+      PsiType expected = new PsiImmediateClassType((PsiClass)target, PsiSubstitutor.EMPTY).createArrayType();
+      if (!expected.equals(methods[0].getReturnType())) {
+        return JavaErrorMessages.message("annotation.container.bad.type", container.getQualifiedName(), JavaHighlightUtil
+          .formatType(expected));
+      }
+    }
+
+    RetentionPolicy targetPolicy = getRetentionPolicy((PsiClass)target);
+    if (targetPolicy != null) {
+      RetentionPolicy containerPolicy = getRetentionPolicy(container);
+      if (containerPolicy != null && targetPolicy.compareTo(containerPolicy) > 0) {
+        return JavaErrorMessages.message("annotation.container.low.retention", container.getQualifiedName(), containerPolicy);
+      }
+    }
+
+    Set<PsiAnnotation.TargetType> repeatableTargets = PsiImplUtil.getAnnotationTargets((PsiClass)target);
+    if (repeatableTargets != null) {
+      Set<PsiAnnotation.TargetType> containerTargets = PsiImplUtil.getAnnotationTargets(container);
+      if (containerTargets != null && !repeatableTargets.containsAll(containerTargets)) {
+        return JavaErrorMessages.message("annotation.container.wide.target", container.getQualifiedName());
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PsiClass getRepeatableContainer(PsiAnnotation annotation) {
+    PsiAnnotationMemberValue containerRef = PsiImplUtil.findAttributeValue(annotation, null);
+    if (!(containerRef instanceof PsiClassObjectAccessExpression)) return null;
+    PsiType containerType = ((PsiClassObjectAccessExpression)containerRef).getOperand().getType();
+    if (!(containerType instanceof PsiClassType)) return null;
+    PsiClass container = ((PsiClassType)containerType).resolve();
+    if (container == null || !container.isAnnotationType()) return null;
+    return container;
+  }
+
+  @Nullable
+  private static RetentionPolicy getRetentionPolicy(PsiClass annotation) {
+    PsiModifierList modifierList = annotation.getModifierList();
+    if (modifierList != null) {
+      PsiAnnotation retentionAnno = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION);
+      if (retentionAnno == null) return RetentionPolicy.CLASS;
+
+      PsiAnnotationMemberValue policyRef = PsiImplUtil.findAttributeValue(retentionAnno, null);
+      if (policyRef instanceof PsiReference) {
+        PsiElement field = ((PsiReference)policyRef).resolve();
+        if (field instanceof PsiEnumConstant) {
+          String name = ((PsiEnumConstant)field).getName();
+          try {
+            return RetentionPolicy.valueOf(name);
+          }
+          catch (Exception e) {
+            LOG.warn("Unknown policy: " + name);
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  public static class AnnotationReturnTypeVisitor extends PsiTypeVisitor<Boolean> {
+    public static final AnnotationReturnTypeVisitor INSTANCE = new AnnotationReturnTypeVisitor();
+    @Override
+    public Boolean visitType(PsiType type) {
+      return Boolean.FALSE;
+    }
+
+    @Override
+    public Boolean visitPrimitiveType(PsiPrimitiveType primitiveType) {
+      return PsiType.VOID.equals(primitiveType) || PsiType.NULL.equals(primitiveType) ? Boolean.FALSE : Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean visitArrayType(PsiArrayType arrayType) {
+      if (arrayType.getArrayDimensions() != 1) return Boolean.FALSE;
+      PsiType componentType = arrayType.getComponentType();
+      return componentType.accept(this);
+    }
+
+    @Override
+    public Boolean visitClassType(PsiClassType classType) {
+      if (classType.getParameters().length > 0) {
+        PsiClassType rawType = classType.rawType();
+        return rawType.equalsToText(CommonClassNames.JAVA_LANG_CLASS);
+      }
+
+      PsiClass aClass = classType.resolve();
+      if (aClass != null && (aClass.isAnnotationType() || aClass.isEnum())) {
+        return Boolean.TRUE;
+      }
+
+      return classType.equalsToText(CommonClassNames.JAVA_LANG_CLASS) || classType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
+    }
+  }
+
+  private static class DeleteAnnotationAction implements IntentionAction {
+    private final PsiAnnotation myAnnotation;
+
+    public DeleteAnnotationAction(PsiAnnotation annotation) {
+      myAnnotation = annotation;
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return "Remove";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getText();
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+      myAnnotation.delete();
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return true;
+    }
+  }
+}

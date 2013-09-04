@@ -188,7 +188,6 @@ public class RedmineRepository extends BaseRepositoryImpl {
       parsed = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.US).parse(date);
     }
     catch (ParseException e) {
-      LOG.warn("Unparseable date: '" + date + "'. Trying ISO-8601 format instead.");
       parsed = TaskUtil.parseDate(date);
     }
     return parsed;

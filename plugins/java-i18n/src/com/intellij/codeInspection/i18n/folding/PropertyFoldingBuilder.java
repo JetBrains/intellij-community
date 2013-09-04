@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +84,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     if (isI18nProperty(project, expression)) {
       final IProperty property = getI18nProperty(project, expression);
       final HashSet<Object> set = new HashSet<Object>();
-      set.add(property);
+      set.add(property != null ? property : PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       final String msg = formatI18nProperty(expression, property);
 
       final PsiElement parent = expression.getParent();

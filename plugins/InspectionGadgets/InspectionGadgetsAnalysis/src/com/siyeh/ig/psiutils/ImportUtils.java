@@ -571,10 +571,9 @@ public class ImportUtils {
       if (referenceFound) {
         return;
       }
-      final String text = StringUtils.stripAngleBrackets(reference.getText());
-      if (text.indexOf((int)'.') >= 0 || !name.equals(text)) {
-        return;
-      }
+
+      if (reference.getQualifier() != null || reference.getParameterList() != null) return;
+
       final PsiElement element = reference.resolve();
       if (!(element instanceof PsiClass) || element instanceof PsiTypeParameter) {
         return;

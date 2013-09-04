@@ -19,7 +19,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -187,10 +187,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     Set<Language> languages = provider.getLanguages();
     for (Language language : languages) {
       PsiFile root = provider.getPsi(language);
-      if (!HighlightLevelUtil.shouldHighlight(root)) {
+      if (!HighlightingLevelManager.getInstance(myProject).shouldHighlight(root)) {
         noHighlightingRoots.add(language.getID());
       }
-      else if (!HighlightLevelUtil.shouldInspect(root)) {
+      else if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(root)) {
         noInspectionRoots.add(language.getID());
       }
     }

@@ -18,11 +18,8 @@ package org.jetbrains.plugins.gradle.service.resolve;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
@@ -40,8 +37,7 @@ public class GradleDependenciesContributor implements GradleMethodContextContrib
   public void process(@NotNull List<String> methodCallInfo,
                       @NotNull PsiScopeProcessor processor,
                       @NotNull ResolveState state,
-                      @NotNull PsiElement place)
-  {
+                      @NotNull PsiElement place) {
     if (methodCallInfo.isEmpty()) {
       return;
     }
@@ -53,7 +49,8 @@ public class GradleDependenciesContributor implements GradleMethodContextContrib
 
     // Assuming that the method call is addition of new dependency into configuration.
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-    PsiClass contributorClass = psiManager.findClassWithCache(DependencyHandler.class.getName(), place.getResolveScope());
+    PsiClass contributorClass =
+      psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_DEPENDENCY_HANDLER, place.getResolveScope());
     if (contributorClass == null) {
       return;
     }
@@ -64,10 +61,10 @@ public class GradleDependenciesContributor implements GradleMethodContextContrib
                                                 @NotNull PsiClass dependencyHandlerClass,
                                                 @NotNull PsiScopeProcessor processor,
                                                 @NotNull ResolveState state,
-                                                @NotNull PsiElement place)
-  {
+                                                @NotNull PsiElement place) {
     GrLightMethodBuilder builder = new GrLightMethodBuilder(place.getManager(), gradleConfigurationName);
-    PsiClassType type = PsiType.getJavaLangObject(place.getManager(), place.getResolveScope());
+    PsiElementFactory factory = JavaPsiFacade.getInstance(place.getManager().getProject()).getElementFactory();
+    PsiType type = new PsiArrayType(factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, place.getResolveScope()));
     builder.addParameter(new GrLightParameter("dependencyInfo", type, builder));
     processor.execute(builder, state);
 

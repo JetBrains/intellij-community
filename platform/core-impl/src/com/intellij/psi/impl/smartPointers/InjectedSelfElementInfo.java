@@ -45,15 +45,17 @@ class InjectedSelfElementInfo extends SelfElementInfo {
                           @NotNull PsiFile containingFile,
                           @NotNull PsiElement hostContext) {
     super(project, hostContext);
-    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
+    assert containingFile.getViewProvider() instanceof FreeThreadedFileViewProvider : "element parameter must be an injected element: "+injectedElement+"; "+containingFile;
     ProperTextRange.assertProperRange(injectedRange);
+    assert containingFile.getTextRange().contains(injectedRange) : "Injected range outside the file: "+injectedRange +"; file: "+containingFile.getTextRange();
+
     TextRange hostRange = InjectedLanguageManager.getInstance(project).injectedToHost(injectedElement, injectedRange);
     PsiFile hostFile = hostContext.getContainingFile();
     assert !(hostFile.getViewProvider() instanceof FreeThreadedFileViewProvider) : "hostContext parameter must not be and injected element: "+hostContext;
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     myInjectedFileRangeInHostFile = smartPointerManager.createSmartPsiFileRangePointer(hostFile, hostRange);
     anchorClass = containingFile.findElementAt(injectedRange.getStartOffset()).getClass();
     anchorLanguage = containingFile.getLanguage();
-    assert containingFile.getViewProvider() instanceof FreeThreadedFileViewProvider : "element parameter must be an injected element: "+injectedElement+"; "+containingFile;
   }
 
   @Override

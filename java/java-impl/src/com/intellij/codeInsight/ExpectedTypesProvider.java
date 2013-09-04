@@ -282,7 +282,10 @@ public class ExpectedTypesProvider {
     }
 
     @Override public void visitAnnotationArrayInitializer(@NotNull PsiArrayInitializerMemberValue initializer) {
-      final PsiElement parent = initializer.getParent();
+      PsiElement parent = initializer.getParent();
+      while (parent instanceof PsiArrayInitializerMemberValue) {
+        parent = parent.getParent();
+      }
       final PsiType type;
       if (parent instanceof PsiNameValuePair) {
         type = getAnnotationMethodType((PsiNameValuePair)parent);

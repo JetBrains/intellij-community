@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -68,7 +69,7 @@ public class CompilerEncodingServiceImpl extends CompilerEncodingService {
       final VirtualFile file = entry.getKey();
       final Charset charset = entry.getValue();
       if (file == null || charset == null || (!file.isDirectory() && !compilerManager.isCompilableFileType(file.getFileType()))
-          || !index.isInSourceContent(file)) continue;
+          || !index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES)) continue;
 
       final Module module = index.getModuleForFile(file);
       if (module == null) continue;

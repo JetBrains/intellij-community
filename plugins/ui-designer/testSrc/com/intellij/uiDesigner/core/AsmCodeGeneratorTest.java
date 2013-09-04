@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.core;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
@@ -73,6 +74,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/UIBundle.properties"));
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/RuntimeBundle.properties"));
     appendPath(cp, GridLayoutManager.class); // forms_rt
+    appendPath(cp, DataProvider.class);
     myClassFinder = new MyClassFinder(
       new URL[] {new File(swingPath).toURI().toURL()},
       cp.toArray(new URL[cp.size()])

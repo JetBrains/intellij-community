@@ -20,6 +20,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -85,6 +86,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     myEditor = editor;
   }
 
+  @Override
   public void doCollectInformation(@NotNull final ProgressIndicator progress) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     VirtualFile virtualFile = myFile.getViewProvider().getVirtualFile();
@@ -97,10 +99,12 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     final boolean deadCodeEnabled = profile.isToolEnabled(unusedDefKey, myFile);
     final UnusedDeclarationInspection deadCodeInspection = (UnusedDeclarationInspection)profile.getUnwrappedTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
     final GlobalUsageHelper usageHelper = new GlobalUsageHelper() {
+      @Override
       public boolean isCurrentFileAlreadyChecked() {
         return false;
       }
 
+      @Override
       public boolean isLocallyUsed(@NotNull PsiNamedElement member) {
         return false;
       }
@@ -244,20 +248,24 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
   private static IntentionAction createUnusedImportIntention() {
     return new IntentionAction() {
 
+      @Override
       @NotNull
       public String getText() {
         return GroovyInspectionBundle.message("optimize.all.imports");
       }
 
+      @Override
       @NotNull
       public String getFamilyName() {
         return GroovyInspectionBundle.message("optimize.imports");
       }
 
+      @Override
       public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
         return true;
       }
 
+      @Override
       public void invoke(@NotNull final Project project, Editor editor, PsiFile file) {
         if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
@@ -265,12 +273,14 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
         CommandProcessor.getInstance().executeCommand(project, runnable, "optimize imports", this);
       }
 
+      @Override
       public boolean startInWriteAction() {
         return true;
       }
     };
   }
 
+  @Override
   public void doApplyInformationToEditor() {
     if (myUnusedDeclarations == null || myUnusedImports == null) {
       return;
@@ -321,7 +331,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     if (!codeAnalyzer.isErrorAnalyzingFinished(myFile)) return false;
     boolean errors = containsErrorsPreventingOptimize();
 
-    return !errors && codeAnalyzer.canChangeFileSilently(myFile);
+    return !errors && DaemonListeners.canChangeFileSilently(myFile);
   }
 
   private boolean containsErrorsPreventingOptimize() {
@@ -336,14 +346,16 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       ignoreRange = TextRange.EMPTY_RANGE;
     }
 
-    return !DaemonCodeAnalyzerImpl.processHighlights(myDocument, myProject, HighlightSeverity.ERROR, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
-      public boolean process(HighlightInfo error) {
-        int infoStart = error.getActualStartOffset();
-        int infoEnd = error.getActualEndOffset();
+    return !DaemonCodeAnalyzerEx
+      .processHighlights(myDocument, myProject, HighlightSeverity.ERROR, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
+        @Override
+        public boolean process(HighlightInfo error) {
+          int infoStart = error.getActualStartOffset();
+          int infoEnd = error.getActualEndOffset();
 
-        return ignoreRange.containsRange(infoStart,infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
-      }
-    });
+          return ignoreRange.containsRange(infoStart, infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
+        }
+      });
   }
 
 

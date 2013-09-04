@@ -220,9 +220,10 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         }
       }
       else if (entry instanceof LibraryOrderEntry) {
-        String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
-        LibraryDependencyData existing = projectLibrariesToImport.remove(libraryName);
-        if (existing != null) {
+        final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+        final String libraryName = libraryOrderEntry.getLibraryName();
+        final LibraryDependencyData existing = projectLibrariesToImport.remove(libraryName);
+        if (existing != null && libraryOrderEntry.getScope() == existing.getScope()) {
           toImport.remove(existing);
         }
         else if (!hasUnresolvedLibraries) {

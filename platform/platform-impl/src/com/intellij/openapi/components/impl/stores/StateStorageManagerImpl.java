@@ -349,15 +349,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   @Override
   public StreamProvider[] getStreamProviders(RoamingType type) {
     synchronized (myStreamProviders) {
-      final Collection<StreamProvider> providers = myStreamProviders.get(type);
+      Collection<StreamProvider> providers = myStreamProviders.get(type);
       return providers.isEmpty() ? EMPTY_ARRAY : providers.toArray(new StreamProvider[providers.size()]);
-    }
-  }
-
-  @NotNull
-  public Collection<StreamProvider> getStreamProviders() {
-    synchronized (myStreamProviders) {
-      return Collections.unmodifiableCollection(myStreamProviders.values());
     }
   }
 
@@ -389,8 +382,12 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Override
   public boolean isEnabled() {
-    for (StreamProvider provider : getStreamProviders()) {
-      if (provider.isEnabled()) return true;
+    synchronized (myStreamProviders) {
+      for (StreamProvider provider : myStreamProviders.values()) {
+        if (provider.isEnabled()) {
+          return true;
+        }
+      }
     }
     return false;
   }

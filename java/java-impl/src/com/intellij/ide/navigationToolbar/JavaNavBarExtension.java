@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -62,7 +63,7 @@ public class JavaNavBarExtension implements NavBarModelExtension{
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile != null) {
       final VirtualFile file = containingFile.getVirtualFile();
-      if (file != null && (index.isInSourceContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file))) {
+      if (file != null && (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibraryClasses(file) || index.isInLibrarySource(file))) {
         if (psiElement instanceof PsiJavaFile) {
           final PsiJavaFile psiJavaFile = (PsiJavaFile)psiElement;
           if (psiJavaFile.getViewProvider().getBaseLanguage() == StdLanguages.JAVA) {

@@ -32,8 +32,10 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,6 +72,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
   private VirtualFile myExcludeDir;
   private VirtualFile myOutputDir;
   private VirtualFile myModule1OutputDir;
+  private VirtualFile myResDir;
+  private VirtualFile myTestResDir;
 
   @Override
   protected void setUp() throws Exception {
@@ -91,6 +95,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
                         pack1
                         testSrc
                             pack2
+                    res
+                    testRes
                     lib
                         src
                         cls
@@ -113,6 +119,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
           myPack1Dir = mySrcDir1.createChildDirectory(DirectoryIndexTest.this, "pack1");
           myTestSrc1 = mySrcDir1.createChildDirectory(DirectoryIndexTest.this, "testSrc");
           myPack2Dir = myTestSrc1.createChildDirectory(DirectoryIndexTest.this, "pack2");
+          myResDir = myModule1Dir.createChildDirectory(DirectoryIndexTest.this, "res");
+          myTestResDir = myModule1Dir.createChildDirectory(DirectoryIndexTest.this, "testRes");
 
           myLibDir = myModule1Dir.createChildDirectory(DirectoryIndexTest.this, "lib");
           myLibSrcDir = myLibDir.createChildDirectory(DirectoryIndexTest.this, "src");
@@ -136,6 +144,9 @@ public class DirectoryIndexTest extends IdeaTestCase {
             PsiTestUtil.addContentRoot(myModule, myModule1Dir);
             PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
             PsiTestUtil.addSourceRoot(myModule, myTestSrc1, true);
+            PsiTestUtil.addSourceRoot(myModule, myResDir, JavaResourceRootType.RESOURCE);
+            PsiTestUtil.addSourceRoot(myModule, myTestResDir, JavaResourceRootType.TEST_RESOURCE);
+
             ModuleRootModificationUtil.addModuleLibrary(myModule, "lib.js",
                                                         singletonList(myFileLibCls.getUrl()), singletonList(myFileLibSrc.getUrl()));
           }
@@ -182,29 +193,31 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfoNull(myRootVFile);
 
     // beware: files in directory index
-    checkInfo(myFileLibSrc, null, false, false, false, true, "");
-    checkInfo(myFileLibCls, null, false, false, true, false, "");
+    checkInfo(myFileLibSrc, null, false, true, "", null);
+    checkInfo(myFileLibCls, null, true, false, "", null);
 
-    checkInfo(myModule1Dir, myModule, false, false, false, false, null);
-    checkInfo(mySrcDir1, myModule, true, false, false, false, "", myModule);
-    checkInfo(myPack1Dir, myModule, true, false, false, false, "pack1", myModule);
-    checkInfo(myTestSrc1, myModule, true, true, false, false, "", myModule);
-    checkInfo(myPack2Dir, myModule, true, true, false, false, "pack2", myModule);
+    checkInfo(myModule1Dir, myModule, false, false, null, null);
+    checkInfo(mySrcDir1, myModule, false, false, "", JavaSourceRootType.SOURCE, myModule);
+    checkInfo(myPack1Dir, myModule, false, false, "pack1", JavaSourceRootType.SOURCE, myModule);
+    checkInfo(myTestSrc1, myModule, false, false, "", JavaSourceRootType.TEST_SOURCE, myModule);
+    checkInfo(myPack2Dir, myModule, false, false, "pack2", JavaSourceRootType.TEST_SOURCE, myModule);
+    checkInfo(myResDir, myModule, false, false, "", JavaResourceRootType.RESOURCE, myModule);
+    checkInfo(myTestResDir, myModule, false, false, "", JavaResourceRootType.TEST_RESOURCE, myModule);
 
-    checkInfo(myLibDir, myModule, false, false, false, false, null);
-    checkInfo(myLibSrcDir, myModule, false, false, false, true, "", myModule2);
-    checkInfo(myLibClsDir, myModule, false, false, true, false, "", myModule2);
+    checkInfo(myLibDir, myModule, false, false, null, null);
+    checkInfo(myLibSrcDir, myModule, false, true, "", null, myModule2);
+    checkInfo(myLibClsDir, myModule, true, false, "", null, myModule2);
 
-    checkInfo(myModule2Dir, myModule2, false, false, false, false, null);
-    checkInfo(mySrcDir2, myModule2, true, false, false, false, "", myModule2, myModule3);
+    checkInfo(myModule2Dir, myModule2, false, false, null, null);
+    checkInfo(mySrcDir2, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
     checkInfoNull(myCvsDir);
     checkInfoNull(myExcludeDir);
 
-    checkInfo(myModule3Dir, myModule3, false, false, false, false, null);
+    checkInfo(myModule3Dir, myModule3, false, false, null, null);
   }
 
   public void testDirsByPackageName() {
-    checkPackage("", myFileLibSrc, myFileLibCls, mySrcDir1, myTestSrc1, myLibSrcDir, myLibClsDir, mySrcDir2);
+    checkPackage("", myFileLibSrc, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibSrcDir, myLibClsDir, mySrcDir2);
     checkPackage("pack1", myPack1Dir);
     checkPackage("pack2", myPack2Dir);
   }
@@ -331,8 +344,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     myIndex.checkConsistency();
 
-    checkInfo(myModule2Dir, myModule2, false, false, false, false, null);
-    checkInfo(mySrcDir2, myModule2, true, false, false, false, "", myModule2, myModule3);
+    checkInfo(myModule2Dir, myModule2, false, false, null, null);
+    checkInfo(mySrcDir2, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
   }
 
   public void testResettingProjectOutputPath() throws Exception {
@@ -471,8 +484,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     myIndex.checkConsistency();
 
-    checkInfo(myModule1Dir, myModule, false, false, true, false, "", myModule);
-    checkInfo(mySrcDir1, myModule, true, false, true, false, "", myModule);
+    checkInfo(myModule1Dir, myModule, true, false, "", null, myModule);
+    checkInfo(mySrcDir1, myModule, true, false, "", JavaSourceRootType.SOURCE, myModule);
   }
 
 
@@ -485,16 +498,19 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
   private void checkInfo(VirtualFile dir,
                          @Nullable Module module,
-                         boolean isInModuleSource,
-                         boolean isTestSource,
                          boolean isInLibrary,
                          boolean isInLibrarySource,
-                         @Nullable String packageName,
+                         @Nullable String packageName, final JpsModuleSourceRootType<?> moduleSourceRootType,
                          Module... modulesOfOrderEntries) {
     DirectoryInfo info = checkInfoNotNull(dir);
     assertEquals(module, info.getModule());
-    assertEquals(isInModuleSource, info.isInModuleSource());
-    assertEquals(isTestSource, info.isTestSource());
+    if (moduleSourceRootType != null) {
+      assertTrue(info.isInModuleSource());
+      assertEquals(moduleSourceRootType, myIndex.getSourceRootType(info));
+    }
+    else {
+      assertFalse(info.isInModuleSource());
+    }
     assertEquals(isInLibrary, info.hasLibraryClassRoot());
     assertEquals(isInLibrarySource, info.isInLibrarySource());
 
@@ -510,10 +526,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
     }
   }
 
-  private void checkInfoNull(@NotNull VirtualFile dir) {
+  private void checkInfoNull(VirtualFile dir) {
     assertNull(myIndex.getInfoForDirectory(dir));
   }
-  private DirectoryInfo checkInfoNotNull(@NotNull VirtualFile output2) {
+  private DirectoryInfo checkInfoNotNull(VirtualFile output2) {
     DirectoryInfo info = myIndex.getInfoForDirectory(output2);
     assertNotNull(output2.toString(), info);
     info.assertConsistency();

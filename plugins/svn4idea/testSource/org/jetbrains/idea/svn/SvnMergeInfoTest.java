@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import java.io.File;
 import java.util.List;
 
+// TODO: Many tests in this class are written with direct SVNKit usage - could not utilize it for svn 1.8
 public class SvnMergeInfoTest extends Svn17TestCase {
   private File myBranchVcsRoot;
   private ProjectLevelVcsManagerImpl myProjectLevelVcsManager;

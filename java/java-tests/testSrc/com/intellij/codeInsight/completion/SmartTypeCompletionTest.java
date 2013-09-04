@@ -643,6 +643,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   //todo 2nd completion
   public void _testDefaultAnnoParam2() throws Throwable { doTest(); }
+  
+  public void testAnnotationValue() throws Throwable {doTest(); }
 
   public void testLiveTemplate() throws Throwable {
     final Template template = TemplateManager.getInstance(getProject()).createTemplate("foo", "zzz");

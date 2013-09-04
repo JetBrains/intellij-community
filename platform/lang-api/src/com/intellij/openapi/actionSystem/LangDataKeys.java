@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 
 /**
  * @author yole
@@ -39,8 +38,6 @@ public class LangDataKeys extends PlatformDataKeys {
   public static final DataKey<Module[]> MODULE_CONTEXT_ARRAY = DataKey.create("context.Module.Array");
   public static final DataKey<ModifiableModuleModel> MODIFIABLE_MODULE_MODEL = DataKey.create("modifiable.module.model");
 
-  public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create("psi.Element");
-  public static final DataKey<PsiFile> PSI_FILE = DataKey.create("psi.File");
   public static final DataKey<Language> LANGUAGE = DataKey.create("Language");
   public static final DataKey<Language[]> CONTEXT_LANGUAGES = DataKey.create("context.Languages");
   public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create("psi.Element.array");

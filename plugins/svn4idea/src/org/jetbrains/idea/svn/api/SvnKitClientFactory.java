@@ -4,12 +4,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.SvnKitAddClient;
 import org.jetbrains.idea.svn.annotate.SvnKitAnnotateClient;
+import org.jetbrains.idea.svn.change.SvnKitChangeListClient;
 import org.jetbrains.idea.svn.conflict.SvnKitConflictClient;
 import org.jetbrains.idea.svn.content.SvnKitContentClient;
 import org.jetbrains.idea.svn.copy.SvnKitCopyMoveClient;
 import org.jetbrains.idea.svn.delete.SvnKitDeleteClient;
 import org.jetbrains.idea.svn.history.SvnKitHistoryClient;
+import org.jetbrains.idea.svn.integrate.SvnKitMergeClient;
 import org.jetbrains.idea.svn.portable.SvnkitSvnStatusClient;
+import org.jetbrains.idea.svn.portable.SvnkitSvnWcClient;
 import org.jetbrains.idea.svn.properties.SvnKitPropertyClient;
 import org.jetbrains.idea.svn.revert.SvnKitRevertClient;
 
@@ -33,6 +36,9 @@ public class SvnKitClientFactory extends ClientFactory {
     copyMoveClient = new SvnKitCopyMoveClient();
     conflictClient = new SvnKitConflictClient();
     propertyClient = new SvnKitPropertyClient();
+    mergeClient = new SvnKitMergeClient();
+    changeListClient = new SvnKitChangeListClient();
     statusClient = new SvnkitSvnStatusClient(myVcs.createStatusClient());
+    infoClient = new SvnkitSvnWcClient(myVcs.createWCClient());
   }
 }

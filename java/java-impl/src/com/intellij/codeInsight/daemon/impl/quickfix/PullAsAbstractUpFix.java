@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -135,7 +135,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return false;
   }
 
-  public static void registerQuickFix(HighlightInfo highlightInfo, PsiMethod methodWithOverrides) {
+  public static void registerQuickFix(@NotNull PsiMethod methodWithOverrides, @NotNull QuickFixActionRegistrar registrar) {
     PsiClass containingClass = methodWithOverrides.getContainingClass();
     if (containingClass == null) return;
     final PsiManager manager = containingClass.getManager();
@@ -164,14 +164,14 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
            name+= " and make it abstract";
         }
       }
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RunRefactoringAction(new ExtractInterfaceHandler(), "Extract interface"));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RunRefactoringAction(new ExtractSuperclassHandler(), "Extract superclass"));
+      registrar.register(new RunRefactoringAction(new ExtractInterfaceHandler(), "Extract interface"));
+      registrar.register(new RunRefactoringAction(new ExtractSuperclassHandler(), "Extract superclass"));
     }
 
 
     if (canBePulledUp) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RunRefactoringAction(new JavaPullUpHandler(), "Pull members up"));
+      registrar.register(new RunRefactoringAction(new JavaPullUpHandler(), "Pull members up"));
     }
-    QuickFixAction.registerQuickFixAction(highlightInfo, new PullAsAbstractUpFix(methodWithOverrides, name));
+    registrar.register(new PullAsAbstractUpFix(methodWithOverrides, name));
   }
 }

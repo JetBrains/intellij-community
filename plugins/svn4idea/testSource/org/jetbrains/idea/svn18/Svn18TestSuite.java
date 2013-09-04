@@ -13,7 +13,8 @@ import org.junit.runners.Suite;
  */
 // TODO: Add svn clients for mac and linux
 @RunWith(Suite.class)
-@Suite.SuiteClasses({SvnAddTest.class, SvnDeleteTest.class})
+//@Suite.SuiteClasses({SvnAddTest.class, SvnDeleteTest.class, SvnQuickMergeTest.class})
+@Suite.SuiteClasses({SvnMergeInfoTest.class})
 public class Svn18TestSuite {
 
   @ClassRule

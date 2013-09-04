@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.Topic;
@@ -94,7 +95,7 @@ public class Merger implements IMerger {
     return myCount < myChangeLists.size();
   }
 
-  public void mergeNext() throws SVNException {
+  public void mergeNext() throws SVNException, VcsException {
     myLatestProcessed = myChangeLists.get(myCount);
     ++ myCount;
 

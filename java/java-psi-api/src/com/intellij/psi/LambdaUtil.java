@@ -693,7 +693,6 @@ public class LambdaUtil {
   }
 
   private static int isMoreSpecific(PsiType returnType, PsiType returnType1, PsiType lambdaType) {
-    if (returnType == PsiType.VOID || returnType1 == PsiType.VOID) return 0;
     TypeKind typeKind = TypeKind.PRIMITIVE;
     if (lambdaType instanceof PsiLambdaExpressionType) {
       typeKind = areLambdaReturnExpressionsPrimitive((PsiLambdaExpressionType)lambdaType);

@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.todo.TodoConfiguration;
@@ -40,6 +41,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -71,6 +74,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -205,7 +210,7 @@ public class DaemonListeners implements Disposable {
           myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
         }
         for (Editor editor : activeEditors) {
-          myDaemonCodeAnalyzer.repaintErrorStripeRenderer(editor);
+          repaintErrorStripeRenderer(editor);
         }
       }
     };
@@ -223,7 +228,7 @@ public class DaemonListeners implements Disposable {
           LOG.debug("Not worth: " + file);
           return;
         }
-        myDaemonCodeAnalyzer.repaintErrorStripeRenderer(editor);
+        repaintErrorStripeRenderer(editor);
       }
 
       @Override
@@ -256,7 +261,7 @@ public class DaemonListeners implements Disposable {
             if (myProject.isDisposed()) return;
             for (FileEditor fileEditor : editors) {
               if (fileEditor instanceof TextEditor) {
-                myDaemonCodeAnalyzer.repaintErrorStripeRenderer(((TextEditor)fileEditor).getEditor());
+                repaintErrorStripeRenderer(((TextEditor)fileEditor).getEditor());
               }
             }
           }
@@ -335,7 +340,51 @@ public class DaemonListeners implements Disposable {
       }
     };
     LaterInvocator.addModalityStateListener(modalityStateListener,this);
+
+    messageBus.connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
+      @Override
+      public void daemonFinished() {
+        Editor editor = fileEditorManager.getSelectedTextEditor();
+        if (editor != null) {
+          repaintErrorStripeRenderer(editor);
+        }
+      }
+
+      @Override
+      public void passProgressHasAdvanced(@NotNull PsiFile file, double progress) {
+        repaintTrafficIcon(file, progress);
+      }
+
+      @Override
+      public void visibleAreaHighlighted(@NotNull PsiFile file, Editor editor) {
+        // usability: show auto import popup as soon as possible
+        if (editor != null) {
+          new ShowAutoImportPass(myProject, file, editor).applyInformationToEditor();
+        }
+      }
+    });
   }
+  
+  
+  private final Alarm repaintIconAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private void repaintTrafficIcon(final PsiFile file, double progress) {
+    if (ApplicationManager.getApplication().isCommandLine()) return;
+
+    if (repaintIconAlarm.isEmpty() || progress >= 1) {
+      repaintIconAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          if (myProject.isDisposed()) return;
+          Editor editor = file == null ? null : PsiUtilBase.findEditor(file);
+          if (editor == null || editor.isDisposed()) return;
+          EditorMarkupModelImpl markup = (EditorMarkupModelImpl)editor.getMarkupModel();
+          markup.repaintTrafficLightIcon();
+          repaintErrorStripeRenderer(editor);
+        }
+      }, 50, null);
+    }
+  }
+  
 
   static boolean isUnderIgnoredAction(@Nullable Object action) {
     return action instanceof DocumentRunnable.IgnoreDocumentRunnable ||
@@ -357,17 +406,21 @@ public class DaemonListeners implements Disposable {
     LOG.assertTrue(replaced, "Daemon listeners already disposed for the project "+myProject);
   }
 
-  boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
-    if (cutOperationJustHappened) return false;
+  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
+    Project project = file.getProject();
+    DaemonListeners listeners = getInstance(project);
+    if (listeners == null) return true;
+
+    if (listeners.cutOperationJustHappened) return false;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
     if (file instanceof PsiCodeFragment) return true;
-    if (!ModuleUtilCore.projectContainsFile(myProject, virtualFile, false)) return false;
-    Result vcs = vcsThinksItChanged(virtualFile);
+    if (!ModuleUtilCore.projectContainsFile(project, virtualFile, false)) return false;
+    Result vcs = listeners.vcsThinksItChanged(virtualFile);
     if (vcs == Result.CHANGED) return true;
     if (vcs == Result.UNCHANGED) return false;
 
-    return canUndo(virtualFile);
+    return listeners.canUndo(virtualFile);
   }
 
   private boolean canUndo(@NotNull VirtualFile virtualFile) {
@@ -377,7 +430,7 @@ public class DaemonListeners implements Disposable {
     return false;
   }
 
-  private static enum Result {
+  private enum Result {
     CHANGED, UNCHANGED, NOT_SURE
   }
 
@@ -606,5 +659,16 @@ public class DaemonListeners implements Disposable {
   private void stopDaemonAndRestartAllFiles() {
     myDaemonEventPublisher.daemonCancelEventOccurred();
     myDaemonCodeAnalyzer.restart();
+  }
+
+  void repaintErrorStripeRenderer(@NotNull Editor editor) {
+    if (!myProject.isInitialized()) return;
+    final Document document = editor.getDocument();
+    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    final EditorMarkupModel markup = (EditorMarkupModel)editor.getMarkupModel();
+    markup.setErrorPanelPopupHandler(new DaemonEditorPopup(psiFile));
+    markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(myProject));
+    markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
+    TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markup, myProject, document, psiFile);
   }
 }

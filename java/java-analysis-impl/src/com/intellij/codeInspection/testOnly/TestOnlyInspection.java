@@ -68,8 +68,10 @@ public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
     PsiAnnotation anno = findVisibleForTestingAnnotation(method);
     if (anno != null) {
       String modifier = getAccessModifierWithoutTesting(anno);
-      if (modifier == null){
-        return;
+      if (modifier == null) {
+        modifier = method.hasModifierProperty(PsiModifier.PUBLIC) ? PsiModifier.PROTECTED :
+                   method.hasModifierProperty(PsiModifier.PROTECTED) ? PsiModifier.PACKAGE_LOCAL :
+                   PsiModifier.PRIVATE;
       }
       
       LightModifierList modList = new LightModifierList(method.getManager(), JavaLanguage.INSTANCE, modifier);

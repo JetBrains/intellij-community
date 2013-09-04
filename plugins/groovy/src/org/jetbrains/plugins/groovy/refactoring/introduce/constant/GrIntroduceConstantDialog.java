@@ -54,12 +54,12 @@ import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrFieldNameSuggester;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
 
@@ -238,20 +238,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   @NotNull
   @Override
   public LinkedHashSet<String> suggestNames() {
-    GrExpression expression = myContext.getExpression();
-    if (expression == null) {
-      StringPartInfo part = myContext.getStringPart();
-      if (part != null) {
-        expression = part.getLiteral();
-      }
-    }
-    if (expression != null) {
-      return new LinkedHashSet<String>(Arrays.asList(
-        GroovyNameSuggestionUtil.suggestVariableNames(expression, new GroovyVariableValidator(myContext), true)));
-    }
-    else {
-      return new LinkedHashSet<String>();
-    }
+    return new GrFieldNameSuggester(myContext, new GroovyVariableValidator(myContext), true).suggestNames();
   }
 
   @Nullable

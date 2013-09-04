@@ -96,7 +96,8 @@ public class MarkResolvedAction extends BasicAction {
         File ioFile = new File(path);
         ConflictClient client = vcs.getFactory(ioFile).createConflictClient();
 
-        client.resolve(ioFile, true);
+        // TODO: Probably false should be passed to "resolveTree", but previous logic used true implicitly
+        client.resolve(ioFile, true, true, true);
       }
     }
     finally {

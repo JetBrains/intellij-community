@@ -15,36 +15,12 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.containers.Stack;
-import org.gradle.api.artifacts.dsl.RepositoryHandler;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-
-import java.util.List;
-
 /**
  * @author Denis Zhdanov
  * @since 8/14/13 12:56 PM
  */
-public class GradleRepositoriesContributor implements GradleMethodContextContributor {
-
-  @Override
-  public void process(@NotNull List<String> methodCallInfo,
-                      @NotNull PsiScopeProcessor processor,
-                      @NotNull ResolveState state,
-                      @NotNull PsiElement place)
-  {
-    if (methodCallInfo.isEmpty() || methodCallInfo.size() < 2 || !"repositories".equals(methodCallInfo.get(1))) {
-      return;
-    }
-    GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-    PsiClass contributorClass = psiManager.findClassWithCache(RepositoryHandler.class.getName(), place.getResolveScope());
-    if (contributorClass != null) {
-      contributorClass.processDeclarations(processor, state, null, place);
-    }
+public class GradleRepositoriesContributor extends GradleSimpleContributor {
+  public GradleRepositoriesContributor() {
+    super("repositories", GradleCommonClassNames.GRADLE_API_REPOSITORY_HANDLER);
   }
 }

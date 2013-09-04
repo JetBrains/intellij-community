@@ -33,10 +33,12 @@ public class GrFieldNameSuggester {
 
   private final GrIntroduceContext myContext;
   private final NameValidator myValidator;
+  private boolean myForStatic;
 
-  public GrFieldNameSuggester(GrIntroduceContext context, NameValidator validator) {
+  public GrFieldNameSuggester(GrIntroduceContext context, NameValidator validator, boolean forStatic) {
     myContext = context;
     myValidator = validator;
+    myForStatic = forStatic;
   }
 
   @NotNull
@@ -46,10 +48,10 @@ public class GrFieldNameSuggester {
     final StringPartInfo stringPart = myContext.getStringPart();
 
     if (expression != null) {
-      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expression, myValidator, false)));
+      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(expression, myValidator, myForStatic)));
     }
     else if (stringPart != null) {
-      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(stringPart.getLiteral(), myValidator, false)));
+      return new LinkedHashSet<String>(Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(stringPart.getLiteral(), myValidator, myForStatic)));
     }
     else {
       assert var != null;

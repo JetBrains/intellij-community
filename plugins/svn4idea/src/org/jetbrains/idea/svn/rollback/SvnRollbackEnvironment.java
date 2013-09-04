@@ -314,8 +314,8 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
         if (SVNProperty.SCHEDULE_ADD.equals(info.getSchedule())) {
           doRevert(file, true);
         } else {
-          boolean under17Copy = isUnder17Copy(file, info);
-          if (under17Copy) {
+          boolean is17OrGreater = is17OrGreaterCopy(file, info);
+          if (is17OrGreater) {
             doRevert(file, true);
           } else {
             // do update to restore missing directory.
@@ -332,15 +332,15 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
     mySvnVcs.getFactory(path).createRevertClient().revert(new File[]{path}, SVNDepth.fromRecurse(recursive), null);
   }
 
-  private boolean isUnder17Copy(final File file, final SVNInfo info) throws VcsException {
+  private boolean is17OrGreaterCopy(final File file, final SVNInfo info) throws VcsException {
     final RootsToWorkingCopies copies = mySvnVcs.getRootsToWorkingCopies();
     WorkingCopy copy = copies.getMatchingCopy(info.getURL());
     if (copy == null) {
       // TODO: Why null could be here?
       // TODO: Think we could just rewrite it with mySvnVcs.getWorkingCopyFormat(file)
-      SVNStatus status = null;
+      SVNStatus status;
       try {
-        status = mySvnVcs.createStatusClient().doStatus(file, false);
+        status = mySvnVcs.getFactory(file).createStatusClient().doStatus(file, false);
       }
       catch (SVNException e) {
         throw new VcsException(e);
@@ -348,6 +348,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       if (status == null) {
         throw new VcsException("Can not determine working copy or get 'svn status' for " + file.getPath());
       } else {
+        // status.getWorkingCopyFormat returns format 12 both for 1.7 and 1.8 - see PortableStatus default constructor
         return WorkingCopyFormat.ONE_DOT_SEVEN.equals(WorkingCopyFormat.getInstance(status.getWorkingCopyFormat()));
       }
     } else {

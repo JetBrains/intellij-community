@@ -18,10 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.analysis.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
@@ -29,7 +26,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
@@ -57,6 +53,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.PomNamedTarget;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -123,15 +120,15 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull final ProgressIndicator progress) {
-    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    final FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
+    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+    final FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
     final List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> relevantLanguages = viewProvider.getLanguages();
     final Set<PsiElement> elementSet = new THashSet<PsiElement>();
     for (Language language : relevantLanguages) {
       PsiElement psiRoot = viewProvider.getPsi(language);
-      if (!HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
+      if (!HighlightingLevelManager.getInstance(myProject).shouldHighlight(psiRoot)) continue;
       List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       elementSet.addAll(elements);
     }
@@ -282,7 +279,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         }
       }
     }
-    if (unusedImportEnabled && myFile instanceof PsiJavaFile && HighlightLevelUtil.shouldHighlight(myFile)) {
+    if (unusedImportEnabled && myFile instanceof PsiJavaFile && HighlightingLevelManager.getInstance(myProject).shouldHighlight(myFile)) {
       PsiImportList importList = ((PsiJavaFile)myFile).getImportList();
       if (importList != null) {
         final PsiImportStatementBase[] imports = importList.getAllImportStatements();
@@ -302,7 +299,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   @Nullable
   private HighlightInfo processIdentifier(PsiIdentifier identifier, ProgressIndicator progress, GlobalUsageHelper helper) {
-    if (InspectionManagerEx.inspectionResultSuppressed(identifier, myUnusedSymbolInspection)) return null;
+    if (SuppressionUtil.inspectionResultSuppressed(identifier, myUnusedSymbolInspection)) return null;
     PsiElement parent = identifier.getParent();
     if (PsiUtilCore.hasErrorElementChild(parent)) return null;
 
@@ -504,7 +501,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           options.addAll(IntentionManager.getInstance().getStandardIntentionOptions(myUnusedSymbolKey, myFile));
           if (myUnusedParametersInspection != null) {
             SuppressQuickFix[] batchSuppressActions = myUnusedParametersInspection.getBatchSuppressActions(parameter);
-            Collections.addAll(options, SuppressManagerImpl.convertBatchToSuppressIntentionActions(batchSuppressActions));
+            Collections.addAll(options, SuppressIntentionActionFromFix.convertBatchToSuppressIntentionActions(batchSuppressActions));
           }
           //need suppress from Unused Parameters but settings from Unused Symbol
           QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter),
@@ -764,12 +761,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
       PsiElement resolved = reference == null ? null : reference.resolve();
       if (resolved instanceof PsiPackage) {
-        isRedundant = packageName.equals(((PsiPackage)resolved).getQualifiedName());
+        isRedundant = packageName.equals(((PsiQualifiedNamedElement)resolved).getQualifiedName());
       }
       else if (resolved instanceof PsiClass && !importStatement.isOnDemand()) {
         String qName = ((PsiClass)resolved).getQualifiedName();
         if (qName != null) {
-          String name = ((PsiClass)resolved).getName();
+          String name = ((PomNamedTarget)resolved).getName();
           isRedundant = qName.equals(packageName + '.' + name);
         }
       }
@@ -803,7 +800,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private boolean timeToOptimizeImports() {
     if (!CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) return false;
 
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+    DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     // dont optimize out imports in JSP since it can be included in other JSP
     if (file == null || !codeAnalyzer.isHighlightingAvailable(file) || !(file instanceof PsiJavaFile) || file instanceof ServerPageFile) return false;
@@ -811,22 +808,23 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
     boolean errors = containsErrorsPreventingOptimize(file);
 
-    return !errors && codeAnalyzer.canChangeFileSilently(myFile);
+    return !errors && DaemonListeners.canChangeFileSilently(myFile);
   }
 
   private boolean containsErrorsPreventingOptimize(@NotNull PsiFile file) {
     // ignore unresolved imports errors
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
     final TextRange importsRange = importList == null ? TextRange.EMPTY_RANGE : importList.getTextRange();
-    boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerImpl.processHighlights(myDocument, myProject, HighlightSeverity.ERROR, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
-      @Override
-      public boolean process(HighlightInfo error) {
-        int infoStart = error.getActualStartOffset();
-        int infoEnd = error.getActualEndOffset();
+    boolean hasErrorsExceptUnresolvedImports = !DaemonCodeAnalyzerEx
+      .processHighlights(myDocument, myProject, HighlightSeverity.ERROR, 0, myDocument.getTextLength(), new Processor<HighlightInfo>() {
+        @Override
+        public boolean process(HighlightInfo error) {
+          int infoStart = error.getActualStartOffset();
+          int infoEnd = error.getActualEndOffset();
 
-        return importsRange.containsRange(infoStart,infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
-      }
-    });
+          return importsRange.containsRange(infoStart, infoEnd) && error.type.equals(HighlightInfoType.WRONG_REF);
+        }
+      });
 
     return hasErrorsExceptUnresolvedImports;
   }

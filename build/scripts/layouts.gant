@@ -49,25 +49,24 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
   //noinspection GroovyAssignabilityCheck
   List<String> openapiModules = [platformApiModules,
-    "java-psi-api",
-    "java-analysis-api",
-    "java-indexing-api",
-    "openapi",
-    "testFramework-java",
-    "debugger-openapi",
     "compiler-openapi",
-    "remote-servers-api",
-    "remote-servers-java-api",
+    "debugger-openapi",
     "dom-openapi",
     "execution-openapi",
+    "java-analysis-api",
+    "java-indexing-api",
+    "java-psi-api",
     "jsp-openapi",
-    "jsp-base-openapi"].flatten()
+    "jsp-base-openapi",
+    "openapi",
+    "remote-servers-api",
+    "remote-servers-java-api",
+    "testFramework-java",
+  ].flatten()
 
   //noinspection GroovyAssignabilityCheck
   List<String> implementationModules = [platformImplementationModules,
     "compiler-impl",
-    "remote-servers-impl",
-    "remote-servers-java-impl",
     "debugger-impl",
     "dom-impl",
     "execution-impl",
@@ -81,8 +80,11 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "jsp-spi",
     "manifest",
     "platform-main",
+    "remote-servers-impl",
+    "remote-servers-java-impl",
     "testFramework",
-    "tests_bootstrap"].flatten()
+    "tests_bootstrap",
+          ].flatten()
 
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")

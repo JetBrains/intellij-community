@@ -54,6 +54,7 @@ import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
@@ -103,6 +104,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         myState.myExcludeRootsMap.clear();
         myState.myPackageNameToDirsMap.clear();
         myState.myProjectExcludeRoots.clear();
+        myState.myRootTypeId.clear();
+        myState.myRootTypes.clear();
       }
     });
   }
@@ -236,7 +239,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         if (parentInfo.isInModuleSource()) {
           String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
           state.fillMapWithModuleSource(module, (NewVirtualFile)parentContentRoot, file, newDirPackageName,
-                                        (NewVirtualFile)parentInfo.getSourceRoot(), parentInfo.isTestSource(), null, interned);
+                                        (NewVirtualFile)parentInfo.getSourceRoot(), parentInfo.getSourceRootTypeId(), null, interned);
         }
       }
 
@@ -541,6 +544,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   @Override
+  @Nullable
+  public JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info) {
+    if (info.isInModuleSource()) {
+      return myState.getRootTypeById(info.getSourceRootTypeId());
+    }
+    return null;
+  }
+
+  @Override
   public boolean isProjectExcludeRoot(@NotNull VirtualFile dir) {
     checkAvailability();
     return dir instanceof NewVirtualFile && myState.myProjectExcludeRoots.contains(((NewVirtualFile)dir).getId());
@@ -628,6 +640,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     private final TObjectIntHashMap<int[]> myPackageNameToDirsMap = new TObjectIntHashMap<int[]>(INT_ARRAY_STRATEGY);
     private final List<int[]> multiDirPackages = new ArrayList<int[]>(Arrays.asList(new int[]{-1}));
     private final TIntObjectHashMap<int[]> myDirToPackageName = new TIntObjectHashMap<int[]>();
+    private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
+    private final List<JpsModuleSourceRootType<?>> myRootTypes = new ArrayList<JpsModuleSourceRootType<?>>();
     private volatile boolean writable = true;
 
     private IndexState() {
@@ -784,7 +798,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                VirtualFile contentRoot,
                                VirtualFile sourceRoot,
                                VirtualFile libraryClassRoot,
-                               @DirectoryInfo.SourceFlag int sourceFlag,
+                               int sourceRootTypeData,
                                OrderEntry[] orderEntries) {
       if (contentRoot != null) {
         assertAncestor(info, contentRoot, id);
@@ -795,7 +809,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           assertAncestor(info, root, ((NewVirtualFile)sourceRoot).getId());
         }
       }
-      DirectoryInfo newInfo = info.with(module, contentRoot, sourceRoot, libraryClassRoot, (byte)sourceFlag, orderEntries);
+      DirectoryInfo newInfo = info.with(module, contentRoot, sourceRoot, libraryClassRoot, sourceRootTypeData, orderEntries);
       storeInfo(newInfo, id);
       return newInfo;
     }
@@ -876,11 +890,32 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         for (SourceFolder sourceFolder : sourceFolders) {
           VirtualFile dir = sourceFolder.getFile();
           if (dir instanceof NewVirtualFile && contentRoot instanceof NewVirtualFile) {
+            int rootTypeId = getRootTypeId(sourceFolder.getRootType());
             fillMapWithModuleSource(module, (NewVirtualFile)contentRoot, (NewVirtualFile)dir, sourceFolder.getPackagePrefix(),
-                                    (NewVirtualFile)dir, sourceFolder.isTestSource(), progress, interned);
+                                    (NewVirtualFile)dir, rootTypeId, progress, interned);
           }
         }
       }
+    }
+
+    private int getRootTypeId(JpsModuleSourceRootType<?> rootType) {
+      if (myRootTypeId.containsKey(rootType)) {
+        return myRootTypeId.get(rootType);
+      }
+
+      int id = myRootTypes.size();
+      if (id > DirectoryInfo.MAX_ROOT_TYPE_ID) {
+        LOG.error("Too many different types of module source roots (" + id  + ") registered: " + myRootTypes);
+      }
+      myRootTypes.add(rootType);
+      myRootTypeId.put(rootType, id);
+      return id;
+    }
+
+    @Nullable
+    private JpsModuleSourceRootType<?> getRootTypeById(int id) {
+      if (id >= myRootTypes.size()) return null;
+      return myRootTypes.get(id);
     }
 
     private void fillMapWithModuleSource(@NotNull final Module module,
@@ -888,7 +923,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                          @NotNull final NewVirtualFile dir,
                                          @NotNull final String packageName,
                                          @NotNull final NewVirtualFile sourceRoot,
-                                         final boolean isTestSource,
+                                         final int rootTypeId,
                                          @Nullable final ProgressIndicator progress,
                                          final @Nullable TObjectIntHashMap<String> interned
                                          ) {
@@ -915,9 +950,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
           assert VfsUtilCore.isAncestor(dir, file, false) : "dir: " + dir + " (" + dir.getFileSystem() + "); file: " + file + " (" + file.getFileSystem() + ")";
 
-          int flag = info.getSourceFlag() | DirectoryInfo.MODULE_SOURCE_FLAG;
-          flag = BitUtil.set(flag, DirectoryInfo.TEST_SOURCE_FLAG, isTestSource);
-          info = with(id, info, null, null, sourceRoot, null, (byte)flag, null);
+          int flag = DirectoryInfo.createSourceRootTypeData(true, info.isInLibrarySource(), rootTypeId);
+          info = with(id, info, null, null, sourceRoot, null, flag, null);
 
           String currentPackage = myPackages.isEmpty() ? packageName : getPackageNameForSubdir(myPackages.peek(), file.getName());
           myPackages.push(currentPackage);
@@ -976,8 +1010,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
             if (isAnotherRoot(dirId)) return false; // another library source root starts here
           }
 
-          int flag = info.getSourceFlag() | DirectoryInfo.LIBRARY_SOURCE_FLAG;
-          with(dirId, info, null, null, sourceRoot, null, (byte)flag, null);
+          int data = DirectoryInfo.createSourceRootTypeData(info.isInModuleSource(), true, info.getSourceRootTypeId());
+          with(dirId, info, null, null, sourceRoot, null, data, null);
 
           final String packageName = getCurrentValue();
           final String newPackageName = Comparing.equal(file, dir) ? packageName : getPackageNameForSubdir(packageName, file.getName());
@@ -1402,6 +1436,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           if (idFilter == null || idFilter.execute(id)) {
             copy.myDirToPackageName.put(id, name);
           }
+          return true;
+        }
+      });
+
+      copy.myRootTypes.addAll(myRootTypes);
+      myRootTypeId.forEachEntry(new TObjectIntProcedure<JpsModuleSourceRootType<?>>() {
+        @Override
+        public boolean execute(JpsModuleSourceRootType<?> root, int id) {
+          copy.myRootTypeId.put(root, id);
           return true;
         }
       });

@@ -67,7 +67,7 @@ public class LocalDescriptorsUtil {
              context.isSuppressed(element, alternativeId))) {
           continue;
         }
-        if (InspectionManagerEx.inspectionResultSuppressed(element, tool)) continue;
+        if (SuppressionUtil.inspectionResultSuppressed(element, tool)) continue;
       }
 
 

@@ -147,6 +147,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       myMerger.mergeNext();
     } catch (SVNException e) {
       createMessage(true, false, e.getMessage());
+    } catch (VcsException e) {
+      createMessage(true, false, e.getMessage());
     }
   }
 

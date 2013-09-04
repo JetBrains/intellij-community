@@ -136,18 +136,12 @@ public class LatestExistentSearcher {
       if (vf == null) {
         return true;
       }
-      final SVNWCClient client = myVcs.createWCClient();
-      try {
-        final SVNInfo info = client.doInfo(new File(vf.getPath()), SVNRevision.UNDEFINED);
-        if ((info == null) || (info.getRevision() == null)) {
-          return false;
-        }
-        myStartNumber = info.getRevision().getNumber();
-        myStartExistsKnown = true;
-      }
-      catch (SVNException e) {
+      final SVNInfo info = myVcs.getInfo(vf);
+      if ((info == null) || (info.getRevision() == null)) {
         return false;
       }
+      myStartNumber = info.getRevision().getNumber();
+      myStartExistsKnown = true;
     }
     return true;
   }

@@ -81,7 +81,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   public XmlNSDescriptorImpl() {
   }
 
-  private Object[] dependencies;
+  private volatile Object[] dependencies;
 
   private static final ThreadLocal<Set<PsiFile>> myRedefinedDescriptorsInProcessing = new ThreadLocal<Set<PsiFile>>();
 
@@ -928,7 +928,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   public Object[] getDependences() {
-    if (dependencies == null) dependencies = new Object[] {myFile}; // init was not called
+    if (dependencies == null) dependencies = myFile == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[] {myFile}; // init was not called
     return dependencies;
   }
 

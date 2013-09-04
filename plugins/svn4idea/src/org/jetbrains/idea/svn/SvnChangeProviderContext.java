@@ -362,12 +362,11 @@ class SvnChangeProviderContext implements StatusReceiver {
 
       final FilePath path = ChangesUtil.getFilePath(change);
       final File ioFile = path.getIOFile();
-      final SVNWCClient wcClient = myVcs.createWCClient();
       final File beforeFile = deletedStatus != null ? deletedStatus.getFile() : ioFile;
       final String beforeList = SVNStatusType.STATUS_ADDED.equals(propertiesStatus) && deletedStatus == null ? null :
-                                AbstractShowPropertiesDiffAction.getPropertyList(beforeFile, SVNRevision.BASE, wcClient);
+                                AbstractShowPropertiesDiffAction.getPropertyList(myVcs, beforeFile, SVNRevision.BASE);
       final String afterList = SVNStatusType.STATUS_DELETED.equals(propertiesStatus) ? null :
-                               AbstractShowPropertiesDiffAction.getPropertyList(ioFile, SVNRevision.WORKING, wcClient);
+                               AbstractShowPropertiesDiffAction.getPropertyList(myVcs, ioFile, SVNRevision.WORKING);
 
       final String beforeRevisionNu = change.getBeforeRevision() == null ? null : change.getBeforeRevision().getRevisionNumber().asString();
       final String afterRevisionNu = change.getAfterRevision() == null ? null : change.getAfterRevision().getRevisionNumber().asString();

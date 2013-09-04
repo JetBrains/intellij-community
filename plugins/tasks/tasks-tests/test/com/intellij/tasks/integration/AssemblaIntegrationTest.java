@@ -16,17 +16,23 @@
 package com.intellij.tasks.integration;
 
 import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskManagerTestCase;
-import com.intellij.tasks.generic.assembla.AssemblaRepository;
-import com.intellij.tasks.generic.assembla.AssemblaRepositoryType;
+import com.intellij.tasks.TaskTestUtil;
+import com.intellij.tasks.generic.GenericRepository;
+import com.intellij.tasks.generic.GenericRepositoryType;
+import com.intellij.tasks.generic.GenericTask;
+import com.intellij.tasks.impl.TaskUtil;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.tasks.TaskTestUtil.TaskBuilder;
+import static com.intellij.tasks.TaskTestUtil.assertTasksEqual;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 4/1/13
  */
-public class AssemblaIntegrationTest extends TaskManagerTestCase {
+public class AssemblaIntegrationTest extends GenericSubtypeTestCase {
 
-  public static final String RESPONSE =
+  public static final String TASK_LIST_RESPONSE =
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
     "<tickets type=\"array\">\n" +
     "<ticket>\n" +
@@ -61,10 +67,22 @@ public class AssemblaIntegrationTest extends TaskManagerTestCase {
     "</ticket>\n" +
     "</tickets>";
 
-  public void testParseCyrillic() throws Exception {
-    AssemblaRepository repository = new AssemblaRepository(new AssemblaRepositoryType());
-    Task[] tasks = repository.getActiveResponseHandler().parseIssues(RESPONSE, 50);
-    assertEquals(1, tasks.length);
-    assertEquals("\u041F\u0440\u0438\u0432\u0435\u0442", tasks[0].getSummary());
+  @NotNull
+  @Override
+  protected GenericRepository createRepository(GenericRepositoryType genericType) {
+    return (GenericRepository)genericType.new AssemblaRepository().createRepository();
+  }
+
+  public void testParsingTaskList() throws Exception {
+    Task[] tasks = myRepository.getActiveResponseHandler().parseIssues(TASK_LIST_RESPONSE, 50);
+    assertTasksEqual(
+      new Task[]{
+        new TaskBuilder("50351983", "\u041F\u0440\u0438\u0432\u0435\u0442")
+          .withRepository(myRepository)
+          .withDescription("")
+          .withUpdated("2013-04-01T10:48:19+03:00")
+          .withCreated("2013-04-01T10:45:06+03:00")
+      },
+      tasks);
   }
 }

@@ -358,6 +358,8 @@ public class SvnLineCommand extends SvnCommand {
     public void updateParameters(List<String> parameters) {
       if (accepted) {
         parameters.add("--trust-server-cert");
+        // force --non-interactive as it is required by --trust-server-cert, but --non-interactive is not default mode for 1.7 or earlier
+        parameters.add("--non-interactive");
       }
     }
   }

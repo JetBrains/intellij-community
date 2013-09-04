@@ -65,4 +65,13 @@ public class PsiDelegateReference implements PsiReference {
   public boolean isSoft() {
     return myDelegate.isSoft();
   }
+
+  public static PsiReference createSoft(PsiReference origin, final boolean soft) {
+    return new PsiDelegateReference(origin) {
+      @Override
+      public boolean isSoft() {
+        return soft;
+      }
+    };
+  }
 }

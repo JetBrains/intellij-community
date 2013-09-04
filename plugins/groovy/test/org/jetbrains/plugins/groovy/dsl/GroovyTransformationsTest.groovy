@@ -54,7 +54,7 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
     assert myFixture.lookupElementStrings.containsAll(['newInstance', 'new', 'new', 'newInstance'])
   }
 
-  public void testNewifyTransform2() throws Throwable { doVariantsTest('Leaf', 'Leaf', 'Leaf') }
+  public void testNewifyTransform2() throws Throwable { doVariantsTest('Leaf', 'Leaf', 'Leaf', 'Boolean') }
 
   public void testNewifyTransform3() throws Throwable { doVariantsTest('Bazz', 'Bazz') }
 

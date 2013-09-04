@@ -16,18 +16,20 @@
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.util.containers.WeakHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,27 +37,18 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 @State(name="HighlightingSettingsPerFile", storages = @Storage( file = StoragePathMacros.WORKSPACE_FILE))
-public class HighlightingSettingsPerFile implements PersistentStateComponent<Element> {
+public class HighlightingSettingsPerFile extends HighlightingLevelManager implements PersistentStateComponent<Element> {
   @NonNls private static final String SETTING_TAG = "setting";
   @NonNls private static final String ROOT_ATT_PREFIX = "root";
   @NonNls private static final String FILE_ATT = "file";
 
   public static HighlightingSettingsPerFile getInstance(Project project){
-    return ServiceManager.getService(project, HighlightingSettingsPerFile.class);
+    return (HighlightingSettingsPerFile)ServiceManager.getService(project, HighlightingLevelManager.class);
   }
 
   private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlightingSetting[]>();
-  private final Map<PsiFile, InspectionProfile> myProfileSettings = new WeakHashMap<PsiFile, InspectionProfile>();
 
-  public HighlightingSettingsPerFile(Project project) {
-    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
-      @Override
-      public void projectClosed(Project project) {
-        cleanProfileSettings();
-      }
-    });
-  }
-
+  @NotNull
   public FileHighlightingSetting getHighlightingSettingForRoot(@NotNull PsiElement root){
     final PsiFile containingFile = root.getContainingFile();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
@@ -68,7 +61,8 @@ public class HighlightingSettingsPerFile implements PersistentStateComponent<Ele
     return fileHighlightingSettings[index];
   }
 
-  private static FileHighlightingSetting getDefaultHighlightingSetting(Project project, final VirtualFile virtualFile) {
+  @NotNull
+  private static FileHighlightingSetting getDefaultHighlightingSetting(@NotNull Project project, final VirtualFile virtualFile) {
     if (virtualFile != null) {
       DefaultHighlightingSettingProvider[] providers = DefaultHighlightingSettingProvider.EP_NAME.getExtensions();
       List<DefaultHighlightingSettingProvider> filtered =
@@ -83,7 +77,8 @@ public class HighlightingSettingsPerFile implements PersistentStateComponent<Ele
     return FileHighlightingSetting.FORCE_HIGHLIGHTING;
   }
 
-  public static FileHighlightingSetting[] getDefaults(@NotNull PsiFile file){
+  @NotNull
+  private static FileHighlightingSetting[] getDefaults(@NotNull PsiFile file){
     final int rootsCount = file.getViewProvider().getLanguages().size();
     final FileHighlightingSetting[] fileHighlightingSettings = new FileHighlightingSetting[rootsCount];
     for (int i = 0; i < fileHighlightingSettings.length; i++) {
@@ -105,11 +100,11 @@ public class HighlightingSettingsPerFile implements PersistentStateComponent<Ele
     for (FileHighlightingSetting aDefault : defaults) {
       if (aDefault != FileHighlightingSetting.NONE) toRemove = false;
     }
-    if (!toRemove) {
-      myHighlightSettings.put(virtualFile, defaults);
+    if (toRemove) {
+      myHighlightSettings.remove(virtualFile);
     }
     else {
-      myHighlightSettings.remove(virtualFile);
+      myHighlightSettings.put(virtualFile, defaults);
     }
   }
 
@@ -151,11 +146,29 @@ public class HighlightingSettingsPerFile implements PersistentStateComponent<Ele
     return element;
   }
 
-  public synchronized void cleanProfileSettings() {
-    myProfileSettings.clear();
+  @Override
+  public boolean shouldHighlight(@NotNull PsiElement psiRoot) {
+    final FileHighlightingSetting settingForRoot = getHighlightingSettingForRoot(psiRoot);
+    return settingForRoot != FileHighlightingSetting.SKIP_HIGHLIGHTING;
   }
 
-  public synchronized InspectionProfile getInspectionProfile(@NotNull PsiFile file) {
-    return myProfileSettings.get(file);
+  @Override
+  public boolean shouldInspect(@NotNull PsiElement psiRoot) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
+
+    if (!shouldHighlight(psiRoot)) return false;
+    final Project project = psiRoot.getProject();
+    final VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();
+    if (virtualFile == null || !virtualFile.isValid()) return false;
+
+    if (ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
+
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    if (ProjectScope.getLibrariesScope(project).contains(virtualFile) && !fileIndex.isInContent(virtualFile)) return false;
+
+    if (SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile)) return false;
+
+    final FileHighlightingSetting settingForRoot = getHighlightingSettingForRoot(psiRoot);
+    return settingForRoot != FileHighlightingSetting.SKIP_INSPECTION;
   }
 }

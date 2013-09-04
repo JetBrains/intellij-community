@@ -16,7 +16,10 @@
 
 package com.intellij.codeInsight.problems;
 
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
@@ -49,6 +52,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author cdr
@@ -210,8 +215,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (virtualFile == null) return;
     synchronized (myProblems) {
       ProblemFileInfo info = myProblems.get(virtualFile);
-      if (info == null) return;
-      info.hasSyntaxErrors = false;
+      if (info != null) {
+        info.hasSyntaxErrors = false;
+      }
     }
   }
 
@@ -266,16 +272,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  public static class HaveGotErrorException extends RuntimeException {
-    @NotNull private final HighlightInfo myHighlightInfo;
-    private final boolean myHasErrorElement;
-
-    private HaveGotErrorException(@NotNull HighlightInfo info, final boolean hasErrorElement) {
-      myHighlightInfo = info;
-      myHasErrorElement = hasErrorElement;
-    }
-  }
-
   // returns true if car has been cleaned
   private boolean orderVincentToCleanTheCar(@NotNull final VirtualFile file,
                                             @NotNull final ProgressIndicator progressIndicator) throws ProcessCanceledException {
@@ -294,6 +290,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return false;
 
+    final AtomicReference<HighlightInfo> error = new AtomicReference<HighlightInfo>();
+    final AtomicBoolean hasErrorElement = new AtomicBoolean();
     try {
       GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false) {
         @Override
@@ -302,7 +300,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
             @Override
             public boolean add(@Nullable HighlightInfo info) {
               if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {
-                throw new HaveGotErrorException(info, myHasErrorElement);
+                error.set(info);
+                hasErrorElement.set(myHasErrorElement);
+                throw new ProcessCanceledException();
               }
               return super.add(info);
             }
@@ -311,9 +311,11 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       };
       pass.collectInformation(progressIndicator);
     }
-    catch (HaveGotErrorException e) {
-      ProblemImpl problem = new ProblemImpl(file, e.myHighlightInfo, e.myHasErrorElement);
-      reportProblems(file, Collections.<Problem>singleton(problem));
+    catch (ProcessCanceledException e) {
+      if (error.get() != null) {
+        ProblemImpl problem = new ProblemImpl(file, error.get(), hasErrorElement.get());
+        reportProblems(file, Collections.<Problem>singleton(problem));
+      }
       return false;
     }
     clearProblems(file);

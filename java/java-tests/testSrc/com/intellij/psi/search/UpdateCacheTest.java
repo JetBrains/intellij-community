@@ -220,7 +220,7 @@ public class UpdateCacheTest extends PsiTestCase{
   }
 
   public void testTodoConfigurationChange() throws Exception{
-    TodoPattern pattern = new TodoPattern("newtodo", TodoAttributes.createDefault(), true);
+    TodoPattern pattern = new TodoPattern("newtodo", TodoAttributesUtil.createDefault(), true);
     TodoPattern[] oldPatterns = TodoConfiguration.getInstance().getTodoPatterns();
     
     checkTodos(new String[]{"2.java"});
