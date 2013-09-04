@@ -43,4 +43,5 @@ public class TasksIcons {
   public static final Icon Asana = load("/icons/asana.png"); // 16x16
   public static final Icon Trello = load("/icons/trello.png"); // 16x16
   public static final Icon JIRA = load("/icons/jira.png"); // 16x16
+  public static final Icon SPRINTLY = load("/icons/sprintly.png"); // 16x16
 }
