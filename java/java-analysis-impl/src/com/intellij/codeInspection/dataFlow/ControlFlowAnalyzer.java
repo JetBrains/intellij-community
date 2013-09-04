@@ -1400,8 +1400,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         break;
       case NOT_NULL_VALUE:
         PsiType type = expression.getType();
-        Nullness nullability = DfaPsiUtil.getElementNullability(type, expression.resolveMethod());
-        addInstruction(new PushInstruction(myFactory.createTypeValueWithNullability(type, nullability), null));
+        addInstruction(new PushInstruction(myFactory.createTypeValueWithNullability(type, Nullness.NOT_NULL), null));
         addInstruction(new GotoInstruction(exitPoint));
         break;
       case TRUE_VALUE:

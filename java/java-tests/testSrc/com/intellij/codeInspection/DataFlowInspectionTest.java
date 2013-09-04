@@ -284,6 +284,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testContractAnnotation() { doTest(); }
   public void testContractInLoopNotTooComplex() { doTest(); }
+  public void testContractWithNullable() { doTest(); }
+
   public void testBoxingImpliesNotNull() { doTest(); }
   public void testLargeIntegersAreNotEqualWhenBoxed() { doTest(); }
   public void testNoGenericCCE() { doTest(); }
