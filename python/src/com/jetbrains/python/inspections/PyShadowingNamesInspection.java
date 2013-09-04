@@ -5,7 +5,6 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -24,7 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -33,7 +34,8 @@ import java.util.Set;
  * @author vlan
  */
 public class PyShadowingNamesInspection extends PyInspection {
-  public JDOMExternalizableStringList ignoredNames = new JDOMExternalizableStringList();
+  // Persistent settings
+  public List<String> ignoredNames = new ArrayList<String>();
 
   @NotNull
   @Override
@@ -166,8 +168,6 @@ public class PyShadowingNamesInspection extends PyInspection {
         final PsiElement element = descriptor.getPsiElement();
         if (element != null) {
           final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-          // For changing persistent inspection settings we should use the old serializer (put the inspection into
-          // inspection-black-list.txt) and modify settings inside profile.modifyProfile()
           profile.modifyProfile(new Consumer<ModifiableModel>() {
             @Override
             public void consume(ModifiableModel model) {
