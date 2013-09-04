@@ -104,7 +104,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private boolean myRecursionStopper = false;
 
-  private void addInstruction(Instruction i) {
+  private <T extends Instruction> T addInstruction(T i) {
     ProgressManager.checkCanceled();
 
     if (!myRecursionStopper) {
@@ -121,6 +121,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     myCurrentFlow.addInstruction(i);
+    return i;
   }
 
   private int getEndOffset(PsiElement element) {
@@ -1365,7 +1366,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     final int exitPoint = getEndOffset(expression);
 
-    List<ConditionalGotoInstruction> gotoContractFalse = new SmartList<ConditionalGotoInstruction>();
+    List<GotoInstruction> gotoContractFalse = new SmartList<GotoInstruction>();
     for (int i = args.length - 1; i >= 0; i--) {
       ValueConstraint arg = contract.arguments[i];
       if (arg == ValueConstraint.NULL_VALUE || arg == ValueConstraint.NOT_NULL_VALUE) {
@@ -1378,9 +1379,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
 
       boolean expectingTrueOnStack = arg == ValueConstraint.NULL_VALUE || arg == ValueConstraint.TRUE_VALUE;
-      ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(-1, expectingTrueOnStack, null);
-      gotoContractFalse.add(condGoto);
-      addInstruction(condGoto);
+      ConditionalGotoInstruction continueCheckingContract = addInstruction(new ConditionalGotoInstruction(-1, !expectingTrueOnStack, null));
+
+      for (int j = 0; j < i; j++) {
+        addInstruction(new PopInstruction());
+      }
+      gotoContractFalse.add(addInstruction(new GotoInstruction(-1)));
+      continueCheckingContract.setOffset(myCurrentFlow.getInstructionCount());
     }
 
     // if contract is true
@@ -1420,7 +1425,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     // if contract is false
-    for (ConditionalGotoInstruction instruction : gotoContractFalse) {
+    for (GotoInstruction instruction : gotoContractFalse) {
       instruction.setOffset(myCurrentFlow.getInstructionCount());
     }
   }
