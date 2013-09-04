@@ -18,10 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.daemon.DaemonBundle;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.ReferenceImporter;
+import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -97,7 +94,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
     Document document = getDocument();
     final List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
-    DaemonCodeAnalyzerImpl.processHighlights(document, myProject, null, 0, document.getTextLength(), new Processor<HighlightInfo>() {
+    DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), new Processor<HighlightInfo>() {
       @Override
       public boolean process(HighlightInfo info) {
         if (!info.hasHint() || info.getSeverity() != HighlightSeverity.ERROR) {
@@ -121,7 +118,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   @NotNull
   private static List<HighlightInfo> getVisibleHighlights(final int startOffset, final int endOffset, Project project, final Editor editor) {
     final List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
-    DaemonCodeAnalyzerImpl.processHighlights(editor.getDocument(), project, null, startOffset, endOffset, new Processor<HighlightInfo>() {
+    DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, startOffset, endOffset, new Processor<HighlightInfo>() {
       @Override
       public boolean process(HighlightInfo info) {
         if (info.hasHint() && !editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {

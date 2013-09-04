@@ -58,14 +58,10 @@ public class StatusBarUpdater implements Disposable {
       }
     });
 
-    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
       @Override
       public void daemonFinished() {
         updateLater();
-      }
-
-      @Override
-      public void daemonCancelEventOccurred() {
       }
     });
   }

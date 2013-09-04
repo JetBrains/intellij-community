@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
@@ -337,18 +337,18 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     configureByText(StdFileTypes.JAVA, text);
     ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
     ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
-    assertFalse(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).canChangeFileSilently(getFile()));
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile()));
 
 
     doHighlighting();
-    assertFalse(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).canChangeFileSilently(getFile()));
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile()));
 
     type(" ");
-    assertTrue(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).canChangeFileSilently(getFile()));
+    assertTrue(DaemonListeners.canChangeFileSilently(getFile()));
 
     undo();
 
-    assertFalse(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).canChangeFileSilently(getFile()));//CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile()));//CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
   }
 
 

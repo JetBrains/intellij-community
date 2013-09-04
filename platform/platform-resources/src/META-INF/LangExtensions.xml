@@ -205,7 +205,7 @@
     <projectService serviceInterface="com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager"
                     serviceImplementation="com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager"/>
 
-    <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"
+    <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"/>
 
     <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"

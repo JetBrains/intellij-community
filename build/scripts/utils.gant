@@ -247,6 +247,7 @@ binding.setVariable("classPathLibs", [
 binding.setVariable("platformApiModules", [
   "analysis-api",
   "core-api",
+  "editor-ui-api",
   "external-system-api",
   "indexing-api",
   "jps-model-api",
@@ -266,6 +267,7 @@ binding.setVariable("platformImplementationModules", [
   "analysis-impl",
   "core-impl",
   "dvcs",
+  "editor-ui-impl",
   "images",
   "indexing-impl",
   "jps-model-impl",

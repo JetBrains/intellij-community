@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.search.TodoAttributes;
+import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
 
 import javax.swing.*;
@@ -118,7 +119,7 @@ class PatternDialog extends DialogWrapper{
 
     final TodoAttributes attrs = myPattern.getAttributes();
     attrs.setIcon((Icon)myIconComboBox.getSelectedItem());
-    attrs.setUseCustomTodoColor(useCustomTodoColor());
+    attrs.setUseCustomTodoColor(useCustomTodoColor(), TodoAttributesUtil.getDefaultColorSchemeTextAttributes());
 
     if (useCustomTodoColor()) {
       myColorAndFontDescriptionPanel.apply(myColorAndFontDescription, null);

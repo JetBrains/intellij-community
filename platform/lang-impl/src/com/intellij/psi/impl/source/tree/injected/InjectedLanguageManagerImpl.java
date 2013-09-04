@@ -108,11 +108,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     final ExtensionPoint<LanguageInjector> psiManagerPoint = Extensions.getRootArea().getExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME);
     psiManagerPoint.addExtensionPointListener(myListener,this);
     myProgress = new DaemonProgressIndicator();
-    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
-      @Override
-      public void daemonFinished() {
-      }
-
+    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
       @Override
       public void daemonCancelEventOccurred() {
         myProgress.cancel();

@@ -24,7 +24,7 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LossyEncodingInspection;
@@ -130,7 +130,7 @@ public class LossyEncodingTest extends LightDaemonAnalyzerTestCase {
     virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
 
     doHighlighting();
-    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getFileLevelHighlights(getProject(), getFile());
+    List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileLevelHighlights(getProject(), getFile());
     HighlightInfo info = assertOneElement(infos);
     assertEquals("File was loaded in the wrong encoding: 'UTF-8'", info.getDescription());
   }

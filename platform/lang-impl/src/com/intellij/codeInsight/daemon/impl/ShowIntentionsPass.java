@@ -291,42 +291,43 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
 
     final int line = hostDocument.getLineNumber(offset);
-    DaemonCodeAnalyzerImpl.processHighlights(hostDocument, project, null,
-                                             hostDocument.getLineStartOffset(line),
-                                             hostDocument.getLineEndOffset(line), new Processor<HighlightInfo>() {
-        @Override
-        public boolean process(HighlightInfo info) {
-          final GutterIconRenderer renderer = (GutterIconRenderer)info.getGutterIconRenderer();
-          if (renderer == null) {
-            return true;
-          }
-          final AnAction action = renderer.getClickAction();
-          if (action == null) {
-            return true;
-          }
-          final String text = renderer.getTooltipText();
-          if (text == null) {
-            return true;
-          }
-          final IntentionAction actionAdapter = new AbstractIntentionAction() {
-            @Override
-            public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-              final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-              action.actionPerformed(
-                new AnActionEvent(relativePoint.toMouseEvent(), DataManager.getInstance().getDataContext(), text, new Presentation(),
-                                  ActionManager.getInstance(), 0));
-            }
-
-            @Override
-            @NotNull
-            public String getText() {
-              return text;
-            }
-          };
-          intentions.guttersToShow.add(new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), text, renderer.getIcon()));
+    DaemonCodeAnalyzerEx.processHighlights(hostDocument, project, null,
+                                           hostDocument.getLineStartOffset(line),
+                                           hostDocument.getLineEndOffset(line), new Processor<HighlightInfo>() {
+      @Override
+      public boolean process(HighlightInfo info) {
+        final GutterIconRenderer renderer = (GutterIconRenderer)info.getGutterIconRenderer();
+        if (renderer == null) {
           return true;
         }
-      });
+        final AnAction action = renderer.getClickAction();
+        if (action == null) {
+          return true;
+        }
+        final String text = renderer.getTooltipText();
+        if (text == null) {
+          return true;
+        }
+        final IntentionAction actionAdapter = new AbstractIntentionAction() {
+          @Override
+          public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+            final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+            action.actionPerformed(
+              new AnActionEvent(relativePoint.toMouseEvent(), DataManager.getInstance().getDataContext(), text, new Presentation(),
+                                ActionManager.getInstance(), 0));
+          }
+
+          @Override
+          @NotNull
+          public String getText() {
+            return text;
+          }
+        };
+        intentions.guttersToShow.add(
+          new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), text, renderer.getIcon()));
+        return true;
+      }
+    });
   }
 }
 

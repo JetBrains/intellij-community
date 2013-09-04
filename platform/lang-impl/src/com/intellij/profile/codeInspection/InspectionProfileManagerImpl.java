@@ -49,7 +49,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -351,7 +350,8 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   public static void onProfilesChanged() {
     //cleanup caches blindly for all projects in case ide profile was modified
     for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
-      HighlightingSettingsPerFile.getInstance(project).cleanProfileSettings();
+      synchronized (HighlightingSettingsPerFile.getInstance(project)) {
+      }
 
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override

@@ -22,16 +22,13 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentFix;
 import com.intellij.codeInspection.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -43,7 +40,6 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
 import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -89,53 +85,6 @@ public class InspectionManagerEx extends InspectionManagerBase {
     }
   }
 
-  @NotNull
-  public static SuppressIntentionAction convertBatchToSuppressIntentionAction(@NotNull final SuppressQuickFix fix) {
-    return new SuppressIntentionAction() {
-      @Override
-      public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-        PsiElement container = fix instanceof AbstractBatchSuppressByNoInspectionCommentFix
-                               ? ((AbstractBatchSuppressByNoInspectionCommentFix )fix).getContainer(element) : null;
-        boolean caretWasBeforeStatement = editor != null && container != null && editor.getCaretModel().getOffset() == container.getTextRange().getStartOffset();
-        try {
-          ProblemDescriptor descriptor =
-            new ProblemDescriptorImpl(element, element, "", null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null, false);
-          fix.applyFix(project, descriptor);
-        }
-        catch (IncorrectOperationException e) {
-          if (!ApplicationManager.getApplication().isUnitTestMode() && editor != null) {
-            Messages.showErrorDialog(editor.getComponent(),
-                                     InspectionsBundle.message("suppress.inspection.annotation.syntax.error", e.getMessage()));
-          }
-          else {
-            throw e;
-          }
-        }
-
-        if (caretWasBeforeStatement) {
-          editor.getCaretModel().moveToOffset(container.getTextRange().getStartOffset());
-        }
-      }
-
-      @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-        return fix.isAvailable(project, element);
-      }
-
-      @NotNull
-      @Override
-      public String getText() {
-        return fix.getName();
-      }
-
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return fix.getFamilyName();
-      }
-    };
-  }
-
   @Nullable
   public static SuppressIntentionAction[] getSuppressActions(@NotNull InspectionProfileEntry tool) {
     if (tool instanceof CustomSuppressableInspectionTool) {
@@ -146,7 +95,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
       return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, new Function<LocalQuickFix, SuppressIntentionAction>() {
         @Override
         public SuppressIntentionAction fun(final LocalQuickFix fix) {
-          return convertBatchToSuppressIntentionAction((SuppressQuickFix)fix);
+          return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionAction((SuppressQuickFix)fix);
         }
       });
     }
@@ -164,6 +113,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction, onTheFly);
   }
 
+  @Override
   @NotNull
   public GlobalInspectionContextImpl createNewGlobalContext(boolean reuse) {
     final GlobalInspectionContextImpl inspectionContext;
@@ -192,22 +142,6 @@ public class InspectionManagerEx extends InspectionManagerBase {
 
   public Set<GlobalInspectionContextImpl> getRunningContexts() {
     return myRunningContexts;
-  }
-
-  public static boolean inspectionResultSuppressed(@NotNull PsiElement place, @NotNull LocalInspectionTool tool) {
-    if (tool instanceof CustomSuppressableInspectionTool) {
-      return ((CustomSuppressableInspectionTool)tool).isSuppressedFor(place);
-    }
-    if (tool instanceof BatchSuppressableTool) {
-      return ((BatchSuppressableTool)tool).isSuppressedFor(place);
-    }
-    String alternativeId;
-    String id;
-
-    return SuppressionUtil.isSuppressed(place, id = tool.getID()) ||
-           (alternativeId = tool.getAlternativeID()) != null &&
-           !alternativeId.equals(id) &&
-           SuppressionUtil.isSuppressed(place, alternativeId);
   }
 
   @NotNull
