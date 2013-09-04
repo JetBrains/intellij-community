@@ -192,7 +192,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   private static boolean isInnerComprehension(PsiElement referenceElement, PsiElement definition) {
     final PyComprehensionElement definitionComprehension = PsiTreeUtil.getParentOfType(definition, PyComprehensionElement.class);
-    if (definitionComprehension != null && isOwnScopeComprehension(definitionComprehension)) {
+    if (definitionComprehension != null && PyUtil.isOwnScopeComprehension(definitionComprehension)) {
       final PyComprehensionElement elementComprehension = PsiTreeUtil.getParentOfType(referenceElement, PyComprehensionElement.class);
       if (elementComprehension == null || !PsiTreeUtil.isAncestor(definitionComprehension, elementComprehension, false)) {
         return true;
@@ -201,17 +201,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
-  private static boolean isOwnScopeComprehension(PsiElement definitionComprehension) {
-    final boolean isAtLeast30 = LanguageLevel.forElement(definitionComprehension).isAtLeast(LanguageLevel.PYTHON30);
-    final boolean isListComprehension = definitionComprehension instanceof PyListCompExpression;
-    return !isListComprehension || isAtLeast30;
-  }
-
   private static boolean isInOwnScopeComprehension(PsiElement uexpr) {
     PyComprehensionElement comprehensionElement = PsiTreeUtil.getParentOfType(uexpr, PyComprehensionElement.class);
-    return comprehensionElement != null && isOwnScopeComprehension(comprehensionElement);
+    return comprehensionElement != null && PyUtil.isOwnScopeComprehension(comprehensionElement);
   }
-
 
   /**
    * Does actual resolution of resolve().

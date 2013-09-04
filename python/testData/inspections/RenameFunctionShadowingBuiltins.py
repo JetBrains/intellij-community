@@ -1,4 +1,4 @@
-def <warning descr="Shadows a built-in with the same name">i<caret>d</warning>(x):
+def <weak_warning descr="Shadows built-in name 'id'">i<caret>d</weak_warning>(x):
     return x
 
 

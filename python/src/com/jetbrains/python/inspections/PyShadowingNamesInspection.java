@@ -5,35 +5,42 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
- * Warns about shadowing built-in names.
- *
- * TODO: Merge into PyRedeclarationInspection and detect all shadowed names
+ * Warns about shadowing names defined in outer scopes.
  *
  * @author vlan
  */
-public class PyShadowingBuiltinsInspection extends PyInspection {
-  public JDOMExternalizableStringList ignoredNames = new JDOMExternalizableStringList();
+public class PyShadowingNamesInspection extends PyInspection {
+  // Persistent settings
+  public List<String> ignoredNames = new ArrayList<String>();
 
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Shadowing built-ins";
+    return "Shadowing names";
   }
 
   @Override
@@ -65,13 +72,14 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
 
     @Override
     public void visitPyFunction(@NotNull PyFunction node) {
-      if (node.getContainingClass() == null) {
-        processElement(node);
-      }
+      processElement(node);
     }
 
     @Override
     public void visitPyNamedParameter(@NotNull PyNamedParameter node) {
+      if (node.isSelf()) {
+        return;
+      }
       processElement(node);
     }
 
@@ -85,15 +93,53 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
     private void processElement(@NotNull PsiNameIdentifierOwner element) {
       final String name = element.getName();
       if (name != null && !myIgnoredNames.contains(name)) {
+        final PsiElement identifier = element.getNameIdentifier();
+        final PsiElement problemElement = identifier != null ? identifier : element;
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(element);
         final PsiElement builtin = builtinCache.getByName(name);
-        if (builtin != null && !PyUtil.inSameFile(builtin, element)) {
-          final PsiElement identifier = element.getNameIdentifier();
-          registerProblem(identifier != null ? identifier : element, "Shadows a built-in with the same name",
-                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                          null,
-                          new PyRenameElementQuickFix(),
-                          new PyIgnoreBuiltinQuickFix(name));
+        if (builtin != null) {
+          processBuiltin(element, name, problemElement, builtin);
+        }
+        else {
+          processOuterScope(element, name, problemElement);
+        }
+      }
+    }
+
+    private void processBuiltin(@NotNull PsiNameIdentifierOwner element,
+                                @NotNull String name,
+                                @NotNull PsiElement problemElement,
+                                @NotNull PsiElement builtin) {
+      if (!PyUtil.inSameFile(builtin, element)) {
+        registerProblem(problemElement, String.format("Shadows built-in name '%s'", name),
+                        ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix(),
+                        new PyIgnoreBuiltinQuickFix(name));
+      }
+    }
+
+    private void processOuterScope(@NotNull PsiNameIdentifierOwner element, @NotNull String name, @NotNull PsiElement problemElement) {
+      if ("_".equals(name)) {
+        return;
+      }
+      final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
+      if (owner != null) {
+        final ScopeOwner nextOwner = ScopeUtil.getScopeOwner(owner);
+        if (nextOwner != null) {
+          final ResolveProcessor processor = new ResolveProcessor(name);
+          PyResolveUtil.scopeCrawlUp(processor, nextOwner, null, name, null);
+          final PsiElement resolved = processor.getResult();
+          if (resolved != null) {
+            final PyComprehensionElement comprehension = PsiTreeUtil.getParentOfType(resolved, PyComprehensionElement.class);
+            if (comprehension != null && PyUtil.isOwnScopeComprehension(comprehension)) {
+              return;
+            }
+            final Scope scope = ControlFlowCache.getScope(owner);
+            if (scope.isGlobal(name) || scope.isNonlocal(name)) {
+              return;
+            }
+            registerProblem(problemElement, String.format("Shadows name '%s' from outer scope", name),
+                            ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix());
+          }
         }
       }
     }
@@ -122,13 +168,11 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
         final PsiElement element = descriptor.getPsiElement();
         if (element != null) {
           final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-          // For changing persistent inspection settings we should use the old serializer (put the inspection into
-          // inspection-black-list.txt) and modify settings inside profile.modifyProfile()
           profile.modifyProfile(new Consumer<ModifiableModel>() {
             @Override
             public void consume(ModifiableModel model) {
-              final String toolName = PyShadowingBuiltinsInspection.class.getSimpleName();
-              final PyShadowingBuiltinsInspection inspection = (PyShadowingBuiltinsInspection)model.getUnwrappedTool(toolName, element);
+              final String toolName = PyShadowingNamesInspection.class.getSimpleName();
+              final PyShadowingNamesInspection inspection = (PyShadowingNamesInspection)model.getUnwrappedTool(toolName, element);
               if (inspection != null) {
                 if (!inspection.ignoredNames.contains(myName)) {
                   inspection.ignoredNames.add(myName);

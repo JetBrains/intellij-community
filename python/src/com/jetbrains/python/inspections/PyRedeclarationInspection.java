@@ -98,7 +98,17 @@ public class PyRedeclarationInspection extends PyInspection {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
       if (owner != null && name != null) {
         final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
-        final int startInstruction = ControlFlowUtil.findInstructionNumberByElement(instructions, element);
+        PsiElement elementInControlFlow = element;
+        if (element instanceof PyTargetExpression) {
+          final PyImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class);
+          if (importStatement != null) {
+            elementInControlFlow = importStatement;
+          }
+        }
+        final int startInstruction = ControlFlowUtil.findInstructionNumberByElement(instructions, elementInControlFlow);
+        if (startInstruction < 0) {
+          return;
+        }
         ControlFlowUtil.iteratePrev(startInstruction, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
           @Override
           public ControlFlowUtil.Operation fun(Instruction instruction) {
@@ -113,7 +123,7 @@ public class PyRedeclarationInspection extends PyInspection {
                   }
                   final PsiElement identifier = element.getNameIdentifier();
                   registerProblem(identifier != null ? identifier : element,
-                                  PyBundle.message("INSP.redeclared.name"),
+                                  PyBundle.message("INSP.redeclared.name", name),
                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                   null,
                                   quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
