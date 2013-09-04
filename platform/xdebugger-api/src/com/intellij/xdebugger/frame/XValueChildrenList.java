@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class XValueChildrenList extends XValueChildrenProvider {
+public class XValueChildrenList {
   public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.<String>emptyList(), Collections.<XValue>emptyList());
 
   private final List<String> myNames;
@@ -46,6 +46,10 @@ public class XValueChildrenList extends XValueChildrenProvider {
     return new XValueChildrenList(Collections.singletonList(name), Collections.singletonList(value));
   }
 
+  public static XValueChildrenList singleton(@NotNull XNamedValue value) {
+    return new XValueChildrenList(Collections.singletonList(value.getName()), Collections.<XValue>singletonList(value));
+  }
+
   private XValueChildrenList(List<String> names, List<XValue> values) {
     myNames = names;
     myValues = values;
@@ -56,17 +60,19 @@ public class XValueChildrenList extends XValueChildrenProvider {
     myValues.add(value);
   }
 
-  @Override
+  public void add(@NotNull XNamedValue value) {
+    myNames.add(value.getName());
+    myValues.add(value);
+  }
+
   public int size() {
     return myNames.size();
   }
 
-  @Override
   public String getName(int i) {
     return myNames.get(i);
   }
 
-  @Override
   public XValue getValue(int i) {
     return myValues.get(i);
   }
