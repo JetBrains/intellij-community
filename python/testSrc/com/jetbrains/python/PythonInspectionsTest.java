@@ -53,8 +53,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyRedeclarationInspection() {
-    LocalInspectionTool inspection = new PyRedeclarationInspection();
-    doTest(getTestName(false), inspection);
+    doHighlightingTest(PyRedeclarationInspection.class);
   }
 
   public void testPyStringFormatInspection() {
