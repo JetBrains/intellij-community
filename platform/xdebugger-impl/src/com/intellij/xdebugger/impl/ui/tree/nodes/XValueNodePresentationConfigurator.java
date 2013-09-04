@@ -119,16 +119,6 @@ public final class XValueNodePresentationConfigurator {
     doSetPresentation(icon, type, value, valuePresenter, hasChildren, false, node);
   }
 
-  public static void setPresentation(@Nullable Icon icon,
-                                     @NonNls @Nullable String type,
-                                     @SuppressWarnings("UnusedParameters") @NonNls @NotNull String separator,
-                                     @NonNls @NotNull String value,
-                                     final @Nullable NotNullFunction<String, String> valuePresenter,
-                                     boolean hasChildren, ConfigurableXValueNode node) {
-    // yes, we ignore separator, it is deprecated method
-    doSetPresentation(icon, type, value, valuePresenter == null ? DEFAULT_VALUE_PRESENTER : new XValuePresenterAdapter(valuePresenter), hasChildren, false, node);
-  }
-
   public static void setGroupingPresentation(@Nullable Icon icon,
                                              @NonNls @Nullable String value,
                                              @Nullable XValuePresenter valuePresenter,
