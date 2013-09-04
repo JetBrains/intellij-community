@@ -354,7 +354,13 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @NotNull
+  @Deprecated
+  /**
+   * @deprecated This method is incorrect, returned collection can contain duplicated values
+   * remove in idea 14
+   */
   public Collection<StreamProvider> getStreamProviders() {
     synchronized (myStreamProviders) {
       return Collections.unmodifiableCollection(myStreamProviders.values());
@@ -389,8 +395,12 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Override
   public boolean isEnabled() {
-    for (StreamProvider provider : getStreamProviders()) {
-      if (provider.isEnabled()) return true;
+    synchronized (myStreamProviders) {
+      for (StreamProvider provider : myStreamProviders.values()) {
+        if (provider.isEnabled()) {
+          return true;
+        }
+      }
     }
     return false;
   }
