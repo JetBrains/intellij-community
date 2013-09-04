@@ -21,6 +21,6 @@ package org.jetbrains.plugins.gradle.service.resolve;
  */
 public class GradleBuildScriptContributor extends GradleSimpleContributor {
   public GradleBuildScriptContributor() {
-    super("buildscript", GradleCommonClassNames.SCRIPT_HANDLER);
+    super("buildscript", GradleCommonClassNames.GRADLE_API_SCRIPT_HANDLER);
   }
 }

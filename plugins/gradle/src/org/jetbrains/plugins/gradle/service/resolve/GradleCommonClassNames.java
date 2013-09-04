@@ -22,15 +22,16 @@ import org.jetbrains.annotations.NonNls;
  * @since 9/3/13
  */
 public final class GradleCommonClassNames {
-  @NonNls public static final String CONFIGURATION_CONTAINER = "org.gradle.api.artifacts.ConfigurationContainer";
-  @NonNls public static final String CONFIGURATION = "org.gradle.api.artifacts.Configuration";
-  @NonNls public static final String ARTIFACT_HANDLER = "org.gradle.api.artifacts.dsl.ArtifactHandler";
-  @NonNls public static final String DEPENDENCY_HANDLER = "org.gradle.api.artifacts.dsl.DependencyHandler";
-  @NonNls public static final String REPOSITORY_HANDLER = "org.gradle.api.artifacts.dsl.RepositoryHandler";
-  @NonNls public static final String SOURCE_DIRECTORY_SET = "org.gradle.api.file.SourceDirectorySet";
-  @NonNls public static final String SOURCE_SET = "org.gradle.api.tasks.SourceSet";
-  @NonNls public static final String SOURCE_SET_CONTAINER = "org.gradle.api.tasks.SourceSetContainer";
-  @NonNls public static final String SCRIPT_HANDLER = "org.gradle.api.initialization.dsl.ScriptHandler";
+  @NonNls public static final String GRADLE_API_PROJECT = "org.gradle.api.Project";
+  @NonNls public static final String GRADLE_API_CONFIGURATION_CONTAINER = "org.gradle.api.artifacts.ConfigurationContainer";
+  @NonNls public static final String GRADLE_API_CONFIGURATION = "org.gradle.api.artifacts.Configuration";
+  @NonNls public static final String GRADLE_API_ARTIFACT_HANDLER = "org.gradle.api.artifacts.dsl.ArtifactHandler";
+  @NonNls public static final String GRADLE_API_DEPENDENCY_HANDLER = "org.gradle.api.artifacts.dsl.DependencyHandler";
+  @NonNls public static final String GRADLE_API_REPOSITORY_HANDLER = "org.gradle.api.artifacts.dsl.RepositoryHandler";
+  @NonNls public static final String GRADLE_API_SOURCE_DIRECTORY_SET = "org.gradle.api.file.SourceDirectorySet";
+  @NonNls public static final String GRADLE_API_SOURCE_SET = "org.gradle.api.tasks.SourceSet";
+  @NonNls public static final String GRADLE_API_SOURCE_SET_CONTAINER = "org.gradle.api.tasks.SourceSetContainer";
+  @NonNls public static final String GRADLE_API_SCRIPT_HANDLER = "org.gradle.api.initialization.dsl.ScriptHandler";
 
   private GradleCommonClassNames() {
   }

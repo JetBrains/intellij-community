@@ -47,21 +47,21 @@ public class GradleConfigurationsContributor implements GradleMethodContextContr
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
     if (methodCallInfo.size() == 1) {
       if (methodCall.startsWith(CONFIGURATIONS + '.')) {
-        contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.CONFIGURATION, place.getResolveScope());
+        contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_CONFIGURATION, place.getResolveScope());
       }
       else if (CONFIGURATIONS.equals(methodCall)) {
-        contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.CONFIGURATION_CONTAINER, place.getResolveScope());
+        contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_CONFIGURATION_CONTAINER, place.getResolveScope());
         if (place instanceof GrReferenceExpressionImpl) {
-          GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, GradleCommonClassNames.CONFIGURATION);
+          GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, GradleCommonClassNames.GRADLE_API_CONFIGURATION);
           return;
         }
       }
     }
     else if (methodCallInfo.size() == 2) {
       if (CONFIGURATIONS.equals(methodCallInfo.get(1))) {
-        contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.CONFIGURATION_CONTAINER, place.getResolveScope());
+        contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_CONFIGURATION_CONTAINER, place.getResolveScope());
         if (place instanceof GrReferenceExpressionImpl) {
-          GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, GradleCommonClassNames.CONFIGURATION);
+          GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, GradleCommonClassNames.GRADLE_API_CONFIGURATION);
           return;
         }
       }

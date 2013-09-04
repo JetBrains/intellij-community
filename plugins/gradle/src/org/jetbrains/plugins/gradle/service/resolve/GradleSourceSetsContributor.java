@@ -48,38 +48,39 @@ public class GradleSourceSetsContributor implements GradleMethodContextContribut
     if (methodCallInfo.isEmpty()) {
       return;
     }
-    if (methodCallInfo.size() > SOURCE_DIRECTORY_CLOSURE_LEVEL) {
-      String method = ContainerUtil.getLastItem(methodCallInfo);
-      if (method != null && !StringUtil.startsWith(method, SOURCE_SETS)) {
-        return;
-      }
+    final String methodCall = ContainerUtil.getLastItem(methodCallInfo);
+    if (methodCall == null) {
+      return;
     }
 
-    final String methodCall = methodCallInfo.get(0);
+    if (methodCallInfo.size() > SOURCE_DIRECTORY_CLOSURE_LEVEL || !StringUtil.startsWith(methodCall, SOURCE_SETS)) {
+      return;
+    }
+
     String configureClosureClazz = null;
     String contributorClass = null;
     if (methodCallInfo.size() == SOURCE_SET_CONTAINER_LEVEL) {
-      configureClosureClazz = GradleCommonClassNames.SOURCE_SET_CONTAINER;
+      configureClosureClazz = GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER;
       if (place instanceof GrReferenceExpressionImpl) {
         String varClazz = StringUtil.startsWith(methodCall, SOURCE_SETS + '.')
-                          ? GradleCommonClassNames.SOURCE_SET_CONTAINER
-                          : GradleCommonClassNames.SOURCE_SET;
+                          ? GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER
+                          : GradleCommonClassNames.GRADLE_API_SOURCE_SET;
         GradleResolverUtil.addImplicitVariable(processor, state, (GrReferenceExpressionImpl)place, varClazz);
       }
       else {
-        contributorClass = GradleCommonClassNames.SOURCE_SET_CONTAINER;
+        contributorClass = GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER;
       }
     }
     else if (methodCallInfo.size() == SOURCE_SET_LEVEL) {
-      configureClosureClazz = GradleCommonClassNames.SOURCE_SET;
-      contributorClass = GradleCommonClassNames.SOURCE_SET;
+      configureClosureClazz = GradleCommonClassNames.GRADLE_API_SOURCE_SET;
+      contributorClass = GradleCommonClassNames.GRADLE_API_SOURCE_SET;
     }
     else if (methodCallInfo.size() == SOURCE_DIRECTORY_LEVEL) {
-      configureClosureClazz = GradleCommonClassNames.SOURCE_DIRECTORY_SET;
-      contributorClass = GradleCommonClassNames.SOURCE_DIRECTORY_SET;
+      configureClosureClazz = GradleCommonClassNames.GRADLE_API_SOURCE_DIRECTORY_SET;
+      contributorClass = GradleCommonClassNames.GRADLE_API_SOURCE_DIRECTORY_SET;
     }
     else if (methodCallInfo.size() == SOURCE_DIRECTORY_CLOSURE_LEVEL) {
-      contributorClass = GradleCommonClassNames.SOURCE_DIRECTORY_SET;
+      contributorClass = GradleCommonClassNames.GRADLE_API_SOURCE_DIRECTORY_SET;
     }
 
     if (configureClosureClazz != null) {

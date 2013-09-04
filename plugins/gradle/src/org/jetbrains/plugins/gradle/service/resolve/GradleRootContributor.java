@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.ContainerUtil;
-import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
@@ -65,12 +64,12 @@ public class GradleRootContributor implements GradleMethodContextContributor {
       String method = ContainerUtil.getLastItem(methodCallInfo);
       if (method != null && StringUtil.startsWith(method, SOURCE_SETS)) {
         mySourceSetsContributor.process(methodCallInfo, processor, state, place);
+        return;
       }
-      return;
     }
 
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-    PsiClass contributorClass = psiManager.findClassWithCache(Project.class.getName(), place.getResolveScope());
+    PsiClass contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_PROJECT, place.getResolveScope());
     if (contributorClass != null) {
       contributorClass.processDeclarations(processor, state, null, place);
     }

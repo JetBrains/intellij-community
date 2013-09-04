@@ -21,6 +21,6 @@ package org.jetbrains.plugins.gradle.service.resolve;
  */
 public class GradleRepositoriesContributor extends GradleSimpleContributor {
   public GradleRepositoriesContributor() {
-    super("repositories", GradleCommonClassNames.REPOSITORY_HANDLER);
+    super("repositories", GradleCommonClassNames.GRADLE_API_REPOSITORY_HANDLER);
   }
 }

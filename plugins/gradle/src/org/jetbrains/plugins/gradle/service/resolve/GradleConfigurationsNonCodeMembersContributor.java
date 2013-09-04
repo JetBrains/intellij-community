@@ -28,8 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
-import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.CONFIGURATION;
-import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.CONFIGURATION_CONTAINER;
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_CONFIGURATION;
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_CONFIGURATION_CONTAINER;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 
 /**
@@ -50,7 +50,7 @@ public class GradleConfigurationsNonCodeMembersContributor extends NonCodeMember
       return;
     }
 
-    if (!CONFIGURATION_CONTAINER.equals(aClass.getQualifiedName())) {
+    if (!GRADLE_API_CONFIGURATION_CONTAINER.equals(aClass.getQualifiedName())) {
       return;
     }
 
@@ -69,7 +69,7 @@ public class GradleConfigurationsNonCodeMembersContributor extends NonCodeMember
       // TODO replace with groovy implicit method
       GrReferenceExpressionImpl expression = (GrReferenceExpressionImpl)place;
       String expr = expression.getCanonicalText();
-      GrImplicitVariableImpl myPsi = new GrImplicitVariableImpl(place.getManager(), expr, CONFIGURATION, place);
+      GrImplicitVariableImpl myPsi = new GrImplicitVariableImpl(place.getManager(), expr, GRADLE_API_CONFIGURATION, place);
       processor.execute(myPsi, state);
       setNavigation(myPsi, dependencyHandlerClass, METHOD_GET_BY_NAME, 1);
       return;
