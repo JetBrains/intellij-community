@@ -61,7 +61,8 @@ public class VcsLogJoiner {
    * @param savedLog       currently available part of the log.
    * @param firstBlock     the first n commits read from the VCS.
    * @param refs           all references (branches) of the repository.
-   * @return -1 if not enough commits in firstBlock
+   * @return first index i in savedLog, where all log after i is valid part of new log
+   * -1 if not enough commits in firstBlock
    */
   private static int getFirstSafeIndex(@NotNull List<TimeCommitParents> savedLog,
                                        @NotNull List<? extends TimeCommitParents> firstBlock,
@@ -74,7 +75,9 @@ public class VcsLogJoiner {
       allUnresolvedLinkedHashes.addAll(commit.getParents());
     }
     for (CommitParents commit : firstBlock) {
-      allUnresolvedLinkedHashes.remove(commit.getHash());
+      if (commit.getParents().size() != 0) {
+        allUnresolvedLinkedHashes.remove(commit.getHash());
+      }
     }
     return getFirstUnTrackedIndex(savedLog, allUnresolvedLinkedHashes);
   }
@@ -88,7 +91,11 @@ public class VcsLogJoiner {
       searchHashes.remove(commit.getHash());
       lastIndex++;
     }
-    return -1;
+    if (searchHashes.size() == 0) {
+      return lastIndex;
+    } else {
+      return -1;
+    }
   }
 
   private static Set<TimeCommitParents> getAllNewCommits(@NotNull List<TimeCommitParents> unsafePartSavedLog,
