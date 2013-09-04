@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,10 +63,9 @@ public interface StateStorageManager {
   void unregisterStreamProvider(StreamProvider streamProvider, final RoamingType roamingType);
 
   @NotNull
-  StreamProvider[] getStreamProviders(final RoamingType roamingType);
+  StreamProvider[] getStreamProviders(@NotNull RoamingType roamingType);
 
   void reset();
-
 
   interface ExternalizationSession {
     void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, String componentName, @NotNull Object state) throws StateStorageException;
