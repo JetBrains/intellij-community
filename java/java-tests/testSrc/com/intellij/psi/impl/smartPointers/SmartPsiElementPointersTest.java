@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -26,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,6 +40,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.FileContentUtil;
 import gnu.trove.THashSet;
+import org.junit.Assert;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -373,5 +376,44 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNotSame(element1, element2);
 
     assertFalse(SmartPointerManager.getInstance(myProject).pointToTheSameElement(pointer1, pointer2));
+  }
+
+  public void testPointersRefCount() throws Exception {
+    PsiFile file = configureByText(JavaFileType.INSTANCE, "class X{}");
+    PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
+    SmartPointerManagerImpl smartPointerManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject);
+    SmartPsiElementPointer pointer1 = smartPointerManager.createSmartPsiElementPointer(aClass);
+    SmartPsiElementPointer pointer2 = smartPointerManager.createSmartPsiElementPointer(aClass);
+    assertSame(pointer1, pointer2);
+
+    assertNotNull(pointer1.getRange());
+
+    boolean removed2 = smartPointerManager.removePointer(pointer2);
+    assertFalse(removed2);
+    assertNotNull(pointer1.getRange());
+
+    boolean removed1 = smartPointerManager.removePointer(pointer1);
+    assertTrue(removed1);
+    assertNull(pointer1.getRange());
+  }
+
+  public void testPointersRefCountSaturated() throws Exception {
+    PsiFile file = configureByText(JavaFileType.INSTANCE, "class X{}");
+    PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
+    SmartPointerManagerImpl smartPointerManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject);
+    SmartPsiElementPointerImpl pointer1 = (SmartPsiElementPointerImpl)smartPointerManager.createSmartPsiElementPointer(aClass);
+    for (int i=0; i<1000; i++) {
+      SmartPsiElementPointer<PsiClass> pointer2 = smartPointerManager.createSmartPsiElementPointer(aClass);
+      assertSame(pointer1, pointer2);
+    }
+
+    assertNotNull(pointer1.getRange());
+    assertEquals(Byte.MAX_VALUE, pointer1.incrementAndGetReferenceCount(0));
+
+    for (int i=0; i<1100; i++) {
+      boolean removed1 = smartPointerManager.removePointer(pointer1);
+      assertFalse(removed1);
+      Assert.assertNotNull(pointer1.getRange());
+    }
   }
 }

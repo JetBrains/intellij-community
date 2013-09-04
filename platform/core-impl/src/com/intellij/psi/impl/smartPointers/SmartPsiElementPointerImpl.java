@@ -39,6 +39,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   private Reference<E> myElement;
   private final SmartPointerElementInfo myElementInfo;
   private final Class<? extends PsiElement> myElementClass;
+  private byte myReferenceCount;
 
   public SmartPsiElementPointerImpl(@NotNull Project project, @NotNull E element, @Nullable PsiFile containingFile) {
     this(element, createElementInfo(project, element, containingFile), element.getClass());
@@ -192,5 +193,10 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       return cachedElement1 == null || cachedElement2 == null || cachedElement1 == cachedElement2;
     }
     return Comparing.equal(pointer1.getElement(), pointer2.getElement());
+  }
+
+  int incrementAndGetReferenceCount(int delta) {
+    if (myReferenceCount == Byte.MAX_VALUE) return Byte.MAX_VALUE; // saturated
+    return myReferenceCount += delta;
   }
 }
