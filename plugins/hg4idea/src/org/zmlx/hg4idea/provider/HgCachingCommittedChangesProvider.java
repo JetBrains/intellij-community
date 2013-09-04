@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -371,7 +372,14 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
                                      localRevision.getAuthor(), localRevision.getRevisionDate(), changes);
   }
 
-  private final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
+  private static final Comparator<HgCommittedChangeList> BRANCH_COLUMN_COMPARATOR = new Comparator<HgCommittedChangeList>() {
+    @Override
+    public int compare(HgCommittedChangeList o1, HgCommittedChangeList o2) {
+      return Comparing.compare(o1.getBranch(), o2.getBranch());
+    }
+  };
+
+  private static final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
     public String getTitle() {
       return HgVcsMessages.message("hg4idea.changelist.column.branch");
     }
@@ -379,6 +387,12 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
     public Object getValue(final HgCommittedChangeList changeList) {
       final String branch = changeList.getBranch();
       return branch.isEmpty() ? "default" : branch;
+    }
+
+    @Nullable
+    @Override
+    public Comparator<HgCommittedChangeList> getComparator() {
+      return BRANCH_COLUMN_COMPARATOR;
     }
   };
 
