@@ -105,37 +105,15 @@ public class IcsManager {
 
     connectAndUpdateStorage();
 
-    StateStorageManager storageManager = ((ApplicationImpl)application).getStateStore().getStateStorageManager();
-    registerProvider(storageManager, RoamingType.PER_USER);
-    registerProvider(storageManager, RoamingType.PER_PLATFORM);
-    registerProvider(storageManager, RoamingType.GLOBAL);
-  }
-
-  public void registerProjectLevelProviders(Project project) {
-    String projectKey = getProjectId(project);
-    StateStorageManager manager = ((ProjectEx)project).getStateStore().getStateStorageManager();
-    manager.registerStreamProvider(new ICSStreamProvider(projectKey, RoamingType.PER_PLATFORM), RoamingType.PER_PLATFORM);
-    manager.registerStreamProvider(new ICSStreamProvider(projectKey, RoamingType.PER_USER), RoamingType.PER_USER);
-  }
-
-  public void startPing() {
-    updateAlarm.addRequest(updateRequest, 30 * 1000);
-  }
-
-  public void stopPing() {
-    updateAlarm.cancelAllRequests();
-  }
-
-  private void registerProvider(StateStorageManager storageManager, RoamingType type) {
-    storageManager.registerStreamProvider(new ICSStreamProvider(null, type) {
+    ICSStreamProvider streamProvider = new ICSStreamProvider(null) {
       @Override
-      public String[] listSubFiles(final String fileSpec) {
+      public String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         return serverConnector.listSubFileNames(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
       }
 
       @Override
-      public void deleteFile(String fileSpec, RoamingType roamingType) {
-        final String path = IcsUrlBuilder.buildPath(fileSpec, this.roamingType, null);
+      public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+        final String path = IcsUrlBuilder.buildPath(fileSpec, roamingType, null);
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {
@@ -148,7 +126,26 @@ public class IcsManager {
           }
         });
       }
-    }, type);
+    };
+    StateStorageManager storageManager = ((ApplicationImpl)application).getStateStore().getStateStorageManager();
+    storageManager.registerStreamProvider(streamProvider, RoamingType.PER_USER);
+    storageManager.registerStreamProvider(streamProvider, RoamingType.PER_PLATFORM);
+    storageManager.registerStreamProvider(streamProvider, RoamingType.GLOBAL);
+  }
+
+  public void registerProjectLevelProviders(Project project) {
+    StateStorageManager manager = ((ProjectEx)project).getStateStore().getStateStorageManager();
+    ICSStreamProvider provider = new ICSStreamProvider(getProjectId(project));
+    manager.registerStreamProvider(provider, RoamingType.PER_PLATFORM);
+    manager.registerStreamProvider(provider, RoamingType.PER_USER);
+  }
+
+  public void startPing() {
+    updateAlarm.addRequest(updateRequest, 30 * 1000);
+  }
+
+  public void stopPing() {
+    updateAlarm.cancelAllRequests();
   }
 
   public void connectAndUpdateStorage() {
@@ -208,17 +205,14 @@ public class IcsManager {
 
   private class ICSStreamProvider implements CurrentUserHolder, StreamProvider {
     private final String projectId;
-    // todo StreamProvider must be general and use passed roamingType
-    protected final RoamingType roamingType;
 
-    public ICSStreamProvider(@Nullable String projectId, @NotNull RoamingType roamingType) {
+    public ICSStreamProvider(@Nullable String projectId) {
       this.projectId = projectId;
-      this.roamingType = roamingType;
     }
 
     @Override
-    public void saveContent(String fileSpec, @NotNull final InputStream content, long size, RoamingType roamingType, boolean async) throws IOException {
-      final String path = IcsUrlBuilder.buildPath(fileSpec, this.roamingType, projectId);
+    public void saveContent(@NotNull String fileSpec, @NotNull final InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+      final String path = IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId);
       if (async) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
@@ -239,12 +233,12 @@ public class IcsManager {
 
     @Override
     @Nullable
-    public InputStream loadContent(String fileSpec, RoamingType roamingType) throws IOException {
+    public InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException {
       if (projectId == null || roamingType == RoamingType.PER_PLATFORM) {
-        return serverConnector.loadUserPreferences(IcsUrlBuilder.buildPath(fileSpec, this.roamingType, projectId));
+        return serverConnector.loadUserPreferences(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
       }
       else if (StoragePathMacros.WORKSPACE_FILE.equals(fileSpec)) {
-        return serverConnector.loadUserPreferences(IcsUrlBuilder.buildPath(fileSpec, this.roamingType, projectId));
+        return serverConnector.loadUserPreferences(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
       }
       else {
         return null;
@@ -263,12 +257,12 @@ public class IcsManager {
     }
 
     @Override
-    public String[] listSubFiles(final String fileSpec) {
+    public String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
     @Override
-    public void deleteFile(final String fileSpec, final RoamingType roamingType) {
+    public void deleteFile(@NotNull final String fileSpec, @NotNull final RoamingType roamingType) {
     }
   }
 
