@@ -69,7 +69,6 @@ public class XValueHint extends AbstractValueHint {
     myExpressionPosition = file != null ? XDebuggerUtil.getInstance().createPositionByOffset(file, textRange.getStartOffset()) : null;
   }
 
-
   @Override
   protected boolean canShowHint() {
     return true;
