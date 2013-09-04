@@ -23,6 +23,7 @@ import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
+import static com.intellij.tasks.generic.GenericRepositoryUtil.substituteTemplateVariables;
 import static com.intellij.tasks.generic.TemplateVariable.*;
 
 /**
@@ -177,7 +178,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     List<TemplateVariable> variables = concat(getAllTemplateVariables(),
                                               new TemplateVariable("max", String.valueOf(max)),
                                               new TemplateVariable("since", String.valueOf(since)));
-    String requestUrl = GenericRepositoryUtil.substituteTemplateVariables(getTasksListUrl(), variables);
+    String requestUrl = substituteTemplateVariables(getTasksListUrl(), variables);
     String responseBody = executeMethod(getHttpMethod(requestUrl, myTasksListMethodType));
     Task[] tasks = getActiveResponseHandler().parseIssues(responseBody, max);
     if (myResponseType == ResponseType.TEXT) {
@@ -222,8 +223,8 @@ public class GenericRepository extends BaseRepositoryImpl {
     return method;
   }
 
-  private HttpMethod getLoginMethod() {
-    String requestUrl = GenericRepositoryUtil.substituteTemplateVariables(getLoginUrl(), getAllTemplateVariables());
+  private HttpMethod getLoginMethod() throws Exception {
+    String requestUrl = substituteTemplateVariables(getLoginUrl(), getAllTemplateVariables());
     return getHttpMethod(requestUrl, myLoginMethodType);
   }
 
@@ -231,7 +232,7 @@ public class GenericRepository extends BaseRepositoryImpl {
   @Override
   public Task findTask(final String id) throws Exception {
     List<TemplateVariable> variables = concat(getAllTemplateVariables(), new TemplateVariable("id", id));
-    String requestUrl = GenericRepositoryUtil.substituteTemplateVariables(getSingleTaskUrl(), variables);
+    String requestUrl = substituteTemplateVariables(getSingleTaskUrl(), variables);
     HttpMethod method = getHttpMethod(requestUrl, mySingleTaskMethodType);
     return getActiveResponseHandler().parseIssue(executeMethod(method));
   }
@@ -363,6 +364,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     return new ArrayList<ResponseHandler>(handlers);
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   public void setResponseHandlers(List<ResponseHandler> responseHandlers) {
     myResponseHandlersMap.clear();
     for (ResponseHandler handler : responseHandlers) {
