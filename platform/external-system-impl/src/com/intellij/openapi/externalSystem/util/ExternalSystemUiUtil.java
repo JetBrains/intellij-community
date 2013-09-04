@@ -48,7 +48,6 @@ import java.awt.event.InputEvent;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Denis Zhdanov
@@ -57,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 public class ExternalSystemUiUtil {
 
   public static final int INSETS = 7;
+  private static final int BALLOON_FADEOUT_TIME = 5000;
 
   private ExternalSystemUiUtil() {
   }
@@ -71,7 +71,7 @@ public class ExternalSystemUiUtil {
   public static void showBalloon(@NotNull JComponent component, @NotNull MessageType messageType, @NotNull String message) {
     final BalloonBuilder builder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, messageType, null)
       .setDisposable(ApplicationManager.getApplication())
-      .setFadeoutTime(TimeUnit.SECONDS.toMillis(1));
+      .setFadeoutTime(BALLOON_FADEOUT_TIME);
     Balloon balloon = builder.createBalloon();
     Dimension size = component.getSize();
     Balloon.Position position;
