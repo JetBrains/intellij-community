@@ -292,8 +292,10 @@ public class MinusculeMatcher implements Matcher {
       }
       // uppercase should match either uppercase or a word start
       if (!isUpperCase[patternIndex] ||
-          star && Character.isUpperCase(name.charAt(nextOccurrence)) ||
-          isWordStart(name, nextOccurrence)) {
+          Character.isUpperCase(name.charAt(nextOccurrence)) ||
+          isWordStart(name, nextOccurrence) ||
+          // accept uppercase matching lowercase if the whole prefix is uppercase and case sensitivity allows that
+          !myHasHumps && myOptions != NameUtil.MatchingCaseSensitivity.ALL) {
         FList<TextRange> ranges = matchFragment(name, patternIndex, nextOccurrence, matchingState);
         if (ranges != null) {
           return ranges;
@@ -345,7 +347,7 @@ public class MinusculeMatcher implements Matcher {
     while (nameIndex + i < name.length() &&
            patternIndex + i < myPattern.length &&
            charEquals(myPattern[patternIndex+i], patternIndex+i, name.charAt(nameIndex + i), ignoreCase)) {
-      if (isUpperCase[patternIndex + i]) {
+      if (isUpperCase[patternIndex + i] && myHasHumps) {
         if (i < minFragment) {
           return null;
         }
