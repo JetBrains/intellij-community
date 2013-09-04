@@ -1,3 +1,6 @@
+global_foo = 1
+
+
 def test_import_builtin_names():
     import float
     from foo import float
@@ -81,3 +84,8 @@ def test_outer_class():
             pass
 
         <weak_warning descr="Shadows name 'quux' from outer scope">quux</weak_warning> = 1
+
+
+def test_outer_global():
+    global global_foo
+    global_foo = 2

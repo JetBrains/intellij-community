@@ -11,7 +11,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.util.Consumer;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -124,6 +126,10 @@ public class PyShadowingNamesInspection extends PyInspection {
           PyResolveUtil.scopeCrawlUp(processor, nextOwner, null, name, null);
           final PsiElement resolved = processor.getResult();
           if (resolved != null) {
+            final Scope scope = ControlFlowCache.getScope(owner);
+            if (scope.isGlobal(name) || scope.isNonlocal(name)) {
+              return;
+            }
             registerProblem(problemElement, String.format("Shadows name '%s' from outer scope", name),
                             ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix());
           }
