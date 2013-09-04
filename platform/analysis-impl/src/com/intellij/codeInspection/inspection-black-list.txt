@@ -36,7 +36,6 @@ com.jetbrains.python.inspections.PyRedundantParenthesesInspection
 com.jetbrains.python.inspections.PyUnresolvedReferencesInspection
 com.jetbrains.python.inspections.PyPackageRequirementsInspection
 com.jetbrains.python.inspections.PyUnusedLocalInspection
-com.jetbrains.python.inspections.PyShadowingBuiltinsInspection
 com.jetbrains.quirksmode.QuirksModeInspectionTool
 com.jetbrains.rest.inspections.RestRoleInspection
 com.sixrr.inspectjs.bitwise.PointlessBitwiseExpressionJSInspection
