@@ -102,7 +102,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
 
   @Override
   public GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull GrIntroduceFieldSettings settings) {
-    return new GrIntroduceFieldProcessor(context, settings, isInplace(context)).run();
+    return new GrIntroduceFieldProcessor(context, settings, isInplace(context.getEditor(), context.getPlace())).run();
   }
 
   @Override
