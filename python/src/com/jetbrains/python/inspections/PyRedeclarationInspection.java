@@ -3,6 +3,8 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -10,6 +12,7 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -19,13 +22,14 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Annotates declarations that unconditionally override others without these being used.
  *
  * @author dcheryasov
  * @author vlan
- *
- * TODO: Add a rename quick-fix
  */
 public class PyRedeclarationInspection extends PyInspection {
   @Nls
@@ -102,9 +106,17 @@ public class PyRedeclarationInspection extends PyInspection {
               final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
               if (name.equals(rwInstruction.getName())) {
                 if (rwInstruction.getAccess().isWriteAccess()) {
+                  final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
+                  final PsiElement originalElement = rwInstruction.getElement();
+                  if (originalElement != null && suggestRename(element, originalElement)) {
+                    quickFixes.add(new PyRenameElementQuickFix());
+                  }
                   final PsiElement identifier = element.getNameIdentifier();
                   registerProblem(identifier != null ? identifier : element,
-                                  PyBundle.message("INSP.redeclared.name"));
+                                  PyBundle.message("INSP.redeclared.name"),
+                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                  null,
+                                  quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
                 }
                 return ControlFlowUtil.Operation.BREAK;
               }
@@ -113,6 +125,19 @@ public class PyRedeclarationInspection extends PyInspection {
           }
         });
       }
+    }
+
+    private static boolean suggestRename(@NotNull PsiNameIdentifierOwner element, @NotNull PsiElement originalElement) {
+      // Target expressions in the same scope are treated as the same variable
+      if ((element instanceof PyTargetExpression) && originalElement instanceof PyTargetExpression) {
+        return false;
+      }
+      // Renaming an __init__ method results in renaming its class
+      else if (element instanceof PyFunction && PyNames.INIT.equals(element.getName()) &&
+               ((PyFunction)element).getContainingClass() != null) {
+        return false;
+      }
+      return true;
     }
   }
 }
