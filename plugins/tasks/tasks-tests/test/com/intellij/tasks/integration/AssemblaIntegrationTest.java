@@ -16,11 +16,15 @@
 package com.intellij.tasks.integration;
 
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskTestUtil;
 import com.intellij.tasks.generic.GenericRepository;
 import com.intellij.tasks.generic.GenericRepositoryType;
 import com.intellij.tasks.generic.GenericTask;
 import com.intellij.tasks.impl.TaskUtil;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.tasks.TaskTestUtil.TaskBuilder;
+import static com.intellij.tasks.TaskTestUtil.assertTasksEqual;
 
 /**
  * @author Dmitry Avdeev
@@ -71,10 +75,14 @@ public class AssemblaIntegrationTest extends GenericSubtypeTestCase {
 
   public void testParsingTaskList() throws Exception {
     Task[] tasks = myRepository.getActiveResponseHandler().parseIssues(TASK_LIST_RESPONSE, 50);
-    GenericTask expected = new GenericTask("50351983", "\u041F\u0440\u0438\u0432\u0435\u0442", myRepository);
-    expected.setDescription("");
-    expected.setUpdated(TaskUtil.parseDate("2013-04-01T10:48:19+03:00"));
-    expected.setCreated(TaskUtil.parseDate("2013-04-01T10:45:06+03:00"));
-    assertTasksEqual(new Task[] {expected}, tasks);
+    assertTasksEqual(
+      new Task[]{
+        new TaskBuilder("50351983", "\u041F\u0440\u0438\u0432\u0435\u0442")
+          .withRepository(myRepository)
+          .withDescription("")
+          .withUpdated("2013-04-01T10:48:19+03:00")
+          .withCreated("2013-04-01T10:45:06+03:00")
+      },
+      tasks);
   }
 }
