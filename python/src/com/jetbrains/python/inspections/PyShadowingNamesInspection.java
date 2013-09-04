@@ -10,6 +10,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -126,6 +127,10 @@ public class PyShadowingNamesInspection extends PyInspection {
           PyResolveUtil.scopeCrawlUp(processor, nextOwner, null, name, null);
           final PsiElement resolved = processor.getResult();
           if (resolved != null) {
+            final PyComprehensionElement comprehension = PsiTreeUtil.getParentOfType(resolved, PyComprehensionElement.class);
+            if (comprehension != null && PyUtil.isOwnScopeComprehension(comprehension)) {
+              return;
+            }
             final Scope scope = ControlFlowCache.getScope(owner);
             if (scope.isGlobal(name) || scope.isNonlocal(name)) {
               return;

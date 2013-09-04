@@ -89,3 +89,10 @@ def test_outer_class():
 def test_outer_global():
     global global_foo
     global_foo = 2
+
+
+def test_comprehensions():
+    print(x for x in range(10))
+    print([y for y in range(10)])
+    def f(x, <weak_warning descr="Shadows name 'y' from outer scope">y</weak_warning>):
+        pass
