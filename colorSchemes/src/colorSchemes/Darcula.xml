@@ -1054,6 +1054,11 @@
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
+    <option name="PROPERTIES.KEY_VALUE_SEPARATOR">
+      <value>
+        <option name="FOREGROUND" value="808080" />
+      </value>
+    </option>
     <option name="PROPERTIES.VALID_STRING_ESCAPE">
       <value />
     </option>
