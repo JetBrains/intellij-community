@@ -123,7 +123,7 @@ public class PyRedeclarationInspection extends PyInspection {
                   }
                   final PsiElement identifier = element.getNameIdentifier();
                   registerProblem(identifier != null ? identifier : element,
-                                  PyBundle.message("INSP.redeclared.name"),
+                                  PyBundle.message("INSP.redeclared.name", name),
                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                   null,
                                   quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
