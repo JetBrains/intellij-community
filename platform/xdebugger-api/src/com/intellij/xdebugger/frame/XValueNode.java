@@ -37,8 +37,6 @@ public interface XValueNode extends Obsolescent {
    */
   int MAX_VALUE_LENGTH = 100;
 
-  int MAX_CHILDREN_TO_SHOW = 100;
-
   /**
    * Setup presentation of the value
    * @param icon icon representing value type (see {@link com.intellij.icons.AllIcons.Debugger})
