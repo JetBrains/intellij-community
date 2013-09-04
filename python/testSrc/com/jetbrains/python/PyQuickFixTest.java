@@ -431,15 +431,26 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-8788
   public void testRenameShadowingBuiltins() {
-    doInspectionTest("RenameShadowingBuiltins.py", PyShadowingNamesInspection.class,
-                     "Rename element", true, true);
+    final String fileName = "RenameShadowingBuiltins.py";
+    myFixture.configureByFile(fileName);
+    myFixture.enableInspections(PyShadowingNamesInspection.class);
+    myFixture.checkHighlighting(true, false, true);
+    final IntentionAction intentionAction = myFixture.getAvailableIntention("Rename element");
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(graftBeforeExt(fileName, "_after"));
   }
 
   // PY-8788
   public void testRenameFunctionShadowingBuiltins() {
-    doInspectionTest("RenameFunctionShadowingBuiltins.py", PyShadowingNamesInspection.class,
-                     "Rename element", true, true);
-
+    final String fileName = "RenameFunctionShadowingBuiltins.py";
+    myFixture.configureByFile(fileName);
+    myFixture.enableInspections(PyShadowingNamesInspection.class);
+    myFixture.checkHighlighting(true, false, true);
+    final IntentionAction intentionAction = myFixture.getAvailableIntention("Rename element");
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(graftBeforeExt(fileName, "_after"));
   }
 
   @Override

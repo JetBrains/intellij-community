@@ -107,7 +107,7 @@ public class PyShadowingNamesInspection extends PyInspection {
                                 @NotNull PsiElement builtin) {
       if (!PyUtil.inSameFile(builtin, element)) {
         registerProblem(problemElement, String.format("Shadows built-in name '%s'", name),
-                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new PyRenameElementQuickFix(),
+                        ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix(),
                         new PyIgnoreBuiltinQuickFix(name));
       }
     }
@@ -125,7 +125,7 @@ public class PyShadowingNamesInspection extends PyInspection {
           final PsiElement resolved = processor.getResult();
           if (resolved != null) {
             registerProblem(problemElement, String.format("Shadows name '%s' from outer scope", name),
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new PyRenameElementQuickFix());
+                            ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix());
           }
         }
       }
