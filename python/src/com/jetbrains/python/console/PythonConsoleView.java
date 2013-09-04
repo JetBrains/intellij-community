@@ -355,18 +355,21 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
   public void showVariables(XVariablesView view) {
     removeAll();
-    view.getPanel().setPreferredSize(new Dimension(150, 500));
     JSplitPane p = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     p.add(myLanguageConsoleView.getComponent(), JSplitPane.LEFT);
     p.add(view.getPanel(), JSplitPane.RIGHT);
-    p.setDividerLocation(0.7);
-    //p.setDividerLocation(200);
+    p.setDividerLocation((int)getSize().getWidth()*2/3);
     add(p, BorderLayout.CENTER);
+    
+    validate();
+    repaint();
   }
 
   public void hideVariables() {
     removeAll();
     add(myLanguageConsoleView.getComponent(), BorderLayout.CENTER);
+    validate();
+    repaint();
   }
 
   public void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
