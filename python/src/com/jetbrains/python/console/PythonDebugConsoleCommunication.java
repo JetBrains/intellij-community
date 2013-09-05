@@ -2,8 +2,8 @@ package com.jetbrains.python.console;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
-import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugProcess;
@@ -54,7 +54,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
 
   public void execInterpreter(
     String s,
-    ICallback<Object, InterpreterResponse> callback) {
+    Function<InterpreterResponse, Object> callback) {
     try {
       myExpression.append(s);
       Pair<String, Boolean> executed = exec(myExpression.toString());
@@ -64,11 +64,11 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
       if (!more) {
         myExpression.setLength(0);
       }
-      callback.call(new InterpreterResponse(more, isWaitingForInput()));
+      callback.fun(new InterpreterResponse(more, isWaitingForInput()));
     }
     catch (PyDebuggerException e) {
       myExpression.setLength(0);
-      callback.call(new InterpreterResponse(false, isWaitingForInput()));
+      callback.fun(new InterpreterResponse(false, isWaitingForInput()));
     }
   }
 

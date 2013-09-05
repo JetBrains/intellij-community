@@ -1,5 +1,6 @@
 package com.jetbrains.python.console.pydev;
 
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public interface ConsoleCommunication {
 
   boolean isExecuting();
 
-  void execInterpreter(String s, ICallback<Object,InterpreterResponse> callback);
+  void execInterpreter(String s, Function<InterpreterResponse, Object> callback);
 
   void interrupt();
 

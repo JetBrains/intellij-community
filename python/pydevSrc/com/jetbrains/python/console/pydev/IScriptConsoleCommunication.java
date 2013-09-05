@@ -9,6 +9,8 @@
  *******************************************************************************/
 package com.jetbrains.python.console.pydev;
 
+import com.intellij.util.Function;
+
 /**
  * Interface for the console communication.
  *
@@ -23,7 +25,7 @@ public interface IScriptConsoleCommunication {
      * @return the response from the interpreter (contains the stdout, stderr, etc).
      * @throws Exception
      */
-    void execInterpreter(String command, ICallback<Object, InterpreterResponse> onResponseReceived);
+    void execInterpreter(String command, Function<InterpreterResponse, Object> onResponseReceived);
 
     /**
      * Creates the completions to be applied in the interpreter.
