@@ -14,7 +14,7 @@ public class Test {
   void foo2() {
     int k = 0;
     int i = 0;
-    if (<caret>i == k) {}
+    if (i <caret>== k) {}
     if (i == k) {}
     if (i == k) {}
     if (i == k) {}
