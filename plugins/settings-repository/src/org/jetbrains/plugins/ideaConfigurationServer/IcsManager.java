@@ -236,6 +236,17 @@ public class IcsManager {
 
     @Override
     public void initComponent() {
+      WindowManager.getInstance().addListener(new WindowManagerListener() {
+        @Override
+        public void frameCreated(IdeFrame frame) {
+          frame.getStatusBar().addWidget(new IcsStatusBarWidget());
+        }
+
+        @Override
+        public void beforeFrameReleased(IdeFrame frame) {
+        }
+      });
+
       getInstance().startPing();
     }
 
@@ -265,17 +276,6 @@ public class IcsManager {
           if (!project.isDefault()) {
             getInstance().registerProjectLevelProviders(project);
           }
-        }
-      });
-
-      WindowManager.getInstance().addListener(new WindowManagerListener() {
-        @Override
-        public void frameCreated(IdeFrame frame) {
-          frame.getStatusBar().addWidget(new IcsStatusBarWidget());
-        }
-
-        @Override
-        public void beforeFrameReleased(IdeFrame frame) {
         }
       });
     }

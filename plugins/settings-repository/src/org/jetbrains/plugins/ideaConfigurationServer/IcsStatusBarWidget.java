@@ -13,6 +13,9 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 
 public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
+
+  private IcsSettingsPanel panel;
+
   @NotNull
   @Override
   public String ID() {
@@ -65,7 +68,7 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
     return new Consumer<MouseEvent>() {
       @Override
       public void consume(MouseEvent event) {
-        new DialogWrapper(true) {
+        DialogWrapper dialog = new DialogWrapper(true) {
           {
             init();
             setTitle(IcsManager.PLUGIN_NAME + " Settings");
@@ -73,7 +76,8 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
 
           @Override
           protected JComponent createCenterPanel() {
-            return new IcsSettingsPanel(this).getPanel();
+            panel = new IcsSettingsPanel();
+            return panel.getPanel();
           }
 
           @NotNull
@@ -81,7 +85,15 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
           protected Action[] createActions() {
             return new Action[]{getOKAction()};
           }
-        }.show();
+
+          @Override
+          protected void doOKAction() {
+            panel.apply();
+            super.doOKAction();
+          }
+        };
+        dialog.setResizable(false);
+        dialog.show();
       }
     };
   }

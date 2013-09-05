@@ -17,9 +17,9 @@ public class IcsSettings {
   @Tag
   private String login;
   @Tag
-  private String url;
+  public String url;
   @Tag
-  private String token;
+  public String token;
 
   public boolean updateOnStart = true;
   @SuppressWarnings("UnusedDeclaration")
