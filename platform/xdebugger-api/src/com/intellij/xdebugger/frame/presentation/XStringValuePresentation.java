@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.frame;
+package com.intellij.xdebugger.frame.presentation;
 
-import com.intellij.ui.ColoredTextContainer;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.frame.XValueNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class XGroupingValuePresenter extends XValuePresenter {
-  public static final XGroupingValuePresenter INSTANCE = new XGroupingValuePresenter();
+/**
+ * Renders a value as a string
+ *
+ * @author nik
+*/
+public class XStringValuePresentation extends XValuePresentation {
+  private final String myValue;
 
-  @Nullable
-  @Override
-  public SimpleTextAttributes getNameAttributes() {
-    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+  public XStringValuePresentation(@NotNull String value) {
+    myValue = value;
   }
 
   @Override
-  public void appendSeparator(@NotNull ColoredTextContainer text) {
-  }
-
-  @Override
-  public void append(@NotNull String value, @NotNull ColoredTextContainer text, boolean changed) {
+  public void renderValue(@NotNull XValueTextRenderer renderer) {
+    renderer.renderStringValue(myValue, "\"\\", XValueNode.MAX_VALUE_LENGTH);
   }
 }

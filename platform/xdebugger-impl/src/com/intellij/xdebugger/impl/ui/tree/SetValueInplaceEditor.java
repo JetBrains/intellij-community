@@ -21,9 +21,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.frame.XValuePresenter;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,9 +48,10 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     SimpleColoredComponent nameLabel = new SimpleColoredComponent();
     nameLabel.setIcon(getNode().getIcon());
     nameLabel.append(nodeName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-    XValuePresenter presenter = node.getValuePresenter();
-    assert presenter != null;
-    presenter.appendSeparator(nameLabel);
+    XValuePresentation presentation = node.getValuePresentation();
+    if (presentation != null) {
+      XValuePresentationUtil.appendSeparator(nameLabel, presentation.getSeparator());
+    }
     myEditorPanel.add(nameLabel, BorderLayout.WEST);
 
     myEditorPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);

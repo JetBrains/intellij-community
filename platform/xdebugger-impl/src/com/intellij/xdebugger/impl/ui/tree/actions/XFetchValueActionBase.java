@@ -80,7 +80,7 @@ public abstract class XFetchValueActionBase extends AnAction {
         XValueNodeImpl valueNode = (XValueNodeImpl)node;
         XFullValueEvaluator fullValueEvaluator = valueNode.getFullValueEvaluator();
         if (fullValueEvaluator == null) {
-          valueCollector.add(StringUtil.notNullize(valueNode.getValue()));
+          valueCollector.add(StringUtil.notNullize(valueNode.getRawValue()));
         }
         else {
           startFetchingValue(fullValueEvaluator, new CopyValueEvaluationCallback(valueNode.getTree().getSession(), valueCollector));

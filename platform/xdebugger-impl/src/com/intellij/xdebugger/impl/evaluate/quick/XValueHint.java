@@ -32,7 +32,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValuePlace;
-import com.intellij.xdebugger.frame.XValuePresenter;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
@@ -82,16 +82,14 @@ public class XValueHint extends AbstractValueHint {
         result.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
           @Override
           public void applyPresentation(@Nullable Icon icon,
-                                        @Nullable String type,
-                                        @Nullable String value,
-                                        @NotNull XValuePresenter valuePresenter,
+                                        @NotNull XValuePresentation valuePresenter,
                                         boolean hasChildren,
                                         boolean expand) {
             if (isHintHidden()) return;
 
             SimpleColoredText text = new SimpleColoredText();
             text.append(myExpression, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-            XValueNodeImpl.buildText(type, value, valuePresenter, text, false);
+            XValueNodeImpl.buildText(valuePresenter, text, false);
             if (!hasChildren) {
               showHint(HintUtil.createInformationLabel(text));
             }

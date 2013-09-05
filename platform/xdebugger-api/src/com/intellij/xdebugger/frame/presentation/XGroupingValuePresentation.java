@@ -13,26 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.frame;
+package com.intellij.xdebugger.frame.presentation;
 
-import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class XValuePresenter {
-  public void appendSeparator(@NotNull ColoredTextContainer text) {
-    text.append(" = ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-  }
+public class XGroupingValuePresentation extends XValuePresentation {
+  public static final XGroupingValuePresentation INSTANCE = new XGroupingValuePresentation(null);
+  private final String myComment;
 
-  public void append(@NotNull String value, @NotNull ColoredTextContainer text, boolean changed) {
+  public XGroupingValuePresentation(@Nullable String comment) {
+    myComment = comment;
   }
 
   @Nullable
-  /**
-   * if returns null, default value (depends on implementation) will be used
-   */
+  @Override
   public SimpleTextAttributes getNameAttributes() {
-    return null;
+    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+  }
+
+  @NotNull
+  @Override
+  public String getSeparator() {
+    return myComment != null ? super.getSeparator() : "";
+  }
+
+  @Override
+  public void renderValue(@NotNull XValueTextRenderer renderer) {
+    if (myComment != null) {
+      renderer.renderComment(myComment);
+    }
   }
 }
