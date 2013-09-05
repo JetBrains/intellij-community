@@ -10,9 +10,6 @@
     <component>
       <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IcsManager$IcsProjectLoadListener</implementation-class>
     </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IcsStatusBarWidget</implementation-class>
-    </component>
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">

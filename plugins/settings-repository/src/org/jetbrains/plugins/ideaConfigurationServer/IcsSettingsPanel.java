@@ -10,7 +10,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class IdeaServerPanel {
+public class IcsSettingsPanel {
   private JLabel myStatusLabel;
   private JPanel myPanel;
   private JRadioButton myLoginSilently;
@@ -20,7 +20,7 @@ public class IdeaServerPanel {
   private JPanel myStartupPanel;
   private final DialogWrapper myParent;
 
-  public IdeaServerPanel(DialogWrapper parent) {
+  public IcsSettingsPanel(DialogWrapper parent) {
     myParent = parent;
     final IcsSettings settings = IcsManager.getInstance().getIdeaServerSettings();
 

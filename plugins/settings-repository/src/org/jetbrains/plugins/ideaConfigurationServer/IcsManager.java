@@ -17,6 +17,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -262,6 +265,17 @@ public class IcsManager {
           if (!project.isDefault()) {
             getInstance().registerProjectLevelProviders(project);
           }
+        }
+      });
+
+      WindowManager.getInstance().addListener(new WindowManagerListener() {
+        @Override
+        public void frameCreated(IdeFrame frame) {
+          frame.getStatusBar().addWidget(new IcsStatusBarWidget());
+        }
+
+        @Override
+        public void beforeFrameReleased(IdeFrame frame) {
         }
       });
     }
