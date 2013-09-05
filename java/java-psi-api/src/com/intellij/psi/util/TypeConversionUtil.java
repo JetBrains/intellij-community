@@ -160,7 +160,7 @@ public class TypeConversionUtil {
         final PsiClass resolved = ((PsiClassType)toType).resolve();
         if (resolved instanceof PsiTypeParameter) {
           for (final PsiClassType boundType : resolved.getExtendsListTypes()) {
-            if (!isNarrowingReferenceConversionAllowed(fromType, boundType)) return false;
+            if (!areTypesConvertible(fromType, boundType)) return false;
           }
           return true;
         }
