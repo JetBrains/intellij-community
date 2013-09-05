@@ -127,6 +127,12 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       // svn: E200009: Could not display info for all targets because some targets don't exist
       } else if (notEmpty && text.contains("some targets don't exist")) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, e), e);
+      } else if (notEmpty && text.contains(String.valueOf(SVNErrorCode.WC_UPGRADE_REQUIRED.getCode()))) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_UPGRADE_REQUIRED, e), e);
+      } else if (notEmpty &&
+                 (text.contains("upgrade your Subversion client") ||
+                  text.contains(String.valueOf(SVNErrorCode.WC_UNSUPPORTED_FORMAT.getCode())))) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, e), e);
       }
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }
