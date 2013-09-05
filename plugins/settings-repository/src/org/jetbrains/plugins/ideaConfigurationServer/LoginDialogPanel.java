@@ -176,7 +176,7 @@ public abstract class LoginDialogPanel {
   private void doLogin(final boolean onTimer) {
     try {
       IcsManager.getInstance().getIdeaServerSettings().update(myLogin.getText(), token.getText());
-      IcsManager.getInstance().connectAndUpdateStorage();
+      IcsManager.getInstance().connectAndUpdateRepository();
       closeDialog(true);
     }
     catch (Exception e) {

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -32,15 +33,14 @@ public class IcsSettings {
   }
 
   public void save() {
-    //noinspection ResultOfMethodCallIgnored
-    settingsFile.getParentFile().mkdirs();
+    FileUtil.createParentDirs(settingsFile);
 
     XmlSerializer.serialize(this);
     try {
       JDOMUtil.writeDocument(new Document(XmlSerializer.serialize(this)), settingsFile, "\n");
     }
     catch (IOException e) {
-      //ignore
+      IcsManager.LOG.error(e);
     }
   }
 

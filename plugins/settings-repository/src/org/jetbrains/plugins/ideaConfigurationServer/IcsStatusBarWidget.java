@@ -65,9 +65,10 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
     };
   }
 
-  private static Icon getStatusIcon(final IdeaConfigurationServerStatus status) {
+  private static Icon getStatusIcon(@NotNull IdeaConfigurationServerStatus status) {
     switch (status) {
-      case CONNECTION_FAILED:
+      case OPEN_FAILED:
+      case UPDATE_FAILED:
         return AllIcons.Nodes.ExceptionClass;
       default:
         return AllIcons.Nodes.Read_access;

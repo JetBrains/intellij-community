@@ -10,12 +10,12 @@ public interface RepositoryManager {
   @Nullable
   InputStream read(@NotNull String path) throws IOException;
 
-  void write(@NotNull String path, @NotNull InputStream content, long size) throws IOException;
+  void write(@NotNull String path, @NotNull InputStream content, long size, boolean async);
 
-  void delete(@NotNull String path) throws IOException;
+  void deleteAsync(@NotNull String path);
 
   @NotNull
   String[] listSubFileNames(@NotNull String path);
 
-  void updateRepo() throws IOException;
+  void updateRepository() throws IOException;
 }

@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
-import com.intellij.openapi.diagnostic.Logger;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -14,13 +13,9 @@ import java.io.File;
 import java.io.IOException;
 
 final class GitRepositoryManager extends BaseRepositoryManager {
-  private static final Logger LOG = Logger.getInstance(GitRepositoryManager.class);
-
   private final Git git;
 
   public GitRepositoryManager() throws IOException {
-    super(new File(IcsManager.PLUGIN_SYSTEM_DIR, "data"));
-
     FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
     repositoryBuilder.setGitDir(new File(dir, Constants.DOT_GIT));
     Repository repository = repositoryBuilder.build();
@@ -32,13 +27,13 @@ final class GitRepositoryManager extends BaseRepositoryManager {
   }
 
   @Override
-  public void updateRepo() throws IOException {
+  public void updateRepository() throws IOException {
     try {
       git.fetch().setRemoveDeletedRefs(true).call();
     }
-    catch (InvalidRemoteException ignored) {
+    catch (InvalidRemoteException e) {
       // remote repo is not configured
-      LOG.debug(ignored.getMessage());
+      LOG.debug(e.getMessage());
     }
     catch (GitAPIException e) {
       throw new IOException(e);
@@ -79,12 +74,7 @@ final class GitRepositoryManager extends BaseRepositoryManager {
   }
 
   @Override
-  protected void doDelete(@NotNull String path) throws IOException {
-    try {
-      git.rm().addFilepattern(path).call();
-    }
-    catch (GitAPIException e) {
-      throw new IOException(e);
-    }
+  protected void doDelete(@NotNull String path) throws GitAPIException {
+    git.rm().addFilepattern(path).call();
   }
 }

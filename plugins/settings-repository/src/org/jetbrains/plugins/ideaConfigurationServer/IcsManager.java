@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
-import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +28,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 public class IcsManager {
-  private static final Logger LOG = Logger.getInstance(IcsManager.class);
+  static final Logger LOG = Logger.getInstance(IcsManager.class);
 
   private static final String PROJECT_ID_KEY = "IDEA_SERVER_PROJECT_ID";
 
@@ -39,8 +38,6 @@ public class IcsManager {
   public static final String PLUGIN_NAME = "Idea Configuration Server";
 
   private final IcsSettings settings;
-  private final Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
-  private final Runnable updateRequest;
 
   private RepositoryManager repositoryManager;
 
@@ -48,26 +45,6 @@ public class IcsManager {
 
   public IcsManager() {
     settings = new IcsSettings();
-    updateRequest = new Runnable() {
-      @SuppressWarnings("StatementWithEmptyBody")
-      @Override
-      public void run() {
-        updateAlarm.cancelAllRequests();
-        try {
-          try {
-            if (status == IdeaConfigurationServerStatus.CONNECTION_FAILED && settings.getLogin() != null && settings.getToken() != null) {
-              connectAndUpdateStorage();
-            }
-          }
-          catch (Exception e) {
-            //ignore
-          }
-        }
-        finally {
-          updateAlarm.addRequest(updateRequest, 30 * 1000);
-        }
-      }
-    };
   }
 
   public static IcsManager getInstance() {
@@ -103,7 +80,7 @@ public class IcsManager {
       LOG.error(e);
     }
 
-    connectAndUpdateStorage();
+    connectAndUpdateRepository();
 
     ICSStreamProvider streamProvider = new ICSStreamProvider(null) {
       @Override
@@ -113,18 +90,7 @@ public class IcsManager {
 
       @Override
       public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-        final String path = IcsUrlBuilder.buildPath(fileSpec, roamingType, null);
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              repositoryManager.delete(path);
-            }
-            catch (IOException e) {
-              LOG.debug(e);
-            }
-          }
-        });
+        repositoryManager.deleteAsync(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
       }
     };
     StateStorageManager storageManager = ((ApplicationImpl)application).getStateStore().getStateStorageManager();
@@ -141,37 +107,38 @@ public class IcsManager {
   }
 
   public void startPing() {
-    updateAlarm.addRequest(updateRequest, 30 * 1000);
   }
 
   public void stopPing() {
-    updateAlarm.cancelAllRequests();
   }
 
-  public void connectAndUpdateStorage() {
+  public void connectAndUpdateRepository() {
     try {
       repositoryManager = new GitRepositoryManager();
-      repositoryManager.updateRepo();
-      //settings.setStatus(IdeaConfigurationServerStatus.LOGGED_IN);
+      setStatus(IdeaConfigurationServerStatus.OPENED);
+      if (settings.updateOnStart) {
+        repositoryManager.updateRepository();
+      }
     }
     catch (IOException e) {
-      //settings.setStatus(IdeaConfigurationServerStatus.CONNECTION_FAILED);
-      LOG.error(e);
+      try {
+        LOG.error(e);
+      }
+      finally {
+        setStatus(getStatus() == IdeaConfigurationServerStatus.OPENED ? IdeaConfigurationServerStatus.UPDATE_FAILED : IdeaConfigurationServerStatus.OPEN_FAILED);
+      }
     }
 
-    if (settings.updateOnStart) {
-      updateStorage();
-    }
+    notifyIdeaStorage();
   }
 
-  private static void updateStorage() {
+  private static void notifyIdeaStorage() {
     StateStorageManager appStorageManager = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager();
     Collection<String> storageFileNames = appStorageManager.getStorageFileNames();
     if (!storageFileNames.isEmpty()) {
       processStorages(appStorageManager, storageFileNames);
 
-      Project[] projects = ProjectManager.getInstance().getOpenProjects();
-      for (Project project : projects) {
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         StateStorageManager storageManager = ((ProjectEx)project).getStateStore().getStateStorageManager();
         processStorages(storageManager, storageManager.getStorageFileNames());
       }
@@ -186,8 +153,10 @@ public class IcsManager {
 
   public String getStatusText() {
     switch (status) {
-      case CONNECTION_FAILED:
-        return "Connection failed";
+      case OPEN_FAILED:
+        return "Open repository failed";
+      case UPDATE_FAILED:
+        return "Update repository failed";
       default:
         return "Unknown";
     }
@@ -218,23 +187,7 @@ public class IcsManager {
 
     @Override
     public void saveContent(@NotNull String fileSpec, @NotNull final InputStream content, final long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
-      final String path = IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId);
-      if (async) {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              repositoryManager.write(path, content, size);
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
-      else {
-        repositoryManager.write(path, content, size);
-      }
+      repositoryManager.write(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId), content, size, async);
     }
 
     @Override
@@ -258,8 +211,7 @@ public class IcsManager {
 
     @Override
     public boolean isEnabled() {
-      // todo configurable
-      return true;
+      return status == IdeaConfigurationServerStatus.OPENED;
     }
 
     @Override
