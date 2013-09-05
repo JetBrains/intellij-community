@@ -204,7 +204,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
         continue;
       }
       ArrangementSettingsToken token = component.getToken();
-      if (token != null && StdArrangementTokens.Order.is(token)) {
+      if (token != null && StdArrangementTokenType.ORDER.is(token)) {
         orderType = token;
       }
       else {
