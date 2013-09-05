@@ -793,8 +793,10 @@ public abstract class ChooseByNameBase {
     return myFixLostTyping && Registry.is("actionSystem.fixLostTyping");
   }
 
-  private synchronized void ensureNamesLoaded(boolean checkboxState) {
-    if (getNamesSync(checkboxState) != null) return;
+  @NotNull
+  private synchronized String[] ensureNamesLoaded(boolean checkboxState) {
+    String[] cached = getNamesSync(checkboxState);
+    if (cached != null) return cached;
 
     Window window = (Window)SwingUtilities.getAncestorOfClass(Window.class, myTextField);
     //LOG.assertTrue (myTextField != null);
@@ -813,12 +815,15 @@ public abstract class ChooseByNameBase {
         ((ContributorsBasedGotoByModel)myModel).sameNamesForProjectAndLibraries() &&
         getNamesSync(false) != null) {
       // there is no way in indices to have different keys for project symbols vs libraries, we always have same ones
-      setNamesSync(true, getNamesSync(false));
-      return;
+      String[] allNames = getNamesSync(false);
+      setNamesSync(true, allNames);
+      return allNames;
     }
 
-    setNamesSync(checkboxState, myModel.getNames(checkboxState));
-    assert getNamesSync(checkboxState) != null : "Model "+myModel+ "("+myModel.getClass()+") returned null names";
+    String[] result = myModel.getNames(checkboxState);
+    //noinspection ConstantConditions
+    assert result != null : "Model "+myModel+ "("+myModel.getClass()+") returned null names";
+    setNamesSync(checkboxState, result);
 
     if (window != null) {
       window.setCursor(Cursor.getDefaultCursor());
@@ -826,13 +831,14 @@ public abstract class ChooseByNameBase {
         ownerWindow.setCursor(Cursor.getDefaultCursor());
       }
     }
+    return result;
   }
 
   @NotNull
   public String[] getNames(boolean checkboxState) {
     if (ourLoadNamesEachTime) {
       setNamesSync(checkboxState, null);
-      ensureNamesLoaded(checkboxState);
+      return ensureNamesLoaded(checkboxState);
     }
     return getNamesSync(checkboxState);
   }
@@ -1222,8 +1228,7 @@ public abstract class ChooseByNameBase {
     final String text = myTextField.getText();
     if (text.length() == 0) return Collections.emptyList();
     final boolean checkBoxState = myCheckBox.isSelected();
-    if (ourLoadNamesEachTime) ensureNamesLoaded(checkBoxState);
-    final String[] names = getNamesSync(checkBoxState);
+    final String[] names = ourLoadNamesEachTime ? ensureNamesLoaded(checkBoxState) : getNamesSync(checkBoxState);
     if (names == null) return Collections.emptyList();
 
     Object uniqueElement = null;
