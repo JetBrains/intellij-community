@@ -81,7 +81,7 @@ public class XDebuggerTreeState {
     if (node instanceof XValueNodeImpl) {
       XValueNodeImpl valueNode = (XValueNodeImpl)node;
       if (valueNode.isComputed()) {
-        return new NodeInfo(valueNode.getName(), valueNode.getValue(), selected);
+        return new NodeInfo(valueNode.getName(), valueNode.getRawValue(), selected);
       }
     }
     return null;

@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.xdebugger.frame.presentation.XGroupingValuePresentation;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class XGroupingValue extends XNamedValue {
@@ -24,6 +25,6 @@ public abstract class XGroupingValue extends XNamedValue {
 
   @Override
   public final void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-    node.setPresentation(null, null, XGroupingValuePresenter.INSTANCE, true);
+    node.setPresentation(null, XGroupingValuePresentation.INSTANCE, true);
   }
 }

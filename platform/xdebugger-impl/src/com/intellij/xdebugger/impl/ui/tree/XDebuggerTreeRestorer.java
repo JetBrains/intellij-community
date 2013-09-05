@@ -63,7 +63,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
     if (treeNode instanceof XValueNodeImpl) {
       XValueNodeImpl node = (XValueNodeImpl)treeNode;
       if (node.isComputed()) {
-        doRestoreNode(node, parentInfo, node.getName(), node.getValue());
+        doRestoreNode(node, parentInfo, node.getName(), node.getRawValue());
       }
       else {
         myNode2ParentState.put(node, parentInfo);
