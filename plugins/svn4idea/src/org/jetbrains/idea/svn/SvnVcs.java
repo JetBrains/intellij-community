@@ -131,6 +131,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private static final Logger LOG = wrapLogger(Logger.getInstance("org.jetbrains.idea.svn.SvnVcs"));
   @NonNls public static final String VCS_NAME = "svn";
+  public static final String VCS_DISPLAY_NAME = "Subversion";
+
   private static final VcsKey ourKey = createKey(VCS_NAME);
   public static final Topic<Runnable> WC_CONVERTED = new Topic<Runnable>("WC_CONVERTED", Runnable.class);
   private final Map<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache =
@@ -776,7 +778,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public String getDisplayName() {
     LOG.debug("getDisplayName");
-    return "Subversion";
+    return VCS_DISPLAY_NAME;
   }
 
   @Override
