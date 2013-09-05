@@ -360,7 +360,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public boolean checkCommandLineVersion() {
-    return myChecker.checkExecutableAndNotifyIfNeeded();
+    boolean isValid = true;
+
+    if (SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration.myUseAcceleration) || isProject18()) {
+      isValid = myChecker.checkExecutableAndNotifyIfNeeded();
+    }
+
+    return isValid;
   }
 
   public void invokeRefreshSvnRoots() {
@@ -491,9 +497,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (SvnConfiguration.UseAcceleration.javaHL.equals(accelerationType)) {
       CheckJavaHL.runtimeCheck(myProject);
     }
-    else if (SvnConfiguration.UseAcceleration.commandLine.equals(accelerationType) &&
-             !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myChecker.checkExecutableAndNotifyIfNeeded();
+    else if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      checkCommandLineVersion();
     }
 
     cmdClientFactory = new CmdClientFactory(this);
@@ -1332,6 +1337,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return myCheckoutProvider;
   }
 
+  public boolean isProject18() {
+    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(getWorkingCopyFormat(new File(getProject().getBaseDir().getPath())));
+  }
+
   /**
    * Try to avoid usages of this method (for now) as it could not correctly for all cases
    * detect svn 1.8 working copy format to guarantee command line client.
@@ -1344,9 +1353,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public ClientFactory getFactory() {
     // check working copy format of project directory
-    WorkingCopyFormat format = getWorkingCopyFormat(new File(getProject().getBaseDir().getPath()));
-
-    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ? cmdClientFactory : getFactoryFromSettings();
+    return isProject18() ? cmdClientFactory : getFactoryFromSettings();
   }
 
   @NotNull
