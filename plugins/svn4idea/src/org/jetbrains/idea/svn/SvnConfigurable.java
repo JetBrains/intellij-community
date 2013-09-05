@@ -312,10 +312,7 @@ public class SvnConfigurable implements Configurable {
     SvnVcs.getInstance(myProject).refreshSSLProperty();
 
     applicationSettings17.setCommandLinePath(myCommandLineClient.getText().trim());
-    boolean isClientValid = true;
-    if (SvnConfiguration.UseAcceleration.commandLine.equals(configuration.myUseAcceleration)) {
-      isClientValid = vcs17.checkCommandLineVersion();
-    }
+    boolean isClientValid = vcs17.checkCommandLineVersion();
     if (isClientValid && reloadWorkingCopies) {
       vcs17.invokeRefreshSvnRoots();
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
