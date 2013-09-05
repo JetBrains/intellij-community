@@ -1003,7 +1003,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
         SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode) ||
         SVNErrorCode.WC_NOT_WORKING_COPY.equals(errorCode) ||
         // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
-        SVNErrorCode.ILLEGAL_TARGET.equals(errorCode)) {
+        SVNErrorCode.ILLEGAL_TARGET.equals(errorCode) ||
+        // do not log working copy format vs client version inconsistencies as errors
+        SVNErrorCode.WC_UNSUPPORTED_FORMAT.equals(errorCode) ||
+        SVNErrorCode.WC_UPGRADE_REQUIRED.equals(errorCode)) {
       LOG.debug(e);
     }
     else {
