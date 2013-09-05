@@ -177,7 +177,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     expression = unfoldClass(expression);
     if (expression instanceof PyReferenceExpression) {
       final PsiPolyVariantReference ref = ((PyReferenceExpression)expression).getReference(PyResolveContext.noProperties());
-      return ref.resolve();
+      if (ref != null) {
+        return ref.resolve();
+      }
     }
     return null;
   }
