@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.application.options.OptionsConstants;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.colors.*;
@@ -204,7 +205,7 @@ class JBTerminalSystemSettingsProvider extends DefaultSettingsProvider {
     @NotNull
     @Override
     public Color getDefaultBackground() {
-      return getGlobal().getDefaultBackground();
+      return getGlobal().getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
     }
 
     @NotNull
