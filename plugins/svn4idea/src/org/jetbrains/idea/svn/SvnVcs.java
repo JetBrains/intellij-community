@@ -359,8 +359,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     });
   }
 
-  public void checkCommandLineVersion() {
-    myChecker.checkExecutableAndNotifyIfNeeded();
+  public boolean checkCommandLineVersion() {
+    return myChecker.checkExecutableAndNotifyIfNeeded();
   }
 
   public void invokeRefreshSvnRoots() {
