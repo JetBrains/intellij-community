@@ -1,14 +1,13 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.lookup.LookupElement;
 
 import java.io.IOException;
 
 /**
  * @author Sergey Evdokimov
  */
-public class MavenDependencyCompletionTest extends MavenDomWithIndicesTestCase {
+public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestCase {
 
   public void testCompletion() throws IOException {
     createProjectPom("<groupId>test</groupId>" +
