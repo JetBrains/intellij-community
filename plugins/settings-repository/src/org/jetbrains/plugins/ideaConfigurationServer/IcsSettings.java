@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public class IcsSettings {
   @Tag
@@ -18,6 +19,10 @@ public class IcsSettings {
   private String url;
   @Tag
   private String token;
+
+  public boolean updateOnStart = true;
+  @SuppressWarnings("UnusedDeclaration")
+  public long updateOnActivityDelay = TimeUnit.HOURS.toMillis(2);
 
   @Transient
   private final File settingsFile;

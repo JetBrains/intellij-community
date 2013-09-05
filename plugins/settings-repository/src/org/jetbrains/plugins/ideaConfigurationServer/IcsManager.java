@@ -159,6 +159,12 @@ public class IcsManager {
       LOG.error(e);
     }
 
+    if (settings.updateOnStart) {
+      updateStorage();
+    }
+  }
+
+  private static void updateStorage() {
     StateStorageManager appStorageManager = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager();
     Collection<String> storageFileNames = appStorageManager.getStorageFileNames();
     if (!storageFileNames.isEmpty()) {
