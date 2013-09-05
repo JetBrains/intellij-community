@@ -17,6 +17,7 @@ package com.intellij.xdebugger.evaluation;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -104,6 +105,17 @@ public abstract class XDebuggerEvaluator {
   @Nullable
   public TextRange getExpressionRangeAtOffset(final Project project, final Document document, int offset, boolean sideEffectsAllowed) {
     return null;
+  }
+
+  @Nullable
+  public Pair<TextRange, String> getExpressionAtOffset(@NotNull Project project, @NotNull Document document, int offset, boolean sideEffectsAllowed) {
+    TextRange range = getExpressionRangeAtOffset(project, document, offset, sideEffectsAllowed);
+    if (range == null) {
+      return null;
+    }
+    else {
+      return Pair.create(range, null);
+    }
   }
 
   /**

@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.xdebugger.XDebugSession;
@@ -61,30 +62,35 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
     return PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<XValueHint>() {
       public XValueHint compute() {
         int offset = AbstractValueHint.calculateOffset(editor, point);
-        TextRange range = getExpressionRange(evaluator, project, type, editor, offset);
-        if (range == null) return null;
+        Pair<TextRange, String> expressionData = getExpressionRange(evaluator, project, type, editor, offset);
+        if (expressionData == null) {
+          return null;
+        }
+
         int textLength = editor.getDocument().getTextLength();
+        TextRange range = expressionData.first;
         if (range.getStartOffset() > range.getEndOffset() || range.getStartOffset() < 0 || range.getEndOffset() > textLength) {
           LOG.error("invalid range: " + range + ", text length = " + textLength + ", evaluator: " + evaluator);
           return null;
         }
 
-        return new XValueHint(project, editor, point, type, range, evaluator, session);
+        return new XValueHint(project, editor, point, type, expressionData, evaluator, session);
       }
     });
   }
 
   @Nullable
-  private static TextRange getExpressionRange(final XDebuggerEvaluator evaluator, final Project project, final ValueHintType type, final Editor editor,
-                                              final int offset) {
+  private static Pair<TextRange, String> getExpressionRange(final XDebuggerEvaluator evaluator, final Project project,
+                                                            final ValueHintType type,
+                                                            final Editor editor, final int offset) {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getSelectionStart();
     int selectionEnd = selectionModel.getSelectionEnd();
     if ((type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT) && selectionModel.hasSelection()
         && selectionStart <= offset && offset <= selectionEnd) {
-      return new TextRange(selectionStart, selectionEnd);
+      return Pair.create(new TextRange(selectionStart, selectionEnd), null);
     }
-    return evaluator.getExpressionRangeAtOffset(project, editor.getDocument(), offset, false);
+    return evaluator.getExpressionAtOffset(project, editor.getDocument(), offset, false);
   }
 
   public boolean canShowHint(@NotNull final Project project) {
