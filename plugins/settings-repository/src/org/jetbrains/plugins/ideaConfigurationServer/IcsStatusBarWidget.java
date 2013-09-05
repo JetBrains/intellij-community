@@ -25,7 +25,7 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
   @NotNull
   @Override
   public String ID() {
-    return "IntelliJConfigurationServer";
+    return IcsManager.PLUGIN_NAME;
   }
 
   @Override
@@ -52,7 +52,7 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
 
   @Override
   public String getTooltipText() {
-    return "IntelliJ Configuration Server status: " + IcsManager.getInstance().getStatusText();
+    return IcsManager.PLUGIN_NAME + " status: " + IcsManager.getInstance().getStatusText();
   }
 
   @Override

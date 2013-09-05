@@ -42,7 +42,7 @@ public class IcsManager {
   private final Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private final Runnable updateRequest;
 
-  private IcsGitConnector serverConnector;
+  private RepositoryManager repositoryManager;
 
   private IdeaConfigurationServerStatus status;
 
@@ -108,7 +108,7 @@ public class IcsManager {
     ICSStreamProvider streamProvider = new ICSStreamProvider(null) {
       @Override
       public String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-        return serverConnector.listSubFileNames(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
+        return repositoryManager.listSubFileNames(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
       }
 
       @Override
@@ -118,7 +118,7 @@ public class IcsManager {
           @Override
           public void run() {
             try {
-              serverConnector.delete(path);
+              repositoryManager.delete(path);
             }
             catch (IOException e) {
               LOG.debug(e);
@@ -150,8 +150,8 @@ public class IcsManager {
 
   public void connectAndUpdateStorage() {
     try {
-      serverConnector = new IcsGitConnector();
-      serverConnector.updateRepo();
+      repositoryManager = new GitRepositoryManager();
+      repositoryManager.updateRepo();
       //settings.setStatus(IdeaConfigurationServerStatus.LOGGED_IN);
     }
     catch (IOException e) {
@@ -217,14 +217,14 @@ public class IcsManager {
     }
 
     @Override
-    public void saveContent(@NotNull String fileSpec, @NotNull final InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+    public void saveContent(@NotNull String fileSpec, @NotNull final InputStream content, final long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
       final String path = IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId);
       if (async) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {
             try {
-              serverConnector.save(content, path);
+              repositoryManager.write(path, content, size);
             }
             catch (IOException e) {
               LOG.error(e);
@@ -233,7 +233,7 @@ public class IcsManager {
         });
       }
       else {
-        serverConnector.save(content, path);
+        repositoryManager.write(path, content, size);
       }
     }
 
@@ -241,10 +241,10 @@ public class IcsManager {
     @Nullable
     public InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException {
       if (projectId == null || roamingType == RoamingType.PER_PLATFORM) {
-        return serverConnector.loadUserPreferences(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
+        return repositoryManager.read(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
       }
       else if (StoragePathMacros.WORKSPACE_FILE.equals(fileSpec)) {
-        return serverConnector.loadUserPreferences(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
+        return repositoryManager.read(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
       }
       else {
         return null;
