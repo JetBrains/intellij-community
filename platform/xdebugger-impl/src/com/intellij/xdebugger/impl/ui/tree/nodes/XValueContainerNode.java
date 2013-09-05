@@ -47,7 +47,6 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   protected XValueContainerNode(XDebuggerTree tree, final XDebuggerTreeNode parent, @NotNull ValueContainer valueContainer) {
     super(tree, parent, true);
     myValueContainer = valueContainer;
-    myText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
   }
 
   private void loadChildren() {
