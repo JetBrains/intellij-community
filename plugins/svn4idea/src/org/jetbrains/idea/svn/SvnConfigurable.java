@@ -29,6 +29,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.MultiLineTooltipUI;
@@ -212,7 +214,7 @@ public class SvnConfigurable implements Configurable {
   }
 
   public String getDisplayName() {
-    return SvnVcs.VCS_NAME;
+    return SvnVcs.VCS_DISPLAY_NAME;
   }
 
   public String getHelpTopic() {
@@ -301,14 +303,19 @@ public class SvnConfigurable implements Configurable {
     }
     configuration.mySSHConnectionTimeout = ((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue() * 1000;
     configuration.mySSHReadTimeout = ((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue() * 1000;
+
+    final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
+    boolean reloadWorkingCopies = !acceleration().equals(configuration.myUseAcceleration) ||
+                                  !StringUtil.equals(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim());
     configuration.myUseAcceleration = acceleration();
     configuration.SSL_PROTOCOLS = getSelectedSSL();
     SvnVcs.getInstance(myProject).refreshSSLProperty();
 
-    final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     applicationSettings17.setCommandLinePath(myCommandLineClient.getText().trim());
-    if (SvnConfiguration.UseAcceleration.commandLine.equals(configuration.myUseAcceleration)) {
-      vcs17.checkCommandLineVersion();
+    boolean isClientValid = vcs17.checkCommandLineVersion();
+    if (isClientValid && reloadWorkingCopies) {
+      vcs17.invokeRefreshSvnRoots();
+      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }
     configuration.setHttpTimeout(((SpinnerNumberModel) myHttpTimeout.getModel()).getNumber().longValue() * 1000);
   }
