@@ -549,7 +549,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public DfaConstValue getConstantValue(DfaVariableValue value) {
     DfaConstValue result = null;
     for (DfaValue equal : getEqClassesFor(value)) {
-      if (equal == value) continue;
+      if (equal instanceof DfaVariableValue) continue;
       DfaConstValue constValue = asConstantValue(equal);
       if (constValue == null) return null;
       result = constValue;
