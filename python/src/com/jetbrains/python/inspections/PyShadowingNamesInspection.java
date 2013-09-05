@@ -91,6 +91,11 @@ public class PyShadowingNamesInspection extends PyInspection {
     }
 
     private void processElement(@NotNull PsiNameIdentifierOwner element) {
+      final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
+      // Class-level names are rarely accessed inside at the class level, usually they are accessed as attributes
+      if (owner instanceof PyClass) {
+        return;
+      }
       final String name = element.getName();
       if (name != null && !myIgnoredNames.contains(name)) {
         final PsiElement identifier = element.getNameIdentifier();
