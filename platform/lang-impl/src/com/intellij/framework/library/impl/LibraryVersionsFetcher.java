@@ -40,7 +40,7 @@ public class LibraryVersionsFetcher extends FileSetVersionsFetcherBase<Framework
 
   @Override
   protected FrameworkLibraryVersion createVersion(Artifact version, List<DownloadableLibraryFileDescription> files) {
-    return new FrameworkLibraryVersionImpl(version.getVersion(), createAvailabilityCondition(version), files, myGroupId);
+    return new FrameworkLibraryVersionImpl(version.getName(), version.getVersion(), createAvailabilityCondition(version), files, myGroupId);
   }
 
   @NotNull
