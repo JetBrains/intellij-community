@@ -308,7 +308,8 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
       return false;
     }
     final PyClass cls = function.getContainingClass();
-    if (cls != null && function.getParameterList().getParameters()[0] == this) {
+    final PyParameter[] parameters = function.getParameterList().getParameters();
+    if (cls != null && parameters.length > 0 && parameters[0] == this) {
       if (PyNames.NEW.equals(function.getName())) {
         return true;
       }
