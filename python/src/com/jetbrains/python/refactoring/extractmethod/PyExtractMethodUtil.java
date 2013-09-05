@@ -140,7 +140,8 @@ public class PyExtractMethodUtil {
             // replace statements with call
             callElement = replaceElements(elementsRange, callElement);
             callElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(callElement);
-            processDuplicates(callElement, generatedMethod, finder, editor);
+            if (callElement != null)
+              processDuplicates(callElement, generatedMethod, finder, editor);
 
             // Set editor
             setSelectionAndCaret(editor, callElement);
