@@ -146,7 +146,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
   private void updateBorder() {
     int state = getExtendedState();
-    if (!WindowManager.getInstance().isFullScreenSupportedInCurrentOS() || !SystemInfo.isWindows) {
+    if (!WindowManager.getInstance().isFullScreenSupportedInCurrentOS() || !SystemInfo.isWindows || myRootPane == null) {
       return;
     }
 
