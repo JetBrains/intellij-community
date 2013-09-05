@@ -18,7 +18,6 @@ package hg4idea.test.history;
 import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import hg4idea.test.HgPlatformTest;
 import org.zmlx.hg4idea.HgVcs;
@@ -56,15 +55,6 @@ public class HgBrowseChangesTest extends HgPlatformTest {
     dateBefore = ChangeBrowserSettings.DATE_FORMAT.format(now.getTime());
     now.set(java.util.Calendar.YEAR, 1970);
     dateAfter = ChangeBrowserSettings.DATE_FORMAT.format(now.getTime());
-    if (!SystemInfo.isWindows) {
-      myVcs.getGlobalSettings().setRunViaBash(true);
-    }
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    myVcs.getGlobalSettings().setRunViaBash(false);
-    super.tearDown();
   }
 
   public void testLogRevisionWithDataFilter() throws HgCommandException, ParseException, VcsException {

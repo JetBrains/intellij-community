@@ -32,7 +32,7 @@ public class HgAnnotationTest extends HgPlatformTest {
     super.setUp();
     cd(myRepository);
     echo(firstCreatedFile, "a\n");
-    hg("commit -m modify");
+    hg("commit -m modify -u '" + defaultAuthor + "'");
     echo(firstCreatedFile, "b\n");
     hg("commit -m modify1 -u " + author1);
     echo(firstCreatedFile, "c\n");

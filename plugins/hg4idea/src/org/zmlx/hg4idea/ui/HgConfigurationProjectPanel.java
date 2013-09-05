@@ -15,7 +15,6 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
@@ -32,7 +31,6 @@ public class HgConfigurationProjectPanel {
   private JPanel myMainPanel;
   private JCheckBox myCheckIncomingOutgoingCbx;
   private TextFieldWithBrowseButton myPathSelector;
-  private JCheckBox myRunHgAsBashCheckBox;
   private final HgVcs myVcs;
 
   public HgConfigurationProjectPanel(@NotNull HgProjectSettings projectSettings, @Nullable Project project) {
@@ -43,13 +41,11 @@ public class HgConfigurationProjectPanel {
 
   public boolean isModified() {
     boolean executableModified = !getCurrentPath().equals(myProjectSettings.getHgExecutable());
-    return executableModified || myCheckIncomingOutgoingCbx.isSelected() != myProjectSettings.isCheckIncomingOutgoing()
-           || myRunHgAsBashCheckBox.isSelected() != myProjectSettings.isRunViaBash();
+    return executableModified || myCheckIncomingOutgoingCbx.isSelected() != myProjectSettings.isCheckIncomingOutgoing();
   }
 
   public void saveSettings() {
     myProjectSettings.setCheckIncomingOutgoing(myCheckIncomingOutgoingCbx.isSelected());
-    myProjectSettings.setRunViaBash(myRunHgAsBashCheckBox.isSelected());
     myProjectSettings.setHgExecutable(getCurrentPath());
     myVcs.checkVersion();
   }
@@ -60,7 +56,6 @@ public class HgConfigurationProjectPanel {
 
   public void loadSettings() {
     myCheckIncomingOutgoingCbx.setSelected(myProjectSettings.isCheckIncomingOutgoing() );
-    myRunHgAsBashCheckBox.setSelected(myProjectSettings.isRunViaBash());
     myPathSelector.setText(myProjectSettings.getGlobalSettings().getHgExecutable());
   }
 
@@ -80,8 +75,6 @@ public class HgConfigurationProjectPanel {
 
   private void createUIComponents() {
     myPathSelector = new HgSetExecutablePathPanel(myProjectSettings);
-    myRunHgAsBashCheckBox = new JCheckBox();
-    myRunHgAsBashCheckBox.setVisible(!SystemInfo.isWindows);
   }
 
   @NotNull

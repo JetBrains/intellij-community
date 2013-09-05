@@ -42,14 +42,6 @@ public class HgLogCommand {
   private static final String[] LONG_TEMPLATE_ITEMS =
     {"{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}", "{file_adds}", "{file_mods}",
       "{file_dels}", "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}"};
-  /**
-   * The reason of existing 2 different templates for bash and others explained in
-   * {@link org.zmlx.hg4idea.provider.HgCachingCommittedChangesProvider.HgLogArgsBuilder#getLogArgs()}
-   */
-  private static final String[] LONG_TEMPLATE_FOR_BASH =
-    {"{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}", "{file_adds}", "{file_mods}",
-      "{file_dels}", "{\"join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')\"}"};
-
   private static final String[] LONG_TEMPLATE_FOR_OLD_VERSIONS =
     {"{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}", "{file_adds}", "{file_mods}",
       "{file_dels}", "{file_copies}"};
@@ -121,9 +113,6 @@ public class HgLogCommand {
       if (!vcs.getVersion().isBuildInFunctionSupported()) {
         template = HgChangesetUtil.makeTemplate(LONG_TEMPLATE_FOR_OLD_VERSIONS);
         shouldParseOldTemplate = true;
-      }
-      else if (vcs.getGlobalSettings().isRunViaBash()) {
-        template = HgChangesetUtil.makeTemplate(LONG_TEMPLATE_FOR_BASH);
       }
       else {
         template = HgChangesetUtil.makeTemplate(LONG_TEMPLATE_ITEMS);
