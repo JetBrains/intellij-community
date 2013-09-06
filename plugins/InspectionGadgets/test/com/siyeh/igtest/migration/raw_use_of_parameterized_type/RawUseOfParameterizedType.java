@@ -12,9 +12,9 @@ import java.util.concurrent.Callable;
 }
 class RawUseOfParameterizedType {
   void array() {
-    final ArrayList[] array = new ArrayList[10];
+    final ArrayList[] array =
+      new ArrayList[10];
   }
-
   void anonymous() {
     new Callable() {
       @Override
