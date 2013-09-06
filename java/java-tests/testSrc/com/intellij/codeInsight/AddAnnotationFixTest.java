@@ -277,25 +277,6 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertFalse(deannotateFix.isAvailable(myProject, editor, file));
   }
 
-  public void testReadingOldPersistenceFormat() throws Throwable {
-    addDefaultLibrary();
-    myFixture.configureByFiles("content/anno/persistence/annotations.xml");
-    myFixture.configureByFiles("lib/persistence/Test.java");
-
-
-    ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(myProject);
-    PsiMethod method = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0];
-    PsiParameter parameter = method.getParameterList().getParameters()[0];
-
-    assertNotNull(manager.findExternalAnnotation(method, AnnotationUtil.NULLABLE));
-    assertNotNull(manager.findExternalAnnotation(method, AnnotationUtil.NLS));
-    assertEquals(2, manager.findExternalAnnotations(method).length);
-
-    assertNotNull(manager.findExternalAnnotation(parameter, AnnotationUtil.NOT_NULL));
-    assertNotNull(manager.findExternalAnnotation(parameter, AnnotationUtil.NON_NLS));
-    assertEquals(2, manager.findExternalAnnotations(parameter).length);
-  }
-
   private static void assertMethodAndParameterAnnotationsValues(ExternalAnnotationsManager manager,
                                                          PsiMethod method,
                                                          PsiParameter parameter,
