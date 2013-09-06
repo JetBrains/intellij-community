@@ -191,7 +191,7 @@ public class XmlRpcServerImpl implements XmlRpcServer {
     Object returnValue = method.invoke(target, argValues);
     if (returnValue == null && method.getReturnType() == Void.TYPE) {
       // Not supported by the spec.
-      throw new IllegalArgumentException("void return types for handler methods not supported");
+      throw new IllegalArgumentException("void return types for handler methods not supported, " + methodName);
     }
     return returnValue;
   }
