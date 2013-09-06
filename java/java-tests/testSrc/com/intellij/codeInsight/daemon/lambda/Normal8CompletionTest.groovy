@@ -50,4 +50,13 @@ class Foo {{ Object o = Fo<caret>x }}
 class Foo {{ Object o = Foo::<caret>x }}
 """
   }
+
+  public void testNoSuggestionsAfterMethodReferenceAndDot() {
+    String text = """
+class Foo {{ Object o = StringBuilder::append.<caret> }}
+"""
+    myFixture.configureByText "a.java", text
+    assertEmpty(myFixture.completeBasic())
+    myFixture.checkResult(text)
+  }
 }
