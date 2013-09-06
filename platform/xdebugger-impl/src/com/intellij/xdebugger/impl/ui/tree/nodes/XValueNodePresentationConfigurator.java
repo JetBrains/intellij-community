@@ -17,13 +17,12 @@ public final class XValueNodePresentationConfigurator {
   public interface ConfigurableXValueNode {
     void applyPresentation(@Nullable Icon icon,
                            @NotNull XValuePresentation valuePresenter,
-                           boolean hasChildren,
-                           boolean expand);
+                           boolean hasChildren);
   }
 
   public static abstract class ConfigurableXValueNodeImpl implements ConfigurableXValueNode, XValueNode {
     @Override
-    public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @Nullable String value, boolean hasChildren) {
+    public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren) {
       XValueNodePresentationConfigurator.setPresentation(icon, type, value, hasChildren, this);
     }
 
@@ -56,34 +55,24 @@ public final class XValueNodePresentationConfigurator {
                                 boolean hasChildren) {
       XValueNodePresentationConfigurator.setPresentation(icon, type, separator, valuePresenter, hasChildren, this);
     }
-
-    @Override
-    public void setGroupingPresentation(@Nullable Icon icon,
-                                        @NonNls @Nullable String value,
-                                        @NotNull XValuePresentation valuePresenter,
-                                        boolean expand) {
-      XValueNodePresentationConfigurator.setGroupingPresentation(icon, valuePresenter, expand, this);
-    }
   }
 
-  public static void setPresentation(@Nullable Icon icon,
-                                      @NotNull XValuePresentation presentation,
-                                      boolean hasChildren,
-                                      ConfigurableXValueNode node) {
-    doSetPresentation(icon, presentation, hasChildren, false, node);
+  public static void setPresentation(@Nullable Icon icon, @NotNull XValuePresentation presentation, boolean hasChildren,
+                                     ConfigurableXValueNode node) {
+    doSetPresentation(icon, presentation, hasChildren, node);
   }
 
   public static void setPresentation(@Nullable Icon icon,
                                      @NonNls @Nullable String type,
-                                     @NonNls @Nullable String value,
+                                     @NonNls @NotNull String value,
                                      boolean hasChildren,
                                      ConfigurableXValueNode node) {
-    doSetPresentation(icon, new XRegularValuePresentation(StringUtil.notNullize(value), type), hasChildren, false, node);
+    doSetPresentation(icon, new XRegularValuePresentation(value, type), hasChildren, node);
   }
 
   public static void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull final String separator,
                                      @NonNls @Nullable String value, boolean hasChildren, ConfigurableXValueNode node) {
-    doSetPresentation(icon, new XRegularValuePresentation(StringUtil.notNullize(value), type, separator), hasChildren, false, node);
+    doSetPresentation(icon, new XRegularValuePresentation(StringUtil.notNullize(value), type, separator), hasChildren, node);
   }
 
   public static void setPresentation(@Nullable Icon icon,
@@ -93,30 +82,22 @@ public final class XValueNodePresentationConfigurator {
                                      boolean hasChildren, ConfigurableXValueNode node) {
     doSetPresentation(icon,
                       valuePresenter == null ? new XRegularValuePresentation(value, type) : new XValuePresentationAdapter(value, type, valuePresenter),
-                      hasChildren, false, node);
-  }
-
-  public static void setGroupingPresentation(@Nullable Icon icon,
-                                             @NotNull XValuePresentation valuePresenter,
-                                             boolean expand,
-                                             ConfigurableXValueNode node) {
-    doSetPresentation(icon, valuePresenter, true, expand, node);
+                      hasChildren, node);
   }
 
   private static void doSetPresentation(@Nullable final Icon icon,
                                         @NotNull final XValuePresentation presentation,
                                         final boolean hasChildren,
-                                        final boolean expand,
                                         final ConfigurableXValueNode node) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      node.applyPresentation(icon, presentation, hasChildren, expand);
+      node.applyPresentation(icon, presentation, hasChildren);
     }
     else {
       application.invokeLater(new Runnable() {
         @Override
         public void run() {
-          node.applyPresentation(icon, presentation, hasChildren, expand);
+          node.applyPresentation(icon, presentation, hasChildren);
         }
       });
     }

@@ -32,9 +32,9 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,8 +60,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       String text = null;
       if (o != null) {
         final Object node = o.getLastPathComponent();
-        if (node instanceof XValueNodeImpl) {
-          text = ((XValueNodeImpl)node).getName();
+        if (node instanceof RestorableStateNode) {
+          text = ((RestorableStateNode)node).getName();
         }
         else if (node instanceof XDebuggerTreeNode) {
           text = ((XDebuggerTreeNode)node).getText().toString();
@@ -213,9 +213,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     }
   }
 
-  public void nodeLoaded(final @NotNull XValueNodeImpl node, final @NotNull String name, final @Nullable String value) {
+  public void nodeLoaded(final @NotNull RestorableStateNode node, final @NotNull String name) {
     for (XDebuggerTreeListener listener : myListeners) {
-      listener.nodeLoaded(node, name, value);
+      listener.nodeLoaded(node, name);
     }
   }
 
