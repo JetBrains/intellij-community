@@ -440,12 +440,8 @@ public class XDebuggerTestUtil {
     }
 
     @Override
-    public void errorOccurred(String errorMessage) {
+    public void errorOccurred(@NotNull String errorMessage) {
       setErrorMessage(errorMessage);
-    }
-
-    public void errorOccured(String errorMessage) {
-      errorOccurred(errorMessage);
     }
   }
 
