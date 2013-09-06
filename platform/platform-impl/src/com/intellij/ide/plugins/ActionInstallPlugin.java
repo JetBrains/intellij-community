@@ -119,7 +119,9 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           }
           final List<PluginId> depends = node.getDepends();
           if (depends != null) {
+            final Set<PluginId> optionalDeps = new HashSet<PluginId>(Arrays.asList(node.getOptionalDependentPluginIds()));
             for (PluginId dependantId : depends) {
+              if (optionalDeps.contains(dependantId)) continue;
               final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(dependantId);
               if (pluginDescriptor != null && pluginsModel.isDisabled(dependantId)) {
                 disabledDependants.add(pluginDescriptor);
