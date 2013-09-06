@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.128"  # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.129"  # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1785,7 +1785,7 @@ class ModuleRedeclarator(object):
         out(0, "# " + msg % args)
         out(0, "")
 
-    def redoClass(self, out, p_class, p_name, indent, p_modname=None, seen=None):
+    def redoClass(self, out, p_class, p_name, indent, p_modname=None, seen=None, inspect_dir=False):
         """
         Restores a class definition.
         @param out output function of a relevant buf
@@ -1841,7 +1841,7 @@ class ModuleRedeclarator(object):
         others = {}
         we_are_the_base_class = p_modname == BUILTIN_MOD_NAME and p_name == "object"
         try:
-            if hasattr(p_class, "__dict__"):
+            if hasattr(p_class, "__dict__") and not inspect_dir:
                 field_source = p_class.__dict__
                 field_keys = field_source.keys() # Jython 2.5.1 _codecs fail here
             else:
@@ -1994,7 +1994,7 @@ class ModuleRedeclarator(object):
             self.imports_buf.out(0, "")
             self.imports_buf.out(0, "# imports")
 
-    def redo(self, p_name, imported_module_names):
+    def redo(self, p_name, inspect_dir):
         """
         Restores module declarations.
         Intended for built-in modules and thus does not handle import statements.
@@ -2022,7 +2022,10 @@ class ModuleRedeclarator(object):
         vars_complex = {}
         funcs = {}
         classes = {}
-        for item_name in self.module.__dict__:
+        module_dict = self.module.__dict__
+        if inspect_dir:
+            module_dict = dir(self.module)
+        for item_name in module_dict:
             note("looking at %s", item_name)
             if item_name in (
             "__dict__", "__doc__", "__module__", "__file__", "__name__", "__builtins__", "__package__"):
@@ -2030,8 +2033,13 @@ class ModuleRedeclarator(object):
             try:
                 item = getattr(self.module, item_name) # let getters do the magic
             except AttributeError:
+                if not item_name in self.module.__dict__: continue
                 item = self.module.__dict__[item_name] # have it raw
                 # check if it has percolated from an imported module
+            except NotImplementedError:
+                if not item_name in self.module.__dict__: continue
+                item = self.module.__dict__[item_name] # have it raw
+
             # unless we're adamantly positive that the name was imported, we assume it is defined here
             mod_name = None # module from which p_name might have been imported
             # IronPython has non-trivial reexports in System module, but not in others:
@@ -2164,7 +2172,7 @@ class ModuleRedeclarator(object):
                     out(0, "# definition of ", item_name, " omitted")
                     continue
                 item = classes[item_name]
-                self.redoClass(out, item, item_name, 0, p_modname=p_name, seen=seen_classes)
+                self.redoClass(out, item, item_name, 0, p_modname=p_name, seen=seen_classes, inspect_dir=inspect_dir)
                 self._defined[item_name] = True
                 out(0, "") # empty line after each item
 
@@ -2375,17 +2383,17 @@ def buildOutputName(subdir, name):
 
     return fname
 
-
+MODULES_INSPECT_DIR = ['gi.repository']
 def redoModule(name, outfile, mod_file_name, doing_builtins, imported_module_names):
     # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
     # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
     # sys.modules
     mod = sys.modules.get(name)
+    path = name.split('.')
     if not mod and sys.platform == 'cli':
         # "import System.Collections" in IronPython 2.7 doesn't actually put System.Collections in sys.modules
         # instead, sys.modules['System'] get set to a Microsoft.Scripting.Actions.NamespaceTracker and Collections can be
         # accessed as its attribute
-        path = name.split('.')
         mod = sys.modules[path[0]]
         for component in path[1:]:
             try:
@@ -2397,17 +2405,17 @@ def redoModule(name, outfile, mod_file_name, doing_builtins, imported_module_nam
     if mod:
         action("restoring")
         r = ModuleRedeclarator(mod, outfile, mod_file_name, doing_builtins=doing_builtins)
-        r.redo(name, imported_module_names)
+        r.redo(name, ".".join(path[:-1]) in MODULES_INSPECT_DIR)
         action("flushing")
         r.flush()
     else:
-        report("Failed to find imported module in sys.modules")
+        report("Failed to find imported module in sys.modules " + name)
 
 # find_binaries functionality
 
 BIN_MODULE_FNAME_PAT = re.compile('([a-zA-Z_]+[0-9a-zA-Z]*)\\.(?:pyc|pyo|(?:[a-zA-Z_]+-\\d\\d[a-zA-Z]*\\.|.+-linux-gnu\\.)?(?:so|pyd))')
 # possible binary module filename: letter,    alphanum                    architecture per PEP-3149
-
+TYPELIB_MODULE_FNAME_PAT = re.compile("([a-zA-Z_]+[0-9a-zA-Z]*)[0-9a-zA-Z-.]*\\.typelib")
 def cut_binary_lib_suffix(path, f):
     """
     @param path where f lives
@@ -2415,7 +2423,7 @@ def cut_binary_lib_suffix(path, f):
     @return f without a binary suffix (that is, an importable name) if path+f is indeed a binary lib, or None.
     Note: if for .pyc or .pyo file a .py is found, None is returned.
     """
-    if not f.endswith(".pyc") and not f.endswith(".pyo") and not f.endswith(".so") and not f.endswith(".pyd"):
+    if not f.endswith(".pyc") and not f.endswith(".typelib") and not f.endswith(".pyo") and not f.endswith(".so") and not f.endswith(".pyd"):
         return None
     ret = None
     m = BIN_MODULE_FNAME_PAT.match(f)
@@ -2429,6 +2437,9 @@ def cut_binary_lib_suffix(path, f):
         fullname = os.path.join(path, f[:-1]) # check for __pycache__ is made outside
         if os.path.exists(fullname):
             ret = None
+    pat_match = TYPELIB_MODULE_FNAME_PAT.match(f)
+    if pat_match:
+        ret = "gi.repository." + pat_match.group(1)
     return ret
 
 
@@ -2664,7 +2675,9 @@ def processOne(name, mod_file_name, doing_builtins):
             redoModule(name, outfile, mod_file_name, doing_builtins, imported_module_names)
             # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
             # restore all of them
-            if imported_module_names:
+            path = name.split(".")
+            redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
+            if imported_module_names and redo_imports:
                 for m in sys.modules.keys():
                     action("looking at possible submodule %r", m)
                     # if module has __file__ defined, it has Python source code and doesn't need a skeleton

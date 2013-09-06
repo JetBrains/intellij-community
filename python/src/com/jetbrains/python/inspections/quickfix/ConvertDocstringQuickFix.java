@@ -32,7 +32,7 @@ public class ConvertDocstringQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement expression = descriptor.getPsiElement();
-    if (expression instanceof PyStringLiteralExpression) {
+    if (expression instanceof PyStringLiteralExpression && expression.isWritable()) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
       String stringText = expression.getText();
