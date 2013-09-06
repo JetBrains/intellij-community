@@ -74,8 +74,7 @@ public class PyRedeclarationInspection extends PyInspection {
     }
 
     private static boolean isConditional(@NotNull PsiElement node) {
-      return PsiTreeUtil.getParentOfType(node, PyIfStatement.class, PyConditionalExpression.class, PyLoopStatement.class,
-                                         PyComprehensionElement.class, PyTryExceptStatement.class) != null;
+      return PsiTreeUtil.getParentOfType(node, PyIfStatement.class, PyConditionalExpression.class, PyTryExceptStatement.class) != null;
     }
 
     private static boolean isDecorated(@NotNull PyDecoratable node) {
@@ -118,17 +117,20 @@ public class PyRedeclarationInspection extends PyInspection {
                 if (rwInstruction.getAccess().isWriteAccess()) {
                   final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
                   final PsiElement originalElement = rwInstruction.getElement();
-                  if (originalElement != null && suggestRename(element, originalElement)) {
-                    quickFixes.add(new PyRenameElementQuickFix());
+                  if (originalElement != null && originalElement != element) {
+                    if (suggestRename(element, originalElement)) {
+                      quickFixes.add(new PyRenameElementQuickFix());
+                    }
+                    final PsiElement identifier = element.getNameIdentifier();
+                    registerProblem(identifier != null ? identifier : element,
+                                    PyBundle.message("INSP.redeclared.name", name),
+                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                    null,
+                                    quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+                    return ControlFlowUtil.Operation.BREAK;
                   }
-                  final PsiElement identifier = element.getNameIdentifier();
-                  registerProblem(identifier != null ? identifier : element,
-                                  PyBundle.message("INSP.redeclared.name", name),
-                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                  null,
-                                  quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
                 }
-                return ControlFlowUtil.Operation.BREAK;
+                return ControlFlowUtil.Operation.CONTINUE;
               }
             }
             return ControlFlowUtil.Operation.NEXT;
