@@ -105,7 +105,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         return;
       }
       super.visitTypeElement(typeElement);
-      final PsiElement parent = typeElement.getParent();
+      final PsiElement parent = PsiTreeUtil.skipParentsOfType(typeElement, PsiTypeElement.class);
       if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiClassObjectAccessExpression) {
         return;
       }

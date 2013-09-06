@@ -37,4 +37,13 @@ class Y implements X {
   public List foo(Map map) {
     return null;
   }
+
+  boolean m(Object o) {
+    final Class<List<String>[][]> aClass = (Class)List[][].class;
+    return o instanceof List[];
+  }
+
+  int f(Object o) {
+    return ((List[])o).length;
+  }
 }
