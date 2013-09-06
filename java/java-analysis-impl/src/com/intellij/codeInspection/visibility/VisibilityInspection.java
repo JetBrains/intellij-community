@@ -160,7 +160,10 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       //ignore implicit constructors. User should not be able to see them.
       if (refElement instanceof RefImplicitConstructor) return null;
 
-      if (refElement instanceof RefField && ((RefField)refElement).getElement() instanceof PsiEnumConstant) return null;
+      if (refElement instanceof RefField) {
+        final Boolean isEnumConstant = refElement.getUserData(RefField.ENUM_CONSTANT);
+        if (isEnumConstant != null && isEnumConstant.booleanValue()) return null;
+      }
 
       //ignore library override methods.
       if (refElement instanceof RefMethod) {
