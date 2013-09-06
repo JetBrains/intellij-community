@@ -413,7 +413,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     }
 
     @Override
-    protected void appendToHistoryDocument(@NotNull Document history, @NotNull String text) {
+    protected void appendToHistoryDocument(@NotNull Document history, @NotNull CharSequence text) {
       myPythonConsoleView.beforeExternalAddContentToDocument(text.length(), ConsoleViewContentType.NORMAL_OUTPUT);
       super.appendToHistoryDocument(history, text);
     }
