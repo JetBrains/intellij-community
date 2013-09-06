@@ -61,6 +61,10 @@ public class ExternalTaskExecutionInfo {
     myExecutorId = executorId;
   }
 
+  public String getDescription() {
+    return StringUtil.join(mySettings.getTaskDescriptions(), "\n");
+  }
+
   @Override
   public int hashCode() {
     int result = mySettings.hashCode();
