@@ -129,14 +129,14 @@ public abstract class ExecutableValidator {
     }
   }
 
-  private void showSettingsAndExpireIfFixed(@NotNull Notification notification) {
+  protected void showSettingsAndExpireIfFixed(@NotNull Notification notification) {
     showSettings();
     if (isExecutableValid(getCurrentExecutable())) {
       notification.expire();
     }
   }
 
-  private void showSettings() {
+  protected void showSettings() {
     Configurable configurable = getConfigurable();
     ShowSettingsUtil.getInstance().showSettingsDialog(myProject, configurable.getDisplayName());
   }

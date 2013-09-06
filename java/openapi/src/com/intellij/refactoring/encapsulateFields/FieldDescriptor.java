@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,42 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 23-Oct-2009
- */
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface EncapsulateFieldsDescriptor {
-  PsiField[] getSelectedFields();
+/**
+* @author Max Medvedev
+*/
+public interface FieldDescriptor {
+  @NotNull
+  PsiField getField();
 
-  String[] getGetterNames();
+  @NotNull
+  String getGetterName();
 
-  String[] getSetterNames();
+  @NotNull
+  String getSetterName();
 
   @Nullable
-  PsiMethod[] getGetterPrototypes();
+  PsiMethod getGetterPrototype();
 
   @Nullable
-  PsiMethod[] getSetterPrototypes();
+  PsiMethod getSetterPrototype();
 
-  boolean isToEncapsulateGet();
-
-  boolean isToEncapsulateSet();
-
-  boolean isToUseAccessorsWhenAccessible();
-
-  @PsiModifier.ModifierConstant
-  String getFieldsVisibility();
-
-  @PsiModifier.ModifierConstant
-  String getAccessorsVisibility();
-
-  int getJavadocPolicy();
+  void refreshField(@NotNull PsiField newField);
 }

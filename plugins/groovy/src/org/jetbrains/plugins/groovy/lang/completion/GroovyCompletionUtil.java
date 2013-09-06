@@ -301,7 +301,7 @@ public class GroovyCompletionUtil {
       }
     }
 
-    String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : element.getText();
+    String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() :   element.getText();
     if (name == null || !matcher.prefixMatches(name)) {
       return Collections.emptyList();
     }
@@ -421,6 +421,14 @@ public class GroovyCompletionUtil {
   public static boolean hasConstructorParameters(@NotNull PsiClass clazz, @NotNull PsiElement place) {
     final GroovyResolveResult[] constructors = ResolveUtil.getAllClassConstructors(clazz, PsiSubstitutor.EMPTY, null, place);
 
+
+    boolean hasSetters = ContainerUtil.find(clazz.getAllMethods(), new Condition<PsiMethod>() {
+      @Override
+      public boolean value(PsiMethod method) {
+        return isSimplePropertySetter(method);
+      }
+    }) != null;
+
     boolean hasParameters = false;
     boolean hasAccessibleConstructors = false;
     for (GroovyResolveResult result : constructors) {
@@ -436,7 +444,7 @@ public class GroovyCompletionUtil {
       }
     }
 
-    return !hasAccessibleConstructors && hasParameters;
+    return !hasAccessibleConstructors && (hasParameters || hasSetters);
   }
 
   public static void addImportForItem(PsiFile file, int startOffset, LookupItem item) throws IncorrectOperationException {

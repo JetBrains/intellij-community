@@ -77,7 +77,7 @@ public class DataFlowRunner {
       if ((parent instanceof PsiNewExpression || parent instanceof PsiDeclarationStatement) && block != null) {
         final RunnerResult result = analyzeMethod(block, visitor);
         if (result == RunnerResult.OK) {
-          final Collection<DfaMemoryState> closureStates = myNestedClosures.get(block);
+          final Collection<DfaMemoryState> closureStates = myNestedClosures.get(DfaPsiUtil.getTopmostBlockInSameClass(psiBlock));
           if (!closureStates.isEmpty()) {
             return closureStates;
           }

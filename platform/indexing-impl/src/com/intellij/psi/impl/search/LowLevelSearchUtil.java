@@ -148,7 +148,7 @@ public class LowLevelSearchUtil {
     if (progress != null) progress.checkCanceled();
 
     PsiFile file = scope.getContainingFile();
-    final CharSequence buffer = file.getViewProvider().getContents();
+    final CharSequence buffer = file.getText();
 
     TextRange range = scope.getTextRange();
     if (range == null) {

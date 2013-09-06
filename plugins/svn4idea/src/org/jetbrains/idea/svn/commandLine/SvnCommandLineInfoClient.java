@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
@@ -50,11 +51,12 @@ import java.util.List;
 public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient");
+
+  @NotNull
   private final Project myProject;
 
-  public SvnCommandLineInfoClient(final Project project) {
-    // TODO: Remove svn kit client instantiation
-    super(SvnVcs.getInstance(project).createWCClient());
+  public SvnCommandLineInfoClient(@NotNull final Project project) {
+    super(SvnVcs.getInstance(project));
     myProject = project;
   }
 
@@ -125,6 +127,12 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       // svn: E200009: Could not display info for all targets because some targets don't exist
       } else if (notEmpty && text.contains("some targets don't exist")) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, e), e);
+      } else if (notEmpty && text.contains(String.valueOf(SVNErrorCode.WC_UPGRADE_REQUIRED.getCode()))) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_UPGRADE_REQUIRED, e), e);
+      } else if (notEmpty &&
+                 (text.contains("upgrade your Subversion client") ||
+                  text.contains(String.valueOf(SVNErrorCode.WC_UNSUPPORTED_FORMAT.getCode())))) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, e), e);
       }
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
     }

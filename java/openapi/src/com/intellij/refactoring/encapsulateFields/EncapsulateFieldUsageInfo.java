@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.frame;
+package com.intellij.refactoring.encapsulateFields;
 
-import com.intellij.ui.ColoredTextContainer;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.psi.PsiReference;
+import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class XGroupingValuePresenter extends XValuePresenter {
-  public static final XGroupingValuePresenter INSTANCE = new XGroupingValuePresenter();
+/**
+* @author Max Medvedev
+*/
+public class EncapsulateFieldUsageInfo extends UsageInfo {
+  private final FieldDescriptor myFieldDescriptor;
 
-  @Nullable
-  @Override
-  public SimpleTextAttributes getNameAttributes() {
-    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+  public EncapsulateFieldUsageInfo(PsiReference ref, @NotNull FieldDescriptor descriptor) {
+    super(ref);
+    myFieldDescriptor = descriptor;
   }
 
-  @Override
-  public void appendSeparator(@NotNull ColoredTextContainer text) {
-  }
-
-  @Override
-  public void append(@NotNull String value, @NotNull ColoredTextContainer text, boolean changed) {
+  @NotNull
+  public FieldDescriptor getFieldDescriptor() {
+    return myFieldDescriptor;
   }
 }

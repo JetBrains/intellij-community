@@ -64,14 +64,6 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     myAppSettings.setHgExecutable(text);
   }
 
-  public boolean isRunViaBash() {
-    return myAppSettings.isRunViaBash();
-  }
-
-  public void setRunViaBash(boolean runViaBash) {
-    myAppSettings.setRunViaBash(runViaBash);
-  }
-
   @NotNull
   public HgGlobalSettings getGlobalSettings() {
     return myAppSettings;

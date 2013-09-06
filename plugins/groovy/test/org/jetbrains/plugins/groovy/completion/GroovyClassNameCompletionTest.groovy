@@ -50,7 +50,13 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
 
   public void testInFieldDeclaration() throws Exception {doTest();}
   public void testInParameter() throws Exception {doTest();}
-  public void testInImport() throws Exception {doTest();}
+  public void testInImport() throws Exception {
+    addClassToProject("a", "FooBar")
+    myFixture.configureByFile(getTestName(false) + ".groovy")
+    complete()
+    myFixture.type('\n')
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+  }
 
   public void testWhenClassExistsInSamePackage() throws Exception {
     addClassToProject("a", "FooBar")

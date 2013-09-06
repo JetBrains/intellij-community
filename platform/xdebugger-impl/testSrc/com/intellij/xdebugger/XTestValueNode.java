@@ -1,8 +1,9 @@
 package com.intellij.xdebugger;
 
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.intellij.xdebugger.frame.XValuePresenter;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,13 +22,10 @@ public class XTestValueNode extends XValueNodePresentationConfigurator.Configura
 
   @Override
   public void applyPresentation(@Nullable Icon icon,
-                                @Nullable String type,
-                                @Nullable String value,
-                                @NotNull XValuePresenter valuePresenter,
-                                boolean hasChildren,
-                                boolean expand) {
-    myType = type;
-    myValue = value;
+                                @NotNull XValuePresentation valuePresentation,
+                                boolean hasChildren) {
+    myType = valuePresentation.getType();
+    myValue = XValuePresentationUtil.computeValueText(valuePresentation);
     myHasChildren = hasChildren;
 
     myFinished.release();

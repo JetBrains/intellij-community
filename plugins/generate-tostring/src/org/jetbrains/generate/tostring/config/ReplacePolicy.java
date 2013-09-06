@@ -40,11 +40,11 @@ public class ReplacePolicy implements ConflictResolutionPolicy {
     }
 
     public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
-        if (existingMethod != null) {
-            return (PsiMethod) existingMethod.replace(newMethod);
-        } else {
-            return DuplicatePolicy.getInstance().applyMethod(clazz, existingMethod, newMethod, editor);
-        }
+      if (existingMethod != null) {
+        existingMethod.delete();
+        existingMethod = null;
+      }
+      return DuplicatePolicy.getInstance().applyMethod(clazz, existingMethod, newMethod, editor);
     }
 
     public String toString() {

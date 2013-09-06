@@ -394,6 +394,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private void runGlobalTools(@NotNull AnalysisScope scope, @NotNull InspectionManagerEx inspectionManager, @NotNull List<Tools> globalTools) {
     final List<InspectionToolWrapper> needRepeatSearchRequest = new ArrayList<InspectionToolWrapper>();
 
+    final boolean surelyNoExternalUsages = scope.getScopeType() == AnalysisScope.PROJECT;
     for (Tools tools : globalTools) {
       for (ScopeToolState state : tools.getTools()) {
         InspectionToolWrapper toolWrapper = state.getTool();
@@ -410,7 +411,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             }
           }
           tool.runInspection(scope, inspectionManager, this, toolPresentation);
-          if (tool.queryExternalUsagesRequests(inspectionManager, this, toolPresentation)) {
+          //skip phase when we are sure that scope already contains everything
+          if (!surelyNoExternalUsages && tool.queryExternalUsagesRequests(inspectionManager, this, toolPresentation)) {
             needRepeatSearchRequest.add(toolWrapper);
           }
         }

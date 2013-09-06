@@ -15,24 +15,44 @@
  */
 package com.intellij.xdebugger.frame;
 
-import com.intellij.ui.ColoredTextContainer;
-import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class XValuePresenter {
-  public void appendSeparator(@NotNull ColoredTextContainer text) {
-    text.append(" = ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+/**
+ * Represents a group of values in a debugger tree.
+ */
+public abstract class XValueGroup extends XValueContainer {
+  private final String myName;
+
+  protected XValueGroup(@NotNull String name) {
+    myName = name;
   }
 
-  public void append(@NotNull String value, @NotNull ColoredTextContainer text, boolean changed) {
+  @NotNull
+  public String getName() {
+    return myName;
   }
 
-  @Nullable
   /**
-   * if returns null, default value (depends on implementation) will be used
+   * @return {@code true} to automatically expand the group node when it's added to a tree
    */
-  public SimpleTextAttributes getNameAttributes() {
+  public boolean isAutoExpand() {
+    return false;
+  }
+
+  /**
+   * @return separator between the group name and the {@link #getComment() comment} in the node text
+   */
+  @NotNull
+  public String getSeparator() {
+    return " = ";
+  }
+
+  /**
+   * @return optional comment shown after the group name
+   */
+  @Nullable
+  public String getComment() {
     return null;
   }
 }

@@ -16,6 +16,8 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import com.intellij.xdebugger.frame.*;
@@ -39,6 +41,8 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   private List<XValueNodeImpl> myValueChildren;
   private List<MessageTreeNode> myMessageChildren;
   private List<MessageTreeNode> myTemporaryMessageChildren;
+  private List<XValueGroupNodeImpl> myTopGroups;
+  private List<XValueGroupNodeImpl> myBottomGroups;
   private List<TreeNode> myCachedAllChildren;
   protected final ValueContainer myValueContainer;
   private volatile boolean myObsolete;
@@ -47,7 +51,6 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   protected XValueContainerNode(XDebuggerTree tree, final XDebuggerTreeNode parent, @NotNull ValueContainer valueContainer) {
     super(tree, parent, true);
     myValueContainer = valueContainer;
-    myText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
   }
 
   private void loadChildren() {
@@ -89,6 +92,8 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
           myValueChildren.add(node);
           newChildren.add(node);
         }
+        myTopGroups = createGroupNodes(children.getTopGroups(), myTopGroups, newChildren);
+        myBottomGroups = createGroupNodes(children.getBottomGroups(), myBottomGroups, newChildren);
         myCachedAllChildren = null;
         fireNodesInserted(newChildren);
         if (last) {
@@ -101,6 +106,21 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
         myTree.childrenLoaded(XValueContainerNode.this, newChildren, last);
       }
     });
+  }
+
+  @Nullable
+  private List<XValueGroupNodeImpl> createGroupNodes(List<XValueGroup> groups,
+                                                     @Nullable List<XValueGroupNodeImpl> prevNodes,
+                                                     List<XValueContainerNode<?>> newChildren) {
+    if (groups.isEmpty()) return prevNodes;
+
+    List<XValueGroupNodeImpl> nodes = prevNodes != null ? prevNodes : new SmartList<XValueGroupNodeImpl>();
+    for (XValueGroup group : groups) {
+      XValueGroupNodeImpl node = new XValueGroupNodeImpl(myTree, this, group);
+      nodes.add(node);
+      newChildren.add(node);
+    }
+    return nodes;
   }
 
   @Override
@@ -124,6 +144,8 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     myMessageChildren = null;
     myTemporaryMessageChildren = null;
     myValueChildren = null;
+    myTopGroups = null;
+    myBottomGroups = null;
     fireNodeStructureChanged();
   }
 
@@ -182,8 +204,14 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
       if (myMessageChildren != null) {
         myCachedAllChildren.addAll(myMessageChildren);
       }
+      if (myTopGroups != null) {
+        myCachedAllChildren.addAll(myTopGroups);
+      }
       if (myValueChildren != null) {
         myCachedAllChildren.addAll(myValueChildren);
+      }
+      if (myBottomGroups != null) {
+        myCachedAllChildren.addAll(myBottomGroups);
       }
       if (myTemporaryMessageChildren != null) {
         myCachedAllChildren.addAll(myTemporaryMessageChildren);
@@ -199,8 +227,11 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   @Override
   @Nullable
-  public List<XValueNodeImpl> getLoadedChildren() {
-    return myValueChildren;
+  public List<? extends XValueContainerNode<?>> getLoadedChildren() {
+    List<? extends XValueContainerNode<?>> empty = Collections.<XValueGroupNodeImpl>emptyList();
+    return ContainerUtil.concat(ObjectUtils.notNull(myTopGroups, empty),
+                                ObjectUtils.notNull(myValueChildren, empty),
+                                ObjectUtils.notNull(myBottomGroups, empty));
   }
 
   public void setObsolete() {

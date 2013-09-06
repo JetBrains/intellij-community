@@ -16,8 +16,8 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,10 +78,10 @@ public class XDebuggerTreeState {
 
   @Nullable
   private static NodeInfo createNode(final XDebuggerTreeNode node, boolean selected) {
-    if (node instanceof XValueNodeImpl) {
-      XValueNodeImpl valueNode = (XValueNodeImpl)node;
+    if (node instanceof RestorableStateNode) {
+      RestorableStateNode valueNode = (RestorableStateNode)node;
       if (valueNode.isComputed()) {
-        return new NodeInfo(valueNode.getName(), valueNode.getValue(), selected);
+        return new NodeInfo(valueNode.getName(), valueNode.getRawValue(), selected);
       }
     }
     return null;

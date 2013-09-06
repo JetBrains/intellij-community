@@ -315,7 +315,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Override
-  public void saveContent(final String fileSpec, @NotNull final InputStream content, final long size, final RoamingType roamingType, boolean async) {
+  public void saveContent(@NotNull final String fileSpec, @NotNull final InputStream content, final long size, @NotNull final RoamingType roamingType, boolean async) {
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
         if (streamProvider.isEnabled()) {
@@ -332,7 +332,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Override
-  public void deleteFile(final String fileSpec, final RoamingType roamingType) {
+  public void deleteFile(@NotNull final String fileSpec, @NotNull final RoamingType roamingType) {
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
         if (streamProvider.isEnabled()) {
@@ -347,28 +347,15 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @NotNull
   @Override
-  public StreamProvider[] getStreamProviders(RoamingType type) {
+  public StreamProvider[] getStreamProviders(@NotNull RoamingType type) {
     synchronized (myStreamProviders) {
-      final Collection<StreamProvider> providers = myStreamProviders.get(type);
+      Collection<StreamProvider> providers = myStreamProviders.get(type);
       return providers.isEmpty() ? EMPTY_ARRAY : providers.toArray(new StreamProvider[providers.size()]);
     }
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  @Deprecated
-  /**
-   * @deprecated This method is incorrect, returned collection can contain duplicated values
-   * remove in idea 14
-   */
-  public Collection<StreamProvider> getStreamProviders() {
-    synchronized (myStreamProviders) {
-      return Collections.unmodifiableCollection(myStreamProviders.values());
-    }
-  }
-
   @Override
-  public InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException {
+  public InputStream loadContent(@NotNull final String fileSpec, @NotNull final RoamingType roamingType) throws IOException {
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
         if (streamProvider.isEnabled()) {
@@ -389,7 +376,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Override
-  public String[] listSubFiles(final String fileSpec) {
+  public String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 

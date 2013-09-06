@@ -24,31 +24,33 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.*;
 
 
 public class GotoInstruction extends Instruction {
-  private int myOffset;
+  private ControlFlow.ControlFlowOffset myOffset;
 
-  public GotoInstruction(int myOffset) {
+  public GotoInstruction(ControlFlow.ControlFlowOffset myOffset) {
     this.myOffset = myOffset;
   }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    Instruction nextInstruction = runner.getInstruction(myOffset);
+    Instruction nextInstruction = runner.getInstruction(myOffset.getInstructionOffset());
     return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, stateBefore)};
   }
 
   public String toString() {
-    return "GOTO: " + myOffset;
+    return "GOTO: " + myOffset.getInstructionOffset();
   }
 
-  public void setOffset(int offset) {
-    myOffset = offset;
+  public void setOffset(final int offset) {
+    myOffset = new ControlFlow.ControlFlowOffset() {
+      @Override
+      public int getInstructionOffset() {
+        return offset;
+      }
+    };
   }
 
 }

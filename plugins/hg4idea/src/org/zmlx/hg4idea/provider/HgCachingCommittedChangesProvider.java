@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -214,7 +215,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
     hgLogCommand.setLogFile(false);
     List<String> args = null;
     if (changeBrowserSettings != null) {
-      HgLogArgsBuilder argsBuilder = new HgLogArgsBuilder(changeBrowserSettings, myVcs.getGlobalSettings().isRunViaBash());
+      HgLogArgsBuilder argsBuilder = new HgLogArgsBuilder(changeBrowserSettings);
       args = argsBuilder.getLogArgs();
       if (args.isEmpty()) {
         maxCount = maxCount == 0 ? VcsConfiguration.getInstance(project).MAXIMUM_HISTORY_ROWS  : maxCount;
@@ -371,7 +372,14 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
                                      localRevision.getAuthor(), localRevision.getRevisionDate(), changes);
   }
 
-  private final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
+  private static final Comparator<HgCommittedChangeList> BRANCH_COLUMN_COMPARATOR = new Comparator<HgCommittedChangeList>() {
+    @Override
+    public int compare(HgCommittedChangeList o1, HgCommittedChangeList o2) {
+      return Comparing.compare(o1.getBranch(), o2.getBranch());
+    }
+  };
+
+  private static final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
     public String getTitle() {
       return HgVcsMessages.message("hg4idea.changelist.column.branch");
     }
@@ -380,16 +388,20 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
       final String branch = changeList.getBranch();
       return branch.isEmpty() ? "default" : branch;
     }
+
+    @Nullable
+    @Override
+    public Comparator<HgCommittedChangeList> getComparator() {
+      return BRANCH_COLUMN_COMPARATOR;
+    }
   };
 
   private static class HgLogArgsBuilder {
 
     @NotNull private final ChangeBrowserSettings myBrowserSettings;
-    private final boolean isRunViaBash;
 
-    HgLogArgsBuilder(@NotNull ChangeBrowserSettings browserSettings, boolean runViaBash) {
+    HgLogArgsBuilder(@NotNull ChangeBrowserSettings browserSettings) {
       myBrowserSettings = browserSettings;
-      isRunViaBash = runViaBash;
     }
 
     @NotNull
@@ -402,13 +414,6 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
       Long beforeFilter = myBrowserSettings.getChangeBeforeFilter();
 
       final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-      //if command executed via bash all mercurial internal (like date, ancestor etc. ) commands should be quoted,
-      // but several commands should be quoted once not each.
-      //f.e. bash -cl 'hg log --rev "date('> 2013')"' OR  bash -cl 'hg log --rev "date('> 2013') and date('< 2014')" '
-      //this complex workaround is needed because java process wrap arguments in single or double quotes,
-      // so this may produce conflicts with hg commands.
-      //If command wrapped by quotes should not escape bash control symbols inside!
-      String separator = isRunViaBash ? "\"" : "";
 
       if ((afterFilter != null) && (beforeFilter != null)) {
         args.append(afterFilter).append(":").append(beforeFilter);
@@ -438,7 +443,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
       if (args.length() > 0) {
         List<String> logArgs = new ArrayList<String>();
         logArgs.add("-r");
-        logArgs.add(separator + args.toString() + separator);
+        logArgs.add(args.toString());
         return logArgs;
       }
 

@@ -167,7 +167,7 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
         }
 
         GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(pair.second);
-        DistributionType distributionType = projectLevelSettings == null ? DistributionType.BUNDLED : projectLevelSettings.getDistributionType();
+        DistributionType distributionType = projectLevelSettings == null ? DistributionType.LOCAL : projectLevelSettings.getDistributionType();
         GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
                                                                      settings.getServiceDirectoryPath(),
                                                                      distributionType,

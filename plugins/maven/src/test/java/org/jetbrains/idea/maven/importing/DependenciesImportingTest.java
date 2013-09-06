@@ -2337,6 +2337,11 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModules("project", "m1");
     assertModuleLibDeps("m1", "Maven: test:m2:2");
+
+    assertModuleLibDep("m1", "Maven: test:m2:2",
+                       "jar://" + getRepositoryPath() + "/test/m2/2/m2-2.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/m2/2/m2-2-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/m2/2/m2-2-javadoc.jar!/");
   }
 
   public void testSaveJdkPosition() throws Exception {

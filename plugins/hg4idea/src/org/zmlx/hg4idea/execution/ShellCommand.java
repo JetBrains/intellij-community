@@ -12,61 +12,43 @@
 // limitations under the License.
 package org.zmlx.hg4idea.execution;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.List;
-
 
 public final class ShellCommand {
 
-  private static final Logger LOG = Logger.getInstance(ShellCommand.class.getName());
+  private final GeneralCommandLine myCommandLine;
 
-  private static final int BUFFER_SIZE = 1024;
-  private final boolean myRunViaBash;
-
-  public ShellCommand(boolean runViaBash) {
-    myRunViaBash = runViaBash;
-  }
-
-  @NotNull
-  public HgCommandResult execute(List<String> commandLine, String dir, Charset charset) throws ShellCommandException, InterruptedException {
+  public ShellCommand(@Nullable List<String> commandLine, @Nullable String dir, @Nullable Charset charset) {
     if (commandLine == null || commandLine.isEmpty()) {
       throw new IllegalArgumentException("commandLine is empty");
     }
-
-    if (myRunViaBash) {
-      // run via bash -cl <hg command> => need to escape bash special symbols but not quoted
-      // '-l' makes bash execute as a login shell thus reading .bash_profile
-      StringBuilder hgCommandBuilder = new StringBuilder();
-      for (String command : commandLine) {
-        hgCommandBuilder.append(command); //do not escape whitespaces because arguments may be quoted
-        hgCommandBuilder.append(" ");
-      }
-      String hgCommand = escapeBashControlCharacters(hgCommandBuilder.toString());
-      commandLine = new ArrayList<String>(3);
-      commandLine.add("bash");
-      commandLine.add("-cl");
-      commandLine.add(hgCommand);
+    myCommandLine = new GeneralCommandLine(commandLine);
+    if (dir != null) {
+      myCommandLine.setWorkDirectory(new File(dir));
     }
+    if (charset != null) {
+      myCommandLine.setCharset(charset);
+    }
+  }
 
+  @NotNull
+  public HgCommandResult execute() throws ShellCommandException, InterruptedException {
     StringWriter out = new StringWriter();
     StringWriter err = new StringWriter();
     try {
-      ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-      if (dir != null) {
-        processBuilder = processBuilder.directory(new File(dir));
-      }
-      Process process = processBuilder.start();
+      Process process = myCommandLine.createProcess();
 
-      CapturingProcessHandler processHandler = new CapturingProcessHandler(process, charset);
+      CapturingProcessHandler processHandler = new CapturingProcessHandler(process, myCommandLine.getCharset());
       final ProcessOutput processOutput = processHandler.runProcess();
 
       int exitValue = processOutput.getExitCode();
@@ -74,31 +56,8 @@ public final class ShellCommand {
       err.write(processOutput.getStderr());
       return new HgCommandResult(out, err, exitValue);
     }
-    catch (IOException e) {
+    catch (ExecutionException e) {
       throw new ShellCommandException(e);
     }
-  }
-
-  /**
-   * Escapes characters in the command which will be executed via 'bash -c' - these are standard chars like \n, and some bash specials.
-   *
-   * @param source Original string.
-   * @return Escaped string.
-   */
-  private static String escapeBashControlCharacters(@NotNull String source) {
-    //need to control other bash control chars manually to avoid conflicts with mercurial symbols (>,',", whitespaces)
-    final String controlChars = "|&$";
-
-    final StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < source.length(); i++) {
-      char ch = source.charAt(i);
-      if (controlChars.indexOf(ch) > -1) {
-        sb.append("\\").append(ch);
-      }
-      else {
-        sb.append(ch);
-      }
-    }
-    return sb.toString();
   }
 }

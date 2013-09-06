@@ -510,8 +510,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       }
     }
     else if (myType1 == mLCURLY) {
-      myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1, mySettings.KEEP_LINE_BREAKS,
-                                       mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
     }
     else if (myType2 == mRCURLY) {
       createLF(true);
@@ -1045,6 +1044,9 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   private int keepBlankLines() {
     if (myType2 == mRCURLY) {
       return mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE;
+    }
+    else if (myParent instanceof GrTypeDefinitionBody) {
+      return mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS;
     }
     else {
       return mySettings.KEEP_BLANK_LINES_IN_CODE;

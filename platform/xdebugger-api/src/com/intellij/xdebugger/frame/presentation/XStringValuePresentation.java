@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.frame;
+package com.intellij.xdebugger.frame.presentation;
 
+import com.intellij.xdebugger.frame.XValueNode;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class XGroupingValue extends XNamedValue {
-  protected XGroupingValue(@NotNull String name) {
-    super(name);
+/**
+ * Renders a value as a string
+ *
+ * @author nik
+*/
+public class XStringValuePresentation extends XValuePresentation {
+  private final String myValue;
+
+  public XStringValuePresentation(@NotNull String value) {
+    myValue = value;
   }
 
   @Override
-  public final void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-    node.setPresentation(null, null, XGroupingValuePresenter.INSTANCE, true);
+  public void renderValue(@NotNull XValueTextRenderer renderer) {
+    renderer.renderStringValue(myValue, "\"\\", XValueNode.MAX_VALUE_LENGTH);
   }
 }

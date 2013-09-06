@@ -568,6 +568,11 @@ public class SvnChangeList implements CommittedChangeList {
     return myRevision;
   }
 
+  @Override
+  public String getBranch() {
+    return null;
+  }
+
   public AbstractVcs getVcs() {
     return myVcs;
   }

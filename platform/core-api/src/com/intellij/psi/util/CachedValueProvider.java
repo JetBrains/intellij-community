@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -25,12 +27,23 @@ public interface CachedValueProvider<T> {
   Result<T> compute();
 
   class Result<T> {
+    private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.CachedValueProvider.Result");
     private final T myValue;
     private final Object[] myDependencyItems;
 
     public Result(@Nullable T value, Object... dependencyItems) {
       myValue = value;
       myDependencyItems = dependencyItems;
+
+      if (dependencyItems.length == 0) {
+        LOG.error("No dependencies provided which causes CachedValue to be never recalculated again. " +
+                  "If this is intentional, please use ModificationTracker.NEVER_CHANGED");
+      }
+      for (int i = 0; i < dependencyItems.length; i++) {
+        if (dependencyItems[i] == null) {
+          LOG.error("Null dependencies are not allowed, index=" + i);
+        }
+      }
     }
 
     public T getValue() {
@@ -41,7 +54,7 @@ public interface CachedValueProvider<T> {
       return myDependencyItems;
     }
 
-    public static <T> Result<T> createSingleDependency(@Nullable T value, Object dependency) {
+    public static <T> Result<T> createSingleDependency(@Nullable T value, @NotNull Object dependency) {
       return create(value, dependency);
     }
 
@@ -53,8 +66,5 @@ public interface CachedValueProvider<T> {
       return new Result<T>(value, ArrayUtil.toObjectArray(dependencies));
     }
 
-    @Deprecated
-    public void setLockValue(final boolean lockValue) {
-    }
   }
 }

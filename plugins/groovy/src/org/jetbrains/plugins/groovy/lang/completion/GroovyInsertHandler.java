@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
@@ -59,7 +58,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     }
 
     if (obj instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)obj;
+      final PsiMethod method = (PsiMethod)obj;
       PsiParameter[] parameters = method.getParameterList().getParameters();
       Editor editor = context.getEditor();
       Document document = editor.getDocument();
@@ -130,7 +129,12 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
         return;
       }
 
-      new MethodParenthesesHandler(method, true).handleInsert(context, item);
+      new MethodParenthesesHandler(method, true) {
+        @Override
+        protected boolean placeCaretInsideParentheses(InsertionContext context, LookupElement item) {
+          return method.isConstructor() || super.placeCaretInsideParentheses(context, item);
+        }
+      }.handleInsert(context, item);
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(editor, method);
       return;
     }
@@ -152,7 +156,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
           parent.getParent() instanceof GrNewExpression &&
           (offset == text.length() || !text.substring(offset).trim().startsWith("("))) {
         document.insertString(offset, "()");
-        if (GroovyCompletionUtil.hasConstructorParameters(clazz, (GroovyPsiElement)parent)) {
+        if (GroovyCompletionUtil.hasConstructorParameters(clazz, parent)) {
           caretModel.moveToOffset(offset + 1);
           return;
         }

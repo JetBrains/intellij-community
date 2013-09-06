@@ -17,6 +17,7 @@ package com.intellij.xdebugger.frame;
 
 import com.intellij.util.NotNullFunction;
 import com.intellij.xdebugger.Obsolescent;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,17 +45,20 @@ public interface XValueNode extends Obsolescent {
    * @param value string representation of value. It is also used in 'Copy Value' action
    * @param hasChildren {@code false} if the node is a leaf
    */
-  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @Nullable String value, boolean hasChildren);
+  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
 
   /**
-   * @deprecated use XVariableValuePresenter
+   * Setup presentation of the value. This method allows to change separator between name and value and customize the way value text is shown
+   * @param icon icon representing value type (see {@link com.intellij.icons.AllIcons.Debugger})
+   * @param presentation a new {@link XValuePresentation} instance which determines how the value is show
+   * @param hasChildren {@code false} if the node is a leaf
+   */
+  void setPresentation(@Nullable Icon icon, @NotNull XValuePresentation presentation, boolean hasChildren);
+
+  /**
+   * @deprecated use {@link #setPresentation(javax.swing.Icon, XValuePresentation, boolean)}
    */
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @Nullable String value, boolean hasChildren);
-
-  /**
-   * Setup presentation of the grouping value (value as container)
-   */
-  void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean expand);
 
   /**
    * The same as {@link #setPresentation(javax.swing.Icon, String, String, boolean)} but allows to change default processing of
@@ -62,21 +66,13 @@ public interface XValueNode extends Obsolescent {
    * are escaped in the value. {@code valuePresenter} function doesn't affect 'Copy Value' action. It can be used to escape additional
    * characters and/or surround value by quotes.
    *
-   * @deprecated use {@link XValuePresenter}
+   * @deprecated use {@link #setPresentation(javax.swing.Icon, XValuePresentation, boolean)}
    */
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value,
                        @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren);
 
-  void setPresentation(@Nullable Icon icon,
-                       @NonNls @Nullable String type,
-                       @NonNls @NotNull String value,
-                       @Nullable XValuePresenter valuePresenter,
-                       boolean hasChildren);
-
-  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren);
-
   /**
-   * @deprecated use XVariableValuePresenter
+   * @deprecated use {@link #setPresentation(javax.swing.Icon, XValuePresentation, boolean)}
    */
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value,
                        @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren);

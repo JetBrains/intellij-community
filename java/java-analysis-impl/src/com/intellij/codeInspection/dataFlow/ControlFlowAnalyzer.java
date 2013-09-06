@@ -46,15 +46,18 @@ import static com.intellij.psi.CommonClassNames.*;
 
 class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
-  private static final int NOT_FOUND = -10;
+  private static final ControlFlow.ControlFlowOffset NOT_FOUND = new ControlFlow.ControlFlowOffset() {
+    @Override
+    public int getInstructionOffset() {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+  };
   private boolean myIgnoreAssertions;
 
   private static class CannotAnalyzeException extends RuntimeException { }
 
   private final DfaValueFactory myFactory;
-  private ControlFlow myPass1Flow;
   private ControlFlow myCurrentFlow;
-  private int myPassNumber;
   private Set<DfaVariableValue> myFields;
   private Stack<CatchDescriptor> myCatchStack;
   private DfaValue myRuntimeException;
@@ -74,9 +77,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     myNpe = JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName(JAVA_LANG_NULL_POINTER_EXCEPTION, scope);
     myFields = new HashSet<DfaVariableValue>();
     myCatchStack = new Stack<CatchDescriptor>();
-    myPassNumber = 1;
-    myPass1Flow = new ControlFlow(myFactory);
-    myCurrentFlow = myPass1Flow;
+    myCurrentFlow = new ControlFlow(myFactory);
 
     try {
       codeFragment.accept(this);
@@ -85,26 +86,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       return null;
     }
 
-    myPassNumber = 2;
-    final ControlFlow pass2Flow = new ControlFlow(myFactory);
-    myCurrentFlow = pass2Flow;
-
-    codeFragment.accept(this);
-
-    pass2Flow.setFields(myFields.toArray(new DfaVariableValue[myFields.size()]));
-
-    if (myPass1Flow.getInstructionCount() != pass2Flow.getInstructionCount()) {
-      LOG.error(Arrays.toString(myPass1Flow.getInstructions()) + "!=\n" + Arrays.toString(pass2Flow.getInstructions()));
-    }
+    myCurrentFlow.setFields(myFields.toArray(new DfaVariableValue[myFields.size()]));
 
     addInstruction(new ReturnInstruction());
 
-    return pass2Flow;
+    return myCurrentFlow;
   }
 
   private boolean myRecursionStopper = false;
 
-  private void addInstruction(Instruction i) {
+  private <T extends Instruction> T addInstruction(T i) {
     ProgressManager.checkCanceled();
 
     if (!myRecursionStopper) {
@@ -121,14 +112,15 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     myCurrentFlow.addInstruction(i);
+    return i;
   }
 
-  private int getEndOffset(PsiElement element) {
-    return myPassNumber == 2 ? myPass1Flow.getEndOffset(element) : 0;
+  private ControlFlow.ControlFlowOffset getEndOffset(PsiElement element) {
+    return myCurrentFlow.getEndOffset(element);
   }
 
-  private int getStartOffset(PsiElement element) {
-    return myPassNumber == 2 ? myPass1Flow.getStartOffset(element) : 0;
+  private ControlFlow.ControlFlowOffset getStartOffset(PsiElement element) {
+    return myCurrentFlow.getStartOffset(element);
   }
 
   private void startElement(PsiElement element) {
@@ -311,9 +303,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement exitedStatement = statement.findExitedStatement();
 
     if (exitedStatement != null) {
-      int offset = myPass1Flow.getEndOffset(exitedStatement);
-      if (offset == -1) offset = myPass1Flow.getInstructionCount();
-      addInstruction(new GotoInstruction(offset));
+      addInstruction(new GotoInstruction(getEndOffset(exitedStatement)));
     }
 
     finishElement(statement);
@@ -323,24 +313,24 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(statement);
     PsiStatement continuedStatement = statement.findContinuedStatement();
     if (continuedStatement != null) {
-      int offset = -1;
+      ControlFlow.ControlFlowOffset offset = null;
       if (continuedStatement instanceof PsiForStatement) {
         PsiStatement body = ((PsiForStatement)continuedStatement).getBody();
-        offset = myPass1Flow.getEndOffset(body);
+        offset = getEndOffset(body);
       }
       else if (continuedStatement instanceof PsiWhileStatement) {
         PsiStatement body = ((PsiWhileStatement)continuedStatement).getBody();
-        offset = myPass1Flow.getEndOffset(body);
+        offset = getEndOffset(body);
       }
       else if (continuedStatement instanceof PsiDoWhileStatement) {
         PsiStatement body = ((PsiDoWhileStatement)continuedStatement).getBody();
-        offset = myPass1Flow.getEndOffset(body);
+        offset = getEndOffset(body);
       }
       else if (continuedStatement instanceof PsiForeachStatement) {
         PsiStatement body = ((PsiForeachStatement)continuedStatement).getBody();
-        offset = myPass1Flow.getEndOffset(body);
+        offset = getEndOffset(body);
       }
-      Instruction instruction = offset == -1 ? new EmptyInstruction(null) : new GotoInstruction(offset);
+      Instruction instruction = offset == null ? new EmptyInstruction(null) : new GotoInstruction(offset);
       addInstruction(instruction);
     }
     finishElement(statement);
@@ -396,7 +386,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new FieldReferenceInstruction(iteratedValue, "Collection iterator or array.length"));
     }
 
-    int offset = myCurrentFlow.getInstructionCount();
+    ControlFlow.ControlFlowOffset offset = myCurrentFlow.getNextOffset();
     DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(parameter, false);
     addInstruction(new FlushVariableInstruction(dfaVariable));
 
@@ -457,7 +447,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       update.accept(this);
     }
 
-    int offset = initialization != null
+    ControlFlow.ControlFlowOffset offset = initialization != null
                  ? getEndOffset(initialization)
                  : getStartOffset(statement);
 
@@ -478,7 +468,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement thenStatement = statement.getThenBranch();
     PsiStatement elseStatement = statement.getElseBranch();
 
-    int offset = elseStatement != null
+    ControlFlow.ControlFlowOffset offset = elseStatement != null
                  ? getStartOffset(elseStatement)
                  : getEndOffset(statement);
 
@@ -535,7 +525,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void returnCheckingFinally() {
-    int finallyOffset = getFinallyOffset();
+    ControlFlow.ControlFlowOffset finallyOffset = getFinallyOffset();
     if (finallyOffset != NOT_FOUND) {
       addInstruction(new GosubInstruction(finallyOffset));
     }
@@ -583,7 +573,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           }
           else {
             try {
-              int offset = getStartOffset(statement);
+              ControlFlow.ControlFlowOffset offset = getStartOffset(statement);
               PsiExpression caseValue = psiLabelStatement.getCaseValue();
               
               if (caseValue != null &&
@@ -616,7 +606,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
 
       if (enumValues == null || !enumValues.isEmpty()) {
-        int offset = defaultLabel != null ? getStartOffset(defaultLabel) : getEndOffset(body);
+        ControlFlow.ControlFlowOffset offset = defaultLabel != null ? getStartOffset(defaultLabel) : getEndOffset(body);
         addInstruction(new GotoInstruction(offset));
       }
 
@@ -655,7 +645,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new DupInstruction());
       addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
       addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, statement.getProject()));
-      ConditionalGotoInstruction gotoInstruction = new ConditionalGotoInstruction(-1, true, null);
+      ConditionalGotoInstruction gotoInstruction = new ConditionalGotoInstruction(null, true, null);
       addInstruction(gotoInstruction);
       addThrowCode(myNpe);
       gotoInstruction.setOffset(myCurrentFlow.getInstructionCount());
@@ -682,7 +672,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void addConditionalRuntimeThrow(CatchDescriptor cd, boolean forCatch) {
     pushUnknown();
-    final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(-1, false, null);
+    final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(null, false, null);
     addInstruction(branch);
     addInstruction(new EmptyStackInstruction());
     if (forCatch) {
@@ -694,7 +684,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         addGotoCatch(cd);
       } else {
         pushUnknown();
-        final ConditionalGotoInstruction branch2 = new ConditionalGotoInstruction(-1, false, null);
+        final ConditionalGotoInstruction branch2 = new ConditionalGotoInstruction(null, false, null);
         addInstruction(branch2);
         addInstruction(new PushInstruction(myError, null));
         addGotoCatch(cd);
@@ -724,7 +714,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       else if (cd.getType().isConvertibleFrom(exceptionClass)) { // Probable catch
         addInstruction(new DupInstruction());
         pushUnknown();
-        final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(-1, false, null);
+        final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(null, false, null);
         addInstruction(branch);
         addGotoCatch(cd);
         branch.setOffset(myCurrentFlow.getInstructionCount());
@@ -745,7 +735,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new GotoInstruction(cd.getJumpOffset(this)));
   }
 
-  private int getFinallyOffset() {
+  private ControlFlow.ControlFlowOffset getFinallyOffset() {
     for (int i = myCatchStack.size() - 1; i >= 0; i--) {
       CatchDescriptor cd = myCatchStack.get(i);
       if (cd.isFinally()) return cd.getJumpOffset(this);
@@ -812,7 +802,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       return myIsFinally;
     }
 
-    public int getJumpOffset(ControlFlowAnalyzer analyzer) {
+    public ControlFlow.ControlFlowOffset getJumpOffset(ControlFlowAnalyzer analyzer) {
       return analyzer.getStartOffset(myBlock);
     }
 
@@ -850,7 +840,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       throw new CannotAnalyzeException();
     }
 
-    int endOffset = finallyBlock == null ? getEndOffset(statement) : getStartOffset(finallyBlock) - 2;
+    ControlFlow.ControlFlowOffset endOffset = finallyBlock == null ? getEndOffset(statement) : ControlFlow.deltaOffset(getStartOffset(finallyBlock), -2);
 
     if (resourceList != null) {
       resourceList.accept(this);
@@ -1142,9 +1132,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void combineStackBooleans(boolean and, PsiExpression anchor) {
-    ConditionalGotoInstruction toPopAndPushSuccess = new ConditionalGotoInstruction(-1, and, anchor);
+    ConditionalGotoInstruction toPopAndPushSuccess = new ConditionalGotoInstruction(null, and, anchor);
     addInstruction(toPopAndPushSuccess);
-    GotoInstruction overPushSuccess = new GotoInstruction(-1);
+    GotoInstruction overPushSuccess = new GotoInstruction(null);
     addInstruction(overPushSuccess);
 
     PopInstruction pop = new PopInstruction();
@@ -1171,7 +1161,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         continue;
       }
 
-      ConditionalGotoInstruction onFail = new ConditionalGotoInstruction(-1, true, operand);
+      ConditionalGotoInstruction onFail = new ConditionalGotoInstruction(null, true, operand);
       branchToFail.add(onFail);
       addInstruction(onFail);
     }
@@ -1181,7 +1171,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
-    GotoInstruction toSuccess = new GotoInstruction(-1);
+    GotoInstruction toSuccess = new GotoInstruction(null);
     addInstruction(toSuccess);
     PushInstruction pushFalse = new PushInstruction(myFactory.getConstFactory().getFalse(), null);
     addInstruction(pushFalse);
@@ -1210,7 +1200,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression thenExpression = expression.getThenExpression();
     PsiExpression elseExpression = expression.getElseExpression();
 
-    final int elseOffset = elseExpression == null ? getEndOffset(expression) - 1 : getStartOffset(elseExpression);
+    final ControlFlow.ControlFlowOffset elseOffset = elseExpression == null ? ControlFlow.deltaOffset(getEndOffset(expression), -1) : getStartOffset(elseExpression);
     if (thenExpression != null) {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
@@ -1265,7 +1255,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiClassType[] refs = method.getThrowsList().getReferencedTypes();
       for (PsiClassType ref : refs) {
         pushUnknown();
-        ConditionalGotoInstruction cond = new ConditionalGotoInstruction(NOT_FOUND, false, null);
+        ConditionalGotoInstruction cond = new ConditionalGotoInstruction(null, false, null);
         addInstruction(cond);
         addInstruction(new EmptyStackInstruction());
         addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(ref), null));
@@ -1363,9 +1353,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private void handleContract(PsiMethodCallExpression expression, MethodContract contract) {
     PsiExpression[] args = expression.getArgumentList().getExpressions();
 
-    final int exitPoint = getEndOffset(expression);
+    final ControlFlow.ControlFlowOffset exitPoint = getEndOffset(expression);
 
-    List<ConditionalGotoInstruction> gotoContractFalse = new SmartList<ConditionalGotoInstruction>();
+    List<GotoInstruction> gotoContractFalse = new SmartList<GotoInstruction>();
     for (int i = args.length - 1; i >= 0; i--) {
       ValueConstraint arg = contract.arguments[i];
       if (arg == ValueConstraint.NULL_VALUE || arg == ValueConstraint.NOT_NULL_VALUE) {
@@ -1378,9 +1368,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
 
       boolean expectingTrueOnStack = arg == ValueConstraint.NULL_VALUE || arg == ValueConstraint.TRUE_VALUE;
-      ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(-1, expectingTrueOnStack, null);
-      gotoContractFalse.add(condGoto);
-      addInstruction(condGoto);
+      ConditionalGotoInstruction continueCheckingContract = addInstruction(new ConditionalGotoInstruction(null, !expectingTrueOnStack, null));
+
+      for (int j = 0; j < i; j++) {
+        addInstruction(new PopInstruction());
+      }
+      gotoContractFalse.add(addInstruction(new GotoInstruction(null)));
+      continueCheckingContract.setOffset(myCurrentFlow.getInstructionCount());
     }
 
     // if contract is true
@@ -1395,8 +1389,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         break;
       case NOT_NULL_VALUE:
         PsiType type = expression.getType();
-        Nullness nullability = DfaPsiUtil.getElementNullability(type, expression.resolveMethod());
-        addInstruction(new PushInstruction(myFactory.createTypeValueWithNullability(type, nullability), null));
+        addInstruction(new PushInstruction(myFactory.createTypeValueWithNullability(type, Nullness.NOT_NULL), null));
         addInstruction(new GotoInstruction(exitPoint));
         break;
       case TRUE_VALUE:
@@ -1408,7 +1401,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         addInstruction(new GotoInstruction(exitPoint));
         break;
       case THROW_EXCEPTION:
-        int finallyOffset = getFinallyOffset();
+        ControlFlow.ControlFlowOffset finallyOffset = getFinallyOffset();
         if (finallyOffset != NOT_FOUND) {
           addInstruction(new GosubInstruction(finallyOffset));
         }
@@ -1420,7 +1413,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     // if contract is false
-    for (ConditionalGotoInstruction instruction : gotoContractFalse) {
+    for (GotoInstruction instruction : gotoContractFalse) {
       instruction.setOffset(myCurrentFlow.getInstructionCount());
     }
   }

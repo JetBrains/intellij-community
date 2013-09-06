@@ -37,7 +37,7 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
   }
 
   public ColoredProcessHandler(final GeneralCommandLine commandLine) throws ExecutionException {
-    this(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
+    super(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
   }
 
   public ColoredProcessHandler(Process process, String commandLine) {

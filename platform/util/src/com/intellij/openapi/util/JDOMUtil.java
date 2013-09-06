@@ -174,8 +174,8 @@ public class JDOMUtil {
       targetElement.addContent(content);
     }
     else if (node instanceof List) {
-      List list = (List)node;
-      targetElement.addContent(list);
+      //noinspection unchecked
+      targetElement.addContent((List)node);
     }
     else {
       throw new IllegalArgumentException("Wrong node: " + node);
@@ -245,6 +245,7 @@ public class JDOMUtil {
 
 
   private static class EmptyTextFilter implements Filter {
+    @Override
     public boolean matches(Object obj) {
       if (obj instanceof Text) {
         final Text t = (Text)obj;
@@ -333,6 +334,7 @@ public class JDOMUtil {
     if (saxBuilder == null) {
       saxBuilder = new SAXBuilder();
       saxBuilder.setEntityResolver(new EntityResolver() {
+        @Override
         @NotNull
         public InputSource resolveEntity(String publicId, String systemId) {
           return new InputSource(new CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY));
@@ -382,9 +384,11 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static Document loadDocument(@NotNull Class clazz, String reaource) throws JDOMException, IOException {
-    InputStream stream = clazz.getResourceAsStream(reaource);
-    if (stream == null) throw new FileNotFoundException(reaource);
+  public static Document loadDocument(@NotNull Class clazz, String resource) throws JDOMException, IOException {
+    InputStream stream = clazz.getResourceAsStream(resource);
+    if (stream == null) {
+      throw new FileNotFoundException(resource);
+    }
     return loadDocument(stream);
   }
 
@@ -445,7 +449,7 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static String writeParent(Parent element, String lineSeparator) throws IOException {
+  public static String writeParent(Parent element, String lineSeparator) {
     try {
       final StringWriter writer = new StringWriter();
       writeParent(element, writer, lineSeparator);
@@ -608,11 +612,13 @@ public class JDOMUtil {
   }
 
   public static class MyXMLOutputter extends XMLOutputter {
+    @Override
     @NotNull
     public String escapeAttributeEntities(@NotNull String str) {
       return escapeText(str, false, true);
     }
 
+    @Override
     @NotNull
     public String escapeElementEntities(@NotNull String str) {
       return escapeText(str, false, false);
@@ -623,6 +629,7 @@ public class JDOMUtil {
     ElementInfo info = getElementInfo(element);
     prefix += "/" + info.name;
     if (info.hasNullAttributes) {
+      //noinspection UseOfSystemOutOrSystemErr
       System.err.println(prefix);
     }
 

@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -32,8 +31,9 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValuePlace;
-import com.intellij.xdebugger.frame.XValuePresenter;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -51,24 +51,24 @@ import java.awt.*;
  * @author nik
  */
 public class XValueHint extends AbstractValueHint {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.evaluate.quick.XValueHint");
+  private static final Logger LOG = Logger.getInstance(XValueHint.class);
 
   private final XDebuggerEvaluator myEvaluator;
   private final XDebugSession myDebugSession;
   private final String myExpression;
   private final @Nullable XSourcePosition myExpressionPosition;
 
-  public XValueHint(final Project project, final Editor editor, final Point point, final ValueHintType type, final TextRange textRange,
-                    final XDebuggerEvaluator evaluator, final XDebugSession session) {
-    super(project, editor, point, type, textRange);
+  public XValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, @NotNull ValueHintType type,
+                    @NotNull Pair<TextRange, String> expressionData, @NotNull XDebuggerEvaluator evaluator,
+                    @NotNull XDebugSession session) {
+    super(project, editor, point, type, expressionData.first);
+
     myEvaluator = evaluator;
     myDebugSession = session;
-    final Document document = editor.getDocument();
-    myExpression = document.getText(textRange);
-    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    myExpressionPosition = file != null ? XDebuggerUtil.getInstance().createPositionByOffset(file, textRange.getStartOffset()) : null;
+    myExpression = XDebuggerEvaluateActionHandler.getExpressionText(expressionData, editor.getDocument());
+    final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    myExpressionPosition = file != null ? XDebuggerUtil.getInstance().createPositionByOffset(file, expressionData.first.getStartOffset()) : null;
   }
-
 
   @Override
   protected boolean canShowHint() {
@@ -83,16 +83,13 @@ public class XValueHint extends AbstractValueHint {
         result.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
           @Override
           public void applyPresentation(@Nullable Icon icon,
-                                        @Nullable String type,
-                                        @Nullable String value,
-                                        @NotNull XValuePresenter valuePresenter,
-                                        boolean hasChildren,
-                                        boolean expand) {
+                                        @NotNull XValuePresentation valuePresenter,
+                                        boolean hasChildren) {
             if (isHintHidden()) return;
 
             SimpleColoredText text = new SimpleColoredText();
             text.append(myExpression, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-            XValueNodeImpl.buildText(type, value, valuePresenter, text, false);
+            XValueNodeImpl.buildText(valuePresenter, text, false);
             if (!hasChildren) {
               showHint(HintUtil.createInformationLabel(text));
             }
