@@ -152,6 +152,14 @@ public class PyBlockEvaluator {
       }
 
       @Override
+      public void visitPyIfStatement(PyIfStatement node) {
+        PyStatementList list = node.getIfPart().getStatementList();
+        if (list != null) {
+          list.acceptChildren(this);
+        }
+      }
+
+      @Override
       public void visitPyReturnStatement(PyReturnStatement node) {
         myReturnValue = prepareEvaluator().evaluate(node.getExpression());
       }
