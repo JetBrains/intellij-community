@@ -101,6 +101,19 @@ public class StringUtilRt {
                                              @NotNull String newSeparator,
                                              @Nullable int[] offsetsToKeep,
                                              boolean keepCarriageReturn) {
+    return unifyLineSeparators(text, newSeparator, offsetsToKeep, keepCarriageReturn).toString();
+  }
+
+  @NotNull
+  public static CharSequence unifyLineSeparators(@NotNull CharSequence text) {
+    return unifyLineSeparators(text, "\n", null, false);
+  }
+
+  @NotNull
+  public static CharSequence unifyLineSeparators(@NotNull CharSequence text,
+                                                 @NotNull String newSeparator,
+                                                 @Nullable int[] offsetsToKeep,
+                                                 boolean keepCarriageReturn) {
     StringBuilder buffer = null;
     int intactLength = 0;
     final boolean newSeparatorIsSlashN = "\n".equals(newSeparator);
@@ -156,7 +169,7 @@ public class StringUtilRt {
         }
       }
     }
-    return buffer == null ? text : buffer.toString();
+    return buffer == null ? text : buffer;
   }
 
   private static void shiftOffsets(int[] offsets, int changeOffset, int oldLength, int newLength) {
