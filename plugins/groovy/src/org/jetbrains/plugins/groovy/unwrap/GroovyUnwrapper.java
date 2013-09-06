@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.unwrap;
 import com.intellij.codeInsight.unwrap.AbstractUnwrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.List;
 
@@ -53,7 +53,7 @@ public abstract class GroovyUnwrapper extends AbstractUnwrapper<GroovyUnwrapper.
     List<PsiElement> res = super.unwrap(editor, element);
 
     for (PsiElement e : res) {
-      if (PsiUtil.isLeafElementOfType(e, GroovyTokenTypes.mNLS)) {
+      if (PsiImplUtil.isLeafElementOfType(e, GroovyTokenTypes.mNLS)) {
         CodeEditUtil.setNodeGenerated(e.getNode(), true);
       }
     }
@@ -104,7 +104,7 @@ public abstract class GroovyUnwrapper extends AbstractUnwrapper<GroovyUnwrapper.
     }
 
     protected boolean isWhiteSpace(PsiElement element) {
-      return PsiUtil.isLeafElementOfType(element, TokenSets.WHITE_SPACES_SET);
+      return PsiImplUtil.isLeafElementOfType(element, TokenSets.WHITE_SPACES_SET);
     }
 
     public void setElseBranch(GrIfStatement ifStatement, GrStatement elseBranch) throws IncorrectOperationException {
