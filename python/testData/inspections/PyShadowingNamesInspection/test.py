@@ -34,7 +34,7 @@ def test_builtin_class_name():
 
 def test_builtin_method_name():
     class C:
-        def <weak_warning descr="Shadows built-in name 'list'">list</weak_warning>(self):
+        def list(self):
             pass
 
 
@@ -50,7 +50,7 @@ def test_builtin_qualified_name():
 # PY-10164
 def test_builtin_class_attribute():
     class C:
-        <weak_warning descr="Shadows built-in name 'id'">id</weak_warning> = 1
+        id = 1
 
 
 def test_outer_function():
@@ -73,17 +73,17 @@ def test_outer_class():
             def foo():
                 def <weak_warning descr="Shadows name 'bar' from outer scope">bar</weak_warning>():
                     class <weak_warning descr="Shadows name 'C' from outer scope">C</weak_warning>:
-                        def <weak_warning descr="Shadows name 'baz' from outer scope">baz</weak_warning>(self):
+                        def baz(self):
                             pass
             def bar():
                 pass
 
             <weak_warning descr="Shadows name 'baz' from outer scope">baz</weak_warning> = 2
 
-        def <weak_warning descr="Shadows name 'spam' from outer scope">spam</weak_warning>(self):
+        def spam(self):
             pass
 
-        <weak_warning descr="Shadows name 'quux' from outer scope">quux</weak_warning> = 1
+        quux = 1
 
 
 def test_outer_global():

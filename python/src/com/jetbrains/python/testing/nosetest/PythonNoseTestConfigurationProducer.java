@@ -20,7 +20,11 @@ public class PythonNoseTestConfigurationProducer extends
   protected boolean isAvailable(@NotNull final Location location) {
     final PsiElement element = location.getPsiElement();
     Module module = location.getModule();
-    if (module == null) module = ModuleManager.getInstance(element.getProject()).getModules()[0];
+    if (module == null) {
+      final Module[] modules = ModuleManager.getInstance(element.getProject()).getModules();
+      if (modules.length == 0) return false;
+      module = modules[0];
+    }
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
     return (TestRunnerService.getInstance(module).getProjectConfiguration().equals(
       PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME) && sdk != null);

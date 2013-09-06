@@ -115,42 +115,8 @@ public class PySdkUtil {
         commands.add("/c");
       }
       Collections.addAll(commands, command);
-      String[] new_env = null;
-      if (addEnv != null) {
-        Map<String, String> env_map = new HashMap<String, String>(System.getenv());
-        // turn additional ent into map
-        Map<String, String> add_map = new HashMap<String, String>();
-        for (String env_item : addEnv) {
-          int pos = env_item.indexOf('=');
-          if (pos > 0) {
-            String key = env_item.substring(0, pos);
-            String value = env_item.substring(pos + 1, env_item.length());
-            add_map.put(key, value);
-          }
-          else {
-            LOG.warn(String.format("Invalid env value: '%s'", env_item));
-          }
-        }
-        // fuse old and new
-        for (Map.Entry<String, String> entry : add_map.entrySet()) {
-          final String key = entry.getKey();
-          final String value = entry.getValue();
-          final String old_value = env_map.get(key);
-          if (old_value != null) {
-            env_map.put(key, value + old_value);
-          }
-          else {
-            env_map.put(key, value);
-          }
-        }
-        new_env = new String[env_map.size()];
-        int i = 0;
-        for (Map.Entry<String, String> entry : env_map.entrySet()) {
-          new_env[i] = entry.getKey() + "=" + entry.getValue();
-          i += 1;
-        }
-      }
-      Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands), new_env, new File(homePath));
+      String[] newEnv = buildAdditionalEnv(addEnv);
+      Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands), newEnv, new File(homePath));
       CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
       if (stdin != null) {
         final OutputStream processInput = processHandler.getProcessInput();
@@ -182,6 +148,50 @@ public class PySdkUtil {
         }
       };
     }
+  }
+
+  private static String[] buildAdditionalEnv(String[] addEnv) {
+    String[] newEnv = null;
+    if (addEnv != null) {
+      Map<String, String> envMap = buildEnvMap(addEnv);
+      newEnv = new String[envMap.size()];
+      int i = 0;
+      for (Map.Entry<String, String> entry : envMap.entrySet()) {
+        newEnv[i] = entry.getKey() + "=" + entry.getValue();
+        i += 1;
+      }
+    }
+    return newEnv;
+  }
+
+  public static Map<String, String> buildEnvMap(String[] addEnv) {
+    Map<String, String> envMap = new HashMap<String, String>(System.getenv());
+    // turn additional ent into map
+    Map<String, String> addMap = new HashMap<String, String>();
+    for (String envItem : addEnv) {
+      int pos = envItem.indexOf('=');
+      if (pos > 0) {
+        String key = envItem.substring(0, pos);
+        String value = envItem.substring(pos + 1, envItem.length());
+        addMap.put(key, value);
+      }
+      else {
+        LOG.warn(String.format("Invalid env value: '%s'", envItem));
+      }
+    }
+    // fuse old and new
+    for (Map.Entry<String, String> entry : addMap.entrySet()) {
+      final String key = entry.getKey();
+      final String value = entry.getValue();
+      final String oldValue = envMap.get(key);
+      if (oldValue != null) {
+        envMap.put(key, value + oldValue);
+      }
+      else {
+        envMap.put(key, value);
+      }
+    }
+    return envMap;
   }
 
   public static boolean isRemote(@Nullable Sdk sdk) {

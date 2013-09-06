@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.*;
@@ -295,7 +296,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    *
    * @param command the command to be executed in the client
    */
-  public void execInterpreter(final String command, final ICallback<Object, InterpreterResponse> onResponseReceived) {
+  public void execInterpreter(final String command, final Function<InterpreterResponse, Object> onResponseReceived) {
     nextResponse = null;
     if (waitingForInput) {
       inputReceived = command;
@@ -397,7 +398,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
               }
             }
           }
-          onResponseReceived.call(nextResponse);
+          onResponseReceived.fun(nextResponse);
         }
       }, "Waiting for REPL response", true, myProject);
     }

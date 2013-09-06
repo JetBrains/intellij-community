@@ -190,21 +190,22 @@ public class PySkeletonRefresher {
 
   private static String calculateExtraSysPath(@NotNull Sdk sdk, @Nullable String skeletonsPath) {
     final VirtualFile[] classDirs = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-    final StringBuilder builder = new StringBuilder("\"");
-    int i = 0;
-    while (i < classDirs.length) {
-      if (i > 0) {
+    final StringBuilder builder = new StringBuilder("");
+    int countAddedPaths = 0;
+    for (VirtualFile file : classDirs) {
+      if (countAddedPaths > 0) {
         builder.append(File.pathSeparator);
       }
-      if (classDirs[i].isInLocalFileSystem()) {
-        final String pathname = classDirs[i].getPath();
+      if (file.isInLocalFileSystem()) {
+        final String pathname = file.getPath();
         if (pathname != null && !pathname.equals(skeletonsPath)) {
           builder.append(pathname);
+          countAddedPaths += 1;
         }
       }
-      i += 1;
     }
-    builder.append("\"");
+
+    builder.append("");
     return builder.toString();
   }
 

@@ -124,10 +124,12 @@ public class PyBlockEvaluator {
         PsiElement source = PyUtil.turnDirIntoInit(node.resolveImportSource());
         if (source instanceof PyFile) {
           PyBlockEvaluator importEvaluator = new PyBlockEvaluator(myVisitedFiles);
+          importEvaluator.myDeclarationsToTrack.addAll(myDeclarationsToTrack);
           importEvaluator.evaluate((PyFile)source);
           if (node.isStarImport()) {
             // TODO honor __all__ here
             myNamespace.putAll(importEvaluator.myNamespace);
+            myDeclarations.putAll(importEvaluator.myDeclarations);
           }
           else {
             for (PyImportElement element : node.getImportElements()) {
@@ -137,8 +139,23 @@ public class PyBlockEvaluator {
                 name = element.getName();
               }
               myNamespace.put(name, value);
+              List<PyExpression> declarations = importEvaluator.getDeclarations(name);
+              if (myDeclarations.containsKey(name)) {
+                myDeclarations.get(name).addAll(declarations);
+              }
+              else {
+                myDeclarations.put(name, declarations);
+              }
             }
           }
+        }
+      }
+
+      @Override
+      public void visitPyIfStatement(PyIfStatement node) {
+        PyStatementList list = node.getIfPart().getStatementList();
+        if (list != null) {
+          list.acceptChildren(this);
         }
       }
 
