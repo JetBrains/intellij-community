@@ -143,10 +143,16 @@ public class SvnRecursiveStatusWalker {
     }
 
     public SvnStatusClientI getClient(final File file) {
+      // TODO: refactor to ClientFactory usage but carefully save all parameters passed in myClient - fileProvider and
+      // TODO: event handler (for cancel support)
       WorkingCopyFormat format = myVcs.getWorkingCopyFormat(file);
 
       if (format == WorkingCopyFormat.ONE_DOT_EIGHT) {
         return myCommandLineClient;
+      }
+
+      if (format == WorkingCopyFormat.ONE_DOT_SIX) {
+        return mySvnClient;
       }
 
       // check format

@@ -362,7 +362,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public boolean checkCommandLineVersion() {
     boolean isValid = true;
 
-    if (SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration.myUseAcceleration) || isProject18()) {
+    if (!isProject16() && (SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration.myUseAcceleration) || isProject18())) {
       isValid = myChecker.checkExecutableAndNotifyIfNeeded();
     }
 
@@ -1341,10 +1341,20 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public boolean isProject18() {
-    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(getWorkingCopyFormat(new File(getProject().getBaseDir().getPath())));
+    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(getProjectRootFormat());
+  }
+
+  public boolean isProject16() {
+    return WorkingCopyFormat.ONE_DOT_SIX.equals(getProjectRootFormat());
+  }
+
+  private WorkingCopyFormat getProjectRootFormat() {
+    return getWorkingCopyFormat(new File(getProject().getBaseDir().getPath()));
   }
 
   /**
+   * Detects appropriate client factory based on project root directory working copy format.
+   *
    * Try to avoid usages of this method (for now) as it could not correctly for all cases
    * detect svn 1.8 working copy format to guarantee command line client.
    *
@@ -1355,18 +1365,23 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
    */
   @NotNull
   public ClientFactory getFactory() {
-    // check working copy format of project directory
-    return isProject18() ? cmdClientFactory : getFactoryFromSettings();
+    return getFactory(getProjectRootFormat(), false);
   }
 
   @NotNull
   public ClientFactory getFactory(@NotNull File file) {
-    WorkingCopyFormat format = getWorkingCopyFormat(file);
+    return getFactory(getWorkingCopyFormat(file), true);
+  }
 
+  @NotNull
+  private ClientFactory getFactory(@NotNull WorkingCopyFormat format, boolean useProjectRootForUnknown) {
     boolean is18 = WorkingCopyFormat.ONE_DOT_EIGHT.equals(format);
+    boolean is16 = WorkingCopyFormat.ONE_DOT_SIX.equals(format);
     boolean isUnknown = WorkingCopyFormat.UNKNOWN.equals(format);
 
-    return is18 ? cmdClientFactory : (isUnknown ? getFactory() : getFactoryFromSettings());
+    return is18
+           ? cmdClientFactory
+           : (is16 ? svnKitClientFactory : (useProjectRootForUnknown && isUnknown ? getFactory() : getFactoryFromSettings()));
   }
 
   @NotNull
