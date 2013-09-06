@@ -21,6 +21,8 @@ public class IcsSettings {
   @Tag
   public String token;
 
+  public boolean shareProjectWorkspace;
+
   public boolean updateOnStart = true;
   @SuppressWarnings("UnusedDeclaration")
   public long updateOnActivityDelay = TimeUnit.HOURS.toMillis(2);

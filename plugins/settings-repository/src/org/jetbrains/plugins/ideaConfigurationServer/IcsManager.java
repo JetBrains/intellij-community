@@ -104,9 +104,26 @@ public class IcsManager {
 
   public void registerProjectLevelProviders(Project project) {
     StateStorageManager manager = ((ProjectEx)project).getStateStore().getStateStorageManager();
-    ICSStreamProvider provider = new ICSStreamProvider(getProjectId(project));
-    manager.registerStreamProvider(provider, RoamingType.PER_PLATFORM);
-    manager.registerStreamProvider(provider, RoamingType.PER_USER);
+    String projectId = getProjectId(project);
+    manager.registerStreamProvider(new ICSStreamProvider(projectId), RoamingType.PER_PLATFORM);
+    manager.registerStreamProvider(new ICSStreamProvider(projectId) {
+      @Override
+      public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+        if (isShareable(fileSpec)) {
+          super.saveContent(fileSpec, content, size, roamingType, async);
+        }
+      }
+
+      private boolean isShareable(String fileSpec) {
+        return settings.shareProjectWorkspace || !fileSpec.equals(StoragePathMacros.WORKSPACE_FILE);
+      }
+
+      @Nullable
+      @Override
+      public InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException {
+        return isShareable(fileSpec) ? super.loadContent(fileSpec, roamingType) : null;
+      }
+    }, RoamingType.PER_USER);
   }
 
   public void startPing() {
@@ -196,15 +213,7 @@ public class IcsManager {
     @Override
     @Nullable
     public InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException {
-      if (projectId == null || roamingType == RoamingType.PER_PLATFORM) {
-        return repositoryManager.read(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
-      }
-      else if (StoragePathMacros.WORKSPACE_FILE.equals(fileSpec)) {
-        return repositoryManager.read(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
-      }
-      else {
-        return null;
-      }
+      return repositoryManager.read(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
     }
 
     @Override

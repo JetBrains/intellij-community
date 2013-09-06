@@ -8,6 +8,7 @@ public class IcsSettingsPanel {
   private JTextField tokenTextField;
   private JTextField urlTextField;
   private JCheckBox updateRepositoryFromRemoteCheckBox;
+  private JCheckBox shareProjectWorkspaceCheckBox;
 
   public IcsSettingsPanel() {
     IcsSettings settings = IcsManager.getInstance().getIdeaServerSettings();
@@ -16,6 +17,7 @@ public class IcsSettingsPanel {
     tokenTextField.setText(settings.token);
     urlTextField.setText(settings.url);
     updateRepositoryFromRemoteCheckBox.setSelected(settings.updateOnStart);
+    shareProjectWorkspaceCheckBox.setSelected(settings.shareProjectWorkspace);
   }
 
   public JComponent getPanel() {
@@ -28,5 +30,6 @@ public class IcsSettingsPanel {
     settings.token = tokenTextField.getText();
     settings.url = urlTextField.getText();
     settings.updateOnStart = updateRepositoryFromRemoteCheckBox.isSelected();
+    settings.shareProjectWorkspace = shareProjectWorkspaceCheckBox.isSelected();
   }
 }
