@@ -134,26 +134,33 @@ public class SvnLineCommand extends SvnCommand {
 
       while (true) {
         final SvnLineCommand command = runCommand(exePath, commandName, listener, base, configDir, parameters);
-        if (command.myErr.length() > 0) {
-          final String errText = command.myErr.toString().trim();
-          if (authenticationCallback != null) {
-            final AuthCallbackCase callback = createCallback(errText, authenticationCallback, base, url);
-            if (callback != null) {
-              cleanup(exePath, command, base);
-              if (callback.getCredentials(errText)) {
-                if (authenticationCallback.getSpecialConfigDir() != null) {
-                  configDir = authenticationCallback.getSpecialConfigDir();
+        final Integer exitCode = command.myExitCode.get();
+
+        // could be situations when exit code = 0, but there is info "warning" in error stream
+        // for instance, for "svn status" on non-working copy folder
+        if (exitCode != 0) {
+          if (command.myErr.length() > 0) {
+            // handle authentication
+            final String errText = command.myErr.toString().trim();
+            if (authenticationCallback != null) {
+              final AuthCallbackCase callback = createCallback(errText, authenticationCallback, base, url);
+              if (callback != null) {
+                cleanup(exePath, command, base);
+                if (callback.getCredentials(errText)) {
+                  if (authenticationCallback.getSpecialConfigDir() != null) {
+                    configDir = authenticationCallback.getSpecialConfigDir();
+                  }
+                  parameters = updateParameters(callback, parameters);
+                  continue;
                 }
-                parameters = updateParameters(callback, parameters);
-                continue;
               }
             }
+            throw new SvnBindException(errText);
+          } else {
+            throw new SvnBindException("Svn process exited with error code: " + exitCode);
           }
-          throw new SvnBindException(errText);
-        }
-        final Integer exitCode = command.myExitCode.get();
-        if (exitCode != 0) {
-          throw new SvnBindException("Svn process exited with error code: " + exitCode);
+        } else if (command.myErr.length() > 0) {
+          LOG.info("Detected warning - " + command.myErr);
         }
         return command;
       }
@@ -351,6 +358,8 @@ public class SvnLineCommand extends SvnCommand {
     public void updateParameters(List<String> parameters) {
       if (accepted) {
         parameters.add("--trust-server-cert");
+        // force --non-interactive as it is required by --trust-server-cert, but --non-interactive is not default mode for 1.7 or earlier
+        parameters.add("--non-interactive");
       }
     }
   }

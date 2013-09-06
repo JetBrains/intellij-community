@@ -4449,7 +4449,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         final LogicalPosition startPosition = getCaretModel().getLogicalPosition();
         final int offset = logicalPositionToOffset(startPosition);
         char[] chars = myDocument instanceof DocumentImpl ? ((DocumentImpl)myDocument).getRawChars() : myDocument.getChars();
-        if (chars.length > offset) {
+        if (chars.length > offset && myDocument.getTextLength() > offset) {
           FoldRegion folding = myFoldingModel.getCollapsedRegionAtOffset(offset);
           final char ch;
           if (folding == null || folding.isExpanded()) {

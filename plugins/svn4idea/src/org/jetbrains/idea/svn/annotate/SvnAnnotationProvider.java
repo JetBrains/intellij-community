@@ -120,8 +120,6 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
           final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).SHOW_MERGE_SOURCES_IN_ANNOTATE &&
                                              SvnUtil.checkRepositoryVersion15(myVcs, url);
-          final SVNRevision svnRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
-
           final MySteppedLogGetter logGetter = new MySteppedLogGetter(
             myVcs, ioFile, progress,
             myVcs.getFactory(ioFile).createHistoryClient(), endRevision, result,
@@ -133,7 +131,8 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           // TODO: only 2 elements will be in rp and for loop will be executed only once - probably rewrite with Pair
           AnnotateClient annotateClient = myVcs.getFactory(ioFile).createAnnotateClient();
           for (int i = 0; i < rp.size() - 1; i++) {
-            annotateClient.annotate(SvnTarget.fromFile(ioFile), rp.get(i + 1), rp.get(i), svnRevision, calculateMergeinfo,
+            annotateClient.annotate(SvnTarget.fromFile(ioFile), rp.get(i + 1), rp.get(i), ((SvnFileRevision)revision).getPegRevision(),
+                                    calculateMergeinfo,
                                     getLogClientOptions(myVcs), annotateHandler);
           }
 

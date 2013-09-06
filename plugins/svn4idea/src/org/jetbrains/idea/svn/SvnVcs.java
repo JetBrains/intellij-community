@@ -1368,17 +1368,26 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
    *
    * @return
    */
+  @NotNull
   public ClientFactory getFactory() {
     // check working copy format of project directory
     WorkingCopyFormat format = getWorkingCopyFormat(new File(getProject().getBaseDir().getPath()));
 
-    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ||
-           myConfiguration.myUseAcceleration.equals(SvnConfiguration.UseAcceleration.commandLine) ? cmdClientFactory : svnKitClientFactory;
+    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ? cmdClientFactory : getFactoryFromSettings();
   }
 
+  @NotNull
   public ClientFactory getFactory(@NotNull File file) {
     WorkingCopyFormat format = getWorkingCopyFormat(file);
 
-    return WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) ? cmdClientFactory : getFactory();
+    boolean is18 = WorkingCopyFormat.ONE_DOT_EIGHT.equals(format);
+    boolean isUnknown = WorkingCopyFormat.UNKNOWN.equals(format);
+
+    return is18 ? cmdClientFactory : (isUnknown ? getFactory() : getFactoryFromSettings());
+  }
+
+  @NotNull
+  private ClientFactory getFactoryFromSettings() {
+    return myConfiguration.myUseAcceleration.equals(SvnConfiguration.UseAcceleration.commandLine) ? cmdClientFactory : svnKitClientFactory;
   }
 }
