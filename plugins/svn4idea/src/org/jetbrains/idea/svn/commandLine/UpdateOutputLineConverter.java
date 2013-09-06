@@ -67,6 +67,9 @@ public class UpdateOutputLineConverter {
 
   public UpdateOutputLineConverter(File base) {
     myBase = base;
+    // checkout output does not have special line like "Updating '.'" on start - so set current file directly
+    // to correctly detect complete event
+    myCurrentFile = base;
   }
 
   public SVNEvent convert(final String line) {
@@ -85,6 +88,7 @@ public class UpdateOutputLineConverter {
       return new SVNEvent(myCurrentFile, myCurrentFile == null ? null : (myCurrentFile.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE),
                           null, -1, null, null, null, null, SVNEventAction.RESTORE, SVNEventAction.RESTORE, null, null, null, null, null);
     } else if (line.startsWith(SKIPPED)) {
+      // called, for instance, when folder is not working copy
       myCurrentFile = parseForPath(line);
       final String comment = parseComment(line);
       return new SVNEvent(myCurrentFile, myCurrentFile == null ? null : (myCurrentFile.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE),
@@ -100,8 +104,12 @@ public class UpdateOutputLineConverter {
       final Pattern pattern = ourCompletePatterns[i];
       final long revision = matchAndGetRevision(pattern, line);
       if (revision != -1) {
-        return new SVNEvent(myCurrentFile, myCurrentFile == null ? null : (myCurrentFile.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE),
-                    null, revision, null, null, null, null, SVNEventAction.UPDATE_COMPLETED, SVNEventAction.UPDATE_COMPLETED, null, null, null, null, null);
+        // TODO: seems that myCurrentFile will not always be correct - complete update message could be right after complete externals update
+        // TODO: check this and use Stack instead
+        return new SVNEvent(myCurrentFile,
+                            myCurrentFile == null ? null : (myCurrentFile.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE),
+                            null, revision, null, null, null, null, SVNEventAction.UPDATE_COMPLETED, SVNEventAction.UPDATE_COMPLETED, null,
+                            null, null, null, null);
       }
     }
 
