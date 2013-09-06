@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.JBColor;
@@ -91,7 +92,7 @@ public class XValuePresentationUtil {
     return extractor.getText();
   }
 
-  private static class XValuePresentationTextExtractor implements XValuePresentation.XValueTextRenderer {
+  private static class XValuePresentationTextExtractor extends XValueTextRendererBase {
     private final StringBuilder myBuilder;
 
     public XValuePresentationTextExtractor() {
@@ -104,7 +105,7 @@ public class XValuePresentationUtil {
     }
 
     @Override
-    public void renderStringValue(@NotNull String value) {
+    protected void renderRawValue(@NotNull String value, @NotNull TextAttributesKey key) {
       myBuilder.append(value);
     }
 
