@@ -299,8 +299,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   private static void addIfNeeded(@NotNull final VirtualFile file, @NotNull final Collection<String> pathList) {
+    addIfNeeded(pathList, file.getPath());
+  }
+
+  protected static void addIfNeeded(Collection<String> pathList, String path) {
     final Set<String> vals = Sets.newHashSet(pathList);
-    final String filePath = FileUtil.toSystemDependentName(file.getPath());
+    final String filePath = FileUtil.toSystemDependentName(path);
     if (!vals.contains(filePath)) {
       pathList.add(filePath);
     }
