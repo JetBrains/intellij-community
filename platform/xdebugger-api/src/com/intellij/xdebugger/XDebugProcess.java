@@ -44,7 +44,6 @@ import javax.swing.event.HyperlinkListener;
 public abstract class XDebugProcess {
   private final XDebugSession mySession;
   private ProcessHandler myProcessHandler;
-  private XDebugLayoutCustomizer myLayoutCustomizer;
 
   /**
    * @param session pass <code>session</code> parameter of {@link XDebugProcessStarter#start} method to this constructor
@@ -198,12 +197,8 @@ public abstract class XDebugProcess {
   }
 
   @Nullable
-  public XDebugLayoutCustomizer getLayoutCustomizer() {
-    return myLayoutCustomizer;
-  }
-
-  public void setLayoutCustomizer(@Nullable XDebugLayoutCustomizer layoutCustomizer) {
-    myLayoutCustomizer = layoutCustomizer;
+  public XDebugLayoutCustomizer createLayoutCustomizer() {
+    return null;
   }
 
   /**

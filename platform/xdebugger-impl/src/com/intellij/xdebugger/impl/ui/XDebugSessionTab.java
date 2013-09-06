@@ -136,7 +136,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
     myUi.addContent(createWatchesContent(session, sessionData), 0, PlaceInGrid.right, false);
-    XDebugLayoutCustomizer layoutCustomizer = debugProcess.getLayoutCustomizer();
+    XDebugLayoutCustomizer layoutCustomizer = debugProcess.createLayoutCustomizer();
     final Content consoleContent;
     if (layoutCustomizer != null) {
       consoleContent = layoutCustomizer.registerConsoleContent(myConsole, myUi);
