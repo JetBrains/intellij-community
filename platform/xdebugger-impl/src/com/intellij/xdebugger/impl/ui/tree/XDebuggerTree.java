@@ -232,6 +232,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     actionManager.getAction(XDebuggerActions.SET_VALUE).unregisterCustomShortcutSet(this);
     actionManager.getAction(XDebuggerActions.COPY_VALUE).unregisterCustomShortcutSet(this);
     actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).unregisterCustomShortcutSet(this);
+    actionManager.getAction(XDebuggerActions.JUMP_TO_TYPE_SOURCE).unregisterCustomShortcutSet(this);
     actionManager.getAction(XDebuggerActions.MARK_OBJECT).unregisterCustomShortcutSet(this);
   }
 
@@ -241,6 +242,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), this);
     actionManager.getAction(XDebuggerActions.COPY_VALUE).registerCustomShortcutSet(CommonShortcuts.getCopy(), this);
     actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
+    Shortcut[] editTypeShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(XDebuggerActions.EDIT_TYPE_SOURCE);
+    actionManager.getAction(XDebuggerActions.JUMP_TO_TYPE_SOURCE).registerCustomShortcutSet(new CustomShortcutSet(editTypeShortcuts), this);
     actionManager.getAction(XDebuggerActions.MARK_OBJECT)
       .registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("ToggleBookmark")), this);
   }
