@@ -45,20 +45,15 @@ public interface XValueNode extends Obsolescent {
    * @param value string representation of value. It is also used in 'Copy Value' action
    * @param hasChildren {@code false} if the node is a leaf
    */
-  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @Nullable String value, boolean hasChildren);
+  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
 
   /**
-   * Setup presentation of the value
+   * Setup presentation of the value. This method allows to change separator between name and value and customize the way value text is shown
    * @param icon icon representing value type (see {@link com.intellij.icons.AllIcons.Debugger})
-   * @param presentation
+   * @param presentation a new {@link XValuePresentation} instance which determines how the value is show
    * @param hasChildren {@code false} if the node is a leaf
    */
   void setPresentation(@Nullable Icon icon, @NotNull XValuePresentation presentation, boolean hasChildren);
-
-  /**
-   * Setup presentation of the grouping value (value as container)
-   */
-  void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @NotNull XValuePresentation valuePresenter, boolean expand);
 
   /**
    * @deprecated use {@link #setPresentation(javax.swing.Icon, XValuePresentation, boolean)}

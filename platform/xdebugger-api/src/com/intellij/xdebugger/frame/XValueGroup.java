@@ -13,36 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.frame.presentation;
+package com.intellij.xdebugger.frame;
 
-import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XGroupingValuePresentation extends XValuePresentation {
-  public static final XGroupingValuePresentation INSTANCE = new XGroupingValuePresentation(null);
-  private final String myComment;
+/**
+ * Represents a group of values in a debugger tree.
+ */
+public abstract class XValueGroup extends XValueContainer {
+  private final String myName;
 
-  public XGroupingValuePresentation(@Nullable String comment) {
-    myComment = comment;
-  }
-
-  @Nullable
-  @Override
-  public SimpleTextAttributes getNameAttributes() {
-    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+  protected XValueGroup(@NotNull String name) {
+    myName = name;
   }
 
   @NotNull
-  @Override
-  public String getSeparator() {
-    return myComment != null ? super.getSeparator() : "";
+  public String getName() {
+    return myName;
   }
 
-  @Override
-  public void renderValue(@NotNull XValueTextRenderer renderer) {
-    if (myComment != null) {
-      renderer.renderComment(myComment);
-    }
+  /**
+   * @return {@code true} to automatically expand the group node when it's added to a tree
+   */
+  public boolean isAutoExpand() {
+    return false;
+  }
+
+  /**
+   * @return separator between the group name and the {@link #getComment() comment} in the node text
+   */
+  @NotNull
+  public String getSeparator() {
+    return " = ";
+  }
+
+  /**
+   * @return optional comment shown after the group name
+   */
+  @Nullable
+  public String getComment() {
+    return null;
   }
 }

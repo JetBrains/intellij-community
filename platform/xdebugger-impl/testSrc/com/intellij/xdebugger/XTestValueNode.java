@@ -23,8 +23,7 @@ public class XTestValueNode extends XValueNodePresentationConfigurator.Configura
   @Override
   public void applyPresentation(@Nullable Icon icon,
                                 @NotNull XValuePresentation valuePresentation,
-                                boolean hasChildren,
-                                boolean expand) {
+                                boolean hasChildren) {
     myType = valuePresentation.getType();
     myValue = XValuePresentationUtil.computeValueText(valuePresentation);
     myHasChildren = hasChildren;

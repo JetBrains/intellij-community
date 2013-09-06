@@ -21,7 +21,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.ObjectUtils;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -41,7 +40,7 @@ import java.util.Comparator;
 /**
  * @author nik
  */
-public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode {
+public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
   public static final Comparator<XValueNodeImpl> COMPARATOR = new Comparator<XValueNodeImpl>() {
     @Override
     public int compare(XValueNodeImpl o1, XValueNodeImpl o2) {
@@ -57,9 +56,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private boolean myChanged;
   private XValuePresentation myValuePresentation;
 
+  //todo[nik] annotate 'name' with @NotNull
   public XValueNodeImpl(XDebuggerTree tree, XDebuggerTreeNode parent, String name, @NotNull XValue value) {
     super(tree, parent, value);
-
     myName = name;
 
     value.computePresentation(this, XValuePlace.TREE);
@@ -75,7 +74,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   @Override
-  public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @Nullable String value, boolean hasChildren) {
+  public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren) {
     XValueNodePresentationConfigurator.setPresentation(icon, type, value, hasChildren, this);
   }
 
@@ -110,16 +109,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   @Override
-  public void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @NotNull XValuePresentation valuePresenter,
-                                      boolean expand) {
-    XValueNodePresentationConfigurator.setGroupingPresentation(icon, valuePresenter, expand, this);
-  }
-
-  @Override
-  public void applyPresentation(@Nullable Icon icon,
-                                @NotNull XValuePresentation valuePresentation,
-                                boolean hasChildren,
-                                boolean expand) {
+  public void applyPresentation(@Nullable Icon icon, @NotNull XValuePresentation valuePresentation, boolean hasChildren) {
     setIcon(icon);
     myValuePresentation = valuePresentation;
     myRawValue = XValuePresentationUtil.computeValueText(valuePresentation);
@@ -127,17 +117,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     updateText();
     setLeaf(!hasChildren);
     fireNodeChanged();
-    myTree.nodeLoaded(this, myName, myRawValue);
-    if (expand) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!isObsolete()) {
-            myTree.expandPath(getPath());
-          }
-        }
-      });
-    }
+    myTree.nodeLoaded(this, myName);
   }
 
   @Override
@@ -166,8 +146,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   private void appendName() {
     if (!StringUtil.isEmpty(myName)) {
-      SimpleTextAttributes attributes = ObjectUtils.notNull(myValuePresentation.getNameAttributes(), XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-      XValuePresentationUtil.renderValue(myName, myText, attributes, MAX_VALUE_LENGTH, null);
+      XValuePresentationUtil.renderValue(myName, myText, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES, MAX_VALUE_LENGTH, null);
     }
   }
 

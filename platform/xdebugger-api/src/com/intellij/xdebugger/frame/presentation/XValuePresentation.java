@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.frame.presentation;
 
-import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,14 +46,6 @@ public abstract class XValuePresentation {
    */
   @Nullable
   public String getType() {
-    return null;
-  }
-
-  /**
-   * if returns null, default value (depends on implementation) will be used
-   */
-  @Nullable
-  public SimpleTextAttributes getNameAttributes() {
     return null;
   }
 

@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.frame;
+package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.xdebugger.frame.presentation.XGroupingValuePresentation;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public abstract class XGroupingValue extends XNamedValue {
-  protected XGroupingValue(@NotNull String name) {
-    super(name);
-  }
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 
-  @Override
-  public final void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-    node.setPresentation(null, XGroupingValuePresentation.INSTANCE, true);
-  }
+/**
+ * @author nik
+ */
+public interface RestorableStateNode extends TreeNode {
+  @Nullable
+  String getName();
+
+  @Nullable
+  String getRawValue();
+
+  boolean isComputed();
+
+  TreePath getPath();
+
+  void markChanged();
 }

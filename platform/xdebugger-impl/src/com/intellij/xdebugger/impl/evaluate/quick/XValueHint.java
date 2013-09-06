@@ -84,8 +84,7 @@ public class XValueHint extends AbstractValueHint {
           @Override
           public void applyPresentation(@Nullable Icon icon,
                                         @NotNull XValuePresentation valuePresenter,
-                                        boolean hasChildren,
-                                        boolean expand) {
+                                        boolean hasChildren) {
             if (isHintHidden()) return;
 
             SimpleColoredText text = new SimpleColoredText();
