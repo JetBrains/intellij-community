@@ -19,12 +19,10 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,10 +30,8 @@ import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
-import com.sun.tools.jdi.VoidValueImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -49,6 +45,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   // cached data
   private final Map<ObjectReference, ObjectReferenceProxyImpl>  myObjectReferenceProxies = new HashMap<ObjectReference, ObjectReferenceProxyImpl>();
+  @NotNull
   private Map<ThreadReference, ThreadReferenceProxyImpl>  myAllThreads = new HashMap<ThreadReference, ThreadReferenceProxyImpl>();
   private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<ThreadGroupReference, ThreadGroupReferenceProxyImpl>();
   private boolean myAllThreadsDirty = true;
@@ -147,6 +144,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
    * @return a list of all ThreadReferenceProxies
    */
   public Collection<ThreadReferenceProxyImpl> allThreads() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     if(myAllThreadsDirty) {
       myAllThreadsDirty = false;
 
@@ -169,17 +167,14 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   public void threadStarted(ThreadReference thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final Map<ThreadReference, ThreadReferenceProxyImpl> allThreads = myAllThreads;
-    if (allThreads != null && !allThreads.containsKey(thread)) {
+    if (!allThreads.containsKey(thread)) {
       allThreads.put(thread, new ThreadReferenceProxyImpl(this, thread));
     }
   }
 
   public void threadStopped(ThreadReference thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    final Map<ThreadReference, ThreadReferenceProxyImpl> allThreads = myAllThreads;
-    if (allThreads != null) {
-      allThreads.remove(thread);
-    }
+    myAllThreads.remove(thread);
   }
 
   public void suspend() {
@@ -228,6 +223,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public void threadGroupCreated(ThreadGroupReference threadGroupReference){
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     if(!isJ2ME()) {
       ThreadGroupReferenceProxyImpl proxy = new ThreadGroupReferenceProxyImpl(this, threadGroupReference);
       myThreadGroups.put(threadGroupReference, proxy);
@@ -243,6 +239,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public void threadGroupRemoved(ThreadGroupReference threadGroupReference){
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     myThreadGroups.remove(threadGroupReference);
   }
 
@@ -255,24 +252,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public VoidValue mirrorOf() throws EvaluateException {
-    try {
-      Constructor<VoidValueImpl> constructor = VoidValueImpl.class.getDeclaredConstructor(new Class[]{VirtualMachine.class});
-      constructor.setAccessible(true);
-      return constructor.newInstance(myVirtualMachine);
-    }
-    catch (NoSuchMethodException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
-    catch (InstantiationException e) {
-      LOG.error(e);
-    }
-    throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.cannot.create.void.value"));
+    return myVirtualMachine.mirrorOfVoid();
   }
 
   public BooleanValue mirrorOf(boolean b) {
@@ -341,13 +321,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myWatchFieldAccess.isAvailable();
   }
 
-  private final Capability myInvokeMethods = new Capability() {
+  private final Capability myIsJ2ME = new Capability() {
     protected boolean calcValue() {
       return isJ2ME();
     }
   };
   public boolean canInvokeMethods() {
-    return myInvokeMethods.isAvailable();
+    return !myIsJ2ME.isAvailable();
   }
 
   private final Capability myGetBytecodes = new Capability() {
@@ -540,6 +520,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public ThreadReferenceProxyImpl getThreadReferenceProxy(ThreadReference thread) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     if(thread == null) {
       return null;
     }
@@ -554,13 +535,14 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public ThreadGroupReferenceProxyImpl getThreadGroupReferenceProxy(ThreadGroupReference group) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     if(group == null) {
       return null;
     }
 
     ThreadGroupReferenceProxyImpl proxy = myThreadGroups.get(group);
     if(proxy == null) {
-      if(!isJ2ME()) {
+      if(!myIsJ2ME.isAvailable()) {
         proxy = new ThreadGroupReferenceProxyImpl(this, group);
         myThreadGroups.put(group, proxy);
       }
