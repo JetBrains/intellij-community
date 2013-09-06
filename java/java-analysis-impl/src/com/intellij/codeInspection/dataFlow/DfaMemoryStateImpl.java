@@ -90,6 +90,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (myStateSize != that.myStateSize) return false;
     if (myDistinctClasses.size() != that.myDistinctClasses.size()) return false;
+    if (myStack.size() != that.myStack.size()) return false;
+    if (myOffsetStack.size() != that.myOffsetStack.size()) return false;
+    if (myVariableStates.size() != that.myVariableStates.size()) return false;
+    if (myUnknownVariables.size() != that.myUnknownVariables.size()) return false;
 
     if (!myStack.equals(that.myStack)) return false;
     if (!myOffsetStack.equals(that.myOffsetStack)) return false;
