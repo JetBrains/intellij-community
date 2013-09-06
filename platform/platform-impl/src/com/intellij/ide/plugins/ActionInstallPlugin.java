@@ -226,7 +226,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           message += "plugin dependenc" + (disabledDependants.size() > 1 ? "ies" : "y");
         }
         message += "?</body></html>";
-        result = Messages.showOkCancelDialog(message, CommonBundle.getWarningTitle(), Messages.getQuestionIcon());
+        result = Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getQuestionIcon());
         if (result == DialogWrapper.CANCEL_EXIT_CODE) return false;
       }
 
