@@ -141,23 +141,23 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       }
     }
     appendName();
-    buildText(myValuePresentation, myText, myChanged);
+    buildText(myValuePresentation, myText);
   }
 
   private void appendName() {
     if (!StringUtil.isEmpty(myName)) {
-      XValuePresentationUtil.renderValue(myName, myText, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES, MAX_VALUE_LENGTH, null);
+      SimpleTextAttributes attributes = myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES;
+      XValuePresentationUtil.renderValue(myName, myText, attributes, MAX_VALUE_LENGTH, null);
     }
   }
 
-  public static void buildText(@NotNull XValuePresentation valuePresenter, @NotNull final ColoredTextContainer text,
-                               final boolean changed) {
+  public static void buildText(@NotNull XValuePresentation valuePresenter, @NotNull final ColoredTextContainer text) {
     XValuePresentationUtil.appendSeparator(text, valuePresenter.getSeparator());
     String type = valuePresenter.getType();
     if (type != null) {
       text.append("{" + type + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
     }
-    valuePresenter.renderValue(new XValueTextRendererImpl(text, changed));
+    valuePresenter.renderValue(new XValueTextRendererImpl(text));
   }
 
   public void markChanged() {

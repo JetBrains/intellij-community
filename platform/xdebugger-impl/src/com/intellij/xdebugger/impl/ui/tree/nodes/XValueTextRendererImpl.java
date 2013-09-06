@@ -17,45 +17,39 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.xdebugger.frame.presentation.XValuePresentation;
-import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
 * @author nik
 */
-class XValueTextRendererImpl implements XValuePresentation.XValueTextRenderer {
+class XValueTextRendererImpl extends XValueTextRendererBase {
   private final ColoredTextContainer myText;
-  private final boolean myChanged;
 
-  public XValueTextRendererImpl(ColoredTextContainer text, boolean changed) {
+  public XValueTextRendererImpl(ColoredTextContainer text) {
     myText = text;
-    myChanged = changed;
   }
 
   @Override
   public void renderValue(@NotNull String value) {
-    SimpleTextAttributes attributes = myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
-    XValuePresentationUtil.renderValue(value, myText, attributes, -1, null);
+    XValuePresentationUtil.renderValue(value, myText, SimpleTextAttributes.REGULAR_ATTRIBUTES, -1, null);
   }
 
   @Override
-  public void renderStringValue(@NotNull String value) {
-    renderStringValue(value, null, -1);
+  protected void renderRawValue(@NotNull String value, @NotNull TextAttributesKey key) {
+    TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
+    SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
+    myText.append(value, attributes);
   }
 
   @Override
   public void renderStringValue(@NotNull String value, @Nullable String additionalSpecialCharsToHighlight, int maxLength) {
-    SimpleTextAttributes attributes;
-    if (myChanged) {
-      attributes = XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES;
-    }
-    else {
-      attributes = SimpleTextAttributes.fromTextAttributes(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DefaultLanguageHighlighterColors.STRING));
-    }
+    TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DefaultLanguageHighlighterColors.STRING);
+    SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
     myText.append("\"", attributes);
     XValuePresentationUtil.renderValue(value, myText, attributes, maxLength, additionalSpecialCharsToHighlight);
     myText.append("\"", attributes);
