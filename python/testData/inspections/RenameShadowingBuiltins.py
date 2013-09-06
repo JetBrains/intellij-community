@@ -1,3 +1,3 @@
 def f(name):
-    <warning descr="Shadows a built-in with the same name">f<caret>ile</warning> = open(name, 'rb')
+    <weak_warning descr="Shadows built-in name 'file'">f<caret>ile</weak_warning> = open(name, 'rb')
     return file.read()

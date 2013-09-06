@@ -16,11 +16,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
+import com.intellij.util.Function;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
-import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -168,8 +168,8 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       else {
         executingPrompt(console);
       }
-      myConsoleCommunication.execInterpreter(command, new ICallback<Object, InterpreterResponse>() {
-        public Object call(final InterpreterResponse interpreterResponse) {
+      myConsoleCommunication.execInterpreter(command, new Function<InterpreterResponse, Object>() {
+        public Object fun(final InterpreterResponse interpreterResponse) {
           // clear
           myInputBuffer = null;
           // Handle prompt
@@ -216,7 +216,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     console.setPrompt(PyConsoleUtil.EXECUTING_PROMPT);
   }
 
-  private void more(LanguageConsoleImpl console, Editor currentEditor) {
+  private static void more(LanguageConsoleImpl console, Editor currentEditor) {
     if (!PyConsoleUtil.INDENT_PROMPT.equals(console.getPrompt())) {
       console.setPrompt(PyConsoleUtil.INDENT_PROMPT);
       PyConsoleUtil.scrollDown(currentEditor);

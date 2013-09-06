@@ -53,8 +53,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyRedeclarationInspection() {
-    LocalInspectionTool inspection = new PyRedeclarationInspection();
-    doTest(getTestName(false), inspection);
+    doHighlightingTest(PyRedeclarationInspection.class);
   }
 
   public void testPyStringFormatInspection() {
@@ -296,7 +295,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   // PY-5807
-  public void testPyShadowingBuiltinsInspection() {
-    doHighlightingTest(PyShadowingBuiltinsInspection.class);
+  public void testPyShadowingNamesInspection() {
+    doHighlightingTest(PyShadowingNamesInspection.class);
   }
 }
