@@ -203,10 +203,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private ClientFactory cmdClientFactory;
   private ClientFactory svnKitClientFactory;
 
-
-  public void checkCommandLineVersion() {
-    myChecker.checkExecutableAndNotifyIfNeeded();
-  }
+  private final boolean myLogExceptions;
 
   static {
     System.setProperty("svnkit.log.native.calls", "true");
@@ -244,8 +241,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBrachesStorage storage) {
     super(project, VCS_NAME);
+
     myLoadedBranchesStorage = storage;
-    LOG.debug("ct");
     myRootsToWorkingCopies = new RootsToWorkingCopies(this);
     myConfiguration = svnConfiguration;
     myAuthNotifier = new SvnAuthenticationNotifier(this);
@@ -293,6 +290,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     // remove used some time before old notification group ids
     correctNotificationIds();
     myChecker = new SvnExecutableChecker(myProject);
+
+    Application app = ApplicationManager.getApplication();
+    myLogExceptions = app != null && (app.isInternal() || app.isUnitTestMode());
   }
 
   private void correctNotificationIds() {
@@ -355,6 +355,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
         ApplicationManager.getApplication().invokeLater(callCleanupWorker, ModalityState.any());
       }
     });
+  }
+
+  public void checkCommandLineVersion() {
+    myChecker.checkExecutableAndNotifyIfNeeded();
   }
 
   public void invokeRefreshSvnRoots() {
@@ -987,7 +991,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private void handleInfoException(SVNException e) {
     final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
 
-    if (SVNErrorCode.WC_PATH_NOT_FOUND.equals(errorCode) ||
+    if (!myLogExceptions ||
+        SVNErrorCode.WC_PATH_NOT_FOUND.equals(errorCode) ||
         SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode) ||
         SVNErrorCode.WC_NOT_WORKING_COPY.equals(errorCode) ||
         // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
