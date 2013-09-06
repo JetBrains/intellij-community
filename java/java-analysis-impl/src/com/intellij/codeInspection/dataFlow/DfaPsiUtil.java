@@ -101,7 +101,7 @@ public class DfaPsiUtil {
     ContainerUtil.addIfNotNull(result, field.getInitializer());
 
     final PsiClass containingClass = field.getContainingClass();
-    if (containingClass != null) {
+    if (containingClass != null && !(containingClass instanceof PsiCompiledElement)) {
       result.addAll(getAllConstructorFieldInitializers(containingClass).get(field));
     }
     return result;
