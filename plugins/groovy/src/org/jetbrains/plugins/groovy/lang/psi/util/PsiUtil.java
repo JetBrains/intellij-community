@@ -25,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.light.JavaIdentifier;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -967,14 +966,6 @@ public class PsiUtil {
       String modifier = visibilityModifiers[index];
       com.intellij.psi.util.PsiUtil.setModifierProperty(owner, modifier, true);
     }
-  }
-
-  public static boolean isLeafElementOfType(@Nullable PsiElement element, IElementType type) {
-    return element instanceof LeafElement && ((LeafElement)element).getElementType() == type;
-  }
-
-  public static boolean isLeafElementOfType(PsiElement element, TokenSet tokenSet) {
-    return element instanceof LeafElement && tokenSet.contains(((LeafElement)element).getElementType());
   }
 
   /**
