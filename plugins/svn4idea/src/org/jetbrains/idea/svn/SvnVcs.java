@@ -1390,7 +1390,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @NotNull
-  private ClientFactory getFactoryFromSettings() {
+  public ClientFactory getFactoryFromSettings() {
     return myConfiguration.myUseAcceleration.equals(SvnConfiguration.UseAcceleration.commandLine) ? cmdClientFactory : svnKitClientFactory;
   }
 }
