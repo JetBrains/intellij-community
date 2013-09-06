@@ -131,34 +131,6 @@ public class DfaPsiUtil {
     return assignmentExpression;
   }
 
-  public static boolean isNullableInitialized(PsiVariable var, boolean nullable) {
-    if (!isFinalField(var)) {
-      return false;
-    }
-
-    List<PsiExpression> initializers = findAllConstructorInitializers((PsiField)var);
-    if (initializers.isEmpty()) {
-      return false;
-    }
-
-    for (PsiExpression expression : initializers) {
-      if (!(expression instanceof PsiReferenceExpression)) {
-        return false;
-      }
-      PsiElement target = ((PsiReferenceExpression)expression).resolve();
-      if (!(target instanceof PsiParameter)) {
-        return false;
-      }
-      if (nullable && NullableNotNullManager.isNullable((PsiParameter)target)) {
-        return true;
-      }
-      if (!nullable && !NullableNotNullManager.isNotNull((PsiParameter)target)) {
-        return false;
-      }
-    }
-    return !nullable;
-  }
-
   @Nullable
   public static PsiCodeBlock getTopmostBlockInSameClass(@NotNull PsiElement position) {
     PsiCodeBlock block = PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, false, PsiMember.class, PsiFile.class);
