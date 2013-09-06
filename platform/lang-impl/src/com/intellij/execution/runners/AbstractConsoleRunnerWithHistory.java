@@ -15,20 +15,19 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionHelper;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.Executor;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.SideBorder;
@@ -47,8 +46,7 @@ import java.util.List;
  *         This class provides basic functionality for running consoles.
  *         It launches external process and handles line input with history
  */
-public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsoleViewImpl> {
-  private final Project myProject;
+public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsoleViewImpl> extends ConsoleRunnerWithHistory<T> {
   private final String myConsoleTitle;
 
   private ProcessHandler myProcessHandler;
@@ -58,10 +56,9 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   private ConsoleExecuteActionHandler myConsoleExecuteActionHandler;
 
-  public AbstractConsoleRunnerWithHistory(@NotNull final Project project,
-                                          @NotNull final String consoleTitle,
-                                          @Nullable final String workingDir) {
-    myProject = project;
+  public AbstractConsoleRunnerWithHistory(@NotNull Project project, @NotNull String consoleTitle, @Nullable String workingDir) {
+    super(project);
+
     myConsoleTitle = consoleTitle;
     myWorkingDir = workingDir;
   }
@@ -74,7 +71,6 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   public void initAndRun() throws ExecutionException {
     // Create Server process
     final Process process = createProcess();
-
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -247,43 +243,27 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   public static AnAction createConsoleExecAction(final LanguageConsoleImpl languageConsole,
                                                  final ProcessHandler processHandler,
                                                  final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return new ConsoleExecuteAction(languageConsole, processHandler, consoleExecuteActionHandler);
+    return new ProcessBackedConsoleExecuteAction(languageConsole, processHandler, consoleExecuteActionHandler);
   }
 
   @NotNull
   protected abstract ConsoleExecuteActionHandler createConsoleExecuteActionHandler();
 
 
-  private static class ConsoleExecuteAction extends DumbAwareAction {
-    public static final String ACTIONS_EXECUTE_ICON = "/actions/execute.png";
-
-    private final LanguageConsoleImpl myLanguageConsole;
+  private static class ProcessBackedConsoleExecuteAction extends ConsoleExecuteAction {
     private final ProcessHandler myProcessHandler;
 
-    private final ConsoleExecuteActionHandler myConsoleExecuteActionHandler;
+    public ProcessBackedConsoleExecuteAction(LanguageConsoleImpl languageConsole,
+                                             ProcessHandler processHandler,
+                                             ConsoleExecuteActionHandler consoleExecuteActionHandler) {
+      super(languageConsole, consoleExecuteActionHandler);
 
-
-    public ConsoleExecuteAction(LanguageConsoleImpl languageConsole,
-                                ProcessHandler processHandler,
-                                ConsoleExecuteActionHandler consoleExecuteActionHandler) {
-      super(null, null, AllIcons.Actions.Execute);
-      myLanguageConsole = languageConsole;
       myProcessHandler = processHandler;
-      myConsoleExecuteActionHandler = consoleExecuteActionHandler;
-      EmptyAction.setupAction(this, consoleExecuteActionHandler.getEmptyExecuteAction(), null);
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
-      myConsoleExecuteActionHandler.runExecuteAction(myLanguageConsole);
-    }
-
-    @Override
-    public void update(final AnActionEvent e) {
-      final EditorEx editor = myLanguageConsole.getConsoleEditor();
-      final Lookup lookup = LookupManager.getActiveLookup(editor);
-      e.getPresentation().setEnabled(!editor.isRendererMode() && !myProcessHandler.isProcessTerminated() &&
-                                     (lookup == null || !(lookup.isCompletion() && lookup.isFocused())));
+    protected boolean isEnabled() {
+      return !myProcessHandler.isProcessTerminated();
     }
   }
 

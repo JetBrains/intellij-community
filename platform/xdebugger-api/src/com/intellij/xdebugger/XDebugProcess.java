@@ -16,7 +16,6 @@
 
 package com.intellij.xdebugger;
 
-import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -162,8 +161,7 @@ public abstract class XDebugProcess {
 
   @NotNull
   public ExecutionConsole createConsole() {
-    final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getSession().getProject());
-    return consoleBuilder.getConsole();
+    return TextConsoleBuilderFactory.getInstance().createBuilder(getSession().getProject()).getConsole();
   }
 
   /**
