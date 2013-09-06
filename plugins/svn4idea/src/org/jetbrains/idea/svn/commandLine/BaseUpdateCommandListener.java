@@ -4,6 +4,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -19,13 +20,13 @@ public class BaseUpdateCommandListener extends LineCommandListener {
   @NotNull
   private final UpdateOutputLineConverter converter;
 
-  @NotNull
+  @Nullable
   private final ISVNEventHandler handler;
 
   @NotNull
   private final AtomicReference<SVNException> exception;
 
-  public BaseUpdateCommandListener(@NotNull File base, @NotNull ISVNEventHandler handler) {
+  public BaseUpdateCommandListener(@NotNull File base, @Nullable ISVNEventHandler handler) {
     this.handler = handler;
     this.converter = new UpdateOutputLineConverter(base);
     exception = new AtomicReference<SVNException>();
@@ -42,13 +43,19 @@ public class BaseUpdateCommandListener extends LineCommandListener {
       if (event != null) {
         beforeHandler(event);
         try {
-          handler.handleEvent(event, 0.5);
+          callHandler(event);
         }
         catch (SVNException e) {
           cancel();
           exception.set(e);
         }
       }
+    }
+  }
+
+  private void callHandler(SVNEvent event) throws SVNException {
+    if (handler != null) {
+      handler.handleEvent(event, 0.5);
     }
   }
 
