@@ -80,43 +80,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return StringUtil.getQualifiedName(packageName, virtualFile.getNameWithoutExtension());
   }
 
-  @Nullable
-  protected static String getNormalizedExternalName(@NotNull PsiModifierListOwner owner) {
-    String externalName = getExternalName(owner, true);
-    if (externalName == null) {
-      return null;
-    }
-    if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(owner, PsiMethod.class);
-      if (method != null) {
-        externalName =
-          externalName.substring(0, externalName.lastIndexOf(' ') + 1) + method.getParameterList().getParameterIndex((PsiParameter)owner);
-      }
-    }
-    final int idx = externalName.indexOf('(');
-    if (idx == -1) return externalName;
-    StringBuilder buf = new StringBuilder(externalName.length());
-    int rightIdx = externalName.indexOf(')');
-    String[] params = externalName.substring(idx + 1, rightIdx).split(",");
-    buf.append(externalName, 0, idx + 1);
-    for (String param : params) {
-      param = param.trim();
-      int spaceIdx = param.indexOf(' ');
-      if (spaceIdx > -1) {
-        buf.append(param, 0, spaceIdx);
-      }
-      else {
-        buf.append(param);
-      }
-      buf.append(", ");
-    }
-    if (StringUtil.endsWith(buf, ", ")) {
-      buf.delete(buf.length() - ", ".length(), buf.length());
-    }
-    buf.append(externalName, rightIdx, externalName.length());
-    return buf.toString();
-  }
-
   protected abstract boolean hasAnyAnnotationsRoots();
 
   @Override
@@ -242,7 +205,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     SmartList<AnnotationData> result = new SmartList<AnnotationData>();
     String externalName = getExternalName(listOwner, false);
     if (externalName == null) return NO_DATA;
-    String oldExternalName = getNormalizedExternalName(listOwner);
 
     for (PsiFile file : files) {
       if (!file.isValid()) continue;
@@ -251,9 +213,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       MostlySingularMultiMap<String, AnnotationData> fileData = getDataFromFile(file);
 
       ContainerUtil.addAll(result, fileData.get(externalName));
-      if (oldExternalName != null && !externalName.equals(oldExternalName)) {
-        ContainerUtil.addAll(result, fileData.get(oldExternalName));
-      }
     }
     if (result.isEmpty()) {
       return NO_DATA;

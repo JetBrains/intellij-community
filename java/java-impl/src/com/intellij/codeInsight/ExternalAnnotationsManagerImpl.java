@@ -395,12 +395,11 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           continue;
         }
         final String externalName = getExternalName(listOwner, false);
-        final String oldExternalName = getNormalizedExternalName(listOwner);
 
         final List<XmlTag> tagsToProcess = new ArrayList<XmlTag>();
         for (XmlTag tag : rootTag.getSubTags()) {
           String className = StringUtil.unescapeXml(tag.getAttributeValue("name"));
-          if (!Comparing.strEqual(className, externalName) && !Comparing.strEqual(className, oldExternalName)) {
+          if (!Comparing.strEqual(className, externalName)) {
             continue;
           }
           for (XmlTag annotationTag : tag.getSubTags()) {
