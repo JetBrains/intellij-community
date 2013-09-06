@@ -216,7 +216,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     console.setPrompt(PyConsoleUtil.EXECUTING_PROMPT);
   }
 
-  private void more(LanguageConsoleImpl console, Editor currentEditor) {
+  private static void more(LanguageConsoleImpl console, Editor currentEditor) {
     if (!PyConsoleUtil.INDENT_PROMPT.equals(console.getPrompt())) {
       console.setPrompt(PyConsoleUtil.INDENT_PROMPT);
       PyConsoleUtil.scrollDown(currentEditor);
