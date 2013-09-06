@@ -792,6 +792,11 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByTestName();
   }
 
+  public void testSameSignatureWithGenerics() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "i", "z", "zz", "i, z, zz");
+  }
+
   public void testWrongAnonymous() throws Throwable {
     configureByTestName();
     select();

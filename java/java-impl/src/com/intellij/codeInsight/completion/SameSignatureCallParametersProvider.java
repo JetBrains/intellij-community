@@ -34,9 +34,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -55,7 +54,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
                                 @NotNull CompletionResultSet result) {
     final PsiCall methodCall = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiCall.class);
     assert methodCall != null;
-    List<Pair<PsiMethod, PsiSubstitutor>> candidates = getCallCandidates(methodCall);
+    Set<Pair<PsiMethod, PsiSubstitutor>> candidates = getCallCandidates(methodCall);
 
     PsiMethod container = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
     while (container != null) {
@@ -93,8 +92,8 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
     return TailTypeDecorator.withTail(element, ExpectedTypesProvider.getFinalCallParameterTailType(call, invoked.getReturnType(), invoked));
   }
 
-  private static List<Pair<PsiMethod, PsiSubstitutor>> getCallCandidates(PsiCall expression) {
-    List<Pair<PsiMethod, PsiSubstitutor>> candidates = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
+  private static Set<Pair<PsiMethod, PsiSubstitutor>> getCallCandidates(PsiCall expression) {
+    Set<Pair<PsiMethod, PsiSubstitutor>> candidates = ContainerUtil.newLinkedHashSet();
     JavaResolveResult[] results;
     if (expression instanceof PsiMethodCallExpression) {
       results = ((PsiMethodCallExpression)expression).getMethodExpression().multiResolve(false);
@@ -108,7 +107,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
         final PsiClass psiClass = ((PsiMethod)element).getContainingClass();
         if (psiClass != null) {
           for (Pair<PsiMethod, PsiSubstitutor> overload : psiClass.findMethodsAndTheirSubstitutorsByName(((PsiMethod)element).getName(), true)) {
-            candidates.add(overload);
+            candidates.add(Pair.create(overload.first, candidate.getSubstitutor().putAll(overload.second)));
           }
           break;
         }
