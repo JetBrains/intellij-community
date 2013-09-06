@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
@@ -45,6 +46,7 @@ import java.util.Set;
  *         Date: 7/8/12
  */
 public class FSOperations {
+  private static final Logger LOG = Logger.getInstance(FSOperations.class);
   public static final GlobalContextKey<Set<File>> ALL_OUTPUTS_KEY = GlobalContextKey.create("_all_project_output_dirs_");
 
   public static void markDirty(CompileContext context, final File file) throws IOException {
@@ -193,6 +195,7 @@ public class FSOperations {
   public static void pruneEmptyDirs(CompileContext context, @Nullable final Set<File> dirsToDelete) {
     if (dirsToDelete == null || dirsToDelete.isEmpty()) return;
 
+    LOG.debug("Pruning " + dirsToDelete.size() + " directories");
     Set<File> doNotDelete = ALL_OUTPUTS_KEY.get(context);
     if (doNotDelete == null) {
       doNotDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);

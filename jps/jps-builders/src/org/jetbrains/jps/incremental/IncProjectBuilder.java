@@ -379,7 +379,9 @@ public class IncProjectBuilder {
   public static void clearOutputFiles(CompileContext context, BuildTarget<?> target) throws IOException {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
     final THashSet<File> dirsToDelete = target instanceof ModuleBasedTarget? new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY) : null;
-    for (String srcPath : map.getSources()) {
+    Collection<String> sources = map.getSources();
+    LOG.debug("Clearing " + sources.size() + " output files");
+    for (String srcPath : sources) {
       final Collection<String> outs = map.getOutputs(srcPath);
       if (outs != null && !outs.isEmpty()) {
         for (String out : outs) {
@@ -399,6 +401,7 @@ public class IncProjectBuilder {
     if (dirsToDelete != null) {
       FSOperations.pruneEmptyDirs(context, dirsToDelete);
     }
+    LOG.debug("Finished clearing output files");
   }
 
   private static void registerTargetsWithClearedOutput(CompileContext context, Collection<? extends BuildTarget<?>> targets) {
