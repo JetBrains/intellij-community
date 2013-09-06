@@ -8,6 +8,7 @@ import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.PostMethod;
 
+import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,11 @@ public class GenericRepositoryUtil {
     return postMethod;
   }
 
-  public static String substituteTemplateVariables(String s, Collection<TemplateVariable> variables) {
+  public static String substituteTemplateVariables(String s, Collection<TemplateVariable> variables) throws Exception {
+    return substituteTemplateVariables(s, variables, true);
+  }
+
+  public static String substituteTemplateVariables(String s, Collection<TemplateVariable> variables, boolean escape) throws Exception {
     Map<String, String> lookup = new HashMap<String, String>();
     for (TemplateVariable v : variables) {
       lookup.put(v.getName(), v.getValue());
@@ -48,8 +53,12 @@ public class GenericRepositoryUtil {
     StringBuffer sb = new StringBuffer();
     Matcher m = PLACEHOLDER_PATTERN.matcher(s);
     while (m.find()) {
-      String replacement = lookup.containsKey(m.group(1)) ? lookup.get(m.group(1)) : m.group(0);
-      m.appendReplacement(sb, replacement);
+      String name = m.group(1);
+      String replacement = lookup.get(name);
+      if (replacement == null) {
+        throw new Exception((String.format("Template variable '%s' is not defined", name)));
+      }
+      m.appendReplacement(sb, escape? URLEncoder.encode(replacement, "utf-8") : replacement);
     }
     return m.appendTail(sb).toString();
   }
@@ -61,7 +70,7 @@ public class GenericRepositoryUtil {
   public static List<String> createPlaceholdersList(List<TemplateVariable> variables) {
     return ContainerUtil.map2List(variables, new Function<TemplateVariable, String>() {
       @Override
-      public String  fun(TemplateVariable variable) {
+      public String fun(TemplateVariable variable) {
         return String.format("{%s}", variable.getName());
       }
     });

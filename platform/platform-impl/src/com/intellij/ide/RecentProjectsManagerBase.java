@@ -263,6 +263,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
   private class MyProjectManagerListener extends ProjectManagerAdapter {
     public void projectOpened(final Project project) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
       String path = getProjectPath(project);
       if (path != null) {
         markPathRecent(path);

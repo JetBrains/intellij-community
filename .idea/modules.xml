@@ -161,7 +161,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/xslt-debugger/engine/impl/xslt-debugger-engine-impl.iml" filepath="$PROJECT_DIR$/plugins/xslt-debugger/engine/impl/xslt-debugger-engine-impl.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xpath/xslt-rt/xslt-rt.iml" filepath="$PROJECT_DIR$/plugins/xpath/xslt-rt/xslt-rt.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-api/editor-ui-api.iml" filepath="$PROJECT_DIR$/platform/editor-ui-api/editor-ui-api.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-impl/editor-ui-impl.iml" filepath="$PROJECT_DIR$/platform/editor-ui-impl/editor-ui-impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-ex/editor-ui-ex.iml" filepath="$PROJECT_DIR$/platform/editor-ui-ex/editor-ui-ex.iml" />
     </modules>
   </component>
 </project>

@@ -29,7 +29,6 @@ public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, TextA
 
   void setName(String name);
 
-  TextAttributes getAttributes(TextAttributesKey key);
   void setAttributes(TextAttributesKey key, TextAttributes attributes);
 
   @NotNull

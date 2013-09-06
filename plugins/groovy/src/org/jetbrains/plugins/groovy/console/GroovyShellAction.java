@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -43,6 +46,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.PlatformIcons;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
@@ -87,6 +91,23 @@ public class GroovyShellAction extends DumbAwareAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
 
+    CompilerManager.getInstance(project).make(new CompileStatusNotification() {
+      @Override
+      public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+        if (aborted) return;
+
+        final Project project = compileContext.getProject();
+
+        if (errors == 0 ||
+            Messages.showYesNoDialog(project, "Compilation failed with errors. Do you want to run Groovy shell anyway?", "Groovy Shell",
+                                     JetgroovyIcons.Groovy.Groovy_32x32) == Messages.YES) {
+          runGroovyShell(project);
+        }
+      }
+    });
+  }
+
+  private static void runGroovyShell(Project project) {
     List<Module> modules = new ArrayList<Module>();
     final Map<Module, String> versions = new HashMap<Module, String>();
 

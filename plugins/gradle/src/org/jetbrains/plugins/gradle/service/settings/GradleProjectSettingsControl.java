@@ -150,6 +150,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     myUseBundledDistributionButton = new JBRadioButton(
       GradleBundle.message("gradle.settings.text.use.bundled.distribution", GradleVersion.current().getVersion()));
     myUseBundledDistributionButton.addActionListener(listener);
+    myUseBundledDistributionButton.setEnabled(false);
 
     ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(myUseWrapperButton);

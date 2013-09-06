@@ -43,9 +43,9 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.DottedBorder;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -87,17 +87,17 @@ public class GrInplaceParameterIntroducer extends GrInplaceIntroducer {
                                       GrExpressionWrapper expr) {
     super(elementToRename, editor, project, title, occurrences, elementToIntroduce);
 
+    mySettings = settings;
 
     initPreview(project);
 
     myDelegateCB = new JBCheckBox("Delegate via overloading method");
-    myDelegateCB.setMnemonic(DefaultGroovyMethods.asType("l", Character.class));
+    myDelegateCB.setMnemonic('l');
+    myDelegateCB.setFocusable(false);
 
     myPanel = new JPanel(new BorderLayout());
     myPanel.add(myPreviewComponent, BorderLayout.CENTER);
-    //myPanel.add(myDelegateCB, BorderLayout.SOUTH); todo
-
-    mySettings = settings;
+    myPanel.add(myDelegateCB, BorderLayout.SOUTH);
 
     myExpr = expr;
 
@@ -134,7 +134,7 @@ public class GrInplaceParameterIntroducer extends GrInplaceIntroducer {
 
     final Color bg = myPreview.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
     myPreview.setBackgroundColor(bg);
-    myPreview.setBorder(BorderFactory.createCompoundBorder(new DottedBorder(Color.gray), new LineBorder(bg, 2)));
+    myPreview.setBorder(BorderFactory.createCompoundBorder(new DottedBorder(JBColor.GRAY), new LineBorder(bg, 2)));
 
     myPreviewComponent = new JPanel(new BorderLayout());
     myPreviewComponent.add(myPreview.getComponent(), BorderLayout.CENTER);
@@ -154,6 +154,8 @@ public class GrInplaceParameterIntroducer extends GrInplaceIntroducer {
       }
     };
     myEditor.getDocument().addDocumentListener(documentAdapter);
+
+    updateTitle(getVariable(), getVariable().getName());
   }
 
   @Override
@@ -169,7 +171,7 @@ public class GrInplaceParameterIntroducer extends GrInplaceIntroducer {
   protected void moveOffsetAfter(boolean success) {
     if (success) {
       final GrVariable parameter = getVariable();
-      GrIntroduceParameterSettings settings = generateSettings((GrParameter)parameter, mySettings);
+      GrIntroduceParameterSettings settings = generateSettings((GrParameter)parameter, mySettings, myDelegateCB.isSelected());
       assert parameter != null;
       parameter.delete();
       GrIntroduceParameterProcessor processor = new GrIntroduceParameterProcessor(settings, myExpr);
@@ -180,26 +182,29 @@ public class GrInplaceParameterIntroducer extends GrInplaceIntroducer {
     super.moveOffsetAfter(success);
   }
 
-  public GrIntroduceParameterSettings generateSettings(GrParameter parameter, IntroduceParameterInfo info) {
+  public GrIntroduceParameterSettings generateSettings(GrParameter parameter, IntroduceParameterInfo info, boolean delegate) {
 
     TObjectIntHashMap<GrParameter> toRemove = GroovyIntroduceParameterUtil.findParametersToRemove(info);
+    TIntArrayList removeList = new TIntArrayList(delegate ? ArrayUtil.EMPTY_INT_ARRAY: toRemove.getValues());
+
     GrExpression _expr = myExpr.getExpression();
     GrVariable _var = GroovyIntroduceParameterUtil.findVar(info);
-    return new GrIntroduceExpressionSettingsImpl(info, parameter.getName(), false, new TIntArrayList(toRemove.getValues()),
-                                                 myDelegateCB.isSelected(), IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE,
-                                                 _expr, _var, parameter.getType(), false);
+    return new GrIntroduceExpressionSettingsImpl(info, parameter.getName(), false, removeList, myDelegateCB.isSelected(),
+                                                 IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, _expr, _var,
+                                                 parameter.getType(), false);
   }
 
   @Override
   protected JComponent getComponent() {
+    updateTitle(getVariable());
     return myPanel;
   }
 
 
-  /*protected void updateTitle(@Nullable PsiVariable variable) {
+  protected void updateTitle(@Nullable PsiVariable variable) {
     if (variable == null) return;
     updateTitle(variable, variable.getName());
-  }*/
+  }
 
   protected void updateTitle(@Nullable final PsiVariable variable, final String value) {
     final PsiElement declarationScope = variable != null ? ((PsiParameter)variable).getDeclarationScope() : null;

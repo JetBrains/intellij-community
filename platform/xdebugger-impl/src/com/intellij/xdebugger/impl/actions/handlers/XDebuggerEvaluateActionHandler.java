@@ -15,11 +15,12 @@
  */
 package com.intellij.xdebugger.impl.actions.handlers;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -43,8 +44,8 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
     if (evaluator == null) return;
 
-    @Nullable Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    @Nullable Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    @Nullable Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    @Nullable Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     String selectedText = editor != null ? editor.getSelectionModel().getSelectedText() : null;
     if (selectedText != null) {
@@ -53,9 +54,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     String text = selectedText;
 
     if (text == null && editor != null) {
-      Document document = editor.getDocument();
-      TextRange range = evaluator.getExpressionRangeAtOffset(project, document, editor.getCaretModel().getOffset(), true);
-      text = range == null ? null : document.getText(range);
+      text = getExpressionText(evaluator, project, editor);
     }
 
     if (text == null) {
@@ -67,9 +66,24 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     if (text == null) {
       text = "";
     }
-    final XDebuggerEvaluationDialog dialog = new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, text,
-                                                                           stackFrame.getSourcePosition());
-    dialog.show();
+    new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, text, stackFrame.getSourcePosition()).show();
+  }
+
+  @Nullable
+  public static String getExpressionText(@Nullable XDebuggerEvaluator evaluator, @Nullable Project project, @NotNull Editor editor) {
+    if (project == null || evaluator == null) {
+      return null;
+    }
+
+    Document document = editor.getDocument();
+    return getExpressionText(evaluator.getExpressionAtOffset(project, document, editor.getCaretModel().getOffset(), true), document);
+  }
+
+  public static String getExpressionText(@Nullable Pair<TextRange, String> expressionInfo, @NotNull Document document) {
+    if (expressionInfo == null) {
+      return null;
+    }
+    return expressionInfo.second == null ? document.getText(expressionInfo.first) : expressionInfo.second;
   }
 
   protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {

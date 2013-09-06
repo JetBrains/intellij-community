@@ -168,7 +168,7 @@ public class StorageUtil {
     return LocalFileSystem.getInstance().findFileByIoFile(ioFile);
   }
 
-  public static byte[] printDocument(final Document document) throws StateStorageException {
+  public static byte[] printDocument(@NotNull Document document) throws StateStorageException {
     try {
       return printDocumentToString(document, SystemProperties.getLineSeparator()).getBytes(CharsetToolkit.UTF8);
     }
@@ -212,7 +212,7 @@ public class StorageUtil {
     }
   }
 
-  public static String printDocumentToString(final Document document, final String lineSeparator) {
+  public static String printDocumentToString(@NotNull Document document, final String lineSeparator) {
     return JDOMUtil.writeDocument(document, lineSeparator);
   }
 
@@ -234,7 +234,7 @@ public class StorageUtil {
   }
 
   @Nullable
-  public static Document loadDocument(final InputStream stream) {
+  public static Document loadDocument(@Nullable InputStream stream) {
     if (stream == null) {
       return null;
     }
@@ -255,7 +255,7 @@ public class StorageUtil {
     }
   }
 
-  public static void sendContent(StreamProvider provider, String fileSpec, Document copy, RoamingType type, boolean async) throws IOException {
+  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, Document copy, @NotNull RoamingType type, boolean async) throws IOException {
     byte[] content = printDocument(copy);
     ByteArrayInputStream in = new ByteArrayInputStream(content);
     try {

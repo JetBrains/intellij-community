@@ -147,12 +147,14 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testReportConstantReferences() {
-    doTestReplaceConstantReferences();
+    doTestReportConstantReferences();
     myFixture.launchAction(myFixture.findSingleIntention("Replace with 'null'"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  private void doTestReplaceConstantReferences() {
+  public void testReportConstantReferencesAfterFinalFieldAccess() { doTestReportConstantReferences(); }
+
+  private void doTestReportConstantReferences() {
     DataFlowInspection inspection = new DataFlowInspection();
     inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
     myFixture.enableInspections(inspection);
@@ -160,27 +162,27 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testReportConstantReferences_ReplaceWithString() {
-    doTestReplaceConstantReferences();
+    doTestReportConstantReferences();
     myFixture.launchAction(myFixture.findSingleIntention("Replace with 'CONST'"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
   public void testReportConstantReferences_ReplaceWithIntConstant() {
-    doTestReplaceConstantReferences();
+    doTestReportConstantReferences();
     myFixture.launchAction(myFixture.findSingleIntention("Replace with 'CONST'"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
   public void testReportConstantReferences_ReplaceWithEnum() {
     myFixture.addClass("package foo; public enum MyEnum { FOO }");
-    doTestReplaceConstantReferences();
+    doTestReportConstantReferences();
     myFixture.launchAction(myFixture.findSingleIntention("Replace with 'FOO'"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
   public void testReportConstantReferences_NotInComplexAssignment() {
     myFixture.addClass("package foo; public enum MyEnum { FOO }");
-    doTestReplaceConstantReferences();
+    doTestReportConstantReferences();
     assertEmpty(myFixture.filterAvailableIntentions("Replace with"));
   }
-  public void testReportConstantReferences_Switch() { doTestReplaceConstantReferences(); }
+  public void testReportConstantReferences_Switch() { doTestReportConstantReferences(); }
 
   public void testCheckFieldInitializers() {
     doTest();

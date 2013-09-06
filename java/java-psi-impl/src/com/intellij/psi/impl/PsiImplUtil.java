@@ -26,10 +26,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.JavaDocElementType;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -39,6 +36,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -748,4 +746,13 @@ public class PsiImplUtil {
 
     return result;
   }
+
+  public static boolean isLeafElementOfType(@Nullable PsiElement element, IElementType type) {
+    return element instanceof LeafElement && ((LeafElement)element).getElementType() == type;
+  }
+
+  public static boolean isLeafElementOfType(PsiElement element, TokenSet tokenSet) {
+    return element instanceof LeafElement && tokenSet.contains(((LeafElement)element).getElementType());
+  }
+
 }

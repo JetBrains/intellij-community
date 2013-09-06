@@ -60,7 +60,8 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
     return Arrays.asList(
       this,
       new AsanaRepository(),
-      new AssemblaRepository()
+      new AssemblaRepository(),
+      new SprintlyRepository()
     );
   }
 
@@ -117,6 +118,12 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
   public final class AssemblaRepository extends GenericSubtype {
     public AssemblaRepository() {
       super("Assembla", TasksIcons.Assembla);
+    }
+  }
+
+  public final class SprintlyRepository extends GenericSubtype {
+    public SprintlyRepository() {
+      super("Sprintly", TasksIcons.SPRINTLY);
     }
   }
 }

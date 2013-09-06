@@ -29,7 +29,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   @NotNull  private DistributionType distributionType;
 
   public GradleProjectSettings() {
-    this.distributionType = DistributionType.BUNDLED;
+    this.distributionType = DistributionType.LOCAL;
   }
 
   @Nullable

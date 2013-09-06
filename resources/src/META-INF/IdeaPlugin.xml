@@ -219,6 +219,10 @@
       <with attribute="implementationClass" implements="com.intellij.testIntegration.createTest.TestGenerator"/>
     </extensionPoint>
 
+    <extensionPoint name="encapsulateFields.Helper" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.encapsulateFields.EncapsulateFieldHelper"/>
+    </extensionPoint>
+
     <extensionPoint name="psi.clsCustomNavigationPolicy"
                     interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
     <extensionPoint name="psi.clsDecompiledFileProvider"
@@ -882,6 +886,8 @@
 
     <lang.refactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaRefactoringSupportProvider"/>
     <lang.refactoringSupport.classMembersRefactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaClassMembersRefactoringSupport"/>
+
+    <encapsulateFields.Helper implementationClass="com.intellij.refactoring.encapsulateFields.JavaEncapsulateFieldHelper" language="JAVA"/>
 
     <lang.formatter language="JAVA" implementationClass="com.intellij.lang.java.JavaFormattingModelBuilder"/>
     <lang.whiteSpaceFormattingStrategy language="JAVA"

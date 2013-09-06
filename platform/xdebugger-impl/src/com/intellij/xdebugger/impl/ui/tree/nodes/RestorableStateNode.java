@@ -13,12 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.frame;
+package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-public abstract class XValueChildrenProvider {
-  public abstract String getName(int i);
+import org.jetbrains.annotations.Nullable;
 
-  public abstract XValue getValue(int i);
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 
-  public abstract int size();
+/**
+ * @author nik
+ */
+public interface RestorableStateNode extends TreeNode {
+  @Nullable
+  String getName();
+
+  @Nullable
+  String getRawValue();
+
+  boolean isComputed();
+
+  TreePath getPath();
+
+  void markChanged();
 }

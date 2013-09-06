@@ -16,11 +16,9 @@
 package com.intellij.tasks.integration;
 
 import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskTestUtil;
 import com.intellij.tasks.generic.GenericRepository;
 import com.intellij.tasks.generic.GenericRepositoryType;
 import com.intellij.tasks.generic.GenericTask;
-import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -102,8 +100,7 @@ public class AsanaIntegrationTest extends GenericSubtypeTestCase {
     Task task = myRepository.getActiveResponseHandler().parseIssue(SINGLE_TASK_RESPONSE);
     assertNotNull(task);
     assertTasksEqual(
-      new TaskBuilder("7119324862208", "Task #2")
-        .withRepository(myRepository)
+      new TaskBuilder("7119324862208", "Task #2", myRepository)
         .withDescription("This is task #2 description")
         .withClosed(true)
         .withCreated("2013-08-02T12:13:20.372Z")

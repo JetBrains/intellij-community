@@ -141,6 +141,9 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
         }
       }
       else {
+        if (curChar == '.') {
+          buf.append("\\");
+        }
         buf.append(curChar);
       }
       cur++;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,55 +20,59 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
-class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
+public class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
+
   @NotNull private final PsiVariable variable;
   private final boolean recurseIntoClasses;
   private final boolean checkUnaryExpressions;
   private boolean assigned = false;
+  private PsiElement excludedElement = null;
 
-  public VariableAssignedVisitor(@NotNull PsiVariable variable,
-                                 boolean recurseIntoClasses) {
+  public VariableAssignedVisitor(@NotNull PsiVariable variable, boolean recurseIntoClasses) {
     this.variable = variable;
     final PsiType type = variable.getType();
     checkUnaryExpressions = TypeConversionUtil.isNumericType(type);
     this.recurseIntoClasses = recurseIntoClasses;
   }
 
+  public VariableAssignedVisitor(@NotNull PsiVariable variable) {
+    this(variable, true);
+  }
+
+  public void setExcludedElement(PsiElement excludedElement) {
+    this.excludedElement = excludedElement;
+  }
+
   @Override
   public void visitElement(@NotNull PsiElement element) {
-    if (assigned) {
+    if (assigned || element == excludedElement) {
       return;
     }
     super.visitElement(element);
   }
 
   @Override
-  public void visitAssignmentExpression(
-    @NotNull PsiAssignmentExpression assignment) {
+  public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
     if (assigned) {
       return;
     }
     super.visitAssignmentExpression(assignment);
-    final PsiExpression arg = assignment.getLExpression();
-    if (VariableAccessUtils.mayEvaluateToVariable(arg, variable)) {
+    final PsiExpression lhs = assignment.getLExpression();
+    if (VariableAccessUtils.evaluatesToVariable(lhs, variable)) {
       assigned = true;
     }
   }
 
   @Override
   public void visitClass(PsiClass aClass) {
-    if (!recurseIntoClasses) {
-      return;
-    }
-    if (assigned) {
+    if (!recurseIntoClasses || assigned) {
       return;
     }
     super.visitClass(aClass);
   }
 
   @Override
-  public void visitPrefixExpression(
-    @NotNull PsiPrefixExpression prefixExpression) {
+  public void visitPrefixExpression(@NotNull PsiPrefixExpression prefixExpression) {
     if (assigned) {
       return;
     }
@@ -77,19 +81,17 @@ class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
       return;
     }
     final IElementType tokenType = prefixExpression.getOperationTokenType();
-    if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-        !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+    if (!tokenType.equals(JavaTokenType.PLUSPLUS) && !tokenType.equals(JavaTokenType.MINUSMINUS)) {
       return;
     }
     final PsiExpression operand = prefixExpression.getOperand();
-    if (VariableAccessUtils.mayEvaluateToVariable(operand, variable)) {
+    if (VariableAccessUtils.evaluatesToVariable(operand, variable)) {
       assigned = true;
     }
   }
 
   @Override
-  public void visitPostfixExpression(
-    @NotNull PsiPostfixExpression postfixExpression) {
+  public void visitPostfixExpression(@NotNull PsiPostfixExpression postfixExpression) {
     if (assigned) {
       return;
     }
@@ -98,12 +100,11 @@ class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
       return;
     }
     final IElementType tokenType = postfixExpression.getOperationTokenType();
-    if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-        !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+    if (!tokenType.equals(JavaTokenType.PLUSPLUS) && !tokenType.equals(JavaTokenType.MINUSMINUS)) {
       return;
     }
     final PsiExpression operand = postfixExpression.getOperand();
-    if (VariableAccessUtils.mayEvaluateToVariable(operand, variable)) {
+    if (VariableAccessUtils.evaluatesToVariable(operand, variable)) {
       assigned = true;
     }
   }

@@ -1016,7 +1016,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       for (HighlightSeverity severity : severities) {
         final TextAttributesKey attributesKey = TextAttributesKey.find(severity.toString());
         final TextAttributes textAttributes = oppositeRegister.getTextAttributesBySeverity(severity);
-        LOG.assertTrue(textAttributes != null);
+        LOG.assertTrue(textAttributes != null, severity.toString());
         HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(severity, attributesKey);
         registrar.registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
                                    textAttributes.getErrorStripeColor());

@@ -101,7 +101,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     if (value == null) {
       return null;
     }
-    if (value instanceof String || value instanceof Long || value instanceof Boolean) {
+    if (value instanceof String || value instanceof Number || value instanceof Boolean) {
       return value.toString();
     }
     throw new Exception(String.format("JsonPath expression '%s' should match string value. Got '%s' instead",

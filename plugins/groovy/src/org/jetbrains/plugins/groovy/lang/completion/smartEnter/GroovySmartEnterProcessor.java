@@ -41,6 +41,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -78,6 +80,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
             }
           }
         },
+        new GrClassBodyFixer() ,
         new GrMissingIfStatement(),
         new GrIfConditionFixer(),
         new GrLiteralFixer(),
@@ -154,7 +157,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
     if (atCaret instanceof PsiWhiteSpace) return null;
 
     while (atCaret != null && !PsiUtil.isExpressionStatement(atCaret)) {
-      if (atCaret instanceof PsiMethod || atCaret instanceof GrDocComment) return atCaret;
+      if (atCaret instanceof PsiMethod || atCaret instanceof GrDocComment || atCaret instanceof GrTypeDefinition) return atCaret;
       atCaret = atCaret.getParent();
     }
 
@@ -180,7 +183,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
       final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
       final boolean old = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
       settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
-      PsiElement elt = PsiTreeUtil.getParentOfType(file.findElementAt(caretOffset - 1), GrCodeBlock.class);
+      PsiElement elt = PsiTreeUtil.getParentOfType(file.findElementAt(caretOffset - 1), GrCodeBlock.class, GrTypeDefinitionBody.class);
       reformat(elt);
       settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = old;
       editor.getCaretModel().moveToOffset(caretOffset - 1);

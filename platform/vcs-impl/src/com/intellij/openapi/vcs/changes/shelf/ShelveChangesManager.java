@@ -301,6 +301,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   private File getPatchPath(@NonNls final String commitMessage) {
     File file = myFileProcessor.getBaseIODir();
     if (!file.exists()) {
+      //noinspection ResultOfMethodCallIgnored
       file.mkdirs();
     }
 

@@ -486,7 +486,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       return CachingReference.getManipulator(element).handleContentChange(element, range, newName);
     }
     catch (IncorrectOperationException e) {
-      LOG.error("Cannot rename " + getClass() + " from " + myFileReferenceSet.getClass() + " to " + newName);
+      LOG.error("Cannot rename " + getClass() + " from " + myFileReferenceSet.getClass() + " to " + newName, e);
       throw e;
     }
   }

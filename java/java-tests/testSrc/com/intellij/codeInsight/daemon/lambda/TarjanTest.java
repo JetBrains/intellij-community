@@ -21,6 +21,7 @@ import com.intellij.util.Function;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,7 +33,41 @@ public class TarjanTest extends TestCase {
 
   //testdata from https://github.com/bwesterb/py-tarjan/
   public void testResultGraph() throws Exception {
-    //{1:[2],2:[1,5],3:[4],4:[3,5],5:[6],6:[7],7:[8],8:[6,9],9:[]}
+    
+
+    final List<List<InferenceGraphNode<Integer>>> tarjan = InferenceGraphNode.tarjan(Arrays.asList(initNodes()));
+    final String messages = StringUtil.join(tarjan, new Function<List<InferenceGraphNode<Integer>>, String>() {
+      @Override
+      public String fun(List<InferenceGraphNode<Integer>> nodes) {
+        return StringUtil.join(nodes, new Function<InferenceGraphNode<Integer>, String>() {
+          @Override
+          public String fun(InferenceGraphNode<Integer> node) {
+            return String.valueOf(node.getValue());
+          }
+        }, ",");
+      }
+    }, "\n");
+
+    Assert.assertEquals("[9]\n" +
+                        "[8],[7],[6]\n" +
+                        "[5]\n" +
+                        "[2],[1]\n" +
+                        "[4],[3]", messages);
+
+    final ArrayList<InferenceGraphNode<Integer>> acyclicNodes = InferenceGraphNode.initNodes(Arrays.asList(initNodes()));
+    final String aMessages = StringUtil.join(acyclicNodes, new Function<InferenceGraphNode<Integer>, String>() {
+      @Override
+      public String fun(InferenceGraphNode<Integer> node) {
+        return String.valueOf(node.getValue());
+      }
+    }, ",");
+
+
+    Assert.assertEquals("[9],[8, 7, 6],[5],[2, 1],[4, 3]", aMessages);
+  }
+
+  //{1:[2],2:[1,5],3:[4],4:[3,5],5:[6],6:[7],7:[8],8:[6,9],9:[]}
+  private static InferenceGraphNode<Integer>[] initNodes() {
     InferenceGraphNode<Integer>[] nodes = new InferenceGraphNode[9];
     for (int i = 0; i < nodes.length; i++) {
       nodes[i] = new InferenceGraphNode<Integer>(i + 1);
@@ -56,24 +91,6 @@ public class TarjanTest extends TestCase {
 
     nodes[7].getDependencies().add(nodes[5]);
     nodes[7].getDependencies().add(nodes[8]);
-
-    final List<List<InferenceGraphNode<Integer>>> tarjan = InferenceGraphNode.tarjan(Arrays.asList(nodes));
-    final String messages = StringUtil.join(tarjan, new Function<List<InferenceGraphNode<Integer>>, String>() {
-      @Override
-      public String fun(List<InferenceGraphNode<Integer>> nodes) {
-        return StringUtil.join(nodes, new Function<InferenceGraphNode<Integer>, String>() {
-          @Override
-          public String fun(InferenceGraphNode<Integer> node) {
-            return String.valueOf(node.getValue());
-          }
-        }, ",");
-      }
-    }, "\n");
-
-    Assert.assertEquals("9\n" +
-                        "8,7,6\n" +
-                        "5\n" +
-                        "2,1\n" +
-                        "4,3", messages);
+    return nodes;
   }
 }

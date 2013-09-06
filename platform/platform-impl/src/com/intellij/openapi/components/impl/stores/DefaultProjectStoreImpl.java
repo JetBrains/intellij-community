@@ -181,7 +181,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
       @NotNull
       @Override
-      public StreamProvider[] getStreamProviders(final RoamingType roamingType) {
+      public StreamProvider[] getStreamProviders(@NotNull RoamingType roamingType) {
         throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
       }
 
