@@ -53,11 +53,14 @@ public class UpdateOutputLineConverter {
   
   private final static Pattern ourAtRevision = Pattern.compile(AT_REVISION);
   private final static Pattern ourUpdatedToRevision = Pattern.compile(UPDATED_TO_REVISION);
+  private final static Pattern ourCheckedOutRevision = Pattern.compile("Checked out revision (\\d+)\\.");
 
   private final static Pattern ourExternal = Pattern.compile(EXTERNAL);
   private final static Pattern ourUpdatedExternal = Pattern.compile(UPDATED_EXTERNAL);
-  
-  private final static Pattern[] ourCompletePatterns = new Pattern[] {ourAtRevision, ourUpdatedToRevision, ourExternal, ourUpdatedExternal};
+  private final static Pattern ourCheckedOutExternal = Pattern.compile("Checked out external at revision (\\d+)\\.");
+
+  private final static Pattern[] ourCompletePatterns =
+    new Pattern[]{ourAtRevision, ourUpdatedToRevision, ourCheckedOutRevision, ourExternal, ourUpdatedExternal, ourCheckedOutExternal};
 
   private final File myBase;
   private File myCurrentFile;

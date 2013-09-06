@@ -5,6 +5,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.CmdAddClient;
 import org.jetbrains.idea.svn.annotate.CmdAnnotateClient;
 import org.jetbrains.idea.svn.change.CmdChangeListClient;
+import org.jetbrains.idea.svn.checkout.CmdCheckoutClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.conflict.CmdConflictClient;
@@ -38,6 +39,7 @@ public class CmdClientFactory extends ClientFactory {
     propertyClient = new CmdPropertyClient();
     mergeClient = new CmdMergeClient();
     changeListClient = new CmdChangeListClient();
+    checkoutClient = new CmdCheckoutClient();
     statusClient = new SvnCommandLineStatusClient(myVcs.getProject());
     infoClient = new SvnCommandLineInfoClient(myVcs.getProject());
   }
