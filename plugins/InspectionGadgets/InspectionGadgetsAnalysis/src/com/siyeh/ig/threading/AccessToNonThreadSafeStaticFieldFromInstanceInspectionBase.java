@@ -29,11 +29,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionBase extends BaseInspection {
+
   public AccessToNonThreadSafeStaticFieldFromInstanceInspectionBase() {
-    if (nonThreadSafeTypes.length() != 0) {
+    if (!nonThreadSafeTypes.isEmpty()) {
       nonThreadSafeClasses.clear();
-      final List<String> strings =
-        StringUtil.split(nonThreadSafeTypes, ",");
+      final List<String> strings = StringUtil.split(nonThreadSafeTypes, ",");
       for (String string : strings) {
         nonThreadSafeClasses.add(string);
       }
@@ -43,9 +43,8 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionBase extends 
 
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet nonThreadSafeClasses =
-    new ExternalizableStringSet(
-      "java.text.SimpleDateFormat",
-      "java.util.Calendar");
+    new ExternalizableStringSet("java.text.SimpleDateFormat", "java.util.Calendar");
+
   @NonNls
   @SuppressWarnings({"PublicField"})
   public String nonThreadSafeTypes = "";
@@ -60,16 +59,13 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionBase extends 
   @Nls
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "access.to.non.thread.safe.static.field.from.instance.display.name");
+    return InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "access.to.non.thread.safe.static.field.from.instance.field.problem.descriptor",
-      infos[0]);
+    return InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.field.problem.descriptor", infos[0]);
   }
 
   @Override
@@ -77,28 +73,21 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionBase extends 
     return new AccessToNonThreadSafeStaticFieldFromInstanceVisitor();
   }
 
-  class AccessToNonThreadSafeStaticFieldFromInstanceVisitor
-    extends BaseInspectionVisitor {
+  class AccessToNonThreadSafeStaticFieldFromInstanceVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       final PsiModifierListOwner parent =
-        PsiTreeUtil.getParentOfType(expression,
-                                    PsiField.class, PsiMethod.class,
-                                    PsiClassInitializer.class);
+        PsiTreeUtil.getParentOfType(expression, PsiField.class, PsiMethod.class, PsiClassInitializer.class);
       if (parent == null) {
         return;
       }
-      if (parent instanceof PsiMethod ||
-          parent instanceof PsiClassInitializer) {
+      if (parent instanceof PsiMethod || parent instanceof PsiClassInitializer) {
         if (parent.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
           return;
         }
-        final PsiSynchronizedStatement synchronizedStatement =
-          PsiTreeUtil.getParentOfType(expression,
-                                      PsiSynchronizedStatement.class);
+        final PsiSynchronizedStatement synchronizedStatement = PsiTreeUtil.getParentOfType(expression, PsiSynchronizedStatement.class);
         if (synchronizedStatement != null) {
           return;
         }

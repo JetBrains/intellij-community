@@ -15,27 +15,21 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
-public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
-  extends AccessToNonThreadSafeStaticFieldFromInstanceInspectionBase {
+public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends AccessToNonThreadSafeStaticFieldFromInstanceInspectionBase {
 
-  public AccessToNonThreadSafeStaticFieldFromInstanceInspection() {
-  }
+  public AccessToNonThreadSafeStaticFieldFromInstanceInspection() {}
 
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return UiUtils.createTreeClassChooserList(nonThreadSafeClasses,
-                                              InspectionGadgetsBundle.message(
-                                                "access.to.non.thread.safe.static.field.from.instance.option.title"),
-                                              InspectionGadgetsBundle.message(
-                                                "access.to.non.thread.safe.static.field.from.instance.class.chooser.title"));
+    return UiUtils.createTreeClassChooserList(
+      nonThreadSafeClasses, InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.option.title"),
+      InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.class.chooser.title"));
   }
 }
