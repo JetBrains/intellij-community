@@ -15,6 +15,7 @@
     <lang.substitutor language="TEXT" implementationClass="com.jetbrains.rest.RestLanguageSubstitutor"/>
 
     <languageInjector implementation="com.jetbrains.rest.PyRestDocstringLanguageInjector"/>
+    <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.completion.SphinxDirectiveCompletionContributor"/>
   </extensions>
 
   <actions>
