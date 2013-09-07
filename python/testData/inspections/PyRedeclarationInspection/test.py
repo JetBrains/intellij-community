@@ -43,15 +43,11 @@ def test_local_variable():
     x = 2
 
 
-def conditional(c):
+def test_conditional(c):
     def foo():
         pass
 
     if c:
-        def foo():
-            pass
-
-    while c:
         def foo():
             pass
 
@@ -60,3 +56,34 @@ def conditional(c):
             pass
     except:
         pass
+
+
+def test_while_loop(c):
+    def foo():
+        pass
+
+    while c:
+        def <warning descr="Redeclared 'foo' defined above without usage">foo</warning>():
+            pass
+
+
+class TestForLoopNoRedeclaraion:
+    for foo in [1, 2, 3]:
+        x = 1
+
+
+class TestForLoopTarget:
+    def foo():
+        pass
+
+    for <warning descr="Redeclared 'foo' defined above without usage">foo</warning> in [1, 2, 3]:
+        x = 1
+
+
+class TestForLoopBody:
+    def foo():
+        pass
+
+    for _ in [1, 2, 3]:
+        def <warning descr="Redeclared 'foo' defined above without usage">foo</warning>():
+            pass
