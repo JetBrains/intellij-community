@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -92,8 +93,12 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionBase extends 
           return;
         }
       }
-      final PsiExpression qualifier = expression.getQualifierExpression();
-      if (qualifier != null) {
+      if (parent instanceof PsiField || parent instanceof PsiClassInitializer) {
+        if (parent.hasModifierProperty(PsiModifier.STATIC)) {
+          return;
+        }
+      }
+      if (expression.getQualifierExpression() != null) {
         return;
       }
       final PsiType type = expression.getType();
@@ -102,8 +107,12 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionBase extends 
       }
       final PsiClassType classType = (PsiClassType)type;
       final String className = classType.rawType().getCanonicalText();
+      boolean deepCheck = false;
       if (!nonThreadSafeClasses.contains(className)) {
-        return;
+        if (!TypeUtils.isExpressionTypeAssignableWith(expression, nonThreadSafeClasses)) {
+          return;
+        }
+        deepCheck = true;
       }
       final PsiElement target = expression.resolve();
       if (!(target instanceof PsiField)) {
@@ -113,7 +122,25 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspectionBase extends 
       if (!field.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      registerError(expression, className);
+      if (deepCheck) {
+        final PsiExpression initializer = field.getInitializer();
+        if (initializer == null) {
+          return;
+        }
+        final PsiType initializerType = initializer.getType();
+        if (!(initializerType instanceof PsiClassType)) {
+          return;
+        }
+        final PsiClassType classType2 = (PsiClassType)initializerType;
+        final String className2 = classType2.rawType().getCanonicalText();
+        if (!nonThreadSafeClasses.contains(className2)) {
+          return;
+        }
+        registerError(expression, className2);
+      }
+      else {
+        registerError(expression, className);
+      }
     }
   }
 }

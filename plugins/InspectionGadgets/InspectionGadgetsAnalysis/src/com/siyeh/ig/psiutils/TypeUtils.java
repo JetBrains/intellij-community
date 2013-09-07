@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
 public class TypeUtils {
 
-  private TypeUtils() {
-  }
+  private TypeUtils() {}
 
   public static boolean typeEquals(@NonNls @NotNull String typeName, @Nullable PsiType targetType) {
     return targetType != null && targetType.equalsToText(typeName);
@@ -55,6 +52,21 @@ public class TypeUtils {
 
   public static boolean isJavaLangString(@Nullable PsiType targetType) {
     return typeEquals(CommonClassNames.JAVA_LANG_STRING, targetType);
+  }
+
+  public static boolean isExpressionTypeAssignableWith(@NotNull PsiExpression expression, @NotNull Iterable<String> rhsTypeTexts) {
+    final PsiType type = expression.getType();
+    if (type == null) {
+      return false;
+    }
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    for (String rhsTypeText : rhsTypeTexts) {
+      final PsiClassType rhsType = factory.createTypeByFQClassName(rhsTypeText, expression.getResolveScope());
+      if (type.isAssignableFrom(rhsType)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean expressionHasTypeOrSubtype(@Nullable PsiExpression expression, @NonNls @NotNull String typeName) {
@@ -98,7 +110,7 @@ public class TypeUtils {
     return null;
   }
 
-  public static boolean expressionHasTypeOrSubtype(@Nullable PsiExpression expression, @NonNls @NotNull Collection<String> typeNames) {
+  public static boolean expressionHasTypeOrSubtype(@Nullable PsiExpression expression, @NonNls @NotNull Iterable<String> typeNames) {
     if (expression == null) {
       return false;
     }
@@ -148,9 +160,6 @@ public class TypeUtils {
       return false;
     }
     final PsiType type = expression.getType();
-    if (type == null) {
-      return false;
-    }
-    return PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type);
+    return type != null && (PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type));
   }
 }
