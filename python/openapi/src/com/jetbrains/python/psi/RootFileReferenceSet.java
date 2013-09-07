@@ -35,7 +35,12 @@ public class RootFileReferenceSet extends FileReferenceSet {
   }
 
   public boolean isAbsolutePathReference() {
-    return FileUtil.isAbsolute(getPathString());
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      return FileUtil.isAbsolute(getPathString());
+    }
+    else {
+      return super.isAbsolutePathReference();
+    }
   }
 
   @NotNull
