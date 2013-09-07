@@ -4,6 +4,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
@@ -37,15 +38,16 @@ public class PythonUnitTestCommandLineState extends
   protected List<String> getTestSpecs() {
     List<String> specs = new ArrayList<String>();
 
+    final String scriptName = FileUtil.toSystemDependentName(myConfig.getScriptName());
     switch (myConfig.getTestType()) {
       case TEST_SCRIPT:
-        specs.add(myConfig.getScriptName());
+        specs.add(scriptName);
         break;
       case TEST_CLASS:
-        specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName());
+        specs.add(scriptName + "::" + myConfig.getClassName());
         break;
       case TEST_METHOD:
-        specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
+        specs.add(scriptName + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
         break;
       case TEST_FOLDER:
         if (!StringUtil.isEmpty(myConfig.getPattern()) && myConfig.usePattern()) {
@@ -56,7 +58,7 @@ public class PythonUnitTestCommandLineState extends
         }
         break;
       case TEST_FUNCTION:
-        specs.add(myConfig.getScriptName() + "::::" + myConfig.getMethodName());
+        specs.add(scriptName + "::::" + myConfig.getMethodName());
         break;
       default:
         throw new IllegalArgumentException("Unknown test type: " + myConfig.getTestType());
