@@ -22,7 +22,7 @@ import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonProcessRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.rest.RestUtil;
+import com.jetbrains.rest.RestPythonUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,6 +169,6 @@ public class SphinxBaseCommand {
 
   @Nullable
   private static String getCommandPath(Sdk sdk) {
-    return RestUtil.findQuickStart(sdk.getHomePath());
+    return RestPythonUtil.findQuickStart(sdk);
   }
 }

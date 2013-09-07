@@ -867,6 +867,37 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
+  @Nullable
+  public static String getExecutablePath(@NotNull final String homeDirectory, @NotNull String name) {
+    File binPath = new File(homeDirectory);
+    File binDir = binPath.getParentFile();
+    if (binDir == null) return null;
+    File runner = new File(binDir, name);
+    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    runner = new File(new File(binDir, "Scripts"), name);
+    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    runner = new File(new File(binDir.getParentFile(), "Scripts"), name);
+    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    runner = new File(new File(binDir.getParentFile(), "local"), name);
+    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    runner = new File(new File(new File(binDir.getParentFile(), "local"), "bin"), name);
+    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+
+    // Search in standard unix path
+    runner = new File(new File("/usr", "bin"), name);
+    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    runner = new File(new File (new File("/usr", "local"), "bin"), name);
+    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
+    return null;
+  }
+
+  @Nullable
+  public static String getExecutablePath(@NotNull final Sdk sdk, @NotNull String name) {
+    final String homeDirectory = sdk.getHomePath();
+    if (homeDirectory == null) return null;
+    return getExecutablePath(homeDirectory, name);
+  }
+
   private static String[] getBinaryNames() {
     if (SystemInfo.isUnix) {
       return UNIX_BINARY_NAMES;

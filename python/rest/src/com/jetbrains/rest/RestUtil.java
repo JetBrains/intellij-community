@@ -2,11 +2,7 @@ package com.jetbrains.rest;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,32 +11,6 @@ import java.util.Set;
  */
 public class RestUtil {
   private RestUtil() {}
-
-  @Nullable
-  public static String findQuickStart(final String sdkHome) {
-    final String runnerName = "sphinx-quickstart" + (SystemInfo.isWindows ? ".exe" : "");
-    File binPath = new File(sdkHome);
-    File binDir = binPath.getParentFile();
-    if (binDir == null) return null;
-    File runner = new File(binDir, runnerName);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
-    runner = new File(new File(binDir, "scripts"), runnerName);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
-    runner = new File(new File(binDir.getParentFile(), "scripts"), runnerName);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
-    runner = new File(new File(binDir.getParentFile(), "local"), runnerName);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
-    runner = new File(new File (new File(binDir.getParentFile(), "local"), "bin"), runnerName);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
-
-    // Search in standard unix path
-    runner = new File(new File("/usr", "bin"), runnerName);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
-    runner = new File(new File (new File("/usr", "local"), "bin"), runnerName);
-    if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
-
-    return null;
-  }
 
   public static String[] SPHINX_DIRECTIVES = new String[] {
     "module::" ,  "automodule::" ,  "autoclass::" ,  "toctree::" ,  "glossary::" ,  "code-block::", "versionadded::",

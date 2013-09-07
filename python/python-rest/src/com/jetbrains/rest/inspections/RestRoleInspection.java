@@ -19,10 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.rest.RestBundle;
-import com.jetbrains.rest.RestFile;
-import com.jetbrains.rest.RestTokenTypes;
-import com.jetbrains.rest.RestUtil;
+import com.jetbrains.rest.*;
 import com.jetbrains.rest.psi.RestDirectiveBlock;
 import com.jetbrains.rest.psi.RestRole;
 import com.jetbrains.rest.quickfixes.AddIgnoredRoleFix;
@@ -114,7 +111,7 @@ public class RestRoleInspection extends RestInspection {
 
       Sdk sdk = ProjectRootManager.getInstance(node.getProject()).getProjectSdk();
       if (sdk != null) {
-        String sphinx = RestUtil.findQuickStart(sdk.getHomePath());
+        String sphinx = RestPythonUtil.findQuickStart(sdk);
         if (sphinx != null) {
           if (RestUtil.SPHINX_ROLES.contains(node.getText()) || RestUtil.SPHINX_ROLES.contains(":py"+node.getText())
              || mySphinxRoles.contains(node.getRoleName())) return;
