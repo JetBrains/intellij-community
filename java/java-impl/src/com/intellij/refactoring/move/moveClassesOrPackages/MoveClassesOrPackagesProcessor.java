@@ -159,14 +159,20 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    List<UsageInfo> allUsages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> allUsages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> usagesToSkip = new ArrayList<UsageInfo>();
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     for (PsiElement element : myElementsToMove) {
       String newName = getNewQName(element);
       if (newName == null) continue;
       final UsageInfo[] usages = MoveClassesOrPackagesUtil.findUsages(element, mySearchInComments,
                                                                       mySearchInNonJavaFiles, newName);
-      allUsages.addAll(new ArrayList<UsageInfo>(Arrays.asList(usages)));
+      final ArrayList<UsageInfo> infos = new ArrayList<UsageInfo>(Arrays.asList(usages));
+      allUsages.addAll(infos);
+      if (Comparing.strEqual(newName, getOldQName(element))) {
+        usagesToSkip.addAll(infos);
+      }
+
       if (element instanceof PsiPackage) {
         for (PsiDirectory directory : ((PsiPackage)element).getDirectories()) {
           final UsageInfo[] dirUsages = MoveClassesOrPackagesUtil.findUsages(directory, mySearchInComments,
@@ -186,6 +192,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    allUsages.removeAll(usagesToSkip);
     return UsageViewUtil.removeDuplicatedUsages(allUsages.toArray(new UsageInfo[allUsages.size()]));
   }
 
@@ -411,23 +418,30 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   @Nullable
   private String getNewQName(PsiElement element) {
     final String qualifiedName = myTargetPackage.getQualifiedName();
-    final String newQName;
-    final String oldQName;
     if (element instanceof PsiClass) {
-      newQName = StringUtil.getQualifiedName(qualifiedName, ((PsiClass)element).getName());
-      oldQName = ((PsiClass)element).getQualifiedName();
+      return StringUtil.getQualifiedName(qualifiedName, ((PsiClass)element).getName());
     }
     else if (element instanceof PsiPackage) {
-      newQName = StringUtil.getQualifiedName(qualifiedName, ((PsiPackage)element).getName());
-      oldQName = ((PsiPackage)element).getQualifiedName();
+      return StringUtil.getQualifiedName(qualifiedName, ((PsiPackage)element).getName());
     }
     else {
       LOG.assertTrue(false);
-      newQName = null;
-      oldQName = null;
+      return null;
     }
-    if (Comparing.strEqual(newQName, oldQName)) return null;
-    return newQName;
+  }
+  
+  @Nullable
+  private String getOldQName(PsiElement element) {
+    if (element instanceof PsiClass) {
+      return ((PsiClass)element).getQualifiedName();
+    }
+    else if (element instanceof PsiPackage) {
+      return ((PsiPackage)element).getQualifiedName();
+    }
+    else {
+      LOG.assertTrue(false);
+      return null;
+    }
   }
 
   protected void refreshElements(PsiElement[] elements) {

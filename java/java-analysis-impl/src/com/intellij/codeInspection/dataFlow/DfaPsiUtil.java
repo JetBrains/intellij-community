@@ -21,10 +21,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class DfaPsiUtil {
   public static boolean isPlainMutableField(PsiVariable var) {
@@ -97,66 +100,48 @@ public class DfaPsiUtil {
     final List<PsiExpression> result = ContainerUtil.createLockFreeCopyOnWriteList();
     ContainerUtil.addIfNotNull(result, field.getInitializer());
 
-    PsiClass containingClass = field.getContainingClass();
-    if (containingClass != null) {
-      LocalSearchScope scope = new LocalSearchScope(containingClass.getConstructors());
-      ReferencesSearch.search(field, scope, false).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference reference) {
-          final PsiElement element = reference.getElement();
-          if (element instanceof PsiReferenceExpression) {
-            final PsiAssignmentExpression assignment = getAssignmentExpressionIfOnAssignmentLhs(element);
-            final PsiMethod method = PsiTreeUtil.getParentOfType(assignment, PsiMethod.class);
-            if (method != null && method.isConstructor() && assignment != null) {
-              ContainerUtil.addIfNotNull(result, assignment.getRExpression());
-            }
-          }
-          return true;
-        }
-      });
+    final PsiClass containingClass = field.getContainingClass();
+    if (containingClass != null && !(containingClass instanceof PsiCompiledElement)) {
+      result.addAll(getAllConstructorFieldInitializers(containingClass).get(field));
     }
     return result;
   }
 
-  @Nullable
-  private static PsiAssignmentExpression getAssignmentExpressionIfOnAssignmentLhs(PsiElement expression) {
-    PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
-    if (!(parent instanceof PsiAssignmentExpression)) {
-      return null;
-    }
-    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-    if (!PsiTreeUtil.isAncestor(assignmentExpression.getLExpression(), expression, false)) {
-      return null;
-    }
-    return assignmentExpression;
-  }
+  private static MultiMap<PsiField, PsiExpression> getAllConstructorFieldInitializers(final PsiClass psiClass) {
+    return CachedValuesManager.getManager(psiClass.getProject()).getCachedValue(psiClass, new CachedValueProvider<MultiMap<PsiField, PsiExpression>>() {
+      @Nullable
+      @Override
+      public Result<MultiMap<PsiField, PsiExpression>> compute() {
+        final Set<String> fieldNames = ContainerUtil.newHashSet();
+        for (PsiField field : psiClass.getFields()) {
+          ContainerUtil.addIfNotNull(fieldNames, field.getName());
+        }
 
-  public static boolean isNullableInitialized(PsiVariable var, boolean nullable) {
-    if (!isFinalField(var)) {
-      return false;
-    }
+        final MultiMap<PsiField, PsiExpression> result = new MultiMap<PsiField, PsiExpression>();
+        JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
+            super.visitAssignmentExpression(assignment);
+            PsiExpression lExpression = assignment.getLExpression();
+            PsiExpression rExpression = assignment.getRExpression();
+            if (rExpression != null &&
+                lExpression instanceof PsiReferenceExpression &&
+                fieldNames.contains(((PsiReferenceExpression)lExpression).getReferenceName())) {
+              PsiElement target = ((PsiReferenceExpression)lExpression).resolve();
+              if (target instanceof PsiField && ((PsiField)target).getContainingClass() == psiClass) {
+                result.putValue((PsiField)target, rExpression);
+              }
+            }
+          }
+        };
 
-    List<PsiExpression> initializers = findAllConstructorInitializers((PsiField)var);
-    if (initializers.isEmpty()) {
-      return false;
-    }
+        for (PsiMethod constructor : psiClass.getConstructors()) {
+          constructor.accept(visitor);
+        }
 
-    for (PsiExpression expression : initializers) {
-      if (!(expression instanceof PsiReferenceExpression)) {
-        return false;
+        return Result.create(result, psiClass);
       }
-      PsiElement target = ((PsiReferenceExpression)expression).resolve();
-      if (!(target instanceof PsiParameter)) {
-        return false;
-      }
-      if (nullable && NullableNotNullManager.isNullable((PsiParameter)target)) {
-        return true;
-      }
-      if (!nullable && !NullableNotNullManager.isNotNull((PsiParameter)target)) {
-        return false;
-      }
-    }
-    return !nullable;
+    });
   }
 
   @Nullable

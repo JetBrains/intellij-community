@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiField;
 
 /**
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiField;
  * @since 6.0
  */
 public interface RefField extends RefJavaElement {
+   Key<Boolean> ENUM_CONSTANT = Key.create("ENUM_CONSTANT");
   /**
    * Checks if the field is used for reading.
    *

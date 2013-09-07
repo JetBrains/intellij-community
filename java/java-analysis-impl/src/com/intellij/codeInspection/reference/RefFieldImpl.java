@@ -17,6 +17,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -42,6 +43,9 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     if (ownerClass.isInterface()) {
       setIsStatic(true);
       setIsFinal(true);
+    }
+    if (field instanceof PsiEnumConstant) {
+      putUserData(ENUM_CONSTANT, true);
     }
   }
 

@@ -38,16 +38,16 @@ import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +59,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
@@ -85,6 +86,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   @NotNull private ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
 
   private static int myMinMarkHeight = 3;
+  private static int myPreviewLines = 5;// Actually preview has myPreviewLines * 2 + 1 lines (above + below + current one)
+  private boolean myEditorPreviewIsShown = false;
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
@@ -145,53 +148,46 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  private boolean showToolTipByMouseMove(final MouseEvent e, final double width) {
+  private boolean showToolTipByMouseMove(final MouseEvent e) {
     MouseEvent me = e;
 
-    Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
+    final int line = getLineByEvent(e);
+    Rectangle area = myEditor.getScrollingModel().getVisibleArea();
+    //int realY = (int)(((float)e.getY() / e.getComponent().getHeight()) * myEditor.getContentComponent().getHeight());
+    int realY = myEditor.getLineHeight() * line;
+    boolean isVisible = area.contains(area.x, realY);//area.y < realY && area.y + area.height > realY;
 
-    getNearestHighlighters(this, me, width, highlighters);
-    getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true), me,
-                           width, highlighters);
+    TooltipRenderer bigRenderer;
+    if (!ApplicationManager.getApplication().isInternal() || isVisible) {
+      final Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
+      getNearestHighlighters(this, me.getY(), highlighters);
+      getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true), me.getY(), highlighters);
 
-    int minDelta = Integer.MAX_VALUE;
-    int y = e.getY();
+      int minDelta = Integer.MAX_VALUE;
+      int y = e.getY();
 
-    for (RangeHighlighter each : highlighters) {
-      ProperTextRange range = offsetsToYPositions(each.getStartOffset(), each.getEndOffset());
-      int eachStartY = range.getStartOffset();
-      int eachEndY = range.getEndOffset();
-      int eachY = eachStartY + (eachEndY - eachStartY) / 2;
-      if (Math.abs(e.getY() - eachY) < minDelta) {
-        y = eachY;
+      for (RangeHighlighter each : highlighters) {
+        ProperTextRange range = offsetsToYPositions(each.getStartOffset(), each.getEndOffset());
+        int eachStartY = range.getStartOffset();
+        int eachEndY = range.getEndOffset();
+        int eachY = eachStartY + (eachEndY - eachStartY) / 2;
+        if (Math.abs(e.getY() - eachY) < minDelta) {
+          y = eachY;
+        }
       }
-    }
 
-    me = new MouseEvent((Component)e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(), y + 1, e.getClickCount(),
-                        e.isPopupTrigger());
 
-    boolean bigEditorView = false;
-    TooltipRenderer bigRenderer = null;
+      me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(), y + 1, e.getClickCount(),
+                          e.isPopupTrigger());
 
-    if (ApplicationManager.getApplication().isInternal()){
-      int line = myEditor.offsetToLogicalLine(yPositionToOffset(y, true));
-      int startOffset = myEditor.logicalPositionToOffset(new LogicalPosition(Math.max(0, line - getMinHeight()), 0));
-      LogicalPosition endPosition = new LogicalPosition(Math.max(0, line + getMinHeight()), 0);
-      int endOffset = myEditor.logicalPositionToOffset(endPosition);
-      Rectangle rect = myEditor.getScrollingModel().getVisibleArea();
-      Point point = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset));
-      bigEditorView = !rect.contains(point);
-      if (bigEditorView) {
-        getNearestHighlighters(this, me, width, highlighters, false);
-        getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true), me,
-                               width, highlighters, false);
-        bigRenderer = new MyTooltipRenderer(new DocumentFragment(myEditor.getDocument(), startOffset, endOffset), highlighters);
-      }
-    }
-
-    if (!bigEditorView) {
       if (highlighters.isEmpty()) return false;
       bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
+    } else {
+      final List<RangeHighlighterEx> highlighters = new ArrayList<RangeHighlighterEx>();
+      collectRangeHighlighters(this, line, highlighters);
+      collectRangeHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true), line,
+                               highlighters);
+      bigRenderer = new EditorFragmentRenderer(line, highlighters, e.getX());
     }
 
     if (bigRenderer != null) {
@@ -201,11 +197,33 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return false;
   }
 
+  private int getLineByEvent(MouseEvent e) {
+    return myEditor.offsetToLogicalLine(yPositionToOffset(e.getY(), true));
+  }
+
+  private void collectRangeHighlighters(MarkupModelEx markupModel, final int currentLine, final Collection<RangeHighlighterEx> highlighters) {
+    int startOffset = myEditor.getDocument().getLineStartOffset(Math.max(0, currentLine - myPreviewLines));
+    int endOffset = myEditor.getDocument().getLineEndOffset(Math.min(myEditor.getDocument().getLineCount() -1 , currentLine + myPreviewLines));
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+      @Override
+      public boolean process(RangeHighlighterEx highlighter) {
+        if (highlighter.getErrorStripeMarkColor() != null) {
+          int startLine = offsetToLine(highlighter.getStartOffset(), myEditor.getDocument());
+          int endLine = offsetToLine(highlighter.getStartOffset(), myEditor.getDocument());
+          if (startLine <= currentLine + myPreviewLines && endLine >= currentLine - myPreviewLines) {
+            highlighters.add(highlighter);
+          }
+        }
+        return true;
+      }
+    });
+  }
+
   @Nullable
-  private RangeHighlighter getNearestRangeHighlighter(final MouseEvent e, final int width) {
+  private RangeHighlighter getNearestRangeHighlighter(final MouseEvent e) {
     List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    getNearestHighlighters(this, e, width, highlighters);
-    getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), myEditor.getProject(), true), e, width,
+    getNearestHighlighters(this, e.getY(), highlighters);
+    getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), myEditor.getProject(), true), e.getY(),
                            highlighters);
     RangeHighlighter nearestMarker = null;
     int yPos = 0;
@@ -221,27 +239,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private void getNearestHighlighters(MarkupModelEx markupModel,
-                                      MouseEvent e,
-                                      final double width,
+                                      final int y,
                                       final Collection<RangeHighlighter> nearest) {
-    getNearestHighlighters(markupModel, e, width, nearest, true);
-  }
-  private void getNearestHighlighters(MarkupModelEx markupModel,
-                                      MouseEvent e,
-                                      final double width,
-                                      final Collection<RangeHighlighter> nearest,
-                                      final boolean isTooltip) {
-    if (0 > e.getX() || e.getX() >= width) return;
-    final int y = e.getY();
-    int startOffset = yPositionToOffset(y - getMinHeight() * (isTooltip ? 1 : 20), true);
-    int endOffset = yPositionToOffset(y + getMinHeight() * (isTooltip ? 1 : 20), false);
+    int startOffset = yPositionToOffset(y - getMinHeight(), true);
+    int endOffset = yPositionToOffset(y + getMinHeight(), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx highlighter) {
         if (highlighter.getErrorStripeMarkColor() != null) {
           ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
-          if (y >= range.getStartOffset() - getMinHeight() * (isTooltip ? 2 : 20) &&
-              y <= range.getEndOffset() + getMinHeight() * (isTooltip ? 2 : 20)) {
+          if (y >= range.getStartOffset() - getMinHeight() * 2 &&
+              y <= range.getEndOffset() + getMinHeight() * 2) {
             nearest.add(highlighter);
           }
         }
@@ -250,10 +258,18 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     });
   }
 
-  private void doClick(final MouseEvent e, final int width) {
-    RangeHighlighter marker = getNearestRangeHighlighter(e, width);
-    if (marker == null) return;
-    int offset = marker.getStartOffset();
+  private void doClick(final MouseEvent e) {
+    RangeHighlighter marker = getNearestRangeHighlighter(e);
+    int offset;
+    if (marker == null) {
+      if (myEditorPreviewIsShown) {
+        offset = myEditor.getDocument().getLineStartOffset(getLineByEvent(e));
+      } else {
+        return;
+      }
+    } else {
+      offset = marker.getStartOffset();
+    }
 
     final Document doc = myEditor.getDocument();
     if (doc.getLineCount() > 0) {
@@ -710,7 +726,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (lineCount == 0) {
         return;
       }
-      doClick(e, getWidth());
+      if (e.getX() > 0 && e.getX() <= getWidth()) {
+        doClick(e);
+      }
     }
 
     @Override
@@ -727,7 +745,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         return;
       }
 
-      if (showToolTipByMouseMove(e, getWidth())) {
+      if (e.getX() > 0 && e.getX() <= getWidth() && showToolTipByMouseMove(e)) {
         scrollbar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return;
       }
@@ -974,14 +992,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       return startCollapsed != null ? Math.max(offset, startCollapsed.getEndOffset()) : offset;
     }
   }
+  private class EditorFragmentRenderer implements TooltipRenderer {
+    private int myLine;
+    private Collection<RangeHighlighterEx> myHighlighters;
+    private int myMouseX;
 
-  private static class MyTooltipRenderer implements TooltipRenderer {
-    private final DocumentFragment myDocumentFragment;
-    private Set<RangeHighlighter> myHighlighters;
-
-    public MyTooltipRenderer(DocumentFragment documentFragment, Set<RangeHighlighter> highlighters) {
-      myDocumentFragment = documentFragment;
-      myHighlighters = highlighters;
+    private EditorFragmentRenderer(int currentLine, Collection<RangeHighlighterEx> rangeHighlighters, int mouseX) {
+      myLine = currentLine;
+      myHighlighters = rangeHighlighters;
+      myMouseX = mouseX;
     }
 
     @Override
@@ -990,71 +1009,107 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                 boolean alignToRight,
                                 @NotNull TooltipGroup group,
                                 @NotNull HintHint intInfo) {
-      LightweightHint hint;
+      final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
+      JPanel magic = new JPanel() {
+        private static final int R = 6;
 
-      final JComponent editorComponent = editor.getComponent();
+        private BufferedImage myImage = null;
 
-      TextRange range = myDocumentFragment.getTextRange();
-      int startOffset = range.getStartOffset();
-      int endOffset = range.getEndOffset();
-
-      int verticalScrollOffset = editor.getScrollingModel().getVerticalScrollOffset();
-      if (verticalScrollOffset > endOffset) {
-        startOffset -= (verticalScrollOffset - endOffset);
-        endOffset -= (verticalScrollOffset - endOffset);
-        startOffset = Math.max(0, startOffset);
-        endOffset = Math.max(0, endOffset);
-      }
-
-      Document doc = myDocumentFragment.getDocument();
-      int endLine = doc.getLineNumber(endOffset);
-      int startLine = doc.getLineNumber(startOffset);
-
-      JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
-
-      // There is a possible case that collapsed folding region is soft wrapped, hence, we need to anchor
-      // not logical but visual line start.
-      Rectangle rect = editor.getComponent().getVisibleRect();
-      Point point = intInfo.getOriginalPoint();
-      SwingUtilities.convertPointToScreen(point, intInfo.getOriginalComponent());
-      VisualPosition visual = editor.offsetToVisualPosition(startOffset);
-      p = editor.visualPositionToXY(visual);
-      p = SwingUtilities.convertPoint(
-        ((EditorEx)editor).getGutterComponentEx(),
-        p,
-        layeredPane
-      );
-
-      p.x -= 3;
-      p.y = point.y;
-
-      Point screenPoint = new Point(p);
-      SwingUtilities.convertPointToScreen(screenPoint, layeredPane);
-      int maxLineCount = (ScreenUtil.getScreenRectangle(screenPoint).height - screenPoint.y) / editor.getLineHeight();
-
-      if (endLine - startLine > maxLineCount) {
-        endOffset = doc.getLineEndOffset(Math.max(0, Math.min(startLine + maxLineCount, doc.getLineCount() - 1)));
-      }
-
-      FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
-      foldingModel.setFoldingEnabled(false);
-      TextRange textRange = new TextRange(startOffset, endOffset);
-      List<Pair<RangeHighlighter, int[]>> highlightInfo = new ArrayList<Pair<RangeHighlighter, int[]>>();
-      for (RangeHighlighter highlighter : myHighlighters) {
-        if (highlighter instanceof RangeHighlighterEx) {
-          RangeHighlighterEx rangeHighlighterEx = (RangeHighlighterEx)highlighter;
-          highlightInfo.add(Pair.create(highlighter, new int[]{rangeHighlighterEx.getAffectedAreaStartOffset(), rangeHighlighterEx.getAffectedAreaEndOffset()}));
+        @Override
+        public Dimension getPreferredSize() {
+          int width = 0;
+          if (editor instanceof EditorEx) {
+            width = ((EditorEx)editor).getGutterComponentEx().getWidth();
+          }
+          width += Math.min(editor.getScrollingModel().getVisibleArea().width, editor.getContentComponent().getWidth());
+          return new Dimension(width - 6, editor.getLineHeight() * (myPreviewLines * 2 + 1));
         }
-      }
-      hint = EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.x, p.y, true, false, true, highlightInfo.toArray(new Pair[]{}));
-      if (hint == null) return null;
-      JComponent component = hint.getComponent();
-      Dimension size = new Dimension(editorComponent.getWidth(), component.getPreferredSize().height);
-      size.width -= ((EditorEx)editor).getScrollPane().getVerticalScrollBar().getWidth();
-      component.setPreferredSize(size);
-      component.setMinimumSize(size);
-      component.setSize(size);
-      foldingModel.setFoldingEnabled(true);
+
+        @Override
+        protected void paintComponent(Graphics g) {
+          if (myImage == null) {
+            Dimension size = getPreferredSize();
+            myImage = UIUtil.createImage(size.width, size.height, Transparency.TRANSLUCENT);
+            Graphics graphics = myImage.getGraphics();
+            int width = 0;
+            Graphics2D g2d = (Graphics2D)graphics;
+            UISettings.setupAntialiasing(graphics);
+            int lineShift = -editor.getLineHeight() * (myLine - myPreviewLines);
+            int popupStartOffset = myEditor.getDocument().getLineStartOffset(Math.max(0, myLine - myPreviewLines));
+            int popupEndOffset = myEditor.getDocument().getLineEndOffset(Math.min(myEditor.getDocument().getLineCount() - 1, myLine + myPreviewLines));
+            List<RangeHighlighterEx> exs = new ArrayList<RangeHighlighterEx>();
+            for (RangeHighlighterEx rangeHighlighter : myHighlighters) {
+              if (rangeHighlighter.getEndOffset()> popupStartOffset && rangeHighlighter.getStartOffset() < popupEndOffset) {
+                exs.add(rangeHighlighter);
+              }
+            }
+            g2d.setTransform(AffineTransform.getTranslateInstance(5 - myMouseX, lineShift));
+            if (editor instanceof EditorEx) {
+              EditorGutterComponentEx gutterComponentEx = ((EditorEx)editor).getGutterComponentEx();
+              width = gutterComponentEx.getWidth();
+              graphics.setClip(0, 0, width, gutterComponentEx.getHeight());
+              gutterComponentEx.paint(graphics);
+            }
+            JComponent contentComponent = editor.getContentComponent();
+            graphics.setClip(width, 0, contentComponent.getWidth(), contentComponent.getHeight());
+            g2d.setTransform(AffineTransform.getTranslateInstance(width + 5 - myMouseX, lineShift));
+            contentComponent.paint(graphics);
+            Collections.sort(exs, new Comparator<RangeHighlighterEx>() {
+              public int compare(RangeHighlighterEx ex1, RangeHighlighterEx ex2) {
+                LogicalPosition startPos1 = myEditor.offsetToLogicalPosition(ex1.getAffectedAreaStartOffset());
+                LogicalPosition startPos2 = myEditor.offsetToLogicalPosition(ex2.getAffectedAreaStartOffset());
+                if (startPos1.line != startPos2.line) return 0;
+                return startPos1.column - startPos2.column;
+              }
+            });
+            Map<Integer, Integer> rightEdges = new com.intellij.util.containers.hash.HashMap<Integer, Integer>();
+            for (RangeHighlighterEx ex : exs) {
+              int hStartOffset = ex.getAffectedAreaStartOffset();
+              int hEndOffset = ex.getAffectedAreaEndOffset();
+              Object tooltip = ex.getErrorStripeTooltip();
+              if (tooltip == null) continue;
+              String s = String.valueOf(tooltip);
+              if (s.isEmpty()) continue;
+
+              LogicalPosition logicalPosition = editor.offsetToLogicalPosition(hStartOffset);
+              Point placeToShow = editor.logicalPositionToXY(logicalPosition);
+              placeToShow.y -= (0 - editor.getLineHeight() * 3 / 2);
+
+              int w = graphics.getFontMetrics().stringWidth(s);
+              int a = graphics.getFontMetrics().getAscent();
+              int h = editor.getLineHeight();
+
+              Integer rightEdge = rightEdges.get(logicalPosition.line);
+              if (rightEdge == null) rightEdge = 0;
+              placeToShow.x = Math.max(placeToShow.x, rightEdge);
+              rightEdge  = Math.max(rightEdge, placeToShow.x + w + 3 * R);
+              rightEdges.put(logicalPosition.line, rightEdge);
+
+              GraphicsUtil.setupAAPainting(graphics);
+              graphics.setColor(MessageType.WARNING.getPopupBackground());
+              graphics.fillRoundRect(placeToShow.x - R, placeToShow.y - a, w + 2 * R, h, R, R);
+              graphics.setColor(new JBColor(JBColor.GRAY, Gray._200));
+              graphics.drawRoundRect(placeToShow.x - R, placeToShow.y - a, w + 2 * R, h, R, R);
+              graphics.setColor(JBColor.foreground());
+              graphics.drawString(s, placeToShow.x, placeToShow.y + 2);
+            }
+
+          }
+          g.drawImage(myImage, 0, 0, this);
+        }
+      };
+      LightweightHint hint = new LightweightHint(magic);
+      hint.addHintListener(new HintListener() {
+        @Override
+        public void hintHidden(EventObject event) {
+          myEditorPreviewIsShown = false;
+        }
+      });
+      hintManager.showEditorHint(hint, editor, intInfo.getOriginalPoint(), HintManager.HIDE_BY_ANY_KEY |
+                                                                           HintManager.HIDE_BY_TEXT_CHANGE |
+                                                                           HintManager.HIDE_BY_OTHER_HINT |
+                                                                           HintManager.HIDE_BY_SCROLLING, 0, false, intInfo);
+      myEditorPreviewIsShown = true;
       return hint;
     }
   }

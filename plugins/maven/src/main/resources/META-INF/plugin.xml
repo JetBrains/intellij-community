@@ -106,6 +106,9 @@
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenVersionCompletionContributor"/>
 
     <completion.contributor language="XML"
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenPomXmlCompletionTagListenerContributor" order="first"/>
+
+    <completion.contributor language="XML"
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenDependenciesCompletionProvider"/>
 
     <psi.referenceContributor implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>

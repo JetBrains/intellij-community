@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.framework.library.DownloadableLibraryFileDescription;
 import com.intellij.framework.library.DownloadableLibraryType;
 import com.intellij.framework.library.FrameworkLibraryVersion;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryNameAndLevelPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -31,6 +31,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CheckBoxListListener;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
@@ -48,8 +49,10 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class DownloadingOptionsDialog extends DialogWrapper {
-  private static enum AdditionalDownloadType {SOURCES, DOCUMENTATION}
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.libraries.DownloadingOptionsDialog");
+
+  private enum AdditionalDownloadType {SOURCES, DOCUMENTATION}
+
   private JPanel myPanel;
   private CheckBoxList myFilesList;
   private TextFieldWithBrowseButton myDirectoryField;
@@ -72,14 +75,14 @@ public class DownloadingOptionsDialog extends DialogWrapper {
 
     final FormBuilder builder = LibraryNameAndLevelPanel.createFormBuilder();
 
-    myVersionComboBox = new JComboBox();
+    myVersionComboBox = new ComboBox();
     for (FrameworkLibraryVersion version : versions) {
       myVersionComboBox.addItem(version);
     }
     myVersionComboBox.setRenderer(new ListCellRendererWrapper<FrameworkLibraryVersion>() {
       @Override
       public void customize(JList list, FrameworkLibraryVersion value, int index, boolean selected, boolean hasFocus) {
-        setText(value.getName() + value.getVersionString());
+        setText(value.getDefaultLibraryName());
       }
     });
     myVersionComboBox.setSelectedItem(settings.getVersion());

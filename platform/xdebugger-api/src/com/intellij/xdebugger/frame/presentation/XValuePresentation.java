@@ -19,7 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Determines how a value is shown in debugger trees. Use one of the standard implementations (for {@link com.intellij.xdebugger.frame.presentation.XStringValuePresentation strings}
+ * Determines how a value is shown in debugger trees. Use one of the standard implementations (for {@link com.intellij.xdebugger.frame.presentation.XStringValuePresentation strings},
+ * {@link com.intellij.xdebugger.frame.presentation.XNumericValuePresentation numbers}, {@link com.intellij.xdebugger.frame.presentation.XKeywordValuePresentation keywords}
  * and for {@link com.intellij.xdebugger.frame.presentation.XRegularValuePresentation other values}) or override this class if you need something special
  *
  * @see com.intellij.xdebugger.frame.XValueNode#setPresentation(javax.swing.Icon, XValuePresentation, boolean)
@@ -59,6 +60,16 @@ public abstract class XValuePresentation {
      * Appends {@code value} surrounded by quotes to the node text colored as a string
      */
     void renderStringValue(@NotNull String value);
+
+    /**
+     * Appends {@code value} highlighted as a number
+     */
+    void renderNumericValue(@NotNull String value);
+
+    /**
+     * Appends {@code value} highlighted as a keyword
+     */
+    void renderKeywordValue(@NotNull String value);
 
     /**
      * Appends {@code value} surrounded by quotes to the node text colored as a string

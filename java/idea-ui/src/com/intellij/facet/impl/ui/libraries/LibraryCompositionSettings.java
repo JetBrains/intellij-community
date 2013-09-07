@@ -18,6 +18,9 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.LibraryDependencyScopeSuggester;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
@@ -183,13 +186,19 @@ public class LibraryCompositionSettings implements Disposable {
 
     if (library != null) {
       addedLibraries.add(library);
+      DependencyScope scope = LibraryDependencyScopeSuggester.getDefaultScope(library);
       if (getLibraryLevel() != LibrariesContainer.LibraryLevel.MODULE) {
-        rootModel.addLibraryEntry(library);
+        rootModel.addLibraryEntry(library).setScope(scope);
+      }
+      else {
+        LibraryOrderEntry orderEntry = rootModel.findLibraryOrderEntry(library);
+        assert orderEntry != null;
+        orderEntry.setScope(scope);
       }
     }
     if (mySelectedLibrary != null) {
       addedLibraries.add(mySelectedLibrary);
-      rootModel.addLibraryEntry(mySelectedLibrary);
+      rootModel.addLibraryEntry(mySelectedLibrary).setScope(LibraryDependencyScopeSuggester.getDefaultScope(mySelectedLibrary));
     }
     return library;
   }

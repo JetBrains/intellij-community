@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.spock;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.*;
@@ -234,7 +234,7 @@ public class SpockUtils {
       else {
         e = e.getNextSibling();
       }
-    } while (PsiUtil.isLeafElementOfType(e, TokenSets.WHITE_SPACES_OR_COMMENTS));
+    } while (PsiImplUtil.isLeafElementOfType(e, TokenSets.WHITE_SPACES_OR_COMMENTS));
 
     if (e instanceof GrLabeledStatement) return null;
 
@@ -246,7 +246,7 @@ public class SpockUtils {
     if (!(expression instanceof GrReferenceExpression)) return null;
 
     PsiElement firstChild = expression.getFirstChild();
-    if (firstChild != expression.getLastChild() || !PsiUtil.isLeafElementOfType(firstChild, GroovyTokenTypes.mIDENT)) return null;
+    if (firstChild != expression.getLastChild() || !PsiImplUtil.isLeafElementOfType(firstChild, GroovyTokenTypes.mIDENT)) return null;
 
     GrReferenceExpression ref = (GrReferenceExpression)expression;
     if (ref.isQualified()) return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,19 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 
 /**
  * @author nik
  */
-public class XJumpToSourceAction extends XJumpToSourceActionBase {
+public class XJumpToTypeSourceAction extends XJumpToSourceActionBase {
   @Override
   protected void startComputingSourcePosition(XValue value, XNavigatable navigatable) {
-    value.computeSourcePosition(navigatable);
+    value.computeTypeSourcePosition(navigatable);
+  }
+
+  @Override
+  protected boolean isEnabled(XValueNodeImpl node) {
+    return super.isEnabled(node) && node.getValueContainer().canNavigateToTypeSource();
   }
 }

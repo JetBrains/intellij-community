@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.ui.tree.actions;
+package com.intellij.xdebugger.frame.presentation;
 
-import com.intellij.xdebugger.frame.XNavigatable;
-import com.intellij.xdebugger.frame.XValue;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public class XJumpToSourceAction extends XJumpToSourceActionBase {
+public class XNumericValuePresentation extends XValuePresentation {
+  private final String myValue;
+
+  public XNumericValuePresentation(String value) {
+    myValue = value;
+  }
+
   @Override
-  protected void startComputingSourcePosition(XValue value, XNavigatable navigatable) {
-    value.computeSourcePosition(navigatable);
+  public void renderValue(@NotNull XValueTextRenderer renderer) {
+    renderer.renderNumericValue(myValue);
   }
 }

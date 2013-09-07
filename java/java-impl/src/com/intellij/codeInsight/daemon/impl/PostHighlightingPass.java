@@ -407,11 +407,11 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
                                      @NotNull PsiIdentifier identifier,
                                      @NotNull ProgressIndicator progress,
                                      @NotNull GlobalUsageHelper helper) {
+    if (HighlightUtil.isSerializationImplicitlyUsedField(field)) {
+      return null;
+    }
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (!myRefCountHolder.isReferenced(field) && !isImplicitUsage(field, progress)) {
-        if (HighlightUtil.isSerializationImplicitlyUsedField(field)) {
-          return null;
-        }
         String message = JavaErrorMessages.message("private.field.is.not.used", identifier.getText());
 
         HighlightInfo highlightInfo = suggestionsToMakeFieldUsed(field, identifier, message);

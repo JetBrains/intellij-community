@@ -17,7 +17,6 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -25,7 +24,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,6 +87,10 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (ignoreObjectConstruction) {
         return;
       }
+      if (ignoreUncompilable && (expression.getArrayInitializer() != null || expression.getArrayDimensions().length > 0)) {
+        //array creation can (almost) never be generic
+        return;
+      }
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       checkReferenceElement(classReference);
     }
@@ -99,11 +101,11 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         return;
       }
       final PsiType type = typeElement.getType();
-      if (type instanceof PsiArrayType) {
+      if (!(type instanceof PsiClassType)) {
         return;
       }
       super.visitTypeElement(typeElement);
-      final PsiElement parent = typeElement.getParent();
+      final PsiElement parent = PsiTreeUtil.skipParentsOfType(typeElement, PsiTypeElement.class);
       if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiClassObjectAccessExpression) {
         return;
       }

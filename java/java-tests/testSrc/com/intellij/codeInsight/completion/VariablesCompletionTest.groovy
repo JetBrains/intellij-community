@@ -201,4 +201,20 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("pColor");
   }
 
+  public void "test finish with ="() {
+    myFixture.configureByText 'a.java', '''
+class FooFoo {
+  FooFoo f<caret>
+}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'fooFoo', 'foo'
+    myFixture.type '='
+    myFixture.checkResult '''
+class FooFoo {
+  FooFoo fooFoo = <caret>
+}
+'''
+  }
+
 }

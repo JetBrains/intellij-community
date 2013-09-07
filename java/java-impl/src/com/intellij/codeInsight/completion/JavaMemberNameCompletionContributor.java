@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -121,10 +122,10 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     addLookupItems(set, suggestedNameInfo, matcher, project, suggestedNames);
     if (!hasStartMatches(set, matcher)) {
       if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && matcher.prefixMatches("object")) {
-        set.add(LookupElementBuilder.create("object"));
+        set.add(withInsertHandler(suggestedNameInfo, LookupElementBuilder.create("object")));
       }
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) && matcher.prefixMatches("string")) {
-        set.add(LookupElementBuilder.create("string"));
+        set.add(withInsertHandler(suggestedNameInfo, LookupElementBuilder.create("string")));
       }
     }
 
@@ -422,14 +423,23 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
       LookupElement element = PrioritizedLookupElement.withPriority(LookupElementBuilder.create(name).withAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE), -i);
       if (callback != null) {
-        element = LookupElementDecorator.withInsertHandler(element, new InsertHandler<LookupElementDecorator<LookupElement>>() {
-          @Override
-          public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
-            callback.nameChosen(item.getLookupString());
-          }
-        });
+        element = withInsertHandler(callback, element);
       }
       lookupElements.add(element);
     }
+  }
+
+  private static LookupElementDecorator<LookupElement> withInsertHandler(final SuggestedNameInfo callback, LookupElement element) {
+    return LookupElementDecorator.withInsertHandler(element, new InsertHandler<LookupElementDecorator<LookupElement>>() {
+      @Override
+      public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+        TailType tailType = LookupItem.getDefaultTailType(context.getCompletionChar());
+        if (tailType != null) {
+          context.setAddCompletionChar(false);
+          tailType.processTail(context.getEditor(), context.getTailOffset());
+        }
+        callback.nameChosen(item.getLookupString());
+      }
+    });
   }
 }
