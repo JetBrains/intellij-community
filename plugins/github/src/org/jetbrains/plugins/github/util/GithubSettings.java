@@ -62,7 +62,6 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     public boolean PRIVATE_GIST = true;
     public boolean SAVE_PASSWORD = true;
     @NotNull public Collection<String> TRUSTED_HOSTS = new ArrayList<String>();
-    @Nullable public String CREATE_PULL_REQUEST_DEFAULT_BRANCH = null;
   }
 
   public static GithubSettings getInstance() {
@@ -121,11 +120,6 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return passwordSafe.getSettings().getProviderType() == PasswordSafeSettings.ProviderType.MASTER_PASSWORD;
   }
 
-  @Nullable
-  public String getCreatePullRequestDefaultBranch() {
-    return myState.CREATE_PULL_REQUEST_DEFAULT_BRANCH;
-  }
-
   public void setAnonymousGist(final boolean anonymousGist) {
     myState.ANONYMOUS_GIST = anonymousGist;
   }
@@ -140,10 +134,6 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
 
   public void setOpenInBrowserGist(final boolean openInBrowserGist) {
     myState.OPEN_IN_BROWSER_GIST = openInBrowserGist;
-  }
-
-  public void setCreatePullRequestDefaultBranch(@NotNull String branch) {
-    myState.CREATE_PULL_REQUEST_DEFAULT_BRANCH = branch;
   }
 
   @NotNull
