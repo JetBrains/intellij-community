@@ -488,7 +488,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       for (String url : remote.getUrls()) {
         //noinspection ConstantConditions
         if (forkPath.equals(GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url))) {
-          return new TargetBranchInfo(remote.getName(), branch);
+          return new TargetBranchInfo(remote.getName(), remote.getName() + "/" + branch);
         }
       }
     }
