@@ -126,7 +126,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     }
     repository.update();
 
-    final Pair<GitRemote, String> remote = GithubUtil.findGithubRemote(repository);
+    Pair<GitRemote, String> remote = GithubUtil.findGithubRemote(repository);
     if (remote == null) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find GitHub remote");
       return;
@@ -134,11 +134,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     final String remoteUrl = remote.getSecond();
     final String remoteName = remote.getFirst().getName();
 
-    String upstreamUrl = GithubUtil.findUpstreamRemote(repository);
-    final GithubFullPath upstreamUserAndRepo =
-      upstreamUrl == null || !GithubUrlUtil.isGithubUrl(upstreamUrl) ? null : GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamUrl);
-
-    final GithubFullPath userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
+    GithubFullPath userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
     if (userAndRepo == null) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't process remote: " + remoteUrl);
       return;
@@ -150,16 +146,22 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       return;
     }
 
+    String upstreamUrl = GithubUtil.findUpstreamRemote(repository);
+    GithubFullPath upstreamUserAndRepo =
+      upstreamUrl == null || !GithubUrlUtil.isGithubUrl(upstreamUrl) ? null : GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamUrl);
+
     final Map<String, String> forks = new HashMap<String, String>();
     final Set<RemoteBranch> branches = new HashSet<RemoteBranch>();
     addAvailableBranchesFromGit(repository, forks, branches);
-    final GithubInfo info = loadGithubInfoWithModal(project, userAndRepo, upstreamUserAndRepo, forks, branches);
+    GithubInfo info = loadGithubInfoAndBranchesWithModal(project, userAndRepo, upstreamUserAndRepo, forks, branches);
     if (info == null) {
       return;
     }
+    final GithubRepoDetailed repo = info.getRepo();
+    final GithubAuthData auth = info.getAuthData();
 
-    GithubRepo parent = info.getRepo().getParent();
-    String suggestedBranch =
+    GithubRepo parent = repo.getParent();
+    String defaultBranch =
       parent == null || parent.getDefaultBranch() == null ? null : parent.getUserName() + ":" + parent.getDefaultBranch();
     Collection<String> suggestions = ContainerUtil.map(branches, new Function<RemoteBranch, String>() {
       @Override
@@ -170,10 +172,10 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     Consumer<String> showDiff = new Consumer<String>() {
       @Override
       public void consume(String ref) {
-        showDiffByRef(project, ref, repository, currentBranch.getName(), info.getAuthData(), forks, branches, info.getRepo().getSource());
+        showDiffByRef(project, ref, repository, currentBranch.getName(), auth, forks, branches, repo.getSource());
       }
     };
-    final GithubCreatePullRequestDialog dialog = new GithubCreatePullRequestDialog(project, suggestions, suggestedBranch, showDiff);
+    final GithubCreatePullRequestDialog dialog = new GithubCreatePullRequestDialog(project, suggestions, defaultBranch, showDiff);
     DialogManager.show(dialog);
     if (!dialog.isOK()) {
       return;
@@ -190,12 +192,11 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
           return;
         }
 
-        String from = info.getRepo().getUserName() + ":" + currentBranch.getName();
+        String from = repo.getUserName() + ":" + currentBranch.getName();
         String onto = dialog.getTargetBranch();
         String targetUser = onto.substring(0, onto.indexOf(':'));
-        GithubAuthData auth = info.getAuthData();
 
-        GithubFullPath targetRepo = findRepositoryByUser(project, targetUser, forks, auth, info.getRepo().getSource());
+        GithubFullPath targetRepo = findRepositoryByUser(project, targetUser, forks, auth, repo.getSource());
         if (targetRepo == null) {
           GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find repository for specified branch: " + onto);
           return;
@@ -216,11 +217,11 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static GithubInfo loadGithubInfoWithModal(@NotNull final Project project,
-                                                    @NotNull final GithubFullPath userAndRepo,
-                                                    @Nullable final GithubFullPath upstreamUserAndRepo,
-                                                    @NotNull final Map<String, String> forks,
-                                                    @NotNull final Set<RemoteBranch> branches) {
+  private static GithubInfo loadGithubInfoAndBranchesWithModal(@NotNull final Project project,
+                                                               @NotNull final GithubFullPath userAndRepo,
+                                                               @Nullable final GithubFullPath upstreamUserAndRepo,
+                                                               @NotNull final Map<String, String> forks,
+                                                               @NotNull final Set<RemoteBranch> branches) {
     try {
       return GithubUtil
         .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubInfo, IOException>() {
@@ -285,10 +286,6 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     }
 
     return null;
-  }
-
-  private static boolean isRepoOwner(@NotNull String user, @NotNull GithubRepo repo) {
-    return StringUtil.equalsIgnoreCase(user, repo.getUserName());
   }
 
   @Nullable
@@ -400,17 +397,17 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       @Override
       @Nullable
       public DiffInfo convert(ProgressIndicator indicator) {
+        List<String> list = StringUtil.split(ref, ":");
+        assert list.size() == 2 : ref;
+        final String user = list.get(0);
+        final String branch = list.get(1);
+
         TargetBranchInfo targetBranchInfo;
-        RemoteBranch remoteBranch = findRemoteBranch(branches, ref);
+        RemoteBranch remoteBranch = findRemoteBranch(branches, user, branch);
         if (remoteBranch != null && remoteBranch.getRemoteBranch() != null) {
           targetBranchInfo = getTargetBranchInfo(remoteBranch.getRemoteBranch());
         }
         else {
-          List<String> list = StringUtil.split(ref, ":");
-          assert list.size() == 2 : ref;
-          final String user = list.get(0);
-          final String branch = list.get(1);
-
           GithubFullPath forkPath = findRepositoryByUser(project, user, forks, auth, source);
           if (forkPath == null) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -479,7 +476,6 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
                                              @NotNull GithubFullPath forkPath) {
     for (GitRemote remote : gitRepository.getRemotes()) {
       for (String url : remote.getUrls()) {
-        //noinspection ConstantConditions
         if (forkPath.equals(GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url))) {
           return new TargetBranchInfo(remote.getName(), remote.getName() + "/" + branch);
         }
@@ -517,12 +513,10 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static RemoteBranch findRemoteBranch(@NotNull Set<RemoteBranch> branches, @NotNull String ref) {
-    List<String> list = StringUtil.split(ref, ":");
-    assert list.size() == 2 : ref;
-    for (RemoteBranch branch : branches) {
-      if (StringUtil.equalsIgnoreCase(list.get(0), branch.getUser()) && StringUtil.equals(list.get(1), branch.getBranch())) {
-        return branch;
+  private static RemoteBranch findRemoteBranch(@NotNull Set<RemoteBranch> branches, @NotNull String user, @NotNull String branch) {
+    for (RemoteBranch remoteBranch : branches) {
+      if (StringUtil.equalsIgnoreCase(user, remoteBranch.getUser()) && StringUtil.equals(branch, remoteBranch.getBranch())) {
+        return remoteBranch;
       }
     }
 
