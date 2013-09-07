@@ -25,8 +25,11 @@ public class DjangoTestRunnerTest extends PyEnvTestCase {
   private static void doTest(@NotNull final String output, @NotNull final String testDataPath) {
     final String[] splittedOutput = output.split("\\n");
     final ArrayList<String> outputList = Lists.newArrayList();
+    boolean add = false;
     for (String s : splittedOutput) {
-      outputList.add(norm(s));
+      if ("sys.path end".equals(s)) add = false;
+      if (add) outputList.add(norm(s));
+      if ("sys.path start".equals(s)) add = true;
     }
     assertEquals(outputList.indexOf(testDataPath),
                  outputList.lastIndexOf(testDataPath));
