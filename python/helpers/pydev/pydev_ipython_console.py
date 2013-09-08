@@ -31,7 +31,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         self.interpreter = PyDevFrontEnd()
         self._input_error_printed = False
         self.notification_succeeded = False
-        self.notification_tries = 0;
+        self.notification_tries = 0
         self.notification_max_tries = 3
 
         self.notify_about_magic()
@@ -101,10 +101,8 @@ class InterpreterInterface(BaseInterpreterInterface):
             traceback.print_exc()
             return []
 
-
     def close(self):
         sys.exit(0)
-
 
     def ipython_editor(self, file, line):
         server = self.get_server()

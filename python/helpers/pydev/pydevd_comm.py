@@ -905,7 +905,7 @@ class InternalConsoleExec(InternalThreadCommand):
                 thread.start_new_thread = thread._original_start_new_thread #don't trace new threads created by console command
                 thread.start_new = thread._original_start_new_thread
 
-                result = pydevd_vars.consoleExec(self.thread_id, self.frame_id, self.expression)
+                result = pydevconsole.consoleExec(self.thread_id, self.frame_id, self.expression)
                 xml = "<xml>"
                 xml += pydevd_vars.varToXML(result, "")
                 xml += "</xml>"
