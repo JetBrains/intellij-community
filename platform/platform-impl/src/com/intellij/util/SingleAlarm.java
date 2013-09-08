@@ -16,12 +16,20 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.NotNull;
 
 public class SingleAlarm extends Alarm {
   private final Runnable task;
   private final int delay;
 
-  public SingleAlarm(Runnable task, int delay) {
+  public SingleAlarm(@NotNull Runnable task, int delay) {
+    this.task = task;
+    this.delay = delay;
+  }
+
+  public SingleAlarm(@NotNull Runnable task, int delay, @NotNull ThreadToUse threadToUse) {
+    super(threadToUse);
+
     this.task = task;
     this.delay = delay;
   }
