@@ -52,6 +52,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PySourcePosition;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.ProcessRunner;
@@ -682,7 +683,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       
       if (mySelected) {
         DebugSessionConsoleAdapter session = new DebugSessionConsoleAdapter(getProject(), myPydevConsoleCommunication);
-        XVariablesView view = new XVariablesView(session, new Disposable() {
+        final XVariablesView view = new XVariablesView(session, new Disposable() {
           @Override
           public void dispose() {
             //TODO: pass correct disposable 
@@ -691,6 +692,18 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         session.resume();
         
         getConsoleView().showVariables(view);
+        
+        myPydevConsoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
+          @Override
+          public void executionFinished() {
+            view.rebuildView();
+          }
+
+          @Override
+          public void inputRequested() {
+
+          }
+        });
       }
       else {
         getConsoleView().hideVariables();
