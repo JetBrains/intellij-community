@@ -18,8 +18,9 @@ import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.debugger.PyEvaluator;
+import com.jetbrains.python.debugger.PyFrameAccessor;
 import com.jetbrains.python.debugger.PydevXmlUtils;
+import com.jetbrains.python.debugger.pydev.GetVariableCommand;
 import com.jetbrains.python.debugger.pydev.ProtocolParser;
 import org.apache.xmlrpc.WebServer;
 import org.apache.xmlrpc.XmlRpcException;
@@ -38,12 +39,13 @@ import java.util.Vector;
  * @author Fabio
  */
 public class PydevConsoleCommunication extends AbstractConsoleCommunication implements IScriptConsoleCommunication, XmlRpcHandler,
-                                                                                       PyEvaluator {
+                                                                                       PyFrameAccessor {
 
   private static final String EXEC_LINE = "execLine";
   private static final String GET_COMPLETIONS = "getCompletions";
   private static final String GET_DESCRIPTION = "getDescription";
   private static final String GET_FRAME = "getFrame";
+  private static final String GET_VARIABLE = "getVariable";
   private static final String HANDSHAKE = "handshake";
   private static final String CLOSE = "close";
   /**
@@ -431,19 +433,43 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       try {
         Object ret = myClient.execute(GET_FRAME, new Object[]{});
         if (ret instanceof String) {
-          final List<PyDebugValue> values = ProtocolParser.parseValues((String)ret);
-          XValueChildrenList list = new XValueChildrenList(values.size());
-          for (PyDebugValue v: values) {
-            list.add(v.getName(), v);
-          }
-          return list;
+          return parseVars((String)ret, null);
         }
       }
       catch (XmlRpcException e) {
         throw new PyDebuggerException("Get frame from console failed", e);
       }
     }
-    //list.add("X", new PyDebugValue("X", "int", "1000000", false, false));
     return new XValueChildrenList();
+  }
+
+  private XValueChildrenList parseVars(String ret, PyDebugValue parent) throws PyDebuggerException {
+    final List<PyDebugValue> values = ProtocolParser.parseValues(ret, this);
+    XValueChildrenList list = new XValueChildrenList(values.size());
+    for (PyDebugValue v : values) {
+      list.add(v.getName(), parent != null ? v.setParent(parent) : v);
+    }
+    return list;
+  }
+
+  @Override
+  public XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException {
+    if (myClient != null) {
+      try {
+        Object ret = myClient.execute(GET_VARIABLE, new Object[]{GetVariableCommand.composeName(var)});
+        if (ret instanceof String) {
+          return parseVars((String)ret, var);
+        }
+      }
+      catch (XmlRpcException e) {
+        throw new PyDebuggerException("Get variable from console failed", e);
+      }
+    }
+    return new XValueChildrenList();
+  }
+
+  @Override
+  public void changeVariable(PyDebugValue variable, String expression) throws PyDebuggerException {
+    //To change body of implemented methods use File | Settings | File Templates.
   }
 }

@@ -5,9 +5,7 @@ import pickle
 from django_frame import DjangoTemplateFrame
 from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
-from code import compile_command
-from code import InteractiveInterpreter
-import pydevconsole
+
 from pydevd_xml import *
 
 try:
@@ -53,9 +51,6 @@ if USE_PSYCO_OPTIMIZATION:
     except ImportError:
         if hasattr(sys, 'exc_clear'): #jython does not have it
             sys.exc_clear() #don't keep the traceback -- clients don't want to see it
-
-
-
 
 def iterFrames(initialFrame):
     """NO-YIELD VERSION: Iterates through all the frames starting at the specified frame (which will be the first returned item)"""
@@ -161,6 +156,7 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         return {}
 
     attrList = attrs.split('\t')
+    
     if scope == "GLOBAL":
         var = frame.f_globals
         del attrList[0] # globals are special, and they get a single dummy unused attribute
@@ -181,6 +177,22 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         return resolver.getDictionary(var)
     except:
         traceback.print_exc()
+        
+        
+def resolveVar(var, attrs):
+    attrList = attrs.split('\t')
+    
+    for k in attrList:
+        type, _typeName, resolver = getType(var)
+        
+        var = resolver.resolve(var, k)
+    
+    try:
+        type, _typeName, resolver = getType(var)
+        return resolver.getDictionary(var)
+    except:
+        traceback.print_exc()
+    
 
 def evaluateExpression(thread_id, frame_id, expression, doExec):
     """returns the result of the evaluated expression
@@ -240,64 +252,6 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
         #Should not be kept alive if an exception happens and this frame is kept in the stack.
         del updated_globals
         del frame
-
-class ConsoleWriter(InteractiveInterpreter):
-    skip = 0
-
-    def __init__(self, locals=None):
-        InteractiveInterpreter.__init__(self, locals)
-
-    def write(self, data):
-        #if (data.find("global_vars") == -1 and data.find("pydevd") == -1):
-        if self.skip > 0:
-            self.skip -= 1
-        else:
-            if data == "Traceback (most recent call last):\n":
-                self.skip = 1
-            sys.stderr.write(data)
-
-def consoleExec(thread_id, frame_id, expression):
-    """returns 'False' in case expression is partialy correct
-    """
-    frame = findFrame(thread_id, frame_id)
-
-    expression = str(expression.replace('@LINE@', '\n'))
-
-    #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
-    #(Names not resolved in generator expression in method)
-    #See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
-    updated_globals = {}
-    updated_globals.update(frame.f_globals)
-    updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
-
-    if pydevconsole.IPYTHON:
-        return pydevconsole.exec_expression(expression, updated_globals, frame.f_locals)
-
-    interpreter = ConsoleWriter()
-
-    try:
-        code = compile_command(expression)
-    except (OverflowError, SyntaxError, ValueError):
-        # Case 1
-        interpreter.showsyntaxerror()
-        return False
-
-    if code is None:
-        # Case 2
-        return True
-
-    #Case 3
-
-    try:
-        Exec(code, updated_globals, frame.f_locals)
-
-    except SystemExit:
-        raise
-    except:
-        interpreter.showtraceback()
-
-    return False
-
 
 def changeAttrExpression(thread_id, frame_id, attr, expression):
     """Changes some attribute in a given frame.

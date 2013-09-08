@@ -3,10 +3,14 @@ try:
 except ImportError:
     from pydevconsole_code_for_ironpython import InteractiveConsole
 
+from code import compile_command
+from code import InteractiveInterpreter
+
 import os
 import sys
 
 from pydevd_constants import USE_LIB_COPY
+from pydevd_utils import *
 
 if USE_LIB_COPY:
     import _pydev_threading as threading
@@ -18,6 +22,12 @@ import fix_getpass
 fix_getpass.fixGetpass()
 
 import pydevd_xml
+import pydevd_vars
+
+try:
+    from pydevd_exec import Exec
+except:
+    from pydevd_exec2 import Exec
 
 try:
     if USE_LIB_COPY:
@@ -171,6 +181,21 @@ class InterpreterInterface(BaseInterpreterInterface):
         xml += "</xml>"
         
         return xml
+    
+    def getVariable(self, attributes):
+        xml = "<xml>"
+        valDict = pydevd_vars.resolveVar(self.namespace, attributes)
+        if valDict is None:
+            valDict = {}
+
+        keys = valDict.keys()
+
+        for k in keys:
+            xml += pydevd_vars.varToXML(valDict[k], to_string(k))
+
+        xml += "</xml>"
+        
+        return xml
 
     def close(self):
         sys.exit(0)
@@ -274,6 +299,7 @@ def start_server(host, port, interpreter):
     server.register_function(interpreter.execLine)
     server.register_function(interpreter.getCompletions)
     server.register_function(interpreter.getFrame)
+    server.register_function(interpreter.getVariable)
     server.register_function(interpreter.getDescription)
     server.register_function(interpreter.close)
     server.register_function(interpreter.interrupt)
@@ -332,7 +358,7 @@ def get_completions(text, token, globals, locals):
 
     return interpreterInterface.getCompletions(text, token)
 
-def get_frame(globals, locals):
+def get_frame():
     return interpreterInterface.getFrame()
 
 def exec_expression(expression, globals, locals):
@@ -362,6 +388,65 @@ def read_line(s):
             ret += c
 
     return ret
+
+# Debugger integration
+
+class ConsoleWriter(InteractiveInterpreter):
+    skip = 0
+
+    def __init__(self, locals=None):
+        InteractiveInterpreter.__init__(self, locals)
+
+    def write(self, data):
+        #if (data.find("global_vars") == -1 and data.find("pydevd") == -1):
+        if self.skip > 0:
+            self.skip -= 1
+        else:
+            if data == "Traceback (most recent call last):\n":
+                self.skip = 1
+            sys.stderr.write(data)
+
+def consoleExec(thread_id, frame_id, expression):
+    """returns 'False' in case expression is partialy correct
+    """
+    frame = pydevd_vars.findFrame(thread_id, frame_id)
+
+    expression = str(expression.replace('@LINE@', '\n'))
+
+    #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
+    #(Names not resolved in generator expression in method)
+    #See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
+    updated_globals = {}
+    updated_globals.update(frame.f_globals)
+    updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
+
+    if IPYTHON:
+        return exec_expression(expression, updated_globals, frame.f_locals)
+
+    interpreter = ConsoleWriter()
+
+    try:
+        code = compile_command(expression)
+    except (OverflowError, SyntaxError, ValueError):
+        # Case 1
+        interpreter.showsyntaxerror()
+        return False
+
+    if code is None:
+        # Case 2
+        return True
+
+    #Case 3
+
+    try:
+        Exec(code, updated_globals, frame.f_locals)
+
+    except SystemExit:
+        raise
+    except:
+        interpreter.showtraceback()
+
+    return False
 
 #=======================================================================================================================
 # main
