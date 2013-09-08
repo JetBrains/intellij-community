@@ -20,7 +20,9 @@ import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.WindowManagerListener;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SingleAlarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,6 +96,7 @@ public class IcsManager {
       @Override
       public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         repositoryManager.deleteAsync(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
+        commitAlarm.cancelAndRequest();
       }
     };
     StateStorageManager storageManager = ((ApplicationImpl)application).getStateStore().getStateStorageManager();
@@ -201,13 +204,21 @@ public class IcsManager {
   private class ICSStreamProvider implements CurrentUserHolder, StreamProvider {
     private final String projectId;
 
+    protected final SingleAlarm commitAlarm = new SingleAlarm(new Runnable() {
+      @Override
+      public void run() {
+        repositoryManager.commit();
+      }
+    }, settings.commitDelay, Alarm.ThreadToUse.POOLED_THREAD);
+
     public ICSStreamProvider(@Nullable String projectId) {
       this.projectId = projectId;
     }
 
     @Override
-    public void saveContent(@NotNull String fileSpec, @NotNull final InputStream content, final long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+    public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
       repositoryManager.write(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId), content, size, async);
+      commitAlarm.cancelAndRequest();
     }
 
     @Override

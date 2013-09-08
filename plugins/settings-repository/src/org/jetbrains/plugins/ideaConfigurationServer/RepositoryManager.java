@@ -18,4 +18,6 @@ public interface RepositoryManager {
   String[] listSubFileNames(@NotNull String path);
 
   void updateRepository() throws IOException;
+
+  void commit();
 }

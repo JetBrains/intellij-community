@@ -1,10 +1,13 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.util.ThrowableRunnable;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -76,5 +79,24 @@ final class GitRepositoryManager extends BaseRepositoryManager {
   @Override
   protected void doDelete(@NotNull String path) throws GitAPIException {
     git.rm().addFilepattern(path).call();
+  }
+
+  @Override
+  public void commit() {
+    taskProcessor.add(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        addFilesToGit();
+        PersonIdent ident = new PersonIdent(ApplicationInfoEx.getInstanceEx().getFullApplicationName(), "dev@null.org");
+        git.commit().setAuthor(ident).setCommitter(ident).setMessage("").call();
+        try {
+          git.push().call();
+        }
+        catch (InvalidRemoteException e) {
+          // remote repo is not configured
+          LOG.debug(e.getMessage());
+        }
+      }
+    });
   }
 }

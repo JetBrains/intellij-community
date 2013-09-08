@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.Time;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -11,9 +12,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 public class IcsSettings {
+  private static final int DEFAULT_COMMIT_DELAY = Time.MINUTE * 5;
+  private static final int DEFAULT_UPDATE_ON_ACTIVITY_DELAY = Time.HOUR * 2;
+
   @Tag
   private String login;
   @Tag
@@ -25,7 +28,9 @@ public class IcsSettings {
 
   public boolean updateOnStart = true;
   @SuppressWarnings("UnusedDeclaration")
-  public long updateOnActivityDelay = TimeUnit.HOURS.toMillis(2);
+  public int updateOnActivityDelay = DEFAULT_UPDATE_ON_ACTIVITY_DELAY;
+
+  public int commitDelay = DEFAULT_COMMIT_DELAY;
 
   @Transient
   private final File settingsFile;
@@ -52,6 +57,13 @@ public class IcsSettings {
     }
 
     XmlSerializer.deserializeInto(this, JDOMUtil.loadDocument(settingsFile).getRootElement());
+
+    if (commitDelay < 0) {
+      commitDelay = DEFAULT_COMMIT_DELAY;
+    }
+    if (updateOnActivityDelay < 0) {
+      commitDelay = DEFAULT_UPDATE_ON_ACTIVITY_DELAY;
+    }
   }
 
   @Nullable
