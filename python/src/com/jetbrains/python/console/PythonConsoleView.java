@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -58,6 +59,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   private boolean myHyperlink;
 
   private final MyLanguageConsoleViewImpl myLanguageConsoleView;
+  private XVariablesView myVariablesView;
 
   public PythonConsoleView(final Project project, final String title, Sdk sdk) {
     super(new BorderLayout());
@@ -357,7 +359,8 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     removeAll();
     JSplitPane p = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     p.add(myLanguageConsoleView.getComponent(), JSplitPane.LEFT);
-    p.add(view.getPanel(), JSplitPane.RIGHT);
+    myVariablesView = view;
+    p.add(myVariablesView.getPanel(), JSplitPane.RIGHT);
     p.setDividerLocation((int)getSize().getWidth()*2/3);
     add(p, BorderLayout.CENTER);
     
@@ -370,6 +373,10 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     add(myLanguageConsoleView.getComponent(), BorderLayout.CENTER);
     validate();
     repaint();
+    if (myVariablesView != null) {
+      Disposer.dispose(myVariablesView);
+      myVariablesView = null;
+    }
   }
 
   public void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
