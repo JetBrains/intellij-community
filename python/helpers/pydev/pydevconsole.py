@@ -148,7 +148,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         BaseInterpreterInterface.__init__(self, mainThread)
         self.client_port = client_port
         self.host = host
-        self.namespace = globals()
+        self.namespace = {}
         self.interpreter = InteractiveConsole(self.namespace)
         self._input_error_printed = False
 
