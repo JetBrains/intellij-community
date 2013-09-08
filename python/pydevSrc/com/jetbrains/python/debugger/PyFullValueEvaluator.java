@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * @author traff
  */
 public class PyFullValueEvaluator extends XFullValueEvaluator {
-  private final IPyDebugProcess myDebugProcess;
+  private final PyFrameAccessor myDebugProcess;
   private final String myExpression;
 
   /**
@@ -15,7 +15,7 @@ public class PyFullValueEvaluator extends XFullValueEvaluator {
    * @param debugProcess
    * @param expression
    */
-  protected PyFullValueEvaluator(IPyDebugProcess debugProcess, String expression) {
+  protected PyFullValueEvaluator(PyFrameAccessor debugProcess, String expression) {
     myDebugProcess = debugProcess;
     myExpression = expression;
   }

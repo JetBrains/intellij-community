@@ -36,7 +36,7 @@ public class GetFrameCommand extends AbstractFrameCommand {
   @Override
   protected void processResponse(final ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
-    final List<PyDebugValue> values = ProtocolParser.parseValues(response.getPayload());
+    final List<PyDebugValue> values = ProtocolParser.parseValues(response.getPayload(), myDebugProcess);
     myFrameVariables = new XValueChildrenList(values.size());
     for (PyDebugValue value : values) {
       if (!value.getName().startsWith(RemoteDebugger.TEMP_VAR_PREFIX)) {

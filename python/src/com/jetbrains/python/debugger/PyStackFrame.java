@@ -25,12 +25,12 @@ public class PyStackFrame extends XStackFrame {
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
 
   private Project myProject;
-  private final PyEvaluator myDebugProcess;
+  private final PyFrameAccessor myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
   private final XSourcePosition myPosition;
 
   public PyStackFrame(@NotNull Project project,
-                      @NotNull final PyEvaluator debugProcess,
+                      @NotNull final PyFrameAccessor debugProcess,
                       @NotNull final PyStackFrameInfo frameInfo, XSourcePosition position) {
     myProject = project;
     myDebugProcess = debugProcess;

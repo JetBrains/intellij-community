@@ -37,9 +37,8 @@ public class EvaluateCommand extends AbstractFrameCommand {
   @Override
   protected void processResponse(final ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
-    final PyDebugValue value = ProtocolParser.parseValue(response.getPayload());
-    final String name = (myExecute ? "" : myExpression);
-    myValue = new PyDebugValue(name, value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(), null, myDebugProcess);
+    final PyDebugValue value = ProtocolParser.parseValue(response.getPayload(), myDebugProcess);
+    myValue = value.setName((myExecute ? "" : myExpression));
   }
 
   public PyDebugValue getValue() {
