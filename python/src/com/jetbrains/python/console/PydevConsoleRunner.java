@@ -683,12 +683,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       
       if (mySelected) {
         DebugSessionConsoleAdapter session = new DebugSessionConsoleAdapter(getProject(), myPydevConsoleCommunication);
-        final XVariablesView view = new XVariablesView(session, new Disposable() {
-          @Override
-          public void dispose() {
-            //TODO: pass correct disposable 
-          }
-        });
+        final XVariablesView view = new XVariablesView(session, null);
         session.resume();
         
         getConsoleView().showVariables(view);
