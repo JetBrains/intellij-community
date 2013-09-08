@@ -127,10 +127,9 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public String consoleExec(String threadId, String frameId, String expression) throws PyDebuggerException {
+  public void consoleExec(String threadId, String frameId, String expression, DebugCallback<String> callback) {
     final ConsoleExecCommand command = new ConsoleExecCommand(this, threadId, frameId, expression);
-    command.execute();
-    return command.getValue();
+    command.execute(callback);
   }
 
   @Override
@@ -144,7 +143,7 @@ public class RemoteDebugger implements ProcessDebugger {
   @Override
   public XValueChildrenList loadVariable(final String threadId, final String frameId, final PyDebugValue var) throws PyDebuggerException {
     setTempVariable(threadId, frameId, var);
-    final GetVariableCommand command = new GetVariableCommand(this, threadId, frameId, composeName(var), var);
+    final GetVariableCommand command = new GetVariableCommand(this, threadId, frameId, var);
     command.execute();
     return command.getVariables();
   }
@@ -181,15 +180,6 @@ public class RemoteDebugger implements ProcessDebugger {
     myResponseQueue.clear();
     mySequence = -1;
     myTempVars.clear();
-  }
-
-  private static String composeName(final PyDebugValue var) {
-    final StringBuilder sb = new StringBuilder(var.getTempName());
-    PyDebugValue p = var;
-    while ((p = p.getParent()) != null) {
-      sb.insert(0, '\t').insert(0, p.getTempName());
-    }
-    return sb.toString();
   }
 
   // todo: change variable in lists doesn't work - either fix in pydevd or format var name appropriately

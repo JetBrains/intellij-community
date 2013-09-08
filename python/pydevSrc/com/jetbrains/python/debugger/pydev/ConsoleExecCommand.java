@@ -4,9 +4,8 @@ import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 
 
-public class ConsoleExecCommand extends AbstractFrameCommand {
+public class ConsoleExecCommand extends AbstractFrameCommand<String> {
   private final String myExpression;
-  private String myValue = null;
 
   public ConsoleExecCommand(final RemoteDebugger debugger, final String threadId, final String frameId, final String expression) {
     super(debugger, CONSOLE_EXEC, threadId, frameId);
@@ -25,14 +24,13 @@ public class ConsoleExecCommand extends AbstractFrameCommand {
   }
 
   @Override
-  protected void processResponse(final ProtocolFrame response) throws PyDebuggerException {
-    super.processResponse(response);
-    final PyDebugValue value = ProtocolParser.parseValue(response.getPayload());
-    myValue = value.getValue();
+  protected ResponseProcessor<String> createResponseProcessor() {
+    return new ResponseProcessor<String>() {
+      @Override
+      protected String parseResponse(ProtocolFrame response) throws PyDebuggerException {
+        final PyDebugValue value = ProtocolParser.parseValue(response.getPayload(), myDebugger.getDebugProcess());
+        return value.getValue();
+      }
+    };
   }
-
-  public String getValue() {
-    return myValue;
-  }
-
 }

@@ -8,11 +8,19 @@ public class GetVariableCommand extends GetFrameCommand {
   private final String myVariableName;
   private final PyDebugValue myParent;
 
-  public GetVariableCommand(final RemoteDebugger debugger, final String threadId, final String frameId, final String variableName,
-                            PyDebugValue parent) {
+  public GetVariableCommand(final RemoteDebugger debugger, final String threadId, final String frameId, PyDebugValue var) {
     super(debugger, GET_VARIABLE, threadId, frameId);
-    myVariableName = variableName;
-    myParent = parent;
+    myVariableName = composeName(var);
+    myParent = var;
+  }
+
+  public static String composeName(final PyDebugValue var) {
+    final StringBuilder sb = new StringBuilder(var.getTempName());
+    PyDebugValue p = var;
+    while ((p = p.getParent()) != null) {
+      sb.insert(0, '\t').insert(0, p.getTempName());
+    }
+    return sb.toString();
   }
 
   @Override

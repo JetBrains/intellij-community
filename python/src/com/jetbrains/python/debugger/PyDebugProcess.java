@@ -99,7 +99,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       myProcessHandler.addProcessListener(this);
     }
     if (processHandler instanceof RemoteDebuggableProcessHandler) {
-      myPositionConverter = ((RemoteDebuggableProcessHandler) processHandler).createPositionConverter(this);
+      myPositionConverter = ((RemoteDebuggableProcessHandler)processHandler).createPositionConverter(this);
     }
     else {
       myPositionConverter = new PyLocalPositionConverter();
@@ -444,12 +444,18 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return myDebugger.evaluate(frame.getThreadId(), frame.getFrameId(), expression, execute, trimResult);
   }
 
-  public String consoleExec(String command) throws PyDebuggerException {
+  public void consoleExec(String command, ProcessDebugger.DebugCallback<String> callback) {
     dropFrameCaches();
-    final PyStackFrame frame = currentFrame();
-    return myDebugger.consoleExec(frame.getThreadId(), frame.getFrameId(), command);
+    try {
+      final PyStackFrame frame = currentFrame();
+      myDebugger.consoleExec(frame.getThreadId(), frame.getFrameId(), command, callback);
+    }
+    catch (PyDebuggerException e) {
+      callback.error(e);
+    }
   }
 
+  @Override
   @Nullable
   public XValueChildrenList loadFrame() throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
@@ -641,7 +647,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {
-    return new PyStackFrame(this, frameInfo);
+    return new PyStackFrame(this.getSession().getProject(), this, frameInfo,
+                            getPositionConverter().convertFromPython(frameInfo.getPosition()));
   }
 
   @Override

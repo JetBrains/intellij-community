@@ -168,8 +168,8 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public String consoleExec(String threadId, String frameId, String expression) throws PyDebuggerException {
-    return debugger(threadId).consoleExec(threadId, frameId, expression);
+  public void consoleExec(String threadId, String frameId, String expression, DebugCallback<String> callback) {
+    debugger(threadId).consoleExec(threadId, frameId, expression, callback);
   }
 
   @Override

@@ -1,10 +1,11 @@
 package com.jetbrains.python.debugger.pydev;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import org.jetbrains.annotations.NotNull;
 
 
-public abstract class AbstractCommand {
+public abstract class AbstractCommand<T> {
 
   public static final int RUN = 101;
   public static final int CREATE_THREAD = 103;
@@ -38,13 +39,24 @@ public abstract class AbstractCommand {
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
 
 
-  @NotNull private final RemoteDebugger myDebugger;
+  @NotNull protected final RemoteDebugger myDebugger;
   private final int myCommandCode;
+
+  private final ResponseProcessor<T> myResponseProcessor;
 
 
   protected AbstractCommand(@NotNull final RemoteDebugger debugger, final int commandCode) {
     myDebugger = debugger;
     myCommandCode = commandCode;
+    myResponseProcessor = createResponseProcessor();
+  }
+
+  protected ResponseProcessor<T> createResponseProcessor() {
+    return null;
+  }
+
+  protected ResponseProcessor<T> getResponseProcessor() {
+    return myResponseProcessor;
   }
 
   @NotNull
@@ -61,15 +73,18 @@ public abstract class AbstractCommand {
   }
 
   public void execute() throws PyDebuggerException {
-    int sequence = myDebugger.getNextSequence();
-    if (isResponseExpected()) {
+    final int sequence = myDebugger.getNextSequence();
+
+    final ResponseProcessor<T> processor = getResponseProcessor();
+
+    if (processor != null || isResponseExpected()) {
       myDebugger.placeResponse(sequence, null);
     }
 
     ProtocolFrame frame = new ProtocolFrame(myCommandCode, sequence, getPayload());
     boolean frameSent = myDebugger.sendFrame(frame);
 
-    if (!isResponseExpected()) return;
+    if (processor == null && !isResponseExpected()) return;
 
     if (!frameSent) {
       throw new PyDebuggerException("Couldn't send frame " + myCommandCode);
@@ -82,13 +97,75 @@ public abstract class AbstractCommand {
       }
       throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
     }
-    processResponse(frame);
+    if (processor != null) {
+      processor.processResponse(frame);
+    }
+    else {
+      processResponse(frame);
+    }
   }
+
+  public void execute(final ProcessDebugger.DebugCallback<T> callback) {
+    final int sequence = myDebugger.getNextSequence();
+
+    final ResponseProcessor<T> processor = getResponseProcessor();
+
+    if (processor != null) {
+      myDebugger.placeResponse(sequence, null);
+    }
+
+    try {
+      ProtocolFrame frame = new ProtocolFrame(myCommandCode, sequence, getPayload());
+      boolean frameSent = myDebugger.sendFrame(frame);
+
+      if (processor == null) return;
+
+      if (!frameSent) {
+        throw new PyDebuggerException("Couldn't send frame " + myCommandCode);
+      }
+    }
+    catch (PyDebuggerException e) {
+      callback.error(e);
+      return;
+    }
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          ProtocolFrame frame = myDebugger.waitForResponse(sequence);
+          if (frame == null) {
+            if (!myDebugger.isConnected()) {
+              throw new PyDebuggerException("No connection (command:  " + myCommandCode + " )");
+            }
+            throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
+          }
+          callback.ok(processor.processResponse(frame));
+        }
+        catch (PyDebuggerException e) {
+          callback.error(e);
+        }
+      }
+    });
+  }
+
 
   protected void processResponse(final ProtocolFrame response) throws PyDebuggerException {
     if (response.getCommand() >= 900 && response.getCommand() < 1000) {
       throw new PyDebuggerException(response.getPayload());
     }
+  }
+
+  protected abstract static class ResponseProcessor<T> {
+    protected T processResponse(final ProtocolFrame response) throws PyDebuggerException {
+      if (response.getCommand() >= 900 && response.getCommand() < 1000) {
+        throw new PyDebuggerException(response.getPayload());
+      }
+
+      return parseResponse(response);
+    }
+
+    protected abstract T parseResponse(ProtocolFrame response) throws PyDebuggerException;
   }
 
   public static boolean isCallSignatureTrace(int command) {
