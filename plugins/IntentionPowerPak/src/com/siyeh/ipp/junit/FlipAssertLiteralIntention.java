@@ -78,12 +78,13 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
     }
     newCall.append(toMethodName).append('(');
     final PsiExpressionList argumentList = call.getArgumentList();
-    final PsiExpression[] args = argumentList.getExpressions();
-    if (args.length == 1) {
-      newCall.append(BoolUtils.getNegatedExpressionText(args[0]));
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    if (arguments.length == 1) {
+      newCall.append(BoolUtils.getNegatedExpressionText(arguments[0]));
     }
     else {
-      newCall.append(BoolUtils.getNegatedExpressionText(args[1]));
+      newCall.append(arguments[0].getText()).append(',');
+      newCall.append(BoolUtils.getNegatedExpressionText(arguments[1]));
     }
     newCall.append(')');
     replaceExpression(newCall.toString(), call);

@@ -21,6 +21,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
+import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.CaretModel;
@@ -28,6 +29,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -129,12 +131,13 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
         return;
       }
 
-      new MethodParenthesesHandler(method, true) {
-        @Override
-        protected boolean placeCaretInsideParentheses(InsertionContext context, LookupElement item) {
-          return method.isConstructor() || super.placeCaretInsideParentheses(context, item);
-        }
-      }.handleInsert(context, item);
+
+      CommonCodeStyleSettings settings = context.getCodeStyleSettings();
+      ParenthesesInsertHandler.getInstance(MethodParenthesesHandler.hasParams(item, context.getElements(), true, method),
+                                           settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
+                                           settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES,
+                                           true, true).handleInsert(context, item);
+
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(editor, method);
       return;
     }

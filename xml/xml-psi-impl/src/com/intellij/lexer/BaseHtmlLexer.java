@@ -154,13 +154,6 @@ abstract class BaseHtmlLexer extends DelegateLexer {
       }
     }
   }
-
-  @Nullable
-  protected Language getScriptLanguage() {
-    Collection<Language> instancesByMimeType = Language.findInstancesByMimeType(scriptType != null ? scriptType.trim() : null);
-    return instancesByMimeType.isEmpty() ? null : instancesByMimeType.iterator().next();
-  }
-
   @Nullable
   protected IElementType getCurrentScriptElementType() {
     HtmlScriptContentProvider scriptContentProvider = findScriptContentProvider(scriptType);

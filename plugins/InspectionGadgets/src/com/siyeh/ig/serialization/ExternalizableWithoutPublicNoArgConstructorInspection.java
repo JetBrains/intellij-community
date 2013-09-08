@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,6 +134,9 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
         if (constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
           return;
         }
+      }
+      if (SerializationUtils.hasWriteReplace(aClass)) {
+        return;
       }
       registerClassError(aClass, aClass, constructor);
     }
