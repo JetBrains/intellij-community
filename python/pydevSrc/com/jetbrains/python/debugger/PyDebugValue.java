@@ -3,9 +3,10 @@ package com.jetbrains.python.debugger;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.xdebugger.XNamedValue;
+import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -20,22 +21,29 @@ public class PyDebugValue extends XNamedValue {
   private final String myValue;
   private final boolean myContainer;
   private final PyDebugValue myParent;
-  private final IPyDebugProcess myDebugProcess;
+
+  private final PyFrameAccessor myFrameAccessor;
+
   private final boolean myErrorOnEval;
 
-  public PyDebugValue(final String name, final String type, final String value, final boolean container, boolean errorOnEval) {
+  public PyDebugValue(@NotNull final String name, final String type, final String value, final boolean container, boolean errorOnEval) {
     this(name, type, value, container, errorOnEval, null, null);
   }
 
-  public PyDebugValue(final String name, final String type, final String value, final boolean container,
-                      boolean errorOnEval, final PyDebugValue parent, final IPyDebugProcess debugProcess) {
+  public PyDebugValue(@NotNull final String name, final String type, final String value, final boolean container,
+                      boolean errorOnEval, final PyFrameAccessor frameAccessor) {
+    this(name, type, value, container, errorOnEval, null, frameAccessor);
+  }
+
+  public PyDebugValue(@NotNull final String name, final String type, final String value, final boolean container,
+                      boolean errorOnEval, final PyDebugValue parent, final PyFrameAccessor frameAccessor) {
     super(name);
     myType = type;
     myValue = value;
     myContainer = container;
     myErrorOnEval = errorOnEval;
     myParent = parent;
-    myDebugProcess = debugProcess;
+    myFrameAccessor = frameAccessor;
   }
 
   public String getTempName() {
@@ -60,6 +68,10 @@ public class PyDebugValue extends XNamedValue {
 
   public boolean isErrorOnEval() {
     return myErrorOnEval;
+  }
+  
+  public PyDebugValue setParent(@Nullable PyDebugValue parent) {
+    return new PyDebugValue(myName, myType, myValue, myContainer, myErrorOnEval, parent, myFrameAccessor);
   }
 
   public PyDebugValue getParent() {
@@ -116,7 +128,7 @@ public class PyDebugValue extends XNamedValue {
     String value = PyTypeHandler.format(this);
 
     if (value.length() >= MAX_VALUE) {
-      node.setFullValueEvaluator(new PyFullValueEvaluator(myDebugProcess, myName));
+      node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, myName));
       value = value.substring(0, MAX_VALUE);
     }
 
@@ -129,10 +141,10 @@ public class PyDebugValue extends XNamedValue {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        if (myDebugProcess == null) return;
+        if (myFrameAccessor == null) return;
 
         try {
-          final XValueChildrenList values = myDebugProcess.loadVariable(PyDebugValue.this);
+          final XValueChildrenList values = myFrameAccessor.loadVariable(PyDebugValue.this);
           if (!node.isObsolete()) {
             node.addChildren(values, true);
           }
@@ -149,7 +161,7 @@ public class PyDebugValue extends XNamedValue {
 
   @Override
   public XValueModifier getModifier() {
-    return new PyValueModifier(myDebugProcess, this);
+    return new PyValueModifier(myFrameAccessor, this);
   }
 
   private Icon getValueIcon() {
@@ -162,5 +174,9 @@ public class PyDebugValue extends XNamedValue {
     else {
       return AllIcons.Debugger.Value;
     }
+  }
+  
+  public PyDebugValue setName(String newName) {
+    return new PyDebugValue(newName, myType, myValue, myContainer, myErrorOnEval, myParent, myFrameAccessor);
   }
 }

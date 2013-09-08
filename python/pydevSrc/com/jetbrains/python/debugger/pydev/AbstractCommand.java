@@ -39,7 +39,7 @@ public abstract class AbstractCommand<T> {
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
 
 
-  @NotNull private final RemoteDebugger myDebugger;
+  @NotNull protected final RemoteDebugger myDebugger;
   private final int myCommandCode;
 
   private final ResponseProcessor<T> myResponseProcessor;

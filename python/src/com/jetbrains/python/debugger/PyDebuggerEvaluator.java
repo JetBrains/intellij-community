@@ -15,9 +15,9 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
   private static final PyDebugValue NONE = new PyDebugValue("", "NoneType", "None", false, false, null, null);
 
   private Project myProject;
-  private final PyEvaluator myDebugProcess;
+  private final PyFrameAccessor myDebugProcess;
 
-  public PyDebuggerEvaluator(@NotNull Project project, @NotNull final PyEvaluator debugProcess) {
+  public PyDebuggerEvaluator(@NotNull Project project, @NotNull final PyFrameAccessor debugProcess) {
     myProject = project;
     myDebugProcess = debugProcess;
   }
