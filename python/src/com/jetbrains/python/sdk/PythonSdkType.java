@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
@@ -883,6 +884,12 @@ public class PythonSdkType extends SdkType {
     runner = new File(new File(new File(binDir.getParentFile(), "local"), "bin"), name);
     if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
 
+    // if interpreter is a symlink
+    if (FileSystemUtil.isSymLink(homeDirectory)) {
+      String resolvedPath = FileSystemUtil.resolveSymLink(homeDirectory);
+      if (resolvedPath != null)
+        return getExecutablePath(resolvedPath, name);
+    }
     // Search in standard unix path
     runner = new File(new File("/usr", "bin"), name);
     if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
