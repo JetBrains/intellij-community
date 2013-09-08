@@ -15,8 +15,8 @@
  */
 package com.intellij.xdebugger.impl.actions.handlers;
 
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -44,8 +44,8 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
     if (evaluator == null) return;
 
-    @Nullable Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    @Nullable Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    @Nullable Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    @Nullable Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
 
     String selectedText = editor != null ? editor.getSelectionModel().getSelectedText() : null;
     if (selectedText != null) {

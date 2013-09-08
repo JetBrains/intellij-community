@@ -15,8 +15,8 @@
  */
 package com.intellij.xdebugger.impl.actions.handlers;
 
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -36,7 +36,7 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
 
   @Nullable
   private static String getTextToEvaluate(DataContext dataContext, XDebugSession session) {
-    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return null;
     }
