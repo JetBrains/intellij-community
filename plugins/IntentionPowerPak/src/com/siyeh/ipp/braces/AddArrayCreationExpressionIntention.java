@@ -16,6 +16,7 @@
 package com.siyeh.ipp.braces;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -35,39 +36,18 @@ public class AddArrayCreationExpressionIntention extends MutablyNamedIntention {
   protected String getTextForElement(PsiElement element) {
     final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)element;
     final PsiType type = arrayInitializerExpression.getType();
-    final StringBuilder typeText = buildTypeText(type, new StringBuilder());
-    return IntentionPowerPackBundle.message("add.array.creation.expression.intention.name", typeText.toString());
+    return IntentionPowerPackBundle.message("add.array.creation.expression.intention.name",
+                                            TypeConversionUtil.erasure(type).getCanonicalText());
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiArrayInitializerExpression arrayInitializerExpression =
-      (PsiArrayInitializerExpression)element;
+  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)element;
     final PsiType type = arrayInitializerExpression.getType();
     if (type == null) {
       return;
     }
-    @NonNls final StringBuilder text = new StringBuilder();
-    text.append("new ");
-    buildTypeText(type, text);
-    text.append(arrayInitializerExpression.getText());
-    replaceExpression(text.toString(), arrayInitializerExpression);
-  }
-
-  private static StringBuilder buildTypeText(PsiType type, StringBuilder typeText) {
-    if (type instanceof PsiArrayType) {
-      final PsiArrayType arrayType = (PsiArrayType)type;
-      buildTypeText(arrayType.getComponentType(), typeText);
-      typeText.append("[]");
-    }
-    else if (type instanceof PsiClassType) {
-      final PsiClassType classType = (PsiClassType)type;
-      typeText.append(classType.getClassName()); // no parameters -> no generic array creation
-    }
-    else {
-      typeText.append(type.getCanonicalText());
-    }
-    return typeText;
+    replaceExpression("new " + TypeConversionUtil.erasure(type).getCanonicalText() + arrayInitializerExpression.getText(),
+                      arrayInitializerExpression);
   }
 }
