@@ -41,12 +41,16 @@ public class SingleAlarm extends Alarm {
 
   public void request(boolean forceRun) {
     if (isEmpty()) {
-      addRequest(task, forceRun ? 0 : delay, ModalityState.any());
+      addRequest(forceRun ? 0 : delay);
     }
   }
 
   public void cancelAndRequest() {
     cancelAllRequests();
+    addRequest(delay);
+  }
+
+  private void addRequest(int delay) {
     _addRequest(task, delay, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.NON_MODAL : null);
   }
 }
