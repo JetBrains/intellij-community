@@ -194,9 +194,15 @@ class InterpreterInterface(BaseInterpreterInterface):
             xml += pydevd_vars.varToXML(valDict[k], to_string(k))
 
         xml += "</xml>"
-        
-        return xml
 
+        return xml
+    
+    def changeVariable(self, attr, value):
+        try:
+            Exec('%s=%s' % (attr, value), self.namespace, self.namespace)
+        except:
+            pass
+        
     def close(self):
         sys.exit(0)
 
@@ -300,6 +306,7 @@ def start_server(host, port, interpreter):
     server.register_function(interpreter.getCompletions)
     server.register_function(interpreter.getFrame)
     server.register_function(interpreter.getVariable)
+    server.register_function(interpreter.changeVariable)
     server.register_function(interpreter.getDescription)
     server.register_function(interpreter.close)
     server.register_function(interpreter.interrupt)

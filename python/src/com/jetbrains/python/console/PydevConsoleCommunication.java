@@ -46,6 +46,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private static final String GET_DESCRIPTION = "getDescription";
   private static final String GET_FRAME = "getFrame";
   private static final String GET_VARIABLE = "getVariable";
+  private static final String CHANGE_VARIABLE = "changeVariable";
   private static final String HANDSHAKE = "handshake";
   private static final String CLOSE = "close";
   /**
@@ -469,7 +470,14 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   @Override
-  public void changeVariable(PyDebugValue variable, String expression) throws PyDebuggerException {
-    //To change body of implemented methods use File | Settings | File Templates.
+  public void changeVariable(PyDebugValue variable, String value) throws PyDebuggerException {
+    if (myClient != null) {
+      try {
+        myClient.execute(CHANGE_VARIABLE, new Object[]{variable.getEvaluationExpression(), value});
+      }
+      catch (XmlRpcException e) {
+        throw new PyDebuggerException("Get change variable", e);
+      }
+    }
   }
 }
