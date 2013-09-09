@@ -61,6 +61,16 @@ public abstract class XValue extends XValueContainer {
   }
 
   /**
+   * Return {@code true} from this method and override {@link #computeSourcePosition(XNavigatable)} if navigation to the source
+   * is supported for the value
+   * @return {@code true} if navigation to the value's source is supported
+   */
+  public boolean canNavigateToSource() {
+    // should be false, but cannot be due to compatibility reasons
+    return true;
+  }
+
+  /**
    * Return {@code true} from this method and override {@link #computeTypeSourcePosition(XNavigatable)} if navigation to the value's type
    * is supported for the value
    * @return {@code true} if navigation to the value's type is supported
