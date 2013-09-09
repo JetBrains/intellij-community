@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 
 /**
  * @author nik
@@ -25,5 +26,10 @@ public class XJumpToSourceAction extends XJumpToSourceActionBase {
   @Override
   protected void startComputingSourcePosition(XValue value, XNavigatable navigatable) {
     value.computeSourcePosition(navigatable);
+  }
+
+  @Override
+  protected boolean isEnabled(XValueNodeImpl node) {
+    return super.isEnabled(node) && node.getValueContainer().canNavigateToSource();
   }
 }
