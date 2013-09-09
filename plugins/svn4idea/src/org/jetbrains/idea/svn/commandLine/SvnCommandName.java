@@ -41,6 +41,8 @@ public enum SvnCommandName {
   resolve("resolve", true),
   propget("propget", false),
   proplist("proplist", false),
+  propset("propset", true),
+  propdel("propdel", true),
   blame("blame", false),
   merge("merge", true),
   changelist("changelist", true),

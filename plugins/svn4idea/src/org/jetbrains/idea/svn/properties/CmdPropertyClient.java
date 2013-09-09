@@ -88,6 +88,27 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     parseOutput(target, command.getOutput(), handler);
   }
 
+  @Override
+  public void setProperty(@NotNull File file,
+                          @NotNull String property,
+                          @Nullable SVNPropertyValue value,
+                          @Nullable SVNDepth depth,
+                          boolean force) throws VcsException {
+    List<String> parameters = new ArrayList<String>();
+    boolean isDelete = value == null;
+
+    parameters.add(property);
+    if (!isDelete) {
+      parameters.add(SVNPropertyValue.getPropertyAsString(value));
+      // --force could only be used in "propset" command, but not in "propdel" command
+      CommandUtil.put(parameters, force, "--force");
+    }
+    CommandUtil.put(parameters, file);
+    CommandUtil.put(parameters, depth);
+
+    CommandUtil.execute(myVcs, isDelete ? SvnCommandName.propdel : SvnCommandName.propset, parameters, null);
+  }
+
   private void fillListParameters(@NotNull SvnTarget target,
                                   @Nullable SVNRevision revision,
                                   @Nullable SVNDepth depth,
