@@ -22,6 +22,7 @@ import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.TodoPattern;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author irengrig
@@ -30,7 +31,7 @@ import com.intellij.psi.search.TodoPattern;
  *         Time: 10:47 AM
  */
 public class TodoItemsCreator {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.TodoItemsCreator");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.TodoItemsCreator");
   private final TodoPattern[] myTodoPatterns;
 
   public TodoItemsCreator() {
@@ -43,7 +44,8 @@ public class TodoItemsCreator {
                                  mapPattern(occurrence.getPattern()));
   }
 
-  private TodoPattern mapPattern(final IndexPattern pattern) {
+  @NotNull
+  private TodoPattern mapPattern(@NotNull IndexPattern pattern) {
     for(TodoPattern todoPattern: myTodoPatterns) {
       if (todoPattern.getIndexPattern() == pattern) {
         return todoPattern;

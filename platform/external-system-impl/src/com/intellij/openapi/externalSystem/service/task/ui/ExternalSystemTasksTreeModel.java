@@ -70,7 +70,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   @NotNull private final ProjectSystemId       myExternalSystemId;
 
   public ExternalSystemTasksTreeModel(@NotNull ProjectSystemId externalSystemId) {
-    super(new ExternalSystemNode<String>(new ExternalSystemNodeDescriptor<String>("", "", null)));
+    super(new ExternalSystemNode<String>(new ExternalSystemNodeDescriptor<String>("", "", "", null)));
     myExternalSystemId = externalSystemId;
     myUiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
   }
@@ -210,7 +210,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
 
     if (!toAdd.isEmpty()) {
       for (ExternalTaskExecutionInfo taskInfo : toAdd) {
-        moduleNode.add(new ExternalSystemNode<ExternalTaskExecutionInfo>(descriptor(taskInfo, myUiAware.getTaskIcon())));
+        moduleNode.add(new ExternalSystemNode<ExternalTaskExecutionInfo>(descriptor(taskInfo, taskInfo.getDescription(), myUiAware.getTaskIcon())));
         myIndexHolder[0] = moduleNode.getChildCount() - 1;
         nodesWereInserted(moduleNode, myIndexHolder);
       }
@@ -223,6 +223,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
     settings.setExternalProjectPath(task.getLinkedExternalProjectPath());
     settings.setTaskNames(Collections.singletonList(task.getName()));
+    settings.setTaskDescriptions(Collections.singletonList(task.getDescription()));
     settings.setExternalSystemIdString(myExternalSystemId.toString());
     return new ExternalTaskExecutionInfo(settings, DefaultRunExecutor.EXECUTOR_ID);
   }
@@ -251,7 +252,12 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
 
   @NotNull
   private static <T> ExternalSystemNodeDescriptor<T> descriptor(@NotNull T element, @Nullable Icon icon) {
-    return new ExternalSystemNodeDescriptor<T>(element, element.toString(), icon);
+    return descriptor(element, "", icon);
+  }
+
+  @NotNull
+  private static <T> ExternalSystemNodeDescriptor<T> descriptor(@NotNull T element, @NotNull String description, @Nullable Icon icon) {
+    return new ExternalSystemNodeDescriptor<T>(element, element.toString(), description, icon);
   }
   
   @NotNull

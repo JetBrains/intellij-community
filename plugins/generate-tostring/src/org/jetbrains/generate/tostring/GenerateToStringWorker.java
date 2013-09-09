@@ -210,8 +210,8 @@ public class GenerateToStringWorker {
         // keep this for old user templates
         autoImportPackages(javaFile, params.get("autoImportPackages"));
       }
-      method = (PsiMethod)JavaCodeStyleManager.getInstance(clazz.getProject()).shortenClassReferences(method);
     }
+    method = (PsiMethod)JavaCodeStyleManager.getInstance(clazz.getProject()).shortenClassReferences(method);
 
     // jump to method
     if (!config.isJumpToMethod() || editor == null) {

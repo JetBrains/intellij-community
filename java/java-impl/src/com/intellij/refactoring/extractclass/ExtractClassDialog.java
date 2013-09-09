@@ -42,6 +42,7 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -60,7 +61,6 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private final JTextField classNameField;
   private final ReferenceEditorComboWithBrowseButton packageTextField;
   private final DestinationFolderComboBox myDestinationFolderComboBox;
-  private final JTextField sourceClassTextField = null;
   private JCheckBox myGenerateAccessorsCb;
   private final JavaVisibilityPanel myVisibilityPanel;
   private final JCheckBox extractAsEnum;
@@ -252,7 +252,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       .addLabeledComponent(new JLabel(), extractAsEnum)
       .addLabeledComponent(RefactorJBundle.message("package.for.new.class.label"), packageTextField);
 
-    if (ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1) {
+    if (ProjectRootManager.getInstance(myProject).getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES).size() > 1) {
       builder.addLabeledComponent(RefactoringBundle.message("target.destination.folder"), myDestinationFolderComboBox);
     }
 

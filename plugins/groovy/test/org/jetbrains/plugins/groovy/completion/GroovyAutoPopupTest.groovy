@@ -114,10 +114,10 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testClassesAndPackagesInUnqualifiedImports() {
-    myFixture.addClass("package xxxxx; public class Xxxxxxxxx {}")
+    myFixture.addClass("package xxxxx; public class xxxxxxxxx {}")
     myFixture.configureByText 'a.groovy', 'package foo; import <caret>'
     type 'xxx'
-    assert myFixture.lookupElementStrings == ['xxxxx', 'Xxxxxxxxx']
+    assert myFixture.lookupElementStrings == ['xxxxxxxxx', 'xxxxx']
   }
 
 
@@ -228,11 +228,9 @@ Abcdefg <caret>'''
 
   public void testPrivate() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
-    myFixture.addClass("package foo; public class PrimaBalerina {}")
     myFixture.configureByText 'a.groovy', 'class Foo { <caret> }'
     type 'pri'
     assert myFixture.lookupElementStrings[0] == 'private'
-    assert !('PrimaBalerina' in myFixture.lookupElementStrings)
   }
 
   public void testFieldTypeNonImported() {
@@ -264,9 +262,9 @@ Abcdefg <caret>'''
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
     myFixture.configureByText 'a.groovy', '<caret>'
     type 'boo'
-    myFixture.assertPreferredCompletionItems 0, 'boolean', 'Boolean'
+    myFixture.assertPreferredCompletionItems 0, 'boolean'
     type '\b\b\bBoo'
-    myFixture.assertPreferredCompletionItems 0, 'Boolean', 'boolean'
+    myFixture.assertPreferredCompletionItems 0, 'Boolean'
   }
 
   public void testPackageQualifier() {

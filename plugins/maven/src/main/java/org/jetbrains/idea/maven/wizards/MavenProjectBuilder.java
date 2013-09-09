@@ -126,6 +126,9 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     }
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+
+    manager.setIgnoredState(getParameters().mySelectedProjects, false);
+
     manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles);
     manager.waitForReadingCompletion();
 

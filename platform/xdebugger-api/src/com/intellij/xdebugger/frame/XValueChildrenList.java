@@ -24,13 +24,17 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Represents chunk of values which can be added to a {@link com.intellij.xdebugger.frame.XCompositeNode composite node}
+ * @see com.intellij.xdebugger.frame.XCompositeNode#addChildren(XValueChildrenList, boolean)
+ *
  * @author nik
  */
-public class XValueChildrenList extends XValueChildrenProvider {
+public class XValueChildrenList {
   public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.<String>emptyList(), Collections.<XValue>emptyList());
-
   private final List<String> myNames;
   private final List<XValue> myValues;
+  private List<XValueGroup> myTopGroups = new SmartList<XValueGroup>();
+  private List<XValueGroup> myBottomGroups = new SmartList<XValueGroup>();
 
   public XValueChildrenList(int initialCapacity) {
     myNames = new ArrayList<String>(initialCapacity);
@@ -46,6 +50,16 @@ public class XValueChildrenList extends XValueChildrenProvider {
     return new XValueChildrenList(Collections.singletonList(name), Collections.singletonList(value));
   }
 
+  public static XValueChildrenList singleton(@NotNull XNamedValue value) {
+    return new XValueChildrenList(Collections.singletonList(value.getName()), Collections.<XValue>singletonList(value));
+  }
+
+  public static XValueChildrenList bottomGroup(@NotNull XValueGroup group) {
+    XValueChildrenList list = new XValueChildrenList();
+    list.addBottomGroup(group);
+    return list;
+  }
+
   private XValueChildrenList(List<String> names, List<XValue> values) {
     myNames = names;
     myValues = values;
@@ -56,18 +70,42 @@ public class XValueChildrenList extends XValueChildrenProvider {
     myValues.add(value);
   }
 
-  @Override
+  public void add(@NotNull XNamedValue value) {
+    myNames.add(value.getName());
+    myValues.add(value);
+  }
+
+  /**
+   * Adds a node representing group of values to the top of a node children list
+   */
+  public void addTopGroup(@NotNull XValueGroup group) {
+    myTopGroups.add(group);
+  }
+
+  /**
+   * Adds a node representing group of values to the bottom of a node children list
+   */
+  public void addBottomGroup(@NotNull XValueGroup group) {
+    myBottomGroups.add(group);
+  }
+
   public int size() {
     return myNames.size();
   }
 
-  @Override
   public String getName(int i) {
     return myNames.get(i);
   }
 
-  @Override
   public XValue getValue(int i) {
     return myValues.get(i);
+  }
+
+  public List<XValueGroup> getTopGroups() {
+    return myTopGroups;
+  }
+
+  public List<XValueGroup> getBottomGroups() {
+    return myBottomGroups;
   }
 }

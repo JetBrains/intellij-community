@@ -27,13 +27,13 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
-import com.intellij.xml.NamespaceAwareXmlAttributeDescriptor;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlExtension;
+import com.intellij.xml.*;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.codeInsight.completion.CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
 
@@ -81,9 +81,18 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
       completionData = CompletionUtil.getCompletionDataByElement(attribute, attribute.getContainingFile().getOriginalFile());
     boolean caseSensitive = !(completionData instanceof HtmlCompletionData) || ((HtmlCompletionData)completionData).isCaseSensitive();
 
+    final List<XmlCompletionExtension> completionExtensions = new ArrayList<XmlCompletionExtension>();
+
+    for (XmlCompletionExtension completionExtension : XmlCompletionExtension.EP_NAME.getExtensions()) {
+      if (completionExtension.isMyContext(tag)) {
+        completionExtensions.add(completionExtension);
+      }
+    }
+
     for (XmlAttributeDescriptor descriptor : descriptors) {
       if (isValidVariant(attribute, descriptor, attributes, extension)) {
-        String name = descriptor.getName(tag);
+        final String fullAttrName = descriptor.getName(tag);
+        String name = fullAttrName;
 
         InsertHandler<LookupElement> insertHandler = XmlAttributeInsertHandler.INSTANCE;
 
@@ -103,7 +112,7 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
         }
         if (prefix == null || name.startsWith(prefix)) {
           if (prefix != null && name.length() > prefix.length()) {
-            name = descriptor.getName(tag).substring(prefix.length());
+            name = fullAttrName.substring(prefix.length());
           }
           LookupElementBuilder element = LookupElementBuilder.create(name);
           if (descriptor instanceof PsiPresentableMetaData) {
@@ -116,8 +125,21 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
           element = element
             .withCaseSensitivity(caseSensitive)
             .withInsertHandler(insertHandler);
-          result.addElement(
-            descriptor.isRequired() ? PrioritizedLookupElement.withPriority(element.appendTailText("(required)", true), 100) : element);
+          LookupElement e = null;
+
+          for (XmlCompletionExtension tagNameProvider : completionExtensions) {
+            e = tagNameProvider.setupAttributeLookupElement(tag, descriptor, fullAttrName, element);
+            
+            if (e != null) {
+              break;
+            }
+          }
+          if (e == null) {
+            e = descriptor.isRequired()
+                ? PrioritizedLookupElement.withPriority(element.appendTailText("(required)", true), 100)
+                : element; 
+          }
+          result.addElement(e);
         }
       }
     }

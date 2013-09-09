@@ -4,16 +4,18 @@ import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferen
 import com.intellij.html.impl.providers.MicrodataReferenceProvider;
 import com.intellij.html.impl.util.MicrodataUtil;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.PsiReferenceContributor;
-import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
+import com.intellij.psi.impl.UrlPsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.DtdReferencesProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
@@ -91,5 +93,16 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(xmlAttributeValue(), new XmlPrefixReferenceProvider());
     registrar.registerReferenceProvider(xmlAttributeValue(), new XmlEnumeratedValueReferenceProvider(), PsiReferenceRegistrar.LOWER_PRIORITY);
     registrar.registerReferenceProvider(xmlTag(), XmlEnumeratedValueReferenceProvider.forTags(), PsiReferenceRegistrar.LOWER_PRIORITY);
+
+    registrar.registerReferenceProvider(xmlAttributeValue().withLocalName("source")
+                                          .withSuperParent(2, xmlTag().withLocalName("documentation").withNamespace(XmlUtil.SCHEMA_URIS)),
+                                        new PsiReferenceProvider() {
+                                          @NotNull
+                                          @Override
+                                          public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
+                                                                                       @NotNull ProcessingContext context) {
+                                            return new PsiReference[] { new UrlPsiReference(element) };
+                                          }
+                                        });
   }
 }

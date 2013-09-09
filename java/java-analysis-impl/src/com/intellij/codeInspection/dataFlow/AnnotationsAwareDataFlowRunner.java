@@ -16,13 +16,11 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
 
 /**
  * @author peter
@@ -30,12 +28,7 @@ import java.util.Collection;
 public class AnnotationsAwareDataFlowRunner extends DataFlowRunner {
 
   @Override
-  protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
-    final Collection<DfaMemoryState> initialStates = super.createInitialStates(psiBlock, visitor);
-    if (initialStates == null) {
-      return null;
-    }
-
+  protected void prepareAnalysis(@NotNull PsiElement psiBlock, Iterable<DfaMemoryState> initialStates) {
     final PsiElement parent = psiBlock.getParent();
     if (parent instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)parent;
@@ -50,6 +43,5 @@ public class AnnotationsAwareDataFlowRunner extends DataFlowRunner {
         }
       }
     }
-    return initialStates;
   }
 }

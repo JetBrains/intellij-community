@@ -79,7 +79,7 @@ public class EditorPlaybackCall {
       @Override
       public void run(Project project) {
         final MessageBusConnection bus = project.getMessageBus().connect(connection);
-        bus.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+        bus.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
           @Override
           public void daemonFinished() {
             context.flushAwtAndRunInEdt(result.createSetDoneRunnable());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class LambdaUtil {
     return initialSubst;
   }
 
-  public static boolean isValidLambdaContext(PsiElement context) {
+  public static boolean isValidLambdaContext(@Nullable PsiElement context) {
     return context instanceof PsiTypeCastExpression ||
            context instanceof PsiAssignmentExpression ||
            context instanceof PsiVariable ||
@@ -428,7 +428,13 @@ public class LambdaUtil {
         return ((PsiArrayType)psiType).getComponentType();
       }
     } else if (parent instanceof PsiTypeCastExpression) {
-      return ((PsiTypeCastExpression)parent).getType();
+      final PsiType castType = ((PsiTypeCastExpression)parent).getType();
+      if (castType instanceof PsiIntersectionType) {
+        for (PsiType conjunctType : ((PsiIntersectionType)castType).getConjuncts()) {
+          if (getFunctionalInterfaceMethod(conjunctType) != null) return conjunctType;
+        }
+      }
+      return castType;
     }
     else if (parent instanceof PsiVariable) {
       return ((PsiVariable)parent).getType();
@@ -687,7 +693,6 @@ public class LambdaUtil {
   }
 
   private static int isMoreSpecific(PsiType returnType, PsiType returnType1, PsiType lambdaType) {
-    if (returnType == PsiType.VOID || returnType1 == PsiType.VOID) return 0;
     TypeKind typeKind = TypeKind.PRIMITIVE;
     if (lambdaType instanceof PsiLambdaExpressionType) {
       typeKind = areLambdaReturnExpressionsPrimitive((PsiLambdaExpressionType)lambdaType);

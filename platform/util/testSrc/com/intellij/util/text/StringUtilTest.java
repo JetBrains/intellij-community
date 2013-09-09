@@ -144,4 +144,9 @@ public class StringUtilTest extends TestCase {
     assertEquals("\\\"", StringUtil.escapeQuotes("\""));
     assertEquals("foo\\\"bar'\\\"", StringUtil.escapeQuotes("foo\"bar'\""));
   }
+
+  public void testJoin() {
+    assertEquals("foo,,bar", StringUtil.join(Arrays.asList("foo", "", "bar"), ","));
+    assertEquals("foo,,bar", StringUtil.join(new String[]{"foo", "", "bar"}, ","));
+  }
 }

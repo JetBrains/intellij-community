@@ -17,6 +17,9 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+
+import java.util.Set;
 
 /**
  * Provides information about files contained in a project or module.
@@ -78,4 +81,12 @@ public interface FileIndex {
    * @return true if the file or directory belongs to a test source root, false otherwise.
    */
   boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir);
+
+  /**
+   * Returns true if <code>fileOrDir</code> is a file or directory from the source root which have
+   *
+   * @param fileOrDir the file or directory to check.
+   * @return true if the file or directory belongs to a source root of one of specified types, false otherwise
+   */
+  boolean isUnderSourceRootOfType(@NotNull VirtualFile fileOrDir, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 }

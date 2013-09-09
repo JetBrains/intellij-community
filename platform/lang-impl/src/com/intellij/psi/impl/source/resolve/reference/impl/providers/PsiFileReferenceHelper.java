@@ -22,7 +22,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -32,6 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -89,8 +89,8 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
 
               if (orderEntry instanceof ModuleSourceOrderEntry) {
                 for(ContentEntry e: ((ModuleSourceOrderEntry)orderEntry).getRootModel().getContentEntries()) {
-                  for(SourceFolder sf:e.getSourceFolders()) {
-                    if (Comparing.equal(sf.getFile(), root)) {
+                  for (SourceFolder sf : e.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
+                    if (root.equals(sf.getFile())) {
                       String s = sf.getPackagePrefix();
                       if (s.length() > 0) {
                         path = s + "." + path;

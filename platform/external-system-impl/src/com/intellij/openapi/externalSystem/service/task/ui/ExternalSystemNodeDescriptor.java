@@ -29,12 +29,15 @@ import javax.swing.*;
 public class ExternalSystemNodeDescriptor<T> extends PresentableNodeDescriptor<T> {
 
   @NotNull private final T myElement;
+  @NotNull private final String myDescription;
 
-  public ExternalSystemNodeDescriptor(@NotNull T element, @NotNull String text, @Nullable Icon icon) {
+  public ExternalSystemNodeDescriptor(@NotNull T element, @NotNull String name, @NotNull String description, @Nullable Icon icon) {
     super(null, null);
     myElement = element;
-    myName = text;
+    myName = name;
     setIcon(icon);
+    myDescription = description;
+    getPresentation().setTooltip(description);
   }
 
   public void setName(@NotNull String name) {
@@ -44,7 +47,8 @@ public class ExternalSystemNodeDescriptor<T> extends PresentableNodeDescriptor<T
   @Override
   protected void update(PresentationData presentation) {
     presentation.setPresentableText(myName);
-    presentation.setIcon(getIcon()); 
+    presentation.setIcon(getIcon());
+    presentation.setTooltip(myDescription);
   }
   
   @NotNull

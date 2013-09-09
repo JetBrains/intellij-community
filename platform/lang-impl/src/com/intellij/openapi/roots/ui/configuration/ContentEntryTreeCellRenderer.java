@@ -103,7 +103,10 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
         if (currentRoot != null && VfsUtilCore.isAncestor(sourcePath, currentRoot, false)) {
           continue;
         }
-        icon = getSourceFolderIcon(sourceFolder.getRootType());
+        Icon folderIcon = getSourceFolderIcon(sourceFolder.getRootType());
+        if (folderIcon != null) {
+          icon = folderIcon;
+        }
         currentRoot = sourcePath;
       }
     }

@@ -15,19 +15,16 @@
  */
 package com.intellij.xdebugger;
 
-import com.intellij.xdebugger.frame.XValue;
+import com.intellij.openapi.util.text.StringUtil;
 
 /**
+ * @deprecated use {@link com.intellij.xdebugger.frame.XNamedValue} instead. Note that {@code name} parameter in its constructor cannot be {@code null}
+ *
  * @author traff
  */
-public abstract class XNamedValue extends XValue {
-  protected final String myName;
-
+@Deprecated
+public abstract class XNamedValue extends com.intellij.xdebugger.frame.XNamedValue {
   public XNamedValue(String name) {
-    myName = name;
-  }
-
-  public String getName() {
-    return myName;
+    super(StringUtil.notNullize(name));
   }
 }

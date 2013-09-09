@@ -1,8 +1,5 @@
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
@@ -44,25 +41,6 @@ public class ProjectStructureHelper {
     for (Module module : myFacade.getModules(ideProject)) {
       if (ideModuleName.equals(module.getName())) {
         return module;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public ModuleAwareContentRoot findIdeContentRoot(@NotNull DataNode<ContentRootData> node, @NotNull Project ideProject) {
-    ModuleData moduleData = node.getData(ProjectKeys.MODULE);
-    if (moduleData == null) {
-      return null;
-    }
-    final Module module = findIdeModule(moduleData.getName(), ideProject);
-    if (module == null) {
-      return null;
-    }
-    for (ModuleAwareContentRoot contentRoot : myFacade.getContentRoots(module)) {
-      final VirtualFile file = contentRoot.getFile();
-      if (node.getData().getRootPath().equals(file.getPath())) {
-        return contentRoot;
       }
     }
     return null;

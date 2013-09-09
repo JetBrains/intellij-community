@@ -355,7 +355,7 @@ public class XsltSupport {
 
     public CachedValueProvider.Result<XsltChecker.LanguageLevel> compute(PsiFile psiFile) {
       if (!(psiFile instanceof XmlFile)) {
-        return CachedValueProvider.Result.create(XsltChecker.LanguageLevel.NONE);
+        return CachedValueProvider.Result.create(XsltChecker.LanguageLevel.NONE, PsiModificationTracker.MODIFICATION_COUNT);
       }
 
       final XmlFile xmlFile = (XmlFile)psiFile;

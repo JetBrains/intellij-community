@@ -332,8 +332,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     if (contentEntry == null) {
       return null;
     }
-    final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-    for (SourceFolder sourceFolder : sourceFolders) {
+    for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
       final VirtualFile f = sourceFolder.getFile();
       if (f != null && f.equals(file)) {
         return sourceFolder;

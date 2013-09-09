@@ -22,6 +22,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.concurrency.Job;
 import com.intellij.ide.PowerSaveMode;
@@ -35,8 +36,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -46,6 +45,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -55,7 +55,6 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.util.PsiUtilCore;
@@ -77,10 +76,11 @@ import java.util.*;
 /**
  * This class also controls the auto-reparse and auto-hints.
  */
-public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMExternalizable, NamedComponent {
+public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOMExternalizable, NamedComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
 
   private static final Key<List<LineMarkerInfo>> MARKERS_IN_EDITOR_DOCUMENT_KEY = Key.create("MARKERS_IN_EDITOR_DOCUMENT");
+  private static final Key<List<HighlightInfo>> FILE_LEVEL_HIGHLIGHTS = Key.create("FILE_LEVEL_HIGHLIGHTS");
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
   @NotNull private final EditorTracker myEditorTracker;
@@ -126,8 +126,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                                                    final ProgressIndicator updateProgress) {
         if (fileEditor instanceof TextEditor) {
           log(updateProgress, pass, "Apply ");
-          Editor editor = ((TextEditor)fileEditor).getEditor();
-          repaintErrorStripeRenderer(editor);
         }
       }
 
@@ -160,11 +158,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     });
   }
 
-  static boolean hasErrors(@NotNull Project project, @NotNull Document document) {
-    return !processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(),
-                              CommonProcessors.<HighlightInfo>alwaysFalse());
-  }
-
   @NotNull
   @TestOnly
   public static List<HighlightInfo> getHighlights(@NotNull Document document, HighlightSeverity minSeverity, @NotNull Project project) {
@@ -172,6 +165,66 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     processHighlights(document, project, minSeverity, 0, document.getTextLength(),
                       new CommonProcessors.CollectProcessor<HighlightInfo>(infos));
     return infos;
+  }
+
+  @Override
+  @NotNull
+  @TestOnly
+  public List<HighlightInfo> getFileLevelHighlights(@NotNull Project project, @NotNull PsiFile file) {
+    VirtualFile vFile = file.getViewProvider().getVirtualFile();
+    final FileEditorManager manager = FileEditorManager.getInstance(project);
+    List<HighlightInfo> result = new ArrayList<HighlightInfo>();
+    for (FileEditor fileEditor : manager.getEditors(vFile)) {
+      final List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+      if (infos == null) continue;
+      for (HighlightInfo info : infos) {
+          result.add(info);
+      }
+    }
+    return result;
+  }
+
+  @Override
+  public void cleanFileLevelHighlights(@NotNull Project project, final int group, PsiFile psiFile) {
+    if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
+    VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
+    final FileEditorManager manager = FileEditorManager.getInstance(project);
+    for (FileEditor fileEditor : manager.getEditors(vFile)) {
+      final List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+      if (infos == null) continue;
+      List<HighlightInfo> infosToRemove = new ArrayList<HighlightInfo>();
+      for (HighlightInfo info : infos) {
+        if (info.getGroup() == group) {
+          manager.removeTopComponent(fileEditor, info.fileLevelComponent);
+          infosToRemove.add(info);
+        }
+      }
+      infos.removeAll(infosToRemove);
+    }
+  }
+
+  @Override
+  public void addFileLevelHighlight(@NotNull final Project project,
+                                    final int group,
+                                    @NotNull final HighlightInfo info,
+                                    @NotNull final PsiFile psiFile) {
+    VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
+    final FileEditorManager manager = FileEditorManager.getInstance(project);
+    for (FileEditor fileEditor : manager.getEditors(vFile)) {
+      if (fileEditor instanceof TextEditor) {
+        FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(), info.quickFixActionRanges,
+                                                                                project, psiFile, ((TextEditor)fileEditor).getEditor());
+        manager.addTopComponent(fileEditor, component);
+        List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+        if (fileLevelInfos == null) {
+          fileLevelInfos = new ArrayList<HighlightInfo>();
+          fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
+        }
+        info.fileLevelComponent = component;
+        info.setGroup(group);
+        fileLevelInfos.add(info);
+      }
+    }
   }
 
   @NotNull
@@ -209,7 +262,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                                        @NotNull TextEditor textEditor,
                                        @NotNull int[] toIgnore,
                                        boolean canChangeDocument,
-                                       @Nullable Runnable callbackWhileWaiting) {
+                                       @Nullable Runnable callbackWhileWaiting) throws ProcessCanceledException {
     assert myInitialized;
     assert !myDisposed;
     Application application = ApplicationManager.getApplication();
@@ -240,13 +293,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     try {
       while (progress.isRunning()) {
         try {
-          if (progress.isCanceled() && progress.isRunning()) {
-            // write action sneaked in the AWT. restart
-            waitForTermination();
-            Throwable savedException = PassExecutorService.getSavedException(progress);
-            if (savedException != null) throw savedException;
-            return runPasses(file, document, textEditor, toIgnore, canChangeDocument, callbackWhileWaiting);
-          }
+          progress.checkCanceled();
           if (callbackWhileWaiting != null) {
             callbackWhileWaiting.run();
           }
@@ -292,7 +339,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     waitForTermination();
   }
 
-  private void waitForTermination() {
+  void waitForTermination() {
     myPassExecutorService.cancelAll(true);
   }
 
@@ -300,17 +347,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @NotNull
   public String getComponentName() {
     return "DaemonCodeAnalyzer";
-  }
-
-  void repaintErrorStripeRenderer(@NotNull Editor editor) {
-    if (!myProject.isInitialized()) return;
-    final Document document = editor.getDocument();
-    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    final EditorMarkupModel markup = (EditorMarkupModel)editor.getMarkupModel();
-    markup.setErrorPanelPopupHandler(new DaemonEditorPopup(psiFile));
-    markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(myProject));
-    markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
-    TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markup, myProject, document, psiFile);
   }
 
   @Override
@@ -442,6 +478,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
            myFileStatusMap.allDirtyScopesAreNull(document);
   }
 
+  @Override
   public boolean isErrorAnalyzingFinished(@NotNull PsiFile file) {
     if (myDisposed) return false;
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
@@ -450,6 +487,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
            myFileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL) == null;
   }
 
+  @Override
   @NotNull
   public FileStatusMap getFileStatusMap() {
     return myFileStatusMap;
@@ -483,52 +521,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       myPassExecutorService.cancelAll(false);
       myUpdateProgress = null;
     }
-  }
-
-  public static boolean processHighlights(@NotNull Document document,
-                                          @NotNull Project project,
-                                          @Nullable("null means all") final HighlightSeverity minSeverity,
-                                          final int startOffset,
-                                          final int endOffset,
-                                          @NotNull final Processor<HighlightInfo> processor) {
-    LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
-
-    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
-    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
-    return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(@NotNull RangeHighlighterEx marker) {
-        Object tt = marker.getErrorStripeTooltip();
-        if (!(tt instanceof HighlightInfo)) return true;
-        HighlightInfo info = (HighlightInfo)tt;
-        return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
-               || info.highlighter == null
-               || processor.process(info);
-      }
-    });
-  }
-
-  static boolean processHighlightsOverlappingOutside(@NotNull Document document,
-                                                     @NotNull Project project,
-                                                     @Nullable("null means all") final HighlightSeverity minSeverity,
-                                                     final int startOffset,
-                                                     final int endOffset,
-                                                     @NotNull final Processor<HighlightInfo> processor) {
-    LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
-
-    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
-    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
-    return model.processRangeHighlightersOutside(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(@NotNull RangeHighlighterEx marker) {
-        Object tt = marker.getErrorStripeTooltip();
-        if (!(tt instanceof HighlightInfo)) return true;
-        HighlightInfo info = (HighlightInfo)tt;
-        return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
-               || info.highlighter == null
-               || processor.process(info);
-      }
-    });
   }
 
 
@@ -763,11 +755,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return progress;
   }
 
-  public boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
-    DaemonListeners listeners = DaemonListeners.getInstance(myProject);
-    return listeners == null || listeners.canChangeFileSilently(file);
-  }
-
   @Override
   public void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
     for (ReferenceImporter importer : Extensions.getExtensions(ReferenceImporter.EP_NAME)) {
@@ -777,12 +764,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   synchronized DaemonProgressIndicator getUpdateProgress() {
     return myUpdateProgress;
-  }
-
-  @NotNull
-  @TestOnly
-  public static List<HighlightInfo> getFileLevelHighlights(@NotNull Project project, @NotNull PsiFile file) {
-    return UpdateHighlightersUtil.getFileLevelHighlights(project, file);
   }
 
   @TestOnly

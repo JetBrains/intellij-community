@@ -175,9 +175,12 @@ public class ContextUtil {
     final Map<String, PsiVariable> stringVars = new HashMap<String, PsiVariable>();
 
     for (final PsiMethod method : contextMethods) {
-      final String returnTypeQName = method.getReturnType().getCanonicalText();
-      if (returnTypeQName != null) {
-        containingClassGetters.putValue(returnTypeQName, method);
+      PsiType returnType = method.getReturnType();
+      if (returnType != null) {
+        final String returnTypeQName = returnType.getCanonicalText();
+        if (returnTypeQName != null) {
+          containingClassGetters.putValue(returnTypeQName, method);
+        }
       }
     }
 

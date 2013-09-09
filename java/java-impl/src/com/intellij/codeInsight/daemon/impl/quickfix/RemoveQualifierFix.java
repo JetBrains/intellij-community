@@ -35,7 +35,7 @@ public class RemoveQualifierFix implements IntentionAction {
   private final PsiReferenceExpression myExpression;
   private final PsiClass myResolved;
 
-  public RemoveQualifierFix(final PsiExpression qualifier, final PsiReferenceExpression expression, final PsiClass resolved) {
+  public RemoveQualifierFix(@NotNull PsiExpression qualifier, @NotNull PsiReferenceExpression expression, @NotNull PsiClass resolved) {
     myQualifier = qualifier;
     myExpression = expression;
     myResolved = resolved;
@@ -56,14 +56,10 @@ public class RemoveQualifierFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
-      myQualifier != null
-      && myQualifier.isValid()
+      myQualifier.isValid()
       && myQualifier.getManager().isInProject(myQualifier)
-      && myExpression != null
       && myExpression.isValid()
-      && myResolved != null
-      && myResolved.isValid()
-      ;
+      && myResolved.isValid();
   }
 
   @Override

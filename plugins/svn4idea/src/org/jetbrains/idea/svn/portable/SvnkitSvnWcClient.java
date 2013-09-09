@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn.portable;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -29,47 +31,52 @@ import java.util.Collection;
  * Time: 6:55 PM
  */
 public class SvnkitSvnWcClient implements SvnWcClientI {
-  private final SVNWCClient myClient;
+  @NotNull
+  private final SvnVcs myVcs;
 
-  public SvnkitSvnWcClient(SVNWCClient client) {
-    myClient = client;
+  public SvnkitSvnWcClient(@NotNull SvnVcs vcs) {
+    myVcs = vcs;
+  }
+
+  public SVNWCClient getClient() {
+    return myVcs.createWCClient();
   }
 
   @Override
   public void setAddParameters(ISVNAddParameters addParameters) {
-    myClient.setAddParameters(addParameters);
+    getClient().setAddParameters(addParameters);
   }
 
   @Override
   public ISVNCommitHandler getCommitHandler() {
-    return myClient.getCommitHandler();
+    return getClient().getCommitHandler();
   }
 
   @Override
   public void setCommitHandler(ISVNCommitHandler handler) {
-    myClient.setCommitHandler(handler);
+    getClient().setCommitHandler(handler);
   }
 
   @Override
   public void doGetFileContents(File path, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst)
     throws SVNException {
-    myClient.doGetFileContents(path, pegRevision, revision, expandKeywords, dst);
+    getClient().doGetFileContents(path, pegRevision, revision, expandKeywords, dst);
   }
 
   @Override
   public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst)
     throws SVNException {
-    myClient.doGetFileContents(url, pegRevision, revision, expandKeywords, dst);
+    getClient().doGetFileContents(url, pegRevision, revision, expandKeywords, dst);
   }
 
   @Override
   public void doCleanup(File path) throws SVNException {
-    myClient.doCleanup(path);
+    getClient().doCleanup(path);
   }
 
   @Override
   public void doCleanup(File path, boolean deleteWCProperties) throws SVNException {
-    myClient.doCleanup(path, deleteWCProperties);
+    getClient().doCleanup(path, deleteWCProperties);
   }
 
   @Override
@@ -80,7 +87,7 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                             SVNDepth depth,
                             ISVNPropertyHandler handler,
                             Collection changeLists) throws SVNException {
-    myClient.doSetProperty(path, propName, propValue, skipChecks, depth, handler, changeLists);
+    getClient().doSetProperty(path, propName, propValue, skipChecks, depth, handler, changeLists);
   }
 
   @Override
@@ -90,7 +97,7 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                             SVNDepth depth,
                             ISVNPropertyHandler handler,
                             Collection changeLists) throws SVNException {
-    myClient.doSetProperty(path, propertyValueProvider, skipChecks, depth, handler, changeLists);
+    getClient().doSetProperty(path, propertyValueProvider, skipChecks, depth, handler, changeLists);
   }
 
   @Override
@@ -102,7 +109,7 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                                      SVNProperties revisionProperties,
                                      boolean skipChecks,
                                      ISVNPropertyHandler handler) throws SVNException {
-    return myClient.doSetProperty(url, propName, propValue, baseRevision, commitMessage, revisionProperties, skipChecks, handler);
+    return getClient().doSetProperty(url, propName, propValue, baseRevision, commitMessage, revisionProperties, skipChecks, handler);
   }
 
   @Override
@@ -112,7 +119,7 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                                     SVNPropertyValue propValue,
                                     boolean force,
                                     ISVNPropertyHandler handler) throws SVNException {
-    myClient.doSetRevisionProperty(path, revision, propName, propValue, force, handler);
+    getClient().doSetRevisionProperty(path, revision, propName, propValue, force, handler);
   }
 
   @Override
@@ -122,17 +129,17 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                                     SVNPropertyValue propValue,
                                     boolean force,
                                     ISVNPropertyHandler handler) throws SVNException {
-    myClient.doSetRevisionProperty(url, revision, propName, propValue, force, handler);
+    getClient().doSetRevisionProperty(url, revision, propName, propValue, force, handler);
   }
 
   @Override
   public SVNPropertyData doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
-    return myClient.doGetProperty(path, propName, pegRevision, revision);
+    return getClient().doGetProperty(path, propName, pegRevision, revision);
   }
 
   @Override
   public SVNPropertyData doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
-    return myClient.doGetProperty(url, propName, pegRevision, revision);
+    return getClient().doGetProperty(url, propName, pegRevision, revision);
   }
 
   @Override
@@ -142,7 +149,7 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                             SVNRevision revision,
                             boolean recursive,
                             ISVNPropertyHandler handler) throws SVNException {
-    myClient.doGetProperty(path, propName, pegRevision, revision, recursive, handler);
+    getClient().doGetProperty(path, propName, pegRevision, revision, recursive, handler);
   }
 
   @Override
@@ -153,7 +160,7 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                             SVNDepth depth,
                             ISVNPropertyHandler handler,
                             Collection changeLists) throws SVNException {
-    myClient.doGetProperty(path, propName, pegRevision, revision, depth, handler, changeLists);
+    getClient().doGetProperty(path, propName, pegRevision, revision, depth, handler, changeLists);
   }
 
   @Override
@@ -163,7 +170,7 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                             SVNRevision revision,
                             boolean recursive,
                             ISVNPropertyHandler handler) throws SVNException {
-    myClient.doGetProperty(url, propName, pegRevision, revision, recursive, handler);
+    getClient().doGetProperty(url, propName, pegRevision, revision, recursive, handler);
   }
 
   @Override
@@ -173,38 +180,38 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                             SVNRevision revision,
                             SVNDepth depth,
                             ISVNPropertyHandler handler) throws SVNException {
-    myClient.doGetProperty(url, propName, pegRevision, revision, depth, handler);
+    getClient().doGetProperty(url, propName, pegRevision, revision, depth, handler);
   }
 
   @Override
   public void doGetRevisionProperty(File path, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
-    myClient.doGetRevisionProperty(path, propName, revision, handler);
+    getClient().doGetRevisionProperty(path, propName, revision, handler);
   }
 
   @Override
   public long doGetRevisionProperty(SVNURL url, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
-    return myClient.doGetRevisionProperty(url, propName, revision, handler);
+    return getClient().doGetRevisionProperty(url, propName, revision, handler);
   }
 
   @Override
   public void doDelete(File path, boolean force, boolean dryRun) throws SVNException {
-    myClient.doDelete(path, force, dryRun);
+    getClient().doDelete(path, force, dryRun);
   }
 
   @Override
   public void doDelete(File path, boolean force, boolean deleteFiles, boolean dryRun) throws SVNException {
-    myClient.doDelete(path, force, deleteFiles, dryRun);
+    getClient().doDelete(path, force, deleteFiles, dryRun);
   }
 
   @Override
   public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive) throws SVNException {
-    myClient.doAdd(path, force, mkdir, climbUnversionedParents, recursive);
+    getClient().doAdd(path, force, mkdir, climbUnversionedParents, recursive);
   }
 
   @Override
   public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, boolean includeIgnored)
     throws SVNException {
-    myClient.doAdd(path, force, mkdir, climbUnversionedParents, recursive, includeIgnored);
+    getClient().doAdd(path, force, mkdir, climbUnversionedParents, recursive, includeIgnored);
   }
 
   @Override
@@ -215,7 +222,7 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                     SVNDepth depth,
                     boolean includeIgnored,
                     boolean makeParents) throws SVNException {
-    myClient.doAdd(path, force, mkdir, climbUnversionedParents, depth, includeIgnored, makeParents);
+    getClient().doAdd(path, force, mkdir, climbUnversionedParents, depth, includeIgnored, makeParents);
   }
 
   @Override
@@ -227,7 +234,7 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                     boolean depthIsSticky,
                     boolean includeIgnored,
                     boolean makeParents) throws SVNException {
-    myClient.doAdd(paths, force, mkdir, climbUnversionedParents, depth, depthIsSticky, includeIgnored, makeParents);
+    getClient().doAdd(paths, force, mkdir, climbUnversionedParents, depth, depthIsSticky, includeIgnored, makeParents);
   }
 
   @Override
@@ -239,43 +246,43 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                     boolean depthIsSticky,
                     boolean includeIgnored,
                     boolean makeParents) throws SVNException {
-    myClient.doAdd(path, force, mkdir, climbUnversionedParents, depth, depthIsSticky, includeIgnored, makeParents);
+    getClient().doAdd(path, force, mkdir, climbUnversionedParents, depth, depthIsSticky, includeIgnored, makeParents);
   }
 
   @Override
   public void doMarkReplaced(File path) throws SVNException {
-    myClient.doMarkReplaced(path);
+    getClient().doMarkReplaced(path);
   }
 
   @Override
   public void doRevert(File path, boolean recursive) throws SVNException {
-    myClient.doRevert(path, recursive);
+    getClient().doRevert(path, recursive);
   }
 
   @Override
   public void doRevert(File[] paths, boolean recursive) throws SVNException {
-    myClient.doRevert(paths, recursive);
+    getClient().doRevert(paths, recursive);
   }
 
   @Override
   public void doRevert(File[] paths, SVNDepth depth, Collection changeLists) throws SVNException {
-    myClient.doRevert(paths, depth, changeLists);
+    getClient().doRevert(paths, depth, changeLists);
   }
 
   @Override
   public void doResolve(File path, boolean recursive) throws SVNException {
-    myClient.doResolve(path, recursive);
+    getClient().doResolve(path, recursive);
   }
 
   @Override
   public void doResolve(File path, SVNDepth depth, SVNConflictChoice conflictChoice) throws SVNException {
-    myClient.doResolve(path, depth, conflictChoice);
+    getClient().doResolve(path, depth, conflictChoice);
   }
 
   @Override
   public void doResolve(File path, SVNDepth depth, boolean resolveContents, boolean resolveProperties, SVNConflictChoice conflictChoice)
     throws SVNException {
-    myClient.doResolve(path, depth, resolveContents, resolveProperties, conflictChoice);
+    getClient().doResolve(path, depth, resolveContents, resolveProperties, conflictChoice);
   }
 
   @Override
@@ -285,38 +292,38 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                         boolean resolveProperties,
                         boolean resolveTree,
                         SVNConflictChoice conflictChoice) throws SVNException {
-    myClient.doResolve(path, depth, resolveContents, resolveProperties, resolveTree, conflictChoice);
+    getClient().doResolve(path, depth, resolveContents, resolveProperties, resolveTree, conflictChoice);
   }
 
   @Override
   public void doLock(File[] paths, boolean stealLock, String lockMessage) throws SVNException {
-    myClient.doLock(paths, stealLock, lockMessage);
+    getClient().doLock(paths, stealLock, lockMessage);
   }
 
   @Override
   public void doLock(SVNURL[] urls, boolean stealLock, String lockMessage) throws SVNException {
-    myClient.doLock(urls, stealLock, lockMessage);
+    getClient().doLock(urls, stealLock, lockMessage);
   }
 
   @Override
   public void doUnlock(File[] paths, boolean breakLock) throws SVNException {
-    myClient.doUnlock(paths, breakLock);
+    getClient().doUnlock(paths, breakLock);
   }
 
   @Override
   public void doUnlock(SVNURL[] urls, boolean breakLock) throws SVNException {
-    myClient.doUnlock(urls, breakLock);
+    getClient().doUnlock(urls, breakLock);
   }
 
   @Override
   public void doInfo(File path, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
-    myClient.doInfo(path, revision, recursive, handler);
+    getClient().doInfo(path, revision, recursive, handler);
   }
 
   @Override
   public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
     throws SVNException {
-    myClient.doInfo(path, pegRevision, revision, recursive, handler);
+    getClient().doInfo(path, pegRevision, revision, recursive, handler);
   }
 
   @Override
@@ -326,49 +333,49 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                      SVNDepth depth,
                      Collection changeLists,
                      ISVNInfoHandler handler) throws SVNException {
-    myClient.doInfo(path, pegRevision, revision, depth, changeLists, handler);
+    getClient().doInfo(path, pegRevision, revision, depth, changeLists, handler);
   }
 
   @Override
   public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler)
     throws SVNException {
-    myClient.doInfo(url, pegRevision, revision, recursive, handler);
+    getClient().doInfo(url, pegRevision, revision, recursive, handler);
   }
 
   @Override
   public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNInfoHandler handler)
     throws SVNException {
-    myClient.doInfo(url, pegRevision, revision, depth, handler);
+    getClient().doInfo(url, pegRevision, revision, depth, handler);
   }
 
   @Override
   public String doGetWorkingCopyID(File path, String trailURL) throws SVNException {
-    return myClient.doGetWorkingCopyID(path, trailURL);
+    return getClient().doGetWorkingCopyID(path, trailURL);
   }
 
   @Override
   public String doGetWorkingCopyID(File path, String trailURL, boolean committed) throws SVNException {
-    return myClient.doGetWorkingCopyID(path, trailURL, committed);
+    return getClient().doGetWorkingCopyID(path, trailURL, committed);
   }
 
   @Override
   public SVNInfo doInfo(File path, SVNRevision revision) throws SVNException {
-    return myClient.doInfo(path, revision);
+    return getClient().doInfo(path, revision);
   }
 
   @Override
   public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
-    return myClient.doInfo(url, pegRevision, revision);
+    return getClient().doInfo(url, pegRevision, revision);
   }
 
   @Override
   public void doCleanupWCProperties(File directory) throws SVNException {
-    myClient.doCleanupWCProperties(directory);
+    getClient().doCleanupWCProperties(directory);
   }
 
   @Override
   public void doSetWCFormat(File directory, int format) throws SVNException {
-    myClient.doSetWCFormat(directory, format);
+    getClient().doSetWCFormat(directory, format);
   }
 
   @Override
@@ -378,6 +385,6 @@ public class SvnkitSvnWcClient implements SvnWcClientI {
                             boolean force,
                             boolean recursive,
                             ISVNPropertyHandler handler) throws SVNException {
-    myClient.doSetProperty(path, propName, propValue, force, recursive, handler);
+    getClient().doSetProperty(path, propName, propValue, force, recursive, handler);
   }
 }

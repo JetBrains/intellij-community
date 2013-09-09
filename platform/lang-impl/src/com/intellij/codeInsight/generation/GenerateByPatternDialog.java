@@ -22,6 +22,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Collection;
 
@@ -95,7 +96,7 @@ public class GenerateByPatternDialog extends DialogWrapper {
   }
 
   private void update() {
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getSelectionModel().getSelectionPath().getLastPathComponent();
+    DefaultMutableTreeNode node = getSelectedNode();
     getOKAction().setEnabled(node != null && node.isLeaf());
 
     PatternDescriptor descriptor = getSelectedDescriptor();
@@ -104,10 +105,15 @@ public class GenerateByPatternDialog extends DialogWrapper {
     }
   }
 
+  private DefaultMutableTreeNode getSelectedNode() {
+    TreePath path = myTree.getSelectionModel().getSelectionPath();
+    return path == null ? null : (DefaultMutableTreeNode)path.getLastPathComponent();
+  }
+
   PatternDescriptor getSelectedDescriptor() {
-    Object o = myTree.getSelectionModel().getSelectionPath().getLastPathComponent();
-    if (o instanceof DefaultMutableTreeNode) {
-      Object object = ((DefaultMutableTreeNode)o).getUserObject();
+    DefaultMutableTreeNode selectedNode = getSelectedNode();
+    if (selectedNode != null) {
+      Object object = selectedNode.getUserObject();
       if (object instanceof PatternDescriptor) {
         return (PatternDescriptor)object;
       }

@@ -42,8 +42,7 @@ class GithubErrorMessageRaw {
     else {
       StringBuilder s = new StringBuilder(message);
       for (Error e : errors) {
-        s.append("<br/>").append("[").append(e.resource).append(";").append(e.field).append("]").append(e.code).append(": ")
-          .append(e.message);
+        s.append(String.format("<br/>[%s; %s]%s: %s", e.resource, e.field, e.code, e.message));
       }
       return s.toString();
     }

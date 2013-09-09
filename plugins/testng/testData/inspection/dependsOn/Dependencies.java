@@ -1,7 +1,7 @@
 
 import org.testng.annotations.*;
 public class MyTest {
-  @Test(<warning descr="Method 'beforeMethod' is not a test or configuration method.">dependsOnMethods = "beforeMethod"</warning>)
+  @Test(dependsOnMethods = <warning descr="Method 'beforeMethod' is not a test or configuration method.">"beforeMethod"</warning>)
   public void testFoo() throws Exception {
   }
 
@@ -12,7 +12,7 @@ public class MyTest {
   protected final void afterSuiteMethod() throws Throwable {
   }
 
-  @BeforeMethod(<warning descr="Method 'afterSuiteMethod' is not annotated with @org.testng.annotations.BeforeMethod">dependsOnMethods = "afterSuiteMethod"</warning>)
+  @BeforeMethod(dependsOnMethods = <warning descr="Method 'afterSuiteMethod' is not annotated with @org.testng.annotations.BeforeMethod">"afterSuiteMethod"</warning>)
   public final void beforeMethod() throws Throwable {
   }
 }

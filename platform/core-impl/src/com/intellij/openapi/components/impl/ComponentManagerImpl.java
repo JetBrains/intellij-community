@@ -517,7 +517,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       final String componentKey = config.getInterfaceClass();
       myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(componentKey, implementationClass, null, true)) {
         @Override
-        public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException {
+        public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
           ProgressIndicator indicator = getProgressIndicator();
           if (indicator != null) {
             indicator.checkCanceled();

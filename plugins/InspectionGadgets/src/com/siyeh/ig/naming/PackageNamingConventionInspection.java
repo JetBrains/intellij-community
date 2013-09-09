@@ -54,7 +54,7 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
    */
   public int m_maxLength = DEFAULT_MAX_LENGTH;
 
-  private Pattern m_regexPattern = Pattern.compile(m_regex);
+  protected Pattern m_regexPattern = Pattern.compile(m_regex);
 
   @NotNull
   @Override

@@ -15,18 +15,15 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.*;
 
 /**
  * @author max
  */
 public class GosubInstruction extends Instruction {
-  private final int mySubprogramOffset;
+  private final ControlFlow.ControlFlowOffset mySubprogramOffset;
 
-  public GosubInstruction(int subprogramOffset) {
+  public GosubInstruction(ControlFlow.ControlFlowOffset subprogramOffset) {
     mySubprogramOffset = subprogramOffset;
   }
 
@@ -34,11 +31,11 @@ public class GosubInstruction extends Instruction {
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
     final int returnIndex = getIndex() + 1;
     stateBefore.pushOffset(returnIndex);
-    Instruction nextInstruction = runner.getInstruction(mySubprogramOffset);
+    Instruction nextInstruction = runner.getInstruction(mySubprogramOffset.getInstructionOffset());
     return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, stateBefore)};
   }
 
   public String toString() {
-    return "GOSUB: " + mySubprogramOffset;
+    return "GOSUB: " + mySubprogramOffset.getInstructionOffset();
   }
 }

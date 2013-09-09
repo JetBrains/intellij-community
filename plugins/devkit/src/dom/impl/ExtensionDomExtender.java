@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
 
+import java.lang.annotation.Annotation;
 import java.util.*;
 
 /**
@@ -48,16 +49,70 @@ import java.util.*;
  */
 public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
+
+  private static class MyRequired implements Required {
+    @Override
+    public boolean value() {
+      return true;
+    }
+
+    @Override
+    public boolean nonEmpty() {
+      return true;
+    }
+
+    @Override
+    public boolean identifier() {
+      return false;
+    }
+
+    @Override
+    public Class<? extends Annotation> annotationType() {
+      return Required.class;
+    }
+  }
+
+  private static class MyExtendClass extends ExtendClassImpl {
+    private final String myInterfaceName;
+
+    private MyExtendClass(String interfaceName) {
+      myInterfaceName = interfaceName;
+    }
+
+    @Override
+    public boolean allowAbstract() {
+      return false;
+    }
+
+    @Override
+    public boolean allowInterface() {
+      return false;
+    }
+
+    @Override
+    public boolean allowEnum() {
+      return false;
+    }
+
+    @Override
+    public String value() {
+      return myInterfaceName;
+    }
+  }
+
   private static final DomExtender EXTENSION_EXTENDER = new DomExtender() {
     public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
       final ExtensionPoint extensionPoint = (ExtensionPoint)domElement.getChildDescription().getDomDeclaration();
       assert extensionPoint != null;
 
-      String interfaceName = extensionPoint.getInterface().getStringValue();
+      final String interfaceName = extensionPoint.getInterface().getStringValue();
       final Project project = extensionPoint.getManager().getProject();
 
       if (interfaceName != null) {
-        registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class).setConverter(CLASS_CONVERTER);
+        registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class)
+          .setConverter(CLASS_CONVERTER)
+          .addCustomAnnotation(new MyExtendClass(interfaceName))
+          .addCustomAnnotation(new MyRequired());
         registerXmlb(registrar, JavaPsiFacade.getInstance(project).findClass(interfaceName, GlobalSearchScope.allScope(project)),
                      Collections.<With>emptyList());
       }

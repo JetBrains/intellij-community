@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,18 +29,13 @@ import java.util.Set;
 
 public class ComparisonUtils {
 
-  private ComparisonUtils() {
-    super();
-  }
+  private ComparisonUtils() {}
 
-  private static final Set<IElementType> s_comparisonTokens =
-    new HashSet<IElementType>(6);
+  private static final Set<IElementType> s_comparisonTokens = new HashSet<IElementType>(6);
 
-  private static final Map<IElementType, String> s_swappedComparisons =
-    new HashMap<IElementType, String>(6);
+  private static final Map<IElementType, String> s_swappedComparisons = new HashMap<IElementType, String>(6);
 
-  private static final Map<IElementType, String> s_invertedComparisons =
-    new HashMap<IElementType, String>(6);
+  private static final Map<IElementType, String> s_invertedComparisons = new HashMap<IElementType, String>(6);
 
   static {
     s_comparisonTokens.add(JavaTokenType.EQEQ);
@@ -69,8 +64,8 @@ public class ComparisonUtils {
     if (!(expression instanceof PsiPolyadicExpression)) {
       return false;
     }
-    final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
-    final IElementType tokenType = binaryExpression.getOperationTokenType();
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    final IElementType tokenType = polyadicExpression.getOperationTokenType();
     return isComparisonOperation(tokenType);
   }
 

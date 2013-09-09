@@ -21,12 +21,9 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,17 +34,7 @@ public class SuppressManagerImpl extends SuppressManager {
   @NotNull
   public SuppressIntentionAction[] createSuppressActions(@NotNull final HighlightDisplayKey displayKey) {
     SuppressQuickFix[] batchSuppressActions = createBatchSuppressActions(displayKey);
-    return convertBatchToSuppressIntentionActions(batchSuppressActions);
-  }
-
-  @NotNull
-  public static SuppressIntentionAction[] convertBatchToSuppressIntentionActions(@NotNull SuppressQuickFix[] actions) {
-    return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, new Function<SuppressQuickFix, SuppressIntentionAction>() {
-      @Override
-      public SuppressIntentionAction fun(SuppressQuickFix fix) {
-        return InspectionManagerEx.convertBatchToSuppressIntentionAction(fix);
-      }
-    });
+    return SuppressIntentionActionFromFix.convertBatchToSuppressIntentionActions(batchSuppressActions);
   }
 
   @Override

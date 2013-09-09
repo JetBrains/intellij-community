@@ -35,8 +35,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -148,6 +150,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel;
   }
 
+  @NotNull
   @Override
   public ContentEntry[] getContentEntries() {
     return myRootModel.getContentEntries();
@@ -304,6 +307,18 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   public VirtualFile[] getSourceRoots(final boolean includingTests) {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getSourceRoots(includingTests);
+  }
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getSourceRoots(@NotNull JpsModuleSourceRootType<?> rootType) {
+    return myRootModel.getSourceRoots(rootType);
+  }
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    return myRootModel.getSourceRoots(rootTypes);
   }
 
   @Override

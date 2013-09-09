@@ -67,7 +67,14 @@ public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
 
     PsiAnnotation anno = findVisibleForTestingAnnotation(method);
     if (anno != null) {
-      LightModifierList modList = new LightModifierList(method.getManager(), JavaLanguage.INSTANCE, getAccessModifierWithoutTesting(anno));
+      String modifier = getAccessModifierWithoutTesting(anno);
+      if (modifier == null) {
+        modifier = method.hasModifierProperty(PsiModifier.PUBLIC) ? PsiModifier.PROTECTED :
+                   method.hasModifierProperty(PsiModifier.PROTECTED) ? PsiModifier.PACKAGE_LOCAL :
+                   PsiModifier.PRIVATE;
+      }
+      
+      LightModifierList modList = new LightModifierList(method.getManager(), JavaLanguage.INSTANCE, modifier);
       if (JavaResolveUtil.isAccessible(method, method.getContainingClass(), modList, e, null, null)) {
         return;
       }
@@ -76,17 +83,17 @@ public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
     reportProblem(e, h);
   }
 
+  @Nullable
   private static String getAccessModifierWithoutTesting(PsiAnnotation anno) {
-    String modifier = PsiModifier.PRIVATE;
-    PsiAnnotationMemberValue ref = anno.findDeclaredAttributeValue("visibility");
+    PsiAnnotationMemberValue ref = anno.findAttributeValue("visibility");
     if (ref instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)ref).resolve();
       if (target instanceof PsiEnumConstant) {
         String name = ((PsiEnumConstant)target).getName();
-        modifier = "PRIVATE".equals(name) ? PsiModifier.PRIVATE : "PROTECTED".equals(name) ? PsiModifier.PROTECTED : PsiModifier.PACKAGE_LOCAL;
+        return "PRIVATE".equals(name) ? PsiModifier.PRIVATE : "PROTECTED".equals(name) ? PsiModifier.PROTECTED : PsiModifier.PACKAGE_LOCAL;
       }
     }
-    return modifier;
+    return null;
   }
 
   @Nullable

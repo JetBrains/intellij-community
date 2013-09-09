@@ -34,7 +34,7 @@ public class InsertSuperFix implements IntentionAction, HighPriorityAction {
 
   private final PsiMethod myConstructor;
 
-  public InsertSuperFix(PsiMethod constructor) {
+  public InsertSuperFix(@NotNull PsiMethod constructor) {
     myConstructor = constructor;
   }
 

@@ -15,16 +15,19 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.containers.Stack;
-import org.gradle.api.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import java.util.List;
+import java.util.Set;
+
+import static org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContributor.SOURCE_SETS;
 
 /**
  * @author Denis Zhdanov
@@ -32,17 +35,41 @@ import java.util.List;
  */
 public class GradleRootContributor implements GradleMethodContextContributor {
 
+  private final GradleSourceSetsContributor mySourceSetsContributor;
+
+  public GradleRootContributor(GradleSourceSetsContributor sourceSetsContributor) {
+    mySourceSetsContributor = sourceSetsContributor;
+  }
+
+  private final static Set<String> BUILD_SCRIPT_BLOCKS = ContainerUtil.newHashSet(
+    "subprojects",
+    "allprojects",
+    "beforeEvaluate",
+    "afterEvaluate",
+    SOURCE_SETS);
+
   @Override
   public void process(@NotNull List<String> methodCallInfo,
                       @NotNull PsiScopeProcessor processor,
                       @NotNull ResolveState state,
                       @NotNull PsiElement place) {
-    if (methodCallInfo.size() > 1) {
+    if (methodCallInfo.size() > 2) {
       return;
     }
 
+    if (methodCallInfo.size() == 2 && !BUILD_SCRIPT_BLOCKS.contains(methodCallInfo.get(1))) {
+      return;
+    }
+    if (methodCallInfo.size() > 0) {
+      String method = ContainerUtil.getLastItem(methodCallInfo);
+      if (method != null && StringUtil.startsWith(method, SOURCE_SETS)) {
+        mySourceSetsContributor.process(methodCallInfo, processor, state, place);
+        return;
+      }
+    }
+
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-    PsiClass contributorClass = psiManager.findClassWithCache(Project.class.getName(), place.getResolveScope());
+    PsiClass contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_PROJECT, place.getResolveScope());
     if (contributorClass != null) {
       contributorClass.processDeclarations(processor, state, null, place);
     }

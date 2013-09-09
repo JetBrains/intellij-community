@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,13 +34,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceFieldHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.ArrayList;
@@ -51,7 +49,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceFieldSettings> {
+public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntroduceFieldSettings> {
 
   @NotNull
   @Override
@@ -63,13 +61,6 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   @Override
   protected String getHelpID() {
     return HelpID.INTRODUCE_FIELD;
-  }
-
-  @NotNull
-  @Override
-  protected PsiClass findScope(GrExpression expression, GrVariable variable, StringPartInfo partInfo) {
-    PsiElement place = getCurrentPlace(expression, variable, partInfo);
-    return ObjectUtils.assertNotNull(PsiUtil.getContextClass(place));
   }
 
   @Override
@@ -111,7 +102,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
 
   @Override
   public GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull GrIntroduceFieldSettings settings) {
-    return new GrIntroduceFieldProcessor(context, settings, isInplace(context)).run();
+    return new GrIntroduceFieldProcessor(context, settings, isInplace(context.getEditor(), context.getPlace())).run();
   }
 
   @Override
@@ -211,7 +202,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       @Nullable
       @Override
       public String getName() {
-        return new GrFieldNameSuggester(context, new GroovyInplaceFieldValidator(context)).suggestNames().iterator().next();
+        return new GrFieldNameSuggester(context, new GroovyInplaceFieldValidator(context), false).suggestNames().iterator().next();
       }
 
       @Override
@@ -236,9 +227,6 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   @NotNull
   @Override
   protected PsiElement[] findOccurrences(@NotNull GrExpression expression, @NotNull PsiElement scope) {
-    if (scope instanceof GroovyScriptClass) {
-      scope = scope.getContainingFile();
-    }
     final PsiElement[] occurrences = super.findOccurrences(expression, scope);
     if (shouldBeStatic(expression, scope)) return occurrences;
 
@@ -249,11 +237,6 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       }
     }
     return ContainerUtil.toArray(filtered, new PsiElement[filtered.size()]);
-  }
-
-  @Override
-  protected boolean isInplace(GrIntroduceContext context) {
-    return super.isInplace(context);
   }
 
   @Nullable

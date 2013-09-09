@@ -46,32 +46,39 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     myTree = tree;
   }
 
+  @Override
   public TreeNode getChildAt(final int childIndex) {
     if (isLeaf()) return null;
     return getChildren().get(childIndex);
   }
 
+  @Override
   public int getChildCount() {
     return isLeaf() ? 0 : getChildren().size();
   }
 
+  @Override
   public TreeNode getParent() {
     return myParent;
   }
 
+  @Override
   public int getIndex(final TreeNode node) {
     if (isLeaf()) return -1;
     return getChildren().indexOf(node);
   }
 
+  @Override
   public boolean getAllowsChildren() {
     return true;
   }
 
+  @Override
   public boolean isLeaf() {
     return myLeaf;
   }
 
+  @Override
   public Enumeration children() {
     if (isLeaf()) {
       return EmptyEnumeration.INSTANCE;

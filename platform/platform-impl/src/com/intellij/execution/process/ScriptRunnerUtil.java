@@ -191,12 +191,12 @@ public final class ScriptRunnerUtil {
   public static class ScriptOutput extends ProcessAdapter {
     private final Condition<Key> myScriptOutputType;
     public final StringBuilder myFilteredOutput;
-    public final StringBuilder myMergedOutput;
+    public final StringBuffer myMergedOutput;
 
     private ScriptOutput(Condition<Key> scriptOutputType) {
       myScriptOutputType = scriptOutputType;
       myFilteredOutput = new StringBuilder();
-      myMergedOutput = new StringBuilder();
+      myMergedOutput = new StringBuffer();
     }
 
     public String getFilteredOutput() {

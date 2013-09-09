@@ -9,5 +9,5 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public interface DebuggerLauncher<D extends DebugConnectionData> {
-  void startDebugSession(@NotNull D info, @NotNull ExecutionEnvironment executionEnvironment, RemoteServer<?> server) throws ExecutionException;
+  void startDebugSession(@NotNull D info, @NotNull ExecutionEnvironment executionEnvironment, @NotNull RemoteServer<?> server) throws ExecutionException;
 }

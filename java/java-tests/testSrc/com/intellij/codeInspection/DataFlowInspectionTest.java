@@ -147,40 +147,41 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testReportConstantReferences() {
-    doTestReplaceConstantReferences();
+    doTestReportConstantReferences();
     myFixture.launchAction(myFixture.findSingleIntention("Replace with 'null'"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  private void doTestReplaceConstantReferences() {
+  public void testReportConstantReferencesAfterFinalFieldAccess() { doTestReportConstantReferences(); }
+
+  private void doTestReportConstantReferences() {
     DataFlowInspection inspection = new DataFlowInspection();
     inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
-  public void testReportConstantReferences_ReplaceWithString() {
-    doTestReplaceConstantReferences();
+  public void _testReportConstantReferences_ReplaceWithString() {
+    doTestReportConstantReferences();
     myFixture.launchAction(myFixture.findSingleIntention("Replace with 'CONST'"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
-  public void testReportConstantReferences_ReplaceWithIntConstant() {
-    doTestReplaceConstantReferences();
+  public void _testReportConstantReferences_ReplaceWithIntConstant() {
+    doTestReportConstantReferences();
     myFixture.launchAction(myFixture.findSingleIntention("Replace with 'CONST'"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
-  public void testReportConstantReferences_ReplaceWithEnum() {
+  public void _testReportConstantReferences_ReplaceWithEnum() {
     myFixture.addClass("package foo; public enum MyEnum { FOO }");
-    doTestReplaceConstantReferences();
+    doTestReportConstantReferences();
     myFixture.launchAction(myFixture.findSingleIntention("Replace with 'FOO'"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
-  public void testReportConstantReferences_NotInComplexAssignment() {
-    myFixture.addClass("package foo; public enum MyEnum { FOO }");
-    doTestReplaceConstantReferences();
+  public void _testReportConstantReferences_NotInComplexAssignment() {
+    doTestReportConstantReferences();
     assertEmpty(myFixture.filterAvailableIntentions("Replace with"));
   }
-  public void testReportConstantReferences_Switch() { doTestReplaceConstantReferences(); }
+  public void _testReportConstantReferences_Switch() { doTestReportConstantReferences(); }
 
   public void testCheckFieldInitializers() {
     doTest();
@@ -283,8 +284,12 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testContractAnnotation() { doTest(); }
+  public void testContractInLoopNotTooComplex() { doTest(); }
+  public void testContractWithNullable() { doTest(); }
+
   public void testBoxingImpliesNotNull() { doTest(); }
   public void testLargeIntegersAreNotEqualWhenBoxed() { doTest(); }
   public void testNoGenericCCE() { doTest(); }
   public void testLongCircuitOperations() { doTest(); }
+  public void testUnconditionalForLoop() { doTest(); }
 }

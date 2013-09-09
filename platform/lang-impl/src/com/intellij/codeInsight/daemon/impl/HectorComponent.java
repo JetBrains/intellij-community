@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -120,7 +121,8 @@ public class HectorComponent extends JPanel {
 
       final PsiFile psiRoot = viewProvider.getPsi(language);
       assert psiRoot != null : "No root in " + viewProvider + " for " + language;
-      slider.setValue(getValue(HighlightLevelUtil.shouldHighlight(psiRoot), HighlightLevelUtil.shouldInspect(psiRoot)));
+      slider.setValue(getValue(HighlightingLevelManager.getInstance(project).shouldHighlight(psiRoot), HighlightingLevelManager.getInstance(project).shouldInspect(
+        psiRoot)));
       mySliders.put(language, slider);
     }
 
@@ -301,7 +303,8 @@ public class HectorComponent extends JPanel {
     for (Language language : mySliders.keySet()) {
       JSlider slider = mySliders.get(language);
       final PsiFile root = viewProvider.getPsi(language);
-      if (root != null && getValue(HighlightLevelUtil.shouldHighlight(root), HighlightLevelUtil.shouldInspect(root)) != slider.getValue()) {
+      HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myFile.getProject());
+      if (root != null && getValue(highlightingLevelManager.shouldHighlight(root), highlightingLevelManager.shouldInspect(root)) != slider.getValue()) {
         return true;
       }
     }

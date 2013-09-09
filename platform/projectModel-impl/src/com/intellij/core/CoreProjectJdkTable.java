@@ -19,6 +19,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,7 +100,7 @@ public class CoreProjectJdkTable extends ProjectJdkTable {
   }
 
   @Override
-  public SdkTypeId getSdkTypeByName(String name) {
+  public SdkTypeId getSdkTypeByName(@NotNull String name) {
     return CoreSdkType.INSTANCE;
   }
 

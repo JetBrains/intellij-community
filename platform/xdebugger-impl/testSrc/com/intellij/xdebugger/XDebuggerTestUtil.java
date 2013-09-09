@@ -31,6 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
@@ -172,7 +173,7 @@ public class XDebuggerTestUtil {
 
   public static XTestValueNode computePresentation(XValue value, long timeout) throws InterruptedException {
     XTestValueNode node = new XTestValueNode();
-    if (value instanceof XNamedValue) {
+    if (value instanceof com.intellij.xdebugger.frame.XNamedValue) {
       node.myName = ((XNamedValue)value).getName();
     }
     value.computePresentation(node, XValuePlace.TREE);
@@ -439,12 +440,8 @@ public class XDebuggerTestUtil {
     }
 
     @Override
-    public void errorOccurred(String errorMessage) {
+    public void errorOccurred(@NotNull String errorMessage) {
       setErrorMessage(errorMessage);
-    }
-
-    public void errorOccured(String errorMessage) {
-      errorOccurred(errorMessage);
     }
   }
 

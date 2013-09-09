@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private static final Border LIST_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListBackgroundPainter");
   private static final Border LIST_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListSelectionBackgroundPainter");
   private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListFocusedSelectionBackgroundPainter");
-
+  
   @NotNull private final Condition<Integer> myWideSelectionCondition;
   private boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
@@ -58,7 +58,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   /**
    * Creates new <code>WideSelectionTreeUI</code> object.
-   *
+   * 
    * @param wideSelection           flag that determines if wide selection should be used
    * @param wideSelectionCondition  strategy that determine if wide selection should be used for a target row (it's zero-based index
    *                                is given to the condition as an argument)
@@ -69,8 +69,38 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   }
 
   private final MouseListener mySelectionListener = new MouseAdapter() {
-    @Override
+    boolean handled = false;
     public void mousePressed(@NotNull final MouseEvent e) {
+      handled = false;
+      if (!isSelected(e)) {
+        handled = true;
+        handle(e);
+      }
+    }
+
+    @Override
+    public void mouseReleased(@NotNull final MouseEvent e) {
+      if (!handled) {
+        handle(e);
+      }
+    }
+
+    private boolean isSelected(MouseEvent e) {
+      final JTree tree = (JTree)e.getSource();
+      final int selected = tree.getClosestRowForLocation(e.getX(), e.getY());
+      final int[] rows = tree.getSelectionRows();
+      if (rows != null) {
+        for (int row : rows) {
+          if (row == selected) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
+    private void handle(MouseEvent e) {
       final JTree tree = (JTree)e.getSource();
       if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger()) {
         // if we can't stop any ongoing editing, do nothing
@@ -80,7 +110,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
         final TreePath pressedPath = getClosestPathForLocation(tree, e.getX(), e.getY());
         if (pressedPath != null) {
-          Rectangle bounds = getWidePathBounds(tree, pressedPath);
+          Rectangle bounds = getPathBounds(tree, pressedPath);
 
           if (e.getY() >= bounds.y + bounds.height) {
             return;
@@ -97,15 +127,6 @@ public class WideSelectionTreeUI extends BasicTreeUI {
       }
     }
   };
-
-  public Rectangle getWidePathBounds(JTree tree, TreePath path) {
-    Rectangle bounds = super.getPathBounds(tree, path);
-    if (bounds != null && tree != null) {
-      bounds.x = 0;
-      bounds.width = tree.getWidth();
-    }
-    return bounds;
-  }
 
   @Override
   protected void completeUIInstall() {
@@ -332,13 +353,10 @@ public class WideSelectionTreeUI extends BasicTreeUI {
         }
       }
       else {
-        if (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula()) {
+        if (selected && (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula())) {
           Color bg = UIUtil.getTreeSelectionBackground(tree.hasFocus());
-          if (!selected) {
-            bg = background;
-          }
 
-          if (myWideSelectionCondition.value(row) || selected) {
+          if (myWideSelectionCondition.value(row)) {
             rowGraphics.setColor(bg);
             rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height);
           }

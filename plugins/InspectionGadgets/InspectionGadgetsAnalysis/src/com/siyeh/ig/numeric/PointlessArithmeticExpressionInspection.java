@@ -55,7 +55,7 @@ public class PointlessArithmeticExpressionInspection
   /**
    * @noinspection PublicField
    */
-  public boolean m_ignoreExpressionsContainingConstants = false;
+  public boolean m_ignoreExpressionsContainingConstants = true;
 
   @Override
   public JComponent createOptionsPanel() {

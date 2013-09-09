@@ -16,8 +16,10 @@
 
 package org.jetbrains.plugins.groovy.actions;
 
+import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -79,7 +81,9 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
                                            @NonNls String... parameters) throws IncorrectOperationException {
     final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
 
-    Properties properties = new Properties(FileTemplateManager.getInstance().getDefaultProperties(directory.getProject()));
+    Project project = directory.getProject();
+
+    Properties properties = new Properties(FileTemplateManager.getInstance().getDefaultProperties(project));
     JavaTemplateUtil.setPackageNameAttribute(properties, directory);
     properties.setProperty(NAME_TEMPLATE_PROPERTY, name);
     properties.setProperty(LOW_CASE_NAME_TEMPLATE_PROPERTY, name.substring(0, 1).toLowerCase() + name.substring(1));
@@ -95,10 +99,16 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
                                  e);
     }
 
-    final PsiFileFactory factory = PsiFileFactory.getInstance(directory.getProject());
-    final PsiFile file = factory.createFileFromText(fileName, text);
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+    PsiFile file = factory.createFileFromText(fileName, text);
 
-    return (PsiFile)directory.add(file);
+    file = (PsiFile)directory.add(file);
+
+    if (file != null && template.isReformatCode()) {
+      new ReformatCodeProcessor(project, file, null, false).run();
+    }
+
+    return file;
   }
 
   public String[] getCustomTemplates() {

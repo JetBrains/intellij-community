@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 
@@ -25,7 +26,7 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
                                                                                                                        DumbAware {
 
   protected JavaCreateTemplateInPackageAction(String text, String description, Icon icon, boolean inSourceOnly) {
-    super(text, description, icon, inSourceOnly);
+    super(text, description, icon, inSourceOnly ? JavaModuleSourceRootTypes.SOURCES : null);
   }
 
   @Override

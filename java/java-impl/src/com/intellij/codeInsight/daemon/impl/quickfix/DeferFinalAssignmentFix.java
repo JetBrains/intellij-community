@@ -46,7 +46,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
   private final PsiVariable variable;
   private final PsiReferenceExpression expression;
 
-  public DeferFinalAssignmentFix(PsiVariable variable, PsiReferenceExpression expression) {
+  public DeferFinalAssignmentFix(@NotNull PsiVariable variable, @NotNull PsiReferenceExpression expression) {
     this.variable = variable;
     this.expression = expression;
   }
@@ -81,7 +81,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     deferVariable(codeBlock, field, null);
   }
 
-  private PsiCodeBlock getEnclosingCodeBlock(PsiField field, PsiElement element) {
+  private static PsiCodeBlock getEnclosingCodeBlock(PsiField field, PsiElement element) {
     PsiClass aClass = field.getContainingClass();
     if (aClass == null) return null;
     PsiMethod[] constructors = aClass.getConstructors();
@@ -148,7 +148,11 @@ public class DeferFinalAssignmentFix implements IntentionAction {
   }
 
 
-  private boolean insertToDefinitelyReachedPlace(PsiElement codeBlock, PsiStatement finalAssignment, ControlFlow controlFlow, int minOffset, List references) throws IncorrectOperationException {
+  private static boolean insertToDefinitelyReachedPlace(PsiElement codeBlock,
+                                                        PsiStatement finalAssignment,
+                                                        ControlFlow controlFlow,
+                                                        int minOffset,
+                                                        List references) throws IncorrectOperationException {
     int offset = ControlFlowUtil.getMinDefinitelyReachedOffset(controlFlow, minOffset, references);
     if (offset == controlFlow.getSize()) {
       codeBlock.add(finalAssignment);
@@ -200,13 +204,11 @@ public class DeferFinalAssignmentFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
-        variable != null
-        && variable.isValid()
-        && !(variable instanceof PsiParameter)
-        && !(variable instanceof ImplicitVariable)
-        && expression != null
-        && expression.isValid()
-        && variable.getManager().isInProject(variable)
+      variable.isValid() &&
+      !(variable instanceof PsiParameter) &&
+      !(variable instanceof ImplicitVariable) &&
+      expression.isValid() &&
+      variable.getManager().isInProject(variable)
         ;
   }
 

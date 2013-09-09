@@ -602,11 +602,15 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public void updateStarted(@NotNull Document doc) {
+    if (doc != myEditor.getDocument()) return;
+    
     myBulkUpdateInProgress = true;
   }
 
   @Override
   public void updateFinished(@NotNull Document doc) {
+    if (doc != myEditor.getDocument()) return;
+    
     myBulkUpdateInProgress = false;
     if (!isSoftWrappingEnabled()) {
       return;

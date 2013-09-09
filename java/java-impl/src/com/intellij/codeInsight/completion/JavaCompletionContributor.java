@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -78,6 +79,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   public static final ElementPattern<PsiElement> ANNOTATION_NAME = psiElement().
     withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).afterLeaf("@");
+  private static final PsiJavaElementPattern.Capture<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT =
+    psiElement().afterLeaf(".").insideStarting(psiExpressionStatement());
 
   private static JavaCompletionData getCompletionData(LanguageLevel level) {
     final Set<Map.Entry<LanguageLevel, JavaCompletionData>> entries = ourCompletionData.entrySet();
@@ -203,7 +206,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
-    if (AFTER_NUMBER_LITERAL.accepts(position)) {
+    if (AFTER_NUMBER_LITERAL.accepts(position) || UNEXPECTED_REFERENCE_AFTER_DOT.accepts(position)) {
       _result.stopHere();
       return;
     }
@@ -587,6 +590,11 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
     }
     return LangBundle.message("completion.no.suggestions") + suffix;
+  }
+
+  @Override
+  public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
+    return typeChar == ':' && JavaTokenType.COLON == position.getNode().getElementType();
   }
 
   private static boolean shouldSuggestSmartCompletion(final PsiElement element) {

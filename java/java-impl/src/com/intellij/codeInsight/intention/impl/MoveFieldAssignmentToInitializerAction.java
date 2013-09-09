@@ -133,13 +133,14 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
         if (!PsiUtil.isOnAssignmentLeftHand(reference)) return;
         PsiElement resolved = reference.resolve();
         if (resolved != field) return;
-        PsiExpression rValue = ((PsiAssignmentExpression)reference.getParent()).getRExpression();
+        PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(reference, PsiAssignmentExpression.class);
+        PsiExpression rValue = assignmentExpression.getRExpression();
         if (currentInitializingBlock != null) {
           // ignore usages other than initializing
           if (rValue == null || !PsiEquivalenceUtil.areElementsEquivalent(rValue, expression)) {
             result.set(Boolean.FALSE);
           }
-          initializingAssignments.add((PsiAssignmentExpression)reference.getParent());
+          initializingAssignments.add(assignmentExpression);
         }
         totalUsages.add(assignment);
       }
@@ -153,7 +154,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
   }
 
   private static PsiField getAssignedField(final PsiAssignmentExpression assignment) {
-    PsiExpression lExpression = assignment.getLExpression();
+    PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
     if (!(lExpression instanceof PsiReferenceExpression)) return null;
     PsiElement resolved = ((PsiReferenceExpression)lExpression).resolve();
     if (!(resolved instanceof PsiField)) return null;

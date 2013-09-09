@@ -168,11 +168,11 @@ public abstract class TaskRepository {
   }
 
   @Transient
-  public TaskRepositoryType getRepositoryType() {
+  public final TaskRepositoryType getRepositoryType() {
     return myType;
   }
 
-  public void setRepositoryType(TaskRepositoryType type) {
+  public final void setRepositoryType(TaskRepositoryType type) {
     myType = type;
   }
 

@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -34,7 +35,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlSlashTypedHandler extends TypedHandlerDelegate {
+public class XmlSlashTypedHandler extends TypedHandlerDelegate implements XmlTokenType {
   public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile, final FileType fileType) {
     if ((editedFile.getLanguage() instanceof XMLLanguage || editedFile.getViewProvider().getBaseLanguage() instanceof XMLLanguage) && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -80,10 +81,17 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
       if (!(element.getLanguage() instanceof XMLLanguage)) return Result.CONTINUE;
 
       ASTNode prevLeaf = element.getNode();
-      final String prevLeafText = prevLeaf != null ? prevLeaf.getText():null;
-      if (prevLeaf != null && !"/".equals(prevLeafText)) {
-        if (!"/".equals(prevLeafText.trim())) return Result.CONTINUE;
+      if (prevLeaf == null) return Result.CONTINUE;
+      final String prevLeafText = prevLeaf.getText();
+      if ("</".equals(prevLeafText) && prevLeaf.getElementType() == XML_END_TAG_START) {
+        XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+        if (tag != null && StringUtil.isNotEmpty(tag.getName()) && TreeUtil.findSibling(prevLeaf, XmlTokenType.XML_NAME) == null) {
+          EditorModificationUtil.insertStringAtCaret(editor, tag.getName() + ">");
+          return Result.STOP;
+        }
       }
+      if (!"/".equals(prevLeafText.trim())) return Result.CONTINUE;
+
       while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
       if(prevLeaf instanceof OuterLanguageElement) {
         element = file.getViewProvider().findElementAt(offset - 1, file.getLanguage());

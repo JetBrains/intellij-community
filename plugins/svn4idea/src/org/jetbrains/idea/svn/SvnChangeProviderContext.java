@@ -259,23 +259,15 @@ class SvnChangeProviderContext implements StatusReceiver {
   
   public void addModifiedNotSavedChange(final VirtualFile file) throws SVNException {
     final FilePath filePath = new FilePathImpl(file);
-    final SVNInfo svnInfo;
-    try {
-      svnInfo = myVcs.createWCClient().doInfo(new File(file.getPath()), SVNRevision.UNDEFINED);
+    final SVNInfo svnInfo = myVcs.getInfo(file);
+
+    if (svnInfo != null) {
+      final SVNStatus svnStatus = new SVNStatus();
+      svnStatus.setRevision(svnInfo.getRevision());
+      myChangelistBuilder.processChangeInList(
+        createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, svnInfo.getRevision()), CurrentContentRevision.create(filePath),
+                     FileStatus.MODIFIED, svnStatus), (String)null, SvnVcs.getKey());
     }
-    catch (SVNException e) {
-      final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
-      if (SVNErrorCode.WC_PATH_NOT_FOUND.equals(errorCode) ||
-          SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode) || SVNErrorCode.WC_NOT_WORKING_COPY.equals(errorCode)) {
-        return;
-      }
-      throw e;
-    }
-    final SVNStatus svnStatus = new SVNStatus();
-    svnStatus.setRevision(svnInfo.getRevision());
-    myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, svnInfo.getRevision()),
-                                             CurrentContentRevision.create(filePath), FileStatus.MODIFIED, svnStatus), (String) null,
-                                            SvnVcs.getKey());
   }
 
   private void checkSwitched(final FilePath filePath, final ChangelistBuilder builder, final SVNStatus status,
@@ -370,12 +362,11 @@ class SvnChangeProviderContext implements StatusReceiver {
 
       final FilePath path = ChangesUtil.getFilePath(change);
       final File ioFile = path.getIOFile();
-      final SVNWCClient wcClient = myVcs.createWCClient();
       final File beforeFile = deletedStatus != null ? deletedStatus.getFile() : ioFile;
       final String beforeList = SVNStatusType.STATUS_ADDED.equals(propertiesStatus) && deletedStatus == null ? null :
-                                AbstractShowPropertiesDiffAction.getPropertyList(beforeFile, SVNRevision.BASE, wcClient);
+                                AbstractShowPropertiesDiffAction.getPropertyList(myVcs, beforeFile, SVNRevision.BASE);
       final String afterList = SVNStatusType.STATUS_DELETED.equals(propertiesStatus) ? null :
-                               AbstractShowPropertiesDiffAction.getPropertyList(ioFile, SVNRevision.WORKING, wcClient);
+                               AbstractShowPropertiesDiffAction.getPropertyList(myVcs, ioFile, SVNRevision.WORKING);
 
       final String beforeRevisionNu = change.getBeforeRevision() == null ? null : change.getBeforeRevision().getRevisionNumber().asString();
       final String afterRevisionNu = change.getAfterRevision() == null ? null : change.getAfterRevision().getRevisionNumber().asString();

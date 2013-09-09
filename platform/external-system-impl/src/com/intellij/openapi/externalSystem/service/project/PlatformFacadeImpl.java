@@ -4,7 +4,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
@@ -30,23 +29,6 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public Collection<Module> getModules(@NotNull Project project) {
     return Arrays.asList(ModuleManager.getInstance(project).getModules());
-  }
-
-  @NotNull
-  @Override
-  public Collection<ModuleAwareContentRoot> getContentRoots(@NotNull final Module module) {
-    final ContentEntry[] entries = ModuleRootManager.getInstance(module).getContentEntries();
-    if (entries == null) {
-      return Collections.emptyList();
-    }
-    List<ModuleAwareContentRoot> result = new ArrayList<ModuleAwareContentRoot>();
-    for (ContentEntry entry : entries) {
-      final VirtualFile file = entry.getFile();
-      if (file != null) {
-        result.add(new ModuleAwareContentRoot(module, entry));
-      }
-    }
-    return result;
   }
 
   @NotNull

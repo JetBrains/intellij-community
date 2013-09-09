@@ -33,9 +33,11 @@ public interface XDebuggerActions {
 
   @NonNls String RUN_TO_CURSOR = "RunToCursor";
   @NonNls String FORCE_RUN_TO_CURSOR = "ForceRunToCursor";
+  @NonNls String EDIT_TYPE_SOURCE = "Debugger.EditTypeSource";
 
   @NonNls String SHOW_EXECUTION_POINT = "ShowExecutionPoint";
   @NonNls String JUMP_TO_SOURCE = "XDebugger.JumpToSource";
+  @NonNls String JUMP_TO_TYPE_SOURCE = "XDebugger.JumpToTypeSource";
 
   @NonNls String EVALUATE_EXPRESSION = "EvaluateExpression";
 
@@ -47,7 +49,6 @@ public interface XDebuggerActions {
   @NonNls String VARIABLES_TREE_POPUP_GROUP = "XDebugger.Variables.Tree.Popup";
   @NonNls String WATCHES_TREE_POPUP_GROUP = "XDebugger.Watches.Tree.Popup";
   @NonNls String WATCHES_TREE_TOOLBAR_GROUP = "XDebugger.Watches.Tree.Toolbar";
-  @NonNls String VALUE_HINT_TREE_POPUP_GROUP = "XDebugger.Value.Hint.Tree.Popup";
 
   @NonNls String ADD_TO_WATCH = "Debugger.AddToWatch";
 

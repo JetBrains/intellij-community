@@ -42,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
   private final PsiMethodCallExpression myMethodCall;
 
-  public ReplaceAddAllArrayToCollectionFix(final PsiMethodCallExpression methodCall) {
+  public ReplaceAddAllArrayToCollectionFix(@NotNull PsiMethodCallExpression methodCall) {
     myMethodCall = methodCall;
   }
 
@@ -60,7 +60,7 @@ public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (myMethodCall == null || !myMethodCall.isValid()) return false;
+    if (!myMethodCall.isValid()) return false;
 
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) return false;

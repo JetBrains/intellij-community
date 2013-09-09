@@ -125,8 +125,8 @@ class LoadRecentBranchRevisions extends TaskDescriptor {
       ProgressManager.progress2("Calculating not merged revisions");
       myHelper.prepare();
     }
-    catch (SVNException e) {
-      context.handleException(new VcsException(e), true);
+    catch (VcsException e) {
+      context.handleException(e, true);
     }
     myLastLoaded = myCommittedChangeLists.size() < myBunchSize + 1;
     if (myCommittedChangeLists.size() > myBunchSize){

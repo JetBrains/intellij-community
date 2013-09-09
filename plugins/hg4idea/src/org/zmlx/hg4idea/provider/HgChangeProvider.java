@@ -221,10 +221,11 @@ public class HgChangeProvider implements ChangeProvider {
           // The original file exists so this is a duplication of the file.
           // Don't create the before ContentRevision or IDEA will think
           // this was a rename.
+          //todo: fix this unexpected status behavior (sometimes added  status instead of copied, and copied instead of renamed )
           processChange(
             null,
             HgCurrentContentRevision.create(afterFile, currentNumber),
-            HgChangeProvider.COPIED,
+            FileStatus.ADDED,
             builder,
             vcsKey
           );

@@ -884,8 +884,20 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected void doUpdate() {
-      String hint = StringUtil.join(Arrays.asList(myShortcutsManager.getDescription(myMavenProject, myGoal),
-                                                  myTasksManager.getDescription(myMavenProject, myGoal)), ", ");
+      String s1 = StringUtil.nullize(myShortcutsManager.getDescription(myMavenProject, myGoal));
+      String s2 = StringUtil.nullize(myTasksManager.getDescription(myMavenProject, myGoal));
+
+      String hint;
+      if (s1 == null) {
+        hint = s2;
+      }
+      else if (s2 == null) {
+        hint = s1;
+      }
+      else {
+        hint = s1 + ", " + s2;
+      }
+
       setNameAndTooltip(getName(), null, hint);
     }
 

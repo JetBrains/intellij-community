@@ -108,15 +108,10 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
       typeItems.add(PsiTypeLookupItem.createLookupItem(arg, context));
     }
 
-    if (typeItems.size() == 1 && myInheritors != null) {
-      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(typeItems.get(0).getPsiType());
-      if (aClass != null) {
-        JavaCompletionUtil.setShowFQN(typeItems.get(0));
-        myInheritors.registerClass(aClass);
-      }
-    }
-
-    resultSet.addElement(new TypeArgsLookupElement(typeItems, globalTail, ConstructorInsertHandler.hasConstructorParameters(actualClass, context)));
+    boolean hasParameters = ConstructorInsertHandler.hasConstructorParameters(actualClass, context);
+    TypeArgsLookupElement element = new TypeArgsLookupElement(typeItems, globalTail, hasParameters);
+    element.registerSingleClass(myInheritors);
+    resultSet.addElement(element);
   }
 
   @Nullable
@@ -193,7 +188,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     return Pair.create(referencedClass, parameterIndex);
   }
 
-  private static class TypeArgsLookupElement extends LookupElement {
+  public static class TypeArgsLookupElement extends LookupElement {
     private String myLookupString;
     private final List<PsiTypeLookupItem> myTypeItems;
     private final TailType myGlobalTail;
@@ -215,6 +210,17 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     @Override
     public Object getObject() {
       return myTypeItems.get(0).getObject();
+    }
+
+    public void registerSingleClass(@Nullable InheritorsHolder inheritors) {
+      if (inheritors != null && myTypeItems.size() == 1) {
+        PsiType type = myTypeItems.get(0).getPsiType();
+        PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+        if (aClass != null && !aClass.hasTypeParameters()) {
+          JavaCompletionUtil.setShowFQN(myTypeItems.get(0));
+          inheritors.registerClass(aClass);
+        }
+      }
     }
 
     @NotNull

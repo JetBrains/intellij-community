@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class AddNewArrayExpressionFix implements IntentionAction {
   private final PsiArrayInitializerExpression myInitializer;
 
-  public AddNewArrayExpressionFix(PsiArrayInitializerExpression initializer) {
+  public AddNewArrayExpressionFix(@NotNull PsiArrayInitializerExpression initializer) {
     myInitializer = initializer;
   }
 

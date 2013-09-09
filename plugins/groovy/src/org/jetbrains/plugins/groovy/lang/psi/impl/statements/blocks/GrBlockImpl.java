@@ -16,10 +16,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
+import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -57,6 +59,17 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
 
   protected GrBlockImpl(@NotNull IElementType type, CharSequence buffer) {
     super(type, buffer);
+  }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    if (getParent() instanceof ASTDelegatePsiElement) {
+      CheckUtil.checkWritable(this);
+      ((ASTDelegatePsiElement)getParent()).deleteChildInternal(getNode());
+    }
+    else {
+      getParent().deleteChildRange(this, this);
+    }
   }
 
   @Override

@@ -19,7 +19,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -48,12 +47,12 @@ public class DefaultGroovyShellRunner extends GroovyShellRunner {
   @Override
   public JavaParameters createJavaParameters(@NotNull Module module) throws ExecutionException {
     JavaParameters res = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
-    DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "groovy.ui.GroovyMain", !hasGroovyAll(module));
+    DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "org.codehaus.groovy.tools.shell.Main", !hasGroovyAll(module));
     PathsList list = GroovyScriptRunner.getClassPathFromRootModel(module, true, res, true);
     if (list != null) {
       res.getClassPath().addAll(list.getPathList());
     }
-    res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
+    //res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
     //res.getVMParametersList().add("-Xdebug"); res.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
     res.setWorkingDirectory(getWorkingDirectory(module));
 
@@ -90,6 +89,7 @@ public class DefaultGroovyShellRunner extends GroovyShellRunner {
   @NotNull
   @Override
   public String transformUserInput(@NotNull String userInput) {
-    return StringUtil.replace(userInput, "\n", "###\\n");
+    //return StringUtil.replace(userInput, "\n", "###\\n");
+    return userInput;
   }
 }

@@ -48,7 +48,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   private static final int COPY_TO_FINAL = 2;
   private static final Key<Map<PsiVariable,Boolean>>[] VARS = new Key[] {Key.create("VARS_TO_MAKE_FINAL"), Key.create("VARS_TO_TRANSFORM"), Key.create("???")};
 
-  public VariableAccessFromInnerClassFix(PsiVariable variable, PsiClass aClass) {
+  public VariableAccessFromInnerClassFix(@NotNull PsiVariable variable, @NotNull PsiClass aClass) {
     myVariable = variable;
     myClass = aClass;
     myFixType = getQuickFixType(variable);
@@ -86,14 +86,12 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myClass != null
-           && myClass.isValid()
-           && myClass.getManager().isInProject(myClass)
-           && myVariable != null
-           && myVariable.isValid()
-           && myFixType != -1
-           && !getVariablesToFix().isEmpty()
-           && !inOwnInitializer (myVariable, myClass);
+    return myClass.isValid() &&
+           myClass.getManager().isInProject(myClass) &&
+           myVariable.isValid() &&
+           myFixType != -1 &&
+           !getVariablesToFix().isEmpty() &&
+           !inOwnInitializer(myVariable, myClass);
   }
 
   private static boolean inOwnInitializer(PsiVariable variable, PsiClass aClass) {

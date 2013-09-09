@@ -108,11 +108,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     final ExtensionPoint<LanguageInjector> psiManagerPoint = Extensions.getRootArea().getExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME);
     psiManagerPoint.addExtensionPointListener(myListener,this);
     myProgress = new DaemonProgressIndicator();
-    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
-      @Override
-      public void daemonFinished() {
-      }
-
+    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
       @Override
       public void daemonCancelEventOccurred() {
         myProgress.cancel();
@@ -401,6 +397,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @Override
   public void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     InjectedLanguageUtil.enumerate(host, visitor);
+  }
+
+  @Override
+  public void enumerateEx(@NotNull PsiElement host,
+                          @NotNull PsiFile containingFile,
+                          boolean probeUp,
+                          @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
+    InjectedLanguageUtil.enumerate(host, containingFile, probeUp, visitor);
   }
 
   private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();

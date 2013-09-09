@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -29,10 +28,6 @@ import java.util.List;
  * @author 2003
  */
 public class IconSet {
-
-  public static Icon getSourceRootIcon(boolean isTestSource) {
-    return isTestSource ? AllIcons.Modules.TestRoot : AllIcons.Modules.SourceRoot;
-  }
 
   @Nullable
   public static Icon getSourceRootIcon(JpsModuleSourceRootType<?> type, List<ModuleSourceRootEditHandler<?>> handlers) {

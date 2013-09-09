@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -94,7 +93,7 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    if (PsiUtil.isLeafElementOfType(contextElement, TokenSets.STRING_LITERALS)) {
+    if (com.intellij.psi.impl.PsiImplUtil.isLeafElementOfType(contextElement, TokenSets.STRING_LITERALS)) {
       @SuppressWarnings("ConstantConditions")
       PsiElement parent = contextElement.getParent();
       if (parent != null) {

@@ -193,7 +193,9 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
 
   public void addRows(@NotNull Collection<Item> items) {
     myItems.addAll(items);
-    fireTableRowsInserted(myItems.size() - items.size(), myItems.size() - 1);
+    if (!myItems.isEmpty()) {
+      fireTableRowsInserted(myItems.size() - items.size(), myItems.size() - 1);
+    }
   }
 
   public Object getItem(final int rowIndex) {

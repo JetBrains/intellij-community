@@ -32,10 +32,7 @@ public interface PlatformFacade {
   
   @NotNull
   Collection<Module> getModules(@NotNull Project project);
-  
-  @NotNull
-  Collection<ModuleAwareContentRoot> getContentRoots(@NotNull Module module);
-  
+
   @NotNull
   Collection<OrderEntry> getOrderEntries(@NotNull Module module);
 

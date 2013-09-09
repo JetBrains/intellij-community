@@ -63,17 +63,25 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
   private IntroduceParameterData.ExpressionWrapper myParameterInitializer;
 
   public GrIntroduceParameterProcessor(GrIntroduceParameterSettings settings) {
+    this(settings, createExpressionWrapper(settings));
+  }
+
+  public GrIntroduceParameterProcessor(GrIntroduceParameterSettings settings, GrExpressionWrapper expr) {
     super(settings.getProject());
-    this.mySettings = settings;
+    mySettings = settings;
 
-    LOG.assertTrue(mySettings.getToReplaceIn() instanceof GrMethod);
-    LOG.assertTrue(mySettings.getToSearchFor() instanceof PsiMethod);
+    myParameterInitializer = expr;
+  }
 
-    final StringPartInfo stringPartInfo = mySettings.getStringPartInfo();
+  private static GrExpressionWrapper createExpressionWrapper(GrIntroduceParameterSettings settings) {
+    LOG.assertTrue(settings.getToReplaceIn() instanceof GrMethod);
+    LOG.assertTrue(settings.getToSearchFor() instanceof PsiMethod);
+
+    final StringPartInfo stringPartInfo = settings.getStringPartInfo();
     final GrExpression expression = stringPartInfo != null
                                     ? GrIntroduceHandlerBase.generateExpressionFromStringPart(stringPartInfo, settings.getProject())
-                                    : mySettings.getExpression();
-    myParameterInitializer = new GrExpressionWrapper(expression);
+                                    : settings.getExpression();
+    return new GrExpressionWrapper(expression);
   }
 
   @NotNull
@@ -194,7 +202,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
   protected void performRefactoring(UsageInfo[] usages) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
 
-    PsiType initializerType = mySettings.getSelectedType();
+    //PsiType initializerType = mySettings.getSelectedType();
 
     // Changing external occurrences (the tricky part)
 
@@ -205,35 +213,48 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
 
     final boolean methodsToProcessAreDifferent = toReplaceIn != toSearchFor;
     if (mySettings.generateDelegate()) {
-      GroovyIntroduceParameterUtil.generateDelegate(toReplaceIn, myParameterInitializer, myProject);
-      if (methodsToProcessAreDifferent) {
-        final GrMethod method = GroovyIntroduceParameterUtil.generateDelegate(toSearchFor, myParameterInitializer, myProject);
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && containingClass.isInterface()) {
-          final GrOpenBlock block = method.getBlock();
-          if (block != null) {
-            block.delete();
-          }
-        }
-      }
+      generateDelegate(toReplaceIn, toSearchFor, methodsToProcessAreDifferent);
     }
 
     // Changing signature of initial method
     // (signature of myMethodToReplaceIn will be either changed now or have already been changed)
-    LOG.assertTrue(initializerType == null || initializerType.isValid());
+    //LOG.assertTrue(initializerType == null || initializerType.isValid());
 
-    final FieldConflictsResolver fieldConflictsResolver =
-      new FieldConflictsResolver(mySettings.getName(), toReplaceIn.getBlock());
-    IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(toReplaceIn), usages, this);
-    if (methodsToProcessAreDifferent) {
-      IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(toSearchFor), usages, this);
+    final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(mySettings.getName(), toReplaceIn.getBlock());
+
+    processMethodSignature(usages, toReplaceIn, toSearchFor, methodsToProcessAreDifferent);
+    processUsages(usages, factory);
+    processStringPart();
+    processVar();
+
+    fieldConflictsResolver.fix();
+  }
+
+  private void processVar() {
+    final GrVariable var = mySettings.getVar();
+    if (var != null && mySettings.removeLocalVariable()) {
+      var.delete();
     }
+  }
 
+  private void processStringPart() {
+    final StringPartInfo stringPartInfo = mySettings.getStringPartInfo();
+    if (stringPartInfo != null) {
+      final GrExpression
+        expr = GrIntroduceHandlerBase.processLiteral(mySettings.getName(), mySettings.getStringPartInfo(), mySettings.getProject());
+      final Editor editor = PsiUtilBase.findEditor(expr);
+      if (editor != null) {
+        editor.getSelectionModel().removeSelection();
+        editor.getCaretModel().moveToOffset(expr.getTextRange().getEndOffset());
+      }
+    }
+  }
+
+  private void processUsages(UsageInfo[] usages, GroovyPsiElementFactory factory) {
     // Replacing expression occurrences
     for (UsageInfo usage : usages) {
       if (usage instanceof ChangedMethodCallInfo) {
         PsiElement element = usage.getElement();
-
         GroovyIntroduceParameterUtil.processChangedMethodCall(element, mySettings, myProject);
       }
       else if (usage instanceof InternalUsageInfo) {
@@ -248,23 +269,30 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
         }
       }
     }
+  }
 
-    final StringPartInfo stringPartInfo = mySettings.getStringPartInfo();
-    if (stringPartInfo != null) {
-      final GrExpression expr =
-        GrIntroduceHandlerBase.processLiteral(mySettings.getName(), mySettings.getStringPartInfo(), mySettings.getProject());
-      final Editor editor = PsiUtilBase.findEditor(expr);
-      if (editor != null) {
-        editor.getSelectionModel().removeSelection();
-        editor.getCaretModel().moveToOffset(expr.getTextRange().getEndOffset());
+  private void processMethodSignature(UsageInfo[] usages,
+                                      GrMethod toReplaceIn,
+                                      PsiMethod toSearchFor,
+                                      boolean methodsToProcessAreDifferent) {
+    IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(toReplaceIn), usages, this);
+    if (methodsToProcessAreDifferent) {
+      IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(toSearchFor), usages, this);
+    }
+  }
+
+  private void generateDelegate(GrMethod toReplaceIn, PsiMethod toSearchFor, boolean methodsToProcessAreDifferent) {
+    GroovyIntroduceParameterUtil.generateDelegate(toReplaceIn, myParameterInitializer, myProject);
+    if (methodsToProcessAreDifferent) {
+      final GrMethod method = GroovyIntroduceParameterUtil.generateDelegate(toSearchFor, myParameterInitializer, myProject);
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && containingClass.isInterface()) {
+        final GrOpenBlock block = method.getBlock();
+        if (block != null) {
+          block.delete();
+        }
       }
     }
-
-    final GrVariable var = mySettings.getVar();
-    if (var != null && mySettings.removeLocalVariable()) {
-      var.delete();
-    }
-    fieldConflictsResolver.fix();
   }
 
   @Override

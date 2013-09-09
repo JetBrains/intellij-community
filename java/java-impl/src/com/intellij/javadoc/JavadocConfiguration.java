@@ -48,6 +48,7 @@ import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.io.File;
@@ -358,10 +359,8 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
 
     private static boolean containsPackagePrefix(Module module, String packageFQName) {
       if (module == null) return false;
-      final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-      for (ContentEntry contentEntry : contentEntries) {
-        final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-        for (SourceFolder sourceFolder : sourceFolders) {
+      for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
+        for (SourceFolder sourceFolder : contentEntry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
           final String packagePrefix = sourceFolder.getPackagePrefix();
           final int prefixLength = packagePrefix.length();
           if (prefixLength > 0 && packageFQName.startsWith(packagePrefix)) {

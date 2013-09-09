@@ -85,7 +85,7 @@ public class SpellcheckingStrategy {
     return BATCH_FIXES;
   }
 
-  private static class XmlAttributeValueTokenizer extends Tokenizer<XmlAttributeValue> {
+  protected static class XmlAttributeValueTokenizer extends Tokenizer<XmlAttributeValue> {
     public void tokenize(@NotNull final XmlAttributeValue element, final TokenConsumer consumer) {
       if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) return;
 
@@ -106,5 +106,9 @@ public class SpellcheckingStrategy {
       }
       return true;
     }
+  }
+
+  public boolean isMyContext(@NotNull PsiElement element) {
+    return true;
   }
 }

@@ -32,7 +32,7 @@ public interface ParameterInfoUIContextEx extends ParameterInfoUIContext {
    * @param flags a set of Flags; flags[i] describes formatting of texts[i].
    * @param background background color of the hint.
    */
-  void setupUIComponentPresentation(String[] texts, EnumSet<Flag>[] flags, Color background);
+  String setupUIComponentPresentation(String[] texts, EnumSet<Flag>[] flags, Color background);
 
   enum Flag {
     HIGHLIGHT, DISABLE, STRIKEOUT // more to come

@@ -17,11 +17,14 @@ import java.util.List;
 
 /**
  * This REST API version is used in JIRA 5.1.8 and above (including JIRA 6.x.x).
+ *
  * @author Mikhail Golubev
  */
 public class JiraRestApi2 extends JiraRestApi {
   private static final Logger LOG = Logger.getInstance(JiraIssueApi2.class);
-  private static final Type ISSUES_WRAPPER_TYPE = new TypeToken<JiraResponseWrapper.Issues<JiraIssueApi2>>() { /* empty */ }.getType();
+  private static final Type ISSUES_WRAPPER_TYPE = new TypeToken<JiraResponseWrapper.Issues<JiraIssueApi2>>() { /* empty */
+  }.getType();
+
   public JiraRestApi2(JiraRepository repository) {
     super(repository);
   }
@@ -44,8 +47,9 @@ public class JiraRestApi2 extends JiraRestApi {
   @NotNull
   @Override
   protected GetMethod getSingleIssueSearchMethod(String key) {
-    GetMethod method = super.getSingleIssueSearchMethod(key);
-    method.setQueryString(method.getQueryString() + "&fields=" + JiraIssueApi2.REQUIRED_RESPONSE_FIELDS);
+    final GetMethod method = super.getSingleIssueSearchMethod(key);
+    final String oldParams = method.getQueryString() == null ? "" : method.getQueryString();
+    method.setQueryString(oldParams + "&fields=" + JiraIssueApi2.REQUIRED_RESPONSE_FIELDS);
     return method;
   }
 

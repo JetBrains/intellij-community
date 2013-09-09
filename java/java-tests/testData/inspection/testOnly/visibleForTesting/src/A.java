@@ -4,13 +4,18 @@ public class A {
     visibleMethod(1);
   }
 
-  @com.google.common.annotations.VisibleForTesting()
+  @com.android.annotations.VisibleForTesting
   void invisibleMethod(int a) {
 
   }
 
-  @com.google.common.annotations.VisibleForTesting(visibility=com.google.common.annotations.VisibleForTesting.Visibility.PROTECTED)
+  @com.android.annotations.VisibleForTesting(visibility=com.android.annotations.VisibleForTesting.Visibility.PROTECTED)
   void visibleMethod(int a) {
+    relaxedToPackageLevel(a);
+  }
+  
+  @com.google.common.annotations.VisibleForTesting
+  void relaxedToPackageLevel(int a) {
 
   }
 }

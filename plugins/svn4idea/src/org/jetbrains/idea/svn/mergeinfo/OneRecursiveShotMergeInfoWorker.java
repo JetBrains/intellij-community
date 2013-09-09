@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AreaMap;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -29,7 +30,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.Map;
@@ -61,25 +62,29 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
     return url.startsWith("/") ? url : "/" + url;
   }
   
-  public void prepare() throws SVNException {
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient client = vcs.createWCClient();
-
+  public void prepare() throws VcsException {
     final SVNDepth depth = SvnConfiguration.getInstance(myProject).CHECK_NESTED_FOR_QUICK_MERGE ? SVNDepth.INFINITY : SVNDepth.EMPTY;
-    client.doGetProperty(new File(myWCInfo.getPath()), SVNProperty.MERGE_INFO, SVNRevision.UNDEFINED, SVNRevision.WORKING,
-                         depth, new ISVNPropertyHandler() {
-        public void handleProperty(File path, SVNPropertyData property) throws SVNException {
-          final String key = keyFromFile(path);
-          synchronized (myLock) {
-            myDataMap.put(key, SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(replaceSeparators(property.getValue().getString())), null));
-          }
+    ISVNPropertyHandler handler = new ISVNPropertyHandler() {
+      public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+        final String key = keyFromFile(path);
+        synchronized (myLock) {
+          myDataMap.put(key, SVNMergeInfoUtil
+            .parseMergeInfo(new StringBuffer(replaceSeparators(SVNPropertyValue.getPropertyAsString(property.getValue()))), null));
         }
+      }
 
-        public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
-        }
-        public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
-        }
-      }, null);
+      public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+      }
+
+      public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+      }
+    };
+
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    File path = new File(myWCInfo.getPath());
+
+    vcs.getFactory(path).createPropertyClient()
+      .getProperty(SvnTarget.fromFile(path), SVNProperty.MERGE_INFO, SVNRevision.WORKING, depth, handler);
   }
 
   public SvnMergeInfoCache.MergeCheckResult isMerged(final String relativeToRepoURLPath, final long revisionNumber) {

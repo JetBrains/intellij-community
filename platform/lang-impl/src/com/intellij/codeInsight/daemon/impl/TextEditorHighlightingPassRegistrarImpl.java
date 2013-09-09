@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -151,7 +150,8 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       }
     });
 
-    final FileStatusMap statusMap = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap();
+    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+    final FileStatusMap statusMap = daemonCodeAnalyzer.getFileStatusMap();
     passesRefusedToCreate.forEach(new TIntProcedure() {
       @Override
       public boolean execute(int passId) {
@@ -223,6 +223,8 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     });
   }
 
+  @NotNull
+  @Override
   public List<DirtyScopeTrackingHighlightingPassFactory> getDirtyScopeTrackingFactories() {
     return myDirtyScopeTrackingFactories;
   }

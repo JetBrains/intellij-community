@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractInfoHelperBase;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 
@@ -88,8 +88,8 @@ public class ExtractMethodInfoHelper extends ExtractInfoHelperBase {
   private static boolean canBeStatic(PsiElement statement) {
     PsiElement parent = statement.getParent();
     while (parent != null && !(parent instanceof PsiFile)) {
-      if (parent instanceof GrMethod) {
-        return ((GrMethod) parent).hasModifierProperty(PsiModifier.STATIC);
+      if (parent instanceof GrMember) {
+        return ((GrMember) parent).hasModifierProperty(PsiModifier.STATIC);
       }
       parent = parent.getParent();
     }

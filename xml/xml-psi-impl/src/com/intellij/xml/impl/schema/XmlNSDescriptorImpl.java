@@ -29,6 +29,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -80,7 +81,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   public XmlNSDescriptorImpl() {
   }
 
-  private Object[] dependencies;
+  private volatile Object[] dependencies;
 
   private static final ThreadLocal<Set<PsiFile>> myRedefinedDescriptorsInProcessing = new ThreadLocal<Set<PsiFile>>();
 
@@ -189,7 +190,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
                   if (name != null && !name.equals(pair.second)) {
                     myDescriptorsMap.remove(pair);
-                    return new Result<XmlElementDescriptor>(null);
+                    return new Result<XmlElementDescriptor>(null, PsiModificationTracker.MODIFICATION_COUNT);
                   }
                   final XmlElementDescriptor xmlElementDescriptor = createElementDescriptor(tag);
                   return new Result<XmlElementDescriptor>(xmlElementDescriptor, xmlElementDescriptor.getDependences());
@@ -530,7 +531,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
                          xmlFile.getDocument() == null
                        ) {
                       myTypesMap.remove(pair);
-                      return new Result<TypeDescriptor>(null);
+                      return new Result<TypeDescriptor>(null, PsiModificationTracker.MODIFICATION_COUNT);
                     }
 
                     final XmlDocument document = xmlFile.getDocument();
@@ -538,7 +539,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
                     if (nsDescriptor == null) {
                       myTypesMap.remove(pair);
-                      return new Result<TypeDescriptor>(null);
+                      return new Result<TypeDescriptor>(null, PsiModificationTracker.MODIFICATION_COUNT);
                     }
 
                     final XmlTag rTag = document.getRootTag();
@@ -615,7 +616,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
             !name.equals(XmlUtil.findLocalNameByQualifiedName(pair.first.first))
            ) {
           myTypesMap.remove(pair);
-          return new Result<TypeDescriptor>(null);
+          return new Result<TypeDescriptor>(null, PsiModificationTracker.MODIFICATION_COUNT);
         }
         final ComplexTypeDescriptor complexTypeDescriptor = new ComplexTypeDescriptor(XmlNSDescriptorImpl.this, tag); 
         return new Result<TypeDescriptor>(complexTypeDescriptor, tag);
@@ -927,7 +928,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   public Object[] getDependences() {
-    if (dependencies == null) dependencies = new Object[] {myFile}; // init was not called
+    if (dependencies == null) dependencies = myFile == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[] {myFile}; // init was not called
     return dependencies;
   }
 

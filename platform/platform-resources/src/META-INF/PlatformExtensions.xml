@@ -258,7 +258,9 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
     <!--<statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeSettingsUsagesCollector"/>-->
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.LaFUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsNameUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsVersionUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.UiInfoUsageCollector"/>
 
     <applicationConfigurable instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
                              displayName="Usage Statistics"/>
@@ -308,5 +310,7 @@
                      implementationClass="com.intellij.codeStyle.InconsistentLineSeparatorsInspection"/>
     <search.topHitProvider implementation="com.intellij.platform.DefaultPlatformTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.UISimpleSettingsProvider"/>
+    <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector"/>
+    <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser"/>
   </extensions>
 </idea-plugin>

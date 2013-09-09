@@ -50,6 +50,6 @@ public class AddManagedFilesAction extends MavenAction {
     VirtualFile[] files = FileChooser.chooseFiles(singlePomSelection, project, fileToSelect);
     if (files.length == 0) return;
 
-    manager.addManagedFiles(Arrays.asList(files));
+    manager.addManagedFilesOrUnignore(Arrays.asList(files));
   }
 }

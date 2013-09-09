@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class ReplaceWithListAccessFix implements IntentionAction {
   private final PsiArrayAccessExpression myArrayAccessExpression;
 
-  public ReplaceWithListAccessFix(PsiArrayAccessExpression arrayAccessExpression) {
+  public ReplaceWithListAccessFix(@NotNull PsiArrayAccessExpression arrayAccessExpression) {
     myArrayAccessExpression = arrayAccessExpression;
   }
 

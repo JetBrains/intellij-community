@@ -15,10 +15,17 @@
  */
 package com.intellij.tasks.vcs;
 
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsTaskHandler;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.tasks.BranchInfo;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.actions.OpenTaskDialog;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.PlatformTestCase;
@@ -29,8 +36,10 @@ import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitTestUtil;
+import git4idea.util.GitFileUtils;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,6 +50,8 @@ import java.util.List;
 public class TaskBranchesTest extends PlatformTestCase {
 
   private TaskManagerImpl myTaskManager;
+  private ChangeListManagerImpl myChangeListManager;
+  private VcsDirtyScopeManagerImpl myDirtyScopeManager;
 
   public void testGitTaskHandler() throws Exception {
 
@@ -104,6 +115,46 @@ public class TaskBranchesTest extends PlatformTestCase {
     myTaskManager.activateTask(foo, false);
   }
 
+  public void testCommit() throws Exception {
+    GitRepository repository = initRepository("foo");
+    LocalTask defaultTask = myTaskManager.getActiveTask();
+    LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
+    final LocalTask localTask = myTaskManager.activateTask(foo, false);
+    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
+
+    VirtualFile root = repository.getRoot();
+    File file = new File(root.getPath(), "foo.txt");
+    assertTrue(file.createNewFile());
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    GitFileUtils.addFiles(getProject(), root, virtualFile);
+    myDirtyScopeManager.fileDirty(virtualFile);
+    myChangeListManager.ensureUpToDate(false);
+    Change change = myChangeListManager.getChange(virtualFile);
+    assertNotNull(change);
+    ProjectLevelVcsManager.getInstance(getProject()).getAllActiveVcss()[0].getCheckinEnvironment()
+      .commit(Collections.singletonList(change), "foo");
+    myTaskManager.mergeBranch(localTask);
+
+    repository.update();
+    assertEquals("master", repository.getCurrentBranch().getName());
+    assertEquals(1, repository.getBranches().getLocalBranches().size());
+  }
+
+  public void testOpenTaskDialog() throws Exception {
+    initRepository("foo");
+    LocalTaskImpl task = myTaskManager.createLocalTask("foo");
+    OpenTaskDialog dialog = new OpenTaskDialog(getProject(), task);
+    Disposer.register(myTestRootDisposable, dialog.getDisposable());
+    dialog.createTask();
+    assertEquals("foo", myTaskManager.getActiveTask().getSummary());
+    List<BranchInfo> branches = task.getBranches(true);
+    assertEquals(1, branches.size());
+    assertEquals("master", branches.get(0).name);
+    branches = task.getBranches(false);
+    assertEquals(1, branches.size());
+    assertEquals("foo", branches.get(0).name);
+  }
+
   private List<GitRepository> initRepositories(String... names) {
     return ContainerUtil.map(names, new Function<String, GitRepository>() {
       @Override
@@ -128,5 +179,10 @@ public class TaskBranchesTest extends PlatformTestCase {
     super.setUp();
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
     GitVcsSettings.getInstance(myProject).getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
+
+    myChangeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(getProject());
+    myChangeListManager.projectOpened();
+    myDirtyScopeManager = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(getProject()));
+    myDirtyScopeManager.projectOpened();
   }
 }

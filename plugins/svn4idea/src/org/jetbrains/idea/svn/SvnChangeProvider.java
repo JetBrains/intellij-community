@@ -85,7 +85,7 @@ public class SvnChangeProvider implements ChangeProvider {
       statusReceiver.addListener(context);
       statusReceiver.addListener(nestedCopiesBuilder);
 
-      final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs.getProject(), statusReceiver.getMulticaster(), partner);
+      final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, statusReceiver.getMulticaster(), partner);
 
       for (FilePath path : zipper.getRecursiveDirs()) {
         walker.go(path, SVNDepth.INFINITY);
@@ -180,7 +180,7 @@ public class SvnChangeProvider implements ChangeProvider {
   public void getChanges(final FilePath path, final boolean recursive, final ChangelistBuilder builder) throws SVNException {
     final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, null);
     final StatusWalkerPartnerImpl partner = new StatusWalkerPartnerImpl(myVcs, ProgressManager.getInstance().getProgressIndicator());
-    final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs.getProject(), context, partner);
+    final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, context, partner);
     walker.go(path, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES);
     processCopiedAndDeleted(context, null);
   }

@@ -19,7 +19,6 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Pair;
@@ -79,43 +78,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return null;
     return StringUtil.getQualifiedName(packageName, virtualFile.getNameWithoutExtension());
-  }
-
-  @Nullable
-  protected static String getNormalizedExternalName(@NotNull PsiModifierListOwner owner) {
-    String externalName = getExternalName(owner, true);
-    if (externalName == null) {
-      return null;
-    }
-    if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(owner, PsiMethod.class);
-      if (method != null) {
-        externalName =
-          externalName.substring(0, externalName.lastIndexOf(' ') + 1) + method.getParameterList().getParameterIndex((PsiParameter)owner);
-      }
-    }
-    final int idx = externalName.indexOf('(');
-    if (idx == -1) return externalName;
-    StringBuilder buf = new StringBuilder(externalName.length());
-    int rightIdx = externalName.indexOf(')');
-    String[] params = externalName.substring(idx + 1, rightIdx).split(",");
-    buf.append(externalName, 0, idx + 1);
-    for (String param : params) {
-      param = param.trim();
-      int spaceIdx = param.indexOf(' ');
-      if (spaceIdx > -1) {
-        buf.append(param, 0, spaceIdx);
-      }
-      else {
-        buf.append(param);
-      }
-      buf.append(", ");
-    }
-    if (StringUtil.endsWith(buf, ", ")) {
-      buf.delete(buf.length() - ", ".length(), buf.length());
-    }
-    buf.append(externalName, rightIdx, externalName.length());
-    return buf.toString();
   }
 
   protected abstract boolean hasAnyAnnotationsRoots();
@@ -243,7 +205,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     SmartList<AnnotationData> result = new SmartList<AnnotationData>();
     String externalName = getExternalName(listOwner, false);
     if (externalName == null) return NO_DATA;
-    String oldExternalName = getNormalizedExternalName(listOwner);
 
     for (PsiFile file : files) {
       if (!file.isValid()) continue;
@@ -251,34 +212,13 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
       MostlySingularMultiMap<String, AnnotationData> fileData = getDataFromFile(file);
 
-      addAnnotations(result, externalName, file, fileData);
-      if (oldExternalName != null && !externalName.equals(oldExternalName)) {
-        addAnnotations(result, oldExternalName, file, fileData);
-      }
+      ContainerUtil.addAll(result, fileData.get(externalName));
     }
     if (result.isEmpty()) {
       return NO_DATA;
     }
     result.trimToSize();
     return result;
-  }
-
-  private void addAnnotations(@NotNull List<AnnotationData> result,
-                                     @NotNull String externalName,
-                                     @NotNull PsiFile file,
-                                     @NotNull MostlySingularMultiMap<String, AnnotationData> fileData) {
-    Iterable<AnnotationData> data = fileData.get(externalName);
-    for (AnnotationData ad : data) {
-      if (result.contains(ad)) {
-        // there can be compatible annotations in different files
-        if (Comparing.equal(ad.virtualFile, file.getVirtualFile())) {
-          duplicateError(file, externalName, "Duplicate signature");
-        }
-      }
-      else {
-        result.add(ad);
-      }
-    }
   }
 
   @Override
@@ -414,13 +354,11 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   private static class AnnotationData {
     @NotNull private final String annotationClassFqName;
     @NotNull private final String annotationParameters;
-    private final VirtualFile virtualFile;
     private volatile PsiAnnotation annotation;
 
-    private AnnotationData(@NotNull String annotationClassFqName, @NotNull String annotationParameters, VirtualFile virtualFile) {
+    private AnnotationData(@NotNull String annotationClassFqName, @NotNull String annotationParameters) {
       this.annotationClassFqName = annotationClassFqName;
       this.annotationParameters = annotationParameters;
-      this.virtualFile = virtualFile;
     }
 
     @NotNull
@@ -514,7 +452,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
               duplicateError(file, externalName, "Duplicate annotation '" + annotationFQN + "' ");
             }
           }
-          AnnotationData annData = internAnnotationData(new AnnotationData(annotationFQN, argumentsString, file.getVirtualFile()));
+          AnnotationData annData = internAnnotationData(new AnnotationData(annotationFQN, argumentsString));
           data.add(externalName, annData);
           annotationFQN = null;
           arguments = null;

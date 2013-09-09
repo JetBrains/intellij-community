@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
 
   private static JEditorPane myDescriptionPanel = new JEditorPane();
 
-  protected DetectedPluginsPanel() {
+  public DetectedPluginsPanel() {
     super(PluginDownloader.class);
     final JTable entryTable = getEntryTable();
     entryTable.setTableHeader(null);
@@ -111,18 +111,22 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
   }
 
   public boolean isChecked(final PluginDownloader downloader) {
-    return !UpdateChecker.getDisabledToUpdatePlugins().contains(downloader.getPluginId());
+    return !getSkippedPlugins().contains(downloader.getPluginId());
   }
 
   public void setChecked(final PluginDownloader downloader, final boolean checked) {
     if (checked) {
-      UpdateChecker.getDisabledToUpdatePlugins().remove(downloader.getPluginId());
+      getSkippedPlugins().remove(downloader.getPluginId());
     } else {
-      UpdateChecker.getDisabledToUpdatePlugins().add(downloader.getPluginId());
+      getSkippedPlugins().add(downloader.getPluginId());
     }
     for (Listener listener : myListeners) {
       listener.stateChanged();
     }
+  }
+
+  protected Set<String> getSkippedPlugins() {
+    return UpdateChecker.getDisabledToUpdatePlugins();
   }
 
   public void addStateListener(Listener l) {

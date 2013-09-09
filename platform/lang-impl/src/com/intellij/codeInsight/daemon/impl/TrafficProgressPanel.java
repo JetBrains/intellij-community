@@ -87,7 +87,7 @@ public class TrafficProgressPanel extends JPanel {
       fakeStatusLargeEnough.passStati
         .add(new ProgressableTextEditorHighlightingPass(project, null, DaemonBundle.message("pass.wolf"), psiFile, false) {
           @Override
-          protected void collectInformationWithProgress(ProgressIndicator progress) {
+          protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
           }
 
           @Override

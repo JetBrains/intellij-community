@@ -46,7 +46,7 @@ import com.intellij.xdebugger.impl.frame.XFramesView;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction;
-import com.intellij.xdebugger.ui.XDebugLayoutCustomizer;
+import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,15 +71,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XDebugProcess debugProcess = session.getDebugProcess();
     myRunContentDescriptor = new RunContentDescriptor(myConsole, debugProcess.getProcessHandler(), myUi.getComponent(), mySessionName, icon);
     attachToSession(session, runner, environment, session.getSessionData(), debugProcess);
-  }
-
-  private Content createConsoleContent() {
-    Content result = myUi.createContent(DebuggerContentInfo.CONSOLE_CONTENT, myConsole.getComponent(),
-                                        XDebuggerBundle.message("debugger.session.tab.console.content.name"),
-                                        AllIcons.Debugger.Console,
-                                        myConsole.getPreferredFocusableComponent());
-    result.setCloseable(false);
-    return result;
   }
 
   private Content createVariablesContent(final XDebugSession session) {
@@ -136,21 +127,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
     myUi.addContent(createWatchesContent(session, sessionData), 0, PlaceInGrid.right, false);
-    XDebugLayoutCustomizer layoutCustomizer = debugProcess.getLayoutCustomizer();
-    final Content consoleContent;
-    if (layoutCustomizer != null) {
-      consoleContent = layoutCustomizer.registerConsoleContent(myConsole, myUi);
-    }
-    else {
-      consoleContent = createConsoleContent();
-      myUi.addContent(consoleContent, 1, PlaceInGrid.bottom, false);
-    }
+    XDebugTabLayouter layouter = debugProcess.createTabLayouter();
+    Content consoleContent = layouter.registerConsoleContent(myUi, myConsole);
     attachNotificationTo(consoleContent);
 
-    debugProcess.registerAdditionalContent(myUi);
-    if (layoutCustomizer != null) {
-      layoutCustomizer.registerAdditionalContent(myUi);
-    }
+    layouter.registerAdditionalContent(myUi);
     RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {

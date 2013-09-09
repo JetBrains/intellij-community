@@ -21,16 +21,16 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNDepth;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -42,12 +42,10 @@ public class SvnChangelistListener implements ChangeListListener {
 
   private final Project myProject;
   private final SvnVcs myVcs;
-  //private final SVNChangelistClient myClient;
 
-  public SvnChangelistListener(final Project project, final SvnVcs vcs) {
+  public SvnChangelistListener(@NotNull final Project project, @NotNull final SvnVcs vcs) {
     myProject = project;
     myVcs = vcs;
-    //myClient = client;
   }
 
   public void changeListAdded(final ChangeList list) {
@@ -58,43 +56,18 @@ public class SvnChangelistListener implements ChangeListListener {
     if (SvnChangeProvider.ourDefaultListName.equals(fromList.getName())) {
       return;
     }
-    final List<String> paths = getPathsFromChanges(changes);
-    for (String path : paths) {
-      try {
-        myVcs.createChangelistClient().doRemoveFromChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, null);
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-      }
-    }
+    removeFromChangeList(changes);
   }
 
   public void changesAdded(Collection<Change> changes, ChangeList toList) {
-    if (toList == null) return;
-    if (SvnChangeProvider.ourDefaultListName.equals(toList.getName())) {
+    if (toList == null || SvnChangeProvider.ourDefaultListName.equals(toList.getName())) {
       return;
     }
-    final List<String> paths = getPathsFromChanges(changes);
-    for (String path : paths) {
-      try {
-        myVcs.createChangelistClient().doAddToChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, toList.getName(), null);
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-      }
-    }
+    addToChangeList(toList.getName(), changes);
   }
 
   public void changeListRemoved(final ChangeList list) {
-    final List<String> paths = getPathsFromChanges(list.getChanges());
-    for (String path : paths) {
-      try {
-        myVcs.createChangelistClient().doRemoveFromChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, null);
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-      }
-    }
+    removeFromChangeList(list.getChanges());
   }
 
   private boolean isUnderSvn(final FilePath path) {
@@ -132,15 +105,7 @@ public class SvnChangelistListener implements ChangeListListener {
       changeListRemoved(list);
       return;
     }
-    final List<String> paths = getPathsFromChanges(list.getChanges());
-    for (String path : paths) {
-      try {
-        myVcs.createChangelistClient().doAddToChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, list.getName(), null);
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-      }
-    }
+    addToChangeList(list.getName(), list.getChanges());
   }
 
   public void changeListCommentChanged(final ChangeList list, final String oldComment) {
@@ -154,16 +119,9 @@ public class SvnChangelistListener implements ChangeListListener {
       changeListRemoved(toList);
       return;
     }
+
     final String[] fromLists = SvnChangeProvider.ourDefaultListName.equals(fromList.getName()) ? null : new String[] {fromList.getName()};
-    final List<String> paths = getPathsFromChanges(changes);
-    for (final String path : paths) {
-      try {
-        myVcs.createChangelistClient().doAddToChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, toList.getName(), fromLists);
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-      }
-    }
+    addToChangeList(toList.getName(), changes, fromLists);
   }
 
   public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
@@ -176,11 +134,9 @@ public class SvnChangelistListener implements ChangeListListener {
   }
 
   @Nullable
-  public static String getCurrentMapping(final Project project, final File file) {
-    final SvnVcs vcs = SvnVcs.getInstance(project);
-    final SVNStatusClient statusClient = vcs.createStatusClient();
+  public static String getCurrentMapping(final SvnVcs vcs, final File file) {
     try {
-      final SVNStatus status = statusClient.doStatus(file, false);
+      final SVNStatus status = vcs.getFactory(file).createStatusClient().doStatus(file, false);
       return status == null ? null : status.getChangelistName();
     }
     catch (SVNException e) {
@@ -194,30 +150,71 @@ public class SvnChangelistListener implements ChangeListListener {
     return null;
   }
 
-  public static void putUnderList(final Project project, final String list, final File after) throws SVNException {
+  public static void putUnderList(@NotNull final Project project, @NotNull final String list, @NotNull final File after)
+    throws VcsException {
     final SvnVcs vcs = SvnVcs.getInstance(project);
-    final SVNChangelistClient client = vcs.createChangelistClient();
+
     try {
-      client.doAddToChangelist(new File[]{after}, SVNDepth.EMPTY, list, null);
+      vcs.getFactory(after).createChangeListClient().add(list, after, null);
     }
-    catch (SVNException e) {
+    catch(SvnBindException e) {
       LOG.info(e);
-      if ((! SVNErrorCode.WC_NOT_DIRECTORY.equals(e.getErrorMessage().getErrorCode()) && (! SVNErrorCode.WC_NOT_FILE.equals(e.getErrorMessage().getErrorCode())))) {
+      if (!e.contains(SVNErrorCode.WC_NOT_DIRECTORY) && !e.contains(SVNErrorCode.WC_NOT_FILE)) {
         throw e;
+      }
+    }
+    catch (VcsException e) {
+      LOG.info(e);
+      throw e;
+    }
+  }
+
+  public static void removeFromList(@NotNull final Project project, @NotNull final File after) throws VcsException {
+    final SvnVcs vcs = SvnVcs.getInstance(project);
+    try {
+      vcs.getFactory(after).createChangeListClient().remove(after);
+    }
+    catch(SvnBindException e) {
+      LOG.info(e);
+      if (!e.contains(SVNErrorCode.WC_NOT_DIRECTORY) && !e.contains(SVNErrorCode.WC_NOT_FILE)) {
+        throw e;
+      }
+    }
+    catch (VcsException e) {
+      LOG.info(e);
+      throw e;
+    }
+  }
+
+  private void removeFromChangeList(@NotNull Collection<Change> changes) {
+    final List<String> paths = getPathsFromChanges(changes);
+
+    for (String path : paths) {
+      try {
+        File file = new File(path);
+
+        myVcs.getFactory(file).createChangeListClient().remove(file);
+      }
+      catch (VcsException e) {
+        LOG.info(e);
       }
     }
   }
 
-  public static void removeFromList(final Project project, final File after) throws SVNException {
-    final SvnVcs vcs = SvnVcs.getInstance(project);
-    final SVNChangelistClient client = vcs.createChangelistClient();
-    try {
-      client.doRemoveFromChangelist(new File[]{after}, SVNDepth.EMPTY, null);
-    }
-    catch (SVNException e) {
-      LOG.info(e);
-      if ((! SVNErrorCode.WC_NOT_DIRECTORY.equals(e.getErrorMessage().getErrorCode()) && (! SVNErrorCode.WC_NOT_FILE.equals(e.getErrorMessage().getErrorCode())))) {
-        throw e;
+  private void addToChangeList(@NotNull String changeList, @NotNull Collection<Change> changes) {
+    addToChangeList(changeList, changes, null);
+  }
+
+  private void addToChangeList(@NotNull String changeList, @NotNull Collection<Change> changes, @Nullable String[] changeListsToOperate) {
+    final List<String> paths = getPathsFromChanges(changes);
+
+    for (String path : paths) {
+      try {
+        File file = new File(path);
+        myVcs.getFactory(file).createChangeListClient().add(changeList, file, changeListsToOperate);
+      }
+      catch (VcsException e) {
+        LOG.info(e);
       }
     }
   }

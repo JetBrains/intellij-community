@@ -49,7 +49,7 @@ public class DefaultConfigLoader {
       final SvnVcs vcs = SvnVcs.getInstance(project);
 
       File rootFile = new File(vcsRoot.getPath());
-      final SVNInfo info = vcs.createWCClient().doInfo(rootFile, SVNRevision.UNDEFINED);
+      final SVNInfo info = vcs.getInfo(rootFile);
       if (info == null || info.getURL() == null) {
         LOG.info("Directory is not a working copy: " + vcsRoot.getPresentableUrl());
         return null;

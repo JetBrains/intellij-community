@@ -99,6 +99,7 @@ public class JiraIssueApi20Alpha1 extends JiraIssue {
      * Serialization constructor
      */
     public FieldWrapper() {
+      // empty
     }
 
     public FieldWrapper(T value) {
@@ -124,13 +125,5 @@ public class JiraIssueApi20Alpha1 extends JiraIssue {
     private FieldWrapper<JiraStatus> status;
     private FieldWrapper<JiraIssueType> issuetype;
     private FieldWrapper<List<JiraComment>> comment;
-  }
-
-  /**
-   * Downloaded separately because of iconUrl field, not included in server response in
-   * REST API 2.0.alpha1
-   */
-  public void setIssueType(JiraIssueType issueType) {
-    fields.issuetype = new FieldWrapper<JiraIssueType>(issueType);
   }
 }

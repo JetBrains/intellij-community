@@ -105,15 +105,15 @@ public class ModuleRunConfigurationManagerTest extends LightPlatformTestCase {
     assertSameElements("One config should be added to state", myAddedElements, Collections.singleton(mySettings));
   }
 
-  public void testOtherModuleRemoved() throws Exception {
+  public void testBeforeOtherModuleRemoved() throws Exception {
     myRemovedSettings.clear();
-    myManager.moduleRemoved(getProject(), getModule());
+    myManager.beforeModuleRemoved(getProject(), getModule());
     assertEmpty("No settings should be removed", myRemovedSettings);
   }
 
-  public void testMyModuleRemoved() throws Exception {
+  public void testBeforeMyModuleRemoved() throws Exception {
     myRemovedSettings.clear();
-    myManager.moduleRemoved(getProject(), myModule);
+    myManager.beforeModuleRemoved(getProject(), myModule);
     assertSameElements("one run config should be removed", myRemovedSettings, Collections.singleton(mySettings));
   }
 

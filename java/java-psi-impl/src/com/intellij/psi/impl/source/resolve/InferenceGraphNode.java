@@ -15,33 +15,28 @@
  */
 package com.intellij.psi.impl.source.resolve;
 
-import com.intellij.psi.PsiTypeParameter;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * User: anna
  * Date: 7/4/13
  */
 public class InferenceGraphNode<T> {
-  private final T myValue;
-  private final List<InferenceGraphNode<T>> myDependencies = new ArrayList<InferenceGraphNode<T>>();
+  private final List<T> myValue = new ArrayList<T>();
+  private Set<InferenceGraphNode<T>> myDependencies = new HashSet<InferenceGraphNode<T>>();
 
   private int index = -1;
   private int lowlink;
 
   public InferenceGraphNode(T value) {
-    myValue = value;
+    myValue.add(value);
   }
 
-  public T getValue() {
+  public List<T> getValue() {
     return myValue;
   }
 
-  public List<InferenceGraphNode<T>> getDependencies() {
+  public Set<InferenceGraphNode<T>> getDependencies() {
     return myDependencies;
   }
 
@@ -59,6 +54,58 @@ public class InferenceGraphNode<T> {
       }
     }
     return result;
+  }
+
+  public static <T> ArrayList<InferenceGraphNode<T>> initNodes(Collection<InferenceGraphNode<T>> allNodes) {
+    final List<List<InferenceGraphNode<T>>> nodes = tarjan(allNodes);
+    final ArrayList<InferenceGraphNode<T>> acyclicNodes = new ArrayList<InferenceGraphNode<T>>();
+    for (List<InferenceGraphNode<T>> cycle : nodes) {
+      acyclicNodes.add(merge(cycle, allNodes));
+    }
+    return acyclicNodes;
+  }
+
+  private static <T> InferenceGraphNode<T> merge(final List<InferenceGraphNode<T>> cycle,
+                                                 final Collection<InferenceGraphNode<T>> allNodes) {
+    assert !cycle.isEmpty();
+    final InferenceGraphNode<T> root = cycle.get(0);
+    if (cycle.size() > 1) {
+      for (int i = 1; i < cycle.size(); i++) {
+        final InferenceGraphNode<T> cycleNode = cycle.get(i);
+
+        root.copyFrom(cycleNode);
+        root.filterInterCycleDependencies();
+
+        for (InferenceGraphNode<T> node : allNodes) {
+          if (node.myDependencies.remove(cycleNode)) {
+            node.myDependencies.add(root);
+          }
+        }
+      }
+    }
+    return root;
+  }
+
+  private void filterInterCycleDependencies() {
+    boolean includeSelfDependency = false;
+    for (Iterator<InferenceGraphNode<T>> iterator = myDependencies.iterator(); iterator.hasNext(); ) {
+      InferenceGraphNode<T> d = iterator.next();
+      assert d.myValue.size() >= 1;
+      final T initialNodeValue = d.myValue.get(0);
+      if (myValue.contains(initialNodeValue)) {
+        includeSelfDependency = true;
+        iterator.remove();
+      }
+    }
+
+    if (includeSelfDependency) {
+      myDependencies.add(this);
+    }
+  }
+
+  private void copyFrom(final InferenceGraphNode<T> cycleNode) {
+    myValue.addAll(cycleNode.myValue);
+    myDependencies.addAll(cycleNode.myDependencies);
   }
 
   private static <T> int strongConnect(InferenceGraphNode<T> currentNode,

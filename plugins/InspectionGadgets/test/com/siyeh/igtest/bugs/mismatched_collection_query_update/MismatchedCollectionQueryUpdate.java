@@ -190,4 +190,10 @@ class MethReference<E> {
     interface I<E> {
         boolean _(E e);
     }
+
+    void qTest() {
+        Map<Integer, Boolean> map = new HashMap<>();
+        map.put(1, true);
+        I<Integer> mapper = map::get;
+    }
 }

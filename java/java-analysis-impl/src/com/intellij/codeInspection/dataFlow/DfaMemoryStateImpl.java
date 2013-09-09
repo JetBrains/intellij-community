@@ -90,6 +90,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (myStateSize != that.myStateSize) return false;
     if (myDistinctClasses.size() != that.myDistinctClasses.size()) return false;
+    if (myStack.size() != that.myStack.size()) return false;
+    if (myOffsetStack.size() != that.myOffsetStack.size()) return false;
+    if (myVariableStates.size() != that.myVariableStates.size()) return false;
+    if (myUnknownVariables.size() != that.myUnknownVariables.size()) return false;
 
     if (!myStack.equals(that.myStack)) return false;
     if (!myOffsetStack.equals(that.myOffsetStack)) return false;
@@ -549,7 +553,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public DfaConstValue getConstantValue(DfaVariableValue value) {
     DfaConstValue result = null;
     for (DfaValue equal : getEqClassesFor(value)) {
-      if (equal == value) continue;
+      if (equal instanceof DfaVariableValue) continue;
       DfaConstValue constValue = asConstantValue(equal);
       if (constValue == null) return null;
       result = constValue;

@@ -35,7 +35,7 @@ public interface TodoCacheManager {
 
 
   /**
-   * @return all VirtualFile's that contain todo-items under project roots
+   * @return all VirtualFile's that contain todoItems under project roots
    */
   @NotNull
   PsiFile[] getFilesWithTodoItems();
@@ -43,10 +43,10 @@ public interface TodoCacheManager {
   /**
    * @return -1 if it's not known
    */
-  int getTodoCount(@NotNull VirtualFile file, IndexPatternProvider patternProvider);
+  int getTodoCount(@NotNull VirtualFile file, @NotNull IndexPatternProvider patternProvider);
 
   /**
    * @return -1 if it's not known
    */
-  int getTodoCount(@NotNull VirtualFile file, IndexPattern pattern);
+  int getTodoCount(@NotNull VirtualFile file, @NotNull IndexPattern pattern);
 }

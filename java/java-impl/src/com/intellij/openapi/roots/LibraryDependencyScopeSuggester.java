@@ -28,4 +28,15 @@ public abstract class LibraryDependencyScopeSuggester {
 
   @Nullable
   public abstract DependencyScope getDefaultDependencyScope(@NotNull Library library);
+
+  @NotNull
+  public static DependencyScope getDefaultScope(@NotNull Library library) {
+    for (LibraryDependencyScopeSuggester suggester : EP_NAME.getExtensions()) {
+      DependencyScope scope = suggester.getDefaultDependencyScope(library);
+      if (scope != null) {
+        return scope;
+      }
+    }
+    return DependencyScope.COMPILE;
+  }
 }

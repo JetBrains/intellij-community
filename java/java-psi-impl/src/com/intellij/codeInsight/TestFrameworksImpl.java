@@ -91,4 +91,13 @@ public class TestFrameworksImpl extends TestFrameworks {
     }
     return null;
   }
+
+  @Override
+  protected boolean hasConfigMethods(PsiClass psiClass) {
+    final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
+    for (TestFramework framework : testFrameworks) {
+      if (framework.findSetUpMethod(psiClass) != null || framework.findTearDownMethod(psiClass) != null) return true;
+    }
+    return false;
+  }
 }

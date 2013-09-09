@@ -453,6 +453,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public void setMavenizedModules(Collection<Module> modules, boolean mavenized) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     for (Module m : modules) {
+      if (m.isDisposed()) continue;
+
       if (mavenized) {
         m.setOption(getMavenizedModuleOptionName(), "true");
       }
@@ -482,6 +484,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void addManagedFiles(@NotNull List<VirtualFile> files) {
     addManagedFilesWithProfiles(files, Collections.<String>emptyList());
+  }
+
+  public void addManagedFilesOrUnignore(@NotNull List<VirtualFile> files) {
+    removeIgnoredFilesPaths(MavenUtil.collectPaths(files));
+    addManagedFiles(files);
   }
 
   public void removeManagedFiles(@NotNull List<VirtualFile> files) {
@@ -627,6 +634,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public void setIgnoredFilesPaths(@NotNull List<String> paths) {
     if (!isInitialized()) return;
     myProjectsTree.setIgnoredFilesPaths(paths);
+  }
+
+  public void removeIgnoredFilesPaths(final Collection<String> paths) {
+    if (!isInitialized()) return;
+    myProjectsTree.removeIgnoredFilesPaths(paths);
   }
 
   public boolean getIgnoredState(@NotNull MavenProject project) {

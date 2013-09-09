@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomManager;
@@ -171,7 +172,7 @@ public abstract class DocumentCommitProcessor {
 
   public static TextRange getChangedPsiRange(PsiFile file, int changeStart, int changeEnd, int newTextLength) {
     if (file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
-      return new TextRange(changeStart, changeEnd);
+      return new UnfairTextRange(changeStart, changeEnd);
     }
     return new TextRange(0, newTextLength);
   }

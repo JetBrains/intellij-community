@@ -37,7 +37,7 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
 
   private final PsiClass myClass;
 
-  public MoveClassToSeparateFileFix(PsiClass aClass) {
+  public MoveClassToSeparateFileFix(@NotNull PsiClass aClass) {
     myClass = aClass;
   }
 

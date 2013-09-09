@@ -30,6 +30,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -660,12 +661,12 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     final String oldModifier = VisibilityUtil.getVisibilityModifier(modifierList);
     final String newModifier = getVisibility();
     String newModifierStr = VisibilityUtil.getVisibilityString(newModifier);
-    if (!newModifier.equals(oldModifier)) {
+    if (!Comparing.equal(newModifier, oldModifier)) {
       int index = modifiers.indexOf(oldModifier);
       if (index >= 0) {
         final StringBuilder buf = new StringBuilder(modifiers);
         buf.replace(index,
-                    index + oldModifier.length() + ("".equals(newModifierStr) ? 1 : 0),
+                    index + oldModifier.length() + (StringUtil.isEmpty(newModifierStr) ? 1 : 0),
                     newModifierStr);
         modifiers = buf.toString();
       } else {

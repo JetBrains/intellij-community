@@ -31,7 +31,7 @@ public class AddFileAsMavenProjectAction extends MavenAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext context = e.getDataContext();
     MavenProjectsManager manager = MavenActionUtil.getProjectsManager(context);
-    manager.addManagedFiles(Collections.singletonList(getSelectedFile(context)));
+    manager.addManagedFilesOrUnignore(Collections.singletonList(getSelectedFile(context)));
   }
 
   @Override

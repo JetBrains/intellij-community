@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.html.HtmlFileImpl;
@@ -143,11 +144,11 @@ public abstract class XmlCodeFoldingBuilder implements FoldingBuilder, DumbAware
 
         if (lastAttributeBeforeCR != null) {
           int attributeEnd = lastAttributeBeforeCR.getTextRange().getEndOffset();
-          return new TextRange(attributeEnd, end);
+          return new UnfairTextRange(attributeEnd, end);
         }
       }
 
-      return new TextRange(nameEnd, end);
+      return new UnfairTextRange(nameEnd, end);
     } else if (element instanceof XmlComment) {
       final XmlComment xmlComment = (XmlComment)element;
       final TextRange textRange = element.getTextRange();

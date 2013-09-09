@@ -83,10 +83,19 @@ public abstract class GroovyUtils {
 
     PsiFile psiFile = manager.findFile(virtualFile);
     if ((psiFile instanceof GroovyFile)) {
-      return getClassDefinition((GroovyFile)psiFile, virtualFile.getNameWithoutExtension());
+      return getClassDefinition((GroovyFile)psiFile);
     }
 
     return null;
+  }
+
+  @Nullable
+  public static GrTypeDefinition getClassDefinition(@NotNull GroovyFile groovyFile) {
+    String fileName = groovyFile.getName();
+    int idx = fileName.lastIndexOf('.');
+    if (idx < 0) return null;
+
+    return getClassDefinition(groovyFile, fileName.substring(0, idx));
   }
 
   @Nullable

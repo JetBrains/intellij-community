@@ -28,7 +28,6 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
@@ -55,15 +54,12 @@ public class PackageViewProjectNode extends AbstractProjectNode {
       return modulesAndGroups(allModules.toArray(new Module[allModules.size()]));
     }
     else {
-      final List<VirtualFile> sourceRoots = new ArrayList<VirtualFile>();
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-      ContainerUtil.addAll(sourceRoots, projectRootManager.getContentSourceRoots());
-
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
       final Set<PsiPackage> topLevelPackages = new HashSet<PsiPackage>();
 
-      for (final VirtualFile root : sourceRoots) {
+      for (final VirtualFile root : projectRootManager.getContentSourceRoots()) {
         final PsiDirectory directory = psiManager.findDirectory(root);
         if (directory == null) {
           continue;

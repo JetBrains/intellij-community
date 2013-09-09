@@ -57,7 +57,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
   @NonNls private static final String IS_PREFIX = "is";
   @NonNls private static final String SET_PREFIX = "set";
 
-  public CreatePropertyFromUsageFix(PsiMethodCallExpression methodCall) {
+  public CreatePropertyFromUsageFix(@NotNull PsiMethodCallExpression methodCall) {
     myMethodCall = methodCall;
   }
 

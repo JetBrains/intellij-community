@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.execution.junit2;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.events.*;
 import com.intellij.execution.junit2.info.TestInfo;
+import com.intellij.execution.junit2.states.IgnoredState;
 import com.intellij.execution.junit2.states.Statistics;
 import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.AbstractTestProxy;
@@ -144,7 +145,7 @@ public class TestProxy extends AbstractTestProxy {
 
   @Override
   public boolean isIgnored() {
-    return getMagnitude() == PoolOfTestStates.IGNORED_INDEX;
+    return myState instanceof IgnoredState;
   }
 
   public boolean isPassed() {

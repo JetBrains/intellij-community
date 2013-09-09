@@ -1,6 +1,12 @@
 class Util {
   {
-    FooZoo<caret>
+    Another.fooZoo<caret>
   }
 
+}
+
+class Another {
+  private static void fooZoo() {}
+  static void fooZooGoo() {}
+  static void fooZooImpl() {}
 }

@@ -60,6 +60,6 @@ public class DupInstruction extends Instruction {
   }
 
   public String toString() {
-    return "DUP";
+    return "DUP(" + myValueCount + " top stack values, " + myDuplicationCount + " times)";
   }
 }

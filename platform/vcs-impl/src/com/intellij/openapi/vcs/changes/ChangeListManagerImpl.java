@@ -1459,10 +1459,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     ourUpdateAlarm.get().execute(r);
   }
 
-  /**
-   * Can be called only from not AWT thread; to do smthg after ChangeListManager refresh, call invokeAfterUpdate
-   */
+  @TestOnly
   public boolean ensureUpToDate(final boolean canBeCanceled) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      updateImmediately();
+      return true;
+    }
     myVfsListener.flushDirt();
     final EnsureUpToDateFromNonAWTThread worker = new EnsureUpToDateFromNonAWTThread(myProject);
     worker.execute();

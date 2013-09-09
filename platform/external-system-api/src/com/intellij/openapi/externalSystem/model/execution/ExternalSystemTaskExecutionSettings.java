@@ -37,6 +37,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   @NotNull @NonNls public static final String TAG_NAME = "ExternalSystemSettings";
 
   private List<String> myTaskNames = ContainerUtilRt.newArrayList();
+  private List<String> myTaskDescriptions = ContainerUtilRt.newArrayList();
 
   private String myExternalSystemIdString;
   private String myExternalProjectPath;
@@ -78,6 +79,14 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myTaskNames = taskNames;
   }
 
+  public List<String> getTaskDescriptions() {
+    return myTaskDescriptions;
+  }
+
+  public void setTaskDescriptions(List<String> taskDescriptions) {
+    myTaskDescriptions = taskDescriptions;
+  }
+
   @Override
   public ExternalSystemTaskExecutionSettings clone() {
     ExternalSystemTaskExecutionSettings result = new ExternalSystemTaskExecutionSettings();
@@ -85,6 +94,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     result.setExternalProjectPath(getExternalProjectPath());
     result.setVmOptions(getVmOptions());
     result.setTaskNames(ContainerUtilRt.newArrayList(getTaskNames()));
+    result.setTaskDescriptions(ContainerUtilRt.newArrayList(getTaskDescriptions()));
     return result;
   }
 

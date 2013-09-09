@@ -29,7 +29,6 @@ public interface NavigatableFileEditor extends FileEditor {
   /**
    * Check whatever the editor can navigate to the given element
    *
-   * @param navigatable
    * @return true if editor can navigate, false otherwise
    */
   boolean canNavigateTo(@NotNull final Navigatable navigatable);

@@ -100,6 +100,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private PropertyChangeListener myButtonSynchronizer;
     private boolean myMouseInside = false;
     private JBPopup myPopup;
+    private boolean myForceTransparent = false;
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
@@ -194,6 +195,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
             component.dispatchEvent(event);
         }
       }
+    }
+
+    public void setForceTransparent(boolean transparent) {
+      myForceTransparent = transparent;
     }
 
     public void showPopup() {
@@ -352,9 +357,24 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public void paint(Graphics g) {
       GraphicsUtil.setupAntialiasing(g);
-
-      final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
       final Dimension size = getSize();
+      final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
+
+      if (myForceTransparent) {
+        final Icon icon = getIcon();
+        int x = 7;
+        if (icon != null) {
+          icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
+          x += icon.getIconWidth() + 3;
+        }
+        if (!StringUtil.isEmpty(getText())) {
+          final Font font = getFont();
+          g.setFont(font);
+          g.setColor(UIManager.getColor("Panel.foreground"));
+          g.drawString(getText(), x, (size.height + font.getSize()) / 2 - 1);
+        }
+      } else {
+
       if (isSmallVariant()) {
         final Graphics2D g2 = (Graphics2D)g;
         g2.setColor(UIUtil.getControlColor());
@@ -401,6 +421,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       else {
         paintComponent(g);
       }
+    }
       final Insets insets = super.getInsets();
       final Icon icon = isEnabled() ? AllIcons.General.ComboArrow : DISABLED_ARROW_ICON;
       final int x;

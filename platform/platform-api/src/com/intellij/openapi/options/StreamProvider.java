@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -24,36 +25,41 @@ import java.io.InputStream;
 
 public interface StreamProvider {
   StreamProvider[] EMPTY_ARRAY = new StreamProvider[0];
-  StreamProvider DEFAULT = new StreamProvider(){
-    public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType, boolean async) throws IOException {
+
+  StreamProvider DEFAULT = new StreamProvider() {
+    @Override
+    public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
 
     }
 
-    public InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException {
+    @Override
+    public InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException {
       return null;
     }
 
-    public String[] listSubFiles(final String fileSpec) {
+    @Override
+    public String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    public void deleteFile(final String fileSpec, final RoamingType roamingType) {
-
+    @Override
+    public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
     }
 
+    @Override
     public boolean isEnabled() {
       return false;
     }
   };
 
-  void saveContent(String fileSpec, InputStream content, final long size, final RoamingType roamingType, boolean async) throws IOException;
+  void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException;
 
   @Nullable
-  InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException;
+  InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException;
 
-  String[] listSubFiles(final String fileSpec);
+  String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType);
 
-  void deleteFile(final String fileSpec, final RoamingType roamingType);
+  void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType);
 
   boolean isEnabled();
 }

@@ -34,7 +34,9 @@ import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.io.Responses;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Vector;
 
 public class XmlRpcServerImpl implements XmlRpcServer {
   private static final Logger LOG = Logger.getInstance(XmlRpcServerImpl.class);
@@ -146,7 +148,51 @@ public class XmlRpcServerImpl implements XmlRpcServer {
     throw exception;
   }
 
-  private static Object invokeHandler(@NotNull Object handler, XmlRpcServerRequest request) throws Exception {
-    return (handler instanceof XmlRpcHandler ? (XmlRpcHandler)handler : new Invoker(handler)).execute(request.getMethodName(), request.getParameters());
+  private static Object invokeHandler(@NotNull Object handler, XmlRpcServerRequest request) throws Throwable {
+    return handler instanceof XmlRpcHandler ? (XmlRpcHandler)handler : invoke(handler, request.getMethodName(), request.getParameters());
+  }
+
+  private static Object invoke(Object target, String methodName, @SuppressWarnings("UseOfObsoleteCollectionType") Vector params) throws Throwable {
+    Class<?> targetClass = (target instanceof Class) ? (Class) target : target.getClass();
+    Class[] argClasses = null;
+    Object[] argValues = null;
+    if (params != null) {
+      argClasses = new Class[params.size()];
+      argValues = new Object[params.size()];
+      for (int i = 0; i < params.size(); i++) {
+        argValues[i] = params.elementAt(i);
+        if (argValues[i] instanceof Integer) {
+          argClasses[i] = Integer.TYPE;
+        }
+        else if (argValues[i] instanceof Double) {
+          argClasses[i] = Double.TYPE;
+        }
+        else if (argValues[i] instanceof Boolean) {
+          argClasses[i] = Boolean.TYPE;
+        }
+        else {
+          argClasses[i] = argValues[i].getClass();
+        }
+      }
+    }
+
+    Method method;
+    int dot = methodName.lastIndexOf('.');
+    if (dot > -1 && dot + 1 < methodName.length()) {
+      methodName = methodName.substring(dot + 1);
+    }
+    method = targetClass.getMethod(methodName, argClasses);
+
+    // Our policy is to make all public methods callable except the ones defined in java.lang.Object
+    if (method.getDeclaringClass() == Object.class) {
+      throw new XmlRpcException(0, "Invoker can't call methods defined in java.lang.Object");
+    }
+
+    Object returnValue = method.invoke(target, argValues);
+    if (returnValue == null && method.getReturnType() == Void.TYPE) {
+      // Not supported by the spec.
+      throw new IllegalArgumentException("void return types for handler methods not supported, " + methodName);
+    }
+    return returnValue;
   }
 }

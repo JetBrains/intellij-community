@@ -34,6 +34,7 @@ import java.util.Date;
  */
 public class SvnInfoStructure {
   public File myFile;
+  public String relativeUrl;
   public SVNURL myUrl;
   public SVNURL myRootURL;
   public long myRevision;

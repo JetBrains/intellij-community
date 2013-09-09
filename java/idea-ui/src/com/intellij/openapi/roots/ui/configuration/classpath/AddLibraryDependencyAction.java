@@ -112,22 +112,8 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
       }
     }
     final LibraryOrderEntry orderEntry = rootModel.addLibraryEntry(item);
-    DependencyScope defaultScope = getDefaultScope(item);
-    if (defaultScope != null) {
-      orderEntry.setScope(defaultScope);
-    }
+    orderEntry.setScope(LibraryDependencyScopeSuggester.getDefaultScope(item));
     return ClasspathTableItem.createLibItem(orderEntry, myContext);
-  }
-
-  @Nullable
-  private static DependencyScope getDefaultScope(Library item) {
-    for (LibraryDependencyScopeSuggester suggester : LibraryDependencyScopeSuggester.EP_NAME.getExtensions()) {
-      DependencyScope scope = suggester.getDefaultDependencyScope(item);
-      if (scope != null) {
-        return scope;
-      }
-    }
-    return null;
   }
 
   @Override

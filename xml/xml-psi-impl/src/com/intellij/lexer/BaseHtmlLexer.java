@@ -340,7 +340,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   protected boolean isValidAttributeValueTokenType(final IElementType tokenType) {
     return tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
            tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN ||
-            tokenType == XmlTokenType.XML_CHAR_ENTITY_REF;
+           tokenType == XmlTokenType.XML_CHAR_ENTITY_REF;
   }
 
   public void advance() {

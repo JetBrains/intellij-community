@@ -24,7 +24,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
-import com.intellij.psi.search.TodoAttributes;
+import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBus;
@@ -63,8 +63,8 @@ public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
 
   public void resetToDefaultTodoPatterns() {
     myTodoPatterns = new TodoPattern[]{
-      new TodoPattern("\\btodo\\b.*", TodoAttributes.createDefault(), false),
-      new TodoPattern("\\bfixme\\b.*", TodoAttributes.createDefault(), false),
+      new TodoPattern("\\btodo\\b.*", TodoAttributesUtil.createDefault(), false),
+      new TodoPattern("\\bfixme\\b.*", TodoAttributesUtil.createDefault(), false),
     };
     myTodoFilters = new TodoFilter[]{};
     buildIndexPatterns();
@@ -166,8 +166,8 @@ public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
     for (Object o : element.getChildren()) {
       Element child = (Element)o;
       if (ELEMENT_PATTERN.equals(child.getName())) {
-        TodoPattern pattern = new TodoPattern();
-        pattern.readExternal(child);
+        TodoPattern pattern = new TodoPattern(TodoAttributesUtil.createDefault());
+        pattern.readExternal(child, TodoAttributesUtil.getDefaultColorSchemeTextAttributes());
         patternsList.add(pattern);
       }
       else if (ELEMENT_FILTER.equals(child.getName())) {

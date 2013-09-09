@@ -28,13 +28,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubJsonException;
+import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException;
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubSslSupport;
 import org.jetbrains.plugins.github.util.GithubUrlUtil;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -209,7 +213,11 @@ public class GithubApiUtil {
       case HttpStatus.SC_UNAUTHORIZED:
       case HttpStatus.SC_PAYMENT_REQUIRED:
       case HttpStatus.SC_FORBIDDEN:
-        throw new GithubAuthenticationException("Request response: " + getErrorMessage(method));
+        String message = getErrorMessage(method);
+        if (message.contains("API rate limit exceeded")) {
+          throw new GithubRateLimitExceededException(message);
+        }
+        throw new GithubAuthenticationException("Request response: " + message);
       default:
         throw new GithubStatusCodeException(code + ": " + getErrorMessage(method), code);
     }
@@ -457,21 +465,32 @@ public class GithubApiUtil {
     List<GithubRepo> repos = new ArrayList<GithubRepo>();
 
     repos.addAll(getUserRepos(auth));
-
-    String path = "/user/orgs?" + PER_PAGE;
-    PagedRequest<GithubOrg> request = new PagedRequest<GithubOrg>(path, GithubOrg.class, GithubOrgRaw[].class);
-
-    for (GithubOrg org : request.getAll(auth)) {
-      String pathOrg = "/orgs/" + org.getLogin() + "/repos?type=member&" + PER_PAGE;
-      PagedRequest<GithubRepo> requestOrg = new PagedRequest<GithubRepo>(pathOrg, GithubRepo.class, GithubRepoRaw[].class);
-      repos.addAll(requestOrg.getAll(auth));
-    }
-
-    String pathWatched = "/user/subscriptions?" + PER_PAGE;
-    PagedRequest<GithubRepo> requestWatched = new PagedRequest<GithubRepo>(pathWatched, GithubRepo.class, GithubRepoRaw[].class);
-    repos.addAll(requestWatched.getAll(auth));
+    repos.addAll(getMembershipRepos(auth));
+    repos.addAll(getWatchedRepos(auth));
 
     return repos;
+  }
+
+  @NotNull
+  public static List<GithubRepoOrg> getMembershipRepos(@NotNull GithubAuthData auth) throws IOException {
+    String orgsPath = "/user/orgs?" + PER_PAGE;
+    PagedRequest<GithubOrg> orgsRequest = new PagedRequest<GithubOrg>(orgsPath, GithubOrg.class, GithubOrgRaw[].class);
+
+    List<GithubRepoOrg> repos = new ArrayList<GithubRepoOrg>();
+    for (GithubOrg org : orgsRequest.getAll(auth)) {
+      String path = "/orgs/" + org.getLogin() + "/repos?type=member&" + PER_PAGE;
+      PagedRequest<GithubRepoOrg> request = new PagedRequest<GithubRepoOrg>(path, GithubRepoOrg.class, GithubRepoRaw[].class);
+      repos.addAll(request.getAll(auth));
+    }
+
+    return repos;
+  }
+
+  @NotNull
+  public static List<GithubRepo> getWatchedRepos(@NotNull GithubAuthData auth) throws IOException {
+    String pathWatched = "/user/subscriptions?" + PER_PAGE;
+    PagedRequest<GithubRepo> requestWatched = new PagedRequest<GithubRepo>(pathWatched, GithubRepo.class, GithubRepoRaw[].class);
+    return requestWatched.getAll(auth);
   }
 
   @NotNull
@@ -535,11 +554,15 @@ public class GithubApiUtil {
     return createDataFromRaw(fromJson(postRequest(auth, path, gson.toJson(request)), GithubRepoRaw.class), GithubRepo.class);
   }
 
+  /*
+   * Open issues only
+   */
   @NotNull
   public static List<GithubIssue> getIssuesAssigned(@NotNull GithubAuthData auth,
                                                     @NotNull String user,
                                                     @NotNull String repo,
-                                                    @Nullable String assigned) throws IOException {
+                                                    @Nullable String assigned,
+                                                    int max) throws IOException {
     String path;
     if (StringUtil.isEmptyOrSpaces(assigned)) {
       path = "/repos/" + user + "/" + repo + "/issues?" + PER_PAGE;
@@ -550,10 +573,17 @@ public class GithubApiUtil {
 
     PagedRequest<GithubIssue> request = new PagedRequest<GithubIssue>(path, GithubIssue.class, GithubIssueRaw[].class);
 
-    return request.getAll(auth);
+    List<GithubIssue> result = new ArrayList<GithubIssue>();
+    while (request.hasNext() && max > result.size()) {
+      result.addAll(request.next(auth));
+    }
+    return result;
   }
 
   @NotNull
+  /*
+   * All issues - open and closed
+   */
   public static List<GithubIssue> getIssuesQueried(@NotNull GithubAuthData auth,
                                                    @NotNull String user,
                                                    @NotNull String repo,
@@ -598,6 +628,32 @@ public class GithubApiUtil {
 
     JsonElement result = getRequest(auth, path);
     return createDataFromRaw(fromJson(result, GithubCommitRaw.class), GithubCommitDetailed.class);
+  }
+
+  @NotNull
+  public static List<GithubCommitComment> getCommitComments(@NotNull GithubAuthData auth,
+                                                            @NotNull String user,
+                                                            @NotNull String repo,
+                                                            @NotNull String sha) throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/commits/" + sha + "/comments";
+
+    PagedRequest<GithubCommitComment> request =
+      new PagedRequest<GithubCommitComment>(path, GithubCommitComment.class, GithubCommitCommentRaw[].class, ACCEPT_HTML_BODY_MARKUP);
+
+    return request.getAll(auth);
+  }
+
+  @NotNull
+  public static List<GithubCommitComment> getPullRequestComments(@NotNull GithubAuthData auth,
+                                                            @NotNull String user,
+                                                            @NotNull String repo,
+                                                            long id) throws IOException {
+    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/comments";
+
+    PagedRequest<GithubCommitComment> request =
+      new PagedRequest<GithubCommitComment>(path, GithubCommitComment.class, GithubCommitCommentRaw[].class, ACCEPT_HTML_BODY_MARKUP);
+
+    return request.getAll(auth);
   }
 
   @NotNull

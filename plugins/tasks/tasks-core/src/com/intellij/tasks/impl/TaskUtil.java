@@ -16,6 +16,7 @@
 
 package com.intellij.tasks.impl;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
@@ -24,7 +25,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,9 +36,12 @@ import java.util.regex.Pattern;
  */
 public class TaskUtil {
   private static SimpleDateFormat ISO8601_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-  // Almost ISO-8601 strict except date parts may be separated by '/' as well
+  // Almost ISO-8601 strict except date parts may be separated by '/'
+  // and date only also allowed just in case
   private static Pattern ISO8601_DATE_PATTERN = Pattern.compile(
-    "(\\d{4}[/-]\\d{2}[/-]\\d{2})[ T](\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)?");
+    "(\\d{4}[/-]\\d{2}[/-]\\d{2})" +                  // date
+    "(?:[ T](\\d{2}:\\d{2}:\\d{2})(.\\d{3,})?" +      // optional time and milliseconds
+    "([+-]\\d{2}:\\d{2}|[+-]\\d{4}|[+-]\\d{2}|Z)?)?");// optional timezone info
 
   public static String formatTask(@NotNull Task task, String format) {
     return format.replace("{id}", task.getId()).replace("{number}", task.getNumber())
@@ -55,7 +61,8 @@ public class TaskUtil {
     String text;
     if (task.isIssue()) {
       text = task.getId() + ": " + task.getSummary();
-    } else {
+    }
+    else {
       text = task.getSummary();
     }
     return StringUtil.first(text, 60, true);
@@ -72,15 +79,20 @@ public class TaskUtil {
     }
     String datePart = m.group(1).replace('/', '-');
     String timePart = m.group(2);
+    if (timePart == null) {
+      timePart = "00:00:00";
+    }
     String milliseconds = m.group(3);
-    milliseconds = milliseconds == null? "000" : milliseconds.substring(1, 4);
+    milliseconds = milliseconds == null ? "000" : milliseconds.substring(1, 4);
     String timezone = m.group(4);
     if (timezone == null || timezone.equals("Z")) {
       timezone = "+0000";
-    } else if (timezone.length() == 3) {
+    }
+    else if (timezone.length() == 3) {
       // [+-]HH
       timezone += "00";
-    } else if (timezone.length() == 6) {
+    }
+    else if (timezone.length() == 6) {
       // [+-]HH:MM
       timezone = timezone.substring(0, 3) + timezone.substring(4, 6);
     }
@@ -91,5 +103,40 @@ public class TaskUtil {
     catch (ParseException e) {
       return null;
     }
+  }
+
+  /**
+   * {@link Task#equals(Object)} implementation compares tasks by they unique IDs only.
+   * This method should be used then full comparison is necessary.
+   */
+  public static boolean tasksEqual(@NotNull Task t1, @NotNull Task t2) {
+    if (!t1.getId().equals(t2.getId())) return false;
+    if (!t1.getSummary().equals(t2.getSummary())) return false;
+    if (t1.isClosed() != t2.isClosed()) return false;
+    if (t1.isIssue() != t2.isIssue()) return false;
+    if (!Comparing.equal(t1.getState(), t2.getState())) return false;
+    if (!Comparing.equal(t1.getType(), t2.getType())) return false;
+    if (!Comparing.equal(t1.getDescription(), t2.getDescription())) return false;
+    if (!Comparing.equal(t1.getCreated(), t2.getCreated())) return false;
+    if (!Comparing.equal(t1.getUpdated(), t2.getUpdated())) return false;
+    if (!Comparing.equal(t1.getIssueUrl(), t2.getIssueUrl())) return false;
+    if (!Comparing.equal(t1.getComments(), t2.getComments())) return false;
+    if (!Comparing.equal(t1.getIcon(), t2.getIcon())) return false;
+    if (!Comparing.equal(t1.getCustomIcon(), t2.getCustomIcon())) return false;
+    return Comparing.equal(t1.getRepository(), t2.getRepository());
+  }
+
+  public static boolean tasksEqual(@NotNull List<? extends Task> tasks1, @NotNull List<? extends Task> tasks2) {
+    if (tasks1.size() != tasks2.size()) return false;
+    for (int i = 0; i < tasks1.size(); i++) {
+      if (!tasksEqual(tasks1.get(i), tasks2.get(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean tasksEqual(@NotNull Task[] task1, @NotNull Task[] task2) {
+    return tasksEqual(Arrays.asList(task1), Arrays.asList(task2));
   }
 }

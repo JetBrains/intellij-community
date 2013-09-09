@@ -120,6 +120,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testInstanceofHelpsDetermineTypeInBinaryAnd() { doBasicTest() }
+
   public void testInstanceofHelpsDetermineTypeInBinaryOr() { doBasicTest() }
 
   public void testNotInstanceofDoesntHelpDetermineType() {
@@ -210,6 +211,7 @@ class Foo<A, B> {
   public void testWhileInstanceof() { doBasicTest() }
 
   public void testCompletionInParameterListInClosableBlock() { doBasicTest(); }
+
   public void testCompletionInParameterListInClosableBlock3() { doBasicTest(); }
 
   public void testCompletionInParameterListInClosableBlock2() {
@@ -261,8 +263,9 @@ class Foo<A, B> {
     assert presentation.typeText == 'Integer'
   }
 
-  public void testIntCompletionInPlusMethod() {doBasicTest();}
-  public void testIntCompletionInGenericParameter() {doBasicTest();}
+  public void testIntCompletionInPlusMethod() { doBasicTest(); }
+
+  public void testIntCompletionInGenericParameter() { doBasicTest(); }
 
   public void testWhenSiblingIsStaticallyImported_Method() {
     myFixture.addFileToProject "foo/Foo.groovy", """package foo
@@ -706,7 +709,7 @@ form<caret>"""
     myFixture.checkResult """import static java.lang.String.format
 format(<caret>)"""
   }
-  
+
   public void testImportAsterisk() {
     myFixture.configureByText "a.groovy", "import java.lang.<caret>"
     myFixture.completeBasic()
@@ -826,7 +829,6 @@ class A {
     print myVar<caret>
   }
 }"""
-
   }
 
   public void testParenthesesInMethodCompletion() {
@@ -967,12 +969,13 @@ class Fopppp {
     myFixture.configureByText "a.groovy", text
 
     final LookupElement[] completion = myFixture.completeBasic()
-    return completion.find {println it.lookupString;itemToCheck == it.lookupString}
+    return completion.find { println it.lookupString; itemToCheck == it.lookupString }
   }
 
   public void testWordCompletionInLiterals() {
     checkSingleItemCompletion('def foo = "fo<caret>"', 'def foo = "foo<caret>"')
   }
+
   public void testWordCompletionInLiterals2() {
     checkSingleItemCompletion('''
 println "abcd"
@@ -1028,7 +1031,6 @@ def conti = 4
 while(true) {
   if (tst) cont<caret>
 }""")
-
   }
 
   public void testPreferParametersToClasses() {
@@ -1079,7 +1081,7 @@ class X {
     assertFalse(myFixture.lookupElementStrings.contains('Foo'))
   }
 
-  public void testClassNameBeforeParentheses(){
+  public void testClassNameBeforeParentheses() {
     doBasicTest()
   }
 
@@ -1164,7 +1166,7 @@ public class KeyVO {
     myFixture.addClass("package bar; public class Util { public static void bar() {} }")
     myFixture.configureByText 'a.groovy', 'Util.<caret>'
     myFixture.completeBasic()
-    assertOrderedEquals myFixture.lookupElementStrings[0..1] , ['Util.bar', 'Util.foo']
+    assertOrderedEquals myFixture.lookupElementStrings[0..1], ['Util.bar', 'Util.foo']
 
     def presentation = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
     assertEquals 'Util.bar', presentation.itemText
@@ -1439,7 +1441,7 @@ import java.lang.annotation.Target;
 
     configure('@T<caret> @interface Foo {}')
     myFixture.completeBasic()
-    myFixture.assertPreferredCompletionItems  0, 'TMetaAnno', 'Target', 'TreeSelectionMode', 'TLocalAnno'
+    myFixture.assertPreferredCompletionItems 0, 'TMetaAnno', 'Target', 'TreeSelectionMode', 'TLocalAnno'
   }
 
   void testDiamondCompletion1() {
@@ -1750,11 +1752,11 @@ class Inheritor extends Base {
 }
 """)
 
-    doVariantableTest('Inheritor.fo<caret>','', CompletionType.BASIC, CompletionResult.equal, 'foo', 'forName', 'forName')
+    doVariantableTest('Inheritor.fo<caret>', '', CompletionType.BASIC, CompletionResult.equal, 'foo', 'forName', 'forName')
   }
 
   void testBinding1() {
-   doCompletionTest('''\
+    doCompletionTest('''\
 aaa = 5
 print aa<caret>
 ''', '''\
@@ -1854,5 +1856,23 @@ class Autocompletion {
 ''', '\t', CompletionType.BASIC)
   }
 
+  void testSpaceBeforeMethodCallParentheses() {
+    def settings = CodeStyleSettingsManager.getSettings(myFixture.project).getCommonSettings(GroovyFileType.GROOVY_LANGUAGE)
 
+    boolean old = settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES
+    try {
+      settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true
+      doCompletionTest('''\
+def foooo() {}
+fooo<caret>
+''', '''\
+def foooo() {}
+foooo ()<caret>
+''', '', CompletionType.BASIC)
+    }
+    finally {
+      settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = old
+
+    }
+  }
 }

@@ -203,15 +203,6 @@ public class SearchTextField extends JPanel {
     }
   }
 
-  @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    if (UIUtil.isUnderDarcula() && false) {//todo[kb] fix DarculaTextBorder
-      g.setColor(myTextField.getBackground());
-      g.fillRect(2,3,getWidth(), getHeight()-5);
-    }
-  }
-
   private static boolean hasNativeLeopardSearchControl() {
     return (SystemInfo.isMacOSLeopard && UIUtil.isUnderAquaLookAndFeel()) || UIUtil.isUnderDarcula();
   }

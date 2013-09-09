@@ -18,10 +18,16 @@ package com.intellij.xml.util;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiDelegateReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import com.intellij.xml.impl.schema.XmlSchemaTagsProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -52,11 +58,19 @@ public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends P
     @SuppressWarnings("unchecked") final Object descriptor = getDescriptor((T)element);
     if (descriptor instanceof XmlEnumerationDescriptor) {
       XmlEnumerationDescriptor enumerationDescriptor = (XmlEnumerationDescriptor)descriptor;
-      if (enumerationDescriptor.isFixed() ||
-          enumerationDescriptor.isEnumerated((XmlElement)element) ||
-          unquotedValue.equals(enumerationDescriptor.getDefaultValue())) { // todo case insensitive
+
+      if (enumerationDescriptor.isFixed() || enumerationDescriptor.isEnumerated((XmlElement)element)) {
         //noinspection unchecked
         return enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue);
+      }
+      else if (unquotedValue.equals(enumerationDescriptor.getDefaultValue())) {  // todo case insensitive
+        return ContainerUtil.map2Array(enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue), PsiReference.class,
+                                       new Function<PsiReference, PsiReference>() {
+                                         @Override
+                                         public PsiReference fun(PsiReference reference) {
+                                           return PsiDelegateReference.createSoft(reference, true);
+                                         }
+                                       });
       }
     }
     return PsiReference.EMPTY_ARRAY;

@@ -610,12 +610,11 @@ public abstract class HgUtil {
   @NotNull
   public static HgCommandResult getVersionOutput(@NotNull String executable) throws ShellCommandException, InterruptedException {
     String hgExecutable = executable.trim();
-    ShellCommand shellCommand = new ShellCommand(false);
     List<String> cmdArgs = new ArrayList<String>();
     cmdArgs.add(hgExecutable);
     cmdArgs.add("version");
     cmdArgs.add("-q");
-    return shellCommand
-      .execute(cmdArgs, null, CharsetToolkit.getDefaultSystemCharset());
+    ShellCommand shellCommand = new ShellCommand(cmdArgs, null, CharsetToolkit.getDefaultSystemCharset());
+    return shellCommand.execute();
   }
 }

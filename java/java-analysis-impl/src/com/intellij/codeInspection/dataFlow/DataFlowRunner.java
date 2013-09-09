@@ -38,7 +38,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,16 +50,13 @@ public class DataFlowRunner {
   public static final long ourTimeLimit = 1000 * 1000 * 1000; //1 sec in nanoseconds
 
   private Instruction[] myInstructions;
+  private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<PsiElement, DfaMemoryState>();
   private DfaVariableValue[] myFields;
   private final DfaValueFactory myValueFactory = new DfaValueFactory();
 
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   public static final int MAX_STATES_PER_BRANCH = 300;
-
-  public Instruction getInstruction(int index) {
-    return myInstructions[index];
-  }
 
   protected DataFlowRunner() {
   }
@@ -68,17 +65,19 @@ public class DataFlowRunner {
     return myValueFactory;
   }
 
+  protected void prepareAnalysis(@NotNull PsiElement psiBlock, Iterable<DfaMemoryState> initialStates) {
+  }
+
   @Nullable
-  protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
+  private Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(psiBlock, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) {
       final PsiElement parent = containingClass.getParent();
       final PsiCodeBlock block = DfaPsiUtil.getTopmostBlockInSameClass(parent);
       if ((parent instanceof PsiNewExpression || parent instanceof PsiDeclarationStatement) && block != null) {
-        final EnvironmentalInstructionVisitor envVisitor = new EnvironmentalInstructionVisitor(visitor, parent);
-        final RunnerResult result = analyzeMethod(block, envVisitor);
+        final RunnerResult result = analyzeMethod(block, visitor);
         if (result == RunnerResult.OK) {
-          final Collection<DfaMemoryState> closureStates = envVisitor.getClosureStates();
+          final Collection<DfaMemoryState> closureStates = myNestedClosures.get(DfaPsiUtil.getTopmostBlockInSameClass(psiBlock));
           if (!closureStates.isEmpty()) {
             return closureStates;
           }
@@ -91,13 +90,16 @@ public class DataFlowRunner {
   }
 
   public final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, InstructionVisitor visitor) {
-    return analyzeMethod(psiBlock, visitor, false);
+    Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor);
+    return initialStates == null ? RunnerResult.NOT_APPLICABLE : analyzeMethod(psiBlock, visitor, false, initialStates);
   }
   
-  public final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, InstructionVisitor visitor, boolean ignoreAssertions) {
+  public final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock,
+                                          InstructionVisitor visitor,
+                                          boolean ignoreAssertions,
+                                          @NotNull Collection<DfaMemoryState> initialStates) {
     try {
-      final Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor);
-      if (initialStates == null) return RunnerResult.NOT_APPLICABLE;
+      prepareAnalysis(psiBlock, initialStates);
 
       final ControlFlow flow = createControlFlowAnalyzer().buildControlFlow(psiBlock, ignoreAssertions);
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
@@ -105,6 +107,7 @@ public class DataFlowRunner {
       int endOffset = flow.getInstructionCount();
       myInstructions = flow.getInstructions();
       myFields = flow.getFields();
+      myNestedClosures.clear();
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("Analyzing code block: " + psiBlock.getText());
@@ -141,6 +144,7 @@ public class DataFlowRunner {
         if (LOG.isDebugEnabled()) {
           LOG.debug(instructionState.toString());
         }
+        //System.out.println(instructionState.toString());
 
         Instruction instruction = instructionState.getInstruction();
         long distance = instructionState.getDistanceFromStart();
@@ -152,19 +156,12 @@ public class DataFlowRunner {
           }
         }
 
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(instructionState.toString());
-        }
-        //System.out.println(instructionState.toString());
-
-        DfaInstructionState[] after = instruction.accept(this, instructionState.getMemoryState(), visitor);
-        if (after != null) {
-          for (DfaInstructionState state : after) {
-            Instruction nextInstruction = state.getInstruction();
-            if ((!(nextInstruction instanceof BranchingInstruction) || !nextInstruction.isMemoryStateProcessed(state.getMemoryState())) && instruction.getIndex() < endOffset) {
-              state.setDistanceFromStart(distance + 1);
-              queue.add(state);
-            }
+        DfaInstructionState[] after = acceptInstruction(visitor, instructionState);
+        for (DfaInstructionState state : after) {
+          Instruction nextInstruction = state.getInstruction();
+          if ((!(nextInstruction instanceof BranchingInstruction) || !nextInstruction.isMemoryStateProcessed(state.getMemoryState())) && instruction.getIndex() < endOffset) {
+            state.setDistanceFromStart(distance + 1);
+            queue.add(state);
           }
         }
 
@@ -187,6 +184,47 @@ public class DataFlowRunner {
     }
   }
 
+  private DfaInstructionState[] acceptInstruction(InstructionVisitor visitor, DfaInstructionState instructionState) {
+    Instruction instruction = instructionState.getInstruction();
+    if (instruction instanceof MethodCallInstruction) {
+      PsiCallExpression anchor = ((MethodCallInstruction)instruction).getCallExpression();
+      if (anchor instanceof PsiNewExpression) {
+        PsiAnonymousClass anonymousClass = ((PsiNewExpression)anchor).getAnonymousClass();
+        if (anonymousClass != null) {
+          registerNestedClosures(instructionState, anonymousClass);
+        }
+      }
+    }
+    else if (instruction instanceof EmptyInstruction) {
+      PsiElement anchor = ((EmptyInstruction)instruction).getAnchor();
+      if (anchor instanceof PsiDeclarationStatement) {
+        for (PsiElement element : ((PsiDeclarationStatement)anchor).getDeclaredElements()) {
+          if (element instanceof PsiClass) {
+            registerNestedClosures(instructionState, (PsiClass)element);
+          }
+        }
+      }
+    }
+
+    return instruction.accept(this, instructionState.getMemoryState(), visitor);
+  }
+
+  private void registerNestedClosures(DfaInstructionState instructionState, PsiClass nestedClass) {
+    DfaMemoryStateImpl closureState = createClosureState(instructionState.getMemoryState());
+    for (PsiMethod method : nestedClass.getMethods()) {
+      PsiCodeBlock body = method.getBody();
+      if (body != null) {
+        myNestedClosures.putValue(body, closureState);
+      }
+    }
+    for (PsiClassInitializer initializer : nestedClass.getInitializers()) {
+      myNestedClosures.putValue(initializer.getBody(), closureState);
+    }
+    for (PsiField field : nestedClass.getFields()) {
+      myNestedClosures.putValue(field, closureState);
+    }
+  }
+
   protected ControlFlowAnalyzer createControlFlowAnalyzer() {
     return new ControlFlowAnalyzer(myValueFactory);
   }
@@ -199,8 +237,16 @@ public class DataFlowRunner {
     return myInstructions;
   }
 
+  public Instruction getInstruction(int index) {
+    return myInstructions[index];
+  }
+
   public DfaVariableValue[] getFields() {
     return myFields;
+  }
+
+  public MultiMap<PsiElement, DfaMemoryState> getNestedClosures() {
+    return new MultiMap<PsiElement, DfaMemoryState>(myNestedClosures);
   }
 
   public Pair<Set<Instruction>,Set<Instruction>> getConstConditionalExpressions() {
@@ -237,43 +283,13 @@ public class DataFlowRunner {
     return Pair.create(trueSet, falseSet);
   }
 
-  private static class EnvironmentalInstructionVisitor extends DelegatingInstructionVisitor {
-    private final PsiElement myClassParent;
-    private final Set<DfaMemoryState> myClosureStates = new THashSet<DfaMemoryState>();
-
-    private EnvironmentalInstructionVisitor(InstructionVisitor delegate, PsiElement classParent) {
-      super(delegate);
-      myClassParent = classParent;
+  private DfaMemoryStateImpl createClosureState(DfaMemoryState memState) {
+    DfaMemoryStateImpl copy = (DfaMemoryStateImpl)memState.createCopy();
+    copy.flushFields(getFields());
+    Set<DfaVariableValue> vars = new HashSet<DfaVariableValue>(copy.getVariableStates().keySet());
+    for (DfaVariableValue value : vars) {
+      copy.flushDependencies(value);
     }
-
-    @Override
-    public DfaInstructionState[] visitEmptyInstruction(EmptyInstruction instruction, DataFlowRunner runner, DfaMemoryState before) {
-      checkEnvironment(runner, before, instruction.getAnchor());
-      return super.visitEmptyInstruction(instruction, runner, before);
-    }
-
-    @Override
-    public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      checkEnvironment(runner, memState, instruction.getCallExpression());
-      return super.visitMethodCall(instruction, runner, memState);
-    }
-
-    private void checkEnvironment(DataFlowRunner runner, DfaMemoryState memState, @Nullable PsiElement anchor) {
-      if (myClassParent == anchor) {
-        DfaMemoryStateImpl copy = (DfaMemoryStateImpl)memState.createCopy();
-        copy.flushFields(runner.getFields());
-        Set<DfaVariableValue> vars = new HashSet<DfaVariableValue>(copy.getVariableStates().keySet());
-        for (DfaVariableValue value : vars) {
-          copy.flushDependencies(value);
-        }
-
-        myClosureStates.add(copy);
-      }
-    }
-
-    @NotNull
-    public Collection<DfaMemoryState> getClosureStates() {
-      return myClosureStates;
-    }
+    return copy;
   }
 }

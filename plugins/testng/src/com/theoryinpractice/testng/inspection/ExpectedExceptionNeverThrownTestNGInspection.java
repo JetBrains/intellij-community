@@ -55,15 +55,7 @@ public class ExpectedExceptionNeverThrownTestNGInspection extends BaseJavaLocalI
       if (annotation == null) {
         return;
       }
-      final PsiAnnotationParameterList parameterList = annotation.getParameterList();
-      final PsiNameValuePair[] attributes = parameterList.getAttributes();
-      PsiAnnotationMemberValue value = null;
-      for (PsiNameValuePair attribute : attributes) {
-        if ("expectedExceptions".equals(attribute.getName())) {
-          value = attribute.getValue();
-          break;
-        }
-      }
+      final PsiAnnotationMemberValue value = annotation.findAttributeValue("expectedExceptions");
       if (!(value instanceof PsiClassObjectAccessExpression)) {
         return;
       }

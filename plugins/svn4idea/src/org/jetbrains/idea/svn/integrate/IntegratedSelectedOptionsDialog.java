@@ -251,19 +251,10 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   @Nullable
   private static SVNURL realTargetUrl(final SvnVcs vcs, final WorkingCopyInfo info, final String targetBranchUrl) {
-    final SVNWCClient client = vcs.createWCClient();
-    try {
-      final SVNInfo svnInfo = client.doInfo(new File(info.getLocalPath()), SVNRevision.UNDEFINED);
-      final SVNURL svnurl = svnInfo.getURL();
+    final SVNInfo svnInfo = vcs.getInfo(info.getLocalPath());
+    final SVNURL svnurl = svnInfo != null ? svnInfo.getURL() : null;
 
-      if ((svnurl != null) && (svnurl.toString().startsWith(targetBranchUrl))) {
-        return svnurl;
-      }
-    }
-    catch (SVNException e) {
-      // tracked by return value
-    }
-    return null;
+    return (svnurl != null) && (svnurl.toString().startsWith(targetBranchUrl)) ? svnurl : null;
   }
 
   @Nullable

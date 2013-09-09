@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
@@ -70,7 +71,7 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
 
   @Override
   public boolean isTestSource() {
-    return getRootType().equals(JavaSourceRootType.TEST_SOURCE);
+    return getRootType().equals(JavaSourceRootType.TEST_SOURCE) || getRootType().equals(JavaResourceRootType.TEST_RESOURCE);
   }
 
   @NotNull
@@ -123,8 +124,12 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     int i = super.compareTo(folder);
     if (i!= 0) return i;
 
-    i = getPackagePrefix().compareTo(((SourceFolderImpl)folder).getPackagePrefix());
+    SourceFolderImpl sourceFolder = (SourceFolderImpl)folder;
+    i = getPackagePrefix().compareTo(sourceFolder.getPackagePrefix());
     if (i!= 0) return i;
-    return Boolean.valueOf(isTestSource()).compareTo(((SourceFolderImpl)folder).isTestSource());
+    i = Boolean.valueOf(isTestSource()).compareTo(sourceFolder.isTestSource());
+    if (i != 0) return i;
+    //todo[nik] perhaps we should use LinkedSet instead of SortedSet and get rid of this method
+    return myJpsElement.getRootType().getClass().getName().compareTo(sourceFolder.getRootType().getClass().getName());
   }
 }

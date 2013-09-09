@@ -67,7 +67,7 @@ public class DfaUtil {
               result = TOO_COMPLEX;
             }
           }
-          return new Result<MultiValuesMap<PsiVariable, PsiExpression>>(result, codeBlock);
+          return new Result<MultiValuesMap<PsiVariable, PsiExpression>>(result, variable);
         }
       }, false);
       context.putUserData(DFA_VARIABLE_INFO_KEY, cachedValue);

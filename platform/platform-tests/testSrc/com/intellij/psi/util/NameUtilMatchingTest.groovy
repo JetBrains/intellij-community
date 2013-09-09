@@ -289,7 +289,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("*get*A", "getClass");
     assertMatches("*git", "BlaGitBla");
     assertMatches("*Git", "BlaGitBla");
-    assertFalse(firstLetterMatcher("*Git").matches("BlagitBla"));
+    assertTrue(firstLetterMatcher("*Git").matches("BlagitBla"));
     assertMatches("*git", "BlagitBla");
     assertMatches("*Git*", "AtpGenerationItem");
     assertMatches("Collec*Util*", "CollectionUtils");
@@ -304,15 +304,27 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("*BComp", "BaseComponent");
   }
 
+  public void "test uppercase prefix with middle matching"() {
+    assertMatches("*OS", "ios");
+    assertMatches("*OS", "IOS");
+    assertMatches("*OS", "osx");
+    assertMatches("*OS", "OSX");
+
+    assertTrue(firstLetterMatcher("*I").matches("ID"));
+    assertFalse(firstLetterMatcher("*I").matches("id"));
+  }
+
   public void testMiddleMatchingFirstLetterSensitive() {
     assertTrue(firstLetterMatcher(" cl").matches("getClass"));
-    assertTrue(firstLetterMatcher(" EUC-").matches("x-EUC-TW"));
+    assertFalse(firstLetterMatcher(" EUC-").matches("x-EUC-TW"));
     assertTrue(firstLetterMatcher(" a").matches("aaa"));
     assertFalse(firstLetterMatcher(" a").matches("Aaa"));
     assertFalse(firstLetterMatcher(" a").matches("Aaa"));
     assertFalse(firstLetterMatcher(" _bl").matches("_top"));
     assertFalse(firstLetterMatcher("*Ch").matches("char"));
-    assertTrue(firstLetterMatcher("*codes").matches("CFLocaleCopyISOCountryCodes"));
+    assertTrue(firstLetterMatcher("*Codes").matches("CFLocaleCopyISOCountryCodes"));
+    assertFalse(firstLetterMatcher("*codes").matches("CFLocaleCopyISOCountryCodes"));
+    assertTrue(firstLetterMatcher("*codes").matches("getCFLocaleCopyISOCountryCodes"));
     assertTrue(firstLetterMatcher("*Bcomp").matches("BaseComponent"));
   }
 
@@ -548,7 +560,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   }
 
   public void testMeaningfulMatchingDegree() {
-    assertTrue(new MinusculeMatcher(" EUC-", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matchingDegree("x-EUC-TW") > Integer.MIN_VALUE);
+    assertTrue(caseInsensitiveMatcher(" EUC-").matchingDegree("x-EUC-TW") > Integer.MIN_VALUE);
   }
 
   private static void assertPreference(@NonNls String pattern,

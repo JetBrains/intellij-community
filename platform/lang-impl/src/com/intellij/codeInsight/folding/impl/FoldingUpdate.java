@@ -104,7 +104,7 @@ public class FoldingUpdate {
   }
 
   private static CachedValueProvider.Result<Runnable> getUpdateResult(PsiFile file,
-                                                                      Document document,
+                                                                      @NotNull Document document,
                                                                       boolean quick,
                                                                       final Project project,
                                                                       final Editor editor,

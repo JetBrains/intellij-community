@@ -38,20 +38,14 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
   protected String GIST_DESCRIPTION;
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  protected void beforeTest() throws Exception {
     long time = Clock.getTime();
     GIST_DESCRIPTION = getTestName(false) + "_" + DateFormatUtil.formatDate(time);
   }
 
   @Override
-  public void tearDown() throws Exception {
-    try {
-      deleteGist();
-    }
-    finally {
-      super.tearDown();
-    }
+  protected void afterTest() throws Exception {
+    deleteGist();
   }
 
   protected void deleteGist() throws IOException {

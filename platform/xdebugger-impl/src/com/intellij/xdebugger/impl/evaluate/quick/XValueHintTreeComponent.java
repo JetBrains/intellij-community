@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,30 +20,37 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHintTreeComponent;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class XValueHintTreeComponent extends AbstractValueHintTreeComponent<Pair<XValue, String>> {
   private final XValueHint myValueHint;
   private final XDebuggerTree myTree;
 
-  public XValueHintTreeComponent(final XValueHint valueHint, final XDebuggerTree tree, final Pair<XValue, String> initialItem) {
+  public XValueHintTreeComponent(@Nullable XValueHint valueHint, @NotNull XDebuggerTree tree, @NotNull Pair<XValue, String> initialItem) {
     super(valueHint, tree, initialItem);
+
     myValueHint = valueHint;
     myTree = tree;
     updateTree(initialItem);
   }
 
+  @Override
   protected void updateTree(final Pair<XValue, String> selectedItem) {
     myTree.setRoot(new XValueNodeImpl(myTree, null, selectedItem.getSecond(), selectedItem.getFirst()), true);
-    myValueHint.showTreePopup(this, myTree, selectedItem.getSecond());
+    if (myValueHint != null) {
+      myValueHint.showTreePopup(this, myTree, selectedItem.getSecond());
+    }
   }
 
+  @Override
   protected void setNodeAsRoot(final Object node) {
     if (node instanceof XValueNodeImpl) {
-      final XValueNodeImpl valueNode = (XValueNodeImpl)node;
-      myValueHint.shiftLocation();
+      if (myValueHint != null) {
+        myValueHint.shiftLocation();
+      }
+
+      XValueNodeImpl valueNode = (XValueNodeImpl)node;
       Pair<XValue, String> item = Pair.create(valueNode.getValueContainer(), valueNode.getName());
       addToHistory(item);
       updateTree(item);

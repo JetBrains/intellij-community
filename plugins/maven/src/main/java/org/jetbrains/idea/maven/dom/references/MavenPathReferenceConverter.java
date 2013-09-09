@@ -96,7 +96,19 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
             String resolvedText = model == null ? text : MavenPropertyResolver.resolve(text, model);
 
             if (resolvedText.equals(text)) {
-              super.innerResolveInContext(resolvedText, context, result, caseSensitive);
+              if (getIndex() == 0 && resolvedText.length() == 2 && resolvedText.charAt(1) == ':') {
+                // it's root on windows, e.g. "C:"
+                VirtualFile file = LocalFileSystem.getInstance().findFileByPath(resolvedText + '/');
+                if (file != null) {
+                  PsiDirectory psiDirectory = context.getManager().findDirectory(file);
+                  if (psiDirectory != null) {
+                    result.add(new PsiElementResolveResult(psiDirectory));
+                  }
+                }
+              }
+              else {
+                super.innerResolveInContext(resolvedText, context, result, caseSensitive);
+              }
             }
             else {
               VirtualFile contextFile = context.getVirtualFile();

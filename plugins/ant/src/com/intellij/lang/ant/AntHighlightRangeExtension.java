@@ -18,13 +18,14 @@ package com.intellij.lang.ant;
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension;
 import com.intellij.psi.PsiFile;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class AntHighlightRangeExtension implements HighlightRangeExtension {
 
-  public boolean isForceHighlightParents(final PsiFile file) {
+  public boolean isForceHighlightParents(@NotNull final PsiFile file) {
     return XmlUtil.isAntFile(file);
   }
 }

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * Date: 3/28/12
  */
 public class JavaSdkVersionUtil {
-  public static boolean isAtLeast(PsiElement element, JavaSdkVersion minVersion) {
+  public static boolean isAtLeast(@NotNull PsiElement element, @NotNull JavaSdkVersion minVersion) {
     JavaSdkVersion version = getJavaSdkVersion(element);
     return version == null || version.isAtLeast(minVersion);
   }
@@ -36,7 +36,8 @@ public class JavaSdkVersionUtil {
     if (module != null) {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
       if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-        return JavaSdk.getInstance().getVersion(sdk);
+        String version = sdk.getVersionString();
+        return version == null ? null : JdkVersionUtil.getVersion(version);
       }
     }
     return null;

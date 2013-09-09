@@ -197,11 +197,12 @@ public final class HgCommandExecutor {
       cmdLine.add("--encoding");
       cmdLine.add(myCharset.name());
     }
-    ShellCommand shellCommand = new ShellCommand(myVcs.getGlobalSettings().isRunViaBash());
+
     HgCommandResult result;
     try {
       String workingDir = repo != null ? repo.getPath() : null;
-      result = shellCommand.execute(cmdLine, workingDir, myCharset);
+      ShellCommand shellCommand = new ShellCommand(cmdLine, workingDir, myCharset);
+      result = shellCommand.execute();
       if (!HgErrorUtil.isAuthorizationError(result)) {
         passReceiver.saveCredentials();
       }
@@ -238,8 +239,7 @@ public final class HgCommandExecutor {
     final int lastSlashIndex = settings.getHgExecutable().lastIndexOf(File.separator);
     exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
 
-    final String executable = settings.isRunViaBash() ? "bash -c " + exeName : exeName;
-    final String cmdString = String.format("%s %s %s", executable, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
+    final String cmdString = String.format("%s %s %s", exeName, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
 
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     // log command

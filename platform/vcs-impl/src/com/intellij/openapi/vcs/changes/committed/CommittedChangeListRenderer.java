@@ -92,6 +92,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     String date = ", " + getDateOfChangeList(changeList.getCommitDate());
     final FontMetrics fontMetrics = tree.getFontMetrics(tree.getFont());
     final FontMetrics boldMetrics = tree.getFontMetrics(tree.getFont().deriveFont(Font.BOLD));
+    final FontMetrics italicMetrics = tree.getFontMetrics(tree.getFont().deriveFont(Font.ITALIC));
     if (myDateWidth <= 0 || (fontMetrics.getFont().getSize() != myFontSize)) {
       myDateWidth = Math.max(fontMetrics.stringWidth(", Yesterday 00:00 PM "), fontMetrics.stringWidth(", 00/00/00 00:00 PM "));
       myDateWidth = Math.max(myDateWidth, fontMetrics.stringWidth(getDateOfChangeList(new Date(2000, 11, 31))));
@@ -133,6 +134,15 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       }
     }
 
+    int branchWidth = 0;
+    String branch = changeList.getBranch();
+    if (branch != null) {
+      branch += " ";
+      branchWidth = italicMetrics.stringWidth(branch);
+      descWidth += branchWidth;
+      append(branch, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+    }
+
     if (description.isEmpty() && !truncated) {
       append(VcsBundle.message("committed.changes.empty.comment"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       appendFixedTextFragmentWidth(descMaxWidth);
@@ -147,7 +157,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     else {
       final String moreMarker = VcsBundle.message("changes.browser.details.marker");
       int moreWidth = fontMetrics.stringWidth(moreMarker);
-      int remainingWidth = descMaxWidth - moreWidth - numberWidth;
+      int remainingWidth = descMaxWidth - moreWidth - numberWidth - branchWidth;
       description = truncateDescription(description, fontMetrics, remainingWidth);
       myRenderer.appendTextWithLinks(description);
       if (!StringUtil.isEmpty(description)) {

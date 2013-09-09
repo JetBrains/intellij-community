@@ -67,6 +67,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     fireNodeStructureChanged();
   }
 
+  @Override
   protected List<? extends TreeNode> getChildren() {
     return myChildren;
   }
@@ -76,6 +77,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     return myChildren;
   }
 
+  @Override
   public List<? extends XDebuggerTreeNode> getLoadedChildren() {
     if (myLoadedChildren == null) {
       myLoadedChildren = new ArrayList<XDebuggerTreeNode>();
@@ -135,6 +137,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     myTree.getTreeModel().nodesWereInserted(this, new int[]{index});
   }
 
+  @SuppressWarnings("SuspiciousMethodCalls")
   public int removeChildNode(XDebuggerTreeNode node) {
     int index = myChildren.indexOf(node);
     if (index != -1) {
@@ -185,16 +188,20 @@ public class WatchesRootNode extends XDebuggerTreeNode {
       myResultPlace = resultPlace;
     }
 
+    @Override
     public void evaluated(@NotNull final XValue result) {
       DebuggerUIUtil.invokeLater(new Runnable() {
+        @Override
         public void run() {
           replaceNode(myResultPlace, new WatchNodeImpl(myTree, WatchesRootNode.this, result, myResultPlace.getExpression()));
         }
       });
     }
 
+    @Override
     public void errorOccurred(@NotNull final String errorMessage) {
       DebuggerUIUtil.invokeLater(new Runnable() {
+        @Override
         public void run() {
           replaceNode(myResultPlace, WatchMessageNode.createErrorNode(myTree, WatchesRootNode.this, myResultPlace.getExpression(), errorMessage));
         }

@@ -33,7 +33,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -76,10 +75,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       progress.setText(SvnBundle.message("progress.text.updating", root.getAbsolutePath()));
     }
 
-    protected long doUpdate(
-      final File root,
-      final SVNUpdateClient client) throws
-                                    SVNException {
+    protected long doUpdate(final File root) throws SVNException {
       final long rev;
 
       final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
@@ -104,13 +100,15 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
 
     private SvnUpdateClientI createUpdateClient(SvnConfiguration configuration, File root, boolean isSwitch, SVNURL sourceUrl) {
       final SvnUpdateClientI updateClient;
+      boolean is18Format = myVcs.getWorkingCopyFormat(root) == WorkingCopyFormat.ONE_DOT_EIGHT;
+
       // do not do from command line for switch now
-      if (! isSwitch && SvnConfiguration.UseAcceleration.commandLine.equals(configuration.myUseAcceleration) &&
+      if (! isSwitch && (is18Format || SvnConfiguration.UseAcceleration.commandLine.equals(configuration.myUseAcceleration) &&
           Svn17Detector.is17(myVcs.getProject(), root) && (
           SvnAuthenticationManager.HTTP.equals(sourceUrl.getProtocol()) ||
           SvnAuthenticationManager.HTTPS.equals(sourceUrl.getProtocol())
-          )) {
-        updateClient = new SvnCommandLineUpdateClient(myVcs.getProject(), null);
+          ))) {
+        updateClient = new SvnCommandLineUpdateClient(myVcs, null);
       } else {
         updateClient = new SvnSvnkitUpdateClient(myVcs.createUpdateClient());
       }
@@ -129,18 +127,8 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
 
   @Nullable
   private static SVNURL getSourceUrl(final SvnVcs vcs, final File root) {
-    try {
-      SVNWCClient wcClient = vcs.createWCClient();
-      final SVNInfo svnInfo = wcClient.doInfo(root, SVNRevision.UNDEFINED);
-      if (svnInfo != null) {
-        return svnInfo.getURL();
-      } else {
-        return null;
-      }
-    }
-    catch (SVNException e) {
-      return null;
-    }
+    final SVNInfo svnInfo = vcs.getInfo(root);
+    return svnInfo != null ? svnInfo.getURL() : null;
   }
 
   public boolean validateOptions(final Collection<FilePath> roots) {
@@ -193,9 +181,8 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
 
   // false - do not do update
   private boolean checkAncestry(final File sourceFile, final SVNURL targetUrl, final SVNRevision targetRevision) throws SVNException {
-    final SVNWCClient client = myVcs.createWCClient();
-    final SVNInfo sourceSvnInfo = client.doInfo(sourceFile, SVNRevision.UNDEFINED);
-    final SVNInfo targetSvnInfo = client.doInfo(targetUrl, SVNRevision.UNDEFINED, targetRevision);
+    final SVNInfo sourceSvnInfo = myVcs.getInfo(sourceFile);
+    final SVNInfo targetSvnInfo = myVcs.getInfo(targetUrl, targetRevision);
 
     if (sourceSvnInfo == null || targetSvnInfo == null) {
       // cannot check

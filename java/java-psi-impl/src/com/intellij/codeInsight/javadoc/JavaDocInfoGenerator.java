@@ -1002,7 +1002,7 @@ public class JavaDocInfoGenerator {
       aClass = ((PsiMember)myElement).getContainingClass();
     }
     else {
-      LOG.error("Class or member expected but found " + myElement.getClass().getName());
+      aClass = PsiTreeUtil.getParentOfType(myElement, PsiClass.class);
     }
 
     if (aClass == null) {

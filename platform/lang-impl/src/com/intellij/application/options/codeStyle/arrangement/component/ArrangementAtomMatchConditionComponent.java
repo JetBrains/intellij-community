@@ -23,10 +23,7 @@ import com.intellij.application.options.codeStyle.arrangement.util.InsetsPanel;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
+import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RoundedLineBorder;
 import com.intellij.ui.SimpleColoredComponent;
@@ -112,7 +109,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     myAvailableTokens.add(condition.getType());
     myCloseCallback = closeCallback;
     ArrangementSettingsToken type = condition.getType();
-    if (StdArrangementTokens.Regexp.is(type)) {
+    if (StdArrangementTokenType.REG_EXP.is(type)) {
       myBorderStrategy = TEXT_BORDER_STRATEGY;
     }
     else {
@@ -121,7 +118,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     if (type.equals(condition.getValue())) {
       myText = type.getRepresentationValue();
     }
-    else if (StdArrangementTokens.Regexp.is(type)) {
+    else if (StdArrangementTokenType.REG_EXP.is(type)) {
       myText = String.format("%s %s", type.getRepresentationValue().toLowerCase(), condition.getValue());
     }
     else {
@@ -131,7 +128,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(colorsProvider.getTextAttributes(type, false)));
     myTextControl.setOpaque(false);
     int maxWidth = manager.getWidth(type);
-    if (!StdArrangementTokens.Regexp.is(type) && maxWidth > 0) {
+    if (!StdArrangementTokenType.REG_EXP.is(type) && maxWidth > 0) {
       myTextControlSize = new Dimension(maxWidth, myTextControl.getPreferredSize().height);
     }
     else {

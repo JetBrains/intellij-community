@@ -185,6 +185,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
       }
 
+      // TODO: Implement this with command line
       final String repositoryRoot;
       SVNRepository repository = null;
       try {
@@ -225,6 +226,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     }
 
     final String repositoryRoot;
+    // TODO: Implement this with command line
     SVNRepository repository = null;
     try {
       repository = myVcs.createRepository(svnLocation.getURL());
@@ -258,7 +260,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
       progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
     }
-
+    // TODO: Rewrite this without using SVNKit
     final String repositoryRoot;
     SVNRepository repository = null;
     try {
@@ -371,6 +373,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         revisionBefore = SVNRevision.create(changeTo.longValue());
       }
       else {
+        // TODO: Implement this with command line
         SVNRepository repository = null;
         final long revision;
         try {
@@ -394,6 +397,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         revisionAfter = SVNRevision.create(1);
       }
 
+      // TODO: Implement this with command line
       logger.doLog(SVNURL.parseURIEncoded(url), filterUrls, revisionBefore, revisionBefore, revisionAfter,
                    settings.STOP_ON_COPY, true, includeMergedRevisions, maxCount, null,
                    new ISVNLogEntryHandler() {
@@ -518,9 +522,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       revisionBefore = SVNRevision.create(revision);
 
       svnurl = SVNURL.parseURIEncoded(url);
-      final SVNWCClient client = myVcs.createWCClient();
-      final SVNInfo info = client.doInfo(svnurl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-      targetInfo = client.doInfo(new File(file.getPath()), SVNRevision.UNDEFINED);
+      final SVNInfo info = myVcs.getInfo(svnurl, SVNRevision.HEAD);
+      targetInfo = myVcs.getInfo(new File(file.getPath()));
       if (info == null) {
         throw new VcsException("Can not get repository URL");
       }
@@ -635,6 +638,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     final String repositoryRoot = info.getRepositoryRootURL().toString();
     try {
       final RenameContext renameContext = new RenameContext(info);
+      // TODO: Implement this with command line
       logger.doLog(svnurl, null, SVNRevision.UNDEFINED, SVNRevision.HEAD, revisionBefore,
                    false, true, false, 0, null,
                    new ISVNLogEntryHandler() {
@@ -664,6 +668,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                            SVNRevision revisionBefore,
                            final SVNURL repositoryUrl, SVNURL svnurl) throws VcsException {
     try {
+      // TODO: Implement this with command line
       logger.doLog(svnurl, null, SVNRevision.UNDEFINED, revisionBefore, revisionBefore,
                    false, true, false, 1, null,
                    new ISVNLogEntryHandler() {

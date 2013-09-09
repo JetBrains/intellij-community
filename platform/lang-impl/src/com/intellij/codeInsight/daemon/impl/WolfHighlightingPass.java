@@ -36,7 +36,7 @@ class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass implem
   }
 
   @Override
-  protected void collectInformationWithProgress(final ProgressIndicator progress) {
+  protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
     if (!Registry.is("wolf.the.problem.solver", true)) return;
     final WolfTheProblemSolver solver = WolfTheProblemSolver.getInstance(myProject);
     if (solver instanceof WolfTheProblemSolverImpl) {

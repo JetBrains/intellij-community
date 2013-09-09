@@ -21,10 +21,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
@@ -39,7 +42,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
   private final Tree myTree;
   private JPanel myMainPanel;
 
-  protected AbstractValueHintTreeComponent(final AbstractValueHint valueHint, final Tree tree, final H initialItem) {
+  protected AbstractValueHintTreeComponent(@Nullable AbstractValueHint valueHint, @NotNull Tree tree, @NotNull H initialItem) {
     myValueHint = valueHint;
     myTree = tree;
     myHistory.add(initialItem);
@@ -56,6 +59,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
 
   private AnAction createGoForwardAction(){
     return new AnAction(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward){
+      @Override
       public void actionPerformed(AnActionEvent e) {
         if (myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1){
           myCurrentIndex ++;
@@ -63,7 +67,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
         }
       }
 
-
+      @Override
       public void update(AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1);
       }
@@ -71,12 +75,15 @@ public abstract class AbstractValueHintTreeComponent<H> {
   }
 
   private void updateHint() {
-    myValueHint.shiftLocation();
+    if (myValueHint != null) {
+      myValueHint.shiftLocation();
+    }
     updateTree(myHistory.get(myCurrentIndex));
   }
 
   private AnAction createGoBackAction(){
     return new AnAction(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back){
+      @Override
       public void actionPerformed(AnActionEvent e) {
         if (myHistory.size() > 1 && myCurrentIndex > 0) {
           myCurrentIndex--;
@@ -85,6 +92,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
       }
 
 
+      @Override
       public void update(AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex > 0);
       }
@@ -104,31 +112,34 @@ public abstract class AbstractValueHintTreeComponent<H> {
     }
   }
 
-  private JComponent createToolbar(final JPanel parent) {
+  private JComponent createToolbar(JPanel parent) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(createSetRoot());
+    group.add(new AnAction(XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"),
+                           XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"), AllIcons.Modules.UnmarkWebroot) {
+      @Override
+      public void update(AnActionEvent e) {
+        TreePath path = myTree.getSelectionPath();
+        e.getPresentation().setEnabled(path != null && path.getPathCount() > 1);
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        TreePath path = myTree.getSelectionPath();
+        if (path != null) {
+          setNodeAsRoot(path.getLastPathComponent());
+        }
+      }
+    });
 
     AnAction back = createGoBackAction();
-    back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.ALT_MASK)), parent);
+    back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_MASK)), parent);
     group.add(back);
 
     AnAction forward = createGoForwardAction();
-    forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.ALT_MASK)), parent);
+    forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK)), parent);
     group.add(forward);
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
-  }
-
-  private AnAction createSetRoot() {
-    final String title = XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip");
-    return new AnAction(title, title, AllIcons.Modules.UnmarkWebroot) {
-      public void actionPerformed(AnActionEvent e) {
-        final TreePath path = myTree.getSelectionPath();
-        if (path == null) return;
-        final Object node = path.getLastPathComponent();
-        setNodeAsRoot(node);
-      }
-    };
   }
 
   protected abstract void setNodeAsRoot(Object node);

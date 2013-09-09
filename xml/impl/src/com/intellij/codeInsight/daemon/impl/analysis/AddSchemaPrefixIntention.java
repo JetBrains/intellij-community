@@ -25,7 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlRecursiveElementVisitor;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.TypeOrElementOrAttributeReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -97,7 +97,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
               PsiReference ref = null;
               boolean skip = false;
               for (PsiReference reference : value.getReferences()) {
-                if (reference instanceof SchemaReferencesProvider.TypeOrElementOrAttributeReference) {
+                if (reference instanceof TypeOrElementOrAttributeReference) {
                   ref = reference;
                 } else if (reference instanceof SchemaPrefixReference) {
                   skip = true;

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.WaitForProgressToShow;
@@ -37,6 +38,9 @@ import java.util.Collections;
 import java.util.Iterator;
 
 public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
+
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFormatSelector");
+
   public Collection getEnabledFactories(File path, Collection factories, boolean writeAccess) throws SVNException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return factories;
@@ -145,7 +149,19 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     return newMode[0];
   }
 
+  public static WorkingCopyFormat findRootAndGetFormat(final File path) {
+    File root = SvnUtil.getWorkingCopyRootNew(path);
+
+    return root != null ? getWorkingCopyFormat(root) : WorkingCopyFormat.UNKNOWN;
+  }
+
   public static WorkingCopyFormat getWorkingCopyFormat(final File path) {
+    WorkingCopyFormat format = SvnUtil.getFormat(path);
+
+    return WorkingCopyFormat.UNKNOWN.equals(format) ? detectWithSvnKit(path) : format;
+  }
+
+  private static WorkingCopyFormat detectWithSvnKit(File path) {
     try {
       final SvnWcGeneration svnWcGeneration = SvnOperationFactory.detectWcGeneration(path, true);
       if (SvnWcGeneration.V17.equals(svnWcGeneration)) return WorkingCopyFormat.ONE_DOT_SEVEN;

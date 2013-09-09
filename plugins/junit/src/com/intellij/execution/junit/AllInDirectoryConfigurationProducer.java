@@ -21,14 +21,13 @@ import com.intellij.execution.junit2.info.LocationUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 
 public class AllInDirectoryConfigurationProducer extends JUnitConfigurationProducer {
@@ -44,18 +43,7 @@ public class AllInDirectoryConfigurationProducer extends JUnitConfigurationProdu
     final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
     if (module == null) return false;
-    final ContentEntry[] entries = ModuleRootManager.getInstance(module).getContentEntries();
-    int testRootCount = 0;
-    for (ContentEntry entry : entries) {
-      for (SourceFolder sourceFolder : entry.getSourceFolders()) {
-        if (sourceFolder.isTestSource()) {
-          testRootCount++;
-          if (testRootCount > 1) {
-            break;
-          }
-        }
-      }
-    }
+    int testRootCount = ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.TEST_SOURCE).size();
     if (testRootCount < 2) return false;
     if (!LocationUtil.isJarAttached(context.getLocation(), aPackage, JUnitUtil.TESTCASE_CLASS)) return false;
     setupConfigurationModule(context, configuration);

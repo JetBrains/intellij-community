@@ -17,13 +17,10 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.todo.TodoIndexPatternProvider;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.TodoCacheManager;
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
@@ -36,8 +33,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiTodoSearchHelperImpl");
-
   private final PsiManagerEx myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
 
@@ -68,7 +63,8 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     return processTodoOccurences(startOffset, endOffset, occurrences);
   }
 
-  private TodoItem[] processTodoOccurences(int startOffset, int endOffset, Collection<IndexPatternOccurrence> occurrences) {
+  @NotNull
+  private static TodoItem[] processTodoOccurences(int startOffset, int endOffset, Collection<IndexPatternOccurrence> occurrences) {
     List<TodoItem> items = new ArrayList<TodoItem>(occurrences.size());
     TextRange textRange = new TextRange(startOffset, endOffset);
     final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
@@ -118,14 +114,5 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
       if (item.getPattern().equals(pattern)) count++;
     }
     return count;
-  }
-
-  private static ArrayList<IdIndexEntry> getWordEntries(String name, boolean caseSensitively) {
-    List<String> words = StringUtil.getWordsInStringLongestFirst(name);
-    final ArrayList<IdIndexEntry> keys = new ArrayList<IdIndexEntry>();
-    for (String word : words) {
-      keys.add(new IdIndexEntry(word, caseSensitively));
-    }
-    return keys;
   }
 }

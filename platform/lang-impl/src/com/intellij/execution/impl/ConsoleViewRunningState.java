@@ -22,7 +22,9 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -30,7 +32,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
-
 
 public class ConsoleViewRunningState extends ConsoleState {
   private final ConsoleViewImpl myConsole;
@@ -75,9 +76,8 @@ public class ConsoleViewRunningState extends ConsoleState {
       charset = ((OSProcessHandler)processHandler).getCharset();
     }
     if (charset == null) {
-      charset = EncodingManager.getInstance().getDefaultCharset();
+      charset = ObjectUtils.notNull(EncodingManager.getInstance().getDefaultCharset(), CharsetToolkit.UTF8_CHARSET);
     }
-
     return new OutputStreamWriter(processInput, charset);
   }
 

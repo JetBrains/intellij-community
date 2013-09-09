@@ -27,6 +27,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -58,7 +59,14 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
           JavaCompletionContributor.isClassNamePossible(parameters) &&
           !JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition())) {
         result = result.withPrefixMatcher(new BetterPrefixMatcher(result.getPrefixMatcher(), BetterPrefixMatcher.getBestMatchingDegree(plainResults)));
-        suggestNonImportedClasses(parameters, result);
+        InheritorsHolder holder = new InheritorsHolder(parameters.getPosition(), result);
+        for (CompletionResult plainResult : plainResults) {
+          LookupElement element = plainResult.getLookupElement();
+          if (element instanceof TypeArgumentCompletionProvider.TypeArgsLookupElement) {
+            ((TypeArgumentCompletionProvider.TypeArgsLookupElement)element).registerSingleClass(holder);
+          }
+        }
+        suggestNonImportedClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result), holder);
       }
     }
   }
@@ -86,7 +94,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       if (parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result) &&
           JavaCompletionContributor.isClassNamePossible(parameters)) {
-        suggestNonImportedClasses(parameters, result);
+        suggestNonImportedClasses(parameters, result, null);
         return;
       }
 
@@ -169,12 +177,14 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     return allClasses;
   }
 
-  private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet _result) {
-    final CompletionResultSet result = JavaCompletionSorting.addJavaSorting(parameters, _result);
+  private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet result, @Nullable final InheritorsHolder inheritorsHolder) {
     JavaClassNameCompletionContributor.addAllClasses(parameters,
                                                      true, result.getPrefixMatcher(), new Consumer<LookupElement>() {
       @Override
       public void consume(LookupElement element) {
+        if (inheritorsHolder != null && inheritorsHolder.alreadyProcessed(element)) {
+          return;
+        }
         JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
         if (classElement != null) {
           classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);

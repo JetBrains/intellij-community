@@ -152,6 +152,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(new Throwable());
+  private volatile boolean hasTabs; // optimisation flag: when editor contains no tabs it is dramatically easier to calculate positions
 
   static {
     ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0, 0, UIManager.getFont("Label.font").getFamily()); // load costly font info
@@ -518,6 +519,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       });
     }
+    updateHasTabsFlag(document.getCharsSequence());
   }
 
   public static boolean isPresentationMode(Project project) {
@@ -1693,6 +1695,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Point caretLocation = visualPositionToXY(getCaretModel().getVisualPosition());
     int scrollOffset = caretLocation.y - myCaretUpdateVShift;
     getScrollingModel().scrollVertically(scrollOffset);
+    updateHasTabsFlag(e.getNewFragment());
+  }
+
+  private void updateHasTabsFlag(CharSequence newChars) {
+    if (!hasTabs) {
+      hasTabs = StringUtil.contains(newChars, 0, newChars.length(), '\t');
+    }
+  }
+  public boolean hasTabs() {
+    return hasTabs;
   }
 
   public boolean isScrollToCaret() {
@@ -2474,7 +2486,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // there then.
     VisualPosition selectionStartPosition = getSelectionModel().getSelectionStartPosition();
     VisualPosition selectionEndPosition = getSelectionModel().getSelectionEndPosition();
-    if (selectionStartPosition == null || selectionEndPosition == null || selectionStartPosition.equals(selectionEndPosition)) {
+    if (selectionStartPosition.equals(selectionEndPosition)) {
       return;
     }
 
@@ -2535,7 +2547,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // there then.
     VisualPosition selectionStartPosition = getSelectionModel().getSelectionStartPosition();
     VisualPosition selectionEndPosition = getSelectionModel().getSelectionEndPosition();
-    if (selectionStartPosition == null || selectionEndPosition == null || selectionStartPosition.equals(selectionEndPosition)) {
+    if (selectionStartPosition.equals(selectionEndPosition)) {
       return;
     }
 
@@ -3978,8 +3990,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int x = myGutterComponent.convertX(e.getX());
 
-    if (x >= myGutterComponent.getLineNumberAreaOffset() &&
-        x < myGutterComponent.getLineNumberAreaOffset() + myGutterComponent.getLineNumberAreaWidth()) {
+    int lineNumberAreaOffset = EditorGutterComponentImpl.getLineNumberAreaOffset();
+    if (x >= lineNumberAreaOffset &&
+        x < lineNumberAreaOffset + myGutterComponent.getLineNumberAreaWidth()) {
       return EditorMouseEventArea.LINE_NUMBERS_AREA;
     }
 
@@ -4436,7 +4449,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         final LogicalPosition startPosition = getCaretModel().getLogicalPosition();
         final int offset = logicalPositionToOffset(startPosition);
         char[] chars = myDocument instanceof DocumentImpl ? ((DocumentImpl)myDocument).getRawChars() : myDocument.getChars();
-        if (chars.length > offset) {
+        if (chars.length > offset && myDocument.getTextLength() > offset) {
           FoldRegion folding = myFoldingModel.getCollapsedRegionAtOffset(offset);
           final char ch;
           if (folding == null || folding.isExpanded()) {
@@ -6210,11 +6223,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   class EditorDocumentBulkUpdateAdapter implements DocumentBulkUpdateListener {
     @Override
     public void updateStarted(@NotNull Document doc) {
+      if (doc != getDocument()) return;
+      
       bulkUpdateStarted();
     }
 
     @Override
     public void updateFinished(@NotNull Document doc) {
+      if (doc != getDocument()) return;
+      
       bulkUpdateFinished();
     }
   }

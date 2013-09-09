@@ -29,7 +29,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -168,57 +168,8 @@ public class MethodMayBeStaticInspection extends BaseInspection {
     }
 
     private boolean isExcluded(PsiMethod method) {
-      @NonNls final String name = method.getName();
-      if ("writeObject".equals(name)) {
-        if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
-          return false;
-        }
-        if (!MethodUtils.hasInThrows(method, "java.io.IOException")) {
-          return false;
-        }
-        final PsiType returnType = method.getReturnType();
-        if (!PsiType.VOID.equals(returnType)) {
-          return false;
-        }
-        final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.getParametersCount() != 1) {
-          return false;
-        }
-        final PsiParameter parameter = parameterList.getParameters()[0];
-        final PsiType type = parameter.getType();
-        return type.equalsToText("java.io.ObjectOutputStream");
-      }
-      if ("readObject".equals(name)) {
-        if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
-          return false;
-        }
-        if (!MethodUtils.hasInThrows(method, "java.io.IOException", "java.lang.ClassNotFoundException")) {
-          return false;
-        }
-        final PsiType returnType = method.getReturnType();
-        if (!PsiType.VOID.equals(returnType)) {
-          return false;
-        }
-        final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.getParametersCount() != 1) {
-          return false;
-        }
-        final PsiParameter parameter = parameterList.getParameters()[0];
-        final PsiType type = parameter.getType();
-        return type.equalsToText("java.io.ObjectInputStream");
-      }
-      if ("writeReplace".equals(name) || "readResolve".equals(name)) {
-        if (!MethodUtils.hasInThrows(method, "java.io.ObjectStreamException")) {
-          return false;
-        }
-        final PsiType returnType = method.getReturnType();
-        if (returnType == null || !returnType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-          return false;
-        }
-        final PsiParameterList parameterList = method.getParameterList();
-        return parameterList.getParametersCount() == 0;
-      }
-      return false;
+      return SerializationUtils.isWriteObject(method) || SerializationUtils.isReadObject(method) ||
+             SerializationUtils.isWriteReplace(method) || SerializationUtils.isReadResolve(method);
     }
   }
 }

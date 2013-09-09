@@ -28,7 +28,8 @@ public class FileTypeExtensionFactory<T> extends KeyedExtensionFactory<T, FileTy
     super(interfaceClass, epName);
   }
 
-  public String getKey(final FileType key) {
+  @Override
+  public String getKey(@NotNull final FileType key) {
     return key.getName();
   }
 }

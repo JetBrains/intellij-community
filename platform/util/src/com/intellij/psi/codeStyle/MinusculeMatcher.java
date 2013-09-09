@@ -292,8 +292,10 @@ public class MinusculeMatcher implements Matcher {
       }
       // uppercase should match either uppercase or a word start
       if (!isUpperCase[patternIndex] ||
-          star && Character.isUpperCase(name.charAt(nextOccurrence)) ||
-          isWordStart(name, nextOccurrence)) {
+          Character.isUpperCase(name.charAt(nextOccurrence)) ||
+          isWordStart(name, nextOccurrence) ||
+          // accept uppercase matching lowercase if the whole prefix is uppercase and case sensitivity allows that
+          !myHasHumps && myOptions != NameUtil.MatchingCaseSensitivity.ALL) {
         FList<TextRange> ranges = matchFragment(name, patternIndex, nextOccurrence, matchingState);
         if (ranges != null) {
           return ranges;
@@ -345,7 +347,7 @@ public class MinusculeMatcher implements Matcher {
     while (nameIndex + i < name.length() &&
            patternIndex + i < myPattern.length &&
            charEquals(myPattern[patternIndex+i], patternIndex+i, name.charAt(nameIndex + i), ignoreCase)) {
-      if (isUpperCase[patternIndex + i]) {
+      if (isUpperCase[patternIndex + i] && myHasHumps) {
         if (i < minFragment) {
           return null;
         }
@@ -390,9 +392,18 @@ public class MinusculeMatcher implements Matcher {
   }
 
   private boolean isFirstCharMatching(@NotNull String name, int nameIndex, int patternIndex) {
-    boolean ignoreCase = myOptions == NameUtil.MatchingCaseSensitivity.FIRST_LETTER && nameIndex > 0 ||
-                    myOptions == NameUtil.MatchingCaseSensitivity.NONE;
-    return nameIndex < name.length() && charEquals(myPattern[patternIndex],patternIndex, name.charAt(nameIndex), ignoreCase);
+    if (nameIndex >= name.length()) return false;
+
+    boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
+    char patternChar = myPattern[patternIndex];
+    if (!charEquals(patternChar, patternIndex, name.charAt(nameIndex), ignoreCase)) return false;
+
+    if (myOptions == NameUtil.MatchingCaseSensitivity.FIRST_LETTER &&
+        (patternIndex == 0 || patternIndex == 1 && isWildcard(0)) && 
+        Character.isUpperCase(patternChar) != Character.isUpperCase(name.charAt(0))) {
+      return false;
+    }
+    return true;
   }
 
   private boolean isWildcard(int patternIndex) {

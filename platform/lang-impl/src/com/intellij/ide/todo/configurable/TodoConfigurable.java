@@ -25,6 +25,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
@@ -181,7 +182,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
             @Override
             public void run(AnActionButton button) {
               stopEditing();
-              TodoPattern pattern = new TodoPattern();
+              TodoPattern pattern = new TodoPattern(TodoAttributesUtil.createDefault());
               PatternDialog dialog = new PatternDialog(myPanel, pattern);
               dialog.setTitle(IdeBundle.message("title.add.todo.pattern"));
               dialog.show();

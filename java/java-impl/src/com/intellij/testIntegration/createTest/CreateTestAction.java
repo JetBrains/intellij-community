@@ -25,10 +25,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,6 +36,7 @@ import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -148,23 +147,12 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     final boolean isFirst = processed.isEmpty();
     if (!processed.add(srcModule)) return;
 
-    final ContentEntry[] entries = ModuleRootManager.getInstance(srcModule).getContentEntries();
-    for (ContentEntry entry : entries) {
-      for (SourceFolder sourceFolder : entry.getSourceFolders()) {
-        if (sourceFolder.isTestSource()) {
-          final VirtualFile sourceFolderFile = sourceFolder.getFile();
-          if (sourceFolderFile != null) {
-            testFolders.add(sourceFolderFile);
-          }
-        }
-      }
-    }
+    testFolders.addAll(ModuleRootManager.getInstance(srcModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE));
     if (isFirst && !testFolders.isEmpty()) return;
 
     final HashSet<Module> modules = new HashSet<Module>();
     ModuleUtilCore.collectModulesDependsOn(srcModule, modules);
     for (Module module : modules) {
-
       checkForTestRoots(module, testFolders, processed);
     }
   }

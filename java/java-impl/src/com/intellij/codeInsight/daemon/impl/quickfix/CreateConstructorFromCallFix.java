@@ -41,7 +41,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
 
   private final PsiConstructorCall myConstructorCall;
 
-  public CreateConstructorFromCallFix(PsiConstructorCall constructorCall) {
+  public CreateConstructorFromCallFix(@NotNull PsiConstructorCall constructorCall) {
     myConstructorCall = constructorCall;
   }
 

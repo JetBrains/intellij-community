@@ -169,7 +169,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfaValue dfaValue = instruction.getValue();
       if (dfaValue instanceof DfaVariableValue) {
         DfaConstValue constValue = memState.getConstantValue((DfaVariableValue)dfaValue);
-        myPossibleVariableValues.putValue(instruction, constValue != null ? constValue : ANY_VALUE);
+        myPossibleVariableValues.putValue(instruction, constValue != null && (constValue.getValue() == null || constValue.getValue() instanceof Boolean) ? constValue : ANY_VALUE);
       }
     }
     return super.visitPush(instruction, runner, memState);

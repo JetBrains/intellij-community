@@ -15,8 +15,8 @@
  */
 package com.intellij.xdebugger.impl;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
@@ -165,7 +165,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Nullable
   private static Editor getEditor(@NotNull Project project, DataContext context) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(context);
+    Editor editor = CommonDataKeys.EDITOR.getData(context);
     if(editor == null) {
       return FileEditorManager.getInstance(project).getSelectedTextEditor();
     }

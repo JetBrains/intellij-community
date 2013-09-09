@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -152,9 +153,9 @@ public class FragmentedDiffRequestFromChange {
               if (! lineFragment.isEqual()) {
                 final TextRange oldRange = lineFragment.getRange(FragmentSide.SIDE1);
                 final TextRange newRange = lineFragment.getRange(FragmentSide.SIDE2);
-                myRanges.add(new BeforeAfter<TextRange>(new TextRange(myOldDocument.getLineNumber(oldRange.getStartOffset()),
+                myRanges.add(new BeforeAfter<TextRange>(new UnfairTextRange(myOldDocument.getLineNumber(oldRange.getStartOffset()),
                                            myOldDocument.getLineNumber(correctRangeEnd(oldRange.getEndOffset(), myOldDocument))),
-                                                        new TextRange(myDocument.getLineNumber(newRange.getStartOffset()),
+                                                        new UnfairTextRange(myDocument.getLineNumber(newRange.getStartOffset()),
                                            myDocument.getLineNumber(correctRangeEnd(newRange.getEndOffset(), myDocument)))));
               }
             }

@@ -49,7 +49,6 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
 
   public static class State {
     public String myHgExecutable = null;
-    public boolean myRunViaBash = false;
     // visited URL -> login for this URL. Passwords are remembered in the PasswordSafe.
     public Map<String, String> myRememberedUserNames = new HashMap<String, String>();
   }
@@ -132,13 +131,5 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
 
   public static int getIncomingCheckIntervalSeconds() {
     return FIVE_MINUTES;
-  }
-
-  public boolean isRunViaBash() {
-    return myState.myRunViaBash;
-  }
-
-  public void setRunViaBash(boolean runViaBash) {
-    myState.myRunViaBash = runViaBash;
   }
 }

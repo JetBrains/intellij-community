@@ -45,8 +45,7 @@ public class OpenModuleSettingsAction extends EditSourceAction {
         if (moduleFolder == null) {
           return false;
         }
-        if (ProjectRootsUtil.isModuleContentRoot(moduleFolder, project)
-            || ProjectRootsUtil.isSourceOrTestRoot(moduleFolder, project)) {
+        if (ProjectRootsUtil.isModuleContentRoot(moduleFolder, project) || ProjectRootsUtil.isModuleSourceRoot(moduleFolder, project)) {
           return true;
         }
       }

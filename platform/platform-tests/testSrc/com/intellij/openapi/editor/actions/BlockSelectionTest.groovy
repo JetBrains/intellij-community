@@ -42,4 +42,19 @@ public class BlockSelectionTest extends LightPlatformCodeInsightFixtureTestCase 
 """
   }
 
+  public void "test paste single tabbed string into block selection"() {
+    myFixture.configureByText "a.txt", """\
+<li></li>
+<li></li>
+"""
+    myFixture.editor.selectionModel.setBlockSelection(new LogicalPosition(0, 4), new LogicalPosition(1, 4))
+    StringSelection content = new StringSelection("\tCo-ed handball")
+    ClipboardSynchronizer.instance.setContent(content, content)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
+    myFixture.checkResult """\
+<li>\tCo-ed handball</li>
+<li>\tCo-ed handball</li>
+"""
+  }
+
 }

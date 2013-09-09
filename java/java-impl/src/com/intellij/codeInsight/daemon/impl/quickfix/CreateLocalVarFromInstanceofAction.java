@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -342,7 +342,11 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
           anchorAfter = newBranch.getCodeBlock().getLBrace();
         }
         else {
-          anchorAfter = ((PsiBlockStatement)thenBranch).getCodeBlock().getLBrace();
+          final PsiJavaToken lBrace = ((PsiBlockStatement)thenBranch).getCodeBlock().getLBrace();
+          if (lBrace != null) {
+            final PsiElement nextSibling = PsiTreeUtil.skipSiblingsForward(lBrace, PsiWhiteSpace.class);
+            anchorAfter = nextSibling instanceof PsiComment ? PsiTreeUtil.skipSiblingsForward(nextSibling, PsiComment.class) : lBrace;
+          } 
         }
       }
     }

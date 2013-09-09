@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,13 @@ public class LoopConditionNotUpdatedInsideLoopInspection
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "loop.condition.not.updated.inside.loop.problem.descriptor");
+    final boolean entireCondition = ((Boolean)infos[0]).booleanValue();
+    if (entireCondition) {
+      return InspectionGadgetsBundle.message("loop.condition.not.updated.inside.loop.problem.descriptor");
+    }
+    else {
+      return InspectionGadgetsBundle.message("loop.variable.not.updated.inside.loop.problem.descriptor");
+    }
   }
 
   @Override
@@ -90,22 +95,18 @@ public class LoopConditionNotUpdatedInsideLoopInspection
     }
 
     private void check(PsiExpression condition, PsiStatement statement) {
-      final List<PsiExpression> notUpdated =
-        new SmartList<PsiExpression>();
+      final List<PsiExpression> notUpdated = new SmartList<PsiExpression>();
       if (checkCondition(condition, statement, notUpdated)) {
         if (notUpdated.isEmpty()) {
           // condition involves only final variables and/or constants,
           // flag the whole condition
-          // Maybe this should show a different error message, like
-          // "loop condition cannot change",
-          // "loop condition is never updated" or so
           if (!BoolUtils.isTrue(condition)) {
-            registerError(condition);
+            registerError(condition, Boolean.TRUE);
           }
         }
         else {
           for (PsiExpression expression : notUpdated) {
-            registerError(expression);
+            registerError(expression, Boolean.FALSE);
           }
         }
       }
@@ -133,20 +134,17 @@ public class LoopConditionNotUpdatedInsideLoopInspection
           ((PsiParenthesizedExpression)condition).getExpression();
         return checkCondition(expression, context, notUpdated);
       }
-      else if (condition instanceof PsiBinaryExpression) {
+      else if (condition instanceof PsiPolyadicExpression) {
         // while (value != x) { ... }
         // while (value != (x + y)) { ... }
         // while (b1 && b2) { ... }
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)condition;
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        final PsiExpression rhs = binaryExpression.getROperand();
-        if (rhs == null) {
-          return false;
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+        for (PsiExpression operand : polyadicExpression.getOperands()) {
+          if (!checkCondition(operand, context, notUpdated)) {
+            return false;
+          }
         }
-        if (checkCondition(lhs, context, notUpdated)) {
-          return checkCondition(rhs, context, notUpdated);
-        }
+        return true;
       }
       else if (condition instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression =

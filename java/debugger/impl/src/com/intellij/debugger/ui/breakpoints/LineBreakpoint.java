@@ -61,6 +61,7 @@ import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -191,7 +192,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     if (position != null) {
       final VirtualFile breakpointFile = position.getFile().getVirtualFile();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      if (breakpointFile != null && fileIndex.isInSourceContent(breakpointFile)) {
+      if (breakpointFile != null && fileIndex.isUnderSourceRootOfType(breakpointFile, JavaModuleSourceRootTypes.SOURCES)) {
         // apply filtering to breakpoints from content sources only, not for sources attached to libraries
         final Collection<VirtualFile> candidates = findClassCandidatesInSourceContent(className, debugProcess.getSearchScope(), fileIndex);
         if (LOG.isDebugEnabled()) {
@@ -271,7 +272,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
               final VirtualFile vFile = psiFile.getVirtualFile();
               msg.append("\n\t").append("VirtualFile=").append(vFile);
               if (vFile != null) {
-                msg.append("\n\t").append("isInSourceContent=").append(fileIndex.isInSourceContent(vFile));
+                msg.append("\n\t").append("isInSourceContent=").append(fileIndex.isUnderSourceRootOfType(vFile, JavaModuleSourceRootTypes.SOURCES));
               }
             }
             LOG.debug(msg.toString());
@@ -281,7 +282,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
             return null;
           }
           final VirtualFile vFile = psiFile.getVirtualFile();
-          if (vFile == null || !fileIndex.isInSourceContent(vFile)) {
+          if (vFile == null || !fileIndex.isUnderSourceRootOfType(vFile, JavaModuleSourceRootTypes.SOURCES)) {
             return null; // this will switch off the check if at least one class is from libraries
           }
           list.add(vFile);

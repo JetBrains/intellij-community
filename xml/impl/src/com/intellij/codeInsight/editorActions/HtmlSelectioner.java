@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -121,7 +122,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
         while (!i.atEnd() && i.getTokenType() != XmlTokenType.XML_END_TAG_START) i.retreat();
 
         if (!i.atEnd() && !j.atEnd()) {
-          result.add(new TextRange(j.getEnd(), i.getStart()));
+          result.add(new UnfairTextRange(j.getEnd(), i.getStart()));
         }
         if (!j.atEnd()) {
           result.add(new TextRange(start, j.getEnd()));

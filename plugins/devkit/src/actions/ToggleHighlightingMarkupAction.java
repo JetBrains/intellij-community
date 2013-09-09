@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.devkit.actions;
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.IndentsPass;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -117,7 +117,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     else {
       final int[] offset = new int[] {0};
       final ArrayList<HighlightInfo> infos = new ArrayList<HighlightInfo>();
-      DaemonCodeAnalyzerImpl.processHighlights(
+      DaemonCodeAnalyzerEx.processHighlights(
         document, project, HighlightSeverity.WARNING, 0, sequence.length(),
         new Processor<HighlightInfo>() {
           @Override
