@@ -20,7 +20,7 @@ def test_generic_user_class():
             self.x = value
 
     c = User1(10)
-    print(c.get() + <warning descr="Expected type 'int | long | float | complex', got 'str' instead">'foo'</warning>)
+    print(c.get() + <warning descr="Expected type 'Number', got 'str' instead">'foo'</warning>)
     c.put(14)
     c.put(<weak_warning descr="Expected type 'int' (matched generic type 'T'), got 'str' instead">'foo'</weak_warning>)
 
