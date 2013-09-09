@@ -86,6 +86,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Gregory.Shrago
+ * In case of REPL consider to use {@link com.intellij.execution.runners.LanguageConsoleBuilder}
  */
 public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance("#" + LanguageConsoleImpl.class.getName());
