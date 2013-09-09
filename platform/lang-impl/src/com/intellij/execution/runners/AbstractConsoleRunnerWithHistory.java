@@ -47,7 +47,7 @@ import java.util.List;
  *         This class provides basic functionality for running consoles.
  *         It launches external process and handles line input with history
  */
-public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsoleViewImpl> extends ConsoleRunnerWithHistory<T> {
+public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsoleView> extends ConsoleRunnerWithHistory<T> {
   private final String myConsoleTitle;
 
   private ProcessHandler myProcessHandler;
