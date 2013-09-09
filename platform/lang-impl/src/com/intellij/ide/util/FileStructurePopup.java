@@ -347,7 +347,10 @@ public class FileStructurePopup implements Disposable {
                 SwingUtilities.invokeLater(new Runnable() {
                   @Override
                   public void run() {
-                    selectPsiElement(myInitialPsiElement);
+                    if (selectPsiElement(myInitialPsiElement) == null) {
+                      TreeUtil.ensureSelection(myAbstractTreeBuilder.getTree());
+                      myAbstractTreeBuilder.revalidateTree();
+                    }
                   }
                 });
               }
@@ -432,7 +435,7 @@ public class FileStructurePopup implements Disposable {
     Set<PsiElement> parents = getAllParents(element);
 
     FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)myAbstractTreeBuilder.getRootElement();
-    if (node != null && myStructureView instanceof StructureViewComposite) {
+    if (element != null && node != null && myStructureView instanceof StructureViewComposite) {
       parents.remove(element.getContainingFile());
       final List<FilteringTreeStructure.FilteringNode> fileNodes = node.children();
 
@@ -445,11 +448,11 @@ public class FileStructurePopup implements Disposable {
     } else {
       final FilteringTreeStructure.FilteringNode found = findNode(parents, node);
       if (found == null) {
-        TreeUtil.selectFirstNode(myTree);
+        TreeUtil.ensureSelection(myTree);
       }
       return found;
     }
-    TreeUtil.selectFirstNode(myTree);
+    TreeUtil.ensureSelection(myTree);
     return null;
   }
 
