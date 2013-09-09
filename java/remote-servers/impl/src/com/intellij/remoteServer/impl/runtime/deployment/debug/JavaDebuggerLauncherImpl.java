@@ -34,7 +34,7 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
   private static final Logger LOG = Logger.getInstance(JavaDebuggerLauncherImpl.class);
 
   @Override
-  public void startDebugSession(@NotNull JavaDebugConnectionData info, @NotNull ExecutionEnvironment executionEnvironment, RemoteServer<?> server)
+  public void startDebugSession(@NotNull JavaDebugConnectionData info, @NotNull ExecutionEnvironment executionEnvironment, @NotNull RemoteServer<?> server)
     throws ExecutionException {
     final Project project = executionEnvironment.getProject();
     Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();

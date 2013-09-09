@@ -13,6 +13,7 @@ public enum DeploymentStatus {
     myPresentableText = presentableText;
   }
 
+  @NotNull
   public String getPresentableText() {
     return myPresentableText;
   }
