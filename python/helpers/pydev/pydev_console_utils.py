@@ -21,6 +21,9 @@ try:
 except:
     import _thread as thread
 
+import pydevd_xml
+import pydevd_vars
+
 #=======================================================================================================================
 # Null
 #=======================================================================================================================
@@ -333,7 +336,6 @@ class BaseInterpreterInterface:
         else:
             return None
 
-
     def finishExec(self):
         self.interruptable = False
 
@@ -343,3 +345,31 @@ class BaseInterpreterInterface:
             return server.NotifyFinished()
         else:
             return True
+
+    def getFrame(self):
+        xml = "<xml>"
+        xml += pydevd_xml.frameVarsToXML(self.getNamespace())
+        xml += "</xml>"
+
+        return xml
+
+    def getVariable(self, attributes):
+        xml = "<xml>"
+        valDict = pydevd_vars.resolveVar(self.getNamespace(), attributes)
+        if valDict is None:
+            valDict = {}
+
+        keys = valDict.keys()
+
+        for k in keys:
+            xml += pydevd_vars.varToXML(valDict[k], to_string(k))
+
+        xml += "</xml>"
+
+        return xml
+
+    def changeVariable(self, attr, value):
+        try:
+            Exec('%s=%s' % (attr, value), self.getNamespace(), self.getNamespace())
+        except:
+            pass

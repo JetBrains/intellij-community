@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PatternUtil;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -226,5 +227,9 @@ public abstract class PythonSdkFlavor {
   public void initPythonPath(Collection<String> path, Map<String, String> env) {
     path = appendSystemPythonPath(path);
     addToEnv(PythonEnvUtil.PYTHONPATH, StringUtil.join(path, File.pathSeparator), env);
+  }
+
+  public VirtualFile getSdkPath(VirtualFile path) {
+    return path;
   }
 }
