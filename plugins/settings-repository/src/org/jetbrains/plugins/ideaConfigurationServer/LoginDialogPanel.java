@@ -104,7 +104,7 @@ public abstract class LoginDialogPanel {
       myFailedMessage.setVisible(true);
       myFailedMessage.setText(failedMessage);
     }
-    IcsSettings settings = IcsManager.getInstance().getIdeaServerSettings();
+    IcsSettings settings = IcsManager.getInstance().getSettings();
     myLogin.setText(settings.getLogin());
     token.setText(settings.getToken());
     myShowDialog.setSelected(true);
@@ -112,7 +112,7 @@ public abstract class LoginDialogPanel {
 
   private void closeDialog(final boolean doLogin) {
     stopCounter();
-    rememberStartupSettings(IcsManager.getInstance().getIdeaServerSettings(), doLogin);
+    rememberStartupSettings(IcsManager.getInstance().getSettings(), doLogin);
 
     closeDialog();
   }
@@ -175,7 +175,7 @@ public abstract class LoginDialogPanel {
 
   private void doLogin(final boolean onTimer) {
     try {
-      IcsManager.getInstance().getIdeaServerSettings().update(myLogin.getText(), token.getText());
+      IcsManager.getInstance().getSettings().update(myLogin.getText(), token.getText());
       IcsManager.getInstance().connectAndUpdateRepository();
       closeDialog(true);
     }

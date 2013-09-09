@@ -8,6 +8,11 @@ import java.io.InputStream;
 
 public interface RepositoryManager {
   @Nullable
+  String getRemoteRepositoryUrl();
+
+  void setRemoteRepositoryUrl(@Nullable String url);
+
+  @Nullable
   InputStream read(@NotNull String path) throws IOException;
 
   void write(@NotNull String path, @NotNull InputStream content, long size, boolean async);

@@ -20,8 +20,6 @@ public class IcsSettings {
   @Tag
   private String login;
   @Tag
-  public String url;
-  @Tag
   public String token;
 
   public boolean shareProjectWorkspace;

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
@@ -9,8 +10,10 @@ import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +30,23 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     }
 
     git = new Git(repository);
+  }
+
+  @Nullable
+  @Override
+  public String getRemoteRepositoryUrl() {
+    return StringUtil.nullize(git.getRepository().getConfig().getString("remote", "origin", "url"));
+  }
+
+  @Override
+  public void setRemoteRepositoryUrl(@Nullable String url) {
+    StoredConfig config = git.getRepository().getConfig();
+    if (StringUtil.isEmptyOrSpaces(url)) {
+      config.unset("remote", "origin", "url");
+    }
+    else {
+      config.setString("remote", "origin", "url", url);
+    }
   }
 
   @Override

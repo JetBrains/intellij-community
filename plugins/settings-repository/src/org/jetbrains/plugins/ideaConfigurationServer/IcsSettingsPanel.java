@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 import javax.swing.*;
 
 public class IcsSettingsPanel {
@@ -11,13 +13,14 @@ public class IcsSettingsPanel {
   private JCheckBox shareProjectWorkspaceCheckBox;
 
   public IcsSettingsPanel() {
-    IcsSettings settings = IcsManager.getInstance().getIdeaServerSettings();
+    IcsManager icsManager = IcsManager.getInstance();
+    IcsSettings settings = icsManager.getSettings();
 
     loginTextField.setText(settings.getLogin());
     tokenTextField.setText(settings.token);
-    urlTextField.setText(settings.url);
     updateRepositoryFromRemoteCheckBox.setSelected(settings.updateOnStart);
     shareProjectWorkspaceCheckBox.setSelected(settings.shareProjectWorkspace);
+    urlTextField.setText(icsManager.getRepositoryManager().getRemoteRepositoryUrl());
   }
 
   public JComponent getPanel() {
@@ -25,11 +28,12 @@ public class IcsSettingsPanel {
   }
 
   public void apply() {
-    IcsSettings settings = IcsManager.getInstance().getIdeaServerSettings();
+    IcsManager icsManager = IcsManager.getInstance();
+    IcsSettings settings = icsManager.getSettings();
     settings.update(loginTextField.getText(), tokenTextField.getText());
     settings.token = tokenTextField.getText();
-    settings.url = urlTextField.getText();
     settings.updateOnStart = updateRepositoryFromRemoteCheckBox.isSelected();
     settings.shareProjectWorkspace = shareProjectWorkspaceCheckBox.isSelected();
+    icsManager.getRepositoryManager().setRemoteRepositoryUrl(StringUtil.nullize(urlTextField.getText()));
   }
 }

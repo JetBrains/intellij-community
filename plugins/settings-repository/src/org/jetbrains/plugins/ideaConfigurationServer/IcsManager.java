@@ -170,8 +170,12 @@ public class IcsManager {
     }
   }
 
-  public IcsSettings getIdeaServerSettings() {
+  public IcsSettings getSettings() {
     return settings;
+  }
+
+  public RepositoryManager getRepositoryManager() {
+    return repositoryManager;
   }
 
   public String getStatusText() {
@@ -277,7 +281,7 @@ public class IcsManager {
 
     @Override
     public void save() {
-      getInstance().getIdeaServerSettings().save();
+      getInstance().getSettings().save();
     }
   }
 
