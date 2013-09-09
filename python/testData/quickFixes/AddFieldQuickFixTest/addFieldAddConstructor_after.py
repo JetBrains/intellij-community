@@ -5,6 +5,7 @@ class A:
 
 class B(A):
     def __init__(self, a, b):
+        A.__init__(self, a, b)
         self.x = None
 
     def foo(self):

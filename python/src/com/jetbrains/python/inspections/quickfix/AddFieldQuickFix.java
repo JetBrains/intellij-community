@@ -19,6 +19,8 @@ import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.jetbrains.python.PyNames.FAKE_OLD_BASE;
+
 /**
  * Available on self.my_something when my_something is unresolved.
  * User: dcheryasov
@@ -142,28 +144,40 @@ public class AddFieldQuickFix implements LocalQuickFix {
     String paramList = ancestorInit != null ? ancestorInit.getParameterList().getText() : "(self)";
 
     String functionText = "def " + PyNames.INIT + paramList + ":\n";
-    if (cls.isNewStyleClass() && ancestorInit != null &&
-        ancestorInit.getContainingClass() != PyBuiltinCache.getInstance(ancestorInit).getClass("object")) {
-      // form the super() call
-      StringBuffer sb = new StringBuffer("super(");
-      sb.append(cls.getName());
-      PyParameter[] params = ancestorInit.getParameterList().getParameters();
-      // NOTE: assume that we have at least the first param
-      String self_name = params[0].getName();
-      sb.append(", ").append(self_name).append(").").append(PyNames.INIT).append("(");
-      boolean seen = false;
-      for (int i = 1; i < params.length; i += 1) {
-        if (seen) sb.append(", ");
-        else seen = true;
-        sb.append(params[i].getText());
-      }
-      sb.append(")");
-      functionText += "    " + sb.toString();
-    }
+    if (ancestorInit == null) functionText += "    pass";
     else {
-      functionText += "    pass";
-    }
+      final PyClass ancestorClass = ancestorInit.getContainingClass();
+      if (ancestorClass != null && ancestorClass != PyBuiltinCache.getInstance(ancestorInit).getClass("object") && !FAKE_OLD_BASE.equals(ancestorClass.getName())) {
+        StringBuilder sb = new StringBuilder();
+        PyParameter[] params = ancestorInit.getParameterList().getParameters();
 
+        boolean seen = false;
+        if (cls.isNewStyleClass()) {
+          // form the super() call
+          sb.append("super(");
+          sb.append(cls.getName());
+
+          // NOTE: assume that we have at least the first param
+          String self_name = params[0].getName();
+          sb.append(", ").append(self_name).append(").").append(PyNames.INIT).append("(");
+        }
+        else {
+          sb.append(ancestorClass.getName());
+          sb.append(".__init__(self");
+          seen = true;
+        }
+        for (int i = 1; i < params.length; i += 1) {
+          if (seen) sb.append(", ");
+          else seen = true;
+          sb.append(params[i].getText());
+        }
+        sb.append(")");
+        functionText += "    " + sb.toString();
+      }
+      else {
+        functionText += "    pass";
+      }
+    }
     return PyElementGenerator.getInstance(project).createFromText(
       LanguageLevel.getDefault(), PyFunction.class, functionText,
       new int[]{0}
