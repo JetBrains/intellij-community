@@ -34,4 +34,8 @@ public class PyMoveAttributeToInitQuickFixTest extends PyQuickFixTestCase {
     doInspectionTest(PyAttributeOutsideInitInspection.class, PyBundle.message("QFIX.move.attribute"));
   }
 
+  public void testAddSuperCallOldStyle() {
+    doInspectionTest(PyAttributeOutsideInitInspection.class, PyBundle.message("QFIX.move.attribute"));
+  }
+
 }
