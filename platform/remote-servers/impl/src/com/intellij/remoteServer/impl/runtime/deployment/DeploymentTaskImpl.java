@@ -6,7 +6,6 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguratio
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
-import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,24 +16,16 @@ public class DeploymentTaskImpl<D extends DeploymentConfiguration> implements De
   private final DeploymentSource mySource;
   private final D myConfiguration;
   private final Project myProject;
-  private final LoggingHandler myLoggingHandler;
   private final DebugConnector<?,?> myDebugConnector;
   private final ExecutionEnvironment myExecutionEnvironment;
 
-  public DeploymentTaskImpl(DeploymentSource source, D configuration, Project project, LoggingHandler loggingHandler,
-                            DebugConnector<?, ?> connector, ExecutionEnvironment environment) {
+  public DeploymentTaskImpl(DeploymentSource source, D configuration, Project project, DebugConnector<?, ?> connector,
+                            ExecutionEnvironment environment) {
     mySource = source;
     myConfiguration = configuration;
     myProject = project;
-    myLoggingHandler = loggingHandler;
     myDebugConnector = connector;
     myExecutionEnvironment = environment;
-  }
-
-  @NotNull
-  @Override
-  public LoggingHandler getLoggingHandler() {
-    return myLoggingHandler;
   }
 
   @NotNull
