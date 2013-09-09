@@ -139,8 +139,10 @@ public class SdkConfigurationUtil {
 
     final ProjectJdkImpl sdk;
     try {
+      String sdkPath = sdkType.sdkPath(homeDir);
+      
       final String sdkName = customSdkSuggestedName == null
-                             ? createUniqueSdkName(sdkType, homeDir.getPath(), sdksList)
+                             ? createUniqueSdkName(sdkType, sdkPath, sdksList)
                              : createUniqueSdkName(customSdkSuggestedName, sdksList);
       sdk = new ProjectJdkImpl(sdkName, sdkType);
 
@@ -151,7 +153,7 @@ public class SdkConfigurationUtil {
         sdk.setSdkAdditionalData(additionalData);
       }
 
-      sdk.setHomePath(homeDir.getPath());
+      sdk.setHomePath(sdkPath);
       sdkType.setupSdkPaths(sdk);
     }
     catch (Exception e) {

@@ -238,4 +238,8 @@ public abstract class SdkType implements SdkTypeId {
     VirtualFile homeDir = sdk.getHomeDirectory();
     return homeDir != null && homeDir.isValid();
   }
+
+  public String sdkPath(VirtualFile homePath) {
+    return homePath.getPath();
+  }
 }
