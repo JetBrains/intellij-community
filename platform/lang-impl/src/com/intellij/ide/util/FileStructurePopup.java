@@ -153,6 +153,7 @@ public class FileStructurePopup implements Disposable {
     if (myStructureView instanceof StructureViewComposite) {
       StructureViewComposite.StructureViewDescriptor[] views = ((StructureViewComposite)myStructureView).getStructureViews();
       myBaseTreeModel = new StructureViewCompositeModel(myPsiFile, views);
+      Disposer.register(this, (Disposable)myBaseTreeModel);
     } else {
       myBaseTreeModel = structureViewModel;
     }
@@ -347,7 +348,10 @@ public class FileStructurePopup implements Disposable {
                 SwingUtilities.invokeLater(new Runnable() {
                   @Override
                   public void run() {
-                    selectPsiElement(myInitialPsiElement);
+                    if (selectPsiElement(myInitialPsiElement) == null) {
+                      TreeUtil.ensureSelection(myAbstractTreeBuilder.getTree());
+                      myAbstractTreeBuilder.revalidateTree();
+                    }
                   }
                 });
               }
@@ -432,6 +436,28 @@ public class FileStructurePopup implements Disposable {
     Set<PsiElement> parents = getAllParents(element);
 
     FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)myAbstractTreeBuilder.getRootElement();
+    if (element != null && node != null && myStructureView instanceof StructureViewComposite) {
+      parents.remove(element.getContainingFile());
+      final List<FilteringTreeStructure.FilteringNode> fileNodes = node.children();
+
+      for (FilteringTreeStructure.FilteringNode fileNode : fileNodes) {
+        final FilteringTreeStructure.FilteringNode found = findNode(parents, fileNode);
+        if (found != null && found != fileNode) {
+          return found;
+        }
+      }
+    } else {
+      final FilteringTreeStructure.FilteringNode found = findNode(parents, node);
+      if (found == null) {
+        TreeUtil.ensureSelection(myTree);
+      }
+      return found;
+    }
+    TreeUtil.ensureSelection(myTree);
+    return null;
+  }
+
+  private FilteringTreeStructure.FilteringNode findNode(Set<PsiElement> parents, FilteringTreeStructure.FilteringNode node) {
     while (node != null) {
       boolean changed = false;
       for (FilteringTreeStructure.FilteringNode n : node.children()) {
@@ -451,7 +477,6 @@ public class FileStructurePopup implements Disposable {
         return node;
       }
     }
-    TreeUtil.selectFirstNode(myTree);
     return null;
   }
 
@@ -505,6 +530,10 @@ public class FileStructurePopup implements Disposable {
     Object elementAtCursor = myTreeModel.getCurrentEditorElement();
     if (elementAtCursor instanceof PsiElement) {
       return (PsiElement)elementAtCursor;
+    }
+
+    if (myEditor != null) {
+      return psiFile.getViewProvider().findElementAt(myEditor.getCaretModel().getOffset());
     }
 
     return null;
