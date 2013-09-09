@@ -15,22 +15,26 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.properties.PropertyClient;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -47,6 +51,9 @@ import java.util.TreeSet;
  * @author alex
  */
 public class SetPropertyDialog extends DialogWrapper {
+
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.dialogs.SetPropertyDialog");
+
   private final String myPropertyName;
   private final File[] myFiles;
 
@@ -147,14 +154,8 @@ public class SetPropertyDialog extends DialogWrapper {
       return;
     }
     File file = myFiles[0];
-    SVNPropertyData property;
-    try {
-      SVNWCClient client = myVCS.createWCClient();
-      property = client.doGetProperty(file, name, SVNRevision.WORKING, SVNRevision.WORKING);
-    }
-    catch (SVNException e) {
-      property = null;
-    }
+    SVNPropertyData property = !StringUtil.isEmpty(name) ? getProperty(file, name) : null;
+
     if (property != null) {
       myValueText.setText(SVNPropertyValue.getPropertyAsString(property.getValue()));
       myValueText.selectAll();
@@ -162,6 +163,21 @@ public class SetPropertyDialog extends DialogWrapper {
     else {
       myValueText.setText("");
     }
+  }
+
+  private SVNPropertyData getProperty(@NotNull File file, @NotNull String name) {
+    SVNPropertyData property;
+
+    try {
+      PropertyClient client = myVCS.getFactory(file).createPropertyClient();
+      property = client.getProperty(SvnTarget.fromFile(file, SVNRevision.WORKING), name, false, SVNRevision.WORKING);
+    }
+    catch (VcsException e) {
+      LOG.info(e);
+      property = null;
+    }
+
+    return property;
   }
 
   protected JComponent createCenterPanel() {
@@ -189,23 +205,26 @@ public class SetPropertyDialog extends DialogWrapper {
     if (files.length == 1) {
       File file = files[0];
       try {
-        SVNWCClient client = myVCS.createWCClient();
-        client.doGetProperty(file, null, SVNRevision.WORKING, SVNRevision.WORKING, false,
-                             new ISVNPropertyHandler() {
-                               public void handleProperty(File path, SVNPropertyData property) {
-                                 String name = property.getName();
-                                 if (name != null) {
-                                   names.add(name);
-                                 }
-                               }
-                               public void handleProperty(SVNURL url, SVNPropertyData property) {
-                               }
-                               public void handleProperty(long revision, SVNPropertyData property) {
-                               }
-                             });
+        ISVNPropertyHandler handler = new ISVNPropertyHandler() {
+          public void handleProperty(File path, SVNPropertyData property) {
+            String name = property.getName();
+            if (name != null) {
+              names.add(name);
+            }
+          }
+
+          public void handleProperty(SVNURL url, SVNPropertyData property) {
+          }
+
+          public void handleProperty(long revision, SVNPropertyData property) {
+          }
+        };
+
+        PropertyClient client = myVCS.getFactory(file).createPropertyClient();
+        client.list(SvnTarget.fromFile(file, SVNRevision.WORKING), SVNRevision.WORKING, SVNDepth.EMPTY, handler);
       }
-      catch (SVNException e) {
-        //
+      catch (VcsException e) {
+        LOG.info(e);
       }
     }
 
