@@ -143,6 +143,10 @@ public abstract class SvnCommand {
     return outputAdapter.getOutput().getStdout();
   }
 
+  public String getErrorOutput() {
+    return outputAdapter.getOutput().getStderr();
+  }
+
   /**
    * Wait for process termination
    * @param timeout
