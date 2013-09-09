@@ -21,12 +21,12 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 
 import java.util.Map;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created with IntelliJ IDEA.
@@ -37,8 +37,6 @@ import java.util.regex.Pattern;
  * Marker exception
  */
 public class SvnBindException extends VcsException {
-
-  private static final Pattern ERROR_PATTERN = Pattern.compile("^svn: (E(\\d+)): (.*)$", Pattern.MULTILINE);
 
   private Map<Integer, String> errors = new HashMap<Integer, String>();
 
@@ -70,7 +68,7 @@ public class SvnBindException extends VcsException {
   }
 
   private void parseErrors(@NotNull String message) {
-    Matcher matcher = ERROR_PATTERN.matcher(message);
+    Matcher matcher = SvnUtil.ERROR_PATTERN.matcher(message);
 
     while (matcher.find()) {
       put(Integer.valueOf(matcher.group(2)), matcher.group());
