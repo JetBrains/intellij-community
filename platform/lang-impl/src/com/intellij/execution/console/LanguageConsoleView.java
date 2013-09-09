@@ -16,6 +16,7 @@
 package com.intellij.execution.console;
 
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,4 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public interface LanguageConsoleView extends ConsoleView {
   @NotNull
   LanguageConsoleImpl getConsole();
+
+  @NotNull
+  Project getProject();
 }
