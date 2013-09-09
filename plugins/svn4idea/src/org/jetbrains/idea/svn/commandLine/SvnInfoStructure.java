@@ -53,7 +53,7 @@ public class SvnInfoStructure {
   public String myConflictNew;
   public String myConflictWorking;
   public String myPropRejectFile;
-  public SVNLock myLock;
+  public SVNLockWrapper myLockWrapper;
   public SVNDepth myDepth;
   public String myChangelistName;
   public long myWcSize;
@@ -65,7 +65,18 @@ public class SvnInfoStructure {
   public SVNInfo convert() throws SAXException, SVNException {
     return new IdeaSVNInfo(myFile, myUrl, myRootURL, myRevision, myKind, myUuid, myCommittedRevision, myCommittedDate, myAuthor, mySchedule,
                            myCopyFromURL, myCopyFromRevision, myTextTime, myPropTime, myChecksum, myConflictOld, myConflictNew, myConflictWorking,
-                           myPropRejectFile, myLock, myDepth, myChangelistName, myWcSize, createTreeConflict());
+                           myPropRejectFile, getLock(), myDepth, myChangelistName, myWcSize, createTreeConflict());
+  }
+
+  private SVNLock getLock() {
+    SVNLock lock = null;
+
+    if (myLockWrapper != null) {
+      myLockWrapper.setPath(relativeUrl);
+      lock = myLockWrapper.create();
+    }
+
+    return lock;
   }
 
   private SVNTreeConflictDescription createTreeConflict() throws SAXException, SVNException {
