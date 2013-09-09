@@ -9,30 +9,22 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
-import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.emulator.ColorPalette;
-import com.jediterm.terminal.ui.AbstractSystemSettingsProvider;
 import com.jediterm.terminal.ui.TerminalSession;
 import com.jediterm.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -169,41 +161,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   protected Project getProject() {
     return myProject;
-  }
-
-  private class JBTerminalSystemSettingsProvider extends AbstractSystemSettingsProvider {
-    @Override
-    public KeyStroke[] getCopyKeyStrokes() {
-      return getKeyStrokesByActionId("$Copy");
-    }
-
-    @Override
-    public KeyStroke[] getPasteKeyStrokes() {
-      return getKeyStrokesByActionId("$Paste");
-    }
-
-    @Override
-    public ColorPalette getPalette() {
-      return SystemInfo.isWindows ? ColorPalette.WINDOWS_PALETTE : ColorPalette.XTERM_PALETTE;
-    }
-
-    private KeyStroke[] getKeyStrokesByActionId(String actionId) {
-      List<KeyStroke> keyStrokes = new ArrayList<KeyStroke>();
-      Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
-      for (Shortcut sc : shortcuts) {
-        if (sc instanceof KeyboardShortcut) {
-          KeyStroke ks = ((KeyboardShortcut)sc).getFirstKeyStroke();
-          keyStrokes.add(ks);
-        }
-      }
-
-      return keyStrokes.toArray(new KeyStroke[keyStrokes.size()]);
-    }
-
-    @Override
-    public boolean shouldCloseTabOnLogout(TtyConnector ttyConnector) {
-      return ttyConnector instanceof PtyProcessTtyConnector; //close tab only on logout of local pty, not remote
-    }
   }
 
   public void openSession(TerminalWidget terminalWidget) {
