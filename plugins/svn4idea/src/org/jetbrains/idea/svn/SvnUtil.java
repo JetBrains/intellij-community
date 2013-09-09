@@ -167,7 +167,7 @@ public class SvnUtil {
       force = false;
     }
 
-    final SVNException[] exception = new SVNException[1];
+    final VcsException[] exception = new VcsException[1];
     final Collection<String> failedLocks = new ArrayList<String>();
     final int[] count = new int[]{ioFiles.length};
     final ISVNEventHandler eventHandler = new ISVNEventHandler() {
@@ -187,11 +187,8 @@ public class SvnUtil {
     Runnable command = new Runnable() {
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-        SVNWCClient wcClient;
 
         try {
-          wcClient = activeVcs.createWCClient();
-          wcClient.setEventHandler(eventHandler);
           if (progress != null) {
             progress.setText(SvnBundle.message("progress.text.locking.files"));
           }
@@ -202,10 +199,10 @@ public class SvnUtil {
             if (progress != null) {
               progress.setText2(SvnBundle.message("progress.text2.processing.file", ioFile.getName()));
             }
-            wcClient.doLock(new File[]{ioFile}, force, lockMessage);
+            activeVcs.getFactory(ioFile).createLockClient().lock(ioFile, force, lockMessage, eventHandler);
           }
         }
-        catch (SVNException e) {
+        catch (VcsException e) {
           exception[0] = e;
         }
       }
@@ -229,13 +226,13 @@ public class SvnUtil {
 
     StatusBarUtil.setStatusBarInfo(project, SvnBundle.message("message.text.files.locked", count[0]));
     if (exception[0] != null) {
-      throw new VcsException(exception[0]);
+      throw exception[0];
     }
   }
 
   public static void doUnlockFiles(Project project, final SvnVcs activeVcs, final File[] ioFiles) throws VcsException {
     final boolean force = true;
-    final SVNException[] exception = new SVNException[1];
+    final VcsException[] exception = new VcsException[1];
     final Collection<String> failedUnlocks = new ArrayList<String>();
     final int[] count = new int[]{ioFiles.length};
     final ISVNEventHandler eventHandler = new ISVNEventHandler() {
@@ -255,11 +252,8 @@ public class SvnUtil {
     Runnable command = new Runnable() {
       public void run() {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-        SVNWCClient wcClient;
 
         try {
-          wcClient = activeVcs.createWCClient();
-          wcClient.setEventHandler(eventHandler);
           if (progress != null) {
             progress.setText(SvnBundle.message("progress.text.unlocking.files"));
           }
@@ -270,10 +264,10 @@ public class SvnUtil {
             if (progress != null) {
               progress.setText2(SvnBundle.message("progress.text2.processing.file", ioFile.getName()));
             }
-            wcClient.doUnlock(new File[]{ioFile}, force);
+            activeVcs.getFactory(ioFile).createLockClient().unlock(ioFile, force, eventHandler);
           }
         }
-        catch (SVNException e) {
+        catch (VcsException e) {
           exception[0] = e;
         }
       }

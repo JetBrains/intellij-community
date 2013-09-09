@@ -43,7 +43,9 @@ public enum SvnCommandName {
   proplist("proplist", false),
   blame("blame", false),
   merge("merge", true),
-  changelist("changelist", true);
+  changelist("changelist", true),
+  lock("lock", true),
+  unlock("unlock", true);
 
   private final String myName;
   private final boolean myWriteable;
