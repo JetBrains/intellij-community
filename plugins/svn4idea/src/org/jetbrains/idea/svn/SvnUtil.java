@@ -30,7 +30,10 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Convertor;
@@ -55,6 +58,8 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SvnUtil {
   // TODO: ASP.NET hack behavior should be supported - http://svn.apache.org/repos/asf/subversion/trunk/notes/asp-dot-net-hack.txt
@@ -66,7 +71,24 @@ public class SvnUtil {
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnUtil");
 
+  public static final Pattern ERROR_PATTERN = Pattern.compile("^svn: (E(\\d+)): (.*)$", Pattern.MULTILINE);
+  public static final Pattern WARNING_PATTERN = Pattern.compile("^svn: warning: (W(\\d+)): (.*)$", Pattern.MULTILINE);
+
   private SvnUtil() { }
+
+  @Nullable
+  public static SVNErrorMessage parseWarning(@NotNull String text) {
+    Matcher matcher = WARNING_PATTERN.matcher(text);
+    SVNErrorMessage error = null;
+
+    // currently treating only first warning
+    if (matcher.find()) {
+      error = SVNErrorMessage
+        .create(SVNErrorCode.getErrorCode(Integer.parseInt(matcher.group(2))), matcher.group(3), SVNErrorMessage.TYPE_WARNING);
+    }
+
+    return error;
+  }
 
   public static boolean isSvnVersioned(final Project project, File parent) {
     final SVNInfo info = SvnVcs.getInstance(project).getInfo(parent);
