@@ -102,23 +102,25 @@ public class PyStatementEffectInspection extends PyInspection {
       }
       else if (expression instanceof PyBinaryExpression) {
         PyBinaryExpression binary = (PyBinaryExpression)expression;
+        final PyExpression leftExpression = binary.getLeftExpression();
+        final PyExpression rightExpression = binary.getRightExpression();
+        if (hasEffect(leftExpression) || hasEffect(rightExpression)) return true;
+
         final PyElementType operator = binary.getOperator();
         String method = operator == null ? null : operator.getSpecialMethodName();
         if (method != null) {
           // maybe the op is overridden and may produce side effects, like cout << "hello"
-          PyType type = myTypeEvalContext.getType(binary.getLeftExpression());
+          PyType type = myTypeEvalContext.getType(leftExpression);
           if (type != null &&
               !type.isBuiltin(myTypeEvalContext) &&
               type.resolveMember(method, null, AccessDirection.READ, resolveWithoutImplicits()) != null) {
             return true;
           }
-          final PyExpression rhs = binary.getRightExpression();
-          if (rhs != null) {
-            type = myTypeEvalContext.getType(rhs);
+          if (rightExpression != null) {
+            type = myTypeEvalContext.getType(rightExpression);
             if (type != null) {
               String rmethod = "__r" + method.substring(2); // __add__ -> __radd__
-              if (!type.isBuiltin(myTypeEvalContext) && type.resolveMember(rmethod, null, AccessDirection.READ, resolveWithoutImplicits()
-              ) != null) {
+              if (!type.isBuiltin(myTypeEvalContext) && type.resolveMember(rmethod, null, AccessDirection.READ, resolveWithoutImplicits()) != null) {
                 return true;
               }
             }

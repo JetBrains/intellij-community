@@ -35,3 +35,14 @@ foo()
 def foo():
   y = 2
   <warning descr="Docstring seems to be misplaced">"""fake docstring"""</warning>
+
+# PY-10755
+def is_good(a):
+    return a > 10
+
+def do_something(a):
+    print a
+
+def process():
+    for a in range(20):
+        is_good(a) and do_something(a)
