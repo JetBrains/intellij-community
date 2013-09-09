@@ -355,6 +355,12 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     return myLanguageConsoleView.getConsole();
   }
 
+  @NotNull
+  @Override
+  public Project getProject() {
+    return myProject;
+  }
+
   public void showVariables(XVariablesView view) {
     removeAll();
     JSplitPane p = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
