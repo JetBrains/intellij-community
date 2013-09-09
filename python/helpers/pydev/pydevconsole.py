@@ -21,7 +21,6 @@ import traceback
 import fix_getpass
 fix_getpass.fixGetpass()
 
-import pydevd_xml
 import pydevd_vars
 
 try:
@@ -174,34 +173,6 @@ class InterpreterInterface(BaseInterpreterInterface):
 
             traceback.print_exc()
             return []
-            
-    def getFrame(self):    
-        xml = "<xml>"
-        xml += pydevd_xml.frameVarsToXML(self.namespace)
-        xml += "</xml>"
-        
-        return xml
-    
-    def getVariable(self, attributes):
-        xml = "<xml>"
-        valDict = pydevd_vars.resolveVar(self.namespace, attributes)
-        if valDict is None:
-            valDict = {}
-
-        keys = valDict.keys()
-
-        for k in keys:
-            xml += pydevd_vars.varToXML(valDict[k], to_string(k))
-
-        xml += "</xml>"
-
-        return xml
-    
-    def changeVariable(self, attr, value):
-        try:
-            Exec('%s=%s' % (attr, value), self.namespace, self.namespace)
-        except:
-            pass
         
     def close(self):
         sys.exit(0)
