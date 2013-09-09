@@ -12,6 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 
 public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
@@ -96,6 +99,23 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
           @Override
           protected ValidationInfo doValidate() {
             return panel.doValidate();
+          }
+
+          @Nullable
+          @Override
+          protected JComponent createSouthPanel() {
+            JComponent southPanel = super.createSouthPanel();
+
+            JButton button = new JButton("Sync now");
+            button.addActionListener(new ActionListener() {
+              @Override
+              public void actionPerformed(ActionEvent e) {
+                IcsManager.getInstance().sync();
+              }
+            });
+            assert southPanel != null;
+            southPanel.add(button, BorderLayout.WEST);
+            return southPanel;
           }
         };
         dialog.setResizable(false);
