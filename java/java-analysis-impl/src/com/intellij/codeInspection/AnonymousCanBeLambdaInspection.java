@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
@@ -151,13 +152,14 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(element, PsiAnonymousClass.class);
         LOG.assertTrue(anonymousClass != null);
         ChangeContextUtil.encodeContextInfo(anonymousClass, true);
-        boolean validContext = LambdaUtil.isValidLambdaContext(anonymousClass.getParent().getParent());
+        final PsiElement lambdaContext = anonymousClass.getParent().getParent();
+        boolean validContext = LambdaUtil.isValidLambdaContext(lambdaContext);
         final String canonicalText = anonymousClass.getBaseClassType().getCanonicalText();
         final PsiMethod method = anonymousClass.getMethods()[0];
         LOG.assertTrue(method != null);
 
-        final String lambdaWithTypesDeclared = composeLambdaText(method, true);
-        final String withoutTypesDeclared = composeLambdaText(method, false);
+        final String lambdaWithTypesDeclared = composeLambdaText(method, lambdaContext, true);
+        final String withoutTypesDeclared = composeLambdaText(method, lambdaContext, false);
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         PsiLambdaExpression lambdaExpression =
           (PsiLambdaExpression)elementFactory.createExpressionFromText(withoutTypesDeclared, anonymousClass);
@@ -229,32 +231,44 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
                                                                                                                 interfaceType) != null;
     }
 
-    private static String composeLambdaText(PsiMethod method, final boolean appendType) {
+    private static String composeLambdaText(PsiMethod method, final PsiElement lambdaContext, final boolean appendType) {
       final StringBuilder buf = new StringBuilder();
-      if (appendType) {
-        buf.append(method.getParameterList().getText());
-      } else {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (parameters.length != 1) {
-          buf.append("(");
-        }
-        buf.append(StringUtil.join(parameters,
-                                   new Function<PsiParameter, String>() {
-                                     @Override
-                                     public String fun(PsiParameter parameter) {
-                                       String parameterName = parameter.getName();
-                                       if (parameterName == null) {
-                                         parameterName = "";
-                                       }
-                                       return parameterName;
-                                     }
-                                   }, ","));
-        if (parameters.length != 1) {
-          buf.append(")");
-        }
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length != 1 || appendType) {
+        buf.append("(");
+      }
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(lambdaContext.getProject());
+      buf.append(StringUtil.join(parameters,
+                                 new Function<PsiParameter, String>() {
+                                   @Override
+                                   public String fun(PsiParameter parameter) {
+                                     return composeParameter(parameter, appendType, codeStyleManager, lambdaContext);
+                                   }
+                                 }, ","));
+      if (parameters.length != 1 || appendType) {
+        buf.append(")");
       }
       buf.append("-> {}");
       return buf.toString();
+    }
+
+    private static String composeParameter(PsiParameter parameter,
+                                           boolean appendType,
+                                           JavaCodeStyleManager codeStyleManager,
+                                           PsiElement lambdaContext) {
+      final String parameterType;
+      if (appendType) {
+        final PsiTypeElement typeElement = parameter.getTypeElement();
+        parameterType = typeElement != null ? (typeElement.getText() + " ") : "";
+      }
+      else {
+        parameterType = "";
+      }
+      String parameterName = parameter.getName();
+      if (parameterName == null) {
+        parameterName = "";
+      }
+      return parameterType + codeStyleManager.suggestUniqueVariableName(parameterName, lambdaContext, true);
     }
   }
 }

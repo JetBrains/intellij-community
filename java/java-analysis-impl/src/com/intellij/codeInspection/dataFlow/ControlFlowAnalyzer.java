@@ -52,6 +52,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       throw new UnsupportedOperationException("Not implemented");
     }
   };
+  public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = "org.jetbrains.annotations.Contract";
   private boolean myIgnoreAssertions;
 
   private static class CannotAnalyzeException extends RuntimeException { }
@@ -1421,18 +1422,17 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private static List<MethodContract> getCallContracts(PsiMethodCallExpression expression) {
     PsiMethod resolved = expression.resolveMethod();
     if (resolved != null) {
-      final PsiAnnotation contractAnno = AnnotationUtil.findAnnotation(resolved, "org.jetbrains.annotations.Contract");
+      final PsiAnnotation contractAnno = findContractAnnotation(resolved);
       if (contractAnno != null) {
         final Project project = expression.getProject();
         return CachedValuesManager.getManager(project).getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
           @Nullable
           @Override
           public Result<List<MethodContract>> compute() {
-            PsiAnnotationMemberValue value = contractAnno.findAttributeValue(null);
-            Object text = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper().computeConstantExpression(value);
-            if (text instanceof String) {
+            String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
+            if (text != null) {
               try {
-                return Result.create(parseContract((String)text), contractAnno);
+                return Result.create(parseContract(text), contractAnno);
               }
               catch (Exception ignored) {
               }
@@ -1505,6 +1505,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     return Collections.emptyList();
+  }
+
+  public static PsiAnnotation findContractAnnotation(PsiMethod method) {
+    return AnnotationUtil.findAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
   }
 
   public static List<MethodContract> parseContract(String text) throws ParseException {

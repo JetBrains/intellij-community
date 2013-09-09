@@ -694,6 +694,11 @@
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInspection.dataFlow.EditContractIntention</className>
+      <category>Control Flow</category>
+      <descriptionDirectoryName>EditContractIntention</descriptionDirectoryName>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.IterateOverIterableIntention</className>
       <category>Control Flow</category>
     </intentionAction>

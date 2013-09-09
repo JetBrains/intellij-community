@@ -154,6 +154,13 @@ abstract class BaseHtmlLexer extends DelegateLexer {
       }
     }
   }
+
+  @Nullable
+  protected Language getScriptLanguage() {
+    Collection<Language> instancesByMimeType = Language.findInstancesByMimeType(scriptType != null ? scriptType.trim() : null);
+    return instancesByMimeType.isEmpty() ? null : instancesByMimeType.iterator().next();
+  }
+
   @Nullable
   protected IElementType getCurrentScriptElementType() {
     HtmlScriptContentProvider scriptContentProvider = findScriptContentProvider(scriptType);
@@ -333,7 +340,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   protected boolean isValidAttributeValueTokenType(final IElementType tokenType) {
     return tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
            tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN ||
-            tokenType == XmlTokenType.XML_CHAR_ENTITY_REF;
+           tokenType == XmlTokenType.XML_CHAR_ENTITY_REF;
   }
 
   public void advance() {

@@ -55,6 +55,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -85,6 +86,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Gregory.Shrago
+ * In case of REPL consider to use {@link com.intellij.execution.runners.LanguageConsoleBuilder}
  */
 public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance("#" + LanguageConsoleImpl.class.getName());
@@ -380,10 +382,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     this.myTitle = title;
   }
 
-  public void addToHistory(final String text, final TextAttributes attributes) {
-    printToHistory(text, attributes);
-  }
-
   public void printToHistory(@NotNull final List<Pair<String, TextAttributes>> attributedText) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (LOG.isDebugEnabled()) {
@@ -400,7 +398,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
     final DocumentEx history = myHistoryViewer.getDocument();
     final int oldHistoryLength = history.getTextLength();
-    appendToHistoryDocument(history, sb.toString());
+    appendToHistoryDocument(history, sb);
 
     assert oldHistoryLength + offsets[i] >= history.getTextLength()
       : "unexpected history length " + oldHistoryLength + " " + offsets[i] + " " + history.getTextLength();
@@ -435,9 +433,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     LOG.debug("printToHistory(): completed");
   }
 
-  public void printToHistory(String text, final TextAttributes attributes) {
+  public void printToHistory(@NotNull CharSequence text, @NotNull TextAttributes attributes) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    text = StringUtil.convertLineSeparators(text);
+    text = StringUtilRt.unifyLineSeparators(text);
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
     addTextToHistory(text, attributes);
     if (scrollToEnd) {
@@ -446,8 +444,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     queueUiUpdate(scrollToEnd);
   }
 
-  protected void addTextToHistory(@Nullable String text, @Nullable TextAttributes attributes) {
-    if (text == null || text.length() == 0) return;
+  protected void addTextToHistory(@Nullable CharSequence text, @Nullable TextAttributes attributes) {
+    if (StringUtil.isEmpty(text)) {
+      return;
+    }
+
     Document history = myHistoryViewer.getDocument();
     MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     int offset = history.getTextLength();
@@ -557,7 +558,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     addTextToHistory(myPrompt, ConsoleViewContentType.USER_INPUT.getAttributes());
   }
 
-  protected void appendToHistoryDocument(@NotNull Document history, @NotNull String text) {
+  protected void appendToHistoryDocument(@NotNull Document history, @NotNull CharSequence text) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     history.insertString(history.getTextLength(), text);
   }
@@ -619,7 +620,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   public void calcData(DataKey key, DataSink sink) {
     if (OpenFileDescriptor.NAVIGATE_IN_EDITOR == key) {
       sink.put(OpenFileDescriptor.NAVIGATE_IN_EDITOR, myConsoleEditor);
-      return;
     }
     else if (getProject().isInitialized()) {
       FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
@@ -729,8 +729,23 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
   }
 
+  public void printToHistoryOnEdt(@NotNull final CharSequence text, @NotNull final TextAttributes attributes) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      printToHistory(text, attributes);
+    }
+    else {
+      application.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          printToHistory(text, attributes);
+        }
+      }, ModalityState.stateForComponent(getComponent()));
+    }
+  }
+
   public static void printToConsole(@NotNull final LanguageConsoleImpl console,
-                                    @NotNull final String string,
+                                    @NotNull final CharSequence string,
                                     @NotNull final ConsoleViewContentType mainType,
                                     @Nullable ConsoleViewContentType additionalType) {
     final TextAttributes mainAttributes = mainType.getAttributes();
@@ -743,18 +758,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       attributes.setBackgroundColor(mainAttributes.getBackgroundColor());
     }
 
-    Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      console.printToHistory(string, attributes);
-    }
-    else {
-      application.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          console.printToHistory(string, attributes);
-        }
-      }, ModalityState.stateForComponent(console.getComponent()));
-    }
+    console.printToHistoryOnEdt(string, attributes);
   }
 
   private class MyLayout extends AbstractLayoutManager {

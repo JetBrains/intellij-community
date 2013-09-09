@@ -19,12 +19,13 @@ package com.intellij.xdebugger;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
-import com.intellij.xdebugger.ui.XDebugLayouter;
+import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,6 +173,13 @@ public abstract class XDebugProcess {
   }
 
   /**
+   * @deprecated override {@link #createTabLayouter()} and {@link com.intellij.xdebugger.ui.XDebugTabLayouter#registerAdditionalContent} instead
+   */
+  @Deprecated
+  public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
+  }
+
+  /**
    * Override this method to provide additional actions in 'Debug' tool window
    */
   public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar) {
@@ -189,9 +197,17 @@ public abstract class XDebugProcess {
     return null;
   }
 
+  /**
+   * Override this method to customize content of tab in 'Debug' tool window
+   */
   @NotNull
-  public XDebugLayouter createLayouter() {
-    return new XDebugLayouter();
+  public XDebugTabLayouter createTabLayouter() {
+    return new XDebugTabLayouter() {
+      @Override
+      public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
+        XDebugProcess.this.registerAdditionalContent(ui);
+      }
+    };
   }
 
   /**
@@ -201,4 +217,5 @@ public abstract class XDebugProcess {
   public boolean isValuesCustomSorted() {
     return false;
   }
+
 }

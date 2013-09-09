@@ -236,7 +236,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
         if (myIsTargetInterface || info.isToAbstract()) {
           ChangeContextUtil.clearContextInfo(method);
 
-          if (!info.isToAbstract() && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          if (!info.isToAbstract() && !method.hasModifierProperty(PsiModifier.ABSTRACT) && PsiUtil.isLanguageLevel8OrHigher(myTargetSuperClass)) {
             //pull as default
             RefactoringUtil.makeMethodDefault(methodCopy);
             isOriginalMethodAbstract = true;

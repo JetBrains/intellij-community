@@ -49,4 +49,96 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                        "</dependencies>\n"));
   }
 
+  public void testInsertManagedDependency() throws IOException {
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "<artifactId>project</artifactId>\n" +
+                     "<version>1</version>\n" +
+
+                     "<dependencyManagement>\n" +
+                     "  <dependencies>\n" +
+                     "    <dependency>\n" +
+                     "      <groupId>junit</groupId>\n" +
+                     "      <artifactId>junit</artifactId>\n" +
+                     "      <version>4.0</version>\n" +
+                     "    </dependency>\n" +
+                     "  </dependencies>\n" +
+                     "</dependencyManagement>\n" +
+
+                     "<dependencies>\n" +
+                     "  <dependency>ju<caret></dependency>\n" +
+                     "</dependencies>\n");
+
+    configTest(myProjectPom);
+    myFixture.complete(CompletionType.SMART);
+
+    myFixture.checkResult(createPomXml("<groupId>test</groupId>\n" +
+                                       "<artifactId>project</artifactId>\n" +
+                                       "<version>1</version>\n" +
+                                       "<dependencyManagement>\n" +
+                                       "  <dependencies>\n" +
+                                       "    <dependency>\n" +
+                                       "      <groupId>junit</groupId>\n" +
+                                       "      <artifactId>junit</artifactId>\n" +
+                                       "      <version>4.0</version>\n" +
+                                       "    </dependency>\n" +
+                                       "  </dependencies>\n" +
+                                       "</dependencyManagement>\n" +
+                                       "<dependencies>\n" +
+                                       "    <dependency>\n" +
+                                       "        <groupId>junit</groupId>\n" +
+                                       "        <artifactId>junit</artifactId>\n" +
+                                       "    </dependency>\n" +
+                                       "</dependencies>\n"));
+  }
+
+  public void testInsertManagedDependencyWithTypeAndClassifier() throws IOException {
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "<artifactId>project</artifactId>\n" +
+                     "<version>1</version>\n" +
+
+                     "<dependencyManagement>\n" +
+                     "  <dependencies>\n" +
+                     "    <dependency>\n" +
+                     "      <groupId>junit</groupId>\n" +
+                     "      <artifactId>junit</artifactId>\n" +
+                     "      <version>4.0</version>\n" +
+                     "      <type>test-jar</type>\n" +
+                     "      <classifier>sources</classifier>\n" +
+                     "    </dependency>\n" +
+                     "  </dependencies>\n" +
+                     "</dependencyManagement>\n" +
+
+                     "<dependencies>\n" +
+                     "  <dependency>ju<caret></dependency>\n" +
+                     "</dependencies>\n");
+
+    configTest(myProjectPom);
+    myFixture.complete(CompletionType.SMART);
+
+    myFixture.checkResult(createPomXml("<groupId>test</groupId>\n" +
+                                       "<artifactId>project</artifactId>\n" +
+                                       "<version>1</version>\n" +
+
+                                       "<dependencyManagement>\n" +
+                                       "  <dependencies>\n" +
+                                       "    <dependency>\n" +
+                                       "      <groupId>junit</groupId>\n" +
+                                       "      <artifactId>junit</artifactId>\n" +
+                                       "      <version>4.0</version>\n" +
+                                       "      <type>test-jar</type>\n" +
+                                       "      <classifier>sources</classifier>\n" +
+                                       "    </dependency>\n" +
+                                       "  </dependencies>\n" +
+                                       "</dependencyManagement>\n" +
+
+                                       "<dependencies>\n" +
+                                       "    <dependency>\n" +
+                                       "        <groupId>junit</groupId>\n" +
+                                       "        <artifactId>junit</artifactId>\n" +
+                                       "        <type>test-jar</type>\n" +
+                                       "        <classifier>sources</classifier>\n" +
+                                       "    </dependency>\n" +
+                                       "</dependencies>\n"));
+  }
+
 }

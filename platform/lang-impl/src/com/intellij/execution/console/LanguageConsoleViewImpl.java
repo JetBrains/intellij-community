@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,7 +37,12 @@ public class LanguageConsoleViewImpl extends ConsoleViewImpl implements Language
   }
 
   public LanguageConsoleViewImpl(@NotNull LanguageConsoleImpl console) {
-    super(console.getProject(), true);
+    this(console, true);
+  }
+
+  public LanguageConsoleViewImpl(@NotNull LanguageConsoleImpl console, boolean usePredefinedMessageFilter) {
+    super(console.getProject(), GlobalSearchScope.allScope(console.getProject()), true, null, usePredefinedMessageFilter);
+
     myConsole = console;
     Disposer.register(this, myConsole);
   }

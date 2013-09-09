@@ -432,4 +432,11 @@ public class AnnotationUtil {
   public static boolean isInsideAnnotation(PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class, PsiArrayInitializerMemberValue.class) != null;
   }
+
+  @Nullable
+  public static String getStringAttributeValue(PsiAnnotation anno, @Nullable final String attributeName) {
+    PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);
+    Object constValue = JavaPsiFacade.getInstance(anno.getProject()).getConstantEvaluationHelper().computeConstantExpression(attrValue);
+    return constValue instanceof String ? (String)constValue : null;
+  }
 }
