@@ -43,6 +43,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,7 +63,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
   private final XDebugSessionData mySessionData;
   private final JPanel myDecoratedPanel;
 
-  public XWatchesView(final XDebugSession session, final Disposable parentDisposable, final XDebugSessionData sessionData) {
+  public XWatchesView(@NotNull final XDebugSession session, @Nullable final Disposable parentDisposable, final XDebugSessionData sessionData) {
     super(session, parentDisposable);
     mySessionData = sessionData;
     myTreePanel = new XDebuggerTreePanel(session, session.getDebugProcess().getEditorsProvider(), this, null,

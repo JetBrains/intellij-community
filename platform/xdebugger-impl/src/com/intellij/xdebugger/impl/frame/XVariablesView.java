@@ -30,6 +30,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -44,7 +45,7 @@ public class XVariablesView extends XDebugViewBase {
   private Object myFrameEqualityObject;
   private XDebuggerTreeRestorer myTreeRestorer;
 
-  public XVariablesView(@NotNull XDebugSession session, final Disposable parentDisposable) {
+  public XVariablesView(@NotNull XDebugSession session, @Nullable final Disposable parentDisposable) {
     super(session, parentDisposable);
     XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
     myDebuggerTreePanel = new XDebuggerTreePanel(session, editorsProvider, this, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP);
