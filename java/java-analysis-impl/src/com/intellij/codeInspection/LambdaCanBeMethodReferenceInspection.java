@@ -69,11 +69,14 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         super.visitLambdaExpression(expression);
         if (PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_8)) {
           final PsiElement body = expression.getBody();
-          final PsiCallExpression callExpression = canBeMethodReferenceProblem(body, expression.getParameterList().getParameters(), expression.getFunctionalInterfaceType());
-          if (callExpression != null) {
-            holder.registerProblem(callExpression,
-                                   "Can be replaced with method reference",
-                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithMethodRefFix());
+          final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+          if (functionalInterfaceType != null) {
+            final PsiCallExpression callExpression = canBeMethodReferenceProblem(body, expression.getParameterList().getParameters(), functionalInterfaceType);
+            if (callExpression != null) {
+              holder.registerProblem(callExpression,
+                                     "Can be replaced with method reference",
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithMethodRefFix());
+            }
           }
         }
       }
