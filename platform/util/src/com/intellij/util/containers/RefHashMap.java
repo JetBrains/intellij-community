@@ -32,6 +32,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   public RefHashMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<Key<K>> strategy) {
     myMap = new MyMap(initialCapacity, loadFactor, strategy);
   }
+
   public RefHashMap(int initialCapacity, float loadFactor) {
     this(initialCapacity, loadFactor, ContainerUtil.<Key<K>>canonicalStrategy());
   }
@@ -63,7 +64,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     });
   }
 
-  private class MyMap extends THashMap<Key<K>,V> {
+  private class MyMap extends THashMap<Key<K>, V> {
     private MyMap(int initialCapacity, float loadFactor, @NotNull TObjectHashingStrategy<Key<K>> strategy) {
       super(initialCapacity, loadFactor, strategy);
     }
@@ -77,10 +78,10 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     }
 
     private void compactIfNecessary() {
-        if (_deadkeys > _size && capacity() > 42) {
-            // Compact if more than 50% of all keys are dead. Also, don't trash small maps
-            compact();
-        }
+      if (_deadkeys > _size && capacity() > 42) {
+        // Compact if more than 50% of all keys are dead. Also, don't trash small maps
+        compact();
+      }
     }
 
     @Override
@@ -93,9 +94,9 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       V[] oldVals = _values;
 
       _set = new Object[newCapacity];
-      _values = (V[]) new Object[newCapacity];
+      _values = (V[])new Object[newCapacity];
 
-      for (int i = oldCapacity; i-- > 0;) {
+      for (int i = oldCapacity; i-- > 0; ) {
         Object o = oldKeys[i];
         if (o == null || o == REMOVED) continue;
         Key<K> k = (Key<K>)o;
@@ -104,7 +105,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
         int index = insertionIndex(k);
         if (index < 0) {
           // make 'key' alive till this point to not allow 'o.referent' to be gced
-          throwObjectContractViolation(_set[-index -1], o + "; key: "+key);
+          throwObjectContractViolation(_set[-index - 1], o + "; key: " + key);
         }
         _set[index] = o;
         _values[index] = oldVals[i];
@@ -131,6 +132,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       myObject = object;
       myHash = object.hashCode();
     }
+
     private void clear() {
       myObject = null;
       myHash = 0;
@@ -166,10 +168,12 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   V removeKey(@NotNull Key<K> key) {
     return myMap.remove(key);
   }
+
   @NotNull
   Key<K> createKey(@NotNull K key) {
     return createKey(key, myReferenceQueue);
   }
+
   V putKey(@NotNull Key<K> weakKey, V value) {
     return myMap.put(weakKey, value);
   }
@@ -228,7 +232,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
 
   private static class MyEntry<K, V> implements Entry<K, V> {
     private final Entry<?, V> ent;
-    private final K key;	/* Strong reference to key, so that the GC
+    private final K key; /* Strong reference to key, so that the GC
                                  will leave it alone as long as this Entry
                                  exists */
 

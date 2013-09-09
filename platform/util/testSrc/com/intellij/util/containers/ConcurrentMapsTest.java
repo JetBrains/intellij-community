@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectHashingStrategy;
 import junit.framework.TestCase;
 
@@ -120,5 +121,25 @@ public class ConcurrentMapsTest extends TestCase {
     assertEquals(0, map.underlyingMapSize());
     map.put(this, this);
     assertEquals(1, map.underlyingMapSize());
+  }
+
+  public void testStrategy() {
+    SoftHashMap<String, String> map = new SoftHashMap<String, String>(new TObjectHashingStrategy<String>() {
+      @Override
+      public int computeHashCode(String object) {
+        return Character.toLowerCase(object.charAt(object.length() - 1));
+      }
+
+      @Override
+      public boolean equals(String o1, String o2) {
+        return StringUtil.equalsIgnoreCase(o1, o2);
+      }
+    });
+
+    map.put("ab", "ab");
+    assertTrue(map.containsKey("AB"));
+    String removed = map.remove("aB");
+    assertEquals("ab", removed);
+    assertTrue(map.isEmpty());
   }
 }
