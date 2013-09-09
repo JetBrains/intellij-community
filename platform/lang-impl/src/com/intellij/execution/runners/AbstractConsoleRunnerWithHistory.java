@@ -246,7 +246,8 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   public static AnAction createConsoleExecAction(final LanguageConsoleImpl languageConsole,
                                                  final ProcessHandler processHandler,
                                                  final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return new ProcessBackedConsoleExecuteAction(languageConsole, processHandler, consoleExecuteActionHandler);
+    return new ConsoleExecuteAction(languageConsole, consoleExecuteActionHandler, ConsoleExecuteAction.CONSOLE_EXECUTE_ACTION_ID,
+                                    new LanguageConsoleBuilder.ProcessBackedExecutionEnabledCondition(processHandler));
   }
 
   @NotNull

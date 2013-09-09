@@ -23,24 +23,28 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import org.jetbrains.annotations.NotNull;
 
 public class ConsoleExecuteAction extends DumbAwareAction {
-  public static final String CONSOLE_EXECUTE_ACTION_ID = "Console.Execute";
+  static final String CONSOLE_EXECUTE_ACTION_ID = "Console.Execute";
 
   private final LanguageConsoleImpl myConsole;
   private final BaseConsoleExecuteActionHandler myExecuteActionHandler;
+  private final Condition<LanguageConsoleImpl> myEnabledCondition;
 
   public ConsoleExecuteAction(@NotNull LanguageConsoleImpl console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler) {
-    this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID);
+    this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, Conditions.<LanguageConsoleImpl>alwaysTrue());
   }
 
   public ConsoleExecuteAction(@NotNull LanguageConsoleImpl console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler,
-                              @NotNull String emptyExecuteActionId) {
+                              @NotNull String emptyExecuteActionId, @NotNull Condition<LanguageConsoleImpl> enabledCondition) {
     super(null, null, AllIcons.Actions.Execute);
 
     myConsole = console;
     myExecuteActionHandler = executeActionHandler;
+    myEnabledCondition = enabledCondition;
 
     EmptyAction.setupAction(this, emptyExecuteActionId, null);
   }
@@ -59,6 +63,6 @@ public class ConsoleExecuteAction extends DumbAwareAction {
   }
 
   protected boolean isEnabled() {
-    return true;
+    return myEnabledCondition.value(myConsole);
   }
 }
