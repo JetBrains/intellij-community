@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * Allows to customize xdebug layout for 'Debug' tool window.
  *
  * @author Sergey Simonchik
+ * @see com.intellij.xdebugger.XDebugProcess#createTabLayouter()
  */
 public class XDebugTabLayouter {
 

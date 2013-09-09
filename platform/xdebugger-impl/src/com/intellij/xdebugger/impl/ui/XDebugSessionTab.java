@@ -131,8 +131,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     Content consoleContent = layouter.registerConsoleContent(myUi, myConsole);
     attachNotificationTo(consoleContent);
 
-    //noinspection deprecation
-    debugProcess.registerAdditionalContent(myUi);
     layouter.registerAdditionalContent(myUi);
     RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
 

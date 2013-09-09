@@ -173,9 +173,7 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * Override this method to provide additional tabs for 'Debug' tool window
-   *
-   * @Deprecated use {@link com.intellij.xdebugger.ui.XDebugTabLayouter#registerAdditionalContent} instead
+   * @deprecated override {@link #createTabLayouter()} and {@link com.intellij.xdebugger.ui.XDebugTabLayouter#registerAdditionalContent} instead
    */
   @Deprecated
   public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
@@ -199,9 +197,17 @@ public abstract class XDebugProcess {
     return null;
   }
 
+  /**
+   * Override this method to customize content of tab in 'Debug' tool window
+   */
   @NotNull
   public XDebugTabLayouter createTabLayouter() {
-    return new XDebugTabLayouter();
+    return new XDebugTabLayouter() {
+      @Override
+      public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
+        XDebugProcess.this.registerAdditionalContent(ui);
+      }
+    };
   }
 
   /**
