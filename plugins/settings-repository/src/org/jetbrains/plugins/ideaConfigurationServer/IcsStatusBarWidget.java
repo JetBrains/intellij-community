@@ -4,18 +4,17 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 
 public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
-
-  private IcsSettingsPanel panel;
-
   @NotNull
   @Override
   public String ID() {
@@ -69,6 +68,7 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
       @Override
       public void consume(MouseEvent event) {
         DialogWrapper dialog = new DialogWrapper(true) {
+          private IcsSettingsPanel panel;
           {
             init();
             setTitle(IcsManager.PLUGIN_NAME + " Settings");
@@ -90,6 +90,12 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
           protected void doOKAction() {
             panel.apply();
             super.doOKAction();
+          }
+
+          @Nullable
+          @Override
+          protected ValidationInfo doValidate() {
+            return panel.doValidate();
           }
         };
         dialog.setResizable(false);

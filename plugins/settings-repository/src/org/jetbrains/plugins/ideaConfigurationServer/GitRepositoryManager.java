@@ -46,6 +46,13 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     else {
       config.setString("remote", "origin", "url", url);
     }
+
+    try {
+      config.save();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 
   @Override

@@ -42,7 +42,7 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
   });
 
   protected BaseRepositoryManager() {
-    dir = new File(IcsManager.PLUGIN_SYSTEM_DIR, "repository");
+    dir = new File(IcsManager.getPluginSystemDir(), "repository");
   }
 
   @Override

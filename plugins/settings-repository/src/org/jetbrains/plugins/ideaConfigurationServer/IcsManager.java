@@ -11,7 +11,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,7 +24,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.WindowManagerListener;
-import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SingleAlarm;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +40,6 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
   private static final String PROJECT_ID_KEY = "IDEA_SERVER_PROJECT_ID";
 
-  public static final File PLUGIN_SYSTEM_DIR = new File(PathManager.getSystemPath(), "ideaConfigurationServer");
   public static final String PLUGIN_NAME = "Idea Configuration Server";
 
   private final IcsSettings settings;
@@ -66,6 +63,10 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       PropertiesComponent.getInstance(project).setValue(PROJECT_ID_KEY, id);
     }
     return id;
+  }
+
+  public static File getPluginSystemDir() {
+    return new File(PathManager.getSystemPath(), "ideaConfigurationServer");
   }
 
   public IdeaConfigurationServerStatus getStatus() {
@@ -212,7 +213,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   public void dispose() {
   }
 
-  private class ICSStreamProvider implements CurrentUserHolder, StreamProvider {
+  private class ICSStreamProvider implements StreamProvider {
     private final String projectId;
 
     protected final SingleAlarm commitAlarm = new SingleAlarm(new Runnable() {
@@ -240,7 +241,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
           }
         });
       }
-    }, settings.commitDelay, Alarm.ThreadToUse.POOLED_THREAD, IcsManager.this);
+    }, settings.commitDelay);
 
     public ICSStreamProvider(@Nullable String projectId) {
       this.projectId = projectId;
@@ -256,11 +257,6 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     @Nullable
     public InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException {
       return repositoryManager.read(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
-    }
-
-    @Override
-    public String getCurrentUserName() {
-      return settings.getLogin();
     }
 
     @Override
