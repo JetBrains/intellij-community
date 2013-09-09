@@ -1885,6 +1885,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
