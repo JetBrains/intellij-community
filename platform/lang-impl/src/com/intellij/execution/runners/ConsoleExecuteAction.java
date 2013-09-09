@@ -50,7 +50,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
     EditorEx editor = myConsole.getConsoleEditor();
     Lookup lookup = LookupManager.getActiveLookup(editor);
     e.getPresentation().setEnabled(!editor.isRendererMode() && isEnabled() &&
-                                   (lookup == null || !(lookup.isCompletion() && lookup.isFocused())));
+                                   (lookup == null || !lookup.isCompletion()));
   }
 
   @Override
