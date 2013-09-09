@@ -49,7 +49,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,33 +102,41 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
       @Override
       public void visitAnnotation(PsiAnnotation annotation) {
-        if (!Contract.class.getName().equals(annotation.getQualifiedName())) return;
+        if (!ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotation.getQualifiedName())) return;
 
         PsiMethod method = PsiTreeUtil.getParentOfType(annotation, PsiMethod.class);
         if (method == null) return;
 
-        PsiAnnotationMemberValue value = annotation.findAttributeValue(null);
-        Object text = JavaPsiFacade.getInstance(annotation.getProject()).getConstantEvaluationHelper().computeConstantExpression(value);
-        if (!(text instanceof String)) return;
-        
-        List<MethodContract> contracts;
-        try {
-          contracts = ControlFlowAnalyzer.parseContract((String)text);
-        }
-        catch (ControlFlowAnalyzer.ParseException e) {
-          holder.registerProblem(value, e.getMessage());
-          return;
-        }
-        int paramCount = method.getParameterList().getParametersCount();
-        for (int i = 0; i < contracts.size(); i++) {
-          MethodContract contract = contracts.get(i);
-          if (contract.arguments.length != paramCount) {
-            holder.registerProblem(value, "Method takes " + paramCount + " parameters, while contract clause " + i + " expects " + contract.arguments.length);
-            return;
-          }
+        String text = AnnotationUtil.getStringAttributeValue(annotation, null);
+        if (text == null) return;
+
+        String error = checkContract(method, text);
+        if (error != null) {
+          PsiAnnotationMemberValue value = annotation.findAttributeValue(null);
+          assert value != null;
+          holder.registerProblem(value, error);
         }
       }
     };
+  }
+
+  @Nullable
+  public static String checkContract(PsiMethod method, String text) {
+    List<MethodContract> contracts;
+    try {
+      contracts = ControlFlowAnalyzer.parseContract(text);
+    }
+    catch (ControlFlowAnalyzer.ParseException e) {
+      return e.getMessage();
+    }
+    int paramCount = method.getParameterList().getParametersCount();
+    for (int i = 0; i < contracts.size(); i++) {
+      MethodContract contract = contracts.get(i);
+      if (contract.arguments.length != paramCount) {
+        return "Method takes " + paramCount + " parameters, while contract clause " + i + " expects " + contract.arguments.length;
+      }
+    }
+    return null;
   }
 
   private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder) {
