@@ -1,11 +1,10 @@
 package org.hanuna.gitalk.graph.elements;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
 
 /**
  * @author erokhins
@@ -14,25 +13,17 @@ public final class Branch {
   private final Hash upCommitHash;
   private final Hash downCommitHash;
   @Nullable private final VcsRef myRef;
+  @NotNull private final VirtualFile myRepositoryRoot;
 
-  public Branch(@NotNull Hash upCommitHash, @NotNull Hash downCommitHash, Collection<VcsRef> refs) {
+  public Branch(@NotNull Hash upCommitHash, @NotNull Hash downCommitHash, @Nullable VcsRef ref, @NotNull VirtualFile repositoryRoot) {
     this.upCommitHash = upCommitHash;
     this.downCommitHash = downCommitHash;
-    myRef = findUpRef(upCommitHash, refs);
+    myRef = ref;
+    myRepositoryRoot = repositoryRoot;
   }
 
-  public Branch(Hash commit, Collection<VcsRef> refs) {
-    this(commit, commit, refs);
-  }
-
-  @Nullable
-  private static VcsRef findUpRef(Hash upCommitHash, Collection<VcsRef> refs) {
-    for (VcsRef ref : refs) {
-      if (ref.getType() != VcsRef.RefType.TAG && ref.getCommitHash().equals(upCommitHash)) {
-        return ref;
-      }
-    }
-    return null;
+  public Branch(@NotNull Hash commit, @Nullable VcsRef ref, @NotNull VirtualFile repositoryRoot) {
+    this(commit, commit, ref, repositoryRoot);
   }
 
   @NotNull
@@ -46,7 +37,7 @@ public final class Branch {
   }
 
   public int getBranchNumber() {
-    if (myRef == null) {
+    if (myRef == null || myRef.getType() == VcsRef.RefType.TAG) {
       return upCommitHash.hashCode() + 73 * downCommitHash.hashCode();
     }
     return myRef.getName().hashCode();
@@ -74,5 +65,15 @@ public final class Branch {
     else {
       return upCommitHash.toStrHash() + '#' + downCommitHash.toStrHash();
     }
+  }
+
+  @NotNull
+  public VirtualFile getRepositoryRoot() {
+    return myRepositoryRoot;
+  }
+
+  @Nullable
+  public VcsRef getRef() {
+    return myRef;
   }
 }

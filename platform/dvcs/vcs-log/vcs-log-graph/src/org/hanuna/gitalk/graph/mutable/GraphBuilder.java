@@ -1,13 +1,19 @@
 package org.hanuna.gitalk.graph.mutable;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
+import org.hanuna.gitalk.common.compressedlist.VcsLogLogger;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;
 import org.hanuna.gitalk.graph.mutable.elements.UsualEdge;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -79,11 +85,31 @@ public class GraphBuilder {
     }
   }
 
+  @Nullable
+  public VcsRef findRefForHash(@NotNull final Hash hash) {
+    return ContainerUtil.find(myRefs, new Condition<VcsRef>() {
+      @Override
+      public boolean value(VcsRef ref) {
+        return ref.getCommitHash().equals(hash);
+      }
+    });
+  }
 
   private MutableNode addCurrentCommitAndFinishRow(@NotNull Hash commitHash) {
     MutableNode node = underdoneNodes.remove(commitHash);
     if (node == null) {
-      node = createNode(commitHash, new Branch(commitHash, myRefs));
+      VcsRef ref = findRefForHash(commitHash);
+      VirtualFile repositoryRoot;
+      if (ref == null) {
+        // should never happen;
+        // currently happens if a leaf has a tag label, but no branch labels, because we don't report tags from GitLogProvider
+        VcsLogLogger.LOG.error("Ref should exist for this node. Hash: " + commitHash);
+        repositoryRoot = NullVirtualFile.INSTANCE;
+      }
+      else {
+        repositoryRoot = ref.getRoot();
+      }
+      node = createNode(commitHash, new Branch(commitHash, ref, repositoryRoot));
     }
     node.setType(COMMIT_NODE);
     node.setNodeRow(nextRow);
@@ -130,12 +156,14 @@ public class GraphBuilder {
     MutableNode node = addCurrentCommitAndFinishRow(commitParents.getHash());
 
     List<Hash> parents = commitParents.getParents();
+    Branch branch = node.getBranch();
     if (parents.size() == 1) {
-      addParent(node, parents.get(0), node.getBranch());
+      addParent(node, parents.get(0), branch);
     }
     else {
       for (Hash parentHash : parents) {
-        addParent(node, parentHash, new Branch(node.getCommitHash(), parentHash, myRefs));
+        VcsRef ref = findRefForHash(node.getCommitHash());
+        addParent(node, parentHash, new Branch(node.getCommitHash(), parentHash, ref, branch.getRepositoryRoot()));
       }
     }
   }
