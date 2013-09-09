@@ -15,9 +15,14 @@
  */
 package com.siyeh.ipp;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.SmartList;
+
+import java.util.List;
 
 public abstract class IPPTestCase extends LightCodeInsightFixtureTestCase {
   @Override
@@ -45,6 +50,23 @@ public abstract class IPPTestCase extends LightCodeInsightFixtureTestCase {
     myFixture.configureByFile(testName + ".java");
     assertEmpty("Intention \'" + intentionName + "\' is available but should not",
                 myFixture.filterAvailableIntentions(intentionName));
+  }
+
+  protected void assertIntentionNotAvailable(Class<? extends IntentionAction> intentionClass) {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    final List<IntentionAction> result = new SmartList<IntentionAction>();
+    for (final IntentionAction intention : myFixture.getAvailableIntentions()) {
+      if (intentionClass.isInstance(intention)) {
+        result.add(intention);
+      }
+      else if (intention instanceof IntentionActionWrapper) {
+        final IntentionActionWrapper wrapper = (IntentionActionWrapper)intention;
+        if (intentionClass.isInstance(wrapper.getDelegate())) {
+          result.add(intention);
+        }
+      }
+    }
+    assertEmpty("Intention of class \'" + intentionClass + "\' is available but should not", result);
   }
 
   protected abstract String getIntentionName();

@@ -23,10 +23,11 @@ import com.siyeh.ipp.IPPTestCase;
  */
 public class AddArrayCreationExpressionIntentionTest extends IPPTestCase {
   public void testGeneric() { doTest(); }
+  public void testNotAnArray() { assertIntentionNotAvailable(AddArrayCreationExpressionIntention.class); }
 
   @Override
   protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("add.array.creation.expression.intention.name", "Map[][]");
+    return IntentionPowerPackBundle.message("add.array.creation.expression.intention.name", "java.util.Map[][]");
   }
 
   @Override
