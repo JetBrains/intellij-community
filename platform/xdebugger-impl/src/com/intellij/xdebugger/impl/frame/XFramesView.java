@@ -34,6 +34,7 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -61,7 +62,7 @@ public class XFramesView extends XDebugViewBase {
   private final ActionToolbarImpl myToolbar;
   private final Wrapper myThreadsPanel;
 
-  public XFramesView(final XDebugSession session, final Disposable parentDisposable) {
+  public XFramesView(@NotNull final XDebugSession session, @Nullable final Disposable parentDisposable) {
     super(session, parentDisposable);
 
     myMainPanel = new JPanel(new BorderLayout());

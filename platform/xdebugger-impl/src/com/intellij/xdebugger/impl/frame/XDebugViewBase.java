@@ -20,20 +20,25 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionAdapter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public abstract class XDebugViewBase implements Disposable {
   protected enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED, SETTINGS_CHANGED}
+
   protected final XDebugSession mySession;
   private final MyDebugSessionListener mySessionListener;
 
-  public XDebugViewBase(final XDebugSession session, Disposable parentDisposable) {
+  public XDebugViewBase(@NotNull final XDebugSession session, @Nullable Disposable parentDisposable) {
     mySession = session;
     mySessionListener = new MyDebugSessionListener();
     mySession.addSessionListener(mySessionListener);
-    Disposer.register(parentDisposable, this);
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, this);
+    }
   }
 
   public void rebuildView() {
