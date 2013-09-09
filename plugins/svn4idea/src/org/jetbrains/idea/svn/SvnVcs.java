@@ -892,7 +892,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public boolean fileExistsInVcs(FilePath path) {
     File file = path.getIOFile();
     try {
-      SVNStatus status = createStatusClient().doStatus(file, false);
+      SVNStatus status = getFactory(file).createStatusClient().doStatus(file, false);
       if (status != null) {
         if (svnStatusIs(status, SVNStatusType.STATUS_ADDED)) {
           return status.isCopied();
@@ -903,7 +903,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       }
     }
     catch (SVNException e) {
-      //
+      LOG.info(e);
     }
     return false;
   }

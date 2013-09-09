@@ -18,11 +18,10 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.EditFileProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperty;
+import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
@@ -38,18 +37,16 @@ public class SvnEditFileProvider implements EditFileProvider {
 
   public void editFiles(VirtualFile[] files) throws VcsException {
     File[] ioFiles = new File[files.length];
-    SVNWCClient client = myVCS.createWCClient();
+
     for (int i = 0; i < files.length; i++) {
       ioFiles[i] = new File(files[i].getPath());
-      try {
-        SVNPropertyData property = client
-          .doGetProperty(ioFiles[i], SVNProperty.NEEDS_LOCK, SVNRevision.WORKING, SVNRevision.WORKING);
-        if (property == null || property.getValue() == null) {
-          throw new VcsException(SvnBundle.message("exception.text.file.miss.svn", ioFiles[i].getName()));
-        }
-      }
-      catch (SVNException e) {
-        throw new VcsException(e);
+
+      PropertyClient client = myVCS.getFactory(ioFiles[i]).createPropertyClient();
+      SVNPropertyData property = client.getProperty(SvnTarget.fromFile(ioFiles[i], SVNRevision.WORKING), SvnPropertyKeys.SVN_NEEDS_LOCK,
+                                                    false, SVNRevision.WORKING);
+
+      if (property == null || property.getValue() == null) {
+        throw new VcsException(SvnBundle.message("exception.text.file.miss.svn", ioFiles[i].getName()));
       }
     }
     SvnUtil.doLockFiles(myVCS.getProject(), myVCS, ioFiles);
