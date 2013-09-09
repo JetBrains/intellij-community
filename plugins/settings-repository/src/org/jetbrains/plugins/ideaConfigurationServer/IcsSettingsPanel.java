@@ -7,6 +7,8 @@ import com.intellij.ui.components.JBLabel;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class IcsSettingsPanel {
   private JPanel panel;
@@ -15,6 +17,7 @@ public class IcsSettingsPanel {
   private JCheckBox updateRepositoryFromRemoteCheckBox;
   private JCheckBox shareProjectWorkspaceCheckBox;
   private JBLabel tokenFieldLabel;
+  private JButton syncNowButton;
 
   public IcsSettingsPanel() {
     IcsManager icsManager = IcsManager.getInstance();
@@ -28,11 +31,22 @@ public class IcsSettingsPanel {
     urlTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        boolean tokenFieldEnabled = isHttps();
-        tokenField.setEnabled(tokenFieldEnabled);
-        tokenFieldLabel.setEnabled(tokenFieldEnabled);
+        updateTokenFieldStatus();
       }
     });
+
+    syncNowButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        IcsManager.getInstance().sync();
+      }
+    });
+  }
+
+  private void updateTokenFieldStatus() {
+    boolean tokenFieldEnabled = isHttps();
+    tokenField.setEnabled(tokenFieldEnabled);
+    tokenFieldLabel.setEnabled(tokenFieldEnabled);
   }
 
   private boolean isHttps() {

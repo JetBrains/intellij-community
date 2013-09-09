@@ -42,15 +42,38 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
   public static final String PLUGIN_NAME = "Idea Configuration Server";
 
-  private final IcsSettings settings;
+  private final IcsSettings settings = new IcsSettings();
 
   private RepositoryManager repositoryManager;
 
   private IdeaConfigurationServerStatus status;
 
-  public IcsManager() {
-    settings = new IcsSettings();
-  }
+  protected final SingleAlarm commitAlarm = new SingleAlarm(new Runnable() {
+    @Override
+    public void run() {
+      ProgressManager.getInstance().run(new Task.Backgroundable(null, "Pushing to ICS server") {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          ActionCallback callback = repositoryManager.commit(indicator);
+          while (!callback.isProcessed()) {
+            try {
+              //noinspection BusyWait
+              Thread.sleep(300);
+            }
+            catch (InterruptedException e) {
+              break;
+            }
+            if (indicator.isCanceled()) {
+              String message = "Pushing to ICS server canceled";
+              LOG.warn(message);
+              callback.reject(message);
+              break;
+            }
+          }
+        }
+      });
+    }
+  }, settings.commitDelay);
 
   public static IcsManager getInstance() {
     return ApplicationLoadListener.EP_NAME.findExtension(IcsManager.class);
@@ -213,35 +236,12 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   public void dispose() {
   }
 
+  public void sync() {
+    // todo
+  }
+
   private class ICSStreamProvider implements StreamProvider {
     private final String projectId;
-
-    protected final SingleAlarm commitAlarm = new SingleAlarm(new Runnable() {
-      @Override
-      public void run() {
-        ProgressManager.getInstance().run(new Task.Backgroundable(null, "Pushing to ICS server") {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            ActionCallback callback = repositoryManager.commit(indicator);
-            while (!callback.isProcessed()) {
-              try {
-                //noinspection BusyWait
-                Thread.sleep(300);
-              }
-              catch (InterruptedException e) {
-                break;
-              }
-              if (indicator.isCanceled()) {
-                String message = "Pushing to ICS server canceled";
-                LOG.warn(message);
-                callback.reject(message);
-                break;
-              }
-            }
-          }
-        });
-      }
-    }, settings.commitDelay);
 
     public ICSStreamProvider(@Nullable String projectId) {
       this.projectId = projectId;

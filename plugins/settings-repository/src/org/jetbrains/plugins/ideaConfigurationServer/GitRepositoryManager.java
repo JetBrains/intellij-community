@@ -8,9 +8,12 @@ import com.intellij.util.ThrowableRunnable;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.CredentialItem;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.URIish;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +48,9 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     }
     else {
       config.setString("remote", "origin", "url", url);
+      config.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
+      config.setString("branch", "master", "remote", "origin");
+      config.setString("branch", "master", "merge", "refs/heads/master");
     }
 
     try {
@@ -56,28 +62,18 @@ final class GitRepositoryManager extends BaseRepositoryManager {
   }
 
   @Override
-  public void updateRepository() throws IOException {
-    try {
-      git.fetch().setRemoveDeletedRefs(true).call();
-    }
-    catch (InvalidRemoteException e) {
-      // remote repo is not configured
-      LOG.debug(e.getMessage());
-    }
-    catch (GitAPIException e) {
-      throw new IOException(e);
-    }
+  protected void doUpdateRepository() throws Exception {
+    git.fetch().setRemoveDeletedRefs(true).setCredentialsProvider(new MyCredentialsProvider()).call();
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  public void push() throws IOException {
+  @Override
+  protected boolean hasRemoteRepository() {
+    return !StringUtil.isEmptyOrSpaces(git.getRepository().getConfig().getString("remote", "origin", "url"));
+  }
+
+  public void push() throws Exception {
     addFilesToGit();
-    try {
-      git.push().call();
-    }
-    catch (GitAPIException e) {
-      throw new IOException(e);
-    }
+    git.push().setCredentialsProvider(new MyCredentialsProvider()).call();
   }
 
   private void addFilesToGit() throws IOException {
@@ -129,17 +125,8 @@ final class GitRepositoryManager extends BaseRepositoryManager {
 
       private void doRun() throws IOException, GitAPIException {
         addFilesToGit();
-        //indicator.setFraction(5);
         PersonIdent ident = new PersonIdent(ApplicationInfoEx.getInstanceEx().getFullApplicationName(), "dev@null.org");
         git.commit().setAuthor(ident).setCommitter(ident).setMessage("").call();
-        //indicator.setFraction(15);
-        try {
-          git.push().setProgressMonitor(new JGitProgressMonitor(indicator)).call();
-        }
-        catch (InvalidRemoteException e) {
-          // remote repo is not configured
-          LOG.debug(e.getMessage());
-        }
       }
     });
     return callback;
@@ -174,6 +161,47 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     @Override
     public boolean isCancelled() {
       return indicator.isCanceled();
+    }
+  }
+
+  private static class MyCredentialsProvider extends CredentialsProvider {
+    private static final char[] X_OAUTH_PASSWORD = "x-oauth-basic".toCharArray();
+
+    @Override
+    public boolean isInteractive() {
+      return false;
+    }
+
+    @Override
+    public boolean supports(CredentialItem... items) {
+      for (CredentialItem item : items) {
+        if (item instanceof CredentialItem.Password) {
+          continue;
+        }
+        if (item instanceof CredentialItem.Username) {
+          continue;
+        }
+        return false;
+      }
+      return true;
+    }
+
+    @Override
+    public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
+      String token = IcsManager.getInstance().getSettings().token;
+      if (StringUtil.isEmptyOrSpaces(token)) {
+        return false;
+      }
+
+      for (CredentialItem item : items) {
+        if (item instanceof CredentialItem.Username) {
+          ((CredentialItem.Username)item).setValue(token);
+        }
+        else if (item instanceof CredentialItem.Password) {
+          ((CredentialItem.Password)item).setValue(X_OAUTH_PASSWORD);
+        }
+      }
+      return true;
     }
   }
 }
