@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Sergey Simonchik
  */
-public class XDebugLayouter {
+public class XDebugTabLayouter {
 
   /**
    * Registers tab for the given {@code console}.
