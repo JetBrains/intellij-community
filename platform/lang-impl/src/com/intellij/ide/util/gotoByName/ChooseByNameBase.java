@@ -167,7 +167,14 @@ public abstract class ChooseByNameBase {
   public void setDisposed(boolean disposedFlag) {
     myDisposedFlag = disposedFlag;
     if (disposedFlag) {
-      myNames[0] = myNames[1] = null;
+      setNamesSync(true, null);
+      setNamesSync(false, null);
+    }
+  }
+
+  private void setNamesSync(boolean checkboxState, @Nullable String[] value) {
+    synchronized (myNames) {
+      myNames[checkboxState ? 1 : 0] = value;
     }
   }
 
@@ -436,12 +443,12 @@ public abstract class ChooseByNameBase {
     final JComponent toolbarComponent = actionToolbar.getComponent();
     toolbarComponent.setBorder(null);
 
-    hBox.add(toolbarComponent);
-
     if (myToolArea == null) {
       myToolArea = new JLabel(EmptyIcon.create(1, 24));
     }
     hBox.add(myToolArea);
+    hBox.add(toolbarComponent);
+
     myTextFieldPanel.add(caption2Tools);
 
     final ActionMap actionMap = new ActionMap();
@@ -544,7 +551,7 @@ public abstract class ChooseByNameBase {
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        clearPosponedOkAction(false);
+        clearPostponedOkAction(false);
         rebuildList(false);
       }
     });
@@ -751,7 +758,7 @@ public abstract class ChooseByNameBase {
       cancelListUpdater();
       close(ok);
 
-      clearPosponedOkAction(ok);
+      clearPostponedOkAction(ok);
     }
     finally {
       myListModel.clear();
@@ -781,9 +788,10 @@ public abstract class ChooseByNameBase {
     return Registry.is("actionSystem.fixLostTyping");
   }
 
-  private synchronized void ensureNamesLoaded(boolean checkboxState) {
-    int index = checkboxState ? 1 : 0;
-    if (myNames[index] != null) return;
+  @NotNull
+  private synchronized String[] ensureNamesLoaded(boolean checkboxState) {
+    String[] cached = getNamesSync(checkboxState);
+    if (cached != null) return cached;
 
     Window window = (Window)SwingUtilities.getAncestorOfClass(Window.class, myTextField);
     //LOG.assertTrue (myTextField != null);
@@ -797,17 +805,20 @@ public abstract class ChooseByNameBase {
       }
     }
 
-    if (index == 1 &&
+    if (checkboxState &&
         myModel instanceof ContributorsBasedGotoByModel &&
         ((ContributorsBasedGotoByModel)myModel).sameNamesForProjectAndLibraries() &&
-        myNames[0] != null) {
+        getNamesSync(false) != null) {
       // there is no way in indices to have different keys for project symbols vs libraries, we always have same ones
-      myNames[1] = myNames[0];
-      return;
-    } else {
-      myNames[index] = myModel.getNames(checkboxState);
-      assert myNames[index] != null : "Model "+myModel+ "("+myModel.getClass()+") returned null names";
+      String[] allNames = getNamesSync(false);
+      setNamesSync(true, allNames);
+      return allNames;
     }
+
+    String[] result = myModel.getNames(checkboxState);
+    //noinspection ConstantConditions
+    assert result != null : "Model "+myModel+ "("+myModel.getClass()+") returned null names";
+    setNamesSync(checkboxState, result);
 
     if (window != null) {
       window.setCursor(Cursor.getDefaultCursor());
@@ -815,17 +826,23 @@ public abstract class ChooseByNameBase {
         ownerWindow.setCursor(Cursor.getDefaultCursor());
       }
     }
+    return result;
   }
 
   @NotNull
   public String[] getNames(boolean checkboxState) {
     if (ourLoadNamesEachTime) {
-      myNames[checkboxState ? 1 : 0] = null;
-      ensureNamesLoaded(checkboxState);
+      setNamesSync(checkboxState, null);
+      return ensureNamesLoaded(checkboxState);
     }
-    return checkboxState ? myNames[1] : myNames[0];
+    return getNamesSync(checkboxState);
   }
 
+  private String[] getNamesSync(boolean checkboxState) {
+    synchronized (myNames) {
+      return myNames[checkboxState ? 1 : 0];
+    }
+  }
 
   @NotNull
   protected Set<Object> filter(@NotNull Set<Object> elements) {
@@ -1017,7 +1034,7 @@ public abstract class ChooseByNameBase {
       myTextField.setForeground(JBColor.red);
       myListUpdater.cancelAll();
       hideList();
-      clearPosponedOkAction(false);
+      clearPostponedOkAction(false);
       return;
     }
 
@@ -1163,12 +1180,12 @@ public abstract class ChooseByNameBase {
         if (getChosenElement() != null) {
           doClose(true);
         }
-        clearPosponedOkAction(checkDisposed());
+        clearPostponedOkAction(checkDisposed());
       }
     }
   }
 
-  private void clearPosponedOkAction(boolean success) {
+  private void clearPostponedOkAction(boolean success) {
     if (myPostponedOkAction != null) {
       if (success) {
         myPostponedOkAction.setDone();
@@ -1194,18 +1211,19 @@ public abstract class ChooseByNameBase {
   }
 
   protected List<Object> getChosenElements() {
-    if (myListIsUpToDate) {
-      List<Object> values = new ArrayList<Object>(Arrays.asList(myList.getSelectedValues()));
-      values.remove(EXTRA_ELEM);
-      values.remove(NON_PREFIX_SEPARATOR);
+
+    List<Object> values = new ArrayList<Object>(Arrays.asList(myList.getSelectedValues()));
+    values.remove(EXTRA_ELEM);
+    values.remove(NON_PREFIX_SEPARATOR);
+
+    if (myListIsUpToDate || !values.isEmpty()) {
       return values;
     }
 
     final String text = myTextField.getText();
     if (text.length() == 0) return Collections.emptyList();
     final boolean checkBoxState = myCheckBox.isSelected();
-    if (ourLoadNamesEachTime) ensureNamesLoaded(checkBoxState);
-    final String[] names = checkBoxState ? myNames[1] : myNames[0];
+    final String[] names = ourLoadNamesEachTime ? ensureNamesLoaded(checkBoxState) : getNamesSync(checkBoxState);
     if (names == null) return Collections.emptyList();
 
     Object uniqueElement = null;
@@ -1516,13 +1534,12 @@ public abstract class ChooseByNameBase {
             return;
           }
 
-          final String cardToShow;
           if (elements.isEmpty() && !myCheckboxState) {
             myScopeExpanded = true;
             myCheckboxState = true;
             calculation.run();
           }
-          cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
+          final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : myScopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
           showCard(cardToShow, 0);
 
           final Set<Object> filtered = filter(elements);
@@ -1562,8 +1579,8 @@ public abstract class ChooseByNameBase {
           }
         }
       );
-      long end = System.currentTimeMillis();
       if (ContributorsBasedGotoByModel.LOG.isDebugEnabled()) {
+        long end = System.currentTimeMillis();
         ContributorsBasedGotoByModel.LOG.debug("addElementsByPattern("+pattern+"): "+(end-start)+"ms; "+elements.size()+" elements");
       }
     }
@@ -1629,7 +1646,7 @@ public abstract class ChooseByNameBase {
 
   private abstract class ShowFindUsagesAction extends AnAction {
     public ShowFindUsagesAction() {
-      super(ACTION_NAME, ACTION_NAME, AllIcons.Actions.Find);
+      super(ACTION_NAME, ACTION_NAME, AllIcons.General.AutohideOff);
     }
 
     @Override
