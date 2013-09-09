@@ -46,6 +46,6 @@ public class SingleAlarm extends Alarm {
 
   public void cancelAndRequest() {
     cancelAllRequests();
-    addRequest(task, delay, ModalityState.any());
+    addRequest(task, delay, ModalityState.NON_MODAL);
   }
 }
