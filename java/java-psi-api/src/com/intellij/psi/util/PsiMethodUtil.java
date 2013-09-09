@@ -31,7 +31,7 @@ public class PsiMethodUtil {
     @Override
     public boolean value(final PsiClass psiClass) {
       if (psiClass instanceof PsiAnonymousClass) return false;
-      if (psiClass.isInterface()) return false;
+      if (psiClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(psiClass)) return false;
       return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
     }
   };
