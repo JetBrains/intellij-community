@@ -5,21 +5,14 @@ import pickle
 from django_frame import DjangoTemplateFrame
 from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
-from code import compile_command
-from code import InteractiveInterpreter
-import pydevconsole
-import pydev_log
+
+from pydevd_xml import *
 
 try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
 import sys #@Reimport
-
-try:
-    from urllib import quote
-except:
-    from urllib.parse import quote #@UnresolvedImport
 
 if USE_LIB_COPY:
     import _pydev_threading as threading
@@ -50,177 +43,6 @@ class VariableError(RuntimeError): pass
 class FrameNotFoundError(RuntimeError): pass
 
 
-#------------------------------------------------------------------------------------------------------ resolvers in map
-
-if not sys.platform.startswith("java"):
-    typeMap = [
-            #None means that it should not be treated as a compound variable
-
-            #isintance does not accept a tuple on some versions of python, so, we must declare it expanded
-            (type(None), None,),
-            (int, None),
-            (float, None),
-            (complex, None),
-            (str, None),
-            (tuple, pydevd_resolver.tupleResolver),
-            (list, pydevd_resolver.tupleResolver),
-            (dict, pydevd_resolver.dictResolver),
-    ]
-
-    try:
-        typeMap.append((long, None))
-    except:
-        pass #not available on all python versions
-
-    try:
-        typeMap.append((unicode, None))
-    except:
-        pass #not available on all python versions
-
-    try:
-        typeMap.append((set, pydevd_resolver.setResolver))
-    except:
-        pass #not available on all python versions
-
-    try:
-        typeMap.append((frozenset, pydevd_resolver.setResolver))
-    except:
-        pass #not available on all python versions
-
-else: #platform is java   
-    from org.python import core #@UnresolvedImport
-
-    typeMap = [
-            (core.PyNone, None),
-            (core.PyInteger, None),
-            (core.PyLong, None),
-            (core.PyFloat, None),
-            (core.PyComplex, None),
-            (core.PyString, None),
-            (core.PyTuple, pydevd_resolver.tupleResolver),
-            (core.PyList, pydevd_resolver.tupleResolver),
-            (core.PyDictionary, pydevd_resolver.dictResolver),
-            (core.PyStringMap, pydevd_resolver.dictResolver),
-    ]
-
-    if hasattr(core, 'PyJavaInstance'):
-        #Jython 2.5b3 removed it.
-        typeMap.append((core.PyJavaInstance, pydevd_resolver.instanceResolver))
-
-
-def getType(o):
-    """ returns a triple (typeObject, typeString, resolver
-        resolver != None means that variable is a container, 
-        and should be displayed as a hierarchy.
-        Use the resolver to get its attributes.
-        
-        All container objects should have a resolver.
-    """
-
-    try:
-        type_object = type(o)
-        type_name = type_object.__name__
-    except:
-        #This happens for org.python.core.InitModule
-        return 'Unable to get Type', 'Unable to get Type', None
-
-    try:
-        if type_name == 'org.python.core.PyJavaInstance':
-            return type_object, type_name, pydevd_resolver.instanceResolver
-
-        if type_name == 'org.python.core.PyArray':
-            return type_object, type_name, pydevd_resolver.jyArrayResolver
-
-        for t in typeMap:
-            if isinstance(o, t[0]):
-                return type_object, type_name, t[1]
-    except:
-        traceback.print_exc()
-
-    #no match return default        
-    return type_object, type_name, pydevd_resolver.defaultResolver
-
-
-try:
-    from xml.sax.saxutils import escape
-
-    def makeValidXmlValue(s):
-        return escape(s, {'"': '&quot;'})
-except:
-    #Simple replacement if it's not there.
-    def makeValidXmlValue(s):
-        return s.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
-
-
-def varToXML(val, name, doTrim=True):
-    """ single variable or dictionary to xml representation """
-
-    is_exception_on_eval = isinstance(val, ExceptionOnEvaluate)
-
-    if is_exception_on_eval:
-        v = val.result
-    else:
-        v = val
-
-    type, typeName, resolver = getType(v)
-
-    try:
-        if hasattr(v, '__class__'):
-            try:
-                cName = str(v.__class__)
-                if cName.find('.') != -1:
-                    cName = cName.split('.')[-1]
-
-                elif cName.find("'") != -1: #does not have '.' (could be something like <type 'int'>)
-                    cName = cName[cName.index("'") + 1:]
-
-                if cName.endswith("'>"):
-                    cName = cName[:-2]
-            except:
-                cName = str(v.__class__)
-            value = '%s: %s' % (cName, v)
-        else:
-            value = str(v)
-    except:
-        try:
-            value = repr(v)
-        except:
-            value = 'Unable to get repr for %s' % v.__class__
-
-    xml = '<var name="%s" type="%s"' % (makeValidXmlValue(quote(name, '/>_= ')), makeValidXmlValue(typeName))
-
-    if value:
-        #cannot be too big... communication may not handle it.
-        if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE and doTrim:
-            value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
-            value += '...'
-
-        #fix to work with unicode values
-        try:
-            if not IS_PY3K:
-                if isinstance(value, unicode):
-                    value = value.encode('utf-8')
-            else:
-                if isinstance(value, bytes):
-                    value = value.encode('utf-8')
-        except TypeError: #in java, unicode is a function
-            pass
-
-        xmlValue = ' value="%s"' % (makeValidXmlValue(quote(value, '/>_= ')))
-    else:
-        xmlValue = ''
-
-    if is_exception_on_eval:
-        xmlCont = ' isErrorOnEval="True"'
-    else:
-        if resolver is not None:
-            xmlCont = ' isContainer="True"'
-        else:
-            xmlCont = ''
-
-    return ''.join((xml, xmlValue, xmlCont, ' />\n'))
-
-
 if USE_PSYCO_OPTIMIZATION:
     try:
         import psyco
@@ -229,29 +51,6 @@ if USE_PSYCO_OPTIMIZATION:
     except ImportError:
         if hasattr(sys, 'exc_clear'): #jython does not have it
             sys.exc_clear() #don't keep the traceback -- clients don't want to see it
-
-
-def frameVarsToXML(frame):
-    """ dumps frame variables to XML
-    <var name="var_name" scope="local" type="type" value="value"/>
-    """
-    xml = ""
-
-    keys = frame.f_locals.keys()
-    if hasattr(keys, 'sort'):
-        keys.sort() #Python 3.0 does not have it
-    else:
-        keys = sorted(keys) #Jython 2.1 does not have it
-
-    for k in keys:
-        try:
-            v = frame.f_locals[k]
-            xml += varToXML(v, str(k))
-        except Exception:
-            traceback.print_exc()
-            pydev_log.error("Unexpected error, recovered safely.\n")
-
-    return xml
 
 def iterFrames(initialFrame):
     """NO-YIELD VERSION: Iterates through all the frames starting at the specified frame (which will be the first returned item)"""
@@ -357,6 +156,7 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         return {}
 
     attrList = attrs.split('\t')
+    
     if scope == "GLOBAL":
         var = frame.f_globals
         del attrList[0] # globals are special, and they get a single dummy unused attribute
@@ -377,10 +177,22 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         return resolver.getDictionary(var)
     except:
         traceback.print_exc()
-
-class ExceptionOnEvaluate:
-    def __init__(self, result):
-        self.result = result
+        
+        
+def resolveVar(var, attrs):
+    attrList = attrs.split('\t')
+    
+    for k in attrList:
+        type, _typeName, resolver = getType(var)
+        
+        var = resolver.resolve(var, k)
+    
+    try:
+        type, _typeName, resolver = getType(var)
+        return resolver.getDictionary(var)
+    except:
+        traceback.print_exc()
+    
 
 def evaluateExpression(thread_id, frame_id, expression, doExec):
     """returns the result of the evaluated expression
@@ -440,64 +252,6 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
         #Should not be kept alive if an exception happens and this frame is kept in the stack.
         del updated_globals
         del frame
-
-class ConsoleWriter(InteractiveInterpreter):
-    skip = 0
-
-    def __init__(self, locals=None):
-        InteractiveInterpreter.__init__(self, locals)
-
-    def write(self, data):
-        #if (data.find("global_vars") == -1 and data.find("pydevd") == -1):
-        if self.skip > 0:
-            self.skip -= 1
-        else:
-            if data == "Traceback (most recent call last):\n":
-                self.skip = 1
-            sys.stderr.write(data)
-
-def consoleExec(thread_id, frame_id, expression):
-    """returns 'False' in case expression is partialy correct
-    """
-    frame = findFrame(thread_id, frame_id)
-
-    expression = str(expression.replace('@LINE@', '\n'))
-
-    #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
-    #(Names not resolved in generator expression in method)
-    #See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
-    updated_globals = {}
-    updated_globals.update(frame.f_globals)
-    updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
-
-    if pydevconsole.IPYTHON:
-        return pydevconsole.exec_expression(expression, updated_globals, frame.f_locals)
-
-    interpreter = ConsoleWriter()
-
-    try:
-        code = compile_command(expression)
-    except (OverflowError, SyntaxError, ValueError):
-        # Case 1
-        interpreter.showsyntaxerror()
-        return False
-
-    if code is None:
-        # Case 2
-        return True
-
-    #Case 3
-
-    try:
-        Exec(code, updated_globals, frame.f_locals)
-
-    except SystemExit:
-        raise
-    except:
-        interpreter.showtraceback()
-
-    return False
-
 
 def changeAttrExpression(thread_id, frame_id, attr, expression):
     """Changes some attribute in a given frame.

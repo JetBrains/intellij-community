@@ -24,14 +24,18 @@ public class PyStackFrame extends XStackFrame {
 
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
 
-  private final PyDebugProcess myDebugProcess;
+  private Project myProject;
+  private final PyFrameAccessor myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
   private final XSourcePosition myPosition;
 
-  public PyStackFrame(@NotNull final PyDebugProcess debugProcess, @NotNull final PyStackFrameInfo frameInfo) {
+  public PyStackFrame(@NotNull Project project,
+                      @NotNull final PyFrameAccessor debugProcess,
+                      @NotNull final PyStackFrameInfo frameInfo, XSourcePosition position) {
+    myProject = project;
     myDebugProcess = debugProcess;
     myFrameInfo = frameInfo;
-    myPosition = myDebugProcess.getPositionConverter().convertFromPython(frameInfo.getPosition());
+    myPosition = position;
   }
 
   @Override
@@ -46,7 +50,7 @@ public class PyStackFrame extends XStackFrame {
 
   @Override
   public XDebuggerEvaluator getEvaluator() {
-    return new PyDebuggerEvaluator(myDebugProcess);
+    return new PyDebuggerEvaluator(myProject, myDebugProcess);
   }
 
   @Override
@@ -62,8 +66,7 @@ public class PyStackFrame extends XStackFrame {
     final VirtualFile file = myPosition.getFile();
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
-      final Project project = myDebugProcess.getSession().getProject();
-      isExternal = !ProjectRootManager.getInstance(project).getFileIndex().isInContent(file);
+      isExternal = !ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
     }
 
     component.append(myFrameInfo.getName(), gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
@@ -120,5 +123,4 @@ public class PyStackFrame extends XStackFrame {
   protected XSourcePosition getPosition() {
     return myPosition;
   }
-
 }

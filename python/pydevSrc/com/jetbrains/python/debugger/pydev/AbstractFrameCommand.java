@@ -1,7 +1,7 @@
 package com.jetbrains.python.debugger.pydev;
 
 
-public abstract class AbstractFrameCommand extends AbstractThreadCommand {
+public abstract class AbstractFrameCommand<T> extends AbstractThreadCommand<T> {
 
   private final String myFrameId;
 

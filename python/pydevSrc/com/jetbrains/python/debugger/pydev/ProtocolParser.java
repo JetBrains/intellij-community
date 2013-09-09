@@ -115,27 +115,27 @@ public class ProtocolParser {
   }
 
   @NotNull
-  public static PyDebugValue parseValue(final String text) throws PyDebuggerException {
+  public static PyDebugValue parseValue(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
     final XppReader reader = openReader(text, true);
     reader.moveDown();
-    return parseValue(reader);
+    return parseValue(reader, frameAccessor);
   }
 
   @NotNull
-  public static List<PyDebugValue> parseValues(final String text) throws PyDebuggerException {
+  public static List<PyDebugValue> parseValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
     final List<PyDebugValue> values = new LinkedList<PyDebugValue>();
 
     final XppReader reader = openReader(text, false);
     while (reader.hasMoreChildren()) {
       reader.moveDown();
-      values.add(parseValue(reader));
+      values.add(parseValue(reader, frameAccessor));
       reader.moveUp();
     }
 
     return values;
   }
 
-  private static PyDebugValue parseValue(final XppReader reader) throws PyDebuggerException {
+  private static PyDebugValue parseValue(final XppReader reader, PyFrameAccessor frameAccessor) throws PyDebuggerException {
     if (!"var".equals(reader.getNodeName())) {
       throw new PyDebuggerException("Expected <var>, found " + reader.getNodeName());
     }
@@ -150,7 +150,7 @@ public class ProtocolParser {
       value = value.substring(type.length() + 2);
     }
 
-    return new PyDebugValue(name, type, value, "True".equals(isContainer), "True".equals(isErrorOnEval));
+    return new PyDebugValue(name, type, value, "True".equals(isContainer), "True".equals(isErrorOnEval), frameAccessor);
   }
 
   private static XppReader openReader(final String text, final boolean checkForContent) throws PyDebuggerException {

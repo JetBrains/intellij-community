@@ -1,6 +1,6 @@
 package com.jetbrains.python.debugger;
 
-import com.intellij.execution.console.LanguageConsoleViewImpl;
+import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
@@ -11,7 +11,7 @@ import com.jetbrains.python.console.pydev.ConsoleCommunication;
  */
 public class PydevDebugConsoleExecuteActionHandler extends PydevConsoleExecuteActionHandler implements XDebugSessionListener {
 
-  public PydevDebugConsoleExecuteActionHandler(LanguageConsoleViewImpl consoleView,
+  public PydevDebugConsoleExecuteActionHandler(LanguageConsoleView consoleView,
                                                ProcessHandler myProcessHandler,
                                                ConsoleCommunication consoleCommunication) {
     super(consoleView, myProcessHandler, consoleCommunication);

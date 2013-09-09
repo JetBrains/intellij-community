@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.console.ConsoleHistoryController;
+import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.ProcessAdapter;
@@ -16,6 +17,7 @@ import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -45,10 +47,12 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PySourcePosition;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.ProcessRunner;
@@ -64,6 +68,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonIOEncoding;
 import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
@@ -134,6 +139,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     actions.add(backspaceHandlingAction);
     actions.add(interruptAction);
+
+    AnAction showVarsAction = new ShowVarsAction();
+    toolbarActions.add(showVarsAction);
     return actions;
   }
 
@@ -608,14 +616,14 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myConsoleListeners.remove(consoleListener);
   }
 
-  private void fireConsoleInitializedEvent(LanguageConsoleViewImpl consoleView) {
+  private void fireConsoleInitializedEvent(LanguageConsoleView consoleView) {
     for (ConsoleListener listener : myConsoleListeners) {
       listener.handleConsoleInitialized(consoleView);
     }
   }
 
   public interface ConsoleListener {
-    void handleConsoleInitialized(LanguageConsoleViewImpl consoleView);
+    void handleConsoleInitialized(LanguageConsoleView consoleView);
   }
 
 
@@ -655,5 +663,46 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         });
       }
     }.queue();
+  }
+
+  private class ShowVarsAction extends ToggleAction {
+    private boolean mySelected = false;
+
+    public ShowVarsAction() {
+      super("Show Variables", "Shows active console variables", AllIcons.Debugger.Watches);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return mySelected;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      mySelected = state;
+      
+      if (mySelected) {
+        DebugSessionConsoleAdapter session = new DebugSessionConsoleAdapter(getProject(), myPydevConsoleCommunication);
+        final XVariablesView view = new XVariablesView(session, null);
+        session.resume();
+        
+        getConsoleView().showVariables(view);
+        
+        myPydevConsoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
+          @Override
+          public void executionFinished() {
+            view.rebuildView();
+          }
+
+          @Override
+          public void inputRequested() {
+
+          }
+        });
+      }
+      else {
+        getConsoleView().hideVariables();
+      }
+    }
   }
 }

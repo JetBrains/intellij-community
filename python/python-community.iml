@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="testRunner" />
     <orderEntry type="module" module-name="smRunner" />
     <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="module" module-name="xdebugger-impl" />
   </component>
 </module>
 
