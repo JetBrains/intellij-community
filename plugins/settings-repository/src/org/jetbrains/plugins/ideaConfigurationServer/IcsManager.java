@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.ide.ApplicationLoadListener;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -13,10 +14,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.options.StreamProvider;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.WindowManagerListener;
@@ -32,12 +37,10 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.UUID;
 
-public class IcsManager {
+public class IcsManager implements ApplicationLoadListener, Disposable {
   static final Logger LOG = Logger.getInstance(IcsManager.class);
 
   private static final String PROJECT_ID_KEY = "IDEA_SERVER_PROJECT_ID";
-
-  private static final IcsManager instance = new IcsManager();
 
   public static final File PLUGIN_SYSTEM_DIR = new File(PathManager.getSystemPath(), "ideaConfigurationServer");
   public static final String PLUGIN_NAME = "Idea Configuration Server";
@@ -53,7 +56,7 @@ public class IcsManager {
   }
 
   public static IcsManager getInstance() {
-    return instance;
+    return ApplicationLoadListener.EP_NAME.findExtension(IcsManager.class);
   }
 
   private static String getProjectId(final Project project) {
@@ -205,15 +208,39 @@ public class IcsManager {
     }
   }
 
+  @Override
+  public void dispose() {
+  }
+
   private class ICSStreamProvider implements CurrentUserHolder, StreamProvider {
     private final String projectId;
 
     protected final SingleAlarm commitAlarm = new SingleAlarm(new Runnable() {
       @Override
       public void run() {
-        repositoryManager.commit();
+        ProgressManager.getInstance().run(new Task.Backgroundable(null, "Pushing to ICS server") {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            ActionCallback callback = repositoryManager.commit(indicator);
+            while (!callback.isProcessed()) {
+              try {
+                //noinspection BusyWait
+                Thread.sleep(300);
+              }
+              catch (InterruptedException e) {
+                break;
+              }
+              if (indicator.isCanceled()) {
+                String message = "Pushing to ICS server canceled";
+                LOG.warn(message);
+                callback.reject(message);
+                break;
+              }
+            }
+          }
+        });
       }
-    }, settings.commitDelay, Alarm.ThreadToUse.POOLED_THREAD);
+    }, settings.commitDelay, Alarm.ThreadToUse.POOLED_THREAD, IcsManager.this);
 
     public ICSStreamProvider(@Nullable String projectId) {
       this.projectId = projectId;
@@ -285,23 +312,22 @@ public class IcsManager {
     }
   }
 
-  static final class IcsApplicationLoadListener implements ApplicationLoadListener {
-    @Override
-    public void beforeApplicationLoaded(Application application) {
-      if (application.isUnitTestMode()) {
-        return;
-      }
-
-      getInstance().registerApplicationLevelProviders(application);
-
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
-        @Override
-        public void beforeProjectLoaded(@NotNull Project project) {
-          if (!project.isDefault()) {
-            getInstance().registerProjectLevelProviders(project);
-          }
-        }
-      });
+  @Override
+  public void beforeApplicationLoaded(Application application) {
+    if (application.isUnitTestMode()) {
+      return;
     }
+
+    registerApplicationLevelProviders(application);
+
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC,
+                                                                            new ProjectLifecycleListener.Adapter() {
+                                                                              @Override
+                                                                              public void beforeProjectLoaded(@NotNull Project project) {
+                                                                                if (!project.isDefault()) {
+                                                                                  getInstance().registerProjectLevelProviders(project);
+                                                                                }
+                                                                              }
+                                                                            });
   }
 }

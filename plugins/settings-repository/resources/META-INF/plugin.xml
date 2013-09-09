@@ -5,7 +5,7 @@
   <version>2.0</version>
   <vendor>JetBrains</vendor>
   <idea-version since-build="132"/>
-                                  
+
   <application-components>
     <component>
       <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IcsManager$IcsProjectLoadListener</implementation-class>
@@ -13,7 +13,7 @@
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
-    <ApplicationLoadListener implementation="org.jetbrains.plugins.ideaConfigurationServer.IcsManager$IcsApplicationLoadListener"/>
+    <ApplicationLoadListener implementation="org.jetbrains.plugins.ideaConfigurationServer.IcsManager"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
 </idea-plugin>

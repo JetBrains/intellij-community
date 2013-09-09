@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,5 +26,6 @@ public interface RepositoryManager {
 
   void updateRepository() throws IOException;
 
-  void commit();
+  @NotNull
+  ActionCallback commit(@NotNull ProgressIndicator indicator);
 }
