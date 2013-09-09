@@ -456,6 +456,19 @@ public class PythonSdkType extends SdkType {
     return "Python SDK";
   }
 
+  @Override
+  public String sdkPath(VirtualFile homePath) {
+    String path = super.sdkPath(homePath);
+    PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(path);
+    if (flavor != null) {
+      VirtualFile sdkPath = flavor.getSdkPath(homePath);
+      if (sdkPath != null) {
+        return sdkPath.getPath();
+      }
+    }
+    return path;
+  }
+
   public void setupSdkPaths(@NotNull final Sdk sdk) {
     final Project project;
     Component ownerComponent = null;
@@ -887,13 +900,14 @@ public class PythonSdkType extends SdkType {
     // if interpreter is a symlink
     if (FileSystemUtil.isSymLink(homeDirectory)) {
       String resolvedPath = FileSystemUtil.resolveSymLink(homeDirectory);
-      if (resolvedPath != null)
+      if (resolvedPath != null) {
         return getExecutablePath(resolvedPath, name);
+      }
     }
     // Search in standard unix path
     runner = new File(new File("/usr", "bin"), name);
     if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
-    runner = new File(new File (new File("/usr", "local"), "bin"), name);
+    runner = new File(new File(new File("/usr", "local"), "bin"), name);
     if (runner.exists()) return LocalFileSystem.getInstance().extractPresentableUrl(runner.getPath());
     return null;
   }
