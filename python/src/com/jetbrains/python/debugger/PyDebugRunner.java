@@ -4,15 +4,13 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.GenericProgramRunner;
+import com.intellij.execution.runners.LanguageConsoleBuilder;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -110,10 +108,8 @@ public class PyDebugRunner extends GenericProgramRunner {
       PythonConsoleView pythonConsoleView = ((PythonDebugLanguageConsoleView)console).getPydevConsoleView();
 
 
-      ConsoleCommunication consoleCommunication =
-        new PythonDebugConsoleCommunication(project, debugProcess);
+      ConsoleCommunication consoleCommunication = new PythonDebugConsoleCommunication(project, debugProcess);
       pythonConsoleView.setConsoleCommunication(consoleCommunication);
-
 
       PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(pythonConsoleView,
                                                                                                                     processHandler,
@@ -122,11 +118,7 @@ public class PyDebugRunner extends GenericProgramRunner {
       pythonConsoleView.setExecutionHandler(consoleExecuteActionHandler);
 
       debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);
-      new ConsoleHistoryController("py", "", pythonConsoleView.getConsole(), consoleExecuteActionHandler.getConsoleHistoryModel())
-        .install();
-      final AnAction execAction = AbstractConsoleRunnerWithHistory
-        .createConsoleExecAction(pythonConsoleView.getConsole(), processHandler, consoleExecuteActionHandler);
-      execAction.registerCustomShortcutSet(execAction.getShortcutSet(), pythonConsoleView.getComponent());
+      new LanguageConsoleBuilder().console(pythonConsoleView).processHandler(processHandler).initActions(consoleExecuteActionHandler, "py");
     }
   }
 

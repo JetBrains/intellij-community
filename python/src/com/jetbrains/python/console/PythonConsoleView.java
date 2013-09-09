@@ -355,6 +355,12 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     return myLanguageConsoleView.getConsole();
   }
 
+  @NotNull
+  @Override
+  public Project getProject() {
+    return myProject;
+  }
+
   public void showVariables(XVariablesView view) {
     removeAll();
     JSplitPane p = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -413,7 +419,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     }
 
     @Override
-    protected void appendToHistoryDocument(@NotNull Document history, @NotNull String text) {
+    protected void appendToHistoryDocument(@NotNull Document history, @NotNull CharSequence text) {
       myPythonConsoleView.beforeExternalAddContentToDocument(text.length(), ConsoleViewContentType.NORMAL_OUTPUT);
       super.appendToHistoryDocument(history, text);
     }
