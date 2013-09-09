@@ -33,6 +33,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
@@ -140,7 +141,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
       }
     }
-    LambdaUtil.checkMoreSpecificReturnType(conflicts, myActualParameterTypes);
+    checkMoreSpecificReturnType(conflicts, myActualParameterTypes, languageLevel);
   }
 
   public void checkSpecifics(@NotNull List<CandidateInfo> conflicts,
@@ -646,5 +647,151 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
       }
     }
+  }
+
+  enum TypeKind {
+    PRIMITIVE, REFERENCE, NONE_DETERMINED
+  }
+
+  public void checkMoreSpecificReturnType(List<CandidateInfo> conflicts, PsiType[] actualParameterTypes, LanguageLevel languageLevel) {
+    final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
+    next: 
+    for (int i = 1; i < newConflictsArray.length; i++) {
+      final CandidateInfo method = newConflictsArray[i];
+      for (int j = 0; j < i; j++) {
+        final CandidateInfo conflict = newConflictsArray[j];
+        assert conflict != method;
+        switch (isMoreSpecific(method, conflict, actualParameterTypes, languageLevel)) {
+          case FIRST:
+            conflicts.remove(conflict);
+            break;
+          case SECOND:
+            conflicts.remove(method);
+            continue next;
+          default:
+            break;
+        }
+      }
+    }
+  }
+
+  private static Specifics isMoreSpecific(CandidateInfo method,
+                                          CandidateInfo conflict,
+                                          PsiType[] actualParameterTypes,
+                                          LanguageLevel languageLevel) {
+    Specifics moreSpecific = Specifics.NEITHER;
+    final PsiMethod methodElement = (PsiMethod)method.getElement();
+    final PsiMethod conflictElement = (PsiMethod)conflict.getElement();
+    if (methodElement != null && 
+        conflictElement != null &&
+        methodElement.isVarArgs() == conflictElement.isVarArgs() && 
+        methodElement.getParameterList().getParametersCount() <= actualParameterTypes.length &&
+        conflictElement.getParameterList().getParametersCount() <= actualParameterTypes.length) {
+      for (int functionalInterfaceIdx = 0; functionalInterfaceIdx < actualParameterTypes.length; functionalInterfaceIdx++) {
+        final PsiType interfaceReturnType = getReturnType(functionalInterfaceIdx, method);
+        final PsiType interfaceReturnType1 = getReturnType(functionalInterfaceIdx, conflict);
+        if (actualParameterTypes[functionalInterfaceIdx] instanceof PsiLambdaExpressionType || actualParameterTypes[functionalInterfaceIdx] instanceof PsiMethodReferenceType) {
+          if (interfaceReturnType != null && interfaceReturnType1 != null && !Comparing.equal(interfaceReturnType, interfaceReturnType1)) {
+
+            final TypeKind typeKind = getKind(actualParameterTypes[functionalInterfaceIdx]);
+            Specifics moreSpecific1 = Specifics.NEITHER;
+            if (typeKind != TypeKind.NONE_DETERMINED) {
+              final boolean isPrimitive = typeKind == TypeKind.PRIMITIVE;
+              if (interfaceReturnType instanceof PsiPrimitiveType) {
+                if (interfaceReturnType1 instanceof PsiPrimitiveType && 
+                    TypeConversionUtil.isAssignable(interfaceReturnType, interfaceReturnType1)) {
+                  moreSpecific1 = isPrimitive ? Specifics.SECOND : Specifics.FIRST;
+                } else {
+                  moreSpecific1 = isPrimitive ? Specifics.FIRST : Specifics.SECOND;
+                }
+              } else if (interfaceReturnType1 instanceof PsiPrimitiveType) {
+                moreSpecific1 = isPrimitive ? Specifics.SECOND : Specifics.FIRST;
+              }
+            }
+
+            if (moreSpecific1 == Specifics.NEITHER && (interfaceReturnType != PsiType.VOID && interfaceReturnType1 != PsiType.VOID)) {
+              final PsiSubstitutor siteSubstitutor1 = ((MethodCandidateInfo)method).getSiteSubstitutor();
+              final PsiSubstitutor siteSubstitutor2 = ((MethodCandidateInfo)conflict).getSiteSubstitutor();
+
+              final PsiTypeParameter[] typeParameters1 = methodElement.getTypeParameters();
+              final PsiTypeParameter[] typeParameters2 = conflictElement.getTypeParameters();
+
+              final PsiType[] types1AtSite = {interfaceReturnType1};
+              final PsiType[] types2AtSite = {interfaceReturnType};
+
+              final PsiSubstitutor methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, methodElement, siteSubstitutor1, types2AtSite, types1AtSite, languageLevel);
+              final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, conflictElement, siteSubstitutor2, types1AtSite, types2AtSite,languageLevel);
+
+              final boolean applicable12 = TypeConversionUtil.isAssignable(interfaceReturnType1, methodSubstitutor1.substitute(interfaceReturnType));
+              final boolean applicable21 = TypeConversionUtil.isAssignable(interfaceReturnType, methodSubstitutor2.substitute(interfaceReturnType1));
+                
+
+              if (applicable12 || applicable21) {
+                if (!applicable21) {
+                  moreSpecific1 = Specifics.FIRST;
+                }
+                
+                if (!applicable12) {
+                  moreSpecific1 = Specifics.SECOND;
+                }
+              }
+            }
+
+            if (moreSpecific != Specifics.NEITHER && moreSpecific != moreSpecific1) {
+              return Specifics.NEITHER;
+            }
+
+            moreSpecific = moreSpecific1;
+          }
+        } else if (interfaceReturnType != null && interfaceReturnType1 != null) {
+          return Specifics.NEITHER;
+        }
+      }
+    }
+    return moreSpecific;
+  }
+
+  @Nullable
+  private static PsiType getReturnType(int functionalTypeIdx, CandidateInfo method) {
+    final PsiParameter[] methodParameters = ((PsiMethod)method.getElement()).getParameterList().getParameters();
+    if (methodParameters.length == 0) return null;
+    final PsiParameter param = functionalTypeIdx < methodParameters.length ? methodParameters[functionalTypeIdx] : methodParameters[methodParameters.length - 1];
+    final PsiType functionalInterfaceType = ((MethodCandidateInfo)method).getSiteSubstitutor().substitute(param.getType());
+    return LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+  }
+
+  private static TypeKind getKind(PsiType lambdaType) {
+    TypeKind typeKind = TypeKind.PRIMITIVE;
+    if (lambdaType instanceof PsiLambdaExpressionType) {
+      typeKind = areLambdaReturnExpressionsPrimitive((PsiLambdaExpressionType)lambdaType);
+    } else if (lambdaType instanceof PsiMethodReferenceType) {
+      final PsiElement referencedElement = ((PsiMethodReferenceType)lambdaType).getExpression().resolve();
+      if (referencedElement instanceof PsiMethod && !(((PsiMethod)referencedElement).getReturnType() instanceof PsiPrimitiveType)) {
+        typeKind = TypeKind.REFERENCE;
+      }
+    }
+    return typeKind;
+  }
+
+  private static TypeKind areLambdaReturnExpressionsPrimitive(PsiLambdaExpressionType lambdaType) {
+    final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaType.getExpression());
+    TypeKind typeKind = TypeKind.NONE_DETERMINED;
+    for (PsiExpression expression : returnExpressions) {
+      final PsiType returnExprType = expression.getType();
+      if (returnExprType instanceof PsiPrimitiveType) {
+        if (typeKind == TypeKind.REFERENCE) {
+          typeKind = TypeKind.NONE_DETERMINED;
+          break;
+        }
+        typeKind = TypeKind.PRIMITIVE;
+      } else {
+        if (typeKind == TypeKind.PRIMITIVE) {
+          typeKind = TypeKind.NONE_DETERMINED;
+          break;
+        }
+        typeKind = TypeKind.REFERENCE;
+      }
+    }
+    return typeKind;
   }
 }
