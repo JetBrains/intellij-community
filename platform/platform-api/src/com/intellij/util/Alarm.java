@@ -51,7 +51,7 @@ public class Alarm implements Disposable {
   private static final ThreadPoolExecutor ourSharedExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(shared)", Thread.NORM_PRIORITY - 2);
 
   private final Object LOCK = new Object();
-  private final ThreadToUse myThreadToUse;
+  protected final ThreadToUse myThreadToUse;
 
   private JComponent myActivationComponent;
 
@@ -160,7 +160,7 @@ public class Alarm implements Disposable {
     _addRequest(request, delayMillis, modalityState);
   }
 
-  private void _addRequest(@NotNull Runnable request, long delayMillis, ModalityState modalityState) {
+  protected void _addRequest(@NotNull Runnable request, long delayMillis, ModalityState modalityState) {
     synchronized (LOCK) {
       LOG.assertTrue(!myDisposed, "Already disposed");
       final Request requestToSchedule = new Request(request, modalityState, delayMillis);
