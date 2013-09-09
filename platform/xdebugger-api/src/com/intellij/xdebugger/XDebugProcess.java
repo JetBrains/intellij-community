@@ -200,7 +200,7 @@ public abstract class XDebugProcess {
   }
 
   @NotNull
-  public XDebugTabLayouter createLayouter() {
+  public XDebugTabLayouter createTabLayouter() {
     return new XDebugTabLayouter();
   }
 
