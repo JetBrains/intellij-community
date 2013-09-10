@@ -269,7 +269,7 @@ binding.setVariable("platformImplementationModules", [
   "analysis-impl",
   "core-impl",
   "dvcs",
-  "editor-ui-impl",
+  "editor-ui-ex",
   "images",
   "indexing-impl",
   "jps-model-impl",

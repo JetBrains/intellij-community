@@ -26,12 +26,12 @@ class Paths {
   final buildDir
   final sandbox
   final classesTarget
-  final distWin
+  def distWin
   final distWinZip
-  final distAll
+  def distAll
   final distJars
-  final distUnix
-  final distMac
+  def distUnix
+  def distMac
   final distDev
   final artifacts
   final artifacts_core_upsource
@@ -39,10 +39,12 @@ class Paths {
   final ideaConfig
   def jdkHome
 
-  def Paths(String home) {
+  def Paths(String home, String productCode) {
+    // move IDEA specific field to release script
     projectHome = new File(home).getCanonicalPath()
     buildDir = "$projectHome/build"
-    sandbox = "$projectHome/out/release"
+    sandbox = "$projectHome/out/$productCode"
+//    sandbox = "$projectHome/out/release"
 
     classesTarget = "$sandbox/classes"
     distWin = "$sandbox/dist.win"
@@ -77,7 +79,7 @@ class Steps {
 class Build {
   def buildName
   def product
-//  def productCode
+  //{VO} is it use anywhere ?
   def modules
   def steps
   def paths
@@ -91,12 +93,15 @@ class Build {
   Script utils
   Script ultimate_utils
   Script layouts
+  Script community_layouts
   Script libLicenses
 
-  Build(String arg_home, JpsGantProjectBuilder prjBuilder){
+  Build(String arg_home, JpsGantProjectBuilder prjBuilder, String arg_productCode){
+//    productCode = arg_productCode
     home = arg_home
     projectBuilder = prjBuilder
-    paths = new Paths(home)
+//    paths = new Paths(home)
+    paths = new Paths(home, arg_productCode)
     steps = new Steps()
   }
 
@@ -117,8 +122,10 @@ class Build {
     }
     ultimate_utils = utils.includeFile(home + "/build/scripts/ultimate_utils.gant")
     layouts = utils.includeFile(home + "/build/scripts/layouts.gant")
+    community_layouts = utils.includeFile(home + "/community/build/scripts/layouts.gant")
     libLicenses = utils.includeFile(home + "/community/build/scripts/libLicenses.gant")
 //    projectBuilder.stage("Init done")
+    resources()
   }
 
   def zip() {
@@ -127,6 +134,30 @@ class Build {
       utils.zipSources(home, paths.artifacts)
     }
   }
+
+  def resources(){
+    ant.patternset(id: "resources.included") {
+      include(name: "**/*.properties")
+      include(name: "fileTemplates/**/*")
+      include(name: "inspectionDescriptions/**/*")
+      include(name: "intentionDescriptions/**/*")
+      include(name: "tips/**/*")
+      include(name: "search/**/*")
+    }
+
+    ant.patternset(id: "resources.excluded") {
+      exclude(name: "**/*.properties")
+      exclude(name: "fileTemplates/**/*")
+      exclude(name: "fileTemplates")
+      exclude(name: "inspectionDescriptions/**/*")
+      exclude(name: "inspectionDescriptions")
+      exclude(name: "intentionDescriptions/**/*")
+      exclude(name: "intentionDescriptions")
+      exclude(name: "tips/**/*")
+      exclude(name: "tips")
+    }
+  }
+
 
   def compile(String jdk) {
     paths.jdkHome = jdk
@@ -224,10 +255,10 @@ class Build {
     layouts.layoutShared(layout_args, paths.distAll)
 
     projectBuilder.stage("- layoutWin -")
-    layouts.layoutWin(layout_args, paths.distWin)
+    layouts.IdeaLayoutWin(layout_args, paths.distWin)
 
     projectBuilder.stage("- layoutUnix -")
-    layouts.layoutUnix(layout_args, paths.distUnix)
+    layouts.IdeaLayoutUnix(layout_args, paths.distUnix)
 
     projectBuilder.stage("- layoutMac -")
     layouts.layoutMac(layout_args, paths.distMac)
