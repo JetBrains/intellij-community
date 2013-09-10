@@ -2,12 +2,14 @@ package com.jetbrains.python.documentation.doctest;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.InjectedLanguagePlaces;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -33,6 +35,8 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       int start = 0;
       int end = host.getTextLength() - 1;
       final String text = host.getText();
+
+      final Pair<String,String> quotes = PythonStringUtil.getQuotes(text);
       final List<String> strings = StringUtil.split(text, "\n", false);
 
       boolean gotExample = false;
@@ -47,10 +51,12 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
           if (!endsWithSlash)
             injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
         }
+        final String closingQuote = quotes == null ? text.substring(0, 1) : quotes.second;
+
         if (endsWithSlash && !trimmedString.endsWith("\\")) {
           endsWithSlash = false;
           injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(),
-                                            TextRange.create(start, getEndOffset(currentPosition, string, maxPosition)),  null, null);
+                                            TextRange.create(start, getEndOffset(currentPosition, string, maxPosition, closingQuote)),  null, null);
         }
 
         if (trimmedString.startsWith(">>>")) {
@@ -61,13 +67,13 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
             start = currentPosition;
 
           gotExample = true;
-          end = getEndOffset(currentPosition, string, maxPosition);
+          end = getEndOffset(currentPosition, string, maxPosition, closingQuote);
         }
         else if (trimmedString.startsWith("...") && gotExample) {
           if (trimmedString.endsWith("\\"))
             endsWithSlash = true;
 
-          end = getEndOffset(currentPosition, string, maxPosition);
+          end = getEndOffset(currentPosition, string, maxPosition, closingQuote);
         }
         currentPosition += string.length();
       }
@@ -76,10 +82,10 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
     }
   }
 
-  private static int getEndOffset(int start, String s, int maxPosition) {
+  private static int getEndOffset(int start, String s, int maxPosition, String closingQuote) {
     int end;
     int length = s.length();
-    if (s.trim().endsWith("\"\"\"") || s.trim().endsWith("'''"))
+    if (s.trim().endsWith(closingQuote))
       length -= 3;
     else if (start + length == maxPosition && (s.trim().endsWith("\"") || s.trim().endsWith("'")))
       length -= 1;
