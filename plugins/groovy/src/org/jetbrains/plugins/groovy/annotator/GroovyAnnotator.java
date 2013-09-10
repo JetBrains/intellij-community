@@ -53,6 +53,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -247,6 +248,15 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       if (!throwable.isAssignableFrom(type)) {
         myHolder.createErrorAnnotation(typeElement, GroovyBundle.message("catch.statement.parameter.type.should.be.a.subclass.of.throwable"));
       }
+    }
+  }
+
+  @Override
+  public void visitDocComment(GrDocComment comment) {
+    String text = comment.getText();
+    if (!text.endsWith("*/")) {
+      TextRange range = comment.getTextRange();
+      myHolder.createErrorAnnotation(new TextRange(range.getEndOffset() - 1, range.getEndOffset()), GroovyBundle.message("doc.end.expected"));
     }
   }
 

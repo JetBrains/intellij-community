@@ -17,8 +17,11 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -37,6 +40,13 @@ public class GrAnnotatorImpl implements Annotator {
       ((GroovyPsiElement)element).accept(annotator);
       if (PsiUtil.isCompileStatic(element)) {
         GroovyAssignabilityCheckInspection.checkElement((GroovyPsiElement)element, holder);
+      }
+    }
+    else if (element instanceof PsiComment) {
+      String text = element.getText();
+      if (text.startsWith("/*") && !(text.endsWith("*/"))) {
+        TextRange range = element.getTextRange();
+        holder.createErrorAnnotation(TextRange.create(range.getEndOffset() - 1, range.getEndOffset()), GroovyBundle.message("doc.end.expected"));
       }
     }
     else {
