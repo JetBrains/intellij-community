@@ -245,9 +245,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                                                   boolean checkDumbAwareness,
                                                                                   @NotNull List<PsiElement> inside,
                                                                                   @NotNull List<PsiElement> outside) {
-    Set<Language> languages = new THashSet<Language>();
-    Map<String, Language> langIds = new THashMap<String, Language>();
-    Set<String> dialects = new THashSet<String>();
+    Set<Language> languages = new SmartHashSet<Language>();
+    Map<String, Language> langIds = new SmartHashMap<String, Language>();
+    Set<String> dialects = new SmartHashSet<String>();
     for (PsiElement element : inside) {
       Language language = element.getLanguage();
       if (languages.add(language)) {

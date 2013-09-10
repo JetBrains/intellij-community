@@ -15,48 +15,30 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SingletonIterator;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.AbstractSet;
+import java.lang.reflect.Array;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
- * User: cdr
+ * Read-only set consisting of the only element
  */
-public class SingletonSet<E> extends AbstractSet<E> {
-  private final E element;
+public class SingletonSet<E> implements Set<E> {
+  private final E theElement;
+  @NotNull private final TObjectHashingStrategy<E> strategy;
 
   public SingletonSet(E e) {
-    element = e;
+    this(e, ContainerUtil.<E>canonicalStrategy());
   }
 
-  @NotNull
-  @Override
-  public Iterator<E> iterator() {
-    return new Iterator<E>() {
-      private boolean hasNext = true;
-
-      @Override
-      public boolean hasNext() {
-        return hasNext;
-      }
-
-      @Override
-      public E next() {
-        if (hasNext) {
-          hasNext = false;
-          return element;
-        }
-        throw new NoSuchElementException();
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
+  public SingletonSet(E e, @NotNull final TObjectHashingStrategy<E> strategy) {
+    theElement = e;
+    this.strategy = strategy;
   }
 
   @Override
@@ -65,7 +47,77 @@ public class SingletonSet<E> extends AbstractSet<E> {
   }
 
   @Override
-  public boolean contains(Object o) {
-    return Comparing.equal(o, element);
+  public boolean contains(Object elem) {
+    return strategy.equals(theElement, (E)elem);
+  }
+
+  @NotNull
+  @Override
+  public Iterator<E> iterator() {
+    return new SingletonIterator<E>(theElement);
+  }
+
+  @NotNull
+  @Override
+  public Object[] toArray() {
+    return new Object[]{theElement};
+  }
+
+  @NotNull
+  @Override
+  public <T> T[] toArray(@NotNull T[] a) {
+    if (a.length == 0) {
+      a = (T[]) Array.newInstance(a.getClass().getComponentType(), 1);
+    }
+    a[0] = (T)theElement;
+    if (a.length > 1) {
+        a[1] = null;
+    }
+    return a;
+  }
+
+  @Override
+  public boolean add(E t) {
+    throw new IncorrectOperationException();
+  }
+
+  @Override
+  public boolean remove(Object o) {
+    throw new IncorrectOperationException();
+  }
+
+  @Override
+  public boolean containsAll(@NotNull Collection<?> c) {
+    for (Object e : c) {
+      if (!contains(e)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean addAll(@NotNull Collection<? extends E> c) {
+    throw new IncorrectOperationException();
+  }
+
+  @Override
+  public boolean retainAll(@NotNull Collection<?> c) {
+    throw new IncorrectOperationException();
+  }
+
+  @Override
+  public boolean removeAll(@NotNull Collection<?> c) {
+    throw new IncorrectOperationException();
+  }
+
+  @Override
+  public void clear() {
+    throw new IncorrectOperationException();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return false;
   }
 }

@@ -34,7 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "unchecked", "MethodOverridesStaticMethodOfSuperclass","UnusedDeclaration"})
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
 public class ContainerUtil extends ContainerUtilRt {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
@@ -93,11 +93,13 @@ public class ContainerUtil extends ContainerUtilRt {
     return new THashMap<K, V>(strategy);
   }
 
+  @SuppressWarnings("unchecked")
   @NotNull
   public static <T> TObjectHashingStrategy<T> canonicalStrategy() {
     return TObjectHashingStrategy.CANONICAL;
   }
 
+  @SuppressWarnings("unchecked")
   @NotNull
   public static <T> TObjectHashingStrategy<T> identityStrategy() {
     return TObjectHashingStrategy.IDENTITY;
@@ -744,6 +746,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <T, V> V[] map2Array(@NotNull Collection<? extends T> collection, @NotNull Class<? extends V> aClass, @NotNull Function<T, V> mapper) {
     final List<V> list = map2List(collection, mapper);
+    //noinspection unchecked
     return list.toArray((V[])Array.newInstance(aClass, list.size()));
   }
 
@@ -813,18 +816,21 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <T, V> V[] findAllAsArray(@NotNull T[] collection, @NotNull Class<V> instanceOf) {
     List<V> list = findAll(Arrays.asList(collection), instanceOf);
+    //noinspection unchecked
     return list.toArray((V[])Array.newInstance(instanceOf, list.size()));
   }
 
   @NotNull
   public static <T, V> V[] findAllAsArray(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
     List<V> list = findAll(collection, instanceOf);
+    //noinspection unchecked
     return list.toArray((V[])Array.newInstance(instanceOf, list.size()));
   }
 
   @NotNull
   public static <T> T[] findAllAsArray(@NotNull T[] collection, @NotNull Condition<? super T> instanceOf) {
     List<T> list = findAll(collection, instanceOf);
+    //noinspection unchecked
     return list.toArray((T[])Array.newInstance(collection.getClass().getComponentType(), list.size()));
   }
 
@@ -833,6 +839,7 @@ public class ContainerUtil extends ContainerUtilRt {
     final List<V> result = new SmartList<V>();
     for (final T t : collection) {
       if (instanceOf.isInstance(t)) {
+        //noinspection unchecked
         result.add((V)t);
       }
     }
@@ -970,6 +977,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T> List<T> collect(@NotNull Iterator<?> iterator, @NotNull FilteringIterator.InstanceOf<T> instanceOf) {
+    //noinspection unchecked
     return collect(FilteringIterator.create((Iterator<T>)iterator, instanceOf));
   }
 
@@ -1008,6 +1016,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   public static <T, U extends T> U findInstance(@NotNull Iterator<T> iterator, @NotNull Class<U> aClass) {
+    //noinspection unchecked
     return (U)find(iterator, new FilteringIterator.InstanceOf<U>(aClass));
   }
 
@@ -1073,7 +1082,7 @@ public class ContainerUtil extends ContainerUtilRt {
       @Override
       public Iterator<T> iterator() {
         Iterator[] iterators = new Iterator[iterables.length];
-        for (int i = 0, iterablesLength = iterables.length; i < iterablesLength; i++) {
+        for (int i = 0; i < iterables.length; i++) {
           Iterable<? extends T> iterable = iterables[i];
           iterators[i] = iterable.iterator();
         }
@@ -1502,7 +1511,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T> Set<T> set(@NotNull T ... items) {
-    return addAll(newHashSet(items));
+    return newHashSet(items);
   }
 
   public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final Map<K, V> result) {
@@ -1746,96 +1755,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   public static <T> Set<T> singleton(final T o, @NotNull final TObjectHashingStrategy<T> strategy) {
-    return new Set<T>() {
-      @Override
-      public int size() {
-        return 1;
-      }
-
-      @Override
-      public boolean isEmpty() {
-        return false;
-      }
-
-      @Override
-      public boolean contains(Object elem) {
-        return strategy.equals(o, (T)elem);
-      }
-
-      @NotNull
-      @Override
-      public Iterator<T> iterator() {
-        return new Iterator<T>() {
-          boolean atEnd;
-
-          @Override
-          public boolean hasNext() {
-            return !atEnd;
-          }
-
-          @Override
-          public T next() {
-            if (atEnd) throw new NoSuchElementException();
-            atEnd = true;
-            return o;
-          }
-
-          @Override
-          public void remove() {
-            throw new IncorrectOperationException();
-          }
-        };
-      }
-
-      @NotNull
-      @Override
-      public Object[] toArray() {
-        return new Object[]{o};
-      }
-
-      @NotNull
-      @Override
-      public <T> T[] toArray(T[] a) {
-        assert a.length == 1;
-        a[0] = (T)o;
-        return a;
-      }
-
-      @Override
-      public boolean add(T t) {
-        throw new IncorrectOperationException();
-      }
-
-      @Override
-      public boolean remove(Object o) {
-        throw new IncorrectOperationException();
-      }
-
-      @Override
-      public boolean containsAll(Collection<?> c) {
-        return false;
-      }
-
-      @Override
-      public boolean addAll(Collection<? extends T> c) {
-        throw new IncorrectOperationException();
-      }
-
-      @Override
-      public boolean retainAll(Collection<?> c) {
-        throw new IncorrectOperationException();
-      }
-
-      @Override
-      public boolean removeAll(Collection<?> c) {
-        throw new IncorrectOperationException();
-      }
-
-      @Override
-      public void clear() {
-        throw new IncorrectOperationException();
-      }
-    };
+    return new SingletonSet<T>(o, strategy);
   }
 
   /**
@@ -1876,6 +1796,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K,V> V[] convert(@NotNull K[] from, @NotNull V[] to, @NotNull Function<K,V> fun) {
     if (to.length < from.length) {
+      //noinspection unchecked
       to = (V[])Array.newInstance(to.getClass().getComponentType(), from.length);
     }
     for (int i = 0; i < from.length; i++) {
@@ -1931,8 +1852,8 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <A,B> Map<B,A> reverseMap(@NotNull Map<A,B> map) {
     final Map<B,A> result = newHashMap();
-    for (A a : map.keySet()) {
-      result.put(map.get(a), a);
+    for (Map.Entry<A, B> entry : map.entrySet()) {
+      result.put(entry.getValue(), entry.getKey());
     }
     return result;
   }
