@@ -48,7 +48,7 @@ public class DfaTypeValue extends DfaValue {
     }
 
     @NotNull
-    public DfaTypeValue create(@NotNull PsiType type, boolean nullable) {
+    public DfaTypeValue createTypeValue(@NotNull PsiType type, boolean nullable) {
       type = TypeConversionUtil.erasure(type);
       mySharedInstance.myType = type;
       mySharedInstance.myCanonicalText = StringUtil.notNullize(type.getCanonicalText(), PsiKeyword.NULL);
@@ -70,8 +70,8 @@ public class DfaTypeValue extends DfaValue {
       return result;
     }
 
-    public DfaTypeValue create(@NotNull PsiType type) {
-      return create(type, false);
+    public DfaTypeValue createTypeValue(@NotNull PsiType type) {
+      return createTypeValue(type, false);
     }
   }
 

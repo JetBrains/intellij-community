@@ -278,7 +278,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     getVariableState(var).setValue(value);
     if (value instanceof DfaNotNullValue) {
-      DfaTypeValue dfaType = myFactory.getTypeFactory().create(((DfaNotNullValue)value).getType());
+      DfaTypeValue dfaType = myFactory.getTypeFactory().createTypeValue(((DfaNotNullValue)value).getType());
       DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().createRelation(var, dfaType, JavaTokenType.INSTANCEOF_KEYWORD, false);
       applyCondition(dfaInstanceof);
       applyCondition(compareToNull(var, true));
@@ -791,7 +791,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       state = createVariableState(dfaVar);
       PsiType type = dfaVar.getVariableType();
       if (type != null) {
-        state.setInstanceofValue(myFactory.getTypeFactory().create(type));
+        state.setInstanceofValue(myFactory.getTypeFactory().createTypeValue(type));
       }
       if (isUnknownState(dfaVar)) {
         state.setNullable(false);

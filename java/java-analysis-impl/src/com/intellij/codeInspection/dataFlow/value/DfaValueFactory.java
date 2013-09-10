@@ -52,7 +52,7 @@ public class DfaValueFactory {
   }
 
   public DfaValue createTypeValueWithNullability(@Nullable PsiType type, Nullness nullability) {
-    return nullability == Nullness.NOT_NULL ? getNotNullFactory().create(type) : getTypeFactory().create(type, nullability == Nullness.NULLABLE);
+    return nullability == Nullness.NOT_NULL ? getNotNullFactory().create(type) : getTypeFactory().createTypeValue(type, nullability == Nullness.NULLABLE);
   }
 
    int createID() {
