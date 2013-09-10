@@ -46,13 +46,13 @@ public class DfaValueFactory {
     myVarFactory = new DfaVariableValue.Factory(this);
     myConstFactory = new DfaConstValue.Factory(this);
     myBoxedFactory = new DfaBoxedValue.Factory(this);
-    myNotNullFactory = new DfaNotNullValue.Factory(this);
     myTypeFactory = new DfaTypeValue.Factory(this);
     myRelationFactory = new DfaRelationValue.Factory(this);
   }
 
-  public DfaValue createTypeValueWithNullability(@Nullable PsiType type, Nullness nullability) {
-    return nullability == Nullness.NOT_NULL ? getNotNullFactory().create(type) : getTypeFactory().createTypeValue(type, nullability == Nullness.NULLABLE);
+  public DfaValue createTypeValue(@Nullable PsiType type, Nullness nullability) {
+    if (type == null) return DfaUnknownValue.getInstance();
+    return getTypeFactory().createTypeValue(type, nullability);
   }
 
    int createID() {
@@ -80,14 +80,14 @@ public class DfaValueFactory {
     }
 
     if (psiExpression instanceof PsiNewExpression) {
-      return getNotNullFactory().create(psiExpression.getType());
+      return createTypeValue(psiExpression.getType(), Nullness.NOT_NULL);
     }
 
     final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(psiExpression, false);
     PsiType type = psiExpression.getType();
     if (value != null && type != null) {
       if (value instanceof String) {
-        return getNotNullFactory().create(type); // Non-null string literal.
+        return createTypeValue(type, Nullness.NOT_NULL); // Non-null string literal.
       }
       return getConstFactory().createFromValue(value, type, null);
     }
@@ -98,7 +98,7 @@ public class DfaValueFactory {
   @Nullable
   public DfaValue createLiteralValue(PsiLiteralExpression literal) {
     if (literal.getValue() instanceof String) {
-      return getNotNullFactory().create(literal.getType()); // Non-null string literal.
+      return createTypeValue(literal.getType(), Nullness.NOT_NULL); // Non-null string literal.
     }
     return getConstFactory().create(literal);
   }
@@ -131,7 +131,7 @@ public class DfaValueFactory {
       PsiExpression initializer = variable.getInitializer();
       PsiType type = initializer == null ? null : initializer.getType();
       if (initializer != null && type != null && isNotNullExpression(initializer, type)) {
-        return getNotNullFactory().create(type);
+        return createTypeValue(type, Nullness.NOT_NULL);
       }
     }
 
@@ -173,7 +173,6 @@ public class DfaValueFactory {
   private final DfaVariableValue.Factory myVarFactory;
   private final DfaConstValue.Factory myConstFactory;
   private final DfaBoxedValue.Factory myBoxedFactory;
-  private final DfaNotNullValue.Factory myNotNullFactory;
   private final DfaTypeValue.Factory myTypeFactory;
   private final DfaRelationValue.Factory myRelationFactory;
 
@@ -189,11 +188,6 @@ public class DfaValueFactory {
   @NotNull
   public DfaBoxedValue.Factory getBoxedFactory() {
     return myBoxedFactory;
-  }
-
-  @NotNull
-  public DfaNotNullValue.Factory getNotNullFactory() {
-    return myNotNullFactory;
   }
 
   @NotNull

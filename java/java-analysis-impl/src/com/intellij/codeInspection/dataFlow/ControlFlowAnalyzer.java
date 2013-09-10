@@ -73,8 +73,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     myIgnoreAssertions = ignoreAssertions;
     PsiManager manager = codeFragment.getManager();
     GlobalSearchScope scope = codeFragment.getResolveScope();
-    myRuntimeException = myFactory.getNotNullFactory().create(PsiType.getJavaLangRuntimeException(manager, scope));
-    myError = myFactory.getNotNullFactory().create(PsiType.getJavaLangError(manager, scope));
+    myRuntimeException = myFactory.createTypeValue(PsiType.getJavaLangRuntimeException(manager, scope), Nullness.NOT_NULL);
+    myError = myFactory.createTypeValue(PsiType.getJavaLangError(manager, scope), Nullness.NOT_NULL);
     myNpe = JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName(JAVA_LANG_NULL_POINTER_EXCEPTION, scope);
     myFields = new HashSet<DfaVariableValue>();
     myCatchStack = new Stack<CatchDescriptor>();
@@ -1259,7 +1259,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         ConditionalGotoInstruction cond = new ConditionalGotoInstruction(null, false, null);
         addInstruction(cond);
         addInstruction(new EmptyStackInstruction());
-        addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(ref), null));
+        addInstruction(new PushInstruction(myFactory.createTypeValue(ref, Nullness.NOT_NULL), null));
         addThrowCode(ref);
         cond.setOffset(myCurrentFlow.getInstructionCount());
       }
@@ -1390,7 +1390,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         break;
       case NOT_NULL_VALUE:
         PsiType type = expression.getType();
-        addInstruction(new PushInstruction(myFactory.createTypeValueWithNullability(type, Nullness.NOT_NULL), null));
+        addInstruction(new PushInstruction(myFactory.createTypeValue(type, Nullness.NOT_NULL), null));
         addInstruction(new GotoInstruction(exitPoint));
         break;
       case TRUE_VALUE:
@@ -1731,7 +1731,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     if (dfaValue == null) {
       PsiType type = expression.getType();
-      return myFactory.createTypeValueWithNullability(type, DfaPsiUtil.getElementNullability(type, field));
+      return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, field));
     }
     return dfaValue;
   }
@@ -1794,13 +1794,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitSuperExpression(PsiSuperExpression expression) {
     startElement(expression);
-    addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(expression.getType()), null));
+    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL), null));
     finishElement(expression);
   }
 
   @Override public void visitThisExpression(PsiThisExpression expression) {
     startElement(expression);
-    addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(expression.getType()), null));
+    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL), null));
     finishElement(expression);
   }
 

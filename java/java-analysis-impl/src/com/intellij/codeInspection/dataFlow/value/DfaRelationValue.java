@@ -63,10 +63,10 @@ public class DfaRelationValue extends DfaValue {
 
         return createCanonicalRelation(relation, negated, dfaLeft, dfaRight);
       }
-      if (dfaLeft instanceof DfaNotNullValue && dfaRight instanceof DfaConstValue) {
+      if (dfaLeft instanceof DfaTypeValue && ((DfaTypeValue)dfaLeft).isNotNull() && dfaRight instanceof DfaConstValue) {
         return createCanonicalRelation(relation, negated, dfaLeft, dfaRight);
       }
-      else if (dfaRight instanceof DfaNotNullValue && dfaLeft instanceof DfaConstValue) {
+      else if (dfaRight instanceof DfaTypeValue && ((DfaTypeValue)dfaRight).isNotNull() && dfaLeft instanceof DfaConstValue) {
         return createCanonicalRelation(relation, negated, dfaRight, dfaLeft);
       }
       else {
