@@ -280,13 +280,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    final JPanel iconPanel = new JPanel(new BorderLayout());
-    iconPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
-    iconPanel.add(myIcon, BorderLayout.CENTER);
-
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(iconPanel, BorderLayout.WEST);
     panel.add(myContentPanel, BorderLayout.CENTER);
+    panel.add(myIcon, BorderLayout.WEST);
     return panel;
   }
 
@@ -430,7 +426,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     LOG.assertTrue(myCurrentStepComponent != null);
     showStepComponent(myCurrentStepComponent);
 
-    myIcon.setIcon(step.getIcon());
+    Icon icon = step.getIcon();
+    if (icon != null) {
+      myIcon.setIcon(icon);
+      myIcon.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+    }
 
     updateButtons();
 
