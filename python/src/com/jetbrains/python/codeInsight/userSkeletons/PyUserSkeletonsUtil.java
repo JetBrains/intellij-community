@@ -150,9 +150,6 @@ public class PyUserSkeletonsUtil {
     final VirtualFile moduleVirtualFile = file.getVirtualFile();
     if (moduleVirtualFile != null) {
       String moduleName = QualifiedNameFinder.findShortestImportableName(file, moduleVirtualFile);
-      if ("builtins".equals(moduleName)) {
-        moduleName = "__builtin__";
-      }
       if (moduleName != null) {
         final PyQualifiedName qName = PyQualifiedName.fromDottedString(moduleName);
         for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
