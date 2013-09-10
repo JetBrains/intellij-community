@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github.api;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * @author Aleksey Pivovarov
@@ -45,7 +46,7 @@ public class GithubFullPath {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(@Nullable Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
