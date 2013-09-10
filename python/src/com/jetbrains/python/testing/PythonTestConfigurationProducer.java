@@ -183,7 +183,8 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
   }
 
   protected boolean isTestFolder(@NotNull final VirtualFile virtualFile) {
-    return virtualFile.getName().startsWith("test");
+    final String name = virtualFile.getName();
+    return name.toLowerCase().contains("test");
   }
 
   protected boolean isAvailable(@NotNull final Location location) {
