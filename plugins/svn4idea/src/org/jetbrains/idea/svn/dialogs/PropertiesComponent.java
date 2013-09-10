@@ -32,12 +32,13 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
@@ -276,7 +277,6 @@ public class PropertiesComponent extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-      SVNWCClient wcClient = myVcs.createWCClient();
       SVNPropertyData propValue = null;
       try {
         propValue = myVcs.getFactory(myFile).createPropertyClient()
@@ -291,10 +291,11 @@ public class PropertiesComponent extends JPanel {
       dialog.show();
       if (dialog.isOK()) {
         String value = dialog.getKeywords();
+        PropertyClient client = myVcs.getFactory(myFile).createPropertyClient();
         try {
-          wcClient.doSetProperty(myFile, SVNProperty.KEYWORDS, SVNPropertyValue.create(value), false, false, null);
+          client.setProperty(myFile, SvnPropertyKeys.SVN_KEYWORDS, SVNPropertyValue.create(value), SVNDepth.EMPTY, false);
         }
-        catch (SVNException err) {
+        catch (VcsException err) {
           // show error message
           VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + err.getMessage(), MessageType.ERROR);
         }
@@ -316,8 +317,8 @@ public class PropertiesComponent extends JPanel {
 
     public void actionPerformed(AnActionEvent e) {
       try {
-        myVcs.createWCClient().doSetProperty(myFile, getSelectedPropertyName(), null, true, false, null);
-      } catch (SVNException error) {
+        myVcs.getFactory(myFile).createPropertyClient().setProperty(myFile, getSelectedPropertyName(), null, SVNDepth.EMPTY, true);
+      } catch (VcsException error) {
         VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + error.getMessage(), MessageType.ERROR);
         // show error message.
       }
@@ -347,11 +348,12 @@ public class PropertiesComponent extends JPanel {
         String name = dialog.getPropertyName();
         String value = dialog.getPropertyValue();
         recursive = dialog.isRecursive();
-        SVNWCClient wcClient = myVcs.createWCClient();
+
+        PropertyClient client = myVcs.getFactory(myFile).createPropertyClient();
         try {
-          wcClient.doSetProperty(myFile, name, SVNPropertyValue.create(value), false, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, null, null);
+          client.setProperty(myFile, name, SVNPropertyValue.create(value), SVNDepth.getInfinityOrEmptyDepth(recursive), false);
         }
-        catch (SVNException err) {
+        catch (VcsException err) {
           VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + err.getMessage(), MessageType.ERROR);
           // show error message
         }
@@ -380,11 +382,12 @@ public class PropertiesComponent extends JPanel {
         String name = dialog.getPropertyName();
         String value = dialog.getPropertyValue();
         recursive = dialog.isRecursive();
-        SVNWCClient wcClient = myVcs.createWCClient();
+
+        PropertyClient client = myVcs.getFactory(myFile).createPropertyClient();
         try {
-          wcClient.doSetProperty(myFile, name, SVNPropertyValue.create(value), false, recursive, null);
+          client.setProperty(myFile, name, SVNPropertyValue.create(value), SVNDepth.getInfinityOrEmptyDepth(recursive), false);
         }
-        catch (SVNException err) {
+        catch (VcsException err) {
           VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + err.getMessage(), MessageType.ERROR);
           // show error message
         }
