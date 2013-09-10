@@ -793,9 +793,8 @@ binding.setVariable("additionalCompilation", { ->
 })
 
 binding.setVariable("searchableOptions", { ->
-  projectBuilder.stage("step - steps.build_searchable_options")
   if (steps.build_searchable_options) {
-    println "steps.build_searchable_options: $jdkHome/lib/tools.jar"
+    projectBuilder.stage("step - steps.build_searchable_options")
     buildSearchableOptions("${projectBuilder.moduleOutput(findModule("resources-en"))}/search", ["$home/build/idea.license"], {
       ant.pathelement(location: "$jdkHome/lib/tools.jar")
       ant.pathelement(location: "$home/community/lib/junit.jar")

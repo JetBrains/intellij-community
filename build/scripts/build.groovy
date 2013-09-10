@@ -161,23 +161,28 @@ class Build {
   }
 
 
-  def compile(String jdk) {
-    paths.jdkHome = jdk
+  def compile(Map args) {
+    paths.jdkHome = args.jdk
     projectBuilder.stage("- Compilation -")
     if (steps.compile) {
       projectBuilder.arrangeModuleCyclesOutputs = true
       projectBuilder.targetFolder = paths.classesTarget
 //      println "targetFolder: " + paths.classesTarget
       projectBuilder.cleanOutput()
-      projectBuilder.buildProduction()
-    }	
+      if (modules == null ){
+        projectBuilder.buildProduction()
+      }
+      else{
+        usedJars = buildModules(modules, args.module_libs)
+      }
+      projectBuilder.stage("- additionalCompilation -")
+      utils.additionalCompilation()
 
-    projectBuilder.stage("- additionalCompilation -")
-    utils.additionalCompilation()
-    projectBuilder.stage("- searchableOptions -")
-    utils.searchableOptions()
-    projectBuilder.stage("- wireBuildDate -")
-    utils.wireBuildDate(buildName, appInfoFile())
+      projectBuilder.stage("- searchableOptions -")
+      utils.searchableOptions()
+      projectBuilder.stage("- wireBuildDate -")
+      utils.wireBuildDate(buildName, appInfoFile())
+    }
   }
 
   def layout(){
@@ -257,10 +262,10 @@ class Build {
     layouts.layoutShared(layout_args, paths.distAll)
 
     projectBuilder.stage("- layoutWin -")
-    layouts.IdeaLayoutWin(layout_args, paths.distWin)
+    layouts.layoutWin(layout_args, paths.distWin)
 
     projectBuilder.stage("- layoutUnix -")
-    layouts.IdeaLayoutUnix(layout_args, paths.distUnix)
+    layouts.layoutUnix(layout_args, paths.distUnix)
 
     projectBuilder.stage("- layoutMac -")
     layouts.layoutMac(layout_args, paths.distMac)
