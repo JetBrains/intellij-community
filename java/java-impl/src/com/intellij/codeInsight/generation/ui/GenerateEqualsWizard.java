@@ -32,7 +32,6 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -340,12 +339,6 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     @Override
     public JComponent getComponent() {
       return myPanel;
-    }
-
-    @Override
-    @Nullable
-    public Icon getIcon() {
-      return null;
     }
   }
 }
