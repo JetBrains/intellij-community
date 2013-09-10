@@ -89,6 +89,9 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
 
       restoreChildren((XDebuggerTreeNode)treeNode, childInfo);
     }
+    else {
+      treeNode.markChanged();
+    }
   }
 
   public void nodeLoaded(@NotNull final RestorableStateNode node, final String name) {
