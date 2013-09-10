@@ -287,6 +287,11 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     return getSelectedLanguage();
   }
 
+  @Override
+  public void moveStandardOption(String fieldName, String newGroup) {
+    throw new UnsupportedOperationException();
+  }
+
   protected <T extends OrderedOption>List<T> sortOptions(Collection<T> options) {
     Set<String> names = new THashSet<String>(ContainerUtil.map(options, new Function<OrderedOption, String>() {
       @Override
