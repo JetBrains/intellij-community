@@ -109,4 +109,11 @@ public interface JpsJavaDependenciesEnumerator extends JpsDependenciesEnumerator
    */
   @NotNull
   JpsJavaDependenciesRootsEnumerator sources();
+
+  /**
+   *
+   * @return enumerator for processing annotation roots of the dependencies
+   */
+  @NotNull
+  JpsJavaDependenciesRootsEnumerator annotations();
 }

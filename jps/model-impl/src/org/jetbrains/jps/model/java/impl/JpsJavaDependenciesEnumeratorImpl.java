@@ -103,6 +103,12 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
     return new JpsJavaDependenciesRootsEnumeratorImpl(this, JpsOrderRootType.SOURCES);
   }
 
+  @NotNull
+  @Override
+  public JpsJavaDependenciesRootsEnumerator annotations() {
+    return new JpsJavaDependenciesRootsEnumeratorImpl(this, JpsAnnotationRootType.INSTANCE);
+  }
+
   @Override
   protected JpsJavaDependenciesEnumeratorImpl self() {
     return this;

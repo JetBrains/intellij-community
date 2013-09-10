@@ -53,11 +53,13 @@ public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaM
     return new JpsJavaModuleExtensionImpl(this);
   }
 
+  @NotNull
   @Override
   public JpsUrlList getAnnotationRoots() {
     return myContainer.getChild(ANNOTATIONS_ROOTS_ROLE);
   }
 
+  @NotNull
   @Override
   public JpsUrlList getJavadocRoots() {
     return myContainer.getChild(JAVADOC_ROOTS_ROLE);
