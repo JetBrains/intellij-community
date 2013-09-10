@@ -229,8 +229,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
         collectInnerClassNames(reference, references);
       }
       Collections.reverse(references);
-      for (int i = 0, size = references.size(); i < size; i++) {
-        final PsiJavaCodeReferenceElement aReference = references.get(i);
+      for (final PsiJavaCodeReferenceElement aReference : references) {
         final PsiElement referenceTarget = aReference.resolve();
         if (!(referenceTarget instanceof PsiClass)) {
           continue;

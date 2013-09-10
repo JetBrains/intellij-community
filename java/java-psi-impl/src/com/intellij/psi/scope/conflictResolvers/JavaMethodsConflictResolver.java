@@ -692,49 +692,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         final PsiType interfaceReturnType1 = getReturnType(functionalInterfaceIdx, conflict);
         if (actualParameterTypes[functionalInterfaceIdx] instanceof PsiLambdaExpressionType || actualParameterTypes[functionalInterfaceIdx] instanceof PsiMethodReferenceType) {
           if (interfaceReturnType != null && interfaceReturnType1 != null && !Comparing.equal(interfaceReturnType, interfaceReturnType1)) {
-
-            final TypeKind typeKind = getKind(actualParameterTypes[functionalInterfaceIdx]);
-            Specifics moreSpecific1 = Specifics.NEITHER;
-            if (typeKind != TypeKind.NONE_DETERMINED) {
-              final boolean isPrimitive = typeKind == TypeKind.PRIMITIVE;
-              if (interfaceReturnType instanceof PsiPrimitiveType) {
-                if (interfaceReturnType1 instanceof PsiPrimitiveType && 
-                    TypeConversionUtil.isAssignable(interfaceReturnType, interfaceReturnType1)) {
-                  moreSpecific1 = isPrimitive ? Specifics.SECOND : Specifics.FIRST;
-                } else {
-                  moreSpecific1 = isPrimitive ? Specifics.FIRST : Specifics.SECOND;
-                }
-              } else if (interfaceReturnType1 instanceof PsiPrimitiveType) {
-                moreSpecific1 = isPrimitive ? Specifics.SECOND : Specifics.FIRST;
-              }
-            }
-
+            Specifics moreSpecific1 = comparePrimitives(actualParameterTypes[functionalInterfaceIdx], interfaceReturnType, interfaceReturnType1);
             if (moreSpecific1 == Specifics.NEITHER && (interfaceReturnType != PsiType.VOID && interfaceReturnType1 != PsiType.VOID)) {
-              final PsiSubstitutor siteSubstitutor1 = ((MethodCandidateInfo)method).getSiteSubstitutor();
-              final PsiSubstitutor siteSubstitutor2 = ((MethodCandidateInfo)conflict).getSiteSubstitutor();
-
-              final PsiTypeParameter[] typeParameters1 = methodElement.getTypeParameters();
-              final PsiTypeParameter[] typeParameters2 = conflictElement.getTypeParameters();
-
-              final PsiType[] types1AtSite = {interfaceReturnType1};
-              final PsiType[] types2AtSite = {interfaceReturnType};
-
-              final PsiSubstitutor methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, methodElement, siteSubstitutor1, types2AtSite, types1AtSite, languageLevel);
-              final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, conflictElement, siteSubstitutor2, types1AtSite, types2AtSite,languageLevel);
-
-              final boolean applicable12 = TypeConversionUtil.isAssignable(interfaceReturnType1, methodSubstitutor1.substitute(interfaceReturnType));
-              final boolean applicable21 = TypeConversionUtil.isAssignable(interfaceReturnType, methodSubstitutor2.substitute(interfaceReturnType1));
-                
-
-              if (applicable12 || applicable21) {
-                if (!applicable21) {
-                  moreSpecific1 = Specifics.FIRST;
-                }
-                
-                if (!applicable12) {
-                  moreSpecific1 = Specifics.SECOND;
-                }
-              }
+              moreSpecific1 = compareConflicts((MethodCandidateInfo)method, (MethodCandidateInfo)conflict, 
+                                               methodElement, conflictElement, 
+                                               interfaceReturnType, interfaceReturnType1, languageLevel);
             }
 
             if (moreSpecific != Specifics.NEITHER && moreSpecific != moreSpecific1) {
@@ -749,6 +711,62 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
     }
     return moreSpecific;
+  }
+
+  private static Specifics compareConflicts(MethodCandidateInfo method,
+                                            MethodCandidateInfo conflict,
+                                            PsiMethod methodElement,
+                                            PsiMethod conflictElement,
+                                            PsiType interfaceReturnType,
+                                            PsiType interfaceReturnType1,
+                                            LanguageLevel languageLevel) {
+    final PsiSubstitutor siteSubstitutor1 = method.getSiteSubstitutor();
+    final PsiSubstitutor siteSubstitutor2 = conflict.getSiteSubstitutor();
+
+    final PsiTypeParameter[] typeParameters1 = methodElement.getTypeParameters();
+    final PsiTypeParameter[] typeParameters2 = conflictElement.getTypeParameters();
+
+    final PsiType[] types1AtSite = {interfaceReturnType1};
+    final PsiType[] types2AtSite = {interfaceReturnType};
+
+    final PsiSubstitutor methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, methodElement, siteSubstitutor1, types2AtSite, types1AtSite, languageLevel);
+    final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, conflictElement, siteSubstitutor2, types1AtSite, types2AtSite,languageLevel);
+
+    final boolean applicable12 = TypeConversionUtil.isAssignable(interfaceReturnType1, methodSubstitutor1.substitute(interfaceReturnType));
+    final boolean applicable21 = TypeConversionUtil.isAssignable(interfaceReturnType, methodSubstitutor2.substitute(interfaceReturnType1));
+
+
+    if (applicable12 || applicable21) {
+      if (!applicable21) {
+        return Specifics.FIRST;
+      }
+      
+      if (!applicable12) {
+        return Specifics.SECOND;
+      }
+    }
+    return Specifics.NEITHER;
+  }
+
+  private static Specifics comparePrimitives(PsiType type,
+                                             PsiType interfaceReturnType,
+                                             PsiType interfaceReturnType1) {
+    final TypeKind typeKind = getKind(type);
+    Specifics moreSpecific1 = Specifics.NEITHER;
+    if (typeKind != TypeKind.NONE_DETERMINED) {
+      final boolean isPrimitive = typeKind == TypeKind.PRIMITIVE;
+      if (interfaceReturnType instanceof PsiPrimitiveType) {
+        if (interfaceReturnType1 instanceof PsiPrimitiveType &&
+            TypeConversionUtil.isAssignable(interfaceReturnType, interfaceReturnType1)) {
+          moreSpecific1 = isPrimitive ? Specifics.SECOND : Specifics.FIRST;
+        } else {
+          moreSpecific1 = isPrimitive ? Specifics.FIRST : Specifics.SECOND;
+        }
+      } else if (interfaceReturnType1 instanceof PsiPrimitiveType) {
+        moreSpecific1 = isPrimitive ? Specifics.SECOND : Specifics.FIRST;
+      }
+    }
+    return moreSpecific1;
   }
 
   @Nullable
