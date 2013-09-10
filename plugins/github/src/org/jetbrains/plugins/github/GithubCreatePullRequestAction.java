@@ -494,22 +494,10 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
                                                   @NotNull GithubFullPath forkPath) {
     String url = GithubUrlUtil.getCloneUrl(forkPath);
 
-    final GitSimpleHandler handler = new GitSimpleHandler(project, gitRepository.getRoot(), GitCommand.REMOTE);
-    handler.setSilent(true);
-
-    try {
-      handler.addParameters("add", user, url);
-      handler.run();
-      if (handler.getExitCode() != 0) {
-        GithubNotifications.showError(project, "Can't add remote", "Failed to add GitHub remote: '" + url + "'. " + handler.getStderr());
-        return null;
-      }
-      // catch newly added remote
-      gitRepository.update();
+    if (GithubUtil.addGithubRemote(project, gitRepository, user, url)) {
       return new TargetBranchInfo(user, branch);
     }
-    catch (VcsException e) {
-      GithubNotifications.showError(project, "Can't add remote", e);
+    else {
       return null;
     }
   }

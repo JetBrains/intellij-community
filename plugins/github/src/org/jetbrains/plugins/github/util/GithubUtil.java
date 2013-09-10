@@ -25,12 +25,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.Convertor;
 import git4idea.GitUtil;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
@@ -378,5 +381,29 @@ public class GithubUtil {
       }
     }
     return manager.getRepositoryForFile(project.getBaseDir());
+  }
+
+  public static boolean addGithubRemote(@NotNull Project project,
+                                        @NotNull GitRepository repository,
+                                        @NotNull String remote,
+                                        @NotNull String url) {
+    final GitSimpleHandler handler = new GitSimpleHandler(project, repository.getRoot(), GitCommand.REMOTE);
+    handler.setSilent(true);
+
+    try {
+      handler.addParameters("add", remote, url);
+      handler.run();
+      if (handler.getExitCode() != 0) {
+        GithubNotifications.showError(project, "Can't add remote", "Failed to add GitHub remote: '" + url + "'. " + handler.getStderr());
+        return false;
+      }
+      // catch newly added remote
+      repository.update();
+      return true;
+    }
+    catch (VcsException e) {
+      GithubNotifications.showError(project, "Can't add remote", e);
+      return false;
+    }
   }
 }

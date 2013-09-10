@@ -175,7 +175,12 @@ public class GithubRebaseAction extends DumbAwareAction {
 
     LOG.info("Adding GitHub parent as a remote host");
     indicator.setText("Adding GitHub parent as a remote host...");
-    return addParentAsUpstreamRemote(project, root, parentRepoUrl, gitRepository);
+
+    if (GithubUtil.addGithubRemote(project, gitRepository, "upstream", parentRepoUrl)) {
+      return parentRepoUrl;
+    } else {
+      return null;
+    }
   }
 
   @Nullable
@@ -207,33 +212,6 @@ public class GithubRebaseAction extends DumbAwareAction {
     }
     catch (IOException e) {
       GithubNotifications.showError(project, "Can't load repository info", e);
-      return null;
-    }
-  }
-
-  @Nullable
-  private static String addParentAsUpstreamRemote(@NotNull Project project,
-                                                  @NotNull VirtualFile root,
-                                                  @NotNull String parentRepoUrl,
-                                                  @NotNull GitRepository gitRepository) {
-    final GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
-    handler.setSilent(true);
-
-    try {
-      handler.addParameters("add", "upstream", parentRepoUrl);
-      handler.run();
-      if (handler.getExitCode() != 0) {
-        GithubNotifications
-          .showError(project, CANNOT_PERFORM_GITHUB_REBASE, "Failed to add GitHub remote: '" + parentRepoUrl + "'. " + handler.getStderr());
-        return null;
-      }
-      // catch newly added remote
-      gitRepository.update();
-
-      return parentRepoUrl;
-    }
-    catch (VcsException e) {
-      GithubNotifications.showError(project, CANNOT_PERFORM_GITHUB_REBASE, e);
       return null;
     }
   }
