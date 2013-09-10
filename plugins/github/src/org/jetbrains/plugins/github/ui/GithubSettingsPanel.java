@@ -80,7 +80,7 @@ public class GithubSettingsPanel {
     mySignupTextField.setText("<html>Do not have an account at github.com? <a href=\"https://github.com\">" + "Sign up" + "</a></html>");
     mySignupTextField.setBackground(myPane.getBackground());
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
-    myAuthTypeLabel.setBorder(new EmptyBorder(0, 10, 0, 0));
+    myAuthTypeLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
     myAuthTypeComboBox.addItem(AUTH_PASSWORD);
     myAuthTypeComboBox.addItem(AUTH_TOKEN);
 
