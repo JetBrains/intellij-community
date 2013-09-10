@@ -547,20 +547,20 @@ public class HighlightControlFlowUtil {
   public static HighlightInfo checkCannotWriteToFinal(PsiExpression expression, @NotNull PsiFile containingFile) {
     PsiReferenceExpression reference = null;
     if (expression instanceof PsiAssignmentExpression) {
-      final PsiExpression left = ((PsiAssignmentExpression)expression).getLExpression();
+      final PsiExpression left = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)expression).getLExpression());
       if (left instanceof PsiReferenceExpression) {
         reference = (PsiReferenceExpression)left;
       }
     }
     else if (expression instanceof PsiPostfixExpression) {
-      final PsiExpression operand = ((PsiPostfixExpression)expression).getOperand();
+      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(((PsiPostfixExpression)expression).getOperand());
       final IElementType sign = ((PsiPostfixExpression)expression).getOperationTokenType();
       if (operand instanceof PsiReferenceExpression && (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)) {
         reference = (PsiReferenceExpression)operand;
       }
     }
     else if (expression instanceof PsiPrefixExpression) {
-      final PsiExpression operand = ((PsiPrefixExpression)expression).getOperand();
+      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(((PsiPrefixExpression)expression).getOperand());
       final IElementType sign = ((PsiPrefixExpression)expression).getOperationTokenType();
       if (operand instanceof PsiReferenceExpression && (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)) {
         reference = (PsiReferenceExpression)operand;
@@ -569,7 +569,7 @@ public class HighlightControlFlowUtil {
     final PsiElement resolved = reference == null ? null : reference.resolve();
     PsiVariable variable = resolved instanceof PsiVariable ? (PsiVariable)resolved : null;
     if (variable == null || !variable.hasModifierProperty(PsiModifier.FINAL)) return null;
-    if (!canWriteToFinal(variable, expression, reference,containingFile)) {
+    if (!canWriteToFinal(variable, expression, reference, containingFile)) {
       final String name = variable.getName();
       String description = JavaErrorMessages.message("assignment.to.final.variable", name);
       final HighlightInfo highlightInfo =
@@ -599,7 +599,7 @@ public class HighlightControlFlowUtil {
       PsiField field = (PsiField)variable;
       if (innerClass != null && !containingFile.getManager().areElementsEquivalent(innerClass, field.getContainingClass())) return false;
       final PsiMember enclosingCtrOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
-      return enclosingCtrOrInitializer != null && isSameField(variable, enclosingCtrOrInitializer, field, reference,containingFile);
+      return enclosingCtrOrInitializer != null && isSameField(variable, enclosingCtrOrInitializer, field, reference, containingFile);
     }
     if (variable instanceof PsiLocalVariable) {
       boolean isAccessedFromOtherClass = innerClass != null;
