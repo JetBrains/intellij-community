@@ -45,8 +45,12 @@ public class SingleAlarm extends Alarm {
     }
   }
 
-  public void cancelAndRequest() {
+  public void cancel() {
     cancelAllRequests();
+  }
+
+  public void cancelAndRequest() {
+    cancel();
     addRequest(delay);
   }
 
