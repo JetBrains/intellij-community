@@ -294,6 +294,12 @@ public class PyEditingTest extends PyTestCase {
                 "     '')");
   }
 
+  public void testBracesInString() {
+    doTestEnter("a = 'test(<caret>)'",
+                "a = 'test(' \\\n" +
+                "    ')'");
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");
