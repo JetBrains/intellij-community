@@ -8,6 +8,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -124,7 +125,13 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     configuration.setFolderName(path);
     configuration.setWorkingDirectory(path);
     configuration.setGeneratedName();
+    setModuleSdk(element, configuration);
     return true;
+  }
+
+  private static void setModuleSdk(@NotNull final PsiElement element, @NotNull final AbstractPythonTestRunConfiguration configuration) {
+    configuration.setUseModuleSdk(true);
+    configuration.setModule(ModuleUtilCore.findModuleForPsiElement(element));
   }
 
   protected boolean setupConfigurationFromFunction(@NotNull final PyFunction pyFunction,
@@ -169,6 +176,7 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     if (StringUtil.isEmptyOrSpaces(cfg.getWorkingDirectory()))
       cfg.setWorkingDirectory(parent.getPath());
     cfg.setGeneratedName();
+    setModuleSdk(element, cfg);
     return true;
   }
 
