@@ -55,6 +55,7 @@ public interface PsiQualifiedNamedElement {
    *
    * @return container of the element
    */
+  @Deprecated
   @Nullable
   PsiQualifiedNamedElement getContainer();
 }
