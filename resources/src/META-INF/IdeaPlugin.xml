@@ -1478,6 +1478,9 @@
                      implementationClass="org.jetbrains.generate.tostring.inspection.FieldNotUsedInToStringInspection"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.jarFinder.FindJarQuickFixProvider"/>
+
+
+    <methodTextOccurrenceProcessorDelegate implementation="com.intellij.psi.impl.search.JavaMethodTextOccurrenceProcessorDelegate" />
   </extensions>
 
   <actions>
