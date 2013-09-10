@@ -63,7 +63,7 @@ public class GradleDependenciesContributor implements GradleMethodContextContrib
                                                 @NotNull ResolveState state,
                                                 @NotNull PsiElement place) {
     GrLightMethodBuilder builder = new GrLightMethodBuilder(place.getManager(), gradleConfigurationName);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(place.getManager().getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getManager().getProject());
     PsiType type = new PsiArrayType(factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, place.getResolveScope()));
     builder.addParameter(new GrLightParameter("dependencyInfo", type, builder));
     processor.execute(builder, state);

@@ -35,6 +35,7 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleBuildScriptContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleRootContributor"/>
   </extensions>
   

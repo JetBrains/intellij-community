@@ -61,9 +61,18 @@ public class GradleResolverUtil {
     }
   }
 
+  public static void addImplicitVariable(@NotNull PsiScopeProcessor processor,
+                                         @NotNull ResolveState state,
+                                         @NotNull PsiElement element,
+                                         @NotNull String type) {
+    PsiVariable myPsi = new GrImplicitVariableImpl(element.getManager(), element.getText(), type, element);
+    processor.execute(myPsi, state);
+  }
+
+
   public static GrLightMethodBuilder createMethodWithClosure(@NotNull String name, @NotNull PsiElement place, @Nullable String returnType) {
     GrLightMethodBuilder methodWithClosure = new GrLightMethodBuilder(place.getManager(), name);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(place.getManager().getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getManager().getProject());
     PsiClassType closureType = factory.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place.getResolveScope());
     GrLightParameter closureParameter = new GrLightParameter("closure", closureType, methodWithClosure);
     methodWithClosure.addParameter(closureParameter);

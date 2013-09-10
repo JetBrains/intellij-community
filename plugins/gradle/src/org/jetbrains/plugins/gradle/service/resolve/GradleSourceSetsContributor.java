@@ -63,9 +63,7 @@ public class GradleSourceSetsContributor implements GradleMethodContextContribut
     boolean isRootRelated = StringUtil.startsWith(methodCall, SOURCE_SETS + '.');
 
     if (methodCallInfo.size() == SOURCE_SET_CONTAINER_LEVEL) {
-      //if(!isRootRelated) {
-        configureClosureClazz = GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER;
-      //}
+      configureClosureClazz = GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER;
       if (place instanceof GrReferenceExpressionImpl) {
         String varClazz = StringUtil.startsWith(methodCall, SOURCE_SETS + '.')
                           ? GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER
@@ -92,7 +90,8 @@ public class GradleSourceSetsContributor implements GradleMethodContextContribut
       GrLightMethodBuilder methodWithClosure =
         GradleResolverUtil.createMethodWithClosure(CONFIGURE_CLOSURE_METHOD, place, configureClosureClazz);
       processor.execute(methodWithClosure, state);
-    } else {
+    }
+    else {
       GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
       PsiClass contributorPsiClass = psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_PROJECT, place.getResolveScope());
       if (contributorPsiClass != null) {

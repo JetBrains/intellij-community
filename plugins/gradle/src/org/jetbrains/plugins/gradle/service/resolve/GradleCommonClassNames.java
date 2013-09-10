@@ -32,6 +32,8 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_SOURCE_SET = "org.gradle.api.tasks.SourceSet";
   @NonNls public static final String GRADLE_API_SOURCE_SET_CONTAINER = "org.gradle.api.tasks.SourceSetContainer";
   @NonNls public static final String GRADLE_API_SCRIPT_HANDLER = "org.gradle.api.initialization.dsl.ScriptHandler";
+  @NonNls public static final String GRADLE_API_TASK = "org.gradle.api.Task";
+  @NonNls public static final String GRADLE_API_TASK_CONTAINER = "org.gradle.api.tasks.TaskContainer";
 
   private GradleCommonClassNames() {
   }
