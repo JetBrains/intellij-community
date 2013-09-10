@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,7 +56,7 @@ public final class DataBindingWizardAction extends AnAction{
       final WizardData wizardData = new WizardData(project, formFile);
 
 
-      final Module module = ModuleUtil.findModuleForFile(formFile, wizardData.myProject);
+      final Module module = ModuleUtilCore.findModuleForFile(formFile, wizardData.myProject);
       LOG.assertTrue(module != null);
 
       final LwRootContainer[] rootContainer = new LwRootContainer[1];
@@ -114,7 +114,7 @@ public final class DataBindingWizardAction extends AnAction{
         }
       }
 
-      final DataBindingWizard wizard = new DataBindingWizard(project, formFile, wizardData);
+      final DataBindingWizard wizard = new DataBindingWizard(project, wizardData);
       wizard.show();
     }
     catch (Generator.MyException exc) {
