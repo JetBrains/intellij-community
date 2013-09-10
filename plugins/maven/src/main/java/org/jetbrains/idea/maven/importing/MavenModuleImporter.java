@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -38,10 +39,13 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class MavenModuleImporter {
 
   public static final String SUREFIRE_PLUGIN_LIBRARY_NAME = "maven-surefire-plugin urls";
+
+  private static final Set<String> IMPORTED_CLASSIFIERS = ImmutableSet.of("client");
 
   private final Module myModule;
   private final MavenProjectsTree myMavenTree;
@@ -204,7 +208,7 @@ public class MavenModuleImporter {
             addAttachArtifactDependency(buildHelperCfg, scope, depProject, artifact);
           }
 
-          if (artifact.getClassifier() != null
+          if (IMPORTED_CLASSIFIERS.contains(artifact.getClassifier())
               && !isTestJar
               && !"system".equals(artifact.getScope())
               && !"false".equals(System.getProperty("idea.maven.classifier.dep"))) {
