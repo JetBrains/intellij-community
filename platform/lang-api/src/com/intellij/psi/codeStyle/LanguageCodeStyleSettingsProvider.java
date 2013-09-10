@@ -289,6 +289,11 @@ public abstract class LanguageCodeStyleSettingsProvider {
       // Ignore
     }
 
+    @Override
+    public void moveStandardOption(String fieldName, String newGroup) {
+      // Ignore
+    }
+
     public Set<String> getCollectedFields() {
       return myCollectedFields;
     }
