@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.util.*;
 
