@@ -448,6 +448,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     });
   }
 
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    JComponent component = mySteps.get(myCurrentStep).getPreferredFocusedComponent();
+    return component == null ? super.getPreferredFocusedComponent() : component;
+  }
+
   protected boolean canGoNext() {
     return true;
   }
