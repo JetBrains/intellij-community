@@ -177,11 +177,6 @@ class Build {
       }
       projectBuilder.stage("- additionalCompilation -")
       utils.additionalCompilation()
-
-      projectBuilder.stage("- searchableOptions -")
-      utils.searchableOptions()
-      projectBuilder.stage("- wireBuildDate -")
-      utils.wireBuildDate(buildName, appInfoFile())
     }
   }
 
