@@ -219,5 +219,12 @@ public class X {
         }
     }
 }
+class Y {
+  private final int mayBeFinal;
+
+  Y() {
+    (mayBeFinal) = 1;
+  }
+}
 
 
