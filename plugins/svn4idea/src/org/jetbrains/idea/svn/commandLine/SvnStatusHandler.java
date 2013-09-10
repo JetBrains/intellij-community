@@ -380,9 +380,7 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
-      final SVNDate date = SVNDate.parseDate(s);
-      //if (SVNDate.NULL.equals(date)) return;
-      pending.setRemoteDate(date);
+      pending.setCommittedDate(SVNDate.parseDate(s));
     }
   }
 
@@ -405,7 +403,7 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
-      pending.setRemoteAuthor(s);
+      pending.setAuthor(s);
     }
   }
 
@@ -421,6 +419,10 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
+      final String revision = attributes.getValue("revision");
+      if (!StringUtil.isEmpty(revision)) {
+        status.setCommittedRevision(SVNRevision.create(Long.valueOf(revision)));
+      }
     }
 
     @Override
