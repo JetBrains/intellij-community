@@ -25,4 +25,6 @@ public interface Url {
 
   @Nullable
   String getParametersPart();
+
+  boolean equalsIgnoreParameters(@Nullable Url url);
 }
