@@ -84,11 +84,14 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
 
         short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
         collector.searchWord(methodName[0], restrictedByAccessScope, searchContext, true,
-                             new MethodTextOccurrenceProcessor(aClass, strictSignatureSearch, methods));
+                             getTextOccurrenceProcessor(methods, aClass, strictSignatureSearch));
 
         SimpleAccessorReferenceSearcher.addPropertyAccessUsages(method, restrictedByAccessScope, collector);
       }
     });
   }
 
+  protected MethodTextOccurrenceProcessor getTextOccurrenceProcessor(PsiMethod[] methods, PsiClass aClass, boolean strictSignatureSearch) {
+    return new MethodTextOccurrenceProcessor(aClass, strictSignatureSearch, methods);
+  }
 }
