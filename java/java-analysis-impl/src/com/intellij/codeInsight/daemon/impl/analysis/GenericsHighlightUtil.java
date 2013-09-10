@@ -159,7 +159,7 @@ public class GenericsHighlightUtil {
               if (typeParameterListOwner instanceof PsiClass) {
                 QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createChangeClassSignatureFromUsageFix((PsiClass)typeParameterListOwner, referenceParameterList));
               }
-              registerVariableParameterizedTypeFixes(highlightInfo, (PsiVariable)variable, referenceParameterList);
+              registerVariableParameterizedTypeFixes(highlightInfo, (PsiVariable)variable, referenceParameterList, javaSdkVersion);
             }
           }
         }
@@ -1295,7 +1295,8 @@ public class GenericsHighlightUtil {
 
   public static void registerVariableParameterizedTypeFixes(HighlightInfo highlightInfo,
                                                             @NotNull PsiVariable variable,
-                                                            @NotNull PsiReferenceParameterList parameterList) {
+                                                            @NotNull PsiReferenceParameterList parameterList, 
+                                                            @NotNull JavaSdkVersion version) {
     PsiType type = variable.getType();
     if (!(type instanceof PsiClassType)) return;
 
@@ -1307,7 +1308,6 @@ public class GenericsHighlightUtil {
     PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(parameterList.getProject());
     PsiClass[] classes = shortNamesCache.getClassesByName(shortName, GlobalSearchScope.allScope(manager.getProject()));
     PsiElementFactory factory = facade.getElementFactory();
-    JavaSdkVersion version = JavaVersionService.getInstance().getJavaSdkVersion(parameterList);
     for (PsiClass aClass : classes) {
       if (checkReferenceTypeArgumentList(aClass, parameterList, PsiSubstitutor.EMPTY, false, version) == null) {
         PsiType[] actualTypeParameters = parameterList.getTypeArguments();
