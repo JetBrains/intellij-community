@@ -386,6 +386,7 @@
     <highlightRangeExtension implementation="com.jetbrains.pyramid.templates.highlighting.ChameleonAnnotatingVisitor"/>
     <annotator language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonAnnotatingVisitor"/>
     <xml.xmlExtension implementation="com.jetbrains.pyramid.templates.highlighting.ChameleonXmlExtension" order="first"/>
+    <highlightErrorFilter implementation="com.jetbrains.pyramid.templates.highlighting.ChameleonErrorFilter"/>
   </extensions>
 
   <extensionPoints>
