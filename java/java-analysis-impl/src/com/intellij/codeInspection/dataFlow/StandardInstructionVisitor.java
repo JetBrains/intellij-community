@@ -117,14 +117,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
       final PsiVariable psiVariable = var.getPsiVariable();
       if (DfaPsiUtil.getElementNullability(var.getVariableType(), psiVariable) == Nullness.NOT_NULL) {
-        if (!memState.applyNotNull(dfaSource)) {
+        if (!memState.checkNotNullable(dfaSource)) {
           onAssigningToNotNullableVariable(instruction);
         }
       }
       if (!(psiVariable instanceof PsiField) || !psiVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
         memState.setVarValue(var, dfaSource);
       }
-    } else if (dfaDest instanceof DfaNotNullValue && !memState.applyNotNull(dfaSource)) {
+    } else if (dfaDest instanceof DfaNotNullValue && !memState.checkNotNullable(dfaSource)) {
       onAssigningToNotNullableVariable(instruction);
     }
 
@@ -151,7 +151,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   @Override
   public DfaInstructionState[] visitFieldReference(FieldReferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     final DfaValue qualifier = memState.pop();
-    if (instruction.getExpression().isPhysical() && !memState.applyNotNull(qualifier)) {
+    if (!memState.checkNotNullable(qualifier)) {
       onInstructionProducesNPE(instruction);
 
       if (qualifier instanceof DfaVariableValue) {
@@ -219,7 +219,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       final DfaValue arg = memState.pop();
       PsiExpression expr = args[(args.length - i - 1)];
       if (map.get(expr) == Nullness.NOT_NULL) {
-        if (!memState.applyNotNull(arg)) {
+        if (!memState.checkNotNullable(arg)) {
           onPassingNullParameter(expr);
           if (arg instanceof DfaVariableValue) {
             memState.setVarValue((DfaVariableValue)arg, factory.create(((DfaVariableValue)arg).getVariableType()));
@@ -233,7 +233,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     @NotNull final DfaValue qualifier = memState.pop();
     try {
-      if (!memState.applyNotNull(qualifier)) {
+      if (!memState.checkNotNullable(qualifier)) {
         onInstructionProducesNPE(instruction);
         if (qualifier instanceof DfaVariableValue) {
           memState.setVarValue((DfaVariableValue)qualifier, factory.create(((DfaVariableValue)qualifier).getVariableType()));

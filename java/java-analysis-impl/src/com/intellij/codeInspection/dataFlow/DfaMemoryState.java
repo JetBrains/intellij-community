@@ -47,8 +47,6 @@ public interface DfaMemoryState {
 
   boolean applyCondition(DfaValue dfaCond);
 
-  boolean applyNotNull(DfaValue value);
-
   void flushFields(DfaVariableValue[] fields);
 
   void flushVariable(DfaVariableValue variable);

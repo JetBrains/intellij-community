@@ -24,7 +24,7 @@ import com.intellij.psi.PsiExpression;
 /**
  * @author Gregory.Shrago
  */
-public class ValuableDataFlowRunner extends AnnotationsAwareDataFlowRunner {
+public class ValuableDataFlowRunner extends DataFlowRunner {
 
   @Override
   protected DfaMemoryState createMemoryState() {

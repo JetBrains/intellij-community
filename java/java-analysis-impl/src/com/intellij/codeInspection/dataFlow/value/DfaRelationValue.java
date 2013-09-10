@@ -28,7 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -76,8 +76,8 @@ public class DfaRelationValue extends DfaValue {
 
     private DfaRelationValue createCanonicalRelation(IElementType relation,
                                                      boolean negated,
-                                                     final DfaValue dfaLeft,
-                                                     final DfaValue dfaRight) {
+                                                     @NotNull final DfaValue dfaLeft,
+                                                     @NotNull final DfaValue dfaRight) {
       // To canonical form.
       if (NE == relation) {
         relation = EQEQ;

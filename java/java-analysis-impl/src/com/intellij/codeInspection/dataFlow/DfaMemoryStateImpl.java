@@ -610,7 +610,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private boolean applyRelationCondition(DfaRelationValue dfaRelation) {
     DfaValue dfaLeft = dfaRelation.getLeftOperand();
     DfaValue dfaRight = dfaRelation.getRightOperand();
-    if (dfaRight == null || dfaLeft == null) return false;
+    if (dfaLeft instanceof DfaUnknownValue || dfaRight instanceof DfaUnknownValue) return true;
 
     boolean isNegated = dfaRelation.isNegated();
     if (dfaLeft instanceof DfaNotNullValue && dfaRight == myFactory.getConstFactory().getNull()) {
@@ -636,9 +636,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (isNull(dfaRight) && compareVariableWithNull(dfaLeft) || isNull(dfaLeft) && compareVariableWithNull(dfaRight)) {
       return isNegated;
     }
-
-    if (dfaLeft instanceof DfaUnknownValue || dfaRight instanceof DfaUnknownValue) return true;
-
 
     if (isEffectivelyNaN(dfaLeft) || isEffectivelyNaN(dfaRight)) {
       applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
@@ -773,20 +770,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaTypeValue && ((DfaTypeValue)value).isNullable()) return false;
 
     if (value instanceof DfaVariableValue) {
-      if (isNotNull((DfaVariableValue)value)) return true;
-      final DfaVariableState varState = getVariableState((DfaVariableValue)value);
-      if (varState.isNullable()) return false;
+      DfaVariableValue varValue = (DfaVariableValue)value;
+      if (varValue.getVariableType() instanceof PsiPrimitiveType) return true;
+      if (isNotNull(varValue)) return true;
+      if (getVariableState(varValue).isNullable()) return false;
     }
     return true;
-  }
-
-  @Override
-  public boolean applyNotNull(DfaValue value) {
-    if (value instanceof DfaVariableValue && ((DfaVariableValue)value).getVariableType() instanceof PsiPrimitiveType) {
-      return true;
-    }
-
-    return checkNotNullable(value) && applyCondition(compareToNull(value, true));
   }
 
   @Nullable

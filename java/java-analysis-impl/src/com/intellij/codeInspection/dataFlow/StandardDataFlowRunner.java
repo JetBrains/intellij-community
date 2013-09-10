@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class StandardDataFlowRunner extends AnnotationsAwareDataFlowRunner {
+public class StandardDataFlowRunner extends DataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
 
   private final Set<Instruction> myNPEInstructions = new HashSet<Instruction>();
