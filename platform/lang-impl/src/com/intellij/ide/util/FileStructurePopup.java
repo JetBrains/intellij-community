@@ -153,6 +153,7 @@ public class FileStructurePopup implements Disposable {
     if (myStructureView instanceof StructureViewComposite) {
       StructureViewComposite.StructureViewDescriptor[] views = ((StructureViewComposite)myStructureView).getStructureViews();
       myBaseTreeModel = new StructureViewCompositeModel(myPsiFile, views);
+      Disposer.register(this, (Disposable)myBaseTreeModel);
     } else {
       myBaseTreeModel = structureViewModel;
     }
