@@ -33,7 +33,6 @@ import org.jetbrains.plugins.github.util.GithubUtil;
 import org.jetbrains.plugins.github.api.GithubUser;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;

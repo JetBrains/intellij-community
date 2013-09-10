@@ -26,7 +26,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -46,9 +45,7 @@ import git4idea.GitRemoteBranch;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -69,6 +66,7 @@ import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
@@ -228,7 +226,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
         .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubInfo, IOException>() {
           @Override
           public GithubInfo convert(ProgressIndicator indicator) throws IOException {
-            final Ref<GithubRepoDetailed> reposRef = new Ref<GithubRepoDetailed>();
+            final AtomicReference<GithubRepoDetailed> reposRef = new AtomicReference<GithubRepoDetailed>();
             final GithubAuthData auth =
               GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
                 @Override
@@ -422,7 +420,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
 
           targetBranchInfo = findRemote(branch, gitRepository, forkPath);
           if (targetBranchInfo == null) {
-            final Ref<Integer> responseRef = new Ref<Integer>();
+            final AtomicReference<Integer> responseRef = new AtomicReference<Integer>();
             ApplicationManager.getApplication().invokeAndWait(new Runnable() {
               @Override
               public void run() {

@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -61,6 +60,7 @@ import org.jetbrains.plugins.github.util.GithubUtil;
 import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
@@ -207,7 +207,7 @@ public class GithubShareAction extends DumbAwareAction {
           @Override
           public GithubInfo convert(ProgressIndicator indicator) throws IOException {
             // get existing github repos (network) and validate auth data
-            final Ref<List<GithubRepo>> availableReposRef = new Ref<List<GithubRepo>>();
+            final AtomicReference<List<GithubRepo>> availableReposRef = new AtomicReference<List<GithubRepo>>();
             final GithubAuthData auth =
               GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
                 @Override
@@ -289,7 +289,7 @@ public class GithubShareAction extends DumbAwareAction {
       allFiles.addAll(trackedFiles);
       allFiles.addAll(untrackedFiles);
 
-      final Ref<GithubUntrackedFilesDialog> dialogRef = new Ref<GithubUntrackedFilesDialog>();
+      final AtomicReference<GithubUntrackedFilesDialog> dialogRef = new AtomicReference<GithubUntrackedFilesDialog>();
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
         public void run() {

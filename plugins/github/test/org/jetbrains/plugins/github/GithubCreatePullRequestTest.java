@@ -17,8 +17,6 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.notification.NotificationType;
 
-import static com.intellij.dvcs.test.Executor.cd;
-
 /**
  * @author Aleksey Pivovarov
  */
