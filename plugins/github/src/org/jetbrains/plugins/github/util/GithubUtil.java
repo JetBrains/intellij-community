@@ -41,12 +41,12 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.api.GithubUserDetailed;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.ui.GithubBasicLoginDialog;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
-import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -324,6 +324,18 @@ public class GithubUtil {
           }
         }
         return gitRemote.getFirstUrl();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static GitRemote findGithubRemote(@NotNull GitRepository gitRepository, @NotNull GithubFullPath path) {
+    for (GitRemote remote : gitRepository.getRemotes()) {
+      for (String url : remote.getUrls()) {
+        if (path.equals(GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url))) {
+          return remote;
+        }
       }
     }
     return null;

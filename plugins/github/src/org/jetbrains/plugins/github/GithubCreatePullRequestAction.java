@@ -474,14 +474,8 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
   private static TargetBranchInfo findRemote(@NotNull String branch,
                                              @NotNull GitRepository gitRepository,
                                              @NotNull GithubFullPath forkPath) {
-    for (GitRemote remote : gitRepository.getRemotes()) {
-      for (String url : remote.getUrls()) {
-        if (forkPath.equals(GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url))) {
-          return new TargetBranchInfo(remote.getName(), branch);
-        }
-      }
-    }
-    return null;
+    GitRemote remote = GithubUtil.findGithubRemote(gitRepository, forkPath);
+    return remote == null ? null : new TargetBranchInfo(remote.getName(), branch);
   }
 
   @Nullable
