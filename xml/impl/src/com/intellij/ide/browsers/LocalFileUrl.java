@@ -68,6 +68,11 @@ public final class LocalFileUrl implements Url {
   }
 
   @Override
+  public boolean equalsIgnoreParameters(@Nullable Url url) {
+    return equals(url);
+  }
+
+  @Override
   public int hashCode() {
     return path.hashCode();
   }

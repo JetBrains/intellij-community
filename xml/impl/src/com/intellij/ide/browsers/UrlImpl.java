@@ -146,13 +146,23 @@ public final class UrlImpl implements Url {
     }
 
     UrlImpl url = (UrlImpl)o;
+    return equalsIgnoreParameters(url) && (parameters == null ? url.parameters == null : parameters.equals(url.parameters));
+  }
+
+  @Override
+  public boolean equalsIgnoreParameters(@Nullable Url o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof UrlImpl)) {
+      return false;
+    }
+
+    UrlImpl url = (UrlImpl)o;
     if (!scheme.equals(url.scheme)) {
       return false;
     }
-    if (authority != null ? !authority.equals(url.authority) : url.authority != null) {
-      return false;
-    }
-    if (parameters != null ? !parameters.equals(url.parameters) : url.parameters != null) {
+    if (authority == null ? url.authority != null : !authority.equals(url.authority)) {
       return false;
     }
     String decodedPath = getPath();
