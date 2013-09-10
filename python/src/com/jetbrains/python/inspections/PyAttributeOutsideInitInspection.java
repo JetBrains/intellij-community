@@ -51,7 +51,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
     public void visitPyFunction(PyFunction node) {
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
-      if (PythonUnitTestUtil.isUnitTestCaseClass(containingClass)) {
+      if (!isApplicable(containingClass)) {
         return;
       }
 
@@ -100,5 +100,9 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
         }
       }
     }
+  }
+
+  private static boolean isApplicable(@NotNull final PyClass containingClass) {
+    return !PythonUnitTestUtil.isUnitTestCaseClass(containingClass) && !containingClass.isSubclass("django.db.models.base.Model");
   }
 }
