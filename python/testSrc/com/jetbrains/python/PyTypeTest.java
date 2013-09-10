@@ -443,6 +443,13 @@ public class PyTypeTest extends PyTestCase {
            "expr = f()\n");
   }
 
+  public void testGeneratorNextType() {
+    doTest("int",
+           "def f():\n" +
+           "    yield 10\n" +
+           "expr = f().next()\n");
+  }
+
   // PY-7020
   public void testListComprehensionType() {
     final PyExpression expr = parseExpr("expr = [str(x) for x in range(10)]\n");
