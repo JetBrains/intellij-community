@@ -26,6 +26,7 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.deployment.*;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
+import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.ui.FormBuilder;
@@ -166,11 +167,13 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
     }
 
     @Override
-    public void deploy(@NotNull DeploymentTask<DummyDeploymentConfiguration> task, @NotNull DeploymentOperationCallback callback) {
+    public void deploy(@NotNull DeploymentTask<DummyDeploymentConfiguration> task, @NotNull DeploymentLogManager logManager,
+                       @NotNull DeploymentOperationCallback callback) {
       Artifact artifact = ((ArtifactDeploymentSource)task.getSource()).getArtifact();
       if (artifact == null) return;
 
-      AppEngineUploader uploader = AppEngineUploader.createUploader(task.getProject(), artifact, myConfiguration, callback, task.getLoggingHandler());
+      AppEngineUploader uploader = AppEngineUploader.createUploader(task.getProject(), artifact, myConfiguration, callback,
+                                                                    logManager.getMainLoggingHandler());
       if (uploader != null) {
         uploader.startUploading();
       }
