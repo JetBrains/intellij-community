@@ -97,9 +97,7 @@ public class BranchMerger implements IMerger {
   }
 
   private SVNDiffOptions createDiffOptions() {
-    final SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
-    return new SVNDiffOptions(svnConfig.IGNORE_SPACES_IN_MERGE, svnConfig.IGNORE_SPACES_IN_MERGE,
-                              svnConfig.IGNORE_SPACES_IN_MERGE);
+    return myVcs.getSvnConfiguration().getMergeOptions();
   }
 
   public void getInfo(Consumer<String> holder, boolean getLatest) {
