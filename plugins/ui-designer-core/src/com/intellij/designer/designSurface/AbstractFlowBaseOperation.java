@@ -173,7 +173,7 @@ public abstract class AbstractFlowBaseOperation extends AbstractEditOperation {
         return false;
       }
 
-      List<RadComponent> children = myContainer.getChildren();
+      List<RadComponent> children = getChildren();
       int index = children.indexOf(myChildTarget) + (myInsertBefore ? -1 : 1);
       if (0 <= index && index < children.size()) {
         return !myComponents.contains(children.get(index));
@@ -188,7 +188,7 @@ public abstract class AbstractFlowBaseOperation extends AbstractEditOperation {
       execute(myChildTarget);
     }
     else {
-      List<RadComponent> children = myContainer.getChildren();
+      List<RadComponent> children = getChildren();
       int index = children.indexOf(myChildTarget) + 1;
       if (index < children.size()) {
         execute(children.get(index));

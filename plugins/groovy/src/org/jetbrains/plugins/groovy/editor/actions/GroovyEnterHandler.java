@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -290,20 +289,18 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
 
-    Pair<PsiElement, ASTNode> pair = inferStringPair(file, caretOffset);
-    if (pair == null) return false;
+    final PsiElement stringElement = inferStringPair(file, caretOffset);
+    if (stringElement == null) return false;
 
-    final PsiElement stringElement = pair.getFirst();
-    final ASTNode node = pair.getSecond();
+    ASTNode node = stringElement.getNode();
     final IElementType nodeElementType = node.getElementType();
-
 
     boolean isInsertIndent = isInsertIndent(caretOffset, stringElement.getTextRange().getStartOffset(), fileText);
 
     // For simple String literals like 'abcdef'
     CaretModel caretModel = editor.getCaretModel();
     if (nodeElementType == mSTRING_LITERAL) {
-      if (GrStringUtil.isPlainStringLiteral(node)) {
+      if (isSingleQuoteString(stringElement)) {
 
         //the case of print '\<caret>'
         if (isSlashBeforeCaret(caretOffset, fileText)) {
@@ -343,7 +340,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         }
       }
       if (parent == null) return false;
-      if (GrStringUtil.isPlainGString(parent.getNode())) {
+      if (isDoubleQuotedString(parent)) {
         PsiElement exprSibling = stringElement.getNextSibling();
         boolean rightFromDollar = exprSibling instanceof GrExpression && exprSibling.getTextRange().getStartOffset() == caretOffset;
         if (rightFromDollar) caretOffset--;
@@ -402,8 +399,16 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     return false;
   }
 
+  private static boolean isDoubleQuotedString(PsiElement element) {
+    return "\"".equals(GrStringUtil.getStartQuote(element.getText()));
+  }
+
+  private static boolean isSingleQuoteString(PsiElement element) {
+    return "'".equals(GrStringUtil.getStartQuote(element.getText()));
+  }
+
   @Nullable
-  private static Pair<PsiElement, ASTNode> inferStringPair(PsiFile file, int caretOffset) {
+  private static PsiElement inferStringPair(PsiFile file, int caretOffset) {
     PsiElement stringElement = file.findElementAt(caretOffset - 1);
     if (stringElement == null) return null;
     ASTNode node = stringElement.getNode();
@@ -413,11 +418,9 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     if (!INNER_STRING_TOKENS.contains(node.getElementType()) && checkGStringInjection(stringElement)) {
       stringElement = stringElement.getParent().getParent().getNextSibling();
       if (stringElement == null) return null;
-      node = stringElement.getNode();
-      if (node == null) return null;
     }
 
-    return Pair.create(stringElement, node);
+    return stringElement;
   }
 
   private static boolean isSlashBeforeCaret(int caretOffset, String fileText) {

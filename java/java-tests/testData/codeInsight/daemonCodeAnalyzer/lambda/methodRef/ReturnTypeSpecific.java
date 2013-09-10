@@ -95,7 +95,7 @@ class MyTest2 {
         System.out.println(i);
     }
 
-    private static void m(I2 i) {
+    private static void <warning descr="Private method 'm(MyTest2.I2)' is never used">m</warning>(I2 i) {
         System.out.println(i);
     }
 
@@ -104,6 +104,6 @@ class MyTest2 {
     }
 
     public static void main(String[] args) {
-        m(Foo::new);
+        m<error descr="Ambiguous method call: both 'MyTest2.m(I2)' and 'MyTest2.m(I3)' match">(Foo::new)</error>;
     }
 }

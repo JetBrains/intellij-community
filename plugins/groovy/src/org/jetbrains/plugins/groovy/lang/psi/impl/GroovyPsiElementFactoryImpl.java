@@ -742,12 +742,26 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrImportStatement createImportStatementFromText(@NotNull String qName, boolean isStatic, boolean isOnDemand, String alias) {
+    return createImportStatement(qName, isStatic, isOnDemand, alias, null);
+  }
+
+  public GrImportStatement createImportStatementFromText(@NotNull String text) {
+    PsiFile dummyFile = createGroovyFileChecked(text);
+    return ((GrImportStatement) dummyFile.getFirstChild());
+  }
+
+  @Override
+  public GrImportStatement createImportStatement(@NotNull String qname,
+                                                 boolean isStatic,
+                                                 boolean isOnDemand,
+                                                 String alias,
+                                                 PsiElement context) {
     StringBuilder builder = new StringBuilder();
     builder.append("import ");
     if (isStatic) {
       builder.append("static ");
     }
-    builder.append(qName);
+    builder.append(qname);
     if (isOnDemand) {
       builder.append(".*");
     }
@@ -755,13 +769,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       builder.append(" as ").append(alias);
     }
 
-    PsiFile dummyFile = createGroovyFileChecked(builder);
+    PsiFile dummyFile = createGroovyFileChecked(builder, false, context);
     return ((GrImportStatement)dummyFile.getFirstChild());
-  }
-
-  public GrImportStatement createImportStatementFromText(@NotNull String text) {
-    PsiFile dummyFile = createGroovyFileChecked(text);
-    return ((GrImportStatement) dummyFile.getFirstChild());
   }
 
 

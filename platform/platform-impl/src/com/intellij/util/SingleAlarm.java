@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,8 +28,8 @@ public class SingleAlarm extends Alarm {
     this.delay = delay;
   }
 
-  public SingleAlarm(@NotNull Runnable task, int delay, @NotNull ThreadToUse threadToUse) {
-    super(threadToUse);
+  public SingleAlarm(@NotNull Runnable task, int delay, @NotNull ThreadToUse threadToUse, @NotNull Disposable parentDisposable) {
+    super(threadToUse, parentDisposable);
 
     this.task = task;
     this.delay = delay;
@@ -40,12 +41,20 @@ public class SingleAlarm extends Alarm {
 
   public void request(boolean forceRun) {
     if (isEmpty()) {
-      addRequest(task, forceRun ? 0 : delay, ModalityState.any());
+      addRequest(forceRun ? 0 : delay);
     }
   }
 
-  public void cancelAndRequest() {
+  public void cancel() {
     cancelAllRequests();
-    addRequest(task, delay, ModalityState.any());
+  }
+
+  public void cancelAndRequest() {
+    cancel();
+    addRequest(delay);
+  }
+
+  private void addRequest(int delay) {
+    _addRequest(task, delay, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.NON_MODAL : null);
   }
 }

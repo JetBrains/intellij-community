@@ -142,7 +142,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testCatchType() { doTest(false, false); }
   public void testMustBeThrowable() { doTest(false, false); }
   public void testUnhandledMessingWithFinally() { doTest(false, false); }
-  public void testSerializableStuff() { doTest(true, false); }
+  public void testSerializableStuff() { enableInspectionTool(new UnusedDeclarationInspection()); doTest(true, false); }
   public void testDeprecated() { doTest(true, false); }
   public void testJavadoc() { enableInspectionTool(new JavaDocLocalInspection()); doTest(true, false); }
   public void testExpressionsInSwitch () { doTest(false, false); }

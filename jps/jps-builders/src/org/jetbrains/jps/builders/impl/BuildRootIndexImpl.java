@@ -84,6 +84,9 @@ public class BuildRootIndexImpl implements BuildRootIndex {
     for (BuildRootDescriptor descriptor : descriptors) {
       registerDescriptor(descriptor);
     }
+    if (descriptors instanceof ArrayList<?>) {
+      ((ArrayList)descriptors).trimToSize();
+    }
     myRootsByTarget.put(target, descriptors);
   }
 

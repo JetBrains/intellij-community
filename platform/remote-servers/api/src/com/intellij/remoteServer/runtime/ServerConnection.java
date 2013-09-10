@@ -1,8 +1,8 @@
 package com.intellij.remoteServer.runtime;
 
-import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
+import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.util.ParameterizedRunnable;
@@ -40,5 +40,5 @@ public interface ServerConnection<D extends DeploymentConfiguration> {
   Collection<Deployment> getDeployments();
 
   @Nullable
-  ComponentContainer getLogConsole(@NotNull Deployment deployment);
+  DeploymentLogManager getLogManager(@NotNull Deployment deployment);
 }

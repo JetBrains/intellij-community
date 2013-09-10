@@ -4,8 +4,10 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -57,6 +59,20 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
                    @Nullable SVNDepth depth,
                    @Nullable ISVNPropertyHandler handler) throws VcsException {
     runGetProperty(target, null, revision, depth, handler);
+  }
+
+  @Override
+  public void setProperty(@NotNull File file,
+                          @NotNull String property,
+                          @Nullable SVNPropertyValue value,
+                          @Nullable SVNDepth depth,
+                          boolean force) throws VcsException {
+    try {
+      myVcs.createWCClient().doSetProperty(file, property, value, force, depth, null, null);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
   }
 
   private void runGetProperty(@NotNull SvnTarget target,

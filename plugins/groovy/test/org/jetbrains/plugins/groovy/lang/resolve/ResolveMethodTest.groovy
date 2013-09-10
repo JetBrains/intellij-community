@@ -1890,4 +1890,5 @@ class GrTypeDefinition  {
     assert expr.multiResolve(false).length == 1
     assert expr.multiResolve(true).length > 1
   }
+
 }

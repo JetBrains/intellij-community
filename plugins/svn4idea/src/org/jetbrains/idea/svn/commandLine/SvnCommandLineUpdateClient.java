@@ -15,12 +15,11 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
@@ -88,54 +87,8 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
     base = base.isDirectory() ? base : base.getParentFile();
 
     final List<String> parameters = prepareParameters(paths, revision, depth, allowUnversionedObstructions, depthIsSticky, makeParents);
-
-    final AtomicReference<SVNException> excRef = new AtomicReference<SVNException>();
-    final ISVNEventHandler handler = getEventHandler();
-    final UpdateOutputLineConverter converter = new UpdateOutputLineConverter(base);
+    final BaseUpdateCommandListener listener = createCommandListener(paths, updatedToRevision, base);
     try {
-      final LineCommandListener listener = new LineCommandListener() {
-        final long[] myRevisions = new long[paths.length];
-
-        @Override
-        public void baseDirectory(File file) {
-        }
-
-        @Override
-        public void onLineAvailable(String line, Key outputType) {
-          if (ProcessOutputTypes.STDOUT.equals(outputType)) {
-            final SVNEvent event = converter.convert(line);
-            if (event != null) {
-              checkForUpdateCompleted(event);
-              try {
-                handler.handleEvent(event, 0.5);
-              }
-              catch (SVNException e) {
-                cancel();
-                excRef.set(e);
-              }
-            }
-          }
-        }
-
-        private void checkForUpdateCompleted(SVNEvent event) {
-          if (SVNEventAction.UPDATE_COMPLETED.equals(event.getAction())) {
-            final long eventRevision = event.getRevision();
-            for (int i = 0; i < paths.length; i++) {
-              final File path = paths[i];
-              if (FileUtil.filesEqual(path, event.getFile())) {
-                myRevisions[i] = eventRevision;
-                break;
-              }
-            }
-          }
-        }
-
-        @Override
-        public void processTerminated(int exitCode) {
-          super.processTerminated(exitCode);
-          updatedToRevision.set(myRevisions);
-        }
-      };
       SvnLineCommand.runWithAuthenticationAttempt(SvnApplicationSettings.getInstance().getCommandLinePath(),
                                                   base, info.getURL(), SvnCommandName.up, listener,
                                                   new IdeaSvnkitBasedAuthenticationCallback(SvnVcs.getInstance(myProject)),
@@ -144,11 +97,38 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
     catch (SvnBindException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
     }
-    if (excRef.get() != null) {
-      throw excRef.get();
-    }
+
+    listener.throwIfException();
 
     return updatedToRevision.get();
+  }
+
+  private BaseUpdateCommandListener createCommandListener(final File[] paths,
+                                                          final AtomicReference<long[]> updatedToRevision,
+                                                          final File base) {
+    return new BaseUpdateCommandListener(base, getEventHandler()) {
+      final long[] myRevisions = new long[paths.length];
+
+      @Override
+      protected void beforeHandler(@NotNull SVNEvent event) {
+        if (SVNEventAction.UPDATE_COMPLETED.equals(event.getAction())) {
+          final long eventRevision = event.getRevision();
+          for (int i = 0; i < paths.length; i++) {
+            final File path = paths[i];
+            if (FileUtil.filesEqual(path, event.getFile())) {
+              myRevisions[i] = eventRevision;
+              break;
+            }
+          }
+        }
+      }
+
+      @Override
+      public void processTerminated(int exitCode) {
+        super.processTerminated(exitCode);
+        updatedToRevision.set(myRevisions);
+      }
+    };
   }
 
   private List<String> prepareParameters(File[] paths,

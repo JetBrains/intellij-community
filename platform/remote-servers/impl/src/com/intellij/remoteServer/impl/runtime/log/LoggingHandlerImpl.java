@@ -14,10 +14,11 @@ import org.jetbrains.annotations.NotNull;
 public class LoggingHandlerImpl implements LoggingHandler {
   private final ConsoleView myConsole;
 
-  public LoggingHandlerImpl(Project project) {
+  public LoggingHandlerImpl(@NotNull Project project) {
     myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
   }
 
+  @NotNull
   public ConsoleView getConsole() {
     return myConsole;
   }

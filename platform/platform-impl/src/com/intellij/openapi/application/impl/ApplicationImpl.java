@@ -577,8 +577,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private void fireBeforeApplicationLoaded() {
-    ExtensionPoint<ApplicationLoadListener> point = Extensions.getRootArea().getExtensionPoint(ApplicationLoadListener.EP_NAME);
-    for (ApplicationLoadListener listener : point.getExtensions()) {
+    for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
       try {
         listener.beforeApplicationLoaded(this);
       }

@@ -50,4 +50,14 @@ public abstract class FrameworkSupportInModuleProvider {
   public String getPresentableName() {
     return getFrameworkType().getPresentableName();
   }
+
+  @NotNull
+  public String[] getProjectCategories() {
+    return getFrameworkType().getProjectCategories();
+  }
+
+  @Override
+  public String toString() {
+    return getPresentableName();
+  }
 }

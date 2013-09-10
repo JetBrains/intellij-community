@@ -28,11 +28,9 @@ import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
-import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
-import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import com.intellij.util.ParameterizedRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +61,6 @@ public class DeployToServerState<S extends ServerConfiguration, D extends Deploy
     final Project project = myEnvironment.getProject();
     RemoteServersView.getInstance(project).showServerConnection(connection);
 
-    LoggingHandler loggingHandler = new LoggingHandlerImpl(project);
     DebugConnector<?,?> debugConnector;
     if (DefaultDebugExecutor.getDebugExecutorInstance().equals(executor)) {
       debugConnector = myServer.getType().createDebugConnector();
@@ -71,7 +68,7 @@ public class DeployToServerState<S extends ServerConfiguration, D extends Deploy
     else {
       debugConnector = null;
     }
-    connection.deploy(new DeploymentTaskImpl(mySource, myConfiguration, project, loggingHandler, debugConnector, myEnvironment), new ParameterizedRunnable<String>() {
+    connection.deploy(new DeploymentTaskImpl(mySource, myConfiguration, project, debugConnector, myEnvironment), new ParameterizedRunnable<String>() {
       @Override
       public void run(String s) {
         RemoteServersView.getInstance(project).showDeployment(connection, s);

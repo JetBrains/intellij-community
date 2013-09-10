@@ -3,7 +3,6 @@ package com.intellij.remoteServer.runtime.deployment;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
-import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,9 +17,6 @@ public interface DeploymentTask<D extends DeploymentConfiguration> {
 
   @NotNull
   Project getProject();
-
-  @NotNull
-  LoggingHandler getLoggingHandler();
 
   boolean isDebugMode();
 }

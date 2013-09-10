@@ -46,9 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
@@ -72,7 +70,6 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     return new MyPredicate();
   }
 
-
   private static List<GrExpression> collectExpressions(final PsiFile file, final int offset) {
     final List<GrExpression> expressions = new ArrayList<GrExpression>();
 
@@ -86,7 +83,9 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     for (GrExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, GrExpression.class);
          expression != null;
          expression = PsiTreeUtil.getParentOfType(expression, GrExpression.class)) {
-      if (MyPredicate.satisfied(expression)) expressions.add(expression);
+      if (MyPredicate.satisfied(expression)) {
+        expressions.add(expression);
+      }
       else if (!expressions.isEmpty()) break;
     }
   }
@@ -173,8 +172,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     expr.accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitLiteralExpression(GrLiteral literal) {
-        final String quote = GrStringUtil.getStartQuote(literal.getText());
-        if ("'''".equals(quote) || "\"\"\"".equals(quote)) {
+        if (GrStringUtil.isMultilineStringLiteral(literal) && literal.getText().contains("\n")) {
           result.set(true);
         }
       }
@@ -198,30 +196,58 @@ public class ConvertConcatenationToGstringIntention extends Intention {
 
   private static void getOperandText(@Nullable GrExpression operand, StringBuilder builder, boolean multiline) {
     if (operand instanceof GrRegex) {
-      StringBuilder b = new StringBuilder();
-      GrStringUtil.parseRegexCharacters(GrStringUtil.removeQuotes(operand.getText()), b, null, operand.getText().startsWith("/"));
-      GrStringUtil.escapeSymbolsForGString(b, !multiline, false);
+      boolean isDollarSlashy = GrStringUtil.isDollarSlashyString((GrLiteral)operand);
+      for (GroovyPsiElement element : ((GrRegex)operand).getAllContentParts()) {
+        if (element instanceof GrStringInjection) {
+          builder.append(element.getText());
+        }
+        else if (element instanceof GrStringContent) {
+          if (isDollarSlashy) {
+            processDollarSlashyContent(builder, multiline, element.getText());
+          }
+          else {
+            processSlashyContent(builder, multiline, element.getText());
+          }
+        }
+      }
     }
     else if (operand instanceof GrString) {
-      final String text = GrStringUtil.removeQuotes(operand.getText());
-      if (multiline && ((GrString)operand).isPlainString()) {
-        final StringBuilder buffer = new StringBuilder(text);
-        GrStringUtil.unescapeCharacters(buffer, "\"", true);
-        builder.append(buffer);
-      }
-      else {
-        builder.append(text);
+      boolean isMultiline = GrStringUtil.isMultilineStringLiteral((GrLiteral)operand);
+      for (GroovyPsiElement element : ((GrString)operand).getAllContentParts()) {
+        if (element instanceof GrStringInjection) {
+          builder.append(element.getText());
+        }
+        else if (element instanceof GrStringContent) {
+          if (isMultiline) {
+            processMultilineGString(builder, element.getText());
+          }
+          else {
+            processSinglelineGString(builder, element.getText());
+          }
+        }
       }
     }
     else if (operand instanceof GrLiteral) {
       String text = GrStringUtil.removeQuotes(operand.getText());
-      if (multiline) {
-        final int position = builder.length();
-        GrStringUtil.escapeAndUnescapeSymbols(text, "$", "'\"", builder);
-        GrStringUtil.fixAllTripleDoubleQuotes(builder, position);
+      GrLiteral literal = (GrLiteral)operand;
+
+      if (GrStringUtil.isSingleQuoteString(literal)) {
+        processSinglelineString(builder, text);
       }
-      else {
-        GrStringUtil.escapeAndUnescapeSymbols(text, "$\"", "'", builder);
+      else if (GrStringUtil.isTripleQuoteString(literal)) {
+        processMultilineString(builder, text);
+      }
+      else if (GrStringUtil.isDoubleQuoteString(literal)) {
+        processSinglelineGString(builder, text);
+      }
+      else if (GrStringUtil.isTripleDoubleQuoteString(literal)) {
+        processMultilineGString(builder, text);
+      }
+      else if (GrStringUtil.isSlashyString(literal)) {
+        processSlashyContent(builder, multiline, text);
+      }
+      else if (GrStringUtil.isDollarSlashyString(literal)) {
+        processDollarSlashyContent(builder, multiline, text);
       }
     }
     else if (MyPredicate.satisfied(operand)) {
@@ -233,6 +259,35 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     else {
       builder.append(START_BRACE).append(operand == null ? "" : operand.getText()).append(END_BRACE);
     }
+  }
+
+  private static void processMultilineString(StringBuilder builder, String text) {
+    final int position = builder.length();
+    GrStringUtil.escapeAndUnescapeSymbols(text, "$", "'\"", builder);
+    GrStringUtil.fixAllTripleDoubleQuotes(builder, position);
+  }
+
+  private static void processSinglelineString(StringBuilder builder, String text) {
+    GrStringUtil.escapeAndUnescapeSymbols(text, "$\"", "'", builder);
+  }
+
+  private static StringBuilder processSinglelineGString(StringBuilder builder, String text) {
+    return builder.append(text);
+  }
+
+  private static void processMultilineGString(StringBuilder builder, String text) {
+    StringBuilder raw = new StringBuilder(text);
+    GrStringUtil.unescapeCharacters(raw, "\"", true);
+    builder.append(raw);
+  }
+
+  private static void processDollarSlashyContent(StringBuilder builder, boolean multiline, String text) {
+    GrStringUtil.escapeSymbolsForGString(text, !multiline, false, builder);
+  }
+
+  private static void processSlashyContent(StringBuilder builder, boolean multiline, String text) {
+    String unescaped = GrStringUtil.unescapeSlashyString(text);
+    GrStringUtil.escapeSymbolsForGString(unescaped, !multiline, false, builder);
   }
 
   /**

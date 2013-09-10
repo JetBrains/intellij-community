@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
 
-  public abstract void deploy(@NotNull DeploymentTask<D> task, @NotNull DeploymentOperationCallback callback);
+  public abstract void deploy(@NotNull DeploymentTask<D> task, @NotNull DeploymentLogManager logManager,
+                              @NotNull DeploymentOperationCallback callback);
 
   public abstract void computeDeployments(@NotNull ComputeDeploymentsCallback callback);
 

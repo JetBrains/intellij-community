@@ -3,21 +3,18 @@ package com.intellij.remoteServer.impl.runtime;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentImpl;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
+import com.intellij.remoteServer.impl.runtime.log.DeploymentLogManagerImpl;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
 import com.intellij.remoteServer.runtime.ConnectionStatus;
 import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnector;
-import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
-import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
-import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
-import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
+import com.intellij.remoteServer.runtime.deployment.*;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionData;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionDataNotAvailableException;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
@@ -42,7 +39,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   private volatile ServerRuntimeInstance<D> myRuntimeInstance;
   private final Map<String, Deployment> myRemoteDeployments = new HashMap<String, Deployment>();
   private final Map<String, Deployment> myLocalDeployments = Collections.synchronizedMap(new HashMap<String, Deployment>());
-  private final Map<String, LoggingHandlerImpl> myLoggingHandlers = new ConcurrentHashMap<String, LoggingHandlerImpl>();
+  private final Map<String, DeploymentLogManagerImpl> myLogManagers = new ConcurrentHashMap<String, DeploymentLogManagerImpl>();
 
   public ServerConnectionImpl(RemoteServer<?> server, ServerConnector connector, ServerConnectionManagerImpl connectionManager) {
     myServer = server;
@@ -109,20 +106,25 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         DeploymentSource source = task.getSource();
         String deploymentName = instance.getDeploymentName(source);
         myLocalDeployments.put(deploymentName, new DeploymentImpl(deploymentName, DeploymentStatus.DEPLOYING, null, null));
-        LoggingHandlerImpl handler = (LoggingHandlerImpl)task.getLoggingHandler();
+        DeploymentLogManagerImpl logManager = new DeploymentLogManagerImpl(task.getProject(), new Runnable() {
+          @Override
+          public void run() {
+            myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
+          }
+        });
+        LoggingHandlerImpl handler = logManager.getMainLoggingHandler();
+        myLogManagers.put(deploymentName, logManager);
         handler.printlnSystemMessage("Deploying '" + deploymentName + "'...");
-        myLoggingHandlers.put(deploymentName, handler);
         onDeploymentStarted.run(deploymentName);
-        instance.deploy(task, new DeploymentOperationCallbackImpl(deploymentName, (DeploymentTaskImpl<D>)task, handler));
+        instance.deploy(task, logManager, new DeploymentOperationCallbackImpl(deploymentName, (DeploymentTaskImpl<D>)task, handler));
       }
     });
   }
 
-  @Override
   @Nullable
-  public ComponentContainer getLogConsole(@NotNull Deployment deployment) {
-    LoggingHandlerImpl handler = myLoggingHandlers.get(deployment.getName());
-    return handler != null ? handler.getConsole() : null;
+  @Override
+  public DeploymentLogManager getLogManager(@NotNull Deployment deployment) {
+    return myLogManagers.get(deployment.getName());
   }
 
   @Override
@@ -169,14 +171,14 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     final String deploymentName = deployment.getName();
     myLocalDeployments.put(deploymentName, new DeploymentImpl(deploymentName, DeploymentStatus.UNDEPLOYING, null, null));
     myEventDispatcher.queueDeploymentsChanged(this);
-    final LoggingHandlerImpl loggingHandler = myLoggingHandlers.get(deploymentName);
+    final LoggingHandlerImpl loggingHandler = myLogManagers.get(deploymentName).getMainLoggingHandler();
     loggingHandler.printlnSystemMessage("Undeploying '" + deploymentName + "'...");
     runtime.undeploy(new DeploymentRuntime.UndeploymentTaskCallback() {
       @Override
       public void succeeded() {
         loggingHandler.printlnSystemMessage("'" + deploymentName + "' has been undeployed successfully.");
         myLocalDeployments.remove(deploymentName);
-        myLoggingHandlers.remove(deploymentName);
+        myLogManagers.remove(deploymentName);
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
       }
 

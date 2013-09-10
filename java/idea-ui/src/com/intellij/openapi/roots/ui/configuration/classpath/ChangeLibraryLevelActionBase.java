@@ -155,21 +155,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
             return;
           }
 
-          new WriteAction() {
-            @Override
-            protected void run(Result result) throws Throwable {
-              final VirtualFile virtualTo = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(to);
-              if (virtualTo != null) {
-                copiedFiles.put(FileUtil.toSystemIndependentName(from.getAbsolutePath()), virtualTo.getPath());
-              }
-              if (!myCopy) {
-                final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(from.getParentFile());
-                if (parent != null) {
-                  parent.refresh(false, false);
-                }
-              }
-            }
-          }.execute();
+          copiedFiles.put(FileUtil.toSystemIndependentName(from.getAbsolutePath()), FileUtil.toSystemIndependentName(to.getAbsolutePath()));
         }
         finished.set(true);
       }
@@ -177,6 +163,23 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     if (!finished.get()) {
       return false;
     }
+
+    new WriteAction() {
+      @Override
+      protected void run(Result result) throws Throwable {
+        for (Map.Entry<String, String> entry : copiedFiles.entrySet()) {
+          String fromPath = entry.getKey();
+          String toPath = entry.getValue();
+          LocalFileSystem.getInstance().refreshAndFindFileByPath(toPath);
+          if (!myCopy) {
+            final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(fromPath).getParentFile());
+            if (parent != null) {
+              parent.refresh(false, false);
+            }
+          }
+        }
+      }
+    }.execute();
     return true;
   }
 

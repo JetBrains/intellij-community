@@ -95,7 +95,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
 
   @Override
   public JComponent getComponent() {
-    return myVersions.size() > 1 ? myMainPanel : null;
+    return myMainPanel;
   }
 
   protected void reloadVersions(List<? extends FrameworkVersion> frameworkVersions) {

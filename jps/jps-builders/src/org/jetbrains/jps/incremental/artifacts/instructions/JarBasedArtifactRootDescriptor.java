@@ -69,6 +69,9 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
         }
       }
     }
+    catch (IOException e) {
+      throw new IOException("Error processing zip-file " + myRoot, e);
+    }
     finally {
       zipFile.close();
     }

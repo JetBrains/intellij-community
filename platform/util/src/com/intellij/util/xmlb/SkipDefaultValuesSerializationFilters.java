@@ -26,6 +26,7 @@ import java.util.Map;
 public class SkipDefaultValuesSerializationFilters implements SerializationFilter {
   private final Map<Class, Object> myDefaultBeans = new HashMap<Class, Object>();
 
+  @Override
   public boolean accepts(final Accessor accessor, final Object bean) {
     if (bean == null) {
       return true;
