@@ -97,6 +97,7 @@ public class DfaVariableValue extends DfaValue {
   @Nullable private DfaVariableValue myQualifier;
   private boolean myIsNegated;
   private Nullness myInherentNullability;
+  private DfaTypeValue myTypeValue;
 
   private DfaVariableValue(PsiVariable variable, PsiType varType, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier, PsiMethod accessMethod) {
     super(factory);
@@ -105,12 +106,18 @@ public class DfaVariableValue extends DfaValue {
     myQualifier = qualifier;
     myVarType = varType;
     myAccessMethod = accessMethod;
+    myTypeValue = varType == null ? null : myFactory.getTypeFactory().createTypeValue(varType, Nullness.UNKNOWN);
   }
 
   private DfaVariableValue(DfaValueFactory factory) {
     super(factory);
     myVariable = null;
     myIsNegated = false;
+  }
+
+  @Nullable
+  public DfaTypeValue getTypeValue() {
+    return myTypeValue;
   }
 
   @Nullable

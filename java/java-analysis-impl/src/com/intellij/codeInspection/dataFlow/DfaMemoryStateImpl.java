@@ -783,10 +783,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (state == null) {
       state = createVariableState(dfaVar);
-      PsiType type = dfaVar.getVariableType();
-      if (type != null) {
-        state.setInstanceofValue(myFactory.getTypeFactory().createTypeValue(type));
-      }
       if (isUnknownState(dfaVar)) {
         state.setNullable(false);
         return state;

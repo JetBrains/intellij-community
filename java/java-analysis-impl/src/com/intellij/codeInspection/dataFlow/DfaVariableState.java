@@ -47,6 +47,10 @@ public class DfaVariableState implements Cloneable {
     myNotInstanceofValues = new HashSet<DfaTypeValue>();
 
     myNullability = dfaVar.getInherentNullability();
+    DfaTypeValue initialType = dfaVar.getTypeValue();
+    if (initialType != null) {
+      setInstanceofValue(initialType);
+    }
   }
 
   protected DfaVariableState(final DfaVariableState toClone) {
