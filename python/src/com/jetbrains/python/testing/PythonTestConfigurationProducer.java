@@ -117,9 +117,11 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     return false;
   }
 
-  private static boolean setupConfigurationFromFolder(@NotNull final PsiDirectory element,
+  private boolean setupConfigurationFromFolder(@NotNull final PsiDirectory element,
                                                       @NotNull final AbstractPythonTestRunConfiguration configuration) {
-    final String path = element.getVirtualFile().getPath();
+    final VirtualFile virtualFile = element.getVirtualFile();
+    if (!isTestFolder(virtualFile)) return false;
+    final String path = virtualFile.getPath();
 
     configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
     configuration.setFolderName(path);
@@ -178,6 +180,10 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     cfg.setGeneratedName();
     setModuleSdk(element, cfg);
     return true;
+  }
+
+  protected boolean isTestFolder(@NotNull final VirtualFile virtualFile) {
+    return virtualFile.getName().startsWith("test");
   }
 
   protected boolean isAvailable(@NotNull final Location location) {
