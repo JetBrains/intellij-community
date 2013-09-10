@@ -84,7 +84,7 @@ public class GroovyStringLiteralManipulator extends AbstractElementManipulator<G
     }
 
     if (text.startsWith("\"\"\"") || text.startsWith("'''")) {
-      start += 2;
+      start = 3;
       begin = text.substring(0, 3);
     }
 

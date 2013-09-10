@@ -25,6 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteralContainer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,7 +55,8 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
            || parent instanceof GrConditionalExpression && ((GrConditionalExpression)parent).getCondition() != element
            || parent instanceof GrTypeCastExpression
            || parent instanceof GrSafeCastExpression
-           || parent instanceof GrParenthesizedExpression) {
+           || parent instanceof GrParenthesizedExpression
+           || parent instanceof GrString) {
       element = parent;
       parent = parent.getParent();
     }
@@ -61,6 +65,10 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
     PsiElement anchor;
     if (element instanceof GrBinaryExpression) {
       operands = collectBinaryOperands(((GrBinaryExpression)element));
+      anchor = element;
+    }
+    else if (element instanceof GrString) {
+      operands = collectGStringOperands((GrString)element);
       anchor = element;
     }
     else if (element instanceof GrAssignmentExpression) {
@@ -76,6 +84,16 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
     return Pair.create(anchor, operands);
   }
 
+  private static PsiElement[] collectGStringOperands(GrString grString) {
+    final ArrayList<PsiElement> operands = ContainerUtil.newArrayList();
+    processGString(grString, operands);
+    return operands.toArray(new PsiElement[operands.size()]);
+  }
+
+  private static void processGString(GrString string, ArrayList<PsiElement> operands) {
+    ContainerUtil.addAll(operands, string.getAllContentParts());
+  }
+
   private static PsiElement[] collectBinaryOperands(GrBinaryExpression expression) {
     final ArrayList<PsiElement> operands = ContainerUtil.newArrayList();
     processBinary(expression, operands);
@@ -88,6 +106,9 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
     if (left instanceof GrBinaryExpression) {
       processBinary((GrBinaryExpression)left, operands);
     }
+    else if (left instanceof GrString) {
+      processGString((GrString)left, operands);
+    }
     else {
       operands.add(left);
     }
@@ -95,10 +116,13 @@ public class GrConcatenation2InjectorAdapter extends JavaConcatenationInjectorMa
     if (right instanceof GrBinaryExpression) {
       processBinary((GrBinaryExpression)right, operands);
     }
+    else if (right instanceof GrString) {
+      processGString((GrString)right, operands);
+    }
     else {
       operands.add(right);
     }
   }
 
-  private static final List<Class<GrLiteral>> LITERALS = Arrays.asList(GrLiteral.class);
+  private static final List<Class<? extends GrLiteralContainer>> LITERALS = Arrays.asList(GrLiteral.class, GrStringContent.class);
 }

@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject.groovy;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.intellij.plugins.intelliLang.Configuration;
@@ -27,6 +28,7 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -36,12 +38,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.mapArgumentsToParameters;
 
 /**
  * @author Max Medvedev
@@ -52,18 +55,36 @@ public class GrConcatenationInjector implements MultiHostInjector {
     assert context instanceof GrLiteral;
     final GrLiteral literal = (GrLiteral)context;
 
-    final PsiElement parent = literal.getParent();
-    if (parent instanceof GrAssignmentExpression && ((GrAssignmentExpression)parent).getRValue() == literal) {
+    processInPlace(registrar, literal);
+  }
+
+  public static void processInPlace(MultiHostRegistrar registrar, GrLiteral literal) {
+    Trinity<String, String, String> params = findLanguageParams(literal);
+
+    if (params != null) {
+      BaseInjection injection = new BaseInjection(GroovyLanguageInjectionSupport.GROOVY_SUPPORT_ID);
+      injection.setInjectedLanguageId(params.first);
+      injection.setPrefix(params.second);
+      injection.setSuffix(params.third);
+
+      LanguageInjectionSupport support = InjectorUtils.findInjectionSupport(GroovyLanguageInjectionSupport.GROOVY_SUPPORT_ID);
+      InjectorUtils.registerInjectionSimple(literal, injection, support, registrar);
+    }
+  }
+
+  public static Trinity<String, String, String> findLanguageParams(PsiElement place) {
+    PsiElement parent = place.getParent();
+    if (parent instanceof GrAssignmentExpression && ((GrAssignmentExpression)parent).getRValue() == place) {
       final GrExpression lvalue = ((GrAssignmentExpression)parent).getLValue();
       if (lvalue instanceof GrReferenceExpression) {
         final PsiElement resolved = ((GrReferenceExpression)lvalue).resolve();
         if (resolved instanceof PsiModifierListOwner) {
-          processAnnotations(registrar, literal, (PsiModifierListOwner)resolved);
+          return getLanguageParams((PsiModifierListOwner)resolved);
         }
       }
     }
     else if (parent instanceof GrVariable) {
-      processAnnotations(registrar, literal, ((GrVariable)parent));
+      return getLanguageParams((PsiModifierListOwner)parent);
     }
     else if (parent instanceof GrArgumentList) {
       final PsiElement pparent = parent.getParent();
@@ -72,35 +93,31 @@ public class GrConcatenationInjector implements MultiHostInjector {
         final GrCall call = (GrCall)pparent;
         final GroovyResolveResult result = call.advancedResolve();
         if (result.getElement() != null) {
-          final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil
-            .mapArgumentsToParameters(result, literal, false, false, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments());
+          final Map<GrExpression, Pair<PsiParameter, PsiType>> map =
+            mapArgumentsToParameters(result, place, false, false, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments());
 
           if (map != null) {
-            final Pair<PsiParameter, PsiType> pair = map.get(literal);
-            processAnnotations(registrar, literal, pair.first);
+            final Pair<PsiParameter, PsiType> pair = map.get(place);
+            return getLanguageParams(pair.first);
           }
         }
       }
     }
+    return null;
   }
 
-  private static void processAnnotations(MultiHostRegistrar registrar,
-                                         PsiLanguageInjectionHost host,
-                                         PsiModifierListOwner annotationOwner) {
-    final Pair<String, ? extends Set<String>> pair =
-      Configuration.getInstance().getAdvancedConfiguration().getLanguageAnnotationPair();
-
+  @Nullable
+  public static Trinity<String, String, String> getLanguageParams(PsiModifierListOwner annotationOwner) {
+    final Pair<String, ? extends Set<String>> pair = Configuration.getInstance().getAdvancedConfiguration().getLanguageAnnotationPair();
     final PsiAnnotation[] annotations = getAnnotationFrom(annotationOwner, pair, true, true);
     if (annotations.length > 0) {
-      BaseInjection injection = new BaseInjection(GroovyLanguageInjectionSupport.GROOVY_SUPPORT_ID);
-
-      injection.setPrefix(StringUtil.notNullize(AnnotationUtilEx.calcAnnotationValue(annotations, "prefix")));
-      injection.setSuffix(StringUtil.notNullize(AnnotationUtilEx.calcAnnotationValue(annotations, "suffix")));
-      injection.setInjectedLanguageId(StringUtil.notNullize(AnnotationUtilEx.calcAnnotationValue(annotations, "value")));
-
-      LanguageInjectionSupport support = InjectorUtils.findInjectionSupport(GroovyLanguageInjectionSupport.GROOVY_SUPPORT_ID);
-      InjectorUtils.registerInjectionSimple(host, injection, support, registrar);
+      String prefix = StringUtil.notNullize(AnnotationUtilEx.calcAnnotationValue(annotations, "prefix"));
+      String suffix = StringUtil.notNullize(AnnotationUtilEx.calcAnnotationValue(annotations, "suffix"));
+      String id = StringUtil.notNullize(AnnotationUtilEx.calcAnnotationValue(annotations, "value"));
+      return Trinity.create(id, prefix, suffix);
     }
+
+    return null;
   }
 
   @NotNull
