@@ -47,4 +47,8 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testStructUnpackPy3() {
     doMultiFileTest();
   }
+
+  public void testBuiltinsPy3() {
+    doTest();
+  }
 }
