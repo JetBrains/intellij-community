@@ -24,8 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class TodoAttributesUtil {
   @NotNull
   public static TodoAttributes createDefault() {
-    final TextAttributes textAttributes = getDefaultColorSchemeTextAttributes().clone();
-    return new TodoAttributes(AllIcons.General.TodoDefault, textAttributes);
+    return new TodoAttributes(AllIcons.General.TodoDefault, getDefaultColorSchemeTextAttributes());
   }
 
   @NotNull

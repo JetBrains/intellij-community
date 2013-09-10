@@ -67,6 +67,7 @@ public class TodoPattern implements Cloneable {
     }
   }
 
+  @NotNull
   public String getPatternString(){
     return myIndexPattern.getPatternString();
   }
@@ -75,6 +76,7 @@ public class TodoPattern implements Cloneable {
     myIndexPattern.setPatternString(patternString);
   }
 
+  @NotNull
   public TodoAttributes getAttributes(){
     return myAttributes;
   }
