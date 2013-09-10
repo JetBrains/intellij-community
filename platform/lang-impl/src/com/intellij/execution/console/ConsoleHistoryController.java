@@ -138,7 +138,6 @@ public class ConsoleHistoryController {
     EmptyAction.setupAction(myHistoryPrev, "Console.History.Previous", null);
     EmptyAction.setupAction(myBrowseHistory, "Console.History.Browse", null);
     if (!myMultiline) {
-      EmptyAction.setupAction(myBrowseHistory, "Console.History.BrowseTW", null);
       myHistoryNext.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
       myHistoryPrev.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
     }

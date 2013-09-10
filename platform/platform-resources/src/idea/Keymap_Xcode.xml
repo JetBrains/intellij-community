@@ -347,7 +347,6 @@
     <action id="AddFilesToProjectAction">
       <keyboard-shortcut first-keystroke="meta alt A" />
     </action>
-    <action id="Console.History.BrowseTW" />
     <action id="FileChooser.NewFolder">
       <keyboard-shortcut first-keystroke="alt INSERT" />
     </action>
