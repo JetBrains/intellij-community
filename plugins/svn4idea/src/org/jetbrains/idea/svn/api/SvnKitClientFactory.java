@@ -13,6 +13,8 @@ import org.jetbrains.idea.svn.delete.SvnKitDeleteClient;
 import org.jetbrains.idea.svn.history.SvnKitHistoryClient;
 import org.jetbrains.idea.svn.integrate.SvnKitMergeClient;
 import org.jetbrains.idea.svn.lock.SvnKitLockClient;
+import org.jetbrains.idea.svn.portable.SvnSvnkitUpdateClient;
+import org.jetbrains.idea.svn.portable.SvnUpdateClientI;
 import org.jetbrains.idea.svn.portable.SvnkitSvnStatusClient;
 import org.jetbrains.idea.svn.portable.SvnkitSvnWcClient;
 import org.jetbrains.idea.svn.properties.SvnKitPropertyClient;
@@ -44,5 +46,11 @@ public class SvnKitClientFactory extends ClientFactory {
     myLockClient = new SvnKitLockClient();
     statusClient = new SvnkitSvnStatusClient(myVcs.createStatusClient());
     infoClient = new SvnkitSvnWcClient(myVcs);
+  }
+
+  @NotNull
+  @Override
+  public SvnUpdateClientI createUpdateClient() {
+    return new SvnSvnkitUpdateClient(myVcs.createUpdateClient());
   }
 }

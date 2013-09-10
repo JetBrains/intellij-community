@@ -1368,6 +1368,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return getFactory(getProjectRootFormat(), false);
   }
 
+  public ClientFactory getSvnKitFactory() {
+    return svnKitClientFactory;
+  }
+
   @NotNull
   public ClientFactory getFactory(@NotNull File file) {
     return getFactory(getWorkingCopyFormat(file), true);
