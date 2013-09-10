@@ -29,7 +29,7 @@ public class PyTypeTest extends PyTestCase {
            "expr = 1 + 2");
     doTest("str | unicode",
            "expr = '1' + '2'");
-    doTest("str",
+    doTest("str | unicode",
            "expr = '%s' % ('a')");
     doTest("list[int]",
            "expr = [1] + [2]");
