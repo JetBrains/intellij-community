@@ -43,6 +43,7 @@ import git4idea.DialogManager;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
+import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -439,13 +440,14 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
           return null;
         }
 
-        GitFetchResult result = new GitFetcher(project, indicator, false).fetch(gitRepository.getRoot(), targetBranchInfo.getRemote());
+        GitFetchResult result = new GitFetcher(project, indicator, false)
+          .fetch(gitRepository.getRoot(), targetBranchInfo.getRemote(), targetBranchInfo.getBranchNameForRemoteOperations());
         if (!result.isSuccess()) {
           GitFetcher.displayFetchResult(project, result, null, result.getErrors());
           return null;
         }
 
-        DiffInfo info = getDiffInfo(project, gitRepository, currentBranch, targetBranchInfo.getBranch());
+        DiffInfo info = getDiffInfo(project, gitRepository, currentBranch, targetBranchInfo.getBranchNameForLocalOperations());
         if (info == null) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
@@ -467,7 +469,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
   }
 
   private static TargetBranchInfo getTargetBranchInfo(@NotNull GitRemoteBranch remoteBranch) {
-    return new TargetBranchInfo(remoteBranch.getRemote().getName(), remoteBranch.getNameForLocalOperations());
+    return new TargetBranchInfo(remoteBranch.getRemote().getName(), remoteBranch.getNameForRemoteOperations());
   }
 
   @Nullable
@@ -477,7 +479,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     for (GitRemote remote : gitRepository.getRemotes()) {
       for (String url : remote.getUrls()) {
         if (forkPath.equals(GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url))) {
-          return new TargetBranchInfo(remote.getName(), remote.getName() + "/" + branch);
+          return new TargetBranchInfo(remote.getName(), branch);
         }
       }
     }
@@ -648,11 +650,13 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
 
   private static class TargetBranchInfo {
     @NotNull private final String myRemote;
-    @NotNull private final String myBranch;
+    @NotNull private final String myName;
+    @NotNull private final String myNameAtRemote;
 
-    private TargetBranchInfo(@NotNull String remote, @NotNull String branch) {
+    private TargetBranchInfo(@NotNull String remote, @NotNull String nameAtRemote) {
       myRemote = remote;
-      myBranch = branch;
+      myNameAtRemote = GitBranchUtil.stripRefsPrefix(nameAtRemote);
+      myName = myRemote + "/" + myNameAtRemote;
     }
 
     @NotNull
@@ -661,8 +665,13 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     }
 
     @NotNull
-    public String getBranch() {
-      return myBranch;
+    public String getBranchNameForLocalOperations() {
+      return myName;
+    }
+
+    @NotNull
+    public String getBranchNameForRemoteOperations() {
+      return myNameAtRemote;
     }
   }
 }

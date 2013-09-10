@@ -241,7 +241,7 @@ public class GithubRebaseAction extends DumbAwareAction {
   private static boolean fetchParent(@NotNull final Project project,
                                      @NotNull final GitRepository repository,
                                      @NotNull final ProgressIndicator indicator) {
-    GitFetchResult result = new GitFetcher(project, indicator, false).fetch(repository.getRoot(), "upstream");
+    GitFetchResult result = new GitFetcher(project, indicator, false).fetch(repository.getRoot(), "upstream", null);
     if (!result.isSuccess()) {
       GitFetcher.displayFetchResult(project, result, null, result.getErrors());
       return false;
