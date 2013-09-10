@@ -36,6 +36,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.conflict.ConflictClient;
 import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -97,7 +98,7 @@ public class MarkResolvedAction extends BasicAction {
         ConflictClient client = vcs.getFactory(ioFile).createConflictClient();
 
         // TODO: Probably false should be passed to "resolveTree", but previous logic used true implicitly
-        client.resolve(ioFile, true, true, true);
+        client.resolve(ioFile, SVNDepth.EMPTY, true, true, true);
       }
     }
     finally {

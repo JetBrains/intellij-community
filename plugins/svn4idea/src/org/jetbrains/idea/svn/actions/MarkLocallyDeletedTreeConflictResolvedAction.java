@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnLocallyDeletedChange;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.tmatesoft.svn.core.SVNDepth;
 
 import java.util.Collections;
 import java.util.List;
@@ -93,7 +94,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends AnAction {
     SvnVcs vcs = SvnVcs.getInstance(project);
 
     try {
-      vcs.getFactory(path.getIOFile()).createConflictClient().resolve(path.getIOFile(), false, false, true);
+      vcs.getFactory(path.getIOFile()).createConflictClient().resolve(path.getIOFile(), SVNDepth.EMPTY, false, false, true);
     }
     catch (VcsException e) {
       exception.set(e);

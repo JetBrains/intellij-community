@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.tmatesoft.svn.core.SVNDepth;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -114,7 +115,7 @@ public class MarkTreeConflictResolvedAction extends AnAction implements DumbAwar
           SvnVcs vcs = SvnVcs.getInstance(checker.getProject());
 
           try {
-            vcs.getFactory(path.getIOFile()).createConflictClient().resolve(path.getIOFile(), false, false, true);
+            vcs.getFactory(path.getIOFile()).createConflictClient().resolve(path.getIOFile(), SVNDepth.EMPTY, false, false, true);
           }
           catch (VcsException e) {
             exception.set(e);
