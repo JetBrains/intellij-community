@@ -71,15 +71,4 @@ public class RecentTasks {
     if (t == null || !t.equals(Thread.currentThread()))
       throw new RuntimeException("This class has to be used from the same thread");
   }
-
-  public static class Task {
-    private final String path;
-    private final String args;
-    private final String description;
-    public Task(String path, String args, String description) {
-      this.path = path;
-      this.args = args;
-      this.description = description;
-    }
-  }
 }

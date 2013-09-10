@@ -20,7 +20,6 @@ import com.intellij.ide.ReopenProjectAction;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.impl.SystemDock;
 import java.io.File;
 
@@ -29,12 +28,12 @@ import java.io.File;
  */
 public class WinDockDelegate implements SystemDock.Delegate {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.win.WinDockDelegate");
-
   private static final String javaExe = System.getProperty("java.home") + File.separatorChar + "bin" + File.separatorChar + "javaw.exe";
-  private static final String argsToExecute = new StringBuilder(" -classpath ").append(PathManager.getJarPathForClass(SocketControlHelper.class)).
-    append(" com.intellij.ui.win.SocketControlHelper ").append(StartupUtil.getAcquiredPort())
-    .append(" ").toString();
+  private static final String argsToExecute = " -classpath \"" +
+                                              PathManager.getJarPathForClass(SocketControlHelper.class) +
+                                              "\" com.intellij.ui.win.SocketControlHelper " +
+                                              StartupUtil.getAcquiredPort() +
+                                              " ";
 
   private static boolean initialized = false;
   private static final SystemDock.Delegate instance = new WinDockDelegate();
@@ -44,12 +43,10 @@ public class WinDockDelegate implements SystemDock.Delegate {
   public void updateRecentProjectsMenu () {
     final AnAction[] recentProjectActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
     RecentTasks.clear();
-    RecentTasks.Task[] tasks = new RecentTasks.Task[recentProjectActions.length];
+    Task[] tasks = new Task[recentProjectActions.length];
     for (int i = 0; i < recentProjectActions.length; i ++) {
       ReopenProjectAction rpa = (ReopenProjectAction)recentProjectActions[i];
-      tasks[i] = new RecentTasks.Task(javaExe,
-                                   argsToExecute + rpa.getProjectPath(),
-                                   rpa.getProjectName());
+      tasks[i] = new Task(javaExe, argsToExecute + rpa.getProjectPath(), rpa.getProjectName());
     }
     RecentTasks.addTasks(tasks);
   }
