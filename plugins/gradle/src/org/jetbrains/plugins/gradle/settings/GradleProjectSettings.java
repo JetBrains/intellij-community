@@ -26,11 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class GradleProjectSettings extends ExternalProjectSettings {
 
   @Nullable private String myGradleHome;
-  @NotNull  private DistributionType distributionType;
-
-  public GradleProjectSettings() {
-    this.distributionType = DistributionType.LOCAL;
-  }
+  @Nullable  private DistributionType distributionType;
 
   @Nullable
   public String getGradleHome() {
@@ -41,12 +37,12 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     myGradleHome = gradleHome;
   }
 
-  @NotNull
+  @Nullable
   public DistributionType getDistributionType() {
     return distributionType;
   }
 
-  public void setDistributionType(@NotNull DistributionType distributionType) {
+  public void setDistributionType(@Nullable DistributionType distributionType) {
     this.distributionType = distributionType;
   }
 

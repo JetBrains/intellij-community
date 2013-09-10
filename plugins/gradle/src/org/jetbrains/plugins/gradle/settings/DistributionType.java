@@ -20,5 +20,30 @@ package org.jetbrains.plugins.gradle.settings;
  * @since 8/23/13
  */
 public enum DistributionType {
-  BUNDLED, WRAPPED, LOCAL
+  /**
+   * Gradle version packaged with IDE used
+   */
+  BUNDLED,
+  /**
+   * The default configuration of the wrapper task assumed based on manually wrapper generated files:
+   * <p/>
+   * Build layout with default wrapper task:
+   * <pre>
+   * project_dir/
+   *    gradlew
+   *    gradlew.bat
+   *    gradle/wrapper/
+   *        gradle-wrapper.jar
+   *        <b>gradle-wrapper.properties</b>
+   * </pre>
+   */
+  DEFAULT_WRAPPED,
+  /**
+   * Wrapper task configuration based on build.gradle script to be used.
+   */
+  WRAPPED,
+  /**
+   * Locally installed gradle to be used
+   */
+  LOCAL
 }

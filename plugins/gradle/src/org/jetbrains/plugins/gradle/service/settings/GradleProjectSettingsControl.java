@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +70,8 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   private JLabel                    myGradleHomeLabel;
   private TextFieldWithBrowseButton myGradleHomePathField;
   private JBRadioButton             myUseWrapperButton;
+  private JBRadioButton             myUseWrapperWithVerificationButton;
+  private JBLabel                   myUseWrapperVerificationLabel;
   private JBRadioButton             myUseLocalDistributionButton;
   private JBRadioButton             myUseBundledDistributionButton;
 
@@ -111,7 +114,11 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
     initControls();
     content.add(myUseWrapperButton, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
-    content.add(myUseBundledDistributionButton, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    content.add(myUseWrapperWithVerificationButton, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
+    content.add(myUseWrapperVerificationLabel,  ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    //content.add(Box.createGlue(), ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    // Hide bundled distribution option for a while
+    // content.add(myUseBundledDistributionButton, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     content.add(myUseLocalDistributionButton, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
 
     content.add(myGradleHomeLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
@@ -122,7 +129,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        boolean localDistributionEnabled = e.getSource() == myUseLocalDistributionButton;
+        boolean localDistributionEnabled = myUseLocalDistributionButton.isSelected();
         myGradleHomePathField.setEnabled(localDistributionEnabled);
         if (localDistributionEnabled) {
           if(myGradleHomePathField.getText().isEmpty()){
@@ -142,9 +149,16 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
         }
       }
     };
-    myUseWrapperButton = new JBRadioButton(GradleBundle.message("gradle.settings.text.use.wrapper"));
+
+    myUseWrapperButton = new JBRadioButton(GradleBundle.message("gradle.settings.text.use.default_wrapper.configured"));
     myUseWrapperButton.addActionListener(listener);
-    myUseLocalDistributionButton = new JBRadioButton(GradleBundle.message("gradle.settings..text.use.local.distribution"));
+    myUseWrapperWithVerificationButton = new JBRadioButton(GradleBundle.message("gradle.settings.text.use.wrapper.with_verification"));
+    myUseWrapperWithVerificationButton.addActionListener(listener);
+    myUseWrapperVerificationLabel = new JBLabel(GradleBundle.message("gradle.settings.text.wrapper.verification.compatibility"));
+    myUseWrapperVerificationLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.MINI));
+    myUseWrapperVerificationLabel.setIcon(UIUtil.getBalloonInformationIcon());
+
+    myUseLocalDistributionButton = new JBRadioButton(GradleBundle.message("gradle.settings.text.use.local.distribution"));
     myUseLocalDistributionButton.addActionListener(listener);
 
     myUseBundledDistributionButton = new JBRadioButton(
@@ -154,6 +168,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
     ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(myUseWrapperButton);
+    buttonGroup.add(myUseWrapperWithVerificationButton);
     buttonGroup.add(myUseBundledDistributionButton);
     buttonGroup.add(myUseLocalDistributionButton);
   }
@@ -217,9 +232,11 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
         return GradleBundle.message("gradle.home.setting.type.explicit.incorrect", gradleHomePath);
       }
       settings.setDistributionType(DistributionType.LOCAL);
-    } else if (myUseWrapperButton.isSelected()) {
+    } else if(myUseWrapperButton.isSelected()) {
+      settings.setDistributionType(DistributionType.DEFAULT_WRAPPED);
+    } else if(myUseWrapperWithVerificationButton.isSelected()) {
       settings.setDistributionType(DistributionType.WRAPPED);
-    } else {
+    } else if (myUseBundledDistributionButton.isSelected()) {
       settings.setDistributionType(DistributionType.BUNDLED);
     }
 
@@ -228,18 +245,20 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   
   @Override
   protected boolean isExtraSettingModified() {
-    if (myUseBundledDistributionButton.isSelected() &&
-        getInitialSettings().getDistributionType() != DistributionType.BUNDLED) {
+    DistributionType distributionType = getInitialSettings().getDistributionType();
+    if (myUseBundledDistributionButton.isSelected() && distributionType != DistributionType.BUNDLED) {
       return true;
     }
 
-    if (myUseWrapperButton.isSelected() &&
-        getInitialSettings().getDistributionType() != DistributionType.WRAPPED) {
-      return true;
+    if (myUseWrapperButton.isSelected() && distributionType != DistributionType.DEFAULT_WRAPPED) {
+        return true;
     }
 
-    if (myUseLocalDistributionButton.isSelected() &&
-        getInitialSettings().getDistributionType() != DistributionType.LOCAL) {
+    if (myUseWrapperWithVerificationButton.isSelected() && distributionType != DistributionType.WRAPPED) {
+        return true;
+    }
+
+    if (myUseLocalDistributionButton.isSelected() && distributionType != DistributionType.LOCAL) {
       return true;
     }
 
@@ -260,7 +279,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
     
     updateWrapperControls(getInitialSettings().getExternalProjectPath());
-    if (myUseWrapperButton.isSelected()) {
+    if (!myUseLocalDistributionButton.isSelected()) {
       myGradleHomePathField.setEnabled(false);
       return;
     }
@@ -282,15 +301,42 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   }
 
   public void updateWrapperControls(@Nullable String linkedProjectPath) {
-    myUseWrapperButton.setText(GradleBundle.message("gradle.settings.text.use.wrapper"));
+    if(StringUtil.isEmpty(linkedProjectPath)) {
+        myUseLocalDistributionButton.setSelected(true);
+        myGradleHomePathField.setEnabled(true);
+        return;
+    }
+
+    final boolean isGradleDefaultWrapperFilesExist = GradleUtil.isGradleDefaultWrapperFilesExist(linkedProjectPath);
+    if (isGradleDefaultWrapperFilesExist) {
+      myUseWrapperButton.setEnabled(true);
+      myUseWrapperButton.setSelected(true);
+      myGradleHomePathField.setEnabled(false);
+      myUseWrapperButton.setText(GradleBundle.message("gradle.settings.text.use.default_wrapper.configured"));
+    } else {
+      myUseWrapperButton.setEnabled(false);
+      myUseLocalDistributionButton.setSelected(true);
+      myGradleHomePathField.setEnabled(true);
+      myUseWrapperButton.setText(GradleBundle.message("gradle.settings.text.use.default_wrapper.not_configured"));
+    }
+
+    if(getInitialSettings().getDistributionType() == null) {
+      return;
+    }
+
     switch (getInitialSettings().getDistributionType()) {
       case LOCAL:
         myGradleHomePathField.setEnabled(true);
         myUseLocalDistributionButton.setSelected(true);
         break;
-      case WRAPPED:
+      case DEFAULT_WRAPPED:
         myGradleHomePathField.setEnabled(false);
         myUseWrapperButton.setSelected(true);
+        myUseWrapperButton.setEnabled(true);
+        break;
+      case WRAPPED:
+        myGradleHomePathField.setEnabled(false);
+        myUseWrapperWithVerificationButton.setSelected(true);
         break;
       case BUNDLED:
         myGradleHomePathField.setEnabled(false);

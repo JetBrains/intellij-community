@@ -53,7 +53,7 @@ public class GradleUtil {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public static boolean isGradleWrapperDefined(@Nullable String gradleProjectPath) {
+  public static boolean isGradleDefaultWrapperFilesExist(@Nullable String gradleProjectPath) {
     return !StringUtil.isEmpty(getWrapperDistribution(gradleProjectPath));
   }
 
