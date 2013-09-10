@@ -47,12 +47,12 @@ class Paths {
 //    sandbox = "$projectHome/out/release"
 
     classesTarget = "$sandbox/classes"
-    distWin = "$sandbox/dist.win"
-    distWinZip = "$sandbox/dist.win.zip"
-    distAll = "$sandbox/dist.all"
+    distAll = "${sandbox}/layout"
+    distWin = "${sandbox}/win"
+    distMac = "${sandbox}/mac"
+    distUnix = "${sandbox}/unix"
     distJars = "$sandbox/dist.jars"
-    distUnix = "$sandbox/dist.unix"
-    distMac = "$sandbox/dist.mac"
+    distWinZip = "$sandbox/dist.win.zip"
     distDev = "$sandbox/dist.dev"
     artifacts = "$sandbox/artifacts"
 
@@ -89,6 +89,8 @@ class Build {
   def system_selector
   def teamcity_buildType_id
   def ant = new AntBuilder()
+  def ch
+  def usedJars
   Map layout_args
   Script utils
   Script ultimate_utils
