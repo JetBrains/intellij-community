@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Bas Leijdekkers
+ * Copyright 2006-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -127,10 +129,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       }
       final PsiClassType extendsType = extendsListTypes[0];
       final PsiClass aClass = extendsType.resolve();
-      if (aClass == null) {
-        return;
-      }
-      if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
+      if (aClass == null || !aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       final PsiIdentifier nameIdentifier = classParameter.getNameIdentifier();
@@ -156,22 +155,63 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       if (aClass == null || !aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      if (isPartOfOverriddenMethod(typeElement)) {
+      if (!shouldReport(typeElement)) {
         return;
       }
       registerError(typeElement.getFirstChild(), aClass, Integer.valueOf(2));
     }
 
-    private static boolean isPartOfOverriddenMethod(PsiTypeElement typeElement) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(typeElement, PsiMethod.class);
-      if (method == null) {
-        return false;
+    private static boolean shouldReport(PsiTypeElement typeElement) {
+      final PsiElement ancestor = PsiTreeUtil.skipParentsOfType(
+        typeElement, PsiTypeElement.class, PsiJavaCodeReferenceElement.class, PsiReferenceParameterList.class);
+      if (ancestor instanceof PsiParameter) {
+        final PsiParameter parameter = (PsiParameter)ancestor;
+        final PsiElement scope = parameter.getDeclarationScope();
+        if (scope instanceof PsiMethod) {
+          final PsiMethod method = (PsiMethod)scope;
+          if (MethodUtils.hasSuper(method)) {
+            return false;
+          }
+        }
+        else if (scope instanceof PsiForeachStatement) {
+          final PsiForeachStatement foreachStatement = (PsiForeachStatement)scope;
+          final PsiParameter iterationParameter = foreachStatement.getIterationParameter();
+          final PsiType iterationType = iterationParameter.getType();
+          final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
+          if (iteratedValue == null) {
+            return false; // incomplete code
+          }
+          final PsiType type = JavaGenericsUtil.getCollectionItemType(iteratedValue);
+          if (type == null || !TypeConversionUtil.isAssignable(iterationType, type)) { // sanity check
+            return false;
+          }
+          if (type.equals(iterationType)) {
+            return false;
+          }
+          if (!(type instanceof PsiCapturedWildcardType)) {
+            return true;
+          }
+          final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)type;
+          final PsiType upperBound = capturedWildcardType.getUpperBound();
+          if (iterationType.equals(upperBound)) {
+            return false;
+          }
+        }
       }
-      final PsiCodeBlock body = method.getBody();
-      if (PsiTreeUtil.isAncestor(body, typeElement, true)) {
-        return false;
+      else if (ancestor instanceof PsiLocalVariable) {
+        final PsiLocalVariable localVariable = (PsiLocalVariable)ancestor;
+        final PsiExpression initializer = localVariable.getInitializer();
+        if (initializer == null) {
+          return true;
+        }
+        final PsiType type = initializer.getType();
+        final PsiType expectedType = GenericsUtil.getVariableTypeByExpressionType(type);
+        final PsiType variableType = localVariable.getType();
+        if (variableType.equals(expectedType)) {
+          return false;
+        }
       }
-      return MethodUtils.hasSuper(method);
+      return true;
     }
   }
 }
