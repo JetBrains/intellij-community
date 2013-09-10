@@ -46,7 +46,6 @@ import java.util.regex.Pattern;
 public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z0-9_\\-\\(\\)]*)\"");
-  private static final ProblemDescriptor[] EMPTY = new ProblemDescriptor[0];
 
   public JDOMExternalizableStringList groups = new JDOMExternalizableStringList();
   @NonNls public static String SHORT_NAME = "groupsTestNG";
@@ -98,7 +97,7 @@ public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
     if (!psiClass.getContainingFile().isWritable()) return null;
 
     PsiAnnotation[] annotations = TestNGUtil.getTestNGAnnotations(psiClass);
-    if (annotations.length == 0) return EMPTY;
+    if (annotations.length == 0) return ProblemDescriptor.EMPTY_ARRAY;
 
     List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
     for (PsiAnnotation annotation : annotations) {
