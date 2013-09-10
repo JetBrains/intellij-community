@@ -45,7 +45,8 @@ public class EnterBetweenBracesHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
     
-    if (caretOffset <= 0 || caretOffset >= text.length() || !isBracePair(text.charAt(caretOffset - 1), text.charAt(caretOffset))) {
+    if (caretOffset <= 0 || caretOffset >= text.length() || !isBracePair(text.charAt(caretOffset - 1), text.charAt(caretOffset)) ||
+      file.findElementAt(caretOffset) == file.findElementAt(caretOffset-1)) {
       return Result.Continue;
     }
 
