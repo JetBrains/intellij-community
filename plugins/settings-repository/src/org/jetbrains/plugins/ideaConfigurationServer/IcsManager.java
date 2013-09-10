@@ -54,7 +54,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       ProgressManager.getInstance().run(new Task.Backgroundable(null, "Pushing to ICS server") {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          ActionCallback callback = repositoryManager.commit(indicator);
+          ActionCallback callback = repositoryManager.commit();
           while (!callback.isProcessed()) {
             try {
               //noinspection BusyWait
@@ -237,7 +237,15 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   }
 
   public void sync() {
-    // todo
+    commitAlarm.cancel();
+    ProgressManager.getInstance().run(new Task.Modal(null, "Syncing Idea Configuration", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        repositoryManager.commit();
+        repositoryManager.push(indicator);
+      }
+    });
   }
 
   private class ICSStreamProvider implements StreamProvider {

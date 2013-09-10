@@ -3,8 +3,13 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.PasswordUtil;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.ui.UIUtil;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -17,11 +22,12 @@ import org.eclipse.jgit.transport.URIish;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 final class GitRepositoryManager extends BaseRepositoryManager {
   private final Git git;
+
+  private CredentialsProvider credentialsProvider;
 
   public GitRepositoryManager() throws IOException {
     FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
@@ -32,6 +38,13 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     }
 
     git = new Git(repository);
+  }
+
+  private CredentialsProvider getCredentialsProvider() {
+    if (credentialsProvider == null) {
+      credentialsProvider = new MyCredentialsProvider();
+    }
+    return credentialsProvider;
   }
 
   @Nullable
@@ -63,17 +76,12 @@ final class GitRepositoryManager extends BaseRepositoryManager {
 
   @Override
   protected void doUpdateRepository() throws Exception {
-    git.fetch().setRemoveDeletedRefs(true).setCredentialsProvider(new MyCredentialsProvider()).call();
+    git.fetch().setRemoveDeletedRefs(true).setCredentialsProvider(getCredentialsProvider()).call();
   }
 
   @Override
   protected boolean hasRemoteRepository() {
     return !StringUtil.isEmptyOrSpaces(git.getRepository().getConfig().getString("remote", "origin", "url"));
-  }
-
-  public void push() throws Exception {
-    addFilesToGit();
-    git.push().setCredentialsProvider(new MyCredentialsProvider()).call();
   }
 
   private void addFilesToGit() throws IOException {
@@ -105,10 +113,7 @@ final class GitRepositoryManager extends BaseRepositoryManager {
 
   @NotNull
   @Override
-  public ActionCallback commit(@NotNull final ProgressIndicator indicator) {
-    // todo
-    indicator.setIndeterminate(true);
-
+  public ActionCallback commit() {
     final ActionCallback callback = new ActionCallback();
     taskProcessor.add(new ThrowableRunnable<Exception>() {
       @Override
@@ -127,6 +132,30 @@ final class GitRepositoryManager extends BaseRepositoryManager {
         addFilesToGit();
         PersonIdent ident = new PersonIdent(ApplicationInfoEx.getInstanceEx().getFullApplicationName(), "dev@null.org");
         git.commit().setAuthor(ident).setCommitter(ident).setMessage("").call();
+      }
+    });
+    return callback;
+  }
+
+  @Override
+  @NotNull
+  public ActionCallback push(@NotNull final ProgressIndicator indicator) {
+    final ActionCallback callback = new ActionCallback();
+    taskProcessor.add(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        try {
+          doRun();
+          callback.setDone();
+        }
+        catch (Throwable e) {
+          callback.reject(e.getMessage());
+          LOG.error(e);
+        }
+      }
+
+      private void doRun() throws IOException, GitAPIException {
+        git.push().setProgressMonitor(new JGitProgressMonitor(indicator)).setCredentialsProvider(getCredentialsProvider()).call();
       }
     });
     return callback;
@@ -164,12 +193,42 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     }
   }
 
-  private static class MyCredentialsProvider extends CredentialsProvider {
-    private static final char[] X_OAUTH_PASSWORD = "x-oauth-basic".toCharArray();
+  private class MyCredentialsProvider extends CredentialsProvider {
+    private String username;
+    private String password;
+
+    private MyCredentialsProvider() {
+      File loginDataFile = getPasswordStorageFile();
+      if (loginDataFile.exists()) {
+        try {
+          boolean hasErrors = true;
+          DataInputStream in = new DataInputStream(new FileInputStream(loginDataFile));
+          try {
+            username = PasswordUtil.decodePassword(IOUtil.readString(in));
+            password = PasswordUtil.decodePassword(IOUtil.readString(in));
+            hasErrors = false;
+          }
+          finally {
+            if (hasErrors) {
+              //noinspection ResultOfMethodCallIgnored
+              loginDataFile.delete();
+            }
+            in.close();
+          }
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    }
+
+    private File getPasswordStorageFile() {
+      return new File(IcsManager.getPluginSystemDir(), ".git_auth");
+    }
 
     @Override
     public boolean isInteractive() {
-      return false;
+      return true;
     }
 
     @Override
@@ -187,19 +246,87 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     }
 
     @Override
-    public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
-      String token = IcsManager.getInstance().getSettings().token;
-      if (StringUtil.isEmptyOrSpaces(token)) {
-        return false;
-      }
-
+    public boolean get(final URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
+      CredentialItem.Username userNameItem = null;
+      CredentialItem.Password passwordItem = null;
       for (CredentialItem item : items) {
         if (item instanceof CredentialItem.Username) {
-          ((CredentialItem.Username)item).setValue(token);
+          userNameItem = (CredentialItem.Username)item;
         }
         else if (item instanceof CredentialItem.Password) {
-          ((CredentialItem.Password)item).setValue(X_OAUTH_PASSWORD);
+          passwordItem = (CredentialItem.Password)item;
         }
+      }
+
+      if (userNameItem != null || passwordItem != null) {
+        String u = uri.getUser();
+        String p;
+        if (u == null) {
+          // username is not in the url - reading pre-filled value from the password storage
+          u = username;
+          p = password;
+        }
+        else {
+          p = StringUtil.nullize(uri.getPass(), true);
+          // username is in url - read password only if it is for the same user
+          if (u.equals(username) && p == null) {
+            p = password;
+          }
+        }
+
+        boolean ok;
+        if (u != null && p != null) {
+          ok = true;
+        }
+        else {
+          final Ref<AuthDialog> dialogRef = Ref.create();
+          final String finalU = u;
+          final String finalP = p;
+          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              AuthDialog dialog = new AuthDialog("Login required", "Login to " + uri, finalU, finalP);
+              dialogRef.set(dialog);
+              dialog.show();
+            }
+          });
+          ok = dialogRef.get().isOK();
+          if (ok) {
+            u = dialogRef.get().getUsername();
+            p = dialogRef.get().getPassword();
+            if (StringUtil.isEmptyOrSpaces(p)) {
+              p = "x-oauth-basic";
+            }
+          }
+        }
+
+        if (ok) {
+          if (userNameItem != null) {
+            userNameItem.setValue(u);
+          }
+          if (passwordItem != null) {
+            passwordItem.setValue(p.toCharArray());
+          }
+          password = p;
+          username = u;
+
+          taskProcessor.add(new ThrowableRunnable<Exception>() {
+            @Override
+            public void run() throws Exception {
+              File loginDataFile = getPasswordStorageFile();
+              FileUtil.createParentDirs(loginDataFile);
+              DataOutputStream out = new DataOutputStream(new FileOutputStream(loginDataFile));
+              try {
+                IOUtil.writeString(PasswordUtil.encodePassword(username), out);
+                IOUtil.writeString(PasswordUtil.encodePassword(password), out);
+              }
+              finally {
+                out.close();
+              }
+            }
+          });
+        }
+        return ok;
       }
       return true;
     }

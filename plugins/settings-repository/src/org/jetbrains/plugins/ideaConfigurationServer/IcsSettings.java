@@ -21,8 +21,6 @@ public class IcsSettings {
   private static final SkipDefaultValuesSerializationFilters DEFAULT_FILTER = new SkipDefaultValuesSerializationFilters();
 
   @Tag
-  public String token;
-  @Tag
   public boolean shareProjectWorkspace;
   @Tag
   public boolean updateOnStart = true;

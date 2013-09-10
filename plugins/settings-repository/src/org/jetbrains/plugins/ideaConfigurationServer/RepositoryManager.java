@@ -27,5 +27,8 @@ public interface RepositoryManager {
   void updateRepository() throws IOException;
 
   @NotNull
-  ActionCallback commit(@NotNull ProgressIndicator indicator);
+  ActionCallback commit();
+
+  @NotNull
+  ActionCallback push(@NotNull ProgressIndicator indicator);
 }
