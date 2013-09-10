@@ -64,7 +64,7 @@ public class GrHighlightUtil {
   private static final Logger LOG = Logger.getInstance(GrHighlightUtil.class);
 
   private static Set<String> getReassignedNames(final PsiElement scope) {
-    return CachedValuesManager.getManager(scope.getProject()).getCachedValue(scope, new CachedValueProvider<Set<String>>() {
+    return CachedValuesManager.getCachedValue(scope, new CachedValueProvider<Set<String>>() {
       @Nullable
       @Override
       public Result<Set<String>> compute() {

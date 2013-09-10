@@ -200,7 +200,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
 
   @NotNull
   public PsiMethod[] getMethods() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiMethod[]>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiMethod[]>() {
       @Nullable
       @Override
       public Result<PsiMethod[]> compute() {

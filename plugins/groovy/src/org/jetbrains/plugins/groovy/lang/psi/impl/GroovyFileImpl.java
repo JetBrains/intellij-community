@@ -239,7 +239,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   private ConcurrentMap<String, GrBindingVariable> getBindings() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, BINDING_PROVIDER);
+    return CachedValuesManager.getCachedValue(this, BINDING_PROVIDER);
   }
 
   @Nullable
@@ -489,7 +489,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Override
   public PsiType getInferredScriptReturnType() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiType>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiType>() {
       @Override
       public Result<PsiType> compute() {
         return Result.create(GroovyPsiManager.inferType(GroovyFileImpl.this, new MethodTypeInferencer(GroovyFileImpl.this)),

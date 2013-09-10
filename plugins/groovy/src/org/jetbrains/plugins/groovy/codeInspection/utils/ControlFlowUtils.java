@@ -615,7 +615,7 @@ public class ControlFlowUtils {
   }
 
   public static Set<GrExpression> getAllReturnValues(@NotNull final GrControlFlowOwner block) {
-    return CachedValuesManager.getManager(block.getProject()).getCachedValue(block, new CachedValueProvider<Set<GrExpression>>() {
+    return CachedValuesManager.getCachedValue(block, new CachedValueProvider<Set<GrExpression>>() {
       @Override
       public Result<Set<GrExpression>> compute() {
         final Set<GrExpression> result = new HashSet<GrExpression>();

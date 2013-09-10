@@ -130,7 +130,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   }
 
   private PsiMethod[] getDefEnumMethods() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiMethod[]>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiMethod[]>() {
       @Override
       public Result<PsiMethod[]> compute() {
         PsiMethod[] defMethods = new PsiMethod[3];

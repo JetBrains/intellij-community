@@ -140,7 +140,7 @@ class DeclarationCacheKey {
 
   private List<DeclarationHolder> getAllDeclarations(PsiElement place) {
     ConcurrentMap<DeclarationCacheKey, List<DeclarationHolder>> cache =
-      CachedValuesManager.getManager(place.getProject()).getCachedValue(place, VALUE_PROVIDER);
+      CachedValuesManager.getCachedValue(place, VALUE_PROVIDER);
     List<DeclarationHolder> declarations = cache.get(this);
     if (declarations == null) {
       declarations = collectDeclarations(place);

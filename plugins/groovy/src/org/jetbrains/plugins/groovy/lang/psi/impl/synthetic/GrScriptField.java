@@ -84,7 +84,7 @@ public class GrScriptField extends GrLightField {
 
   @NotNull
   public static GrScriptField[] getScriptFields(@NotNull final GroovyScriptClass script) {
-    return CachedValuesManager.getManager(script.getProject()).getCachedValue(script, new CachedValueProvider<GrScriptField[]>() {
+    return CachedValuesManager.getCachedValue(script, new CachedValueProvider<GrScriptField[]>() {
       @Override
       public Result<GrScriptField[]> compute() {
         List<GrScriptField> result = RecursionManager.doPreventingRecursion(script, true, new Computable<List<GrScriptField>>() {

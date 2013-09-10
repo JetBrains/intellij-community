@@ -307,7 +307,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if (referenceExpression != null && element instanceof PsiMethod) {
       final PsiClass[] memberClass = getMemberClass(referenceExpression, element);
       if (memberClass != null && memberClass.length == 1) {
-        return CachedValuesManager.getManager(element.getProject()).getCachedValue(referenceExpression, new CachedValueProvider<SearchScope>() {
+        return CachedValuesManager.getCachedValue(referenceExpression, new CachedValueProvider<SearchScope>() {
           @Nullable
           @Override
           public Result<SearchScope> compute() {

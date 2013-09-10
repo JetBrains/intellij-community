@@ -332,7 +332,7 @@ public class PsiSuperMethodImplUtil {
 
   @NotNull
   public static HierarchicalMethodSignature getHierarchicalMethodSignature(final PsiMethod method) {
-    return CachedValuesManager.getManager(method.getProject())
+    return CachedValuesManager
       .getCachedValue(method, new CachedValueProvider<HierarchicalMethodSignature>() {
         @Nullable
         @Override

@@ -270,7 +270,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
       @Override
       public Result<PsiClassType[]> compute() {
         return Result.create(GrClassImplUtil.getExtendsListTypes(GrTypeDefinitionImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
@@ -280,7 +280,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @NotNull
   public PsiClassType[] getImplementsListTypes() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
       @Override
       public Result<PsiClassType[]> compute() {
         return Result.create(GrClassImplUtil.getImplementsListTypes(GrTypeDefinitionImpl.this),
@@ -295,7 +295,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   public PsiClass[] getInterfaces() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiClass[]>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClass[]>() {
       @Override
       public Result<PsiClass[]> compute() {
         return Result

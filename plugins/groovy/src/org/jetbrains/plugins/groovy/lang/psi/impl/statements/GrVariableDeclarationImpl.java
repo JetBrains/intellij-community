@@ -206,7 +206,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
 
   @Override
   public PsiReference getReference() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiReference>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiReference>() {
       @Nullable
       @Override
       public Result<PsiReference> compute() {

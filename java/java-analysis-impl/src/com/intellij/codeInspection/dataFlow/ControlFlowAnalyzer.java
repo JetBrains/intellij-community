@@ -1425,7 +1425,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       final PsiAnnotation contractAnno = findContractAnnotation(resolved);
       if (contractAnno != null) {
         final Project project = expression.getProject();
-        return CachedValuesManager.getManager(project).getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
+        return CachedValuesManager.getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
           @Nullable
           @Override
           public Result<List<MethodContract>> compute() {

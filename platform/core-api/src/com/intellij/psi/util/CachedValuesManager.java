@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +93,10 @@ public abstract class CachedValuesManager {
 
   public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder, @NotNull CachedValueProvider<T> provider) {
     return getCachedValue(dataHolder, this.<T>getKeyForClass(provider.getClass()), provider, false);
+  }
+  public static <T> T getCachedValue(@NotNull PsiElement psi, @NotNull CachedValueProvider<T> provider) {
+    CachedValuesManager manager = getManager(psi.getProject());
+    return manager.getCachedValue(psi, manager.<T>getKeyForClass(provider.getClass()), provider, false);
   }
 
   private final ConcurrentMap<String, Key<CachedValue>> keyForProvider = new ConcurrentHashMap<String, Key<CachedValue>>();

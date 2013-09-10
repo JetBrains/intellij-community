@@ -101,7 +101,7 @@ public class TypeInferenceHelper {
 
   @NotNull
   private static InferenceCache getInferenceCache(@NotNull final GrControlFlowOwner scope) {
-    return CachedValuesManager.getManager(scope.getProject()).getCachedValue(scope, new CachedValueProvider<InferenceCache>() {
+    return CachedValuesManager.getCachedValue(scope, new CachedValueProvider<InferenceCache>() {
       @Nullable
       @Override
       public Result<InferenceCache> compute() {
@@ -141,7 +141,7 @@ public class TypeInferenceHelper {
 
   @Nullable
   private static Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> getDefUseMaps(@NotNull final GrControlFlowOwner scope) {
-    return CachedValuesManager.getManager(scope.getProject()).getCachedValue(scope, new CachedValueProvider<Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>>>() {
+    return CachedValuesManager.getCachedValue(scope, new CachedValueProvider<Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>>>() {
       @Override
       public Result<Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>>> compute() {
         final Instruction[] flow = scope.getControlFlow();

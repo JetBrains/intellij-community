@@ -98,7 +98,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
 
   @Nullable
   private PsiClass resolveQualifier() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiClass>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClass>() {
       @Nullable
       @Override
       public Result<PsiClass> compute() {
@@ -112,7 +112,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   }
 
   private static List<PsiMember> getAllStaticMembers(final PsiClass clazz) {
-    return CachedValuesManager.getManager(clazz.getProject()).getCachedValue(clazz, new CachedValueProvider<List<PsiMember>>() {
+    return CachedValuesManager.getCachedValue(clazz, new CachedValueProvider<List<PsiMember>>() {
       @Nullable
       @Override
       public Result<List<PsiMember>> compute() {

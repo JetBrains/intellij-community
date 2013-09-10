@@ -42,7 +42,7 @@ public class InheritanceImplUtil {
 
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(candidateClass.getQualifiedName())) return false;
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName())) return true;
-    Map<PsiClass, Boolean> map = CachedValuesManager.getManager(candidateClass.getProject()).
+    Map<PsiClass, Boolean> map = CachedValuesManager.
       getCachedValue(candidateClass, new CachedValueProvider<Map<PsiClass, Boolean>>() {
         @Nullable
         @Override

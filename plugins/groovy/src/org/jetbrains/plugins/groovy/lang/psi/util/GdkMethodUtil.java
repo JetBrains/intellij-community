@@ -261,8 +261,7 @@ public class GdkMethodUtil {
     if (!(statement instanceof GrAssignmentExpression)) return null;
 
     final GrAssignmentExpression assignment = (GrAssignmentExpression)statement;
-    final CachedValuesManager manager = CachedValuesManager.getManager(statement.getProject());
-    return manager.getCachedValue(statement, new CachedValueProvider<Trinity<PsiClassType, GrReferenceExpression, List<GrMethod>>>() {
+    return CachedValuesManager.getCachedValue(statement, new CachedValueProvider<Trinity<PsiClassType, GrReferenceExpression, List<GrMethod>>>() {
       @Nullable
       @Override
       public Result<Trinity<PsiClassType, GrReferenceExpression, List<GrMethod>>> compute() {
@@ -337,8 +336,7 @@ public class GdkMethodUtil {
   private static Trinity<PsiClassType, GrReferenceExpression, PsiClass> getMixinTypes(final GrStatement statement) {
     if (!(statement instanceof GrMethodCall)) return null;
 
-    final CachedValuesManager manager = CachedValuesManager.getManager(statement.getProject());
-    return manager.getCachedValue(statement, new CachedValueProvider<Trinity<PsiClassType, GrReferenceExpression, PsiClass>>() {
+    return CachedValuesManager.getCachedValue(statement, new CachedValueProvider<Trinity<PsiClassType, GrReferenceExpression, PsiClass>>() {
       @Nullable
       @Override
       public Result<Trinity<PsiClassType, GrReferenceExpression, PsiClass>> compute() {
@@ -488,8 +486,7 @@ public class GdkMethodUtil {
 
   @Nullable
   public static PsiClassType getCategoryType(@NotNull final PsiClass categoryAnnotationOwner) {
-    CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(categoryAnnotationOwner.getProject());
-    return cachedValuesManager.getCachedValue(categoryAnnotationOwner, new CachedValueProvider<PsiClassType>() {
+    return CachedValuesManager.getCachedValue(categoryAnnotationOwner, new CachedValueProvider<PsiClassType>() {
       @Override
       public Result<PsiClassType> compute() {
         return Result.create(inferCategoryType(categoryAnnotationOwner), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);

@@ -290,7 +290,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   private PsiVariable getOwner() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiVariable>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiVariable>() {
       @Override
       public Result<PsiVariable> compute() {
         final GroovyPsiElement context = PsiTreeUtil.getParentOfType(GrClosableBlockImpl.this, GrTypeDefinition.class, GrClosableBlock.class, GroovyFile.class);

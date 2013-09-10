@@ -211,7 +211,7 @@ public class GrClassImplUtil {
 
   @NotNull
   public static PsiMethod[] getAllMethods(final GrTypeDefinition grType) {
-    return CachedValuesManager.getManager(grType.getProject()).getCachedValue(grType, new CachedValueProvider<PsiMethod[]>() {
+    return CachedValuesManager.getCachedValue(grType, new CachedValueProvider<PsiMethod[]>() {
       @Nullable
       @Override
       public Result<PsiMethod[]> compute() {
