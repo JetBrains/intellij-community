@@ -29,6 +29,7 @@ public enum SvnCommandName {
   st("st", false),
   up("up", true),
   ci("commit", true),
+  checkout("checkout", true),
   cleanup("cleanup", true),
   cat("cat", false),
   add("add", true),
@@ -40,9 +41,13 @@ public enum SvnCommandName {
   resolve("resolve", true),
   propget("propget", false),
   proplist("proplist", false),
+  propset("propset", true),
+  propdel("propdel", true),
   blame("blame", false),
   merge("merge", true),
-  changelist("changelist", true);
+  changelist("changelist", true),
+  lock("lock", true),
+  unlock("unlock", true);
 
   private final String myName;
   private final boolean myWriteable;

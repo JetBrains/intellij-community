@@ -5,12 +5,14 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.AddClient;
 import org.jetbrains.idea.svn.annotate.AnnotateClient;
 import org.jetbrains.idea.svn.change.ChangeListClient;
+import org.jetbrains.idea.svn.checkout.CheckoutClient;
 import org.jetbrains.idea.svn.conflict.ConflictClient;
 import org.jetbrains.idea.svn.content.ContentClient;
 import org.jetbrains.idea.svn.copy.CopyMoveClient;
 import org.jetbrains.idea.svn.delete.DeleteClient;
 import org.jetbrains.idea.svn.history.HistoryClient;
 import org.jetbrains.idea.svn.integrate.MergeClient;
+import org.jetbrains.idea.svn.lock.LockClient;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
 import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.jetbrains.idea.svn.properties.PropertyClient;
@@ -37,6 +39,8 @@ public abstract class ClientFactory {
   protected PropertyClient propertyClient;
   protected MergeClient mergeClient;
   protected ChangeListClient changeListClient;
+  protected CheckoutClient checkoutClient;
+  protected LockClient myLockClient;
 
   protected ClientFactory(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -110,6 +114,16 @@ public abstract class ClientFactory {
   @NotNull
   public ChangeListClient createChangeListClient() {
     return prepare(changeListClient);
+  }
+
+  @NotNull
+  public CheckoutClient createCheckoutClient() {
+    return prepare(checkoutClient);
+  }
+
+  @NotNull
+  public LockClient createLockClient() {
+    return prepare(myLockClient);
   }
 
   @NotNull

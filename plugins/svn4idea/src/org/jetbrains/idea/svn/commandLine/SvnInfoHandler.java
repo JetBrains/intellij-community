@@ -281,10 +281,28 @@ public class SvnInfoHandler extends DefaultHandler {
         return new Lock();
       }
     });
+    myElementsMap.put("token", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new LockToken();
+      }
+    });
+    myElementsMap.put("owner", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new LockOwner();
+      }
+    });
+    myElementsMap.put("comment", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new LockComment();
+      }
+    });
     myElementsMap.put("created", new Getter<ElementHandlerBase>() {
       @Override
       public ElementHandlerBase get() {
-        return new Date();
+        return new LockCreated();
       }
     });
     myElementsMap.put("uuid", new Getter<ElementHandlerBase>() {
@@ -778,17 +796,76 @@ public class SvnInfoHandler extends DefaultHandler {
 
   private static class Lock extends ElementHandlerBase {
     private Lock() {
-      super(new String[]{"created"}, new String[]{});
+      super(new String[]{"token", "owner", "comment", "created"}, new String[]{});
     }
 
     @Override
     protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
-      // TODO:
+      structure.myLockWrapper = new SVNLockWrapper();
     }
 
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
-      // TODO:
+    }
+  }
+
+  private static class LockToken extends ElementHandlerBase {
+    private LockToken() {
+      super(new String[]{}, new String[]{});
+    }
+
+    @Override
+    protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
+    }
+
+    @Override
+    public void characters(String s, SvnInfoStructure structure) throws SAXException {
+      structure.myLockWrapper.setID(s);
+    }
+  }
+
+  private static class LockOwner extends ElementHandlerBase {
+    private LockOwner() {
+      super(new String[]{}, new String[]{});
+    }
+
+    @Override
+    protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
+    }
+
+    @Override
+    public void characters(String s, SvnInfoStructure structure) throws SAXException {
+      structure.myLockWrapper.setOwner(s);
+    }
+  }
+
+  private static class LockComment extends ElementHandlerBase {
+    private LockComment() {
+      super(new String[]{}, new String[]{});
+    }
+
+    @Override
+    protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
+    }
+
+    @Override
+    public void characters(String s, SvnInfoStructure structure) throws SAXException {
+      structure.myLockWrapper.setComment(s);
+    }
+  }
+
+  private static class LockCreated extends ElementHandlerBase {
+    private LockCreated() {
+      super(new String[]{}, new String[]{});
+    }
+
+    @Override
+    protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
+    }
+
+    @Override
+    public void characters(String s, SvnInfoStructure structure) throws SAXException {
+      structure.myLockWrapper.setCreationDate(SVNDate.parseDate(s));
     }
   }
 
