@@ -3,9 +3,19 @@
 
   <xi:include href="/META-INF/python-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <resource-bundle>com.jetbrains.python.PyBundle</resource-bundle>
-
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.jetbrains.python.duplocator.PyDuplocatorSettings"
+                        serviceImplementation="com.jetbrains.python.duplocator.PyDuplocatorSettings"/>
+
+    <programRunner implementation="com.jetbrains.python.coverage.PythonCoverageRunner"/>
+    <programRunner implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugRunner"/>
+
+    <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.django.DjangoTemplateLineBreakpointType"/>
+    <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.django.DjangoExceptionBreakpointType"/>
+
+    <configurationType implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugConfigurationType"/>
+    <fileEditorProvider implementation="com.jetbrains.python.debugger.remote.vfs.PyRemoteDebugEditorProvider"/>
+
     <projectConfigurable instance="com.jetbrains.python.templateLanguages.TemplateLanguageModulesConfigurable"
                          id="com.jetbrains.python.templateLanguages.TemplateLanguageModulesConfigurable"
                          displayName="Python Template Languages"/>
