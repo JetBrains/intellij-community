@@ -76,13 +76,4 @@ final class BindCompositeStep extends StepAdapter{
       myBindToExistingBeanStep._commit(finishChosen);
     }
   }
-
-  public Icon getIcon() {
-    if(myData.myBindToNewBean){
-      return myBindToNewBeanStep.getIcon();
-    }
-    else{
-      return myBindToExistingBeanStep.getIcon();
-    }
-  }
 }

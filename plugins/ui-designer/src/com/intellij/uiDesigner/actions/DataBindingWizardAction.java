@@ -35,8 +35,6 @@ import com.intellij.uiDesigner.wizard.DataBindingWizard;
 import com.intellij.uiDesigner.wizard.Generator;
 import com.intellij.uiDesigner.wizard.WizardData;
 
-import java.text.MessageFormat;
-
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -97,8 +95,7 @@ public final class DataBindingWizardAction extends AnAction{
           UIDesignerBundle.message("action.bind.to.another.bean"), CommonBundle.getCancelButtonText()};
         final int result = Messages.showYesNoCancelDialog(
           project,
-          MessageFormat.format(UIDesignerBundle.message("info.data.binding.regenerate"),
-                               wizardData.myBeanClass.getQualifiedName()),
+          UIDesignerBundle.message("info.data.binding.regenerate", wizardData.myBeanClass.getQualifiedName()),
           UIDesignerBundle.message("title.data.binding"),
           variants[0], variants[1], variants[2],
           Messages.getQuestionIcon()
