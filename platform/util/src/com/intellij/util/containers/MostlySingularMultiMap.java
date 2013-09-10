@@ -182,6 +182,21 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
       throw new IncorrectOperationException();
     }
 
+    @Override
+    public boolean remove(@NotNull Object key, @NotNull Object value) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public boolean removeAllValues(@NotNull Object key) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public void clear() {
+      throw new IncorrectOperationException();
+    }
+
     @NotNull
     @Override
     public Set keySet() {
