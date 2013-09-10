@@ -31,4 +31,7 @@ public interface RepositoryManager {
 
   @NotNull
   ActionCallback push(@NotNull ProgressIndicator indicator);
+
+  @NotNull
+  ActionCallback pull(@NotNull ProgressIndicator indicator);
 }

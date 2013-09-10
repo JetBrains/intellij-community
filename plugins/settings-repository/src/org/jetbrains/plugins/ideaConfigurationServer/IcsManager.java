@@ -55,25 +55,29 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           ActionCallback callback = repositoryManager.commit();
-          while (!callback.isProcessed()) {
-            try {
-              //noinspection BusyWait
-              Thread.sleep(300);
-            }
-            catch (InterruptedException e) {
-              break;
-            }
-            if (indicator.isCanceled()) {
-              String message = "Pushing to ICS server canceled";
-              LOG.warn(message);
-              callback.reject(message);
-              break;
-            }
-          }
+          awaitCallback(indicator, callback, "Pushing to ICS server");
         }
       });
     }
   }, settings.commitDelay);
+
+  private static void awaitCallback(@NotNull ProgressIndicator indicator, @NotNull ActionCallback callback, @NotNull String title) {
+    while (!callback.isProcessed()) {
+      try {
+        //noinspection BusyWait
+        Thread.sleep(300);
+      }
+      catch (InterruptedException e) {
+        break;
+      }
+      if (indicator.isCanceled()) {
+        String message = title + " canceled";
+        LOG.warn(message);
+        callback.reject(message);
+        break;
+      }
+    }
+  }
 
   public static IcsManager getInstance() {
     return ApplicationLoadListener.EP_NAME.findExtension(IcsManager.class);
@@ -243,7 +247,9 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         repositoryManager.commit();
-        repositoryManager.push(indicator);
+        repositoryManager.pull(indicator);
+        ActionCallback lastActionCallback = repositoryManager.push(indicator);
+        awaitCallback(indicator, lastActionCallback, "Syncing Idea Configuration");
       }
     });
   }

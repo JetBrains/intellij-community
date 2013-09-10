@@ -45,6 +45,12 @@ public class IcsSettingsPanel extends DialogWrapper {
 
   @Nullable
   @Override
+  public JComponent getPreferredFocusedComponent() {
+    return urlTextField;
+  }
+
+  @Nullable
+  @Override
   protected JComponent createCenterPanel() {
     return panel;
   }
@@ -70,6 +76,7 @@ public class IcsSettingsPanel extends DialogWrapper {
     syncButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
+        saveRemoteRepositoryUrl();
         IcsManager.getInstance().sync();
       }
     });
@@ -79,10 +86,13 @@ public class IcsSettingsPanel extends DialogWrapper {
   }
 
   private void apply() {
-    IcsManager icsManager = IcsManager.getInstance();
-    IcsSettings settings = icsManager.getSettings();
+    IcsSettings settings = IcsManager.getInstance().getSettings();
     settings.updateOnStart = updateRepositoryFromRemoteCheckBox.isSelected();
     settings.shareProjectWorkspace = shareProjectWorkspaceCheckBox.isSelected();
-    icsManager.getRepositoryManager().setRemoteRepositoryUrl(StringUtil.nullize(urlTextField.getText()));
+    saveRemoteRepositoryUrl();
+  }
+
+  private void saveRemoteRepositoryUrl() {
+    IcsManager.getInstance().getRepositoryManager().setRemoteRepositoryUrl(StringUtil.nullize(urlTextField.getText()));
   }
 }

@@ -1,12 +1,14 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.UIUtil;
@@ -57,13 +59,13 @@ final class GitRepositoryManager extends BaseRepositoryManager {
   public void setRemoteRepositoryUrl(@Nullable String url) {
     StoredConfig config = git.getRepository().getConfig();
     if (StringUtil.isEmptyOrSpaces(url)) {
-      config.unset("remote", "origin", "url");
+      config.unset(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL);
     }
     else {
-      config.setString("remote", "origin", "url", url);
-      config.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
-      config.setString("branch", "master", "remote", "origin");
-      config.setString("branch", "master", "merge", "refs/heads/master");
+      config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL, url);
+      config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, "fetch", "+refs/heads/*:refs/remotes/origin/*");
+      config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, Constants.MASTER, ConfigConstants.CONFIG_KEY_REMOTE, Constants.DEFAULT_REMOTE_NAME);
+      config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, Constants.MASTER, ConfigConstants.CONFIG_KEY_MERGE, "refs/heads/master");
     }
 
     try {
@@ -114,51 +116,36 @@ final class GitRepositoryManager extends BaseRepositoryManager {
   @NotNull
   @Override
   public ActionCallback commit() {
-    final ActionCallback callback = new ActionCallback();
-    taskProcessor.add(new ThrowableRunnable<Exception>() {
+    return execute(new ThrowableConsumer<ProgressIndicator, Exception>() {
       @Override
-      public void run() throws Exception {
-        try {
-          doRun();
-          callback.setDone();
-        }
-        catch (Throwable e) {
-          callback.reject(e.getMessage());
-          LOG.error(e);
-        }
-      }
-
-      private void doRun() throws IOException, GitAPIException {
+      public void consume(ProgressIndicator indicator) throws Exception {
         addFilesToGit();
         PersonIdent ident = new PersonIdent(ApplicationInfoEx.getInstanceEx().getFullApplicationName(), "dev@null.org");
         git.commit().setAuthor(ident).setCommitter(ident).setMessage("").call();
       }
-    });
-    return callback;
+    }, new EmptyProgressIndicator());
   }
 
   @Override
   @NotNull
   public ActionCallback push(@NotNull final ProgressIndicator indicator) {
-    final ActionCallback callback = new ActionCallback();
-    taskProcessor.add(new ThrowableRunnable<Exception>() {
+    return execute(new ThrowableConsumer<ProgressIndicator, Exception>() {
       @Override
-      public void run() throws Exception {
-        try {
-          doRun();
-          callback.setDone();
-        }
-        catch (Throwable e) {
-          callback.reject(e.getMessage());
-          LOG.error(e);
-        }
-      }
-
-      private void doRun() throws IOException, GitAPIException {
+      public void consume(ProgressIndicator indicator) throws Exception {
         git.push().setProgressMonitor(new JGitProgressMonitor(indicator)).setCredentialsProvider(getCredentialsProvider()).call();
       }
-    });
-    return callback;
+    }, indicator);
+  }
+
+  @Override
+  @NotNull
+  public ActionCallback pull(@NotNull final ProgressIndicator indicator) {
+    return execute(new ThrowableConsumer<ProgressIndicator, Exception>() {
+      @Override
+      public void consume(ProgressIndicator indicator) throws Exception {
+        git.pull().setProgressMonitor(new JGitProgressMonitor(indicator)).setCredentialsProvider(getCredentialsProvider()).setRebase(true).call();
+      }
+    }, indicator);
   }
 
   private static class JGitProgressMonitor implements ProgressMonitor {

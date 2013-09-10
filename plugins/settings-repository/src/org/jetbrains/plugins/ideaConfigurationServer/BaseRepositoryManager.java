@@ -1,9 +1,12 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.QueueProcessor;
 import gnu.trove.THashSet;
@@ -150,4 +153,22 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
   protected abstract boolean hasRemoteRepository();
 
   protected abstract void doUpdateRepository() throws Exception;
+
+  protected final ActionCallback execute(@NotNull final ThrowableConsumer<ProgressIndicator, Exception> task, @NotNull final ProgressIndicator indicator) {
+    final ActionCallback callback = new ActionCallback();
+    taskProcessor.add(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        try {
+          task.consume(indicator);
+          callback.setDone();
+        }
+        catch (Throwable e) {
+          callback.reject(e.getMessage());
+          LOG.error(e);
+        }
+      }
+    });
+    return callback;
+  }
 }
