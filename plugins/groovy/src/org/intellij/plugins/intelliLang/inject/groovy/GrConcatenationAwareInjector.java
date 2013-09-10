@@ -30,6 +30,7 @@ import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry;
+import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
@@ -41,9 +42,11 @@ import java.util.List;
  */
 public class GrConcatenationAwareInjector implements ConcatenationAwareInjector {
   private final LanguageInjectionSupport mySupport;
+  private final Configuration myConfiguration;
 
   @SuppressWarnings("UnusedParameters")
   public GrConcatenationAwareInjector(Configuration configuration, Project project, TemporaryPlacesRegistry temporaryPlacesRegistry) {
+    myConfiguration = configuration;
     mySupport = InjectorUtils.findNotNullInjectionSupport(GroovyLanguageInjectionSupport.GROOVY_SUPPORT_ID);
   }
 
@@ -83,7 +86,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
         }
       }
 
-      InjectorUtils.registerInjection(language, list, file, registrar);
+        InjectorUtils.registerInjection(language, list, file, registrar);
       InjectorUtils.registerSupport(mySupport, false/*todo*/, registrar);
       InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable);
     }
@@ -97,11 +100,11 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
   }
 
   @Nullable
-  private static Language findLanguage(PsiElement[] operands) {
+  private Language findLanguage(PsiElement[] operands) {
     PsiElement parent = PsiTreeUtil.findCommonParent(operands);
-    Trinity<String, String, String> params = GrConcatenationInjector.findLanguageParams(parent);
+    BaseInjection params = GrConcatenationInjector.findLanguageParams(parent, myConfiguration);
     if (params != null) {
-      return Language.findLanguageByID(params.first);
+      return Language.findLanguageByID(params.getInjectedLanguageId());
     }
     return null;
   }
