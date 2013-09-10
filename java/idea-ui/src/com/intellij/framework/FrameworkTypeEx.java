@@ -17,6 +17,7 @@ package com.intellij.framework;
 
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,5 +49,10 @@ public abstract class FrameworkTypeEx extends FrameworkType {
 
   public <V extends FrameworkVersion> List<V> getVersions() {
     return Collections.emptyList();
+  }
+
+  @NotNull
+  public String[] getProjectCategories() {
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 }

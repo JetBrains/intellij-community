@@ -73,6 +73,11 @@ public abstract class FrameworkSupportProvider {
     return null;
   }
 
+  @NotNull
+  public String[] getProjectCategories() {
+    return getGroupId() == null ? ArrayUtil.EMPTY_STRING_ARRAY : new String[] { getGroupId() };
+  }
+
   @Nullable
   public Icon getIcon() {
     return null;
