@@ -22,10 +22,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.search.IndexPattern;
-import com.intellij.psi.search.IndexPatternProvider;
-import com.intellij.psi.search.TodoAttributesUtil;
-import com.intellij.psi.search.TodoPattern;
+import com.intellij.psi.search.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
@@ -36,6 +33,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Vladimir Kondratyev
@@ -161,8 +159,8 @@ public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    ArrayList<TodoPattern> patternsList = new ArrayList<TodoPattern>();
-    ArrayList<TodoFilter> filtersList = new ArrayList<TodoFilter>();
+    List<TodoPattern> patternsList = new ArrayList<TodoPattern>();
+    List<TodoFilter> filtersList = new ArrayList<TodoFilter>();
     for (Object o : element.getChildren()) {
       Element child = (Element)o;
       if (ELEMENT_PATTERN.equals(child.getName())) {
@@ -193,6 +191,15 @@ public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
       Element child = new Element(ELEMENT_FILTER);
       filter.writeExternal(child, todoPatterns);
       element.addContent(child);
+    }
+  }
+
+  public void colorSettingsChanged() {
+    for (TodoPattern pattern : myTodoPatterns) {
+      TodoAttributes attributes = pattern.getAttributes();
+      if (!attributes.shouldUseCustomTodoColor()) {
+        attributes.setUseCustomTodoColor(false, TodoAttributesUtil.getDefaultColorSchemeTextAttributes());
+      }
     }
   }
 }

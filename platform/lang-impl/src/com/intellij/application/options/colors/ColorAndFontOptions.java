@@ -20,6 +20,7 @@ import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.impl.ConsoleViewUtil;
+import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
@@ -231,53 +232,45 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   @Override
   public void apply() throws ConfigurationException {
-    if (!myApplyCompleted) {
-      try {
-        EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
-
-        myColorsManager.removeAllSchemes();
-        for (MyColorScheme scheme : mySchemes.values()) {
-          if (!scheme.isDefault()) {
-            scheme.apply();
-            myColorsManager.addColorsScheme(scheme.getOriginalScheme());
-          }
-        }
-
-        EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
-        myColorsManager.setGlobalScheme(originalScheme);
-        if (originalScheme != null && DarculaLaf.NAME.equals(originalScheme.getName()) && !UIUtil.isUnderDarcula()) {
-          int ok = Messages.showYesNoDialog(
-            "Darcula color scheme has been set for editors. Would you like to set Darcula as default Look and Feel?",
-            "Darcula Look and Feel",
-            Messages.getQuestionIcon());
-          if (ok == Messages.OK) {
-            LafManager.getInstance().setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
-            DarculaInstaller.install();
-          }
-        }
-        applyChangesToEditors();
-
-        reset();
-      }
-      finally {
-        myApplyCompleted = true;
-
-
-      }
-
-
+    if (myApplyCompleted) {
+      return;
     }
+    try {
+      EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
 
+      myColorsManager.removeAllSchemes();
+      for (MyColorScheme scheme : mySchemes.values()) {
+        if (!scheme.isDefault()) {
+          scheme.apply();
+          myColorsManager.addColorsScheme(scheme.getOriginalScheme());
+        }
+      }
 
-//    initAll();
-//    resetSchemesCombo();
+      EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
+      myColorsManager.setGlobalScheme(originalScheme);
+      if (originalScheme != null && DarculaLaf.NAME.equals(originalScheme.getName()) && !UIUtil.isUnderDarcula()) {
+        int ok = Messages.showYesNoDialog(
+          "Darcula color scheme has been set for editors. Would you like to set Darcula as default Look and Feel?",
+          "Darcula Look and Feel",
+          Messages.getQuestionIcon());
+        if (ok == Messages.OK) {
+          LafManager.getInstance().setCurrentLookAndFeel(new DarculaLookAndFeelInfo());
+          DarculaInstaller.install();
+        }
+      }
+      applyChangesToEditors();
 
-
+      reset();
+    }
+    finally {
+      myApplyCompleted = true;
+    }
   }
 
   private static void applyChangesToEditors() {
     EditorFactory.getInstance().refreshAllEditors();
 
+    TodoConfiguration.getInstance().colorSettingsChanged();
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project openProject : openProjects) {
       FileStatusManager.getInstance(openProject).fileStatusesChanged();
