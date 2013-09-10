@@ -119,9 +119,6 @@ class Build {
         ant.mkdir(dir: it)
       }
     }
-    ant.tstamp() {
-      format(property: "today.year", pattern: "yyyy")
-    }
     ultimate_utils = utils.includeFile(home + "/build/scripts/ultimate_utils.gant")
     layouts = utils.includeFile(home + "/build/scripts/layouts.gant")
     community_layouts = utils.includeFile(home + "/community/build/scripts/layouts.gant")
@@ -173,7 +170,7 @@ class Build {
         projectBuilder.buildProduction()
       }
       else{
-        usedJars = buildModules(modules, args.module_libs)
+        usedJars = ultimate_utils.buildModules(modules, args.module_libs)
       }
       projectBuilder.stage("- additionalCompilation -")
       utils.additionalCompilation()
