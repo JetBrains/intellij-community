@@ -1089,7 +1089,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        @NotNull JComponent component,
                                        @NotNull ToolWindowAnchor anchor,
-                                       Disposable parentDisposable) {
+                                       @NotNull Disposable parentDisposable) {
     return registerToolWindow(id, component, anchor, parentDisposable, false, false);
   }
 
@@ -1097,7 +1097,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public ToolWindow registerToolWindow(@NotNull String id,
                                        @NotNull JComponent component,
                                        @NotNull ToolWindowAnchor anchor,
-                                       Disposable parentDisposable,
+                                       @NotNull Disposable parentDisposable,
                                        boolean canWorkInDumbMode) {
     return registerToolWindow(id, component, anchor, parentDisposable, canWorkInDumbMode, false);
   }
@@ -1106,7 +1106,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        @NotNull JComponent component,
                                        @NotNull ToolWindowAnchor anchor,
-                                       Disposable parentDisposable,
+                                       @NotNull Disposable parentDisposable,
                                        boolean canWorkInDumbMode, boolean canCloseContents) {
     return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode));
   }
@@ -1136,7 +1136,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        final boolean canCloseContent,
                                        @NotNull final ToolWindowAnchor anchor,
-                                       final Disposable parentDisposable,
+                                       @NotNull final Disposable parentDisposable,
                                        final boolean canWorkInDumbMode) {
     return registerDisposable(id, parentDisposable, registerToolWindow(id, null, anchor, false, canCloseContent, canWorkInDumbMode));
   }
@@ -1206,7 +1206,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return toolWindow;
   }
 
-  private ToolWindow registerDisposable(final String id, final Disposable parentDisposable, final ToolWindow window) {
+  private ToolWindow registerDisposable(final String id, @NotNull final Disposable parentDisposable, final ToolWindow window) {
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
