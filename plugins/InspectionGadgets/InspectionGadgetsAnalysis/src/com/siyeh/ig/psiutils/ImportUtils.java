@@ -19,17 +19,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class ImportUtils {
 
@@ -548,10 +545,26 @@ public class ImportUtils {
   /**
    * @return true, if the element contains a reference to a different class than fullyQualifiedName but which has the same class name
    */
-  public static boolean containsConflictingReference(PsiElement element, String fullyQualifiedName) {
+  public static boolean containsConflictingReference(PsiFile element, String fullyQualifiedName) {
+    final Map<String, Boolean> cachedValue =
+      CachedValuesManager.getManager(element.getProject()).getCachedValue(element, new CachedValueProvider<Map<String, Boolean>>() {
+        @Nullable
+        @Override
+        public Result<Map<String, Boolean>> compute() {
+          return new Result<Map<String, Boolean>>(Collections.synchronizedMap(new HashMap<String, Boolean>()), PsiModificationTracker.MODIFICATION_COUNT);
+        }
+      });
+    Boolean conflictingRef = cachedValue.get(fullyQualifiedName);
+    if (conflictingRef != null) {
+      return conflictingRef.booleanValue();
+    }
+
     final ConflictingClassReferenceVisitor visitor = new ConflictingClassReferenceVisitor(fullyQualifiedName);
     element.accept(visitor);
-    return visitor.isConflictingReferenceFound();
+    conflictingRef = visitor.isConflictingReferenceFound();
+    cachedValue.put(fullyQualifiedName, conflictingRef);
+
+    return conflictingRef.booleanValue();
   }
 
   private static class ConflictingClassReferenceVisitor extends JavaRecursiveElementVisitor {
@@ -566,11 +579,17 @@ public class ImportUtils {
     }
 
     @Override
+    public void visitElement(PsiElement element) {
+      if (referenceFound) return;
+      super.visitElement(element);
+    }
+
+    @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-      super.visitReferenceElement(reference);
       if (referenceFound) {
         return;
       }
+      super.visitReferenceElement(reference);
 
       if (reference.getQualifier() != null || reference.getParameterList() != null) return;
 
