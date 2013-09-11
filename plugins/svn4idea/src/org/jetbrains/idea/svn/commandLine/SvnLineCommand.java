@@ -410,8 +410,6 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static void cleanup(String exePath, SvnCommand command, File base) throws SvnBindException {
-    // TODO: could be issues with fake "empty" command as it is not writable - but only read commands currently use "empty" command
-    // TODO: and "empty" command will be removed shortly
     if (command.isManuallyDestroyed() && command.getCommandName().isWriteable()) {
       File wcRoot = SvnUtil.getWorkingCopyRootNew(base);
       if (wcRoot == null) {

@@ -71,9 +71,7 @@ public abstract class SvnCommand {
     if (configDir != null) {
       myCommandLine.addParameters("--config-dir", configDir.getPath());
     }
-    if (!SvnCommandName.empty.equals(commandName)) {
-      myCommandLine.addParameter(commandName.getName());
-    }
+    myCommandLine.addParameter(commandName.getName());
   }
 
   public String[] getParameters() {
