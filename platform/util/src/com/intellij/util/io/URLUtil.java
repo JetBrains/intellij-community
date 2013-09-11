@@ -15,8 +15,11 @@
  */
 package com.intellij.util.io;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import com.google.common.io.BaseEncoding;
+import com.google.common.net.MediaType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,14 +36,20 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import static com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue;
 
 public class URLUtil {
   public static final String SCHEME_SEPARATOR = "://";
   public static final String JAR_PROTOCOL = "jar";
   public static final String FILE_PROTOCOL = "file";
   public static final String JAR_SEPARATOR = "!/";
+
+  private static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset=[^,;]+)?(;base64)?,(.+)");
 
   private URLUtil() { }
 
@@ -182,5 +191,51 @@ public class URLUtil {
       return Pair.create("", list.get(0));
     }
     return Pair.create(list.get(0), list.get(1));
+  }
+
+  /**
+   * Extracts mime-type of given data:URL string
+   *
+   * @param dataUrl data:URL-like string (may be quoted)
+   * @return mime-type extracted from image or {@code null} if string doesn't contain mime definition.
+   */
+  @Nullable
+  public static MediaType getMediaTypeFromDataUri(@NotNull String dataUrl) {
+    Matcher matcher = DATA_URI_PATTERN.matcher(stripQuotesAroundValue(dataUrl));
+    if (matcher.matches()) {
+      try {
+        return MediaType.parse(matcher.group(1));
+      }
+      catch (IllegalArgumentException e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Extracts byte array from given data:URL string.
+   * data:URL will be decoded from base64 if it contains the marker of base64 encoding.
+   *
+   * @param dataUrl data:URL-like string (may be quoted)
+   * @return extracted byte array or {@code null} if it cannot be extracted.
+   */
+  @Nullable
+  public static byte[] getBytesFromDataUri(@NotNull String dataUrl) {
+    Matcher matcher = DATA_URI_PATTERN.matcher(stripQuotesAroundValue(dataUrl));
+    if (matcher.matches()) {
+      try {
+        String content = matcher.group(4);
+        return ";base64".equalsIgnoreCase(matcher.group(3)) ? BaseEncoding.base64().decode(content) : content.getBytes(Charsets.UTF_8);
+      }
+      catch (IllegalArgumentException e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  public static boolean isDataUri(@NotNull String value) {
+    return !value.isEmpty() && value.startsWith("data:", value.charAt(0) == '"' || value.charAt(0) == '\'' ? 1 : 0);
   }
 }
