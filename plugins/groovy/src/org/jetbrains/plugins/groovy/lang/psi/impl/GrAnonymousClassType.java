@@ -43,7 +43,8 @@ public class GrAnonymousClassType extends GrLiteralClassType {
     final GrCodeReferenceElement ref = myAnonymous.getBaseClassReferenceGroovy();
     final PsiElement resolved = ref.resolve();
     if (resolved instanceof PsiClass) {
-      return ((PsiClass)resolved).getQualifiedName();
+      String qname = ((PsiClass)resolved).getQualifiedName();
+      return qname != null ? qname : ((PsiClass)resolved).getName();
     }
     else {
       return ref.getClassNameText();
