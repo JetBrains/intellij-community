@@ -20,6 +20,7 @@ import org.jetbrains.idea.svn.lock.CmdLockClient;
 import org.jetbrains.idea.svn.portable.SvnUpdateClientI;
 import org.jetbrains.idea.svn.properties.CmdPropertyClient;
 import org.jetbrains.idea.svn.revert.CmdRevertClient;
+import org.jetbrains.idea.svn.update.CmdRelocateClient;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -46,6 +47,7 @@ public class CmdClientFactory extends ClientFactory {
     checkoutClient = new CmdCheckoutClient();
     myLockClient = new CmdLockClient();
     myCleanupClient = new CmdCleanupClient();
+    myRelocateClient = new CmdRelocateClient();
     statusClient = new SvnCommandLineStatusClient(myVcs.getProject());
     infoClient = new SvnCommandLineInfoClient(myVcs.getProject());
   }
