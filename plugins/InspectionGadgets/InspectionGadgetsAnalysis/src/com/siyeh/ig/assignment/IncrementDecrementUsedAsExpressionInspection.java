@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -85,6 +84,9 @@ public class IncrementDecrementUsedAsExpressionInspection
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
+    if (PsiTreeUtil.getParentOfType(expression, PsiCodeBlock.class, true, PsiMember.class) == null) {
+      return null;
+    }
     return new IncrementDecrementUsedAsExpressionFix(expression.getText());
   }
 
@@ -112,8 +114,7 @@ public class IncrementDecrementUsedAsExpressionInspection
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       // see also the Extract Increment intention of IPP
       final PsiElement element = descriptor.getPsiElement();
       final PsiExpression operand;
