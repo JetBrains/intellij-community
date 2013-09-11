@@ -139,6 +139,7 @@ public class Divider {
         if (parent != null) {
           outside.add(parent);
           TextRange textRange = parent.getTextRange();
+          assert textRange != null : "Text range for " + parent + " is null. " + parent.getClass();
           outsideRanges.add(ProperTextRange.create(textRange));
         }
       }
