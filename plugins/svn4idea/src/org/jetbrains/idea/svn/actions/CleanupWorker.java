@@ -34,7 +34,6 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -57,9 +56,8 @@ public class CleanupWorker {
     chanceToFillRoots();
     if (myRoots.length == 0) return;
 
-    final List<Pair<SVNException, VirtualFile>> exceptions = new LinkedList<Pair<SVNException, VirtualFile>>();
+    final List<Pair<VcsException, VirtualFile>> exceptions = new LinkedList<Pair<VcsException, VirtualFile>>();
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.createWCClient();
 
     final Task.Backgroundable task = new Task.Backgroundable(myProject, SvnBundle.message(myTitleKey), true, BackgroundFromStartOption.getInstance()) {
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -68,9 +66,10 @@ public class CleanupWorker {
         for (VirtualFile root : myRoots) {
           currentRoot = root;
           try {
-            final String path = root.getPath();
+            final File path = new File(root.getPath());
+
             indicator.setText(SvnBundle.message("action.Subversion.cleanup.progress.text", path));
-            wcClient.setEventHandler(new ISVNEventHandler() {
+            ISVNEventHandler handler = new ISVNEventHandler() {
               @Override
               public void handleEvent(SVNEvent event, double progress) throws SVNException {
               }
@@ -79,11 +78,12 @@ public class CleanupWorker {
               public void checkCancelled() throws SVNCancelException {
                 if (indicator.isCanceled()) throw new SVNCancelException();
               }
-            });
-            wcClient.doCleanup(new File(path));
+            };
+
+            vcs.getFactory(path).createCleanupClient().cleanup(path, handler);
           }
-          catch (SVNException ex) {
-            exceptions.add(new Pair<SVNException, VirtualFile>(ex, currentRoot));
+          catch (VcsException ex) {
+            exceptions.add(new Pair<VcsException, VirtualFile>(ex, currentRoot));
           }
         }
       }
@@ -123,8 +123,8 @@ public class CleanupWorker {
 
         if (! exceptions.isEmpty()) {
           final List<VcsException> vcsExceptions = new LinkedList<VcsException>();
-          for (Pair<SVNException, VirtualFile> pair : exceptions) {
-            final SVNException exception = pair.first;
+          for (Pair<VcsException, VirtualFile> pair : exceptions) {
+            final VcsException exception = pair.first;
             vcsExceptions.add(new VcsException(SvnBundle.message("action.Subversion.cleanup.error.message",
                                                               FileUtil.toSystemDependentName(pair.second.getPath()),
                                                               ((exception == null) ? "" : exception.getMessage()))));

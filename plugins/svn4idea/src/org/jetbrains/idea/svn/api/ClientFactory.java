@@ -6,6 +6,7 @@ import org.jetbrains.idea.svn.add.AddClient;
 import org.jetbrains.idea.svn.annotate.AnnotateClient;
 import org.jetbrains.idea.svn.change.ChangeListClient;
 import org.jetbrains.idea.svn.checkout.CheckoutClient;
+import org.jetbrains.idea.svn.cleanup.CleanupClient;
 import org.jetbrains.idea.svn.conflict.ConflictClient;
 import org.jetbrains.idea.svn.content.ContentClient;
 import org.jetbrains.idea.svn.copy.CopyMoveClient;
@@ -42,6 +43,7 @@ public abstract class ClientFactory {
   protected ChangeListClient changeListClient;
   protected CheckoutClient checkoutClient;
   protected LockClient myLockClient;
+  protected CleanupClient myCleanupClient;
 
   protected ClientFactory(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -130,6 +132,11 @@ public abstract class ClientFactory {
   @NotNull
   public LockClient createLockClient() {
     return prepare(myLockClient);
+  }
+
+  @NotNull
+  public CleanupClient createCleanupClient() {
+    return prepare(myCleanupClient);
   }
 
   @NotNull
