@@ -151,14 +151,12 @@ public class EditorFragmentComponent extends JPanel {
   }
 
   /**
-   * @param hideByAnyKey
-   * @param x <code>x</code> coordinate in layered pane coordinate system.
    * @param y <code>y</code> coordinate in layered pane coordinate system.
+   * @param hideByAnyKey
    */
   @Nullable
   public static LightweightHint showEditorFragmentHintAt(Editor editor,
                                                          TextRange range,
-                                                         int x,
                                                          int y,
                                                          boolean showUpward,
                                                          boolean showFolding,
@@ -200,7 +198,7 @@ public class EditorFragmentComponent extends JPanel {
     }
 
     final JComponent c = editor.getComponent();
-    x = SwingUtilities.convertPoint(c, new Point(-3,0), UIUtil.getRootPane(c)).x; //IDEA-68016
+    int x = SwingUtilities.convertPoint(c, new Point(-3,0), UIUtil.getRootPane(c)).x; //IDEA-68016
 
     Point p = new Point(x, y);
     LightweightHint hint = new MyComponentHint(fragmentComponent);
@@ -233,11 +231,8 @@ public class EditorFragmentComponent extends JPanel {
     final JRootPane rootPane = editorComponent.getRootPane();
     if (rootPane == null) return null;
     JLayeredPane layeredPane = rootPane.getLayeredPane();
-    int x = -2;
-    int y = 0;
-    Point point = SwingUtilities.convertPoint(editorComponent, x, y, layeredPane);
-
-    return showEditorFragmentHintAt(editor, range, point.x, point.y, true, showFolding, hideByAnyKey);
+    Point point = SwingUtilities.convertPoint(editorComponent, -2, 0, layeredPane);
+    return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey);
   }
 
   public static Color getBackgroundColor(Editor editor){
