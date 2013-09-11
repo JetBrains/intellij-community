@@ -80,7 +80,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
     List<PsiReference> result = new ArrayList<PsiReference>();
     for (Substring name : paramNames) {
       final String s = name.toString();
-      if (PyNames.isIdentifier(s)) {
+      if (PyNames.isIdentifier(s) && !refType.equals(StructuredDocStringBase.PARAMETER_TYPE)) {
         result.add(new DocStringParameterReference(element, name.getTextRange().shiftRight(offset), refType));
       }
       if (refType.equals(StructuredDocStringBase.PARAMETER_TYPE)) {
