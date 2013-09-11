@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -90,7 +91,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
 
   private boolean fileInRoots(VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-    return file != null && (index.isInSourceContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file));
+    return file != null && (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibraryClasses(file) || index.isInLibrarySource(file));
   }
 
   @Override
