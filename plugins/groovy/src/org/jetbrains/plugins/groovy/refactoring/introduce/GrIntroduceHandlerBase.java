@@ -429,32 +429,37 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
                       @NotNull final Editor editor,
                       @NotNull PsiFile file,
                       int startOffset,
-                      int endOffset) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-    if (!(file instanceof GroovyFileBase)) {
-      throw new GrRefactoringError(GroovyRefactoringBundle.message("only.in.groovy.files"));
-    }
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) {
-      throw new GrRefactoringError(RefactoringBundle.message("readonly.occurences.found"));
-    }
+                      int endOffset) throws GrRefactoringError {
+    try {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      if (!(file instanceof GroovyFileBase)) {
+        throw new GrRefactoringError(GroovyRefactoringBundle.message("only.in.groovy.files"));
+      }
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) {
+        throw new GrRefactoringError(RefactoringBundle.message("readonly.occurences.found"));
+      }
 
-    GrExpression selectedExpr = findExpression(file, startOffset, endOffset);
-    final GrVariable variable = findVariable(file, startOffset, endOffset);
-    final StringPartInfo stringPart = StringPartInfo.findStringPart(file, startOffset, endOffset);
-    if (variable != null) {
-      checkVariable(variable);
-    }
-    else if (selectedExpr != null) {
-      checkExpression(selectedExpr);
-    }
-    else if (stringPart != null) {
-      checkStringLiteral(stringPart);
-    }
-    else {
-      throw new GrRefactoringError(null);
-    }
+      GrExpression selectedExpr = findExpression(file, startOffset, endOffset);
+      final GrVariable variable = findVariable(file, startOffset, endOffset);
+      final StringPartInfo stringPart = StringPartInfo.findStringPart(file, startOffset, endOffset);
+      if (variable != null) {
+        checkVariable(variable);
+      }
+      else if (selectedExpr != null) {
+        checkExpression(selectedExpr);
+      }
+      else if (stringPart != null) {
+        checkStringLiteral(stringPart);
+      }
+      else {
+        throw new GrRefactoringError(null);
+      }
 
-    getContextAndInvoke(project, editor, selectedExpr, variable, stringPart);
+      getContextAndInvoke(project, editor, selectedExpr, variable, stringPart);
+    }
+    catch (GrRefactoringError e) {
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), getRefactoringName(), getHelpID());
+    }
   }
 
   public static RangeMarker createRange(Document document, StringPartInfo part) {
