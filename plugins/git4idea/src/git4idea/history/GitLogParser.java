@@ -56,13 +56,13 @@ import java.util.regex.Pattern;
  *  
  * @see git4idea.history.GitLogRecord
  */
-class GitLogParser {
+public class GitLogParser {
   // Single records begin with %x01, end with %03. Items of commit information (hash, committer, subject, etc.) are separated by %x02.
   // each character is declared twice - for Git pattern format and for actual character in the output.
   public static final String RECORD_START = "\u0001";
   public static final String ITEMS_SEPARATOR = "\u0002";
   public static final String RECORD_END = "\u0003";
-  private static final String RECORD_START_GIT = "%x01";
+  public static final String RECORD_START_GIT = "%x01";
   private static final String ITEMS_SEPARATOR_GIT = "%x02";
   private static final String RECORD_END_GIT = "%x03";
 

@@ -17,6 +17,7 @@ package git4idea.log;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +26,10 @@ import com.intellij.vcs.log.*;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitVcs;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
+import git4idea.history.GitLogParser;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +93,6 @@ public class GitLogProvider implements VcsLogProvider {
       return Collections.emptyList();
     }
 
-    // TODO tags
     Collection<GitLocalBranch> localBranches = repository.getBranches().getLocalBranches();
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
     Collection<VcsRef> refs = new ArrayList<VcsRef>(localBranches.size() + remoteBranches.size());
@@ -102,6 +105,22 @@ public class GitLogProvider implements VcsLogProvider {
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
       refs.add(new VcsRef(Hash.build(currentRevision), "HEAD", VcsRef.RefType.HEAD, root));
+    }
+
+    refs.addAll(readTags(root));
+    return refs;
+  }
+
+  // TODO this is to be removed when tags will be supported by the GitRepositoryReader
+  private Collection<? extends VcsRef> readTags(@NotNull VirtualFile root) throws VcsException {
+    GitSimpleHandler tagHandler = new GitSimpleHandler(myProject, root, GitCommand.LOG);
+    tagHandler.addParameters("--tags", "--no-walk", "--format=%H%d" + GitLogParser.RECORD_START_GIT, "--decorate=full");
+    String out = tagHandler.run();
+    Collection<VcsRef> refs = new ArrayList<VcsRef>();
+    for (String record : out.split(GitLogParser.RECORD_START)) {
+      if (!StringUtil.isEmptyOrSpaces(record)) {
+        refs.addAll(RefParser.parseCommitRefs(record.trim(), root));
+      }
     }
     return refs;
   }

@@ -101,8 +101,7 @@ public class GraphBuilder {
       VcsRef ref = findRefForHash(commitHash);
       VirtualFile repositoryRoot;
       if (ref == null) {
-        // should never happen;
-        // currently happens if a leaf has a tag label, but no branch labels, because we don't report tags from GitLogProvider
+        // should never happen, but fallback gently.
         VcsLogLogger.LOG.error("Ref should exist for this node. Hash: " + commitHash);
         repositoryRoot = NullVirtualFile.INSTANCE;
       }
