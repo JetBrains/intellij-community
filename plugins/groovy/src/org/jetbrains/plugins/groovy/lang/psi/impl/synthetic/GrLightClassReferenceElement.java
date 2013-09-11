@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
   }
 
   public GrLightClassReferenceElement(PsiClass aClass, PsiElement context) {
-    this(aClass.getQualifiedName(), aClass.getName(), context);
+    this(aClass.getQualifiedName() != null ? aClass.getQualifiedName() : aClass.getName(), aClass.getName(), context);
   }
 
   @Override
