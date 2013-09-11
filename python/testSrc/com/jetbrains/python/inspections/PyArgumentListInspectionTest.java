@@ -86,7 +86,7 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
   
-  public void _testUnresolvedSuperclass() {  // PY-4419
+  public void testUnresolvedSuperclass() {  // PY-4419
     doTest();
   }
   
