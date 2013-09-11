@@ -87,6 +87,14 @@ public class CommandUtil {
     put(parameters, path.getAbsolutePath(), SVNRevision.UNDEFINED);
   }
 
+  public static void put(@NotNull List<String> parameters, @NotNull File path, boolean usePegRevision) {
+    if (usePegRevision) {
+      put(parameters, path);
+    } else {
+      parameters.add(path.getAbsolutePath());
+    }
+  }
+
   public static void put(@NotNull List<String> parameters, @NotNull File path, @Nullable SVNRevision pegRevision) {
     put(parameters, path.getAbsolutePath(), pegRevision);
   }

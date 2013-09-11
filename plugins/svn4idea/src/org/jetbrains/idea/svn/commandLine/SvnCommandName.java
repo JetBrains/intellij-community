@@ -26,6 +26,7 @@ public enum SvnCommandName {
   info("info", false),
   st("st", false),
   up("up", true),
+  relocate("relocate", true),
   ci("commit", true),
   checkout("checkout", true),
   cleanup("cleanup", true),

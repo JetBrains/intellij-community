@@ -20,6 +20,7 @@ import org.jetbrains.idea.svn.portable.SvnkitSvnStatusClient;
 import org.jetbrains.idea.svn.portable.SvnkitSvnWcClient;
 import org.jetbrains.idea.svn.properties.SvnKitPropertyClient;
 import org.jetbrains.idea.svn.revert.SvnKitRevertClient;
+import org.jetbrains.idea.svn.update.SvnKitRelocateClient;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -46,6 +47,7 @@ public class SvnKitClientFactory extends ClientFactory {
     checkoutClient = new SvnKitCheckoutClient();
     myLockClient = new SvnKitLockClient();
     myCleanupClient = new SvnKitCleanupClient();
+    myRelocateClient = new SvnKitRelocateClient();
     statusClient = new SvnkitSvnStatusClient(myVcs.createStatusClient());
     infoClient = new SvnkitSvnWcClient(myVcs);
   }
