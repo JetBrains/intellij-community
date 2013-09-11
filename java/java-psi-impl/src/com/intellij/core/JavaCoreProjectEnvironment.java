@@ -17,8 +17,8 @@ package com.intellij.core;
 
 import com.intellij.mock.MockFileIndexFacade;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
@@ -61,6 +61,9 @@ public class JavaCoreProjectEnvironment  extends CoreProjectEnvironment {
     JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, myMessageBus);
     registerProjectComponent(JavaPsiFacade.class, javaPsiFacade);
     myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
+
+    myProject.registerService(ProjectRootManager.class, new ProjectRootManagerImpl(myProject, null));
+    myProject.registerService(ProjectRootModificationTracker.class, new ProjectRootModificationTrackerImpl(myProject));
   }
 
   protected CoreJavaPsiImplementationHelper createJavaPsiImplementationHelper() {
