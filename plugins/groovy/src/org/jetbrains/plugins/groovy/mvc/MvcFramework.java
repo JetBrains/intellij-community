@@ -468,7 +468,7 @@ public abstract class MvcFramework {
       VirtualFile root = findAppRoot(module);
       if (root == null) return;
 
-      extractPlugins(module.getProject(), root.findChild(MvcModuleStructureUtil.PLUGINS_DIRECTORY), false, result);
+      extractPlugins(module.getProject(), root.findChild(MvcModuleStructureUtil.PLUGINS_DIRECTORY), refresh, result);
       extractPlugins(module.getProject(), MvcModuleStructureUtil.findFile(getCommonPluginsDir(module), refresh), refresh, result);
       extractPlugins(module.getProject(), MvcModuleStructureUtil.findFile(getGlobalPluginsDir(module), refresh), refresh, result);
     }
