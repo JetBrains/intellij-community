@@ -496,11 +496,11 @@ public class JDParser {
         List<String> subList = toArrayWrapping(str, mySettings.RIGHT_MARGIN - prefix.length());
 
         //removing pre tag
-        if (unclosedPreTag) {
+        if (unclosedPreTag && subList != null && !subList.isEmpty()) {
           String firstLineTagRemoved = subList.get(0).substring(PRE_TAG_START.length());
           subList.set(0, firstLineTagRemoved);
         }
-        list.addAll(subList);
+        if (subList != null) list.addAll(subList);
       }
     }
     else {

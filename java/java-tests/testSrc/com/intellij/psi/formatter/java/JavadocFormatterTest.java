@@ -43,6 +43,29 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   }
 
+  public void testEA49739() throws Exception {
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 35;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    doTextTest("class A {\n" +
+               "    /**\n" +
+               "     * @return a is one line javadoc\n" +
+               "     */\n" +
+               "    public int get(int a) {\n" +
+               "        return 1;\n" +
+               "    }\n" +
+               "  }",
+               "class A {\n" +
+               "    /**\n" +
+               "     * @return a is one line \n" +
+               "     * javadoc\n" +
+               "     */\n" +
+               "    public int get(int a) {\n" +
+               "        return 1;\n" +
+               "    }\n" +
+               "}");
+  }
+
   public void testOneLineCommentWrappedByRightMarginIntoMultiLine() throws Exception {
     getSettings().getRootSettings().WRAP_COMMENTS = true;
     getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
