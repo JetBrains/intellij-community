@@ -257,7 +257,12 @@ public class DefaultActionGroup extends ActionGroup {
       }
       if (action instanceof ActionStub) {
         action = unStub(e, (ActionStub)action);
-        mySortedChildren.set(i, action);
+        if (action == null) {
+          LOG.error("Can't unstub " + mySortedChildren.get(i));
+        }
+        else {
+          mySortedChildren.set(i, action);
+        }
       }
 
       hasNulls |= action == null;
@@ -269,9 +274,14 @@ public class DefaultActionGroup extends ActionGroup {
       if (action == null) {
         LOG.error("Empty pair child: " + this + ", " + getClass() + "; index=" + i);
       }
-      if (action instanceof ActionStub) {
+      else if (action instanceof ActionStub) {
         action = unStub(e, (ActionStub)action);
-        myPairs.set(i, Pair.create(action, pair.second));
+        if (action == null) {
+          LOG.error("Can't unstub " + pair);
+        }
+        else {
+          myPairs.set(i, Pair.create(action, pair.second));
+        }
       }
 
       hasNulls |= action == null;
