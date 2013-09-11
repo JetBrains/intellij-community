@@ -472,21 +472,21 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final String oldDefaultPath = ArtifactUtil.getDefaultArtifactOutputPath(oldArtifactName, myProject);
     if (Comparing.equal(oldDefaultPath, getConfiguredOutputPath())) {
       setOutputPath(ArtifactUtil.getDefaultArtifactOutputPath(newArtifactName, myProject));
-      final CompositePackagingElement<?> root = getRootElement();
-      if (root instanceof ArchivePackagingElement) {
-        String oldFileName = ArtifactUtil.suggestArtifactFileName(oldArtifactName);
-        final String name = ((ArchivePackagingElement)root).getArchiveFileName();
-        final String fileName = FileUtil.getNameWithoutExtension(name);
-        final String extension = FileUtilRt.getExtension(name);
-        if (fileName.equals(oldFileName) && extension.length() > 0) {
-          myLayoutTreeComponent.editLayout(new Runnable() {
-            @Override
-            public void run() {
-              ((ArchivePackagingElement)getRootElement()).setArchiveFileName(ArtifactUtil.suggestArtifactFileName(newArtifactName) + "." + extension);
-            }
-          });
-          myLayoutTreeComponent.updateRootNode();
-        }
+    }
+    final CompositePackagingElement<?> root = getRootElement();
+    if (root instanceof ArchivePackagingElement) {
+      String oldFileName = ArtifactUtil.suggestArtifactFileName(oldArtifactName);
+      final String name = ((ArchivePackagingElement)root).getArchiveFileName();
+      final String fileName = FileUtil.getNameWithoutExtension(name);
+      final String extension = FileUtilRt.getExtension(name);
+      if (fileName.equals(oldFileName) && extension.length() > 0) {
+        myLayoutTreeComponent.editLayout(new Runnable() {
+          @Override
+          public void run() {
+            ((ArchivePackagingElement)getRootElement()).setArchiveFileName(ArtifactUtil.suggestArtifactFileName(newArtifactName) + "." + extension);
+          }
+        });
+        myLayoutTreeComponent.updateRootNode();
       }
     }
   }
