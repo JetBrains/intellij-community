@@ -30,7 +30,7 @@ import java.util.List;
  * plugin.dtd:idea-plugin interface.
  */
 @DefinesXml
-@Presentation(icon = "AllIcons.Nodes.Plugin")
+@Presentation(icon = "AllIcons.Nodes.Plugin", typeName = "Plugin")
 @Stubbed
 public interface IdeaPlugin extends DomElement {
   @Nullable
