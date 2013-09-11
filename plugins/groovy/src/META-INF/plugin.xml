@@ -422,8 +422,6 @@
 
     <directClassInheritorsSearch implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyDirectInheritorsSearcher"/>
 
-    <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.lang.psi.GroovyDeclarationSearcher"/>
-
     <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.spock.SpockPomDeclarationSearcher"/>
 
     <typeDeclarationProvider implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyTypeDeclarationProvider" order="first"/>

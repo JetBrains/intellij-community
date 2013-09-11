@@ -15,9 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang
 
-import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.navigation.GotoImplementationHandler
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -26,7 +24,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -35,7 +32,6 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -313,33 +309,6 @@ class Bar implements Intf {
 }
 """
     myFixture.testHighlighting(true, false, false, myFixture.file.virtualFile)
-  }
-
-  public void testTraitImplementingAndNavigation() throws Exception {
-    myFixture.configureByText "a.groovy", """
-@Trait
-abstract class <caret>Intf {
-  abstract void foo()
-  void bar() {}
-}
-class Foo implements Intf {}
-class Bar implements Intf {
-  void foo() {}
-}
-class BarImpl extends Bar {}
-"""
-    def facade = JavaPsiFacade.getInstance(getProject())
-    def allScope = GlobalSearchScope.allScope(project)
-    assertOneElement(OverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("Foo", allScope), true))
-
-    GrTypeDefinition barClass = facade.findClass("Bar", allScope) as GrTypeDefinition
-    assertEmpty(OverrideImplementUtil.getMethodsToOverrideImplement(barClass, true))
-    assertTrue "bar" in OverrideImplementUtil.getMethodsToOverrideImplement(barClass, false).collect { ((PsiMethod) it.element).name }
-
-    assertEmpty(OverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("BarImpl", allScope), true))
-
-    def implementations = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.editor, myFixture.file).targets
-    assertEquals Arrays.toString(implementations), 3, implementations.size()
   }
 
   public void testResolveToStdLib() throws Exception {
