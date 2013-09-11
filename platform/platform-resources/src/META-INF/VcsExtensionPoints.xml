@@ -24,7 +24,10 @@
 
     <extensionPoint name="changesViewContent"
                     beanClass="com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT">
+      <with attribute="className" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider"/>
+      <with attribute="predicateClassName" implements="com.intellij.util.NotNullFunction"/>
+    </extensionPoint>
 
     <extensionPoint name="editChangelistSupport"
                     interface="com.intellij.openapi.vcs.changes.ui.EditChangelistSupport"
