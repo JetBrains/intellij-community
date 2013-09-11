@@ -202,7 +202,7 @@ public class JpsGantProjectBuilder {
   private void runBuild(final Set<String> modulesSet, final boolean allModules, boolean includeTests) {
     if (!myDryRun) {
       final AntMessageHandler messageHandler = new AntMessageHandler();
-      Logger.setFactory(new AntLoggerFactory(messageHandler));
+      Logger.setFactory(AntLoggerFactory.class);
       boolean forceBuild = true;
 
       List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
@@ -326,8 +326,8 @@ public class JpsGantProjectBuilder {
 
     private final AntMessageHandler myMessageHandler;
 
-    public AntLoggerFactory(AntMessageHandler messageHandler) {
-      myMessageHandler = messageHandler;
+    public AntLoggerFactory() {
+      myMessageHandler = new AntMessageHandler();
     }
 
     @Override

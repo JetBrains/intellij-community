@@ -16,10 +16,13 @@
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Constructor;
 
 public abstract class Logger {
   public interface Factory {
@@ -33,10 +36,28 @@ public abstract class Logger {
     }
   }
 
-  public static Factory ourFactory = new DefaultFactory();
+  private static Factory ourFactory = new DefaultFactory();
 
-  public static void setFactory(Factory factory) {
-    ourFactory = factory;
+  public static void setFactory(Class<? extends Factory> factory) {
+    if (isInitialized()) {
+      if (factory.isInstance(ourFactory)) {
+        return;
+      }
+
+      //noinspection UseOfSystemOutOrSystemErr
+      System.out.println("Changing log factory\n" + ExceptionUtil.getThrowableText(new Throwable()));
+    }
+
+    try {
+      Constructor<? extends Factory> constructor = factory.getDeclaredConstructor();
+      constructor.setAccessible(true);
+      ourFactory = constructor.newInstance();
+    }
+    catch (Exception e) {
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
   }
 
   public static boolean isInitialized() {

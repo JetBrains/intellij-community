@@ -33,15 +33,9 @@ public class TestLoggerFactory implements Logger.Factory {
   private static final String LOG_DIR_MACRO = "$LOG_DIR$";
   private static final String LOG_DIR = "testlog";
 
-  private static final TestLoggerFactory ourInstance = new TestLoggerFactory();
-
   private boolean myInitialized = false;
 
   private TestLoggerFactory() { }
-
-  public static TestLoggerFactory getInstance() {
-    return ourInstance;
-  }
 
   @Override
   public synchronized Logger getLoggerInstance(final String name) {

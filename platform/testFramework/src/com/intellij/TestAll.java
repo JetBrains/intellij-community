@@ -52,7 +52,7 @@ import java.util.Set;
 @SuppressWarnings({"HardCodedStringLiteral", "CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class TestAll implements Test {
   static {
-    Logger.setFactory(TestLoggerFactory.getInstance());
+    Logger.setFactory(TestLoggerFactory.class);
   }
 
   private final TestCaseLoader myTestCaseLoader;

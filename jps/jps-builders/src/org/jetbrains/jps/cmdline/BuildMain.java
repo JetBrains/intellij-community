@@ -212,59 +212,7 @@ public class BuildMain {
       e.printStackTrace(System.err);
     }
 
-    Logger.setFactory(new Logger.Factory() {
-      @Override
-      public Logger getLoggerInstance(String category) {
-        final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
-
-        return new Logger() {
-          @Override
-          public boolean isDebugEnabled() {
-            return logger.isDebugEnabled();
-          }
-
-          @Override
-          public void debug(@NonNls String message) {
-            logger.debug(message);
-          }
-
-          @Override
-          public void debug(@Nullable Throwable t) {
-            logger.debug("", t);
-          }
-
-          @Override
-          public void debug(@NonNls String message, @Nullable Throwable t) {
-            logger.debug(message, t);
-          }
-
-          @Override
-          public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
-            logger.error(message, t);
-          }
-
-          @Override
-          public void info(@NonNls String message) {
-            logger.info(message);
-          }
-
-          @Override
-          public void info(@NonNls String message, @Nullable Throwable t) {
-            logger.info(message, t);
-          }
-
-          @Override
-          public void warn(@NonNls String message, @Nullable Throwable t) {
-            logger.warn(message, t);
-          }
-
-          @Override
-          public void setLevel(Level level) {
-            logger.setLevel(level);
-          }
-        };
-      }
-    });
+    Logger.setFactory(MyLoggerFactory.class);
   }
 
   private static void ensureLogConfigExists(final File logConfig) throws IOException {
@@ -289,4 +237,57 @@ public class BuildMain {
     }
   }
 
+  private static class MyLoggerFactory implements Logger.Factory {
+    @Override
+    public Logger getLoggerInstance(String category) {
+      final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
+
+      return new Logger() {
+        @Override
+        public boolean isDebugEnabled() {
+          return logger.isDebugEnabled();
+        }
+
+        @Override
+        public void debug(@NonNls String message) {
+          logger.debug(message);
+        }
+
+        @Override
+        public void debug(@Nullable Throwable t) {
+          logger.debug("", t);
+        }
+
+        @Override
+        public void debug(@NonNls String message, @Nullable Throwable t) {
+          logger.debug(message, t);
+        }
+
+        @Override
+        public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
+          logger.error(message, t);
+        }
+
+        @Override
+        public void info(@NonNls String message) {
+          logger.info(message);
+        }
+
+        @Override
+        public void info(@NonNls String message, @Nullable Throwable t) {
+          logger.info(message, t);
+        }
+
+        @Override
+        public void warn(@NonNls String message, @Nullable Throwable t) {
+          logger.warn(message, t);
+        }
+
+        @Override
+        public void setLevel(Level level) {
+          logger.setLevel(level);
+        }
+      };
+    }
+  }
 }

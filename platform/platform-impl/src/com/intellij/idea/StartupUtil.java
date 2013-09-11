@@ -99,7 +99,7 @@ public class StartupUtil {
       System.exit(Main.STARTUP_IMPOSSIBLE);
     }
 
-    Logger.setFactory(LoggerFactory.getInstance());
+    Logger.setFactory(LoggerFactory.class);
     Logger log = Logger.getInstance(Main.class);
     startLogging(log);
     fixProcessEnvironment(log);
