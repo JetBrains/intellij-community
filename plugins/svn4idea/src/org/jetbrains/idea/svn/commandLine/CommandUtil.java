@@ -70,12 +70,6 @@ public class CommandUtil {
     return SvnApplicationSettings.getInstance().getCommandLinePath();
   }
 
-  public static SvnLineCommand runSimple(@NotNull SvnSimpleCommand command, @NotNull SvnVcs vcs, @Nullable File base, @Nullable SVNURL url)
-    throws SVNException {
-    // empty command name passed, as command name is already in command.getParameters()
-    return runSimple(SvnCommandName.empty, vcs, base, url, new ArrayList<String>(Arrays.asList(command.getParameters())));
-  }
-
   /**
    * Puts given value to parameters if condition is satisfied
    *
