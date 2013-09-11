@@ -62,7 +62,7 @@ public class RefPainter {
     g2.setColor(myColorManager.getBackgroundColor(ref));
     g2.fill(rectangle2D);
 
-    g2.setColor(Color.black);
+    g2.setColor(myColorManager.getReferenceBorderColor());
     g2.draw(rectangle2D);
 
     if (myColorManager.isMultipleRoots()) {

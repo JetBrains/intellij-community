@@ -199,7 +199,8 @@ public class VcsLogGraphTable extends JBTable {
     protected void paintComponent(Graphics g) {
       g.setColor(myColor);
       g.fillRect(0, 0, ROOT_INDICATOR_WIDTH - 1, HEIGHT_CELL);
-      UIUtil.drawLine((Graphics2D)g, ROOT_INDICATOR_WIDTH - 1, 0, ROOT_INDICATOR_WIDTH - 1, HEIGHT_CELL, null, JBColor.LIGHT_GRAY);
+      UIUtil.drawLine((Graphics2D)g, ROOT_INDICATOR_WIDTH - 1, 0, ROOT_INDICATOR_WIDTH - 1, HEIGHT_CELL, null,
+                      myUi.getColorManager().getRootIndicatorBorder());
     }
 
     @Override
