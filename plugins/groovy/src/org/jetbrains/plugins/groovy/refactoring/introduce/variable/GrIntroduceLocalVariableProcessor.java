@@ -211,11 +211,11 @@ public class GrIntroduceLocalVariableProcessor {
     PsiElement anchor = GrIntroduceHandlerBase.findAnchor(replaced, GroovyRefactoringUtil.getEnclosingContainer(replacedExpression));
     if (!(anchor instanceof GrStatement)) {
       StringBuilder error = new StringBuilder("scope:");
-      error.append(myContext.getScope());
+      error.append(myContext.getScope().getText());
       error.append("\n---------------------------------------\n\n");
       error.append("occurrences: ");
       for (PsiElement occurrence : myOccurrences) {
-        error.append(occurrence);
+        error.append(occurrence.getText());
         error.append("\n------------------\n");
       }
 
