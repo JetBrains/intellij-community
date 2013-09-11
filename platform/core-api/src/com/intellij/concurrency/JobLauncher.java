@@ -54,7 +54,7 @@ public abstract class JobLauncher {
                                                               ProgressIndicator progress,
                                                               boolean runInReadAction,
                                                               boolean failFastOnAcquireReadAction,
-                                                              @NotNull Processor<T> thingProcessor);
+                                                              @NotNull Processor<T> thingProcessor) throws ProcessCanceledException;
 
   @NotNull
   public abstract <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<? extends T> things,
