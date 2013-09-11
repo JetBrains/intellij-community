@@ -43,32 +43,34 @@ public class GroovyMethodInfo {
   private static void ensureInit() {
     if (METHOD_INFOS != null) return;
 
-    Map<String, Map<String, List<GroovyMethodInfo>>> methodInfos = new HashMap<String, Map<String, List<GroovyMethodInfo>>>();
-    Map<String, Map<String, List<GroovyMethodInfo>>> lightMethodInfos = new HashMap<String, Map<String, List<GroovyMethodInfo>>>();
+    synchronized (GroovyMethodInfo.class) {
+      Map<String, Map<String, List<GroovyMethodInfo>>> methodInfos = new HashMap<String, Map<String, List<GroovyMethodInfo>>>();
+      Map<String, Map<String, List<GroovyMethodInfo>>> lightMethodInfos = new HashMap<String, Map<String, List<GroovyMethodInfo>>>();
 
-    for (GroovyClassDescriptor classDescriptor : GroovyClassDescriptor.EP_NAME.getExtensions()) {
-      ClassLoader classLoader = classDescriptor.getLoaderForClass();
-      for (GroovyMethodDescriptor method : classDescriptor.methods) {
-        addMethodDescriptor(methodInfos, method, classLoader, classDescriptor.className);
+      for (GroovyClassDescriptor classDescriptor : GroovyClassDescriptor.EP_NAME.getExtensions()) {
+        ClassLoader classLoader = classDescriptor.getLoaderForClass();
+        for (GroovyMethodDescriptor method : classDescriptor.methods) {
+          addMethodDescriptor(methodInfos, method, classLoader, classDescriptor.className);
+        }
       }
+
+      for (GroovyMethodDescriptorExtension methodDescriptor : GroovyMethodDescriptorExtension.EP_NAME.getExtensions()) {
+        if (methodDescriptor.className != null) {
+          assert methodDescriptor.lightMethodKey == null;
+          addMethodDescriptor(methodInfos, methodDescriptor, methodDescriptor.getLoaderForClass(), methodDescriptor.className);
+        }
+        else {
+          assert methodDescriptor.className == null;
+          addMethodDescriptor(lightMethodInfos, methodDescriptor, methodDescriptor.getLoaderForClass(), methodDescriptor.lightMethodKey);
+        }
+      }
+
+      processUnnamedDescriptors(lightMethodInfos);
+      processUnnamedDescriptors(methodInfos);
+
+      LIGHT_METHOD_INFOS = lightMethodInfos;
+      METHOD_INFOS = methodInfos;
     }
-
-    for (GroovyMethodDescriptorExtension methodDescriptor : GroovyMethodDescriptorExtension.EP_NAME.getExtensions()) {
-      if (methodDescriptor.className != null) {
-        assert methodDescriptor.lightMethodKey == null;
-        addMethodDescriptor(methodInfos, methodDescriptor, methodDescriptor.getLoaderForClass(), methodDescriptor.className);
-      }
-      else {
-        assert methodDescriptor.className == null;
-        addMethodDescriptor(lightMethodInfos, methodDescriptor, methodDescriptor.getLoaderForClass(), methodDescriptor.lightMethodKey);
-      }
-    }
-
-    processUnnamedDescriptors(lightMethodInfos);
-    processUnnamedDescriptors(methodInfos);
-
-    LIGHT_METHOD_INFOS = lightMethodInfos;
-    METHOD_INFOS = methodInfos;
   }
 
   private static void processUnnamedDescriptors(Map<String, Map<String, List<GroovyMethodInfo>>> map) {
@@ -127,7 +129,7 @@ public class GroovyMethodInfo {
     }
   }
 
-  public GroovyMethodInfo(GroovyMethodDescriptor method, @NotNull ClassLoader classLoader) {
+  private GroovyMethodInfo(GroovyMethodDescriptor method, @NotNull ClassLoader classLoader) {
     myClassLoader = classLoader;
     myParams = method.getParams();
     myReturnType = method.returnType;
