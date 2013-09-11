@@ -99,10 +99,8 @@ class Build {
   Script libLicenses
 
   Build(String arg_home, JpsGantProjectBuilder prjBuilder, String arg_productCode){
-//    productCode = arg_productCode
     home = arg_home
     projectBuilder = prjBuilder
-//    paths = new Paths(home)
     paths = new Paths(home, arg_productCode)
     steps = new Steps()
   }
@@ -123,7 +121,6 @@ class Build {
     layouts = utils.includeFile(home + "/build/scripts/layouts.gant")
     community_layouts = utils.includeFile(home + "/community/build/scripts/layouts.gant")
     libLicenses = utils.includeFile(home + "/community/build/scripts/libLicenses.gant")
-//    projectBuilder.stage("Init done")
     resources()
   }
 
@@ -164,7 +161,6 @@ class Build {
     if (steps.compile) {
       projectBuilder.arrangeModuleCyclesOutputs = true
       projectBuilder.targetFolder = paths.classesTarget
-//      println "targetFolder: " + paths.classesTarget
       projectBuilder.cleanOutput()
       if (modules == null ){
         projectBuilder.buildProduction()
