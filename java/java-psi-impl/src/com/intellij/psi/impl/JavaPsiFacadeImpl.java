@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -413,19 +413,13 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
   }
 
-
   @Override
   public boolean isPartOfPackagePrefix(@NotNull String packageName) {
     final Collection<String> packagePrefixes = myFileManager.getNonTrivialPackagePrefixes();
     for (final String subpackageName : packagePrefixes) {
-      if (isSubpackageOf(subpackageName, packageName)) return true;
+      if (PsiNameHelper.isSubpackageOf(subpackageName, packageName)) return true;
     }
     return false;
-  }
-
-  private static boolean isSubpackageOf(@NotNull String subpackageName, @NotNull String packageName) {
-    return subpackageName.equals(packageName) ||
-           subpackageName.startsWith(packageName) && subpackageName.charAt(packageName.length()) == '.';
   }
 
   @Override

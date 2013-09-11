@@ -256,4 +256,8 @@ public abstract class PsiNameHelper {
     return result;
   }
 
+  public static boolean isSubpackageOf(@NotNull String subpackageName, @NotNull String packageName) {
+    return subpackageName.equals(packageName) ||
+           subpackageName.startsWith(packageName) && subpackageName.charAt(packageName.length()) == '.';
+  }
 }
