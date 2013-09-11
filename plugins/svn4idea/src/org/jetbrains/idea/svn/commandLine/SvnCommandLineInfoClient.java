@@ -96,8 +96,8 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     List<String> parameters = new ArrayList<String>();
 
     fillParameters(path, pegRevision, revision, depth, parameters);
+    SvnCommandLineStatusClient.changelistsToCommand(changeLists, parameters);
     command.addParameters(parameters);
-    SvnCommandLineStatusClient.changelistsToCommand(changeLists, command);
 
     parseResult(handler, base, execute(command));
   }
