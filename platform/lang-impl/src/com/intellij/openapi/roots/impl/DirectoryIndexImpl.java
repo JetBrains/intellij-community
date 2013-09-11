@@ -1478,6 +1478,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                                          "; equalsToParent:"+ (myFile.getParent() == null ? "" : myFile.getParent().getPath()).equals(root.getPath()) +
                                                          "; equalsToRoot:"+ myFile.equals(root) +
                                                          "; equalsToRootPath:"+ myFile.getPath().equals(root.getPath()) +
-                                                         "; my contentRoot: "+info.getContentRoot()+"; my sourceRoot: "+info.getSourceRoot()+"; my classRoot: "+info.getLibraryClassRoot();
+                                                         "; my contentRoot: "+info.getContentRoot()+
+                                                         "; my sourceRoot: "+info.getSourceRoot()+
+                                                         "; my classRoot: "+info.getLibraryClassRoot() +
+                                                         "; path is substring: "+FileUtil.isAncestor(root.getPath(), myFile.getPath(), false)
+      ;
   }
 }
