@@ -1,6 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
-import com.intellij.idea.LoggerFactory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
@@ -28,7 +28,7 @@ public class ScriptSupport {
     try {
       script = scriptFile.exists() ? shell.parse(scriptFile):shell.parse(text);
     } catch (Exception ex) {
-      LoggerFactory.getInstance().getLoggerInstance(getClass().getName()).error(ex);
+      Logger.getInstance(getClass().getName()).error(ex);
       throw new RuntimeException(ex);
     }
   }
@@ -53,7 +53,7 @@ public class ScriptSupport {
       Object o = script.run();
       return String.valueOf(o);
     } catch (GroovyRuntimeException ex) {
-      LoggerFactory.getInstance().getLoggerInstance(getClass().getName()).error(ex);
+      Logger.getInstance(getClass().getName()).error(ex);
       return StringUtil.convertLineSeparators(ex.getLocalizedMessage());
     }
   }

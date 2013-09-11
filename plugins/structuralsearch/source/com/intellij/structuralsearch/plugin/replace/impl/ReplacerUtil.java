@@ -1,6 +1,5 @@
 package com.intellij.structuralsearch.plugin.replace.impl;
 
-import com.intellij.idea.LoggerFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiComment;
@@ -38,7 +37,7 @@ public class ReplacerUtil {
     }
 
     if (patternElements.length == i) {
-      Logger logger = LoggerFactory.getInstance().getLoggerInstance(StructuralSearchProfile.class.getName());
+      Logger logger = Logger.getInstance(StructuralSearchProfile.class.getName());
       logger.error("Unexpected replacement structure:" + replacementToMake);
     }
 
