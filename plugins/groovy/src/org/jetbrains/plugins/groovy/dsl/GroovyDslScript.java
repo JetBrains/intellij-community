@@ -78,8 +78,8 @@ public class GroovyDslScript {
       return holder.processMembers(descriptor, processor, state);
     }
     catch (IncorrectOperationException e) {
-      LOG.error("Error while processing dsl script '" + myPath + "'", e);
-      return false;
+      handleDslError(e);
+      return true;
     }
   }
 
