@@ -157,7 +157,7 @@ public class PsiUtil {
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
                                      PsiMethod method,
                                      PsiSubstitutor substitutor,
-                                     GroovyPsiElement place,
+                                     PsiElement place,
                                      final boolean eraseParameterTypes) {
     return isApplicableConcrete(argumentTypes, method, substitutor, place, eraseParameterTypes) !=
            GrClosureSignatureUtil.ApplicabilityResult.inapplicable;
@@ -166,7 +166,7 @@ public class PsiUtil {
   public static GrClosureSignatureUtil.ApplicabilityResult isApplicableConcrete(@Nullable PsiType[] argumentTypes,
                                                                                 PsiMethod method,
                                                                                 PsiSubstitutor substitutor,
-                                                                                GroovyPsiElement place,
+                                                                                PsiElement place,
                                                                                 final boolean eraseParameterTypes) {
     if (argumentTypes == null) return GrClosureSignatureUtil.ApplicabilityResult.canBeApplicable;
 
