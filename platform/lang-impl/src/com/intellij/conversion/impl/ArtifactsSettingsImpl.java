@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.conversion.impl;
 
+import com.intellij.conversion.ArtifactsSettings;
 import com.intellij.conversion.CannotConvertException;
-import com.intellij.conversion.ProjectLibrariesSettings;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,16 +24,19 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Collection;
 
-public class ProjectLibrariesSettingsImpl extends MultiFilesSettings implements ProjectLibrariesSettings {
-
-  public ProjectLibrariesSettingsImpl(@Nullable File projectFile, @Nullable File[] librariesFiles,
-                                      ConversionContextImpl context) throws CannotConvertException {
-    super(projectFile, librariesFiles, context);
+/**
+ * @author Eugene.Kudelevsky
+ */
+public class ArtifactsSettingsImpl extends MultiFilesSettings implements ArtifactsSettings {
+  protected ArtifactsSettingsImpl(@Nullable File projectFile,
+                                  @Nullable File[] settingsFiles,
+                                  @NotNull ConversionContextImpl context) throws CannotConvertException {
+    super(projectFile, settingsFiles, context);
   }
 
-  @Override
   @NotNull
-  public Collection<? extends Element> getProjectLibraries() {
-    return getSettings("libraryTable", LibraryImpl.ELEMENT);
+  @Override
+  public Collection<? extends Element> getArtifacts() {
+    return getSettings("ArtifactManager", "artifact");
   }
 }

@@ -74,6 +74,7 @@ public class ConversionContextImpl implements ConversionContext {
   private ComponentManagerSettings myProjectRootManagerSettings;
   private ComponentManagerSettingsImpl myModulesSettings;
   private ProjectLibrariesSettingsImpl myProjectLibrariesSettings;
+  private ArtifactsSettingsImpl myArtifactsSettings;
   private ComponentManagerSettings myProjectFileVersionSettings;
   private final Set<String> myPerformedConversionIds;
 
@@ -465,20 +466,31 @@ public class ConversionContextImpl implements ConversionContext {
   @Override
   public ProjectLibrariesSettingsImpl getProjectLibrariesSettings() throws CannotConvertException {
     if (myProjectLibrariesSettings == null) {
-      if (myStorageScheme == StorageScheme.DEFAULT) {
-        myProjectLibrariesSettings = new ProjectLibrariesSettingsImpl(myProjectFile, null, this);
-      }
-      else {
-        final File librariesDir = new File(mySettingsBaseDir, "libraries");
-        final File[] files = librariesDir.exists() ? librariesDir.listFiles(new FileFilter() {
-          @Override
-          public boolean accept(File file) {
-            return !file.isDirectory() && file.getName().endsWith(".xml");
-          }
-        }) : ArrayUtil.EMPTY_FILE_ARRAY;
-        myProjectLibrariesSettings = new ProjectLibrariesSettingsImpl(null, files, this);
-      }
+      myProjectLibrariesSettings = myStorageScheme == StorageScheme.DEFAULT
+                                   ? new ProjectLibrariesSettingsImpl(myProjectFile, null, this)
+                                   : new ProjectLibrariesSettingsImpl(null, getSettingsXmlFiles("libraries"), this);
     }
     return myProjectLibrariesSettings;
+  }
+
+  @Override
+  public ArtifactsSettingsImpl getArtifactsSettings() throws CannotConvertException {
+    if (myArtifactsSettings == null) {
+      myArtifactsSettings = myStorageScheme == StorageScheme.DEFAULT
+                            ? new ArtifactsSettingsImpl(myProjectFile, null, this)
+                            : new ArtifactsSettingsImpl(null, getSettingsXmlFiles("artifacts"), this);
+    }
+    return myArtifactsSettings;
+  }
+
+  @NotNull
+  private File[] getSettingsXmlFiles(@NotNull String dirName) {
+    final File librariesDir = new File(mySettingsBaseDir, dirName);
+    return librariesDir.exists() ? librariesDir.listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File file) {
+        return !file.isDirectory() && file.getName().endsWith(".xml");
+      }
+    }) : ArrayUtil.EMPTY_FILE_ARRAY;
   }
 }

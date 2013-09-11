@@ -64,6 +64,8 @@ public interface ConversionContext {
 
   ProjectLibrariesSettings getProjectLibrariesSettings() throws CannotConvertException;
 
+  ArtifactsSettings getArtifactsSettings() throws CannotConvertException;
+
   @NotNull
   String expandPath(@NotNull String path);
 }

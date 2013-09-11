@@ -52,6 +52,11 @@ public abstract class ProjectConverter {
     return null;
   }
 
+  @Nullable
+  public ConversionProcessor<ArtifactsSettings> createArtifactsConverter() {
+    return null;
+  }
+
   public Collection<File> getAdditionalAffectedFiles() {
     return Collections.emptyList();
   }
