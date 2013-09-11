@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.ui.tables;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommitMiniDetails;
@@ -19,10 +20,14 @@ import java.util.*;
  * @author erokhins
  */
 public class GraphTableModel extends AbstractTableModel {
-  public static final int COMMIT_COLUMN = 0;
-  public static final int AUTHOR_COLUMN = 1;
-  public static final int DATE_COLUMN = 2;
-  private final String[] columnNames = {"Subject", "Author", "Date"};
+
+  public static final int ROOT_COLUMN = 0;
+  public static final int COMMIT_COLUMN = 1;
+  public static final int AUTHOR_COLUMN = 2;
+  public static final int DATE_COLUMN = 3;
+  private static final int COLUMN_COUNT = DATE_COLUMN + 1;
+
+  private static final String[] COLUMN_NAMES = {"Root", "Subject", "Author", "Date"};
   private final DataPack dataPack;
 
   private final Map<Hash, String> reworded = new HashMap<Hash, String>();
@@ -42,7 +47,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   @Override
   public int getColumnCount() {
-    return 3;
+    return COLUMN_COUNT;
   }
 
   @Override
@@ -56,6 +61,8 @@ public class GraphTableModel extends AbstractTableModel {
       data = myDataHolder.getMiniDetailsGetter().getCommitData(commitNode);
     }
     switch (columnIndex) {
+      case ROOT_COLUMN:
+        return commitNode.getBranch().getRepositoryRoot();
       case COMMIT_COLUMN:
         GraphPrintCell graphPrintCell = dataPack.getPrintCellModel().getGraphPrintCell(rowIndex);
         GraphCommitCell.Kind cellKind = getCellKind(PositionUtil.getNode(graphPrintCell));
@@ -110,11 +117,13 @@ public class GraphTableModel extends AbstractTableModel {
   @Override
   public Class<?> getColumnClass(int column) {
     switch (column) {
-      case 0:
+      case ROOT_COLUMN:
+        return VirtualFile.class;
+      case COMMIT_COLUMN:
         return GraphCommitCell.class;
-      case 1:
+      case AUTHOR_COLUMN:
         return String.class;
-      case 2:
+      case DATE_COLUMN:
         return String.class;
       default:
         throw new IllegalArgumentException("column > 2");
@@ -123,7 +132,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   @Override
   public String getColumnName(int column) {
-    return columnNames[column];
+    return COLUMN_NAMES[column];
   }
 
   @Override

@@ -1,7 +1,10 @@
 package org.hanuna.gitalk.ui.frame;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.UIUtil;
+import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -21,6 +24,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -35,14 +40,17 @@ import static org.hanuna.gitalk.ui.render.PrintParameters.HEIGHT_CELL;
  */
 public class VcsLogGraphTable extends JBTable {
 
+  private static final int ROOT_INDICATOR_WIDTH = 5;
+
   @NotNull private final VcsLogUI myUI;
   @NotNull private final GraphCellPainter myGraphPainter = new SimpleGraphCellPainter();
 
-  public VcsLogGraphTable(@NotNull VcsLogUI UI) {
+  public VcsLogGraphTable(@NotNull VcsLogUI UI, final VcsLogDataHolder logDataHolder) {
     super();
     myUI = UI;
 
     setTableHeader(null);
+    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI, logDataHolder));
     setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myGraphPainter, myUI.getColorManager()));
     setDefaultRenderer(String.class, new StringCellRenderer());
 
@@ -66,9 +74,16 @@ public class VcsLogGraphTable extends JBTable {
   }
 
   public void setPreferredColumnWidths() {
-    getColumnModel().getColumn(0).setPreferredWidth(700);
-    getColumnModel().getColumn(1).setMinWidth(90);
-    getColumnModel().getColumn(2).setMinWidth(90);
+    TableColumn rootColumn = getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN);
+    int rootWidth = myUI.getColorManager().isMultipleRoots() ? ROOT_INDICATOR_WIDTH : 0;
+    // NB: all further instructions and their order are important, otherwise the minimum size which is less than 15 won't be applied
+    rootColumn.setMinWidth(rootWidth);
+    rootColumn.setMaxWidth(rootWidth);
+    rootColumn.setPreferredWidth(rootWidth);
+
+    getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN).setPreferredWidth(700);
+    getColumnModel().getColumn(GraphTableModel.AUTHOR_COLUMN).setMinWidth(90);
+    getColumnModel().getColumn(GraphTableModel.DATE_COLUMN).setMinWidth(90);
   }
 
   public void jumpToRow(int rowIndex) {
@@ -166,6 +181,33 @@ public class VcsLogGraphTable extends JBTable {
       }
     }
     return result;
+  }
+
+  private static class RootCellRenderer extends JPanel implements TableCellRenderer {
+
+    @NotNull private final VcsLogUI myUi;
+    @NotNull private final VcsLogDataHolder myDataHolder;
+
+    @NotNull private Color myColor = UIUtil.getTableBackground();
+
+    RootCellRenderer(@NotNull VcsLogUI ui, @NotNull VcsLogDataHolder dataHolder) {
+      myUi = ui;
+      myDataHolder = dataHolder;
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      g.setColor(myColor);
+      g.fillRect(0, 0, ROOT_INDICATOR_WIDTH - 1, HEIGHT_CELL);
+      UIUtil.drawLine((Graphics2D)g, ROOT_INDICATOR_WIDTH - 1, 0, ROOT_INDICATOR_WIDTH - 1, HEIGHT_CELL, null, JBColor.LIGHT_GRAY);
+    }
+
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      Node commitNode = myDataHolder.getDataPack().getGraphModel().getGraph().getCommitNodeInRow(row);
+      myColor = myUi.getColorManager().getRootColor(commitNode.getBranch().getRepositoryRoot());
+      return this;
+    }
   }
 
   private class StringCellRenderer extends DefaultTableCellRenderer {

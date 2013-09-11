@@ -6,6 +6,7 @@ import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.printmodel.ShortEdge;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.hanuna.gitalk.ui.tables.GraphCommitCell;
+import org.hanuna.gitalk.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
@@ -63,7 +64,7 @@ public class PositionUtil {
     if (rowIndex >= model.getRowCount()) {
       return null;
     }
-    GraphCommitCell commitCell = (GraphCommitCell)model.getValueAt(rowIndex, 0);
+    GraphCommitCell commitCell = (GraphCommitCell)model.getValueAt(rowIndex, GraphTableModel.COMMIT_COLUMN);
     return commitCell.getPrintCell();
   }
 
