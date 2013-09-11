@@ -84,7 +84,7 @@ public class CommandUtil {
   }
 
   public static void put(@NotNull List<String> parameters, @NotNull File path) {
-    parameters.add(path.getAbsolutePath());
+    put(parameters, path.getAbsolutePath(), SVNRevision.UNDEFINED);
   }
 
   public static void put(@NotNull List<String> parameters, @NotNull File path, @Nullable SVNRevision pegRevision) {
@@ -93,10 +93,11 @@ public class CommandUtil {
 
   public static void put(@NotNull List<String> parameters, @NotNull String path, @Nullable SVNRevision pegRevision) {
     StringBuilder builder = new StringBuilder(path);
+    // always add '@' to correctly handle paths that contain '@' symbol
+    builder.append("@");
 
     if (pegRevision != null && !SVNRevision.UNDEFINED.equals(pegRevision) && !SVNRevision.WORKING.equals(pegRevision) &&
         pegRevision.isValid() && pegRevision.getNumber() != 0) {
-      builder.append("@");
       builder.append(pegRevision);
     }
 
@@ -105,6 +106,14 @@ public class CommandUtil {
 
   public static void put(@NotNull List<String> parameters, @NotNull SvnTarget target) {
     put(parameters, target.getPathOrUrlString(), target.getPegRevision());
+  }
+
+  public static void put(@NotNull List<String> parameters, @NotNull SvnTarget target, boolean usePegRevision) {
+    if (usePegRevision) {
+      put(parameters, target);
+    } else {
+      parameters.add(target.getPathOrUrlString());
+    }
   }
 
   public static void put(@NotNull List<String> parameters, @NotNull File... paths) {
