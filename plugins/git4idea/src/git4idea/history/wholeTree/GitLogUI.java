@@ -2545,6 +2545,11 @@ public class GitLogUI implements Disposable {
     }
   }
 
+  public void selectCommit(String commitId) {
+    myJBTable.getSelectionModel().clearSelection();
+    myMyGotoCommitAction.tryFind(commitId);
+  }
+
   public class MyGotoCommitAction extends DumbAwareAction {
     public MyGotoCommitAction() {
       super("Find Commit", "Find commit by hash, reference or description fragment (in loaded part)", AllIcons.Actions.Menu_find);
