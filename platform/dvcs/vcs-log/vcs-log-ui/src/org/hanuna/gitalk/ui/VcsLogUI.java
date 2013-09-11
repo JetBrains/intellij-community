@@ -30,14 +30,16 @@ public class VcsLogUI {
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final MainFrame myMainFrame;
+  @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private DragDropListener dragDropListener = DragDropListener.EMPTY;
 
   @Nullable private GraphElement prevGraphElement;
   @NotNull  private TableModel myGraphModel;
 
-  public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project) {
+  public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogColorManager manager) {
     myLogDataHolder = logDataHolder;
+    myColorManager = manager;
     myMainFrame = new MainFrame(myLogDataHolder, this, project);
     project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
       @Override
@@ -182,4 +184,8 @@ public class VcsLogUI {
     return dragDropListener;
   }
 
+  @NotNull
+  public VcsLogColorManager getColorManager() {
+    return myColorManager;
+  }
 }

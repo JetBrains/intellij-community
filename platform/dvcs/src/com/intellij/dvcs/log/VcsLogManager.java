@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
+import org.hanuna.gitalk.ui.VcsLogColorManagerImpl;
 import org.hanuna.gitalk.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,7 +55,7 @@ public class VcsLogManager extends AbstractProjectComponent {
           return;
         }
 
-        Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders();
+        final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders();
         if (logProviders.isEmpty()) {
           return;
         }
@@ -70,7 +71,7 @@ public class VcsLogManager extends AbstractProjectComponent {
           public void consume(VcsLogDataHolder vcsLogDataHolder) {
             Disposer.register(myProject, vcsLogDataHolder);
             myProject.getMessageBus().connect(myProject).subscribe(VcsLogRefresher.TOPIC, vcsLogDataHolder);
-            VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject);
+            VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, new VcsLogColorManagerImpl(logProviders.keySet()));
             mainPanel.init(logUI.getMainFrame().getMainComponent());
           }
         });

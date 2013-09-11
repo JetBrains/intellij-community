@@ -71,15 +71,13 @@ public final class VcsRef {
 
   public enum RefType {
     LOCAL_BRANCH,
-    BRANCH_UNDER_INTERACTIVE_REBASE,
     REMOTE_BRANCH,
     TAG,
-    STASH,
     ANOTHER,
     HEAD;
 
     public boolean isBranch() {
-      return this == LOCAL_BRANCH || this == BRANCH_UNDER_INTERACTIVE_REBASE || this == REMOTE_BRANCH || this == HEAD;
+      return this == LOCAL_BRANCH || this == REMOTE_BRANCH || this == HEAD;
     }
 
     public boolean isLocalOrHead() {

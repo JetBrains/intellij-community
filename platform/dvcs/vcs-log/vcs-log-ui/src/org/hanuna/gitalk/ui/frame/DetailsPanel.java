@@ -15,6 +15,7 @@ import com.intellij.vcs.log.VcsCommitDetails;
 import org.hanuna.gitalk.data.LoadingDetails;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.ui.VcsLogColorManager;
 import org.hanuna.gitalk.ui.render.PrintParameters;
 import org.hanuna.gitalk.ui.render.painters.RefPainter;
 import org.jetbrains.annotations.NotNull;
@@ -46,12 +47,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull private final MessagePanel myMessagePanel;
   @NotNull private final JBLoadingPanel myLoadingPanel;
 
-  DetailsPanel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogGraphTable graphTable) {
+  DetailsPanel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogGraphTable graphTable, @NotNull VcsLogColorManager colorManager) {
     super(new CardLayout());
     myLogDataHolder = logDataHolder;
     myGraphTable = graphTable;
 
-    myRefsPanel = new RefsPanel();
+    myRefsPanel = new RefsPanel(colorManager);
     myDataPanel = new DataPanel();
     myMessagePanel = new MessagePanel();
 
@@ -165,8 +166,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     @NotNull private final RefPainter myRefPainter;
     @NotNull private List<VcsRef> myRefs;
 
-    RefsPanel() {
-      myRefPainter = new RefPainter();
+    RefsPanel(@NotNull VcsLogColorManager colorManager) {
+      myRefPainter = new RefPainter(colorManager);
       myRefs = Collections.emptyList();
       setPreferredSize(new Dimension(-1, PrintParameters.HEIGHT_CELL + UIUtil.DEFAULT_VGAP));
       setOpaque(false);

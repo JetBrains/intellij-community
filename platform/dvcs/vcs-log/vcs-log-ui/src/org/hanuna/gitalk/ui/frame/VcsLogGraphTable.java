@@ -43,7 +43,7 @@ public class VcsLogGraphTable extends JBTable {
     myUI = UI;
 
     setTableHeader(null);
-    setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myGraphPainter));
+    setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myGraphPainter, myUI.getColorManager()));
     setDefaultRenderer(String.class, new StringCellRenderer());
 
     setRowHeight(HEIGHT_CELL);

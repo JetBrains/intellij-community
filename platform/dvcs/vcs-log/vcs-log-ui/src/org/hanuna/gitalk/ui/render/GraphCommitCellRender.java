@@ -3,9 +3,11 @@ package org.hanuna.gitalk.ui.render;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
+import org.hanuna.gitalk.ui.VcsLogColorManager;
 import org.hanuna.gitalk.ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.ui.render.painters.RefPainter;
 import org.hanuna.gitalk.ui.tables.GraphCommitCell;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,11 +30,12 @@ public class GraphCommitCellRender implements TableCellRenderer {
   public static final Color APPLIED_BACKGROUND = new Color(0x92, 0xF5, 0x8F);
 
   private final GraphCellPainter graphPainter;
-  private final RefPainter refPainter = new RefPainter();
+  private final RefPainter refPainter;
   private ExtDefaultCellRender cellRender = new ExtDefaultCellRender();
 
-  public GraphCommitCellRender(GraphCellPainter graphPainter) {
+  public GraphCommitCellRender(GraphCellPainter graphPainter, @NotNull VcsLogColorManager colorManager) {
     this.graphPainter = graphPainter;
+    refPainter = new RefPainter(colorManager);
   }
 
   protected int getLeftPadding(JTable table, @Nullable Object value) {

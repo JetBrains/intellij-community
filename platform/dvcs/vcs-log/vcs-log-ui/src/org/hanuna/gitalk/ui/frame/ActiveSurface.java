@@ -50,7 +50,7 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
     myLogDataHolder = logDataHolder;
     myGraphTable = new VcsLogGraphTable(vcsLogUI);
     myBranchesPanel = new BranchesPanel(logDataHolder, vcsLogUI);
-    myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable);
+    myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager());
 
     final ChangesBrowser changesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, false, null,
                                                        ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);

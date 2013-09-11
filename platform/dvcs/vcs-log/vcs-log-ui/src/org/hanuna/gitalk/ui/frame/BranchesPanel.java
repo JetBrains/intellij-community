@@ -41,7 +41,7 @@ public class BranchesPanel extends JPanel {
     myUiController = logController;
     myUI = UI;
     myRefs = getRefsToDisplayOnPanel();
-    myRefPainter = new RefPainter();
+    myRefPainter = new RefPainter(myUI.getColorManager());
 
     setPreferredSize(new Dimension(-1, PrintParameters.HEIGHT_CELL + UIUtil.DEFAULT_VGAP));
 
