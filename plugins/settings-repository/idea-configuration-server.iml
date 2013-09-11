@@ -13,11 +13,11 @@
     <orderEntry type="module-library">
       <library name="jgit">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.1.0-201308312337-r.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.0.0.201306101825-r.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.1.0-201308312337-r-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/org.eclipse.jgit-3.0.0.201306101825-r-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

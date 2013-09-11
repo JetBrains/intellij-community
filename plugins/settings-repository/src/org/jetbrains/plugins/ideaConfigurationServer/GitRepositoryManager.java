@@ -12,8 +12,7 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.UIUtil;
-import org.eclipse.jgit.api.AddCommand;
-import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.*;
@@ -64,6 +63,7 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     else {
       config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL, url);
       config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, "fetch", "+refs/heads/*:refs/remotes/origin/*");
+
       config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, Constants.MASTER, ConfigConstants.CONFIG_KEY_REMOTE, Constants.DEFAULT_REMOTE_NAME);
       config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, Constants.MASTER, ConfigConstants.CONFIG_KEY_MERGE, "refs/heads/master");
     }
@@ -142,8 +142,45 @@ final class GitRepositoryManager extends BaseRepositoryManager {
   public ActionCallback pull(@NotNull final ProgressIndicator indicator) {
     return execute(new ThrowableConsumer<ProgressIndicator, Exception>() {
       @Override
-      public void consume(ProgressIndicator indicator) throws Exception {
-        git.pull().setProgressMonitor(new JGitProgressMonitor(indicator)).setCredentialsProvider(getCredentialsProvider()).setRebase(true).call();
+      public void consume(@NotNull ProgressIndicator indicator) throws Exception {
+        JGitProgressMonitor progressMonitor = new JGitProgressMonitor(indicator);
+        git.fetch().setRemoveDeletedRefs(true).setProgressMonitor(progressMonitor).setCredentialsProvider(getCredentialsProvider()).call();
+
+        int attemptCount = 0;
+        do {
+          MergeResult.MergeStatus status = git.merge().include(getUpstreamBranchRef()).setFastForward(MergeCommand.FastForwardMode.FF_ONLY).call().getMergeStatus();
+          if (status.isSuccessful()) {
+            rebase(progressMonitor);
+            return;
+          }
+          else if (status != MergeResult.MergeStatus.ABORTED) {
+            break;
+          }
+        }
+        while (++attemptCount < 3);
+      }
+
+      private org.eclipse.jgit.lib.Ref getUpstreamBranchRef() throws IOException {
+        return git.getRepository().getRef(Constants.DEFAULT_REMOTE_NAME + '/' + Constants.MASTER);
+      }
+
+      private void rebase(@NotNull JGitProgressMonitor progressMonitor) throws GitAPIException {
+        RebaseResult result = null;
+        do {
+          if (result == null) {
+            result = git.rebase().setUpstream(Constants.DEFAULT_REMOTE_NAME + '/' + Constants.MASTER).setProgressMonitor(progressMonitor).call();
+          }
+          else if (result.getStatus() == RebaseResult.Status.CONFLICTS) {
+            throw new UnsupportedOperationException();
+          }
+          else if (result.getStatus() == RebaseResult.Status.NOTHING_TO_COMMIT) {
+            result = git.rebase().setOperation(RebaseCommand.Operation.SKIP).call();
+          }
+          else {
+            throw new UnsupportedOperationException();
+          }
+        }
+        while (!result.getStatus().isSuccessful());
       }
     }, indicator);
   }
