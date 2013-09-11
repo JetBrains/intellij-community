@@ -50,6 +50,8 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   }
 
   public void processEntries(EntryProcessor processor) throws IOException {
+    if (!myRoot.isFile()) return;
+
     String prefix = StringUtil.trimStart(myPathInJar, "/");
     if (!StringUtil.endsWithChar(prefix, '/')) prefix += "/";
     if (prefix.equals("/")) {

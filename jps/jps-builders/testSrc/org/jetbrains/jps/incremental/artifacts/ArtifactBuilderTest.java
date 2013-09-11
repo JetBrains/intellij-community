@@ -405,6 +405,18 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     assertEmptyOutput(a);
   }
 
+  public void testExtractNonExistentJarFile() {
+    JpsArtifact a = addArtifact(root().extractedDir("this-file-does-not-exist.jar", "/"));
+    buildAll();
+    assertEmptyOutput(a);
+  }
+
+  public void testRepackNonExistentJarFile() {
+    JpsArtifact a = addArtifact(archive("a.jar").extractedDir("this-file-does-not-exist.jar", "/").fileCopy(createFile("a.txt")));
+    buildAll();
+    assertOutput(a, fs().archive("a.jar").file("a.txt"));
+  }
+
   private static void createFileInArtifactOutput(JpsArtifact a, final String fileName) throws IOException {
     assertTrue(new File(a.getOutputPath(), fileName).createNewFile());
   }
