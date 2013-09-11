@@ -94,10 +94,6 @@ public class ProjectViewDirectoryHelper {
     return true;
   }
 
-  public boolean showFileInLibClasses(VirtualFile vFile) {
-    return true;
-  }
-
   public boolean isEmptyMiddleDirectory(PsiDirectory directory, final boolean strictlyEmpty) {
     return false;
   }
