@@ -91,6 +91,7 @@ class Build {
   def ant = new AntBuilder()
   def ch
   def usedJars
+  def suffix
   Map layout_args
   Script utils
   Script ultimate_utils
@@ -223,6 +224,7 @@ class Build {
 
   private lastPinnedBuild() {
     "http://buildserver/httpAuth/repository/download/" + teamcity_buildType_id + "/.lastPinned"
+    //[vo] uncomment ans test
     //"http://buildserver/httpAuth/repository/download/${this."teamcity.buildType.id"}/.lastPinned"
   }
 
