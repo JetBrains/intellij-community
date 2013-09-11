@@ -608,7 +608,6 @@
       <reference ref="MaintenanceGroup"/>
 
       <action internal="true" id="SendStatistics" class="com.intellij.internal.statistic.tmp.SendStatisticsAction" text="Send statistics"/>
-      <action internal="true" class="com.intellij.ide.projectWizard.NewProjectWizardAction" text="Launch New Project Wizard"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
