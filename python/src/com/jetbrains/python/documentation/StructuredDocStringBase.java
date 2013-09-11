@@ -36,6 +36,7 @@ public abstract class StructuredDocStringBase implements StructuredDocString {
   public static String[] RETURN_TAGS = new String[] { "return", "returns" };
 
   public static String PARAMETER = "parameter";
+  public static String TYPE = "type";
   public static String PARAMETER_TYPE = "parameter_type";
   public static String KEYWORD = "keyword";
   public static String VARIABLE = "variable";
@@ -124,8 +125,7 @@ public abstract class StructuredDocStringBase implements StructuredDocString {
             if (argTypeMatcher.matches()) {
               final Substring type = argName.getMatcherGroup(argTypeMatcher, 1).trim();
               final Substring arg = argName.getMatcherGroup(argTypeMatcher, 2);
-              getTagValuesMap("type").put(arg, type);
-              getTagValuesMap(tagNameString).put(arg, argValue);
+              getTagValuesMap(TYPE).put(arg, type);
             }
             else {
               getTagValuesMap(tagNameString).put(argName, argValue);
