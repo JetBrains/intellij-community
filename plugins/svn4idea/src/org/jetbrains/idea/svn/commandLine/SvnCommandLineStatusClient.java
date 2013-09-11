@@ -180,8 +180,8 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
     CommandUtil.put(parameters, remote, "-u");
     CommandUtil.put(parameters, reportAll, "--verbose");
     CommandUtil.put(parameters, includeIgnored, "--no-ignore");
-
-    changelistsToCommand(changeLists, parameters);
+    // TODO: Fix this check - update corresponding parameters in SvnStatusClientI
+    CommandUtil.putChangeLists(parameters, changeLists);
     parameters.add("--xml");
   }
 
@@ -262,15 +262,6 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
         changelistName[0] = newList;
       }
     };
-  }
-
-  public static void changelistsToCommand(@Nullable Collection changeLists, @NotNull List<String> parameters) {
-    if (changeLists != null) {
-      for (Object changeList : changeLists) {
-        parameters.add("--cl");
-        parameters.add((String) changeList);
-      }
-    }
   }
 
   @Override

@@ -150,6 +150,15 @@ public class CommandUtil {
     }
   }
 
+  public static void putChangeLists(@NotNull List<String> parameters, @Nullable Iterable<String> changeLists) {
+    if (changeLists != null) {
+      for (Object changeList : changeLists) {
+        parameters.add("--cl");
+        parameters.add((String) changeList);
+      }
+    }
+  }
+
   public static <T> T parse(@NotNull String data, @NotNull Class<T> type) throws JAXBException {
     JAXBContext context = JAXBContext.newInstance(type);
     Unmarshaller unmarshaller = context.createUnmarshaller();

@@ -248,17 +248,11 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       return;
     }
 
-    final List<String> paths = ObjectsConvertor.convert(committables, new Convertor<File, String>() {
-      @Override
-      public String convert(File o) {
-        return o.getPath();
-      }
-    });
     final IdeaSvnkitBasedAuthenticationCallback authenticationCallback = new IdeaSvnkitBasedAuthenticationCallback(mySvnVcs);
     try {
-      final SvnBindClient client = new SvnBindClient(SvnApplicationSettings.getInstance().getCommandLinePath(), new Convertor<String[], SVNURL>() {
+      final SvnBindClient client = new SvnBindClient(SvnApplicationSettings.getInstance().getCommandLinePath(), new Convertor<File[], SVNURL>() {
         @Override
-        public SVNURL convert(String[] o) {
+        public SVNURL convert(File[] o) {
           SVNInfo info = o.length > 0 ? mySvnVcs.getInfo(o[0]) : null;
 
           if (info == null || info.getURL() == null) {
@@ -270,7 +264,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       });
       client.setAuthenticationCallback(authenticationCallback);
       client.setHandler(new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator()));
-      final long revision = client.commit(ArrayUtil.toStringArray(paths), comment, false, false);
+      final long revision = client.commit(ArrayUtil.toObjectArray(committables, File.class), comment, false, false);
       reportCommittedRevisions(feedback, String.valueOf(revision));
     }
     catch (VcsException e) {

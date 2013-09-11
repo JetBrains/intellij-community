@@ -17,8 +17,12 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNURL;
 
+import java.io.File;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -31,23 +35,23 @@ public class SvnBindClient {
   private final String myExecutablePath;
   private CommitEventHandler myHandler;
   private AuthenticationCallback myAuthenticationCallback;
-  private Convertor<String[], SVNURL> myUrlProvider;
+  private Convertor<File[], SVNURL> myUrlProvider;
 
-  public SvnBindClient(String path, Convertor<String[], SVNURL> urlProvider) {
+  public SvnBindClient(String path, Convertor<File[], SVNURL> urlProvider) {
     myExecutablePath = path;
     myUrlProvider = urlProvider;
   }
 
-  public long commit(String[] path, String message, boolean recurse, boolean noUnlock) throws VcsException {
-    return commit(path, message, recurse? 3 : 0, noUnlock, false, null, null);
+  public long commit(File[] path, String message, boolean recurse, boolean noUnlock) throws VcsException {
+    return commit(path, message, SVNDepth.getInfinityOrEmptyDepth(recurse), noUnlock, false, null, null);
   }
 
-  public long commit(String[] path,
+  public long commit(File[] path,
                      String message,
-                     int depth,
+                     @Nullable SVNDepth depth,
                      boolean noUnlock,
                      boolean keepChangelist,
-                     String[] changelists,
+                     Collection<String> changelists,
                      Map revpropTable) throws VcsException {
     final long commit = new SvnCommitRunner(myExecutablePath, myHandler, myAuthenticationCallback).
         commit(path, message, depth, noUnlock, keepChangelist, changelists, revpropTable, myUrlProvider);

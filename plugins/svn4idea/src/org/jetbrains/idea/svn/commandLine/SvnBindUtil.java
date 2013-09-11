@@ -68,10 +68,6 @@ public class SvnBindUtil {
     }
   }
 
-  public static String getDepthName(final int i) {
-    return org.tigris.subversion.javahl.Depth.toADepth(i).name();
-  }
-
   public static File correctUpToExistingParent(File base) {
     while (base != null) {
       if (base.exists() && base.isDirectory()) return base;
