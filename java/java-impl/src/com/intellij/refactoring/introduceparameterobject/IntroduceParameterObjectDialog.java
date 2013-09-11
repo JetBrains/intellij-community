@@ -40,6 +40,7 @@ import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -338,7 +339,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         if (containingFile != null) {
           final VirtualFile virtualFile = containingFile.getVirtualFile();
           if (virtualFile != null) {
-            existingNotALibraryClass = ProjectRootManager.getInstance(myProject).getFileIndex().isInSourceContent(virtualFile);
+            existingNotALibraryClass = ProjectRootManager.getInstance(myProject).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.SOURCES);
           }
         }
       }

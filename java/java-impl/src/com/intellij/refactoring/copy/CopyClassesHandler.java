@@ -17,12 +17,12 @@ package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -81,7 +81,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       LOG.assertTrue(navigationElement != null, element);
       final PsiFile containingFile = navigationElement.getContainingFile();
       if (!(containingFile instanceof PsiClassOwner &&
-            ProjectRootsUtil.isOutsideSourceRoot(containingFile))) {
+            JavaProjectRootsUtil.isOutsideJavaSourceRoot(containingFile))) {
         PsiClass[] topLevelClasses = getTopLevelClasses(element);
         if (topLevelClasses == null) {
           if (element instanceof PsiDirectory) {

@@ -16,7 +16,6 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -92,7 +92,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       if (((PsiClass)element).getContainingClass() != null) return true;
       parentFile = element.getContainingFile();
     }
-    return parentFile instanceof PsiJavaFile && ProjectRootsUtil.isOutsideSourceRoot(parentFile);
+    return parentFile instanceof PsiJavaFile && JavaProjectRootsUtil.isOutsideJavaSourceRoot(parentFile);
   }
 
   @Override

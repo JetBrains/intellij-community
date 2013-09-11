@@ -41,6 +41,7 @@ import com.intellij.uiDesigner.propertyInspector.renderers.ClassToBindRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -159,7 +160,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
           new ClassFilter() { // we need show classes from the sources roots only
             public boolean isAccepted(final PsiClass aClass) {
               final VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-              return vFile != null && fileIndex.isInSource(vFile);
+              return vFile != null && fileIndex.isUnderSourceRootOfType(vFile, JavaModuleSourceRootTypes.SOURCES);
             }
           },
           aClass
