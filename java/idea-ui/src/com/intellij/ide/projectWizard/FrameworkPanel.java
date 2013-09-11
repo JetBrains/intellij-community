@@ -81,7 +81,7 @@ class FrameworkPanel extends JPanel {
     FrameworkSupportInModuleConfigurable configurable = myFramework.createConfigurable(myModel);
     configurable.onFrameworkSelectionChanged(true);
     FrameworkSupportOptionsComponent component =
-      new FrameworkSupportOptionsComponent(myModel, myModel.getLibrariesContainer(), configurable, myFramework, configurable);
+      new FrameworkSupportOptionsComponent(myModel, myModel.getLibrariesContainer(), configurable, myFramework, configurable, true);
     return component.getMainPanel();
   }
 

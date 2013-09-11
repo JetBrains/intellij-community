@@ -57,6 +57,15 @@ public class FrameworkSupportOptionsComponent {
                                           Disposable parentDisposable,
                                           FrameworkSupportInModuleProvider provider,
                                           final FrameworkSupportInModuleConfigurable configurable) {
+    this(model, container, parentDisposable, provider, configurable, false);
+  }
+
+  public FrameworkSupportOptionsComponent(FrameworkSupportModelBase model,
+                                          LibrariesContainer container,
+                                          Disposable parentDisposable,
+                                          FrameworkSupportInModuleProvider provider,
+                                          final FrameworkSupportInModuleConfigurable configurable,
+                                          boolean inline) {
     myModel = model;
     myConfigurable = configurable;
     VerticalFlowLayout layout = new VerticalFlowLayout();
@@ -69,7 +78,7 @@ public class FrameworkSupportOptionsComponent {
       myMainPanel.add(myFrameworkVersionComponent.getMainPanel());
     }
 
-    final JComponent component = myConfigurable.createComponent();
+    final JComponent component = myConfigurable.createComponent(inline);
     if (component != null) {
       myMainPanel.add(component);
     }
