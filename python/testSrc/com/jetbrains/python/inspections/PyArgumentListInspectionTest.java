@@ -128,4 +128,9 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     myFixture.enableInspections(PyArgumentListInspection.class);
     myFixture.checkHighlighting(true, false, false);
   }
+
+  // PY-9664
+  public void testFloatConstructor() {
+    doTest();
+  }
 }
