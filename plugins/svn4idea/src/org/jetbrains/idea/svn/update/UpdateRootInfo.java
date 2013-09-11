@@ -32,7 +32,7 @@ public class UpdateRootInfo {
     myRevision = SVNRevision.HEAD;
 
     SVNInfo info = vcs.getInfo(file);
-    myUrl = info != null && info.getURL() != null ? info.getDepth().toString() : "";
+    myUrl = info != null && info.getURL() != null ? info.getURL().toString() : "";
   }
 
   public SVNURL getUrl() {
