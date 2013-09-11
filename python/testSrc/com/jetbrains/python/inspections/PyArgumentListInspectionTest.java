@@ -86,7 +86,7 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
   
-  public void _testUnresolvedSuperclass() {  // PY-4419
+  public void testUnresolvedSuperclass() {  // PY-4419
     doTest();
   }
   
@@ -127,5 +127,10 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     myFixture.configureByFile("inspections/PyArgumentListInspection/" + getTestName(true) + ".py");
     myFixture.enableInspections(PyArgumentListInspection.class);
     myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-9664
+  public void testFloatConstructor() {
+    doTest();
   }
 }

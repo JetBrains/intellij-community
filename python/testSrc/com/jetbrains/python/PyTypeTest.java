@@ -29,7 +29,7 @@ public class PyTypeTest extends PyTestCase {
            "expr = 1 + 2");
     doTest("str | unicode",
            "expr = '1' + '2'");
-    doTest("str",
+    doTest("str | unicode",
            "expr = '%s' % ('a')");
     doTest("list[int]",
            "expr = [1] + [2]");
@@ -443,6 +443,13 @@ public class PyTypeTest extends PyTestCase {
            "expr = f()\n");
   }
 
+  public void testGeneratorNextType() {
+    doTest("int",
+           "def f():\n" +
+           "    yield 10\n" +
+           "expr = f().next()\n");
+  }
+
   // PY-7020
   public void testListComprehensionType() {
     final PyExpression expr = parseExpr("expr = [str(x) for x in range(10)]\n");
@@ -682,6 +689,39 @@ public class PyTypeTest extends PyTestCase {
            "\n" +
            "def f(x):\n" +
            "    expr = C(x).foo\n");
+  }
+
+  public void testOpenDefault() {
+    doTest("FileIO[str]",
+           "expr = open('foo')\n");
+  }
+
+  public void testOpenText() {
+    doTest("FileIO[str]",
+           "expr = open('foo', 'r')\n");
+  }
+
+  public void testOpenBinary() {
+    doTest("FileIO[str]",
+           "expr = open('foo', 'rb')\n");
+  }
+
+  public void testIoOpenDefault() {
+    doTest("TextIOWrapper[unicode]",
+           "import io\n" +
+           "expr = io.open('foo')\n");
+  }
+
+  public void testIoOpenText() {
+    doTest("TextIOWrapper[unicode]",
+           "import io\n" +
+           "expr = io.open('foo', 'r')\n");
+  }
+
+  public void testIoOpenBinary() {
+    doTest("FileIO[str]",
+           "import io\n" +
+           "expr = io.open('foo', 'rb')\n");
   }
 
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
