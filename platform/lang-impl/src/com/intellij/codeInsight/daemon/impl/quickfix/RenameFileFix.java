@@ -80,7 +80,7 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
 
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!file.isValid()) return false;
+    if (file == null || !file.isValid()) return false;
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return false;
     final VirtualFile parent = vFile.getParent();
