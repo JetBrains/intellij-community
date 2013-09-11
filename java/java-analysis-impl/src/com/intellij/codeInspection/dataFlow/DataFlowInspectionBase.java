@@ -133,7 +133,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     for (int i = 0; i < contracts.size(); i++) {
       MethodContract contract = contracts.get(i);
       if (contract.arguments.length != paramCount) {
-        return "Method takes " + paramCount + " parameters, while contract clause " + i + " expects " + contract.arguments.length;
+        return "Method takes " + paramCount + " parameters, while contract clause number " + (i + 1) + " expects " + contract.arguments.length;
       }
     }
     return null;
