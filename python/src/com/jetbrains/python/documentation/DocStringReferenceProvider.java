@@ -45,14 +45,17 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         StructuredDocString docString = DocStringUtil.parse(text);
         if (docString != null) {
           result.addAll(referencesFromNames(element, offset, docString,
-                                            docString.getTagArguments(StructuredDocStringBase.PARAM_TAGS), StructuredDocStringBase.PARAMETER));
+                                            docString.getTagArguments(StructuredDocStringBase.PARAM_TAGS),
+                                            StructuredDocStringBase.PARAMETER));
           result.addAll(referencesFromNames(element, offset, docString,
-                                            docString.getTagArguments(StructuredDocStringBase.PARAM_TYPE_TAGS), StructuredDocStringBase.PARAMETER_TYPE));
+                                            docString.getTagArguments(StructuredDocStringBase.PARAM_TYPE_TAGS),
+                                            StructuredDocStringBase.PARAMETER_TYPE));
           result.addAll(referencesFromNames(element, offset, docString,
                                             docString.getKeywordArgumentSubstrings(), StructuredDocStringBase.KEYWORD));
 
           result.addAll(referencesFromNames(element, offset, docString,
-                                            docString.getTagArguments(StructuredDocStringBase.VARIABLE_TAGS), StructuredDocStringBase.VARIABLE));
+                                            docString.getTagArguments(StructuredDocStringBase.VARIABLE_TAGS),
+                                            StructuredDocStringBase.VARIABLE));
           result.addAll(returnTypes(element, docString, offset));
         }
         return result.toArray(new PsiReference[result.size()]);
@@ -80,8 +83,9 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
     List<PsiReference> result = new ArrayList<PsiReference>();
     for (Substring name : paramNames) {
       final String s = name.toString();
-      if (PyNames.isIdentifier(s) && !refType.equals(StructuredDocStringBase.PARAMETER_TYPE)) {
-        result.add(new DocStringParameterReference(element, name.getTextRange().shiftRight(offset), refType));
+      if (PyNames.isIdentifier(s)) {
+        final TextRange range = name.getTextRange().shiftRight(offset);
+        result.add(new DocStringParameterReference(element, range, refType));
       }
       if (refType.equals(StructuredDocStringBase.PARAMETER_TYPE)) {
         final Substring type = docString.getParamTypeSubstring(s);
