@@ -102,18 +102,20 @@ public class GrConcatenationInjector implements MultiHostInjector {
   }
 
   @Nullable
-  public static BaseInjection getLanguageParams(PsiModifierListOwner annotationOwner, Configuration configuration) {
+  private static BaseInjection getLanguageParams(PsiModifierListOwner annotationOwner, Configuration configuration) {
     final Pair<String, ? extends Set<String>> pair = Configuration.getInstance().getAdvancedConfiguration().getLanguageAnnotationPair();
     final PsiAnnotation[] annotations = getAnnotationFrom(annotationOwner, pair, true, true);
     if (annotations.length > 0) {
       String prefix = StringUtil.notNullize(AnnotationUtilEx.calcAnnotationValue(annotations, "prefix"));
       String suffix = StringUtil.notNullize(AnnotationUtilEx.calcAnnotationValue(annotations, "suffix"));
       String id = StringUtil.notNullize(AnnotationUtilEx.calcAnnotationValue(annotations, "value"));
-      BaseInjection injection = new BaseInjection(GroovyLanguageInjectionSupport.GROOVY_SUPPORT_ID);
-      injection.setPrefix(prefix);
-      injection.setSuffix(suffix);
-      injection.setInjectedLanguageId(id);
-      return injection;
+      if (!StringUtil.isEmpty(id)) {
+        BaseInjection injection = new BaseInjection(GroovyLanguageInjectionSupport.GROOVY_SUPPORT_ID);
+        injection.setPrefix(prefix);
+        injection.setSuffix(suffix);
+        injection.setInjectedLanguageId(id);
+        return injection;
+      }
     }
 
     if (annotationOwner instanceof PsiParameter && annotationOwner.getParent() instanceof PsiParameterList &&annotationOwner.getParent().getParent() instanceof PsiMethod) {

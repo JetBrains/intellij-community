@@ -54,8 +54,8 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
     if (operands.length == 0) return;
 
-    Language language = findLanguage(operands);
-    if (language != null) {
+    String languageID = findLanguage(operands);
+    if (languageID != null) {
       PsiFile file = operands[0].getContainingFile();
 
       List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = ContainerUtil.newArrayList();
@@ -78,7 +78,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
           }
         }
         else {
-          InjectedLanguage injectedLanguage = InjectedLanguage.create(language.getID(), prefix, "", false);
+          InjectedLanguage injectedLanguage = InjectedLanguage.create(languageID, prefix, "", false);
           TextRange range = manipulator.getRangeInElement(operand);
           PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)operand;
           list.add(Trinity.create(host, injectedLanguage, range));
@@ -86,7 +86,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
         }
       }
 
-        InjectorUtils.registerInjection(language, list, file, registrar);
+      InjectorUtils.registerInjection(Language.findLanguageByID(languageID), list, file, registrar);
       InjectorUtils.registerSupport(mySupport, false/*todo*/, registrar);
       InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable);
     }
@@ -100,11 +100,11 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
   }
 
   @Nullable
-  private Language findLanguage(PsiElement[] operands) {
+  private String findLanguage(PsiElement[] operands) {
     PsiElement parent = PsiTreeUtil.findCommonParent(operands);
     BaseInjection params = GrConcatenationInjector.findLanguageParams(parent, myConfiguration);
     if (params != null) {
-      return Language.findLanguageByID(params.getInjectedLanguageId());
+      return params.getInjectedLanguageId();
     }
     return null;
   }
