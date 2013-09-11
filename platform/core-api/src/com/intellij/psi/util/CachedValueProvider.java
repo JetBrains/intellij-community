@@ -31,7 +31,7 @@ public interface CachedValueProvider<T> {
     private final T myValue;
     private final Object[] myDependencyItems;
 
-    public Result(@Nullable T value, Object... dependencyItems) {
+    public Result(@Nullable T value, @NotNull Object... dependencyItems) {
       myValue = value;
       myDependencyItems = dependencyItems;
 
@@ -50,6 +50,7 @@ public interface CachedValueProvider<T> {
       return myValue;
     }
 
+    @NotNull
     public Object[] getDependencyItems() {
       return myDependencyItems;
     }
@@ -58,11 +59,11 @@ public interface CachedValueProvider<T> {
       return create(value, dependency);
     }
 
-    public static <T> Result<T> create(@Nullable T value, Object... dependencies) {
+    public static <T> Result<T> create(@Nullable T value, @NotNull Object... dependencies) {
       return new Result<T>(value, dependencies);
     }
 
-    public static <T> Result<T> create(@Nullable T value, Collection<?> dependencies) {
+    public static <T> Result<T> create(@Nullable T value, @NotNull Collection<?> dependencies) {
       return new Result<T>(value, ArrayUtil.toObjectArray(dependencies));
     }
 
