@@ -6,6 +6,7 @@ import org.jetbrains.idea.svn.add.SvnKitAddClient;
 import org.jetbrains.idea.svn.annotate.SvnKitAnnotateClient;
 import org.jetbrains.idea.svn.change.SvnKitChangeListClient;
 import org.jetbrains.idea.svn.checkout.SvnKitCheckoutClient;
+import org.jetbrains.idea.svn.cleanup.SvnKitCleanupClient;
 import org.jetbrains.idea.svn.conflict.SvnKitConflictClient;
 import org.jetbrains.idea.svn.content.SvnKitContentClient;
 import org.jetbrains.idea.svn.copy.SvnKitCopyMoveClient;
@@ -44,6 +45,7 @@ public class SvnKitClientFactory extends ClientFactory {
     changeListClient = new SvnKitChangeListClient();
     checkoutClient = new SvnKitCheckoutClient();
     myLockClient = new SvnKitLockClient();
+    myCleanupClient = new SvnKitCleanupClient();
     statusClient = new SvnkitSvnStatusClient(myVcs.createStatusClient());
     infoClient = new SvnkitSvnWcClient(myVcs);
   }

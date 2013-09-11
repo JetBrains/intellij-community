@@ -6,6 +6,7 @@ import org.jetbrains.idea.svn.add.CmdAddClient;
 import org.jetbrains.idea.svn.annotate.CmdAnnotateClient;
 import org.jetbrains.idea.svn.change.CmdChangeListClient;
 import org.jetbrains.idea.svn.checkout.CmdCheckoutClient;
+import org.jetbrains.idea.svn.cleanup.CmdCleanupClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineUpdateClient;
@@ -44,6 +45,7 @@ public class CmdClientFactory extends ClientFactory {
     changeListClient = new CmdChangeListClient();
     checkoutClient = new CmdCheckoutClient();
     myLockClient = new CmdLockClient();
+    myCleanupClient = new CmdCleanupClient();
     statusClient = new SvnCommandLineStatusClient(myVcs.getProject());
     infoClient = new SvnCommandLineInfoClient(myVcs.getProject());
   }
