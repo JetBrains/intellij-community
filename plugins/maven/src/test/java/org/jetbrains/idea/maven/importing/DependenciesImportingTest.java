@@ -244,7 +244,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "    <groupId>test</groupId>" +
                           "    <artifactId>m2</artifactId>" +
                           "    <version>1</version>" +
-                          "    <classifier>zzz</classifier>" +
+                          "    <classifier>client</classifier>" +
                           "  </dependency>" +
                           "</dependencies>");
 
@@ -255,8 +255,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProject();
 
     assertModuleModuleDeps("m1", "m2");
-    assertModuleLibDep("m1", "Maven: test:m2:zzz:1",
-                       "jar://" + getRepositoryPath() + "/test/m2/1/m2-1-zzz.jar!/",
+    assertModuleLibDep("m1", "Maven: test:m2:client:1",
+                       "jar://" + getRepositoryPath() + "/test/m2/1/m2-1-client.jar!/",
                        "jar://" + getRepositoryPath() + "/test/m2/1/m2-1-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/test/m2/1/m2-1-javadoc.jar!/");
   }
