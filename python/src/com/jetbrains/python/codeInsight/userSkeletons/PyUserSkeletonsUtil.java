@@ -2,6 +2,7 @@ package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -153,6 +154,13 @@ public class PyUserSkeletonsUtil {
         moduleName = "__builtin__";
       }
       if (moduleName != null) {
+        final PyQualifiedName qName = PyQualifiedName.fromDottedString(moduleName);
+        for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
+          final PyQualifiedName restored = provider.getCanonicalPath(qName, null);
+          if (restored != null) {
+            moduleName = restored.toString();
+          }
+        }
         return getUserSkeletonForModuleQName(moduleName, file);
       }
     }
