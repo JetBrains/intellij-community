@@ -49,7 +49,7 @@ public class DfaTypeValue extends DfaValue {
     }
 
     @NotNull
-    public DfaTypeValue createTypeValue(@NotNull PsiType type, Nullness nullable) {
+    public DfaTypeValue createTypeValue(@NotNull PsiType type, @NotNull Nullness nullable) {
       type = TypeConversionUtil.erasure(type);
       mySharedInstance.myType = type;
       mySharedInstance.myCanonicalText = StringUtil.notNullize(type.getCanonicalText(), PsiKeyword.NULL);
