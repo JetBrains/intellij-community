@@ -57,6 +57,7 @@ public class JavaStylePropertiesUtil {
 
   private static GrAssignmentExpression genRefForSetter(GrMethodCall call, String accessorName) {
     String name = getPropertyNameBySetterName(accessorName);
+    assert name != null : accessorName;
     GrExpression value = call.getExpressionArguments()[0];
     GrReferenceExpression refExpr = (GrReferenceExpression)call.getInvokedExpression();
 
