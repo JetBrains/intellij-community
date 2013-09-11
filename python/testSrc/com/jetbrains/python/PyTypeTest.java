@@ -684,6 +684,39 @@ public class PyTypeTest extends PyTestCase {
            "    expr = C(x).foo\n");
   }
 
+  public void testOpenDefault() {
+    doTest("FileIO[str]",
+           "expr = open('foo')\n");
+  }
+
+  public void testOpenText() {
+    doTest("FileIO[str]",
+           "expr = open('foo', 'r')\n");
+  }
+
+  public void testOpenBinary() {
+    doTest("FileIO[str]",
+           "expr = open('foo', 'rb')\n");
+  }
+
+  public void testIoOpenDefault() {
+    doTest("TextIOWrapper[unicode]",
+           "import io\n" +
+           "expr = io.open('foo')\n");
+  }
+
+  public void testIoOpenText() {
+    doTest("TextIOWrapper[unicode]",
+           "import io\n" +
+           "expr = io.open('foo', 'r')\n");
+  }
+
+  public void testIoOpenBinary() {
+    doTest("FileIO[str]",
+           "import io\n" +
+           "expr = io.open('foo', 'rb')\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
