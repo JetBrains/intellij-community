@@ -24,6 +24,7 @@ import com.intellij.ide.util.treeView.smartTree.NodeProvider;
 import com.intellij.ide.util.treeView.smartTree.ProvidingTreeModel;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class StructureViewCompositeModel extends StructureViewModelBase {
+public class StructureViewCompositeModel extends StructureViewModelBase implements Disposable {
   private final StructureViewComposite.StructureViewDescriptor[] myViews;
 
   public StructureViewCompositeModel(PsiFile file, StructureViewComposite.StructureViewDescriptor[] views) {
