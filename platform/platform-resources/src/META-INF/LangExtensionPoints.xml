@@ -55,7 +55,9 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.highlighting.BraceMatcher"/>
     </extensionPoint>
     <extensionPoint name="quoteHandler"
-                    beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP"/>
+                    beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP">
+      <with attribute="className" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
+    </extensionPoint>
     <extensionPoint name="extendWordSelectionHandler"
                     interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler"/>
     <extensionPoint name="basicWordSelectionFilter"
@@ -420,7 +422,9 @@
       <with attribute="implementation" implements="com.intellij.psi.PsiReferenceContributor"/>
     </extensionPoint>
 
-    <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean"/>
+    <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean">
+      <with attribute="className" implements="com.intellij.psi.PsiReferenceProvider"/>
+    </extensionPoint>
     <extensionPoint name="patterns.patternClass" beanClass="com.intellij.patterns.compiler.PatternClassBean"/>
 
     <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher"/>
