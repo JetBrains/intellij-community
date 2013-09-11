@@ -382,7 +382,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       }
     }
 
-    final VirtualFile[] files = getSelectedFilesInt();
+    final List<VirtualFile> selectedFiles = Arrays.asList(getSelectedFilesInt());
+    final VirtualFile[] files = VfsUtilCore.toVirtualFileArray(FileChooserUtil.getChosenFiles(myChooserDescriptor, selectedFiles));
     if (files.length == 0) {
       myChosenFiles = VirtualFile.EMPTY_ARRAY;
       close(CANCEL_EXIT_CODE);
@@ -469,8 +470,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       return VirtualFile.EMPTY_ARRAY;
     }
 
-    final List<VirtualFile> selectedFiles = Arrays.asList(myFileSystemTree.getSelectedFiles());
-    return VfsUtilCore.toVirtualFileArray(FileChooserUtil.getChosenFiles(myChooserDescriptor, selectedFiles));
+    return myFileSystemTree.getSelectedFiles();
   }
 
   private final Map<String, LocalFileSystem.WatchRequest> myRequests = new HashMap<String, LocalFileSystem.WatchRequest>();
