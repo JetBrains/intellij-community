@@ -84,11 +84,6 @@ public class GroupMerger implements IMerger {
     myPackStart = myPackEnd = -1;
   }
 
-  private SVNDiffOptions createMergeOptions() {
-    return new SVNDiffOptions(mySvnConfig.IGNORE_SPACES_IN_MERGE, mySvnConfig.IGNORE_SPACES_IN_MERGE,
-                                                    mySvnConfig.IGNORE_SPACES_IN_MERGE);
-  }
-
   public boolean hasNext() {
     return mySplitter.hasNext();
   }
@@ -135,10 +130,10 @@ public class GroupMerger implements IMerger {
 
   protected void doMerge() throws VcsException {
     SvnTarget source = SvnTarget.fromURL(myCurrentBranchUrl);
+    MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
 
-    myVcs.getFactory(source).createMergeClient()
-      .merge(source, createRange(), myTarget, SVNDepth.INFINITY, mySvnConfig.MERGE_DRY_RUN, myDryRun, true, createMergeOptions(),
-             myHandler);
+    client.merge(source, createRange(), myTarget, SVNDepth.INFINITY, mySvnConfig.MERGE_DRY_RUN, myDryRun, true,
+                 mySvnConfig.getMergeOptions(), myHandler);
   }
 
   @NonNls

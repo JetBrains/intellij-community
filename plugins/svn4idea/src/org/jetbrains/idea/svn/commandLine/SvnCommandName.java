@@ -22,12 +22,11 @@ package org.jetbrains.idea.svn.commandLine;
  * Time: 1:49 PM
  */
 public enum SvnCommandName {
-  // TODO: temporary command for "more smooth" converting between simple commands and line commands
-  empty("", false),
   version("--version", false),
   info("info", false),
   st("st", false),
   up("up", true),
+  relocate("relocate", true),
   ci("commit", true),
   checkout("checkout", true),
   cleanup("cleanup", true),

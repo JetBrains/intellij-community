@@ -24,15 +24,13 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.commandLine.SvnCommandLineUpdateClient;
-import org.jetbrains.idea.svn.portable.SvnSvnkitUpdateClient;
+import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.portable.SvnUpdateClientI;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -99,24 +97,20 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
     }
 
     private SvnUpdateClientI createUpdateClient(SvnConfiguration configuration, File root, boolean isSwitch, SVNURL sourceUrl) {
-      final SvnUpdateClientI updateClient;
-      boolean is18Format = myVcs.getWorkingCopyFormat(root) == WorkingCopyFormat.ONE_DOT_EIGHT;
+      boolean is17 = WorkingCopyFormat.ONE_DOT_SEVEN.equals(myVcs.getWorkingCopyFormat(root));
+      boolean isSupportedProtocol =
+        SvnAuthenticationManager.HTTP.equals(sourceUrl.getProtocol()) || SvnAuthenticationManager.HTTPS.equals(sourceUrl.getProtocol());
 
-      // do not do from command line for switch now
-      if (! isSwitch && (is18Format || SvnConfiguration.UseAcceleration.commandLine.equals(configuration.myUseAcceleration) &&
-          Svn17Detector.is17(myVcs.getProject(), root) && (
-          SvnAuthenticationManager.HTTP.equals(sourceUrl.getProtocol()) ||
-          SvnAuthenticationManager.HTTPS.equals(sourceUrl.getProtocol())
-          ))) {
-        updateClient = new SvnCommandLineUpdateClient(myVcs, null);
-      } else {
-        updateClient = new SvnSvnkitUpdateClient(myVcs.createUpdateClient());
-      }
+      // TODO: Update this with just myVcs.getFactory(root) when switch and authentication protocols are implemented for command line
+      ClientFactory factory = is17 && (isSwitch || !isSupportedProtocol) ? myVcs.getSvnKitFactory() : myVcs.getFactory(root);
+      final SvnUpdateClientI updateClient = factory.createUpdateClient();
+
       if (! isSwitch) {
         updateClient.setIgnoreExternals(configuration.IGNORE_EXTERNALS);
       }
       updateClient.setEventHandler(myHandler);
       updateClient.setUpdateLocksOnDemand(configuration.UPDATE_LOCK_ON_DEMAND);
+
       return updateClient;
     }
 

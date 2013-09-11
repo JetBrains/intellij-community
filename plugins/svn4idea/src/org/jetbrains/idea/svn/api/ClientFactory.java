@@ -6,6 +6,7 @@ import org.jetbrains.idea.svn.add.AddClient;
 import org.jetbrains.idea.svn.annotate.AnnotateClient;
 import org.jetbrains.idea.svn.change.ChangeListClient;
 import org.jetbrains.idea.svn.checkout.CheckoutClient;
+import org.jetbrains.idea.svn.cleanup.CleanupClient;
 import org.jetbrains.idea.svn.conflict.ConflictClient;
 import org.jetbrains.idea.svn.content.ContentClient;
 import org.jetbrains.idea.svn.copy.CopyMoveClient;
@@ -14,9 +15,11 @@ import org.jetbrains.idea.svn.history.HistoryClient;
 import org.jetbrains.idea.svn.integrate.MergeClient;
 import org.jetbrains.idea.svn.lock.LockClient;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
+import org.jetbrains.idea.svn.portable.SvnUpdateClientI;
 import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.revert.RevertClient;
+import org.jetbrains.idea.svn.update.RelocateClient;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -41,6 +44,8 @@ public abstract class ClientFactory {
   protected ChangeListClient changeListClient;
   protected CheckoutClient checkoutClient;
   protected LockClient myLockClient;
+  protected CleanupClient myCleanupClient;
+  protected RelocateClient myRelocateClient;
 
   protected ClientFactory(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -86,6 +91,11 @@ public abstract class ClientFactory {
     return infoClient;
   }
 
+  // TODO: Update this in same like other clients - move to corresponding package, rename clients
+  // New instances should be always created by this method, as setXxx() methods are currently used in update logic
+  @NotNull
+  public abstract SvnUpdateClientI createUpdateClient();
+
   @NotNull
   public DeleteClient createDeleteClient() {
     return prepare(deleteClient);
@@ -124,6 +134,16 @@ public abstract class ClientFactory {
   @NotNull
   public LockClient createLockClient() {
     return prepare(myLockClient);
+  }
+
+  @NotNull
+  public CleanupClient createCleanupClient() {
+    return prepare(myCleanupClient);
+  }
+
+  @NotNull
+  public RelocateClient createRelocateClient() {
+    return prepare(myRelocateClient);
   }
 
   @NotNull

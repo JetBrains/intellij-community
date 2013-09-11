@@ -66,15 +66,14 @@ public class RelocateAction extends BasicAction {
         if (indicator != null) {
           indicator.setIndeterminate(true);
         }
-        final SVNUpdateClient client = activeVcs.createUpdateClient();
+
         try {
-          client.doRelocate(new File(file.getPath()),
-                            SVNURL.parseURIEncoded(beforeURL),
-                            SVNURL.parseURIEncoded(afterURL),
-                            true);
+          File path = new File(file.getPath());
+
+          activeVcs.getFactory(path).createRelocateClient().relocate(path, beforeURL, afterURL);
           VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
         }
-        catch (final SVNException e) {
+        catch (final VcsException e) {
           WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
             public void run() {
               Messages.showErrorDialog(project, "Error relocating working copy: " + e.getMessage(), "Relocate Working Copy");

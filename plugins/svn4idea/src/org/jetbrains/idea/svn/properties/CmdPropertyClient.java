@@ -42,15 +42,16 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     List<String> parameters = new ArrayList<String>();
 
     parameters.add(property);
-    CommandUtil.put(parameters, target);
     if (!revisionProperty) {
+      CommandUtil.put(parameters, target);
       CommandUtil.put(parameters, revision);
     } else {
-      parameters.add("--revprop");
-
       // currently revision properties are returned only for file targets
       assertFile(target);
 
+      // "svn propget --revprop" treats '@' symbol at file path end as part of the path - so here we manually omit adding '@' at the end
+      CommandUtil.put(parameters, target, false);
+      parameters.add("--revprop");
       CommandUtil.put(parameters, resolveRevisionNumber(target.getFile(), revision));
     }
     // always use --xml option here - this allows to determine if property exists with empty value or property does not exist, which

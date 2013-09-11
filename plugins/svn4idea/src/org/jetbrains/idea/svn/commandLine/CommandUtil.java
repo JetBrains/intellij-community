@@ -70,12 +70,6 @@ public class CommandUtil {
     return SvnApplicationSettings.getInstance().getCommandLinePath();
   }
 
-  public static SvnLineCommand runSimple(@NotNull SvnSimpleCommand command, @NotNull SvnVcs vcs, @Nullable File base, @Nullable SVNURL url)
-    throws SVNException {
-    // empty command name passed, as command name is already in command.getParameters()
-    return runSimple(SvnCommandName.empty, vcs, base, url, new ArrayList<String>(Arrays.asList(command.getParameters())));
-  }
-
   /**
    * Puts given value to parameters if condition is satisfied
    *
@@ -90,7 +84,15 @@ public class CommandUtil {
   }
 
   public static void put(@NotNull List<String> parameters, @NotNull File path) {
-    parameters.add(path.getAbsolutePath());
+    put(parameters, path.getAbsolutePath(), SVNRevision.UNDEFINED);
+  }
+
+  public static void put(@NotNull List<String> parameters, @NotNull File path, boolean usePegRevision) {
+    if (usePegRevision) {
+      put(parameters, path);
+    } else {
+      parameters.add(path.getAbsolutePath());
+    }
   }
 
   public static void put(@NotNull List<String> parameters, @NotNull File path, @Nullable SVNRevision pegRevision) {
@@ -99,10 +101,11 @@ public class CommandUtil {
 
   public static void put(@NotNull List<String> parameters, @NotNull String path, @Nullable SVNRevision pegRevision) {
     StringBuilder builder = new StringBuilder(path);
+    // always add '@' to correctly handle paths that contain '@' symbol
+    builder.append("@");
 
     if (pegRevision != null && !SVNRevision.UNDEFINED.equals(pegRevision) && !SVNRevision.WORKING.equals(pegRevision) &&
         pegRevision.isValid() && pegRevision.getNumber() != 0) {
-      builder.append("@");
       builder.append(pegRevision);
     }
 
@@ -111,6 +114,14 @@ public class CommandUtil {
 
   public static void put(@NotNull List<String> parameters, @NotNull SvnTarget target) {
     put(parameters, target.getPathOrUrlString(), target.getPegRevision());
+  }
+
+  public static void put(@NotNull List<String> parameters, @NotNull SvnTarget target, boolean usePegRevision) {
+    if (usePegRevision) {
+      put(parameters, target);
+    } else {
+      parameters.add(target.getPathOrUrlString());
+    }
   }
 
   public static void put(@NotNull List<String> parameters, @NotNull File... paths) {
@@ -152,6 +163,15 @@ public class CommandUtil {
       if (!StringUtil.isEmpty(value)) {
         parameters.add("--extensions");
         parameters.add(value);
+      }
+    }
+  }
+
+  public static void putChangeLists(@NotNull List<String> parameters, @Nullable Iterable<String> changeLists) {
+    if (changeLists != null) {
+      for (Object changeList : changeLists) {
+        parameters.add("--cl");
+        parameters.add((String) changeList);
       }
     }
   }

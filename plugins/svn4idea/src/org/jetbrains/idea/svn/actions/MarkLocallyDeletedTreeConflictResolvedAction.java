@@ -28,22 +28,16 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnLocallyDeletedChange;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNConflictChoice;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.util.Collections;
 import java.util.List;
@@ -100,7 +94,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends AnAction {
     SvnVcs vcs = SvnVcs.getInstance(project);
 
     try {
-      vcs.getFactory(path.getIOFile()).createConflictClient().resolve(path.getIOFile(), false, false, true);
+      vcs.getFactory(path.getIOFile()).createConflictClient().resolve(path.getIOFile(), SVNDepth.EMPTY, false, false, true);
     }
     catch (VcsException e) {
       exception.set(e);

@@ -25,6 +25,7 @@ import com.intellij.util.containers.Convertor;
 import org.apache.subversion.javahl.types.Revision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
@@ -48,27 +49,21 @@ public class SvnCommitRunner {
     myAuthenticationCallback = authenticationCallback;
   }
 
-  public long commit(String[] paths,
+  public long commit(File[] paths,
                      String message,
-                     int depth,
+                     @Nullable SVNDepth depth,
                      boolean noUnlock,
                      boolean keepChangelist,
-                     String[] changelists,
-                     Map revpropTable, Convertor<String[], SVNURL> urlProvider) throws VcsException {
+                     Collection<String> changelists,
+                     Map revpropTable, Convertor<File[], SVNURL> urlProvider) throws VcsException {
     if (paths.length == 0) return Revision.SVN_INVALID_REVNUM;
 
     final List<String> parameters = new ArrayList<String>();
-    parameters.add("--depth");
-    parameters.add(SvnBindUtil.getDepthName(depth));
-    if (noUnlock) {
-      parameters.add("--no-unlock");
-    }
-    if (keepChangelist) {
-      parameters.add("--keep-changelists");
-    }
-    if (changelists != null && changelists.length > 0) {
-      SvnBindUtil.changelistsToCommand(changelists, parameters);
-    }
+    CommandUtil.put(parameters, depth);
+    CommandUtil.put(parameters, noUnlock, "--no-unlock");
+    CommandUtil.put(parameters, keepChangelist, "--keep-changelists");
+    CommandUtil.putChangeLists(parameters, changelists);
+
     if (revpropTable != null && ! revpropTable.isEmpty()) {
       final Set<Map.Entry<Object, Object>> set = revpropTable.entrySet();
       for (Map.Entry<Object, Object> entry : set) {
@@ -78,10 +73,11 @@ public class SvnCommitRunner {
     }
     parameters.add("-m");
     parameters.add(message);
+    // TODO: seems that sort is not necessary here
     Arrays.sort(paths);
-    parameters.addAll(Arrays.asList(paths));
+    CommandUtil.put(parameters, paths);
 
-    SvnLineCommand.runWithAuthenticationAttempt(myExePath, new File(paths[0]), urlProvider.convert(paths), SvnCommandName.ci,
+    SvnLineCommand.runWithAuthenticationAttempt(myExePath, paths[0], urlProvider.convert(paths), SvnCommandName.ci,
                                                 myCommandListener, myAuthenticationCallback, ArrayUtil.toStringArray(parameters));
     myCommandListener.throwExceptionIfOccurred();
 

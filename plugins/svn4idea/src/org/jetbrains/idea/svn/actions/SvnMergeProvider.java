@@ -30,6 +30,7 @@ import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.properties.PropertyClient;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.*;
@@ -141,7 +142,7 @@ public class SvnMergeProvider implements MergeProvider {
     File path = new File(file.getPath());
     try {
       // TODO: Probably false should be passed to "resolveTree", but previous logic used true implicitly
-      vcs.getFactory(path).createConflictClient().resolve(path, false, true, true);
+      vcs.getFactory(path).createConflictClient().resolve(path, SVNDepth.EMPTY, false, true, true);
     }
     catch (VcsException e) {
       LOG.warn(e);

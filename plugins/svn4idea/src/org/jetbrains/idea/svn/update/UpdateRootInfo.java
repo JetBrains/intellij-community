@@ -20,7 +20,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 
@@ -33,7 +32,7 @@ public class UpdateRootInfo {
     myRevision = SVNRevision.HEAD;
 
     SVNInfo info = vcs.getInfo(file);
-    myUrl = info != null && info.getURL() != null ? info.getDepth().toString() : "";
+    myUrl = info != null && info.getURL() != null ? info.getURL().toString() : "";
   }
 
   public SVNURL getUrl() {
