@@ -17,13 +17,14 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 /**
  * @author oleg
@@ -44,8 +45,11 @@ public class ScrollToTheEndToolbarAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     Document document = myEditor.getDocument();
     int caretOffset = myEditor.getCaretModel().getOffset();
+    Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
+    Dimension size = myEditor.getContentComponent().getSize();
+    boolean isEndVisible = visibleArea.y + visibleArea.height >= size.height;
     boolean isOnLastLine = document.getLineNumber(caretOffset) == document.getLineCount() - 1;
-    e.getPresentation().setEnabled(!isOnLastLine);
+    e.getPresentation().setEnabled(!isEndVisible || !isOnLastLine);
   }
 
   @Override
