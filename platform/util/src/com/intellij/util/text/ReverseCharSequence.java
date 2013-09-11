@@ -34,6 +34,7 @@ public class ReverseCharSequence implements CharSequence{
   }
 
   public CharSequence subSequence(int start, int end) {
-    return new ReverseCharSequence(mySequence.subSequence(start, end));
+    int length = mySequence.length();
+    return new ReverseCharSequence(mySequence.subSequence(length - end, length - start));
   }
 }
