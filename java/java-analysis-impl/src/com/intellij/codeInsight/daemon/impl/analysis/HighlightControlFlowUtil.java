@@ -380,6 +380,10 @@ public class HighlightControlFlowUtil {
       HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddVariableInitializerFix(variable));
+      if (variable instanceof PsiField) {
+        QuickFixAction.registerQuickFixAction(highlightInfo,
+                                              QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false));
+      }
       return highlightInfo;
     }
 
@@ -546,11 +550,14 @@ public class HighlightControlFlowUtil {
   @Nullable
   public static HighlightInfo checkCannotWriteToFinal(PsiExpression expression, @NotNull PsiFile containingFile) {
     PsiReferenceExpression reference = null;
+    boolean readBeforeWrite = false;
     if (expression instanceof PsiAssignmentExpression) {
-      final PsiExpression left = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)expression).getLExpression());
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+      final PsiExpression left = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
       if (left instanceof PsiReferenceExpression) {
         reference = (PsiReferenceExpression)left;
       }
+      readBeforeWrite = assignmentExpression.getOperationTokenType() != JavaTokenType.EQ;
     }
     else if (expression instanceof PsiPostfixExpression) {
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(((PsiPostfixExpression)expression).getOperand());
@@ -558,6 +565,7 @@ public class HighlightControlFlowUtil {
       if (operand instanceof PsiReferenceExpression && (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)) {
         reference = (PsiReferenceExpression)operand;
       }
+      readBeforeWrite = true;
     }
     else if (expression instanceof PsiPrefixExpression) {
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(((PsiPrefixExpression)expression).getOperand());
@@ -565,13 +573,17 @@ public class HighlightControlFlowUtil {
       if (operand instanceof PsiReferenceExpression && (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)) {
         reference = (PsiReferenceExpression)operand;
       }
+      readBeforeWrite = true;
     }
     final PsiElement resolved = reference == null ? null : reference.resolve();
     PsiVariable variable = resolved instanceof PsiVariable ? (PsiVariable)resolved : null;
     if (variable == null || !variable.hasModifierProperty(PsiModifier.FINAL)) return null;
-    if (!canWriteToFinal(variable, expression, reference, containingFile)) {
+    final boolean canWrite = canWriteToFinal(variable, expression, reference, containingFile);
+    if (readBeforeWrite || !canWrite) {
       final String name = variable.getName();
-      String description = JavaErrorMessages.message("assignment.to.final.variable", name);
+      String description = canWrite ?
+                           JavaErrorMessages.message("variable.not.initialized", name) :
+                           JavaErrorMessages.message("assignment.to.final.variable", name);
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference.getTextRange()).descriptionAndTooltip(description).create();
       final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, expression);

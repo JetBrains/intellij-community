@@ -80,3 +80,15 @@ class Foo {
     }
   }
 }
+class T1 {
+  private final int i1;
+  private final int i2;
+  private final int i3;
+  private final int i4;
+  {
+    (<error descr="Variable 'i1' might not have been initialized">i1</error>)++;
+    ++(<error descr="Variable 'i2' might not have been initialized">i2</error>);
+    <error descr="Variable 'i3' might not have been initialized">i3</error> += 1;
+    (i4) = 1;
+  }
+}
