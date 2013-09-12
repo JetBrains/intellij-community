@@ -91,7 +91,7 @@ public class SubtypingConstraint implements ConstraintFormula {
             for (PsiTypeParameter parameter : SClass.getTypeParameters()) {
               final PsiType tSubstituted = tSubstitutor.substitute(parameter);
               final PsiType sSubstituted = sSubstitutor.substitute(parameter);
-              if (tSubstituted != null & sSubstituted != null) {
+              if (tSubstituted != null && sSubstituted != null) {
                 constraints.add(new SubtypingConstraint(tSubstituted, sSubstituted, false));
               }
             }
@@ -111,22 +111,22 @@ public class SubtypingConstraint implements ConstraintFormula {
       if (myT.equals(PsiType.NULL)) return false;
     } else {
       if (myT instanceof PsiWildcardType) {
-        final PsiType tBbound = ((PsiWildcardType)myT).getBound();
-        if (tBbound == null) {
+        final PsiType tBound = ((PsiWildcardType)myT).getBound();
+        if (tBound == null) {
           return true;
         }
         if (((PsiWildcardType)myT).isExtends()) {
-          if (tBbound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+          if (tBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
             return true;
           }
           if (myS instanceof PsiWildcardType) {
             final PsiType sBound = ((PsiWildcardType)myS).getBound();
             if (sBound != null && ((PsiWildcardType)myS).isExtends()) {
-              constraints.add(new SubtypingConstraint(tBbound, sBound, true));
+              constraints.add(new SubtypingConstraint(tBound, sBound, true));
               return true;
             }
           } else {
-            constraints.add(new SubtypingConstraint(tBbound, myS, true));
+            constraints.add(new SubtypingConstraint(tBound, myS, true));
             return true;
           }
           return false;
@@ -134,11 +134,11 @@ public class SubtypingConstraint implements ConstraintFormula {
           if (myS instanceof PsiWildcardType) {
             final PsiType sBound = ((PsiWildcardType)myS).getBound();
             if (sBound != null && ((PsiWildcardType)myS).isSuper()) {
-              constraints.add(new SubtypingConstraint(sBound, tBbound, true));
+              constraints.add(new SubtypingConstraint(sBound, tBound, true));
               return true;
             }
           } else {
-            constraints.add(new SubtypingConstraint(myS, tBbound, true));
+            constraints.add(new SubtypingConstraint(myS, tBound, true));
             return true;
           }
         }
