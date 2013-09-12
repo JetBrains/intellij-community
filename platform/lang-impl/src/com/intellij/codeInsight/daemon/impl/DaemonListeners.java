@@ -42,7 +42,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -74,8 +73,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -210,7 +207,7 @@ public class DaemonListeners implements Disposable {
           myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
         }
         for (Editor editor : activeEditors) {
-          repaintErrorStripeRenderer(editor);
+          repaintErrorStripeRenderer(editor, myProject);
         }
       }
     };
@@ -228,7 +225,7 @@ public class DaemonListeners implements Disposable {
           LOG.debug("Not worth: " + file);
           return;
         }
-        repaintErrorStripeRenderer(editor);
+        repaintErrorStripeRenderer(editor, myProject);
       }
 
       @Override
@@ -261,7 +258,7 @@ public class DaemonListeners implements Disposable {
             if (myProject.isDisposed()) return;
             for (FileEditor fileEditor : editors) {
               if (fileEditor instanceof TextEditor) {
-                repaintErrorStripeRenderer(((TextEditor)fileEditor).getEditor());
+                repaintErrorStripeRenderer(((TextEditor)fileEditor).getEditor(), myProject);
               }
             }
           }
@@ -340,52 +337,8 @@ public class DaemonListeners implements Disposable {
       }
     };
     LaterInvocator.addModalityStateListener(modalityStateListener,this);
-
-    messageBus.connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
-      @Override
-      public void daemonFinished() {
-        Editor editor = fileEditorManager.getSelectedTextEditor();
-        if (editor != null) {
-          repaintErrorStripeRenderer(editor);
-        }
-      }
-
-      @Override
-      public void passProgressHasAdvanced(@NotNull PsiFile file, double progress) {
-        repaintTrafficIcon(file, progress);
-      }
-
-      @Override
-      public void visibleAreaHighlighted(@NotNull PsiFile file, Editor editor) {
-        // usability: show auto import popup as soon as possible
-        if (editor != null) {
-          new ShowAutoImportPass(myProject, file, editor).applyInformationToEditor();
-        }
-      }
-    });
   }
   
-  
-  private final Alarm repaintIconAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private void repaintTrafficIcon(final PsiFile file, double progress) {
-    if (ApplicationManager.getApplication().isCommandLine()) return;
-
-    if (repaintIconAlarm.isEmpty() || progress >= 1) {
-      repaintIconAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (myProject.isDisposed()) return;
-          Editor editor = file == null ? null : PsiUtilBase.findEditor(file);
-          if (editor == null || editor.isDisposed()) return;
-          EditorMarkupModelImpl markup = (EditorMarkupModelImpl)editor.getMarkupModel();
-          markup.repaintTrafficLightIcon();
-          repaintErrorStripeRenderer(editor);
-        }
-      }, 50, null);
-    }
-  }
-  
-
   static boolean isUnderIgnoredAction(@Nullable Object action) {
     return action instanceof DocumentRunnable.IgnoreDocumentRunnable ||
            ApplicationManager.getApplication().hasWriteAction(DocumentRunnable.IgnoreDocumentRunnable.class);
@@ -661,14 +614,15 @@ public class DaemonListeners implements Disposable {
     myDaemonCodeAnalyzer.restart();
   }
 
-  void repaintErrorStripeRenderer(@NotNull Editor editor) {
-    if (!myProject.isInitialized()) return;
+  static void repaintErrorStripeRenderer(@NotNull Editor editor, @NotNull Project project) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!project.isInitialized()) return;
     final Document document = editor.getDocument();
-    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     final EditorMarkupModel markup = (EditorMarkupModel)editor.getMarkupModel();
     markup.setErrorPanelPopupHandler(new DaemonEditorPopup(psiFile));
-    markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(myProject));
+    markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(project));
     markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
-    TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markup, myProject, document, psiFile);
+    TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markup, project, document, psiFile);
   }
 }

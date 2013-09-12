@@ -111,14 +111,12 @@ public class UpdateHighlightersUtil {
     boolean allIsClear = DaemonCodeAnalyzerEx.processHighlights(document, project,
                                                                 null, info.getActualStartOffset(), info.getActualEndOffset(),
                                                                 otherHighlightInTheWayProcessor);
-    if (!allIsClear) {
-      return;
+    if (allIsClear) {
+      createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, null, ranges2markersCache, severityRegistrar);
+
+      clearWhiteSpaceOptimizationFlag(document);
+      assertMarkupConsistent(markup, project);
     }
-
-    createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, null, ranges2markersCache, severityRegistrar);
-
-    clearWhiteSpaceOptimizationFlag(document);
-    assertMarkupConsistent(markup, project);
   }
 
   public static void setHighlightersToEditor(@NotNull Project project,
@@ -151,7 +149,7 @@ public class UpdateHighlightersUtil {
     setHighlightersToEditor(project, document, startOffset, endOffset, highlights, null, group);
   }
 
-  // set highlights inside startOffset,endOffset but outside range
+  // set highlights inside startOffset,endOffset but outside priorityRange
   static void setHighlightersOutsideRange(@NotNull final Project project,
                                           @NotNull final Document document,
                                           @NotNull final List<HighlightInfo> infos,
@@ -159,7 +157,7 @@ public class UpdateHighlightersUtil {
                                           // if null global scheme will be used
                                           final int startOffset,
                                           final int endOffset,
-                                          @NotNull final ProperTextRange range,
+                                          @NotNull final ProperTextRange priorityRange,
                                           final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -174,7 +172,7 @@ public class UpdateHighlightersUtil {
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
     ContainerUtil.quickSort(infos, BY_START_OFFSET_NODUPS);
 
-    DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, null, range.getStartOffset(), range.getEndOffset(),
+    DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, null, priorityRange.getStartOffset(), priorityRange.getEndOffset(),
                                                              new Processor<HighlightInfo>() {
                                                                @Override
                                                                public boolean process(HighlightInfo info) {
@@ -187,8 +185,8 @@ public class UpdateHighlightersUtil {
                                                                        (hiEnd <= startOffset || hiStart >= endOffset))
                                                                      return true; // injections are oblivious to restricting range
                                                                    boolean toRemove = !(hiEnd == document.getTextLength() &&
-                                                                                        range.getEndOffset() == document.getTextLength()) &&
-                                                                                      !range.containsRange(hiStart, hiEnd);
+                                                                                        priorityRange.getEndOffset() == document.getTextLength()) &&
+                                                                                      !priorityRange.containsRange(hiStart, hiEnd);
                                                                    if (toRemove) {
                                                                      infosToRemove.recycleHighlighter(highlighter);
                                                                      info.highlighter = null;
@@ -219,7 +217,7 @@ public class UpdateHighlightersUtil {
         if (isWarningCoveredByError(info, overlappingIntervals, severityRegistrar)) {
           return true;
         }
-        if (info.getStartOffset() < range.getStartOffset() || info.getEndOffset() > range.getEndOffset()) {
+        if (info.getStartOffset() < priorityRange.getStartOffset() || info.getEndOffset() > priorityRange.getEndOffset()) {
           createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, (MarkupModelEx)markup, infosToRemove,
                                         ranges2markersCache, severityRegistrar);
           changed[0] = true;
@@ -242,7 +240,7 @@ public class UpdateHighlightersUtil {
                                      @NotNull final Document document,
                                      @NotNull final TextRange range,
                                      @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                     @NotNull final List<HighlightInfo> highlights,
+                                     @NotNull final List<HighlightInfo> infos,
                                      @NotNull final MarkupModelEx markup,
                                      final int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -268,7 +266,7 @@ public class UpdateHighlightersUtil {
         }
       });
 
-    ContainerUtil.quickSort(highlights, BY_START_OFFSET_NODUPS);
+    ContainerUtil.quickSort(infos, BY_START_OFFSET_NODUPS);
     final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>(10);
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     final DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
@@ -276,7 +274,7 @@ public class UpdateHighlightersUtil {
     RangeMarkerTree.sweep(new RangeMarkerTree.Generator<HighlightInfo>(){
       @Override
       public boolean generate(final Processor<HighlightInfo> processor) {
-        return ContainerUtil.process(highlights, processor);
+        return ContainerUtil.process(infos, processor);
       }
     }, new SweepProcessor<HighlightInfo>() {
       @Override

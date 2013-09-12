@@ -29,13 +29,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -54,12 +50,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.containers.TransferToEDTQueue;
-import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,26 +89,25 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       return o1.order() - o2.order();
     }
   };
-  private volatile Runnable myApplyCommand;
   protected final EditorColorsScheme myGlobalScheme;
+  private NotNullProducer<HighlightVisitor[]> myHighlightVisitorProducer = new NotNullProducer<HighlightVisitor[]>() {
+    @NotNull
+    @Override
+    public HighlightVisitor[] produce() {
+      return cloneHighlightVisitors();
+    }
+  };
 
   public GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,
                                  @NotNull Document document,
                                  int startOffset,
                                  int endOffset,
-                                 boolean updateAll) {
-    this(project, file, document, startOffset, endOffset, updateAll, new ProperTextRange(0,document.getTextLength()), null);
-  }
-  GeneralHighlightingPass(@NotNull Project project,
-                                 @NotNull PsiFile file,
-                                 @NotNull Document document,
-                                 int startOffset,
-                                 int endOffset,
                                  boolean updateAll,
                                  @NotNull ProperTextRange priorityRange,
-                                 @Nullable Editor editor) {
-    super(project, document, PRESENTABLE_NAME, file, true);
+                                 @Nullable Editor editor,
+                                 @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    super(project, document, PRESENTABLE_NAME, file, editor, TextRange.create(startOffset, endOffset), true, highlightInfoProcessor);
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myUpdateAll = updateAll;
@@ -122,21 +115,11 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myEditor = editor;
 
     LOG.assertTrue(file.isValid());
-    setId(Pass.UPDATE_ALL);
-    myHasErrorElement = !isWholeFileHighlighting() && Boolean.TRUE.equals(myFile.getUserData(HAS_ERROR_ELEMENT));
+    boolean wholeFileHighlighting = isWholeFileHighlighting();
+    myHasErrorElement = !wholeFileHighlighting && Boolean.TRUE.equals(myFile.getUserData(HAS_ERROR_ELEMENT));
     final DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-    myErrorFound = !isWholeFileHighlighting() && fileStatusMap.wasErrorFound(myDocument);
-    myApplyCommand = new Runnable() {
-      @Override
-      public void run() {
-        ProperTextRange range = new ProperTextRange(myStartOffset, myEndOffset);
-        MarkupModel model = DocumentMarkupModel.forDocument(myDocument, myProject, true);
-        daemonCodeAnalyzer.cleanFileLevelHighlights(myProject, Pass.UPDATE_ALL, myFile);
-        final EditorColorsScheme colorsScheme = getColorsScheme();
-        UpdateHighlightersUtil.setHighlightersInRange(myProject, myDocument, range, colorsScheme, myHighlights, (MarkupModelEx)model, Pass.UPDATE_ALL);
-      }
-    };
+    myErrorFound = !wholeFileHighlighting && fileStatusMap.wasErrorFound(myDocument);
 
     // initial guess to show correct progress in the traffic light icon
     setProgressLimit(document.getTextLength()/2); // approx number of PSI elements = file length/2
@@ -145,9 +128,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<AtomicInteger>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
   @NotNull
-  protected HighlightVisitor[] getHighlightVisitors() {
+  private HighlightVisitor[] cloneHighlightVisitors() {
     int oldCount = incVisitorUsageCount(1);
-    HighlightVisitor[] highlightVisitors = createHighlightVisitors();
+    HighlightVisitor[] highlightVisitors = Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject);
     if (oldCount != 0) {
       HighlightVisitor[] clones = new HighlightVisitor[highlightVisitors.length];
       for (int i = 0; i < highlightVisitors.length; i++) {
@@ -161,12 +144,33 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return highlightVisitors;
   }
 
-  protected HighlightVisitor[] createHighlightVisitors() {
-    return Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject);
+  @NotNull
+  private HighlightVisitor[] filterVisitors(@NotNull HighlightVisitor[] highlightVisitors, @NotNull PsiFile psiFile) {
+    final List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>(highlightVisitors.length);
+    List<HighlightVisitor> list = Arrays.asList(highlightVisitors);
+    for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(list)) {
+      if (visitor.suitableForFile(psiFile)) {
+        visitors.add(visitor);
+      }
+    }
+    LOG.assertTrue(!visitors.isEmpty(), list);
+
+    HighlightVisitor[] visitorArray = visitors.toArray(new HighlightVisitor[visitors.size()]);
+    Arrays.sort(visitorArray, VISITOR_ORDER_COMPARATOR);
+    return visitorArray;
+  }
+
+  public void setHighlightVisitorProducer(@NotNull NotNullProducer<HighlightVisitor[]> highlightVisitorProducer) {
+    myHighlightVisitorProducer = highlightVisitorProducer;
+  }
+
+  @NotNull
+  protected HighlightVisitor[] getHighlightVisitors(@NotNull PsiFile psiFile) {
+    return filterVisitors(myHighlightVisitorProducer.produce(), psiFile);
   }
 
   // returns old value
-  protected int incVisitorUsageCount(int delta) {
+  public int incVisitorUsageCount(int delta) {
     AtomicInteger count = myProject.getUserData(HIGHLIGHT_VISITOR_INSTANCE_COUNT);
     if (count == null) {
       count = ((UserDataHolderEx)myProject).putUserDataIfAbsent(HIGHLIGHT_VISITOR_INSTANCE_COUNT, new AtomicInteger(0));
@@ -178,79 +182,42 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @Override
   protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
-    final Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>(100);
-    final Set<HighlightInfo> outsideResult = new THashSet<HighlightInfo>(100);
+    final List<HighlightInfo> outsideResult = new ArrayList<HighlightInfo>(100);
+    final List<HighlightInfo> insideResult = new ArrayList<HighlightInfo>(100);
 
-    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-    HighlightVisitor[] highlightVisitors = getHighlightVisitors();
-    final List<PsiElement> inside = new ArrayList<PsiElement>();
-    final List<PsiElement> outside = new ArrayList<PsiElement>();
+    final DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+    final HighlightVisitor[] filteredVisitors = getHighlightVisitors(myFile);
+    final List<PsiElement> insideElements = new ArrayList<PsiElement>();
+    final List<PsiElement> outsideElements = new ArrayList<PsiElement>();
     try {
-      final HighlightVisitor[] filteredVisitors = filterVisitors(highlightVisitors, myFile);
       List<ProperTextRange> insideRanges = new ArrayList<ProperTextRange>();
       List<ProperTextRange> outsideRanges = new ArrayList<ProperTextRange>();
-      Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, insideRanges, outside,
+      Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, insideElements, insideRanges, outsideElements,
                                      outsideRanges, false, FILE_FILTER);
 
-      setProgressLimit((long)(inside.size()+outside.size()));
+      setProgressLimit((long)(insideElements.size()+outsideElements.size()));
 
       final boolean forceHighlightParents = forceHighlightParents();
 
       if (!isDumbMode()) {
-        highlightTodos(myFile, myDocument.getCharsSequence(), myStartOffset, myEndOffset, progress, myPriorityRange, gotHighlights, outsideResult);
+        highlightTodos(myFile, myDocument.getCharsSequence(), myStartOffset, myEndOffset, progress, myPriorityRange, insideResult,
+                       outsideResult);
       }
 
       Runnable after1 = new Runnable() {
         @Override
         public void run() {
-          if (outsideResult.isEmpty()) {
-            return;  // apply only result (by default apply command) and only within inside
-          }
-
-          final ProperTextRange priorityIntersection = myPriorityRange.intersection(new TextRange(myStartOffset, myEndOffset));
-          if ((!inside.isEmpty() || !gotHighlights.isEmpty()) &&
+          final TextRange priorityIntersection = myPriorityRange.intersection(myRestrictRange);
+          if ((!insideElements.isEmpty() || !insideResult.isEmpty()) &&
               priorityIntersection != null) { // do not apply when there were no elements to highlight
-            // clear infos found in visible area to avoid applying them twice
-            final List<HighlightInfo> toApplyInside = new ArrayList<HighlightInfo>(gotHighlights);
-            myHighlights.addAll(toApplyInside);
-            gotHighlights.clear();
-            gotHighlights.addAll(outsideResult);
-            final long modificationStamp = myDocument.getModificationStamp();
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                if (myProject.isDisposed() || modificationStamp != myDocument.getModificationStamp()) return;
-                MarkupModel markupModel = DocumentMarkupModel.forDocument(myDocument, myProject, true);
 
-                UpdateHighlightersUtil.setHighlightersInRange(myProject, myDocument, priorityIntersection, getColorsScheme(), toApplyInside,
-                                                              (MarkupModelEx)markupModel, Pass.UPDATE_ALL);
-                if (myEditor != null) {
-                  myProject.getMessageBus().syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC).visibleAreaHighlighted(myFile, myEditor);
-                }
-              }
-            });
+            myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, insideResult, myPriorityRange, myRestrictRange);
           }
-
-          myApplyCommand = new Runnable() {
-            @Override
-            public void run() {
-              ProperTextRange range = new ProperTextRange(myStartOffset, myEndOffset);
-
-              List<HighlightInfo> toApply = new ArrayList<HighlightInfo>();
-              for (HighlightInfo info : gotHighlights) {
-                if (!range.containsRange(info.getStartOffset(), info.getEndOffset())) continue;
-                if (!myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset())) {
-                  toApply.add(info);
-                }
-              }
-
-              UpdateHighlightersUtil.setHighlightersOutsideRange(myProject, myDocument, toApply, getColorsScheme(),
-                                                                 myStartOffset, myEndOffset, myPriorityRange, Pass.UPDATE_ALL);
-            }
-          };
         }
       };
-      collectHighlights(inside, insideRanges, after1, outside, outsideRanges, progress, filteredVisitors, gotHighlights, forceHighlightParents);
+      collectHighlights(insideElements, insideRanges, after1, outsideElements, outsideRanges, progress, filteredVisitors, insideResult, outsideResult, forceHighlightParents);
+
+      myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, outsideResult, myPriorityRange, myRestrictRange);
 
       if (myUpdateAll) {
         daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(myDocument, myErrorFound);
@@ -259,7 +226,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     finally {
       incVisitorUsageCount(-1);
     }
-    myHighlights.addAll(gotHighlights);
+    myHighlights.addAll(insideResult);
+    myHighlights.addAll(outsideResult);
   }
 
   protected boolean isFailFastOnAcquireReadAction() {
@@ -273,8 +241,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   @Override
   protected void applyInformationWithProgress() {
     myFile.putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
-
-    myApplyCommand.run();
 
     if (myUpdateAll) {
       reportErrorsToWolf();
@@ -294,7 +260,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  @NotNull final List<ProperTextRange> ranges2,
                                  @NotNull final ProgressIndicator progress,
                                  @NotNull final HighlightVisitor[] visitors,
-                                 @NotNull final Set<HighlightInfo> gotHighlights,
+                                 @NotNull final List<HighlightInfo> insideResult,
+                                 @NotNull final List<HighlightInfo> outsideResult,
                                  final boolean forceHighlightParents) {
     final Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
 
@@ -302,26 +269,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final HighlightInfoHolder holder = createInfoHolder(myFile);
 
     final int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
-
-    final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>();
-    final TransferToEDTQueue<HighlightInfo> myTransferToEDTQueue
-      = new TransferToEDTQueue<HighlightInfo>("Apply highlighting results", new Processor<HighlightInfo>() {
-      @Override
-      public boolean process(HighlightInfo info) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        final EditorColorsScheme colorsScheme = getColorsScheme();
-        UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, myStartOffset, myEndOffset,
-                                                                   info, colorsScheme, Pass.UPDATE_ALL, ranges2markersCache);
-
-        return true;
-      }
-    }, new Condition<Object>() {
-      @Override
-      public boolean value(Object o) {
-        return myProject.isDisposed() || progress.isCanceled();
-      }
-    }, 200);
-
 
     final Runnable action = new Runnable() {
       @Override
@@ -376,8 +323,11 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             for (int j = 0; j < holder.size(); j++) {
               final HighlightInfo info = holder.get(j);
               assert info != null;
+
+              if (!myRestrictRange.containsRange(info.getStartOffset(), info.getEndOffset())) continue;
+              List<HighlightInfo> result = myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult;
               // have to filter out already obtained highlights
-              if (!gotHighlights.add(info)) continue;
+              if (!result.add(info)) continue;
               boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
               if (isError) {
                 if (!forceHighlightParents) {
@@ -389,7 +339,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               // that means we can clear this highlight as soon as visitors won't produce any highlights during visiting the same range next time.
               info.setBijective(elementRange.equalsToRange(info.startOffset, info.endOffset));
 
-              myTransferToEDTQueue.offer(info);
+              myHighlightInfoProcessor.infoIsAvailable(myHighlightingSession, info);
+              //myTransferToEDTQueue.offer(info);
               infosForThisRange.add(info);
             }
             // include infos which we got while visiting nested elements with the same range
@@ -411,7 +362,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             }
             nested.push(Pair.create(elementRange, infosForThisRange));
             if (parent == null || !Comparing.equal(elementRange, parent.getTextRange())) {
-              killAbandonedHighlightsUnder(elementRange, infosForThisRange, progress);
+              myHighlightInfoProcessor.allHighlightsForRangeAreProduced(myHighlightingSession, elementRange, infosForThisRange);
+              //killAbandonedHighlightsUnder(elementRange, infosForThisRange, progress);
             }
           }
           advanceProgress(elements.size() - (nextLimit-chunkSize));
@@ -478,20 +430,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
-  @NotNull
-  protected static HighlightVisitor[] filterVisitors(@NotNull HighlightVisitor[] highlightVisitors, @NotNull PsiFile file) {
-    final List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>(highlightVisitors.length);
-    List<HighlightVisitor> list = Arrays.asList(highlightVisitors);
-    for (HighlightVisitor visitor : DumbService.getInstance(file.getProject()).filterByDumbAwareness(list)) {
-      if (visitor.suitableForFile(file)) visitors.add(visitor);
-    }
-    LOG.assertTrue(!visitors.isEmpty(), list);
-
-    HighlightVisitor[] visitorArray = visitors.toArray(new HighlightVisitor[visitors.size()]);
-    Arrays.sort(visitorArray, VISITOR_ORDER_COMPARATOR);
-    return visitorArray;
-  }
-
   static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
                                           @NotNull final Project project,
                                           @NotNull TextEditorHighlightingPass passCalledFrom) throws ProcessCanceledException {
@@ -533,9 +471,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                        int endOffset,
                                        @NotNull ProgressIndicator progress,
                                        @NotNull ProperTextRange priorityRange,
-                                       @NotNull Collection<HighlightInfo> result,
+                                       @NotNull Collection<HighlightInfo> insideResult,
                                        @NotNull Collection<HighlightInfo> outsideResult) {
     PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(file.getProject());
+    if (helper == null) return;
     TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
     if (todoItems.length == 0) return;
 
@@ -548,12 +487,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       builder.textAttributes(attributes);
       builder.descriptionAndTooltip(description);
       HighlightInfo info = builder.createUnconditionally();
-      if (priorityRange.containsRange(info.getStartOffset(), info.getEndOffset())) {
-        result.add(info);
-      }
-      else {
-        outsideResult.add(info);
-      }
+      (priorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult).add(info);
     }
   }
 

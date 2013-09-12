@@ -61,12 +61,14 @@ public class PostHighlightingPassFactory extends AbstractProjectComponent implem
       }
     }
 
-    return new PostHighlightingPass(myProject, file, editor, editor.getDocument());
+    return new PostHighlightingPass(myProject, file, editor, editor.getDocument(), new DefaultHighlightInfoProcessor());
   }
 
   @Override
-  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file, @NotNull Document document) {
-    return new PostHighlightingPass(myProject, file, null, document);
+  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+                                                               @NotNull Document document,
+                                                               @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    return new PostHighlightingPass(myProject, file, null, document, highlightInfoProcessor);
   }
 
   public static void markFileUpToDate(@NotNull PsiFile file) {

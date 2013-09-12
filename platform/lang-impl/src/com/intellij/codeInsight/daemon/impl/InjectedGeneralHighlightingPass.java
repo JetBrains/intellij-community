@@ -16,8 +16,6 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.DocumentWindow;
@@ -28,11 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -47,7 +41,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,8 +53,6 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.InjectedGeneralHighlightingPass");
   private static final String PRESENTABLE_NAME = "Injected fragments";
 
-  private volatile Runnable myApplyCommand;
-
   InjectedGeneralHighlightingPass(@NotNull Project project,
                                   @NotNull PsiFile file,
                                   @NotNull Document document,
@@ -69,25 +60,9 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
                                   int endOffset,
                                   boolean updateAll,
                                   @NotNull ProperTextRange priorityRange,
-                                  @Nullable Editor editor) {
-    super(project, file, document, startOffset, endOffset, updateAll, priorityRange, editor);
-
-    LOG.assertTrue(file.isValid());
-    setId(Pass.UPDATE_ALL);
-    final DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
-    myApplyCommand = new Runnable() {
-      @Override
-      public void run() {
-        ProperTextRange range = new ProperTextRange(myStartOffset, myEndOffset);
-        MarkupModel model = DocumentMarkupModel.forDocument(myDocument, myProject, true);
-        codeAnalyzer.cleanFileLevelHighlights(myProject, Pass.UPDATE_ALL, myFile);
-        final EditorColorsScheme colorsScheme = getColorsScheme();
-        UpdateHighlightersUtil.setHighlightersInRange(myProject, myDocument, range, colorsScheme, myHighlights, (MarkupModelEx)model, getId());
-      }
-    };
-
-    // initial guess to show correct progress in the traffic light icon
-    setProgressLimit(document.getTextLength()/2); // approx number of PSI elements = file length/2
+                                  @Nullable Editor editor,
+                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    super(project, file, document, startOffset, endOffset, updateAll, priorityRange, editor, highlightInfoProcessor);
   }
 
   @Override
@@ -106,12 +81,13 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, insideRanges, outside,
                                    outsideRanges, false, FILE_FILTER);
 
-    setProgressLimit((long)(inside.size()+outside.size()));
 
     // all infos for the "injected fragment for the host which is inside" are indeed inside
     // but some of the infos for the "injected fragment for the host which is outside" can be still inside
     Set<HighlightInfo> injectedResult = new THashSet<HighlightInfo>();
     Set<PsiFile> injected = getInjectedPsiFiles(inside, outside, progress);
+    setProgressLimit(injected.size());
+
     if (!addInjectedPsiHighlights(injected, progress, Collections.synchronizedSet(injectedResult))) {
       throw new ProcessCanceledException();
     }
@@ -140,44 +116,26 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
         final List<HighlightInfo> toApplyInside = new ArrayList<HighlightInfo>(gotHighlights);
         myHighlights.addAll(toApplyInside);
         gotHighlights.clear();
-        final long modificationStamp = myDocument.getModificationStamp();
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed() || modificationStamp != myDocument.getModificationStamp()) return;
-            MarkupModel markupModel = DocumentMarkupModel.forDocument(myDocument, myProject, true);
 
-            UpdateHighlightersUtil
-              .setHighlightersInRange(myProject, myDocument, priorityIntersection, getColorsScheme(), toApplyInside,
-                                      (MarkupModelEx)markupModel, getId());
-            if (myEditor != null) {
-              myProject.getMessageBus().syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC).visibleAreaHighlighted(myFile, myEditor);
-            }
-          }
-        });
+        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, toApplyInside, myPriorityRange, myRestrictRange);
       }
 
-      myApplyCommand = new Runnable() {
-        @Override
-        public void run() {
-          ProperTextRange range = new ProperTextRange(myStartOffset, myEndOffset);
-
-          List<HighlightInfo> toApply = new ArrayList<HighlightInfo>();
-          for (HighlightInfo info : gotHighlights) {
-            if (!range.containsRange(info.getStartOffset(), info.getEndOffset())) continue;
-            if (!myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset())) {
-              toApply.add(info);
-            }
-          }
-          toApply.addAll(injectionsOutside);
-
-          UpdateHighlightersUtil.setHighlightersOutsideRange(myProject, myDocument, toApply, getColorsScheme(),
-                                                             0, myDocument.getTextLength(), new ProperTextRange(myStartOffset, myEndOffset), getId());
+      List<HighlightInfo> toApply = new ArrayList<HighlightInfo>();
+      for (HighlightInfo info : gotHighlights) {
+        if (!myRestrictRange.containsRange(info.getStartOffset(), info.getEndOffset())) continue;
+        if (!myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset())) {
+          toApply.add(info);
         }
-      };
+      }
+      toApply.addAll(injectionsOutside);
+
+      myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, toApply, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()));
     }
-    // else apply only result (by default apply command) and only within inside
-    myHighlights.addAll(gotHighlights);
+    else {
+      // else apply only result (by default apply command) and only within inside
+      myHighlights.addAll(gotHighlights);
+      myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, myHighlights, myRestrictRange, myRestrictRange);
+    }
   }
 
   @NotNull
@@ -308,6 +266,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
         addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, null, outInfos);
       }
     }
+    advanceProgress(1);
     return true;
   }
 
@@ -392,9 +351,8 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
   private void runHighlightVisitorsForInjected(@NotNull PsiFile injectedPsi,
                                                @NotNull final HighlightInfoHolder holder,
                                                @NotNull final ProgressIndicator progress) {
-    HighlightVisitor[] visitors = getHighlightVisitors();
+    HighlightVisitor[] filtered = getHighlightVisitors(injectedPsi);
     try {
-      HighlightVisitor[] filtered = filterVisitors(visitors, injectedPsi);
       final List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
       for (final HighlightVisitor visitor : filtered) {
         visitor.analyze(injectedPsi, true, holder, new Runnable() {
@@ -464,6 +422,5 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
 
   @Override
   protected void applyInformationWithProgress() {
-    myApplyCommand.run();
   }
 }

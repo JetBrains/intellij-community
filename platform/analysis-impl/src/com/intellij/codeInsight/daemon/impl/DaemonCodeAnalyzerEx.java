@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.CommonProcessors;
@@ -90,6 +91,11 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                               CommonProcessors.<HighlightInfo>alwaysFalse());
   }
 
+  @NotNull
+  public abstract List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
+                                                    @NotNull Document document,
+                                                    @NotNull ProgressIndicator progress);
+
   public abstract boolean isErrorAnalyzingFinished(@NotNull PsiFile file);
 
   @NotNull
@@ -105,5 +111,4 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                                     final int group,
                                     @NotNull final HighlightInfo info,
                                     @NotNull final PsiFile psiFile);
-
 }

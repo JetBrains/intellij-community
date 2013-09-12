@@ -40,7 +40,9 @@ public abstract class TextEditorHighlightingPassRegistrarEx extends TextEditorHi
   @NotNull
   public abstract List<TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull int[] passesToIgnore);
   @NotNull
-  public abstract List<TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile, @NotNull Document document);
+  public abstract List<TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
+                                                                         @NotNull Document document,
+                                                                         @NotNull HighlightInfoProcessor highlightInfoProcessor);
 
   @NotNull
   public abstract List<DirtyScopeTrackingHighlightingPassFactory> getDirtyScopeTrackingFactories();

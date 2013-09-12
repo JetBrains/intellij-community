@@ -123,26 +123,22 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final String url2 = "http://www.bar.org/foo";
     ExternalResourceManagerExImpl.registerResourceTemporarily(url, getTestName(false) + ".xsd", getTestRootDisposable());
     ExternalResourceManagerExImpl.registerResourceTemporarily(url2, getTestName(false) + ".xsd", getTestRootDisposable());
-    try {
-      final Collection<HighlightInfo> infoCollection = doDoTest(true, false, true);
-      final TextRange startTagNameRange = XmlTagUtil.getStartTagNameElement(((XmlFile)myFile).getDocument().getRootTag()).getTextRange();
+    final Collection<HighlightInfo> infoCollection = doDoTest(true, false, true);
+    final TextRange startTagNameRange = XmlTagUtil.getStartTagNameElement(((XmlFile)myFile).getDocument().getRootTag()).getTextRange();
 
-      HighlightInfo infoAtTagName = null;
+    HighlightInfo infoAtTagName = null;
 
-      for(HighlightInfo info:infoCollection) {
-        if (info.startOffset == startTagNameRange.getStartOffset() && info.endOffset == startTagNameRange.getEndOffset()) {
-          if (info.getDescription()
-            .equals("Attribute \"foo\" bound to namespace \"http://www.w3.org/2000/xmlns/\" was already specified for element \"root\".")) {
-            infoAtTagName = info;
-            break;
-          }
+    for(HighlightInfo info:infoCollection) {
+      if (info.startOffset == startTagNameRange.getStartOffset() && info.endOffset == startTagNameRange.getEndOffset()) {
+        if (info.getDescription()
+          .equals("Attribute \"foo\" bound to namespace \"http://www.w3.org/2000/xmlns/\" was already specified for element \"root\".")) {
+          infoAtTagName = info;
+          break;
         }
       }
+    }
 
-      assertNotNull( infoAtTagName );
-    }
-    finally {
-    }
+    assertNotNull( infoAtTagName );
   }
 
   // TODO: external validator should not be launched due to error detected after general highlighting pass!

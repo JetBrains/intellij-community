@@ -20,6 +20,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
@@ -58,11 +59,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class LineMarkersPass extends ProgressableTextEditorHighlightingPass implements LineMarkersProcessor, DumbAware {
+public class LineMarkersPass extends TextEditorHighlightingPass implements LineMarkersProcessor, DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LineMarkersPass");
 
   private volatile Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
+  @NotNull private final PsiFile myFile;
   @Nullable private final Editor myEditor;
   private final int myStartOffset;
   private final int myEndOffset;
@@ -75,7 +77,8 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
                          int startOffset,
                          int endOffset,
                          boolean updateAll) {
-    super(project, document, GeneralHighlightingPass.PRESENTABLE_NAME, file, false);
+    super(project, document, false);
+    myFile = file;
     myEditor = editor;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
@@ -83,7 +86,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
   }
 
   @Override
-  protected void applyInformationWithProgress() {
+  public void doApplyInformationToEditor() {
     try {
       LineMarkersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, Pass.UPDATE_ALL);
     }
@@ -92,7 +95,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
   }
 
   @Override
-  protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
+  public void doCollectInformation(@NotNull ProgressIndicator progress) {
     final List<LineMarkerInfo> lineMarkers = new ArrayList<LineMarkerInfo>();
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> relevantLanguages = viewProvider.getLanguages();
@@ -248,14 +251,8 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
       // binary file? see IDEADEV-2809
       return Collections.emptyList();
     }
-    collectInformationWithProgress(new EmptyProgressIndicator());
+    doCollectInformation(new EmptyProgressIndicator());
     return myMarkers;
-  }
-
-  @Override
-  public double getProgress() {
-    // do not show progress of visible highlighters update
-    return myUpdateAll ? super.getProgress() : -1;
   }
 
   @NotNull

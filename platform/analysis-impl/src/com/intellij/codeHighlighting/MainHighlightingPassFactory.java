@@ -16,6 +16,7 @@
 
 package com.intellij.codeHighlighting;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -26,5 +27,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface MainHighlightingPassFactory extends TextEditorHighlightingPassFactory {
   @Nullable
-  TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file, @NotNull final Document document);
+  TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+                                                        @NotNull final Document document,
+                                                        @NotNull HighlightInfoProcessor highlightInfoProcessor);
 }

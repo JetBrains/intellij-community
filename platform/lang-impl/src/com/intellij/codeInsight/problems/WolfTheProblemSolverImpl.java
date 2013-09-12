@@ -16,10 +16,7 @@
 
 package com.intellij.codeInsight.problems;
 
-import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
@@ -293,7 +290,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     final AtomicReference<HighlightInfo> error = new AtomicReference<HighlightInfo>();
     final AtomicBoolean hasErrorElement = new AtomicBoolean();
     try {
-      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false) {
+      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(),
+                                                                 false, new ProperTextRange(0, document.getTextLength()), null, HighlightInfoProcessor.getEmpty()) {
         @Override
         protected HighlightInfoHolder createInfoHolder(@NotNull final PsiFile file) {
           return new HighlightInfoHolder(file) {

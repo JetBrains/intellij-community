@@ -52,14 +52,21 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
         final XmlTag tag = (XmlTag)parent;
         final XmlToken start = XmlTagUtil.getStartTagNameElement(tag);
         XmlToken endTagName = XmlTagUtil.getEndTagNameElement(tag);
-        if (endTagName != null && !(tag instanceof HtmlTag) && !tag.getName().equals(endTagName.getText())) {
-          registerProblem(holder, tag, start, endTagName);
+        if (start == psiElement) {
+          if (endTagName != null && !(tag instanceof HtmlTag) && !tag.getName().equals(endTagName.getText())) {
+            registerProblemStart(holder, tag, start, endTagName);
+          }
+          else if (endTagName == null && !(tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(tag.getName()))) {
+            final PsiErrorElement errorElement = PsiTreeUtil.getChildOfType(tag, PsiErrorElement.class);
+            endTagName = findEndTagName(errorElement);
+            if (endTagName != null) {
+              registerProblemStart(holder, tag, start, endTagName);
+            }
+          }
         }
-        else if (endTagName == null && !(tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(tag.getName()))) {
-          final PsiErrorElement errorElement = PsiTreeUtil.getChildOfType(tag, PsiErrorElement.class);
-          endTagName = findEndTagName(errorElement);
-          if (endTagName != null) {
-            registerProblem(holder, tag, start, endTagName);
+        else if (endTagName == psiElement) {
+          if (!(tag instanceof HtmlTag) && !tag.getName().equals(endTagName.getText())) {
+            registerProblemEnd(holder, tag, endTagName);
           }
         }
       }
@@ -82,9 +89,9 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     }
   }
 
-  private static void registerProblem(@NotNull final AnnotationHolder holder,
+  private static void registerProblemStart(@NotNull final AnnotationHolder holder,
                                       @NotNull final XmlTag tag,
-                                      @Nullable final XmlToken start,
+                                      @NotNull final XmlToken start,
                                       @NotNull final XmlToken end) {
     PsiElement context = tag.getContainingFile().getContext();
     if (context != null) {
@@ -97,17 +104,36 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
         }
       }
     }
-    final String tagName = (tag instanceof HtmlTag) ? tag.getName().toLowerCase() : tag.getName();
-    final String endTokenText = (tag instanceof HtmlTag) ? end.getText().toLowerCase() : end.getText();
+    final String tagName = tag instanceof HtmlTag ? tag.getName().toLowerCase() : tag.getName();
+    final String endTokenText = tag instanceof HtmlTag ? end.getText().toLowerCase() : end.getText();
 
     final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
-    if (start != null) {
-      final Annotation annotation = holder.createErrorAnnotation(start, XmlErrorMessages.message("tag.has.wrong.closing.tag.name"));
-      annotation.registerFix(renameEndAction);
-      annotation.registerFix(renameStartAction);
+    final Annotation annotation = holder.createErrorAnnotation(start, XmlErrorMessages.message("tag.has.wrong.closing.tag.name"));
+    annotation.registerFix(renameEndAction);
+    annotation.registerFix(renameStartAction);
+  }
+
+  private static void registerProblemEnd(@NotNull final AnnotationHolder holder,
+                                         @NotNull final XmlTag tag,
+                                         @NotNull final XmlToken end) {
+    PsiElement context = tag.getContainingFile().getContext();
+    if (context != null) {
+      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(context.getLanguage());
+      if (parserDefinition != null) {
+        ASTNode contextNode = context.getNode();
+        if (contextNode != null && contextNode.getChildren(parserDefinition.getStringLiteralElements()) != null) {
+          // TODO: we should check for concatenations here
+          return;
+        }
+      }
     }
+    final String tagName = tag instanceof HtmlTag ? tag.getName().toLowerCase() : tag.getName();
+    final String endTokenText = tag instanceof HtmlTag ? end.getText().toLowerCase() : end.getText();
+
+    final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
+    final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
     final Annotation annotation = holder.createErrorAnnotation(end, XmlErrorMessages.message("wrong.closing.tag.name"));
     annotation.registerFix(new RemoveExtraClosingTagIntentionAction());

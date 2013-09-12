@@ -58,13 +58,9 @@ public abstract class DaemonCodeAnalyzer {
   public interface DaemonListener {
     void daemonFinished();
     void daemonCancelEventOccurred();
-    void passProgressHasAdvanced(@NotNull PsiFile file, double progress);
-    void visibleAreaHighlighted(@NotNull PsiFile file, Editor editor);
   }
   public abstract static class DaemonListenerAdapter implements DaemonListener {
     @Override public void daemonFinished() {}
     @Override public void daemonCancelEventOccurred() {}
-    @Override public void passProgressHasAdvanced(@NotNull PsiFile file, double progress){}
-    @Override public void visibleAreaHighlighted(@NotNull PsiFile file, Editor editor){}
   }
 }

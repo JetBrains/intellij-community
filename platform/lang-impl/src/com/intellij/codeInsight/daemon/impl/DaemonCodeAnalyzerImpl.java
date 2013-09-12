@@ -20,7 +20,10 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
@@ -227,6 +230,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
     }
   }
 
+  @Override
   @NotNull
   public List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                            @NotNull Document document,
@@ -235,7 +239,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
       List<TextEditorHighlightingPass> passes =
-        TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject).instantiateMainPasses(psiFile, document);
+        TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject).instantiateMainPasses(psiFile, document,
+                                                                                             HighlightInfoProcessor.getEmpty());
 
       Collections.sort(passes, new Comparator<TextEditorHighlightingPass>() {
         @Override
@@ -315,7 +320,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
       UIUtil.dispatchAllInvocationEvents();
       UIUtil.dispatchAllInvocationEvents();
 
-      return getHighlights(document, null, project);
+      List<HighlightInfo> highlights = getHighlights(document, null, project);
+      return highlights;
     }
     finally {
       fileStatusMap.allowDirt(true);
@@ -807,4 +813,5 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements JDOM
   private List<Editor> getActiveEditors() {
     return myEditorTracker.getActiveEditors();
   }
+
 }

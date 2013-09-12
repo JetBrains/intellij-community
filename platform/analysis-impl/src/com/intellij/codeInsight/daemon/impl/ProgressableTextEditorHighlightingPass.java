@@ -17,10 +17,12 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,26 +34,63 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class ProgressableTextEditorHighlightingPass extends TextEditorHighlightingPass {
   private volatile boolean myFinished;
-  private volatile long myProgessLimit = 0;
+  private volatile long myProgressLimit = 0;
   private final AtomicLong myProgressCount = new AtomicLong();
+  private volatile long myNextChunkThreshold; // the value myProgressCount should exceed to generate next fireProgressAdvanced event
   private final String myPresentableName;
   protected final PsiFile myFile;
+  @Nullable private final Editor myEditor;
+  @NotNull protected final TextRange myRestrictRange;
+  @NotNull protected final HighlightInfoProcessor myHighlightInfoProcessor;
+  protected HighlightingSession myHighlightingSession;
 
   protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
                                                    @Nullable final Document document,
                                                    @NotNull String presentableName,
                                                    @Nullable PsiFile file,
-                                                   boolean runIntentionPassAfter) {
+                                                   @Nullable Editor editor,
+                                                   @NotNull TextRange restrictRange,
+                                                   boolean runIntentionPassAfter,
+                                                   @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     super(project, document, runIntentionPassAfter);
     myPresentableName = presentableName;
     myFile = file;
+    myEditor = editor;
+    myRestrictRange = restrictRange;
+    myHighlightInfoProcessor = highlightInfoProcessor;
+  }
+
+  @NotNull
+  private HighlightingSession sessionCreated(@NotNull TextRange restrictRange,
+                                              @NotNull PsiFile file,
+                                              @Nullable Editor editor,
+                                              @NotNull ProgressIndicator progress,
+                                              EditorColorsScheme scheme,
+                                              int passId) {
+    HighlightingSessionImpl impl = new HighlightingSessionImpl(file, editor, progress, scheme, passId);
+    myHighlightingSession = impl;
+    impl.init(restrictRange);
+    return impl;
+  }
+
+  private void sessionFinished() {
+    advanceProgress(Math.max(1, myProgressLimit - myProgressCount.get()));
   }
 
   @Override
   public final void doCollectInformation(@NotNull final ProgressIndicator progress) {
     myFinished = false;
-    collectInformationWithProgress(progress);
-    fireProgressHasAdvanced();
+    if (myFile != null) {
+      myHighlightingSession = sessionCreated(myRestrictRange, myFile, myEditor, progress, getColorsScheme(), getId());
+    }
+    try {
+      collectInformationWithProgress(progress);
+    }
+    finally {
+      if (myFile != null) {
+        sessionFinished();
+      }
+    }
   }
 
   protected abstract void collectInformationWithProgress(@NotNull ProgressIndicator progress);
@@ -62,11 +101,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     applyInformationWithProgress();
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
-    fireProgressHasAdvanced();
-  }
-
-  private void fireProgressHasAdvanced() {
-    myProject.getMessageBus().syncPublisher(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC).passProgressHasAdvanced(myFile, getProgress());
   }
 
   protected abstract void applyInformationWithProgress();
@@ -76,12 +110,14 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
    * <0 means progress is not available
    */
   public double getProgress() {
-    if (myProgessLimit == 0) return -1;
-    return (double)myProgressCount.get() / myProgessLimit;
+    long progressLimit = getProgressLimit();
+    if (progressLimit == 0) return -1;
+    long progressCount = getProgressCount();
+    return progressCount > progressLimit ? 1 : (double)progressCount / progressLimit;
   }
 
   public long getProgressLimit() {
-    return myProgessLimit;
+    return myProgressLimit;
   }
 
   public long getProgressCount() {
@@ -97,12 +133,20 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   }
 
   public void setProgressLimit(long limit) {
-    myProgessLimit = limit;
+    myProgressLimit = limit;
+    myNextChunkThreshold = Math.max(1, limit / 100); // 1% precision
   }
 
   public void advanceProgress(long delta) {
-    myProgressCount.addAndGet(delta);
-    fireProgressHasAdvanced();
+    if (myHighlightingSession != null) {
+      // session can be null in e.g. inspection batch mode
+      long current = myProgressCount.addAndGet(delta);
+      if (current >= myNextChunkThreshold) {
+        double progress = getProgress();
+        myNextChunkThreshold += Math.max(1, myProgressLimit / 100);
+        myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, progress);
+      }
+    }
   }
 
   public static class EmptyPass extends TextEditorHighlightingPass {

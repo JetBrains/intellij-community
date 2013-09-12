@@ -22,6 +22,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
@@ -109,7 +110,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
     final PsiElement parent = myTarget.getParent().getParent();
     final LocalInspectionsPass pass = new LocalInspectionsPass(myFile, myFile.getViewProvider().getDocument(),
                                                                parent.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE,
-                                                               false);
+                                                               false, HighlightInfoProcessor.getEmpty());
     final InspectionProfile inspectionProfile =
       InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     for (PsiLiteralExpression target : targets) {

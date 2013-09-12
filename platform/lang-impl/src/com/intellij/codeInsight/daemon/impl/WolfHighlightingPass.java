@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 */
 class WolfHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   WolfHighlightingPass(@NotNull Project project, @NotNull Document document, @NotNull PsiFile file) {
-    super(project, document, DaemonBundle.message("pass.wolf"), file, false);
+    super(project, document, DaemonBundle.message("pass.wolf"), file, null, TextRange.EMPTY_RANGE, false, HighlightInfoProcessor.getEmpty());
   }
 
   @Override

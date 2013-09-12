@@ -16,9 +16,10 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
@@ -79,9 +80,10 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 
-import static com.intellij.psi.search.PsiSearchHelper.SearchCostResult.*;
+import static com.intellij.psi.search.PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
+import static com.intellij.psi.search.PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES;
 
-public class PostHighlightingPass extends TextEditorHighlightingPass {
+public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
   private RefCountHolder myRefCountHolder;
   private final PsiFile myFile;
@@ -107,8 +109,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   PostHighlightingPass(@NotNull Project project,
                        @NotNull PsiFile file,
                        @Nullable Editor editor,
-                       @NotNull Document document) {
-    super(project, document, true);
+                       @NotNull Document document,
+                       @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    super(project, document, "Unused symbols", file, editor, file.getTextRange(), true, highlightInfoProcessor);
     myFile = file;
     myEditor = editor;
     myStartOffset = 0;
@@ -119,7 +122,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Override
-  public void doCollectInformation(@NotNull final ProgressIndicator progress) {
+  protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     final FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
     final List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
@@ -160,7 +163,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Override
-  public void doApplyInformationToEditor() {
+  protected void applyInformationWithProgress() {
     if (myHighlights == null) return;
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights, getColorsScheme(), Pass.POST_UPDATE_ALL);
     PostHighlightingPassFactory.markFileUpToDate(myFile);

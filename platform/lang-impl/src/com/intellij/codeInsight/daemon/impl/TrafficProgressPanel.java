@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -85,7 +86,8 @@ public class TrafficProgressPanel extends JPanel {
     fakeStatusLargeEnough.passStati = new ArrayList<ProgressableTextEditorHighlightingPass>();
     for (int i = 0; i < 3; i++) {
       fakeStatusLargeEnough.passStati
-        .add(new ProgressableTextEditorHighlightingPass(project, null, DaemonBundle.message("pass.wolf"), psiFile, false) {
+        .add(new ProgressableTextEditorHighlightingPass(project, null, DaemonBundle.message("pass.wolf"), psiFile, editor, TextRange.EMPTY_RANGE, false,
+                                                        HighlightInfoProcessor.getEmpty()) {
           @Override
           protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
           }

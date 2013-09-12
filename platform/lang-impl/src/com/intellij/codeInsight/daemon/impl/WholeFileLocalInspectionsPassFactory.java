@@ -99,7 +99,8 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
       return null;
     }
 
-    return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true) {
+    return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
+                                    new DefaultHighlightInfoProcessor()) {
       @NotNull
       @Override
       List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {

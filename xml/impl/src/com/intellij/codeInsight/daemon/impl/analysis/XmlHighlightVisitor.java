@@ -427,14 +427,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       }
     }
 
-    if (attribute.isNamespaceDeclaration()) {
-      checkReferences(attribute.getValueElement());
-      return;
-    }
-    final String namespace = attribute.getNamespace();
-
-    if (XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(namespace)) {
-      checkReferences(attribute.getValueElement());
+    if (attribute.isNamespaceDeclaration() || XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(attribute.getNamespace())) {
+      //checkReferences(attribute.getValueElement());
       return;
     }
 
