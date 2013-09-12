@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -349,7 +348,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
     if (element == null) return null;
 
-    String standard = element instanceof LightElement ? null : JavaDocumentationProvider.generateExternalJavadoc(element);
+    String standard = element.getNavigationElement() instanceof PsiDocCommentOwner ? JavaDocumentationProvider.generateExternalJavadoc(element) : null;
 
     if (element instanceof GrVariable &&
         ((GrVariable)element).getTypeElementGroovy() == null &&
