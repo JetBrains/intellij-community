@@ -30,13 +30,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
   /**
-   * Collects initial information required for annotation. Expected to run within read action.
-   * See {@link ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)} for details.
-   *
-   * @param file file to annotate
-   * @return see {@link ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)}
+   * @deprecated use {@link ExternalAnnotator#collectInformation(PsiFile)} instead
    */
   @Nullable
+  @Deprecated
   public InitialInfoType collectionInformation(@NotNull PsiFile file) {
     return null;
   }
@@ -47,12 +44,24 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
   @Nullable
   @Deprecated()
   public InitialInfoType collectInformation(@NotNull PsiFile file, @NotNull Editor editor) {
+    return collectInformation(file);
+  }
+
+  /**
+   * Collects initial information required for annotation. Expected to run within read action.
+   * See {@link ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)} for details.
+   *
+   * @param file file to annotate
+   * @return see {@link ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)}
+   */
+  @Nullable
+  public InitialInfoType collectInformation(@NotNull PsiFile file) {
     return collectionInformation(file);
   }
 
   /**
    * Collects initial information required for annotation. This method is called within read action during annotation pass.
-   * Default implementation returns the result of {@link ExternalAnnotator#collectionInformation(PsiFile)}
+   * Default implementation returns the result of {@link ExternalAnnotator#collectInformation(PsiFile)}
    * if file has no errors or {@code null} otherwise.
    * @param file      file to annotate
    * @param editor    editor in which file's document reside
@@ -61,7 +70,7 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
    */
   @Nullable
   public InitialInfoType collectInformation(@NotNull PsiFile file, @NotNull Editor editor, boolean hasErrors) {
-    return hasErrors ? null : collectionInformation(file);
+    return hasErrors ? null : collectInformation(file, editor);
   }
 
   /**
