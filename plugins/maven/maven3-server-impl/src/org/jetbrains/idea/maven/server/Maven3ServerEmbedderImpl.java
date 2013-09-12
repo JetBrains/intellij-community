@@ -15,11 +15,13 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.DefaultMaven;
 import org.apache.maven.Maven;
+import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
@@ -36,11 +38,7 @@ import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Profile;
 import org.apache.maven.model.profile.DefaultProfileInjector;
 import org.apache.maven.plugin.LegacySupport;
-import org.apache.maven.plugin.MavenPluginManager;
-import org.apache.maven.plugin.descriptor.PluginDescriptor;
-import org.apache.maven.plugin.version.DefaultPluginVersionRequest;
-import org.apache.maven.plugin.version.PluginVersionRequest;
-import org.apache.maven.plugin.version.PluginVersionResolver;
+import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.profiles.activation.*;
 import org.apache.maven.project.*;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
@@ -60,7 +58,6 @@ import org.apache.maven.shared.dependency.tree.DependencyTreeResolutionListener;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.classworlds.ClassWorld;
-import org.codehaus.plexus.component.repository.ComponentDependency;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.context.DefaultContext;
@@ -74,6 +71,7 @@ import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.util.DefaultRepositorySystemSession;
+import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -549,10 +547,10 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
   }
 
   @Override
-  public Collection<MavenArtifact> resolvePlugin(@NotNull MavenPlugin plugin,
-                                                 @NotNull List<MavenRemoteRepository> repositories,
+  public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
+                                                 @NotNull final List<MavenRemoteRepository> repositories,
                                                  int nativeMavenProjectId,
-                                                 boolean transitive) throws RemoteException, MavenServerProcessCanceledException {
+                                                 final boolean transitive) throws RemoteException, MavenServerProcessCanceledException {
     try {
       Plugin mavenPlugin = new Plugin();
       mavenPlugin.setGroupId(plugin.getGroupId());
@@ -560,57 +558,42 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       mavenPlugin.setVersion(plugin.getVersion());
       MavenProject project = RemoteNativeMavenProjectHolder.findProjectById(nativeMavenProjectId);
 
-      MavenExecutionRequest request = createRequest(null, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList());
+      Plugin pluginFromProject = project.getBuild().getPluginsAsMap().get(plugin.getGroupId() + ':' + plugin.getArtifactId());
+      if (pluginFromProject != null) {
+        mavenPlugin.setDependencies(pluginFromProject.getDependencies());
+      }
+
+      final MavenExecutionRequest request = createRequest(null, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList());
 
       DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
       RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
 
-      if (plugin.getVersion() == null) {
-        PluginVersionRequest versionRequest =
-          new DefaultPluginVersionRequest(mavenPlugin, repositorySystemSession, project.getRemotePluginRepositories());
-        mavenPlugin.setVersion(getComponent(PluginVersionResolver.class).resolve(versionRequest).getVersion());
-      }
+      PluginDependenciesResolver pluginDependenciesResolver = getComponent(PluginDependenciesResolver.class);
 
-      PluginDescriptor result = getComponent(MavenPluginManager.class).getPluginDescriptor(mavenPlugin,
-                                                                                           project.getRemotePluginRepositories(),
-                                                                                           repositorySystemSession);
+      org.sonatype.aether.artifact.Artifact pluginArtifact =
+        pluginDependenciesResolver.resolve(mavenPlugin, project.getRemotePluginRepositories(), repositorySystemSession);
 
-      Map<MavenArtifactInfo, MavenArtifact> resolvedArtifacts = new THashMap<MavenArtifactInfo, MavenArtifact>();
+      org.sonatype.aether.graph.DependencyNode node = pluginDependenciesResolver
+        .resolve(mavenPlugin, pluginArtifact, null, project.getRemotePluginRepositories(), repositorySystemSession);
 
-      Artifact pluginArtifact = result.getPluginArtifact();
+      PreorderNodeListGenerator nlg = new PreorderNodeListGenerator();
+      node.accept(nlg);
 
-      MavenArtifactInfo artifactInfo = new MavenArtifactInfo(pluginArtifact.getGroupId(),
-                                                             pluginArtifact.getArtifactId(),
-                                                             pluginArtifact.getVersion(),
-                                                             pluginArtifact.getType(), null);
+      List<MavenArtifact> res = new ArrayList<MavenArtifact>();
 
-      resolveIfNecessary(artifactInfo, repositories, resolvedArtifacts);
-
-      if (transitive) {
-        // todo try to use parallel downloading
-        for (Artifact each : result.getIntroducedDependencyArtifacts()) {
-          resolveIfNecessary(new MavenArtifactInfo(each.getGroupId(), each.getArtifactId(), each.getVersion(), each.getType(), null),
-                             repositories, resolvedArtifacts);
-        }
-        for (ComponentDependency each : result.getDependencies()) {
-          resolveIfNecessary(new MavenArtifactInfo(each.getGroupId(), each.getArtifactId(), each.getVersion(), each.getType(), null),
-                             repositories, resolvedArtifacts);
+      for (org.sonatype.aether.artifact.Artifact artifact : nlg.getArtifacts(true)) {
+        if (!Comparing.equal(artifact.getArtifactId(), plugin.getArtifactId())
+            || !Comparing.equal(artifact.getGroupId(), plugin.getGroupId())) {
+          res.add(MavenModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifact), getLocalRepositoryFile()));
         }
       }
 
-      return new THashSet<MavenArtifact>(resolvedArtifacts.values());
+      return res;
     }
     catch (Exception e) {
       Maven3ServerGlobals.getLogger().info(e);
       return Collections.emptyList();
     }
-  }
-
-  private void resolveIfNecessary(MavenArtifactInfo info,
-                                  List<MavenRemoteRepository> repos,
-                                  Map<MavenArtifactInfo, MavenArtifact> resolvedArtifacts) throws RemoteException {
-    if (resolvedArtifacts.containsKey(info)) return;
-    resolvedArtifacts.put(info, doResolve(info, repos));
   }
 
   private MavenArtifact doResolve(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
