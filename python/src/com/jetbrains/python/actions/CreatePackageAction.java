@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiFileSystemItem;
 import com.jetbrains.python.PyNames;
 
 /**
@@ -39,13 +40,16 @@ public class CreatePackageAction extends DumbAwareAction {
       @Override
       protected void createDirectories(String subDirName) {
         super.createDirectories(subDirName);
-        createInitPyInHierarchy(getCreatedElement(), directory);
+        PsiFileSystemItem element = getCreatedElement();
+        if (element instanceof PsiDirectory) {
+          createInitPyInHierarchy((PsiDirectory)element, directory);
+        }
       }
     };
     Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.package.name"),
                                       IdeBundle.message("title.new.package"),
                                       Messages.getQuestionIcon(), "", validator);
-    final PsiDirectory result = validator.getCreatedElement();
+    final PsiFileSystemItem result = validator.getCreatedElement();
     if (result != null) {
       view.selectElement(result);
     }

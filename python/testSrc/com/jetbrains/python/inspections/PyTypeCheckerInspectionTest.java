@@ -203,4 +203,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testFunctionParameterReturnType() {
     doTest();
   }
+
+  // PY-10095
+  public void testStringStartsWith() {
+    doTest();
+  }
 }
