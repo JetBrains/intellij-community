@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -32,6 +33,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -266,14 +268,14 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());
   }
 
-  private Object[] processPackage(final PsiPackage aPackage) {
-    final ArrayList<Object> list = new ArrayList<Object>();
+  private LookupElement[] processPackage(final PsiPackage aPackage) {
+    final ArrayList<LookupElement> list = ContainerUtil.newArrayList();
     final int startOffset = StringUtil.isEmpty(aPackage.getName()) ? 0 : aPackage.getQualifiedName().length() + 1;
     final GlobalSearchScope scope = getScope();
     for (final PsiPackage subPackage : aPackage.getSubPackages(scope)) {
       final String shortName = subPackage.getQualifiedName().substring(startOffset);
       if (JavaPsiFacade.getInstance(subPackage.getProject()).getNameHelper().isIdentifier(shortName)) {
-        list.add(subPackage);
+        list.add(LookupElementBuilder.create(subPackage).withIcon(subPackage.getIcon(Iconable.ICON_FLAG_VISIBILITY)));
       }
     }
 
@@ -293,14 +295,16 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
       for (PsiClass clazz : classes) {
         if (isClassAccepted(clazz, classKind, instantiatable, concrete, notInterface, notEnum)) {
-          list.add(clazz);
+          list.add(JavaClassNameCompletionContributor.createClassLookupItem(clazz, false));
         }
       }
     }
     else {
-      list.addAll(classes);
+      for (PsiClass clazz : classes) {
+        list.add(JavaClassNameCompletionContributor.createClassLookupItem(clazz, false));
+      }
     }
-    return list.toArray();
+    return list.toArray(new LookupElement[list.size()]);
   }
 
   @Nullable
