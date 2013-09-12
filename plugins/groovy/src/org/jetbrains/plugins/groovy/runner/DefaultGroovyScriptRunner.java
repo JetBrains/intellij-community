@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,9 +66,9 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
   @Override
   public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
-    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false);
+    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false, tests);
 
-    addClasspathFromRootModel(module, tests, params, true);
+    //addClasspathFromRootModel(module, tests, params, true);
 
     params.getVMParametersList().addParametersString(configuration.getVMParameters());
 
@@ -82,7 +82,11 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
   }
 
-  public static void configureGenericGroovyRunner(@NotNull JavaParameters params, @NotNull Module module, @NotNull String mainClass, boolean useBundled) {
+  public static void configureGenericGroovyRunner(@NotNull JavaParameters params,
+                                                  @NotNull Module module,
+                                                  @NotNull String mainClass,
+                                                  boolean useBundled,
+                                                  boolean tests) throws CantRunException {
     final VirtualFile groovyJar = findGroovyJar(module);
     if (useBundled) {
       params.getClassPath().add(GroovyUtils.getBundledGroovyJar());
@@ -90,6 +94,8 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     else if (groovyJar != null) {
       params.getClassPath().add(groovyJar);
     }
+
+    getClassPathFromRootModel(module, tests, params, true, params.getClassPath());
 
     setToolsJar(params);
 

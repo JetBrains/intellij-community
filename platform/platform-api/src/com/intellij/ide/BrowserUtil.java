@@ -234,12 +234,6 @@ public class BrowserUtil {
     }
   }
 
-  /** @deprecated unneeded and misleading (to remove in IDEA 13) */
-  @SuppressWarnings("unused")
-  public static String escapeUrl(@NotNull @NonNls String url) {
-    return SystemInfo.isWindows ? '"' + url + '"' : url;
-  }
-
   @NotNull
   public static List<String> getOpenBrowserCommand(@NonNls @NotNull String browserPathOrName) {
     return getOpenBrowserCommand(browserPathOrName, false);

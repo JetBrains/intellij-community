@@ -36,18 +36,17 @@ import java.util.List;
  */
 public class BrowserSelector {
   private ComboboxWithBrowseButton myBrowserComboWithBrowse;
-  private boolean myAllowDefaultBrowser;
 
-  public BrowserSelector(boolean allowDefaultBrowser) {
-    myAllowDefaultBrowser = allowDefaultBrowser;
+  public BrowserSelector(final boolean allowDefaultBrowser) {
     myBrowserComboWithBrowse = new ComboboxWithBrowseButton(new ComboBox());
     myBrowserComboWithBrowse.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
         util.editConfigurable(myBrowserComboWithBrowse, new BrowserSettings());
 
         final BrowsersConfiguration.BrowserFamily selectedItem = getSelectedBrowser();
-        initBrowsersComboModel();
+        initBrowsersComboModel(allowDefaultBrowser);
         if (selectedItem != null) {
           setSelectedBrowser(selectedItem);
         }
@@ -69,16 +68,16 @@ public class BrowserSelector {
       }
     });
 
-    initBrowsersComboModel();
+    initBrowsersComboModel(allowDefaultBrowser);
   }
 
   public JComponent getMainComponent() {
     return myBrowserComboWithBrowse;
   }
 
-  private void initBrowsersComboModel() {
+  private void initBrowsersComboModel(boolean allowDefaultBrowser) {
     final List<BrowsersConfiguration.BrowserFamily> activeBrowsers = new ArrayList<BrowsersConfiguration.BrowserFamily>();
-    if (myAllowDefaultBrowser) {
+    if (allowDefaultBrowser) {
       activeBrowsers.add(null);
     }
     activeBrowsers.addAll(BrowsersConfiguration.getInstance().getActiveBrowsers());

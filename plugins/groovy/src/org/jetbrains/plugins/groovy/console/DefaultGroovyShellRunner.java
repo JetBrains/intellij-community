@@ -22,13 +22,11 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.AbstractConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
-import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
@@ -47,13 +45,7 @@ public class DefaultGroovyShellRunner extends GroovyShellRunner {
   @Override
   public JavaParameters createJavaParameters(@NotNull Module module) throws ExecutionException {
     JavaParameters res = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
-    DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "org.codehaus.groovy.tools.shell.Main", !hasGroovyAll(module));
-    PathsList list = GroovyScriptRunner.getClassPathFromRootModel(module, true, res, true);
-    if (list != null) {
-      res.getClassPath().addAll(list.getPathList());
-    }
-    //res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
-    //res.getVMParametersList().add("-Xdebug"); res.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
+    DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "org.codehaus.groovy.tools.shell.Main", !hasGroovyAll(module), true);
     res.setWorkingDirectory(getWorkingDirectory(module));
 
     return res;
