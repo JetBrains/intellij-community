@@ -38,13 +38,12 @@ import java.util.*;
  * Time: 4:56 PM
  */
 public class SvnCommitRunner {
-  private final String myExePath;
+
   @Nullable private final AuthenticationCallback myAuthenticationCallback;
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.commandLine.SvnCommitRunner");
   private SvnCommitRunner.CommandListener myCommandListener;
 
-  public SvnCommitRunner(@NotNull String path, @Nullable CommitEventHandler handler, @Nullable AuthenticationCallback authenticationCallback) {
-    myExePath = path;
+  public SvnCommitRunner(@Nullable CommitEventHandler handler, @Nullable AuthenticationCallback authenticationCallback) {
     myCommandListener = new CommandListener(handler);
     myAuthenticationCallback = authenticationCallback;
   }
@@ -77,7 +76,7 @@ public class SvnCommitRunner {
     Arrays.sort(paths);
     CommandUtil.put(parameters, paths);
 
-    SvnLineCommand.runWithAuthenticationAttempt(myExePath, paths[0], urlProvider.convert(paths), SvnCommandName.ci,
+    SvnLineCommand.runWithAuthenticationAttempt(paths[0], urlProvider.convert(paths), SvnCommandName.ci,
                                                 myCommandListener, myAuthenticationCallback, ArrayUtil.toStringArray(parameters));
     myCommandListener.throwExceptionIfOccurred();
 

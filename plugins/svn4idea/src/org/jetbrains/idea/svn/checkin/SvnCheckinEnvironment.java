@@ -250,7 +250,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
     final IdeaSvnkitBasedAuthenticationCallback authenticationCallback = new IdeaSvnkitBasedAuthenticationCallback(mySvnVcs);
     IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());
-    String cmdPath = SvnApplicationSettings.getInstance().getCommandLinePath();
     Convertor<File[], SVNURL> urlProvider = new Convertor<File[], SVNURL>() {
       @Override
       public SVNURL convert(File[] o) {
@@ -265,7 +264,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     };
 
     try {
-      SvnCommitRunner runner = new SvnCommitRunner(cmdPath, handler, authenticationCallback);
+      SvnCommitRunner runner = new SvnCommitRunner(handler, authenticationCallback);
       final long revision =
         runner.commit(ArrayUtil.toObjectArray(committables, File.class), comment, SVNDepth.EMPTY, false, false, null, null, urlProvider);
 

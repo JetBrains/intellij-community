@@ -28,6 +28,7 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -111,8 +112,7 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  public static SvnLineCommand runWithAuthenticationAttempt(final String exePath,
-                                                            final File firstFile,
+  public static SvnLineCommand runWithAuthenticationAttempt(final File firstFile,
                                                             final SVNURL url,
                                                             SvnCommandName commandName,
                                                             final LineCommandListener listener,
@@ -133,6 +133,7 @@ public class SvnLineCommand extends SvnCommand {
       }
 
       while (true) {
+        final String exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
         final SvnLineCommand command = runCommand(exePath, commandName, listener, base, configDir, parameters);
         final Integer exitCode = command.myExitCode.get();
 

@@ -89,8 +89,7 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
     final List<String> parameters = prepareParameters(paths, revision, depth, allowUnversionedObstructions, depthIsSticky, makeParents);
     final BaseUpdateCommandListener listener = createCommandListener(paths, updatedToRevision, base);
     try {
-      SvnLineCommand.runWithAuthenticationAttempt(SvnApplicationSettings.getInstance().getCommandLinePath(),
-                                                  base, info.getURL(), SvnCommandName.up, listener,
+      SvnLineCommand.runWithAuthenticationAttempt(base, info.getURL(), SvnCommandName.up, listener,
                                                   new IdeaSvnkitBasedAuthenticationCallback(SvnVcs.getInstance(myProject)),
                                                   ArrayUtil.toStringArray(parameters));
     }

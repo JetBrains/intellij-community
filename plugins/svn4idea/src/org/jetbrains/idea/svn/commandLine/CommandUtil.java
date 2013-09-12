@@ -41,7 +41,7 @@ public class CommandUtil {
 
     try {
       return SvnLineCommand
-        .runWithAuthenticationAttempt(exe, base, url, name, new SvnCommitRunner.CommandListener(null),
+        .runWithAuthenticationAttempt(base, url, name, new SvnCommitRunner.CommandListener(null),
                                       new IdeaSvnkitBasedAuthenticationCallback(vcs), ArrayUtil.toStringArray(parameters));
     }
     catch (SvnBindException e) {
@@ -204,7 +204,7 @@ public class CommandUtil {
     SVNURL url = resolveRepositoryUrl(vcs, null);
 
     SvnLineCommand command = SvnLineCommand.runWithAuthenticationAttempt(
-      exe, base, url, name, listener != null ? listener : new SvnCommitRunner.CommandListener(null),
+      base, url, name, listener != null ? listener : new SvnCommitRunner.CommandListener(null),
       new IdeaSvnkitBasedAuthenticationCallback(vcs),
       ArrayUtil.toStringArray(parameters));
 
