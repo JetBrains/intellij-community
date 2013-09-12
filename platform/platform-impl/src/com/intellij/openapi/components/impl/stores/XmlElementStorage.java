@@ -41,6 +41,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.XmlElementStorage");
 
   @NonNls private static final String ATTR_NAME = "name";
+  public static final String VERSION_FILE_SUFFIX = ".ver";
 
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull private final String myRootElementName;
@@ -447,7 +448,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
                     StorageUtil.sendContent(myStreamProvider, myFileSpec, copy, roamingType, true);
                     Document versionDoc = createVersionDocument(copy);
                     if (!versionDoc.getRootElement().getChildren().isEmpty()) {
-                      StorageUtil.sendContent(myStreamProvider, myFileSpec + ".ver", versionDoc, roamingType, true);
+                      StorageUtil.sendContent(myStreamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
                     }
                   }
                 }
