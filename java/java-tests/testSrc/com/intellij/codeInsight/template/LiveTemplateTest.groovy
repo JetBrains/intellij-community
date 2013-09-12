@@ -25,6 +25,8 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 import com.intellij.codeInsight.template.impl.*
 
+import static com.intellij.codeInsight.template.Template.Property.*
+
 /**
  * @author spleaner
  */
@@ -652,6 +654,38 @@ class Foo {
     state.nextTab()
     assert !state
     checkResultByText 'foo arg bar  goo <caret> after';
+  }
+
+  public void "test reuse static import"() {
+    myFixture.addClass("""package foo; 
+public class Bar { 
+  public static void someMethod() {}
+  public static void someMethod(int a) {}
+}""")
+    myFixture.configureByText "a.java", """
+import static foo.Bar.someMethod;
+
+class Foo {
+  {
+    <caret>
+  }
+}
+"""
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("xxx", "user", 'foo.Bar.someMethod($END$)');
+    template.setValue(USE_STATIC_IMPORT_IF_POSSIBLE, true);
+
+    manager.startTemplate(editor, template);
+    myFixture.checkResult """
+import static foo.Bar.someMethod;
+
+class Foo {
+  {
+    someMethod(<caret>)
+  }
+}
+"""
+
   }
 
 }

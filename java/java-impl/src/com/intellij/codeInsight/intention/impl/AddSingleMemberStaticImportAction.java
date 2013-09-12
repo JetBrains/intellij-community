@@ -51,7 +51,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
    * @return            not-null qualified name of the class which method may be statically imported if any; <code>null</code> otherwise
    */
   @Nullable
-  public static String getStaticImportClass(@NotNull PsiElement element) {
+  public static String getStaticImportClass(@NotNull PsiElement element, boolean useExisting) {
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
     if (element instanceof PsiIdentifier) {
       final PsiElement parent = element.getParent();
@@ -64,7 +64,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
         if (resolved instanceof PsiMember && ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
           PsiClass aClass = getResolvedClass(element, (PsiMember)resolved);
           if (aClass != null && !PsiTreeUtil.isAncestor(aClass, element, true) && !aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-            if (findExistingImport(element.getContainingFile(), aClass, refExpr.getReferenceName()) == null) {
+            if (findExistingImport(element.getContainingFile(), aClass, refExpr.getReferenceName()) == null || useExisting) {
               String qName = aClass.getQualifiedName();
               if (qName != null && !Comparing.strEqual(qName, aClass.getName())) {
                 return qName + "." +refExpr.getReferenceName();
@@ -92,8 +92,8 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
         }
 
         final PsiImportStatementBase importStatement = importList.findSingleImportStatement(refName);
-        final PsiElement resolve = importStatement != null ? importStatement.resolve() : null;
-        if (resolve instanceof PsiMember && ((PsiMember)resolve).getContainingClass() == aClass) {
+        if (importStatement instanceof PsiImportStaticStatement && 
+            ((PsiImportStaticStatement)importStatement).resolveTargetClass() == aClass) {
           return importStatement;
         }
       }
@@ -123,7 +123,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    String classQName = getStaticImportClass(element);
+    String classQName = getStaticImportClass(element, false);
     if (classQName != null) {
       setText(CodeInsightBundle.message("intention.add.single.member.static.import.text", classQName));
     }
