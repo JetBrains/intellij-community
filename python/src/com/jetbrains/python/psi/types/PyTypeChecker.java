@@ -383,7 +383,17 @@ public class PyTypeChecker {
       if (markedCallee != null) {
         final Callable callable = markedCallee.getCallable();
         if (callable instanceof PyFunction) {
-          final PyExpression receiver = callee instanceof PyQualifiedExpression ? ((PyQualifiedExpression)callee).getQualifier() : null;
+          final PyFunction function = (PyFunction)callable;
+          final PyExpression receiver;
+          if (function.getModifier() == PyFunction.Modifier.STATICMETHOD) {
+            receiver = null;
+          }
+          else if (callee instanceof PyQualifiedExpression) {
+            receiver = ((PyQualifiedExpression)callee).getQualifier();
+          }
+          else {
+            receiver = null;
+          }
           return new AnalyzeCallResults(callable, receiver, arguments);
         }
       }
