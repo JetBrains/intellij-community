@@ -10,6 +10,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.options.StreamProvider;
@@ -141,6 +142,8 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     String projectId = getProjectId(project);
     manager.registerStreamProvider(new ICSStreamProvider(projectId), RoamingType.PER_PLATFORM);
     manager.registerStreamProvider(new ICSStreamProvider(projectId) {
+      private static final String WORKSPACE_VERSION_FILE = StoragePathMacros.WORKSPACE_FILE + XmlElementStorage.VERSION_FILE_SUFFIX;
+
       @Override
       public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
         if (isShareable(fileSpec)) {
@@ -149,7 +152,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       }
 
       private boolean isShareable(String fileSpec) {
-        return settings.shareProjectWorkspace || !fileSpec.equals(StoragePathMacros.WORKSPACE_FILE);
+        return settings.shareProjectWorkspace || (!fileSpec.equals(StoragePathMacros.WORKSPACE_FILE) && !fileSpec.equals(WORKSPACE_VERSION_FILE));
       }
 
       @Nullable
