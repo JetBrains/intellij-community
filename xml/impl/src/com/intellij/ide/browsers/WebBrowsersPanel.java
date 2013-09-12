@@ -93,6 +93,7 @@ public class WebBrowsersPanel extends JPanel {
 
     final JButton resetButton = new JButton(XmlBundle.message("browser.default.settings"));
     resetButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         field.getTextField().setText(family.getExecutionPath());
       }
@@ -102,6 +103,7 @@ public class WebBrowsersPanel extends JPanel {
     if (family.createBrowserSpecificSettings() != null) {
       final JButton editSettingsButton = new JButton(XmlBundle.message("button.text.settings"));
       editSettingsButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           editSettings(family);
         }
