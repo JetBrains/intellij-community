@@ -149,6 +149,10 @@ public class GitProjectLogManager {
     gitLog.rootsChanged(fileList);
   }
 
+  public GitLog getLog() {
+    return myLogRef.get();
+  }
+
   public interface CurrentBranchListener extends Consumer<VirtualFile> {
   }
 }
