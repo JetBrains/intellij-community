@@ -15,23 +15,43 @@
  */
 package org.intellij.plugins.intelliLang.inject.groovy;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+
+import java.util.Map;
 
 /**
  * Created by Max Medvedev on 9/12/13
  */
 public class GrInjectionUtil {
+  static int findParameterIndex(PsiElement arg, GrCall call) {
+    final GroovyResolveResult result = call.advancedResolve();
+    if (!(result.getElement() instanceof PsiMethod)) return -1;
+
+    final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil
+      .mapArgumentsToParameters(result, call, false, false, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments());
+    if (map == null) return -1;
+
+    final PsiMethod method = (PsiMethod)result.getElement();
+    final PsiParameter parameter = map.get(arg).first;
+    if (parameter == null) return -1;
+
+    return method.getParameterList().getParameterIndex(parameter);
+  }
+
   public interface AnnotatedElementVisitor {
     boolean visitMethodParameter(GrExpression expression, GrCall psiCallExpression);
     boolean visitMethodReturnStatement(GrReturnStatement parent, PsiMethod method);

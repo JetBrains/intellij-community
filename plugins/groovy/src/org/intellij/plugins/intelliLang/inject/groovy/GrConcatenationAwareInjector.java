@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -30,7 +29,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -54,11 +52,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Max Medvedev on 9/9/13
@@ -161,13 +157,9 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
             if (element instanceof PsiMethod) {
               PsiMethod method = (PsiMethod)element;
               final PsiParameter[] parameters = method.getParameterList().getParameters();
-              Map<GrExpression,Pair<PsiParameter,PsiType>> map = GrClosureSignatureUtil
-                .mapArgumentsToParameters(result, expression, false, true, methodCall.getNamedArguments(),
-                                          methodCall.getExpressionArguments(), methodCall.getClosureArguments());
-              if (map != null) {
-                final int index = ArrayUtil.indexOf(parameters, map.get(expression).first);
+              int index = GrInjectionUtil.findParameterIndex(expression, methodCall);
+              if (index >= 0) {
                 process(parameters[index], method, index);
-
               }
             }
           }

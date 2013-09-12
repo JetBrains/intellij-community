@@ -36,7 +36,6 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
@@ -49,14 +48,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Gregory.Shrago
@@ -174,7 +171,7 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
     else if (parent instanceof GrArgumentList && parent.getParent() instanceof GrMethodCall) {
       final PsiMethod method = ((GrMethodCall)parent.getParent()).resolveMethod();
       if (method != null) {
-        final int index = findParameterIndex(target, ((GrMethodCall)parent.getParent()));
+        final int index = GrInjectionUtil.findParameterIndex(target, ((GrMethodCall)parent.getParent()));
         if (index >= 0) {
           return JavaLanguageInjectionSupport.doInjectInJavaMethod(project, method, index, host, languageId);
         }
@@ -198,21 +195,6 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
       }
     }
     return false;
-  }
-
-  private static int findParameterIndex(PsiElement arg, GrMethodCall call) {
-    final GroovyResolveResult result = call.advancedResolve();
-    assert result.getElement() instanceof PsiMethod;
-    final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil
-      .mapArgumentsToParameters(result, call, false, false, call.getNamedArguments(), call.getExpressionArguments(),
-                                call.getClosureArguments());
-    if (map == null) return -1;
-
-    final PsiMethod method = (PsiMethod)result.getElement();
-    final PsiParameter parameter = map.get(arg).first;
-    if (parameter == null) return -1;
-
-    return method.getParameterList().getParameterIndex(parameter);
   }
 
   private static boolean isStringLiteral(PsiLanguageInjectionHost element) {
