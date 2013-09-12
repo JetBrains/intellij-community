@@ -8,7 +8,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -17,7 +16,6 @@ import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -682,7 +680,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       mySelected = state;
       
       if (mySelected) {
-        DebugSessionConsoleAdapter session = new DebugSessionConsoleAdapter(getProject(), myPydevConsoleCommunication);
+        PyConsoleStackFrameConnector session = new PyConsoleStackFrameConnector(getProject(), myPydevConsoleCommunication);
         final XVariablesView view = new XVariablesView(session, null);
         session.resume();
         
