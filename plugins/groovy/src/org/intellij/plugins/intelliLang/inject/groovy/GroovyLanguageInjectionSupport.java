@@ -29,7 +29,6 @@ import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
-import org.intellij.plugins.intelliLang.inject.java.ConcatenationInjector;
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteralContainer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -99,17 +99,17 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
   @Override
   public boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
     if (!isStringLiteral(psiElement)) return false;
+
+    GrLiteralContainer host = (GrLiteralContainer)psiElement;
     final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = ContainerUtil.newHashMap();
     final ArrayList<PsiElement> annotations = new ArrayList<PsiElement>();
-    final GrLiteral host = (GrLiteral)psiElement;
     final Project project = host.getProject();
     final Configuration configuration = Configuration.getProjectInstance(project);
     collectInjections(host, configuration, this, injectionsMap, annotations);
 
     if (injectionsMap.isEmpty() && annotations.isEmpty()) return false;
     final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>(injectionsMap.keySet());
-    final List<BaseInjection>
-      newInjections = ContainerUtil.mapNotNull(originalInjections, new NullableFunction<BaseInjection, BaseInjection>() {
+    final List<BaseInjection> newInjections = ContainerUtil.mapNotNull(originalInjections, new NullableFunction<BaseInjection, BaseInjection>() {
       public BaseInjection fun(final BaseInjection injection) {
         final Pair<PsiMethod, Integer> pair = injectionsMap.get(injection);
         final String placeText = JavaLanguageInjectionSupport.getPatternStringForJavaPlace(pair.first, pair.second);
@@ -122,13 +122,12 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
     return true;
   }
 
-  private static void collectInjections(GrLiteral host,
+  private static void collectInjections(GrLiteralContainer host,
                                         Configuration configuration,
                                         LanguageInjectionSupport support,
                                         final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap,
                                         final ArrayList<PsiElement> annotations) {
-    new ConcatenationInjector.InjectionProcessor(configuration, support, host) {
-
+    new GrConcatenationAwareInjector.InjectionProcessor(configuration, support, host) {
       @Override
       protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, BaseInjection injection) {
         ContainerUtil.addAll(annotations, comment);
