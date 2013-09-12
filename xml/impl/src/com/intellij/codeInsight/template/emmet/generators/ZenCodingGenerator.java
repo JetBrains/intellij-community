@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,7 @@ import java.util.List;
 public abstract class ZenCodingGenerator {
   private static final ExtensionPointName<ZenCodingGenerator> EP_NAME =
     new ExtensionPointName<ZenCodingGenerator>("com.intellij.xml.zenCodingGenerator");
+  private static final TokenSet VALID_LEAF_TYPES = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS, XmlTokenType.XML_CHAR_ENTITY_REF);
 
   public abstract TemplateImpl generateTemplate(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context);
 
@@ -76,7 +78,7 @@ public abstract class ZenCodingGenerator {
     int elementStart = -1;
     do {
       PsiElement e = element;
-      while ((e instanceof LeafPsiElement && ((LeafPsiElement)e).getElementType() == XmlTokenType.XML_DATA_CHARACTERS) ||
+      while ((e instanceof LeafPsiElement && VALID_LEAF_TYPES.contains(((LeafPsiElement)e).getElementType())) || 
              e instanceof PsiWhiteSpace || e instanceof PsiErrorElement) {
         elementStart = e.getTextRange().getStartOffset();
         e = e.getPrevSibling();
