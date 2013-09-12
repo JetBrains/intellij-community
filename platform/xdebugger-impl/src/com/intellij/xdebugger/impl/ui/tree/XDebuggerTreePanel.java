@@ -24,9 +24,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
@@ -43,7 +43,7 @@ public class XDebuggerTreePanel implements DnDSource {
   private final XDebuggerTree myTree;
   private final JPanel myMainPanel;
 
-  public XDebuggerTreePanel(final @NotNull XDebugSession session, final @NotNull XDebuggerEditorsProvider editorsProvider,
+  public XDebuggerTreePanel(final @NotNull XStackFrameAwareSession session, final @NotNull XDebuggerEditorsProvider editorsProvider,
                             @NotNull Disposable parentDisposable, final @Nullable XSourcePosition sourcePosition,
                             @NotNull @NonNls final String popupActionGroupId) {
     myTree = new XDebuggerTree(session, editorsProvider, sourcePosition, popupActionGroupId);

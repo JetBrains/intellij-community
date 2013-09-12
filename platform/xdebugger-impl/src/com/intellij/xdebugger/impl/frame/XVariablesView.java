@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -45,9 +46,9 @@ public class XVariablesView extends XDebugViewBase {
   private Object myFrameEqualityObject;
   private XDebuggerTreeRestorer myTreeRestorer;
 
-  public XVariablesView(@NotNull XDebugSession session, @Nullable final Disposable parentDisposable) {
+  public XVariablesView(@NotNull XStackFrameAwareSession session, @Nullable final Disposable parentDisposable) {
     super(session, parentDisposable);
-    XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
+    XDebuggerEditorsProvider editorsProvider = session.getEditorsProvider();
     myDebuggerTreePanel = new XDebuggerTreePanel(session, editorsProvider, this, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP);
     myDebuggerTreePanel.getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
     DnDManager.getInstance().registerSource(myDebuggerTreePanel, myDebuggerTreePanel.getTree());
@@ -72,20 +73,30 @@ public class XVariablesView extends XDebugViewBase {
       tree.setSourcePosition(stackFrame.getSourcePosition());
       tree.setRoot(new XStackFrameNode(tree, stackFrame), false);
       Object newEqualityObject = stackFrame.getEqualityObject();
-      if (myFrameEqualityObject != null && newEqualityObject != null && myFrameEqualityObject.equals(newEqualityObject) && myTreeState != null) {
+      if (myFrameEqualityObject != null &&
+          newEqualityObject != null &&
+          myFrameEqualityObject.equals(newEqualityObject) &&
+          myTreeState != null) {
         disposeTreeRestorer();
         myTreeRestorer = myTreeState.restoreState(tree);
       }
     }
     else {
       tree.setSourcePosition(null);
-      XDebugProcess debugProcess = mySession.getDebugProcess();
+
       XDebuggerTreeNode node;
       if (!mySession.isStopped() && mySession.isPaused()) {
         node = createInfoMessage(tree, "Frame is not available");
       }
       else {
-        node = createInfoMessage(tree, debugProcess.getCurrentStateMessage(), debugProcess.getCurrentStateHyperlinkListener());
+        if (mySession instanceof XDebugSession) {
+          XDebugProcess debugProcess = ((XDebugSession)mySession).getDebugProcess();
+
+          node = createInfoMessage(tree, debugProcess.getCurrentStateMessage(), debugProcess.getCurrentStateHyperlinkListener());
+        }
+        else {
+          node = createInfoMessage(tree, "Frame is not available");
+        }
       }
       tree.setRoot(node, true);
     }
