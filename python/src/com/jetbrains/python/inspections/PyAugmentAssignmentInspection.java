@@ -49,6 +49,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
         final PyBinaryExpression expression = (PyBinaryExpression)value;
         PyExpression leftExpression = expression.getLeftExpression();
         PyExpression rightExpression = expression.getRightExpression();
+        if (leftExpression instanceof PyBinaryExpression || rightExpression instanceof PyBinaryExpression) return;
         if (rightExpression instanceof PyParenthesizedExpression) {
           rightExpression = ((PyParenthesizedExpression)rightExpression).getContainedExpression();
         }
