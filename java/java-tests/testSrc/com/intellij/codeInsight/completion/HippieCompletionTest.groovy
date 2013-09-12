@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion
 
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
@@ -26,7 +27,7 @@ class HippieCompletionTest extends LightCodeInsightFixtureTestCase {
 $some_long_variable_name = Obj::instance();
 $some_lon<caret>
 '''
-    myFixture.performEditorAction("HippieCompletion")
+    myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
     myFixture.checkResult '''
 $some_long_variable_name = Obj::instance();
 $some_long_variable_name<caret>

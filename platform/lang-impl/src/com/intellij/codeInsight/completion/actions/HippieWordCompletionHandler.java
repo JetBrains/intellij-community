@@ -24,9 +24,12 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +72,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
       lastProposedVariant = null;
     }
 
-    CompletionVariant nextVariant = computeNextVariant(editor, oldPrefix, lastProposedVariant, data);
+    CompletionVariant nextVariant = computeNextVariant(editor, oldPrefix, lastProposedVariant, data, file);
     if (nextVariant == null) return;
 
     int replacementEnd = data.startOffset + data.myWordUnderCursor.length();
@@ -100,8 +103,8 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   private CompletionVariant computeNextVariant(final Editor editor,
                                                @Nullable final String prefix,
                                                @Nullable CompletionVariant lastProposedVariant,
-                                               final CompletionData data) {
-    final List<CompletionVariant> variants = computeVariants(editor, prefix);
+                                               final CompletionData data, PsiFile file) {
+    final List<CompletionVariant> variants = computeVariants(editor, new CamelHumpMatcher(StringUtil.notNullize(prefix)), file);
     if (variants.isEmpty()) return null;
 
     for (CompletionVariant variant : variants) {
@@ -179,33 +182,44 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
       this.offset = offset;
     }
   }
+  
+  private static boolean isWordLike(CharSequence seq, int start, int end) {
+    for (int i = start; i < end; i++) {
+      if (Character.isLetter(seq.charAt(i))) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-  private static List<CompletionVariant> computeVariants(@NotNull final Editor editor, @Nullable final String prefix) {
+  private static List<CompletionVariant> computeVariants(@NotNull final Editor editor, CamelHumpMatcher matcher, PsiFile file) {
 
     final CharSequence chars = editor.getDocument().getCharsSequence();
 
     final ArrayList<CompletionVariant> words = new ArrayList<CompletionVariant>();
     final List<CompletionVariant> afterWords = new ArrayList<CompletionVariant>();
 
-    IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
-      @Override
-      public void run(final CharSequence chars, @Nullable char[] charsArray, final int start, final int end) {
-        final int caretOffset = editor.getCaretModel().getOffset();
-        if (start <= caretOffset && end >= caretOffset) return; //skip prefix itself
+    final int caretOffset = editor.getCaretModel().getOffset();
 
+    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(0);
+    while (!iterator.atEnd()) {
+      int start = iterator.getStart();
+      int end = iterator.getEnd();
+      if ((start > caretOffset || end < caretOffset) &&  //skip prefix itself
+          end - start > matcher.getPrefix().length() && isWordLike(chars, start, end)) {
         final String word = chars.subSequence(start, end).toString();
-        if (!prefixMatches(prefix, word)) return;
-        final CompletionVariant v = new CompletionVariant(word, start);
-
-        if (end > caretOffset) {
-          afterWords.add(v);
-        }
-        else {
-          words.add(v);
+        if (matcher.prefixMatches(word)) {
+          CompletionVariant v = new CompletionVariant(word, start);
+          if (end > caretOffset) {
+            afterWords.add(v);
+          }
+          else {
+            words.add(v);
+          }
         }
       }
-    }, chars, 0, chars.length());
-
+      iterator.advance();
+    }
 
     Set<String> allWords = new HashSet<String>();
     List<CompletionVariant> result = new ArrayList<CompletionVariant>();
@@ -241,16 +255,19 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
     final CompletionData data = new CompletionData();
 
-    IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
-      @Override
-      public void run(final CharSequence chars, @Nullable char[] charsArray, final int start, final int end) {
-        if (start <= offset && end >= offset) {
-          data.myPrefix = charsSequence.subSequence(start, offset).toString();
-          data.myWordUnderCursor = charsSequence.subSequence(start, end).toString();
-          data.startOffset = start;
-        }
+    final int caretOffset = editor.getCaretModel().getOffset();
+
+    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset - 1);
+    int start = iterator.getStart();
+    int end = iterator.getEnd();
+    if (start <= offset && end >= offset) {
+      if (isWordLike(charsSequence, start, end)) {
+        data.myPrefix = charsSequence.subSequence(start, offset).toString();
+        data.myWordUnderCursor = charsSequence.subSequence(start, end).toString();
+        data.startOffset = start;
       }
-    }, charsSequence, 0, charsSequence.length());
+    }
+    iterator.advance();
 
     if (data.myPrefix == null) {
       data.myPrefix = "";
