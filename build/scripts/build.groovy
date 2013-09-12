@@ -79,7 +79,6 @@ class Steps {
 class Build {
   def buildName
   def product
-  //{VO} is it use anywhere ?
   def modules
   def steps
   def paths
@@ -122,7 +121,7 @@ class Build {
     layouts = utils.includeFile(home + "/build/scripts/layouts.gant")
     community_layouts = utils.includeFile(home + "/community/build/scripts/layouts.gant")
     libLicenses = utils.includeFile(home + "/community/build/scripts/libLicenses.gant")
-    resources()
+//    resources()
   }
 
   def zip() {
@@ -131,30 +130,6 @@ class Build {
       utils.zipSources(home, paths.artifacts)
     }
   }
-
-  def resources(){
-    ant.patternset(id: "resources.included") {
-      include(name: "**/*.properties")
-      include(name: "fileTemplates/**/*")
-      include(name: "inspectionDescriptions/**/*")
-      include(name: "intentionDescriptions/**/*")
-      include(name: "tips/**/*")
-      include(name: "search/**/*")
-    }
-
-    ant.patternset(id: "resources.excluded") {
-      exclude(name: "**/*.properties")
-      exclude(name: "fileTemplates/**/*")
-      exclude(name: "fileTemplates")
-      exclude(name: "inspectionDescriptions/**/*")
-      exclude(name: "inspectionDescriptions")
-      exclude(name: "intentionDescriptions/**/*")
-      exclude(name: "intentionDescriptions")
-      exclude(name: "tips/**/*")
-      exclude(name: "tips")
-    }
-  }
-
 
   def compile(Map args) {
     paths.jdkHome = args.jdk
@@ -207,6 +182,7 @@ class Build {
       def unscrambledPath = "${paths.artifacts}/${args.jarName}.unscramble"
       ant.copy(file: "${args.jarPath}/${args.jarName}", todir: unscrambledPath)
       utils.notifyArtifactBuilt("${unscrambledPath}/${args.jar}")
+
       ultimate_utils.zkmScramble("${paths.sandbox}/script.zkm", args.jarPath, args.jarName)
       ant.zip(destfile: "${paths.artifacts}/logs.zip") {
         fileset(file: "ChangeLog.txt")
