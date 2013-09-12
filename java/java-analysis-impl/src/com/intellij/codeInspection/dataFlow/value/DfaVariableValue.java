@@ -188,6 +188,7 @@ public class DfaVariableValue extends DfaValue {
         return Nullness.UNKNOWN;
       }
 
+      boolean hasUnknowns = false;
       for (PsiExpression expression : initializers) {
         if (!(expression instanceof PsiReferenceExpression)) {
           return Nullness.UNKNOWN;
@@ -200,10 +201,10 @@ public class DfaVariableValue extends DfaValue {
           return Nullness.NULLABLE;
         }
         if (!NullableNotNullManager.isNotNull((PsiParameter)target)) {
-          return Nullness.NOT_NULL;
+          hasUnknowns = true;
         }
       }
-      return Nullness.NOT_NULL;
+      return hasUnknowns ? Nullness.UNKNOWN : Nullness.NOT_NULL;
     }
 
     return Nullness.UNKNOWN;
