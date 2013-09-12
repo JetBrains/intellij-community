@@ -20,8 +20,8 @@
                     interface="com.intellij.xml.XmlExtension"/>
     <extensionPoint name="xml.namespaceHelper"
                     interface="com.intellij.xml.XmlNamespaceHelper"/>
-    <extensionPoint name="xml.completionExtension"
-                    interface="com.intellij.xml.XmlCompletionExtension"/>
+    <extensionPoint name="xml.tagNameProvider"
+                    interface="com.intellij.xml.XmlTagNameProvider"/>
     <extensionPoint name="xml.fileNSInfoProvider"
                     interface="com.intellij.psi.xml.XmlFileNSInfoProvider"/>
     <extensionPoint name="xml.attributeDescriptorsProvider"
@@ -495,7 +495,7 @@
     <xml.psiPolicy language="HTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>
     <xml.psiPolicy language="XHTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>
 
-    <xml.completionExtension implementation="com.intellij.psi.impl.source.xml.DefaultXmlCompletionExtension"/>
+    <xml.tagNameProvider implementation="com.intellij.psi.impl.source.xml.DefaultXmlTagNameProvider"/>
     <xml.fileNSInfoProvider implementation="com.intellij.xml.util.HtmlFileNSInfoProvider"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider

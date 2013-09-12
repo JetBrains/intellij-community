@@ -16,11 +16,9 @@
 package com.intellij.xml;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -29,21 +27,8 @@ import java.util.List;
  *
  * @see HtmlCustomTagNameProvider
  */
-public abstract class XmlCompletionExtension {
-  public static final ExtensionPointName<XmlCompletionExtension> EP_NAME = new ExtensionPointName<XmlCompletionExtension>("com.intellij.xml.completionExtension");
+public interface XmlTagNameProvider {
+  ExtensionPointName<XmlTagNameProvider> EP_NAME = new ExtensionPointName<XmlTagNameProvider>("com.intellij.xml.tagNameProvider");
 
-  public void addTagNameVariants(List<LookupElement> elements, @NotNull XmlTag tag, String prefix) {
-  }
-
-  @Nullable
-  public LookupElement setupAttributeLookupElement(@NotNull XmlTag contextTag,
-                                                   @NotNull XmlAttributeDescriptor descriptor,
-                                                   @NotNull String name,
-                                                   @NotNull LookupElementBuilder elementBuilder) {
-    return null;
-  }
-
-  public boolean isMyContext(@NotNull XmlTag context) {
-    return true;
-  }
+  void addTagNameVariants(List<LookupElement> elements, @NotNull XmlTag tag, String prefix);
 }

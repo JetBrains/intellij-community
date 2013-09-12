@@ -29,7 +29,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
-import com.intellij.xml.XmlCompletionExtension;
+import com.intellij.xml.XmlTagNameProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -41,10 +41,8 @@ import java.util.List;
 public class TagNameReferenceCompletionProvider extends CompletionProvider<CompletionParameters> {
   public static LookupElement[] getTagNameVariants(final @NotNull XmlTag tag, final String prefix) {
     List<LookupElement> elements = new ArrayList<LookupElement>();
-    for (XmlCompletionExtension tagNameProvider : XmlCompletionExtension.EP_NAME.getExtensions()) {
-      if (tagNameProvider.isMyContext(tag)) {
-        tagNameProvider.addTagNameVariants(elements, tag, prefix);
-      }
+    for (XmlTagNameProvider tagNameProvider : XmlTagNameProvider.EP_NAME.getExtensions()) {
+      tagNameProvider.addTagNameVariants(elements, tag, prefix);
     }
     return elements.toArray(new LookupElement[elements.size()]);
   }
