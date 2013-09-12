@@ -118,11 +118,11 @@ public class ProjectTypeStep extends StepAdapter {
 
     FrameworkPanel frameworkPanel;
     if (ArrayUtil.contains(framework.getFrameworkType().getId(), category.getAssociatedFrameworkIds())) {
-      frameworkPanel = new FrameworkPanel.HeaderPanel(framework, myModel);
+      frameworkPanel = new FrameworkPanel(framework, myModel, true);
       myHeader.add(frameworkPanel);
     }
     else {
-      frameworkPanel = new FrameworkPanel(framework, myModel);
+      frameworkPanel = new FrameworkPanel(framework, myModel, false);
       myFrameworksPanel.add(frameworkPanel);
     }
     myFrameworks.add(frameworkPanel);

@@ -25,7 +25,7 @@ public class FrameworkVersionComponent {
   private final String myFrameworkOrGroupId;
 
   public FrameworkVersionComponent(final FrameworkSupportModelBase model, final String frameworkOrGroupId,
-                                   final List<? extends FrameworkVersion> versions_) {
+                                   final List<? extends FrameworkVersion> versions_, String labelText) {
     myModel = model;
     myAllVersions = versions_;
     myMainPanel = new JPanel(new VerticalFlowLayout());
@@ -47,7 +47,7 @@ public class FrameworkVersionComponent {
       }
     });
 
-    myVersionsPanel = FormBuilder.createFormBuilder().addLabeledComponent("Version:", myVersionsBox).getPanel();
+    myVersionsPanel = FormBuilder.createFormBuilder().addLabeledComponent(labelText, myVersionsBox).getPanel();
     myMainPanel.add(myVersionsPanel);
     updateVersionsList();
   }

@@ -73,7 +73,7 @@ public class FrameworkSupportOptionsComponent {
     myModel.registerOptionsComponent(provider, this);
     List<FrameworkVersion> versions = provider.getFrameworkType().getVersions();
     if (!versions.isEmpty()) {
-      myFrameworkVersionComponent = new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions);
+      myFrameworkVersionComponent = new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions, provider.getVersionLabel());
       if (inline) {
         myMainPanel.add(myFrameworkVersionComponent.getMainPanel(), BorderLayout.WEST);
       }

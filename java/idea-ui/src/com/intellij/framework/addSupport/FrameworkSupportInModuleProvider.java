@@ -56,6 +56,10 @@ public abstract class FrameworkSupportInModuleProvider {
     return getFrameworkType().getProjectCategories();
   }
 
+  public String getVersionLabel() {
+    return "Version:";
+  }
+
   @Override
   public String toString() {
     return getPresentableName();

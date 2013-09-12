@@ -37,24 +37,29 @@ class FrameworkPanel extends JPanel {
   private final FrameworkSupportModelBase myModel;
   private JComponent myComponent;
 
-  public FrameworkPanel(final FrameworkSupportInModuleProvider framework, FrameworkSupportModelBase model) {
+  public FrameworkPanel(final FrameworkSupportInModuleProvider framework, FrameworkSupportModelBase model, boolean header) {
     super(new BorderLayout());
     myFramework = framework;
     myModel = model;
-    String title = framework.getPresentableName();
-    final JBCheckBox checkBox = new JBCheckBox(title);
-    checkBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        selectFramework(checkBox.isSelected());
-      }
-    });
-    add(checkBox, BorderLayout.NORTH);
+    if (header) {
+      addComponent(true);
+    }
+    else {
+      String title = framework.getPresentableName();
+      final JBCheckBox checkBox = new JBCheckBox(title);
+      checkBox.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          selectFramework(checkBox.isSelected());
+        }
+      });
+      add(checkBox, BorderLayout.NORTH);
+    }
   }
 
   private void selectFramework(boolean selected) {
     if (selected) {
-      addComponent();
+      addComponent(false);
     }
     else {
       removeComponent();
@@ -69,10 +74,10 @@ class FrameworkPanel extends JPanel {
     }
   }
 
-  protected void addComponent() {
+  protected void addComponent(boolean header) {
     myComponent = createComponent();
     if (myComponent != null) {
-      myComponent.setBorder(IdeBorderFactory.createEmptyBorder(0, 20, 0, 0));
+      myComponent.setBorder(IdeBorderFactory.createEmptyBorder(0, header ? 0 : 20, 0, 0));
       add(myComponent, BorderLayout.CENTER);
     }
   }
@@ -83,14 +88,5 @@ class FrameworkPanel extends JPanel {
     FrameworkSupportOptionsComponent component =
       new FrameworkSupportOptionsComponent(myModel, myModel.getLibrariesContainer(), configurable, myFramework, configurable, true);
     return component.getMainPanel();
-  }
-
-  static class HeaderPanel extends FrameworkPanel {
-
-    public HeaderPanel(FrameworkSupportInModuleProvider framework,
-                       FrameworkSupportModelBase model) {
-      super(framework, model);
-      addComponent();
-    }
   }
 }
