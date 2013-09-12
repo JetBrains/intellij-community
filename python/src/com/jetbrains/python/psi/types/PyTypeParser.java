@@ -347,6 +347,10 @@ public class PyTypeParser {
               final PsiElement resolved = results.get(0).getElement();
               if (resolved instanceof PyTypedElement) {
                 type = context.getType((PyTypedElement)resolved);
+                if (type != null && !allowResolveToType(type)) {
+                  type = null;
+                  break;
+                }
                 if (type instanceof PyClassLikeType) {
                   type = ((PyClassLikeType)type).toInstance();
                 }
@@ -395,6 +399,9 @@ public class PyTypeParser {
           type = context.getType((PyTypedElement)resolved);
           if (type != null) {
             tokens.remove(0);
+            if (!allowResolveToType(type)) {
+              return null;
+            }
             if (type instanceof PyClassLikeType) {
               type = ((PyClassLikeType)type).toInstance();
             }
@@ -441,6 +448,10 @@ public class PyTypeParser {
         }
       }
       return type;
+    }
+
+    private static boolean allowResolveToType(@NotNull PyType type) {
+      return type instanceof PyClassLikeType || type instanceof PyModuleType || type instanceof PyImportedModuleType;
     }
 
     @Nullable

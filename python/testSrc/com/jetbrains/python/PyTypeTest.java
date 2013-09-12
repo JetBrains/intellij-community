@@ -717,6 +717,19 @@ public class PyTypeTest extends PyTestCase {
            "expr = io.open('foo', 'rb')\n");
   }
 
+  public void testNoResolveToFunctionsInTypes() {
+    doTest("C | unknown",
+           "class C(object):\n" +
+           "    def bar(self):\n" +
+           "        pass\n" +
+           "\n" +
+           "def foo(x):\n" +
+           "    '''\n" +
+           "    :type x: C | C.bar | foo\n" +
+           "    '''\n" +
+           "    expr = x\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
