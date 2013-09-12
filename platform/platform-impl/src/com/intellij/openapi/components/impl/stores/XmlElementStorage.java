@@ -440,7 +440,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
             for (RoamingType roamingType : RoamingType.values()) {
               if (roamingType != RoamingType.DISABLED) {
                 try {
-                  Document copy = (Document)getDocumentToSave().clone();
+                  Document copy = getDocumentToSave().clone();
                   filterComponentsDisabledForRoaming(copy.getRootElement(), roamingType);
 
                   if (!copy.getRootElement().getChildren().isEmpty()) {
