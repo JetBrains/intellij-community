@@ -391,8 +391,6 @@
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.templateLanguageCoreTags"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"/>
-    <extensionPoint qualifiedName="Pythonid.javascriptDebugger"
-                    interface="com.jetbrains.django.run.PythonJavaScriptDebuggerStarter" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
