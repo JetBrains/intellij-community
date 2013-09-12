@@ -136,9 +136,13 @@ public class SvnLineCommand extends SvnCommand {
         final SvnLineCommand command = runCommand(exePath, commandName, listener, base, configDir, parameters);
         final Integer exitCode = command.myExitCode.get();
 
-        // could be situations when exit code = 0, but there is info "warning" in error stream
-        // for instance, for "svn status" on non-working copy folder
-        if (exitCode != 0) {
+        // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
+        // on non-working copy folder
+        // TODO: synchronization does not work well in all cases - sometimes exit code is not yet set and null returned - fix synchronization
+        // here we treat null exit code as some non-zero exit code
+        if (exitCode == null || exitCode != 0) {
+          logNullExitCode(command, exitCode);
+
           if (command.myErr.length() > 0) {
             // handle authentication
             final String errText = command.myErr.toString().trim();
@@ -157,9 +161,14 @@ public class SvnLineCommand extends SvnCommand {
             }
             throw new SvnBindException(errText);
           } else {
-            throw new SvnBindException("Svn process exited with error code: " + exitCode);
+            // no errors found in error stream => we treat null exitCode as successful, otherwise exception is thrown
+            if (exitCode != null) {
+              // here exitCode != null && exitCode != 0
+              throw new SvnBindException("Svn process exited with error code: " + exitCode);
+            }
           }
         } else if (command.myErr.length() > 0) {
+          // here exitCode == 0, but some warnings are in error stream
           LOG.info("Detected warning - " + command.myErr);
         }
         return command;
@@ -168,6 +177,12 @@ public class SvnLineCommand extends SvnCommand {
       if (authenticationCallback != null) {
         authenticationCallback.reset();
       }
+    }
+  }
+
+  private static void logNullExitCode(@NotNull SvnLineCommand command, @Nullable Integer exitCode) {
+    if (exitCode == null) {
+      LOG.warn("Null exit code returned, but not errors detected " + command.getCommandText());
     }
   }
 

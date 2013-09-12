@@ -153,6 +153,8 @@ public abstract class SvnCommand {
     checkStarted();
     final OSProcessHandler handler;
     synchronized (myLock) {
+      // TODO: This line seems to cause situation when exitCode is not set before SvnLineCommand.runCommand() is finished.
+      // TODO: Carefully analyze behavior (on all operating systems) and fix.
       if (myIsDestroyed) return true;
       handler = myHandler;
     }
