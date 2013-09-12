@@ -1163,7 +1163,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
       if (!shortCircuit) {
         if (i > 0) {
-          combineStackBooleans(false, operand);
+          combineStackBooleans(true, operand);
         }
         continue;
       }
