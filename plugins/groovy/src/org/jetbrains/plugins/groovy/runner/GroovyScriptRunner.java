@@ -118,10 +118,8 @@ public abstract class GroovyScriptRunner {
   }
 
   protected static void addClasspathFromRootModel(@Nullable Module module, boolean isTests, JavaParameters params, boolean allowDuplication) throws CantRunException {
-    PathsList nonCore = getClassPathFromRootModel(module, isTests, params, allowDuplication);
-    if (nonCore == null) {
-      nonCore = new PathsList();
-    }
+    PathsList nonCore = new PathsList();
+    getClassPathFromRootModel(module, isTests, params, allowDuplication, nonCore);
     nonCore.add(".");
 
     final String cp = nonCore.getPathsString();
@@ -132,7 +130,11 @@ public abstract class GroovyScriptRunner {
   }
 
   @Nullable
-  public static PathsList getClassPathFromRootModel(Module module, boolean isTests, JavaParameters params, boolean allowDuplication)
+  public static PathsList getClassPathFromRootModel(Module module,
+                                                    boolean isTests,
+                                                    JavaParameters params,
+                                                    boolean allowDuplication,
+                                                    PathsList pathList)
     throws CantRunException {
     if (module == null) {
       return null;
@@ -146,12 +148,11 @@ public abstract class GroovyScriptRunner {
 
     Set<VirtualFile> core = new HashSet<VirtualFile>(params.getClassPath().getVirtualFiles());
 
-    PathsList nonCore = new PathsList();
     for (VirtualFile virtualFile : tmp.getClassPath().getVirtualFiles()) {
       if (allowDuplication || !core.contains(virtualFile)) {
-        nonCore.add(virtualFile);
+        pathList.add(virtualFile);
       }
     }
-    return nonCore;
+    return pathList;
   }
 }
