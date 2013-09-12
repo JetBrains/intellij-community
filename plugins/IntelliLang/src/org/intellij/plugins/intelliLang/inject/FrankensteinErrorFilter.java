@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Gregory.Shrago
  */
-public class CustomErrorElementFilter extends HighlightErrorFilter implements HighlightInfoFilter {
+public class FrankensteinErrorFilter extends HighlightErrorFilter implements HighlightInfoFilter {
 
   public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {
     return !isFrankenstein(element.getContainingFile());
@@ -38,7 +38,7 @@ public class CustomErrorElementFilter extends HighlightErrorFilter implements Hi
   public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile file) {
     if (highlightInfo.getSeverity() != HighlightSeverity.WARNING &&
         highlightInfo.getSeverity() != HighlightSeverity.WEAK_WARNING) return true;
-    if (!isFrankenstein(file)) return true;
+    if (file == null || !isFrankenstein(file)) return true;
     int start = highlightInfo.getStartOffset();
     int end = highlightInfo.getEndOffset();
     String text = file.getText().substring(start, end);
