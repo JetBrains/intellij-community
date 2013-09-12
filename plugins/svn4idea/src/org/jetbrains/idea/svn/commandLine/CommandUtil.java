@@ -169,9 +169,9 @@ public class CommandUtil {
 
   public static void putChangeLists(@NotNull List<String> parameters, @Nullable Iterable<String> changeLists) {
     if (changeLists != null) {
-      for (Object changeList : changeLists) {
+      for (String changeList : changeLists) {
         parameters.add("--cl");
-        parameters.add((String) changeList);
+        parameters.add(changeList);
       }
     }
   }
