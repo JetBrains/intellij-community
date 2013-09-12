@@ -50,7 +50,7 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
 
   @Override
   public boolean isApplicableTo(PsiLanguageInjectionHost host) {
-    return useDefaultInjector(host); // todo temporary plugin compatibility fix. TBR
+    return false;
   }
 
   public boolean useDefaultInjector(final PsiLanguageInjectionHost host) {
