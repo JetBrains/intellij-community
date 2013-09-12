@@ -182,7 +182,7 @@ public class SvnLineCommand extends SvnCommand {
 
   private static void logNullExitCode(@NotNull SvnLineCommand command, @Nullable Integer exitCode) {
     if (exitCode == null) {
-      LOG.warn("Null exit code returned, but not errors detected " + command.getCommandText());
+      LOG.info("Null exit code returned, but not errors detected " + command.getCommandText());
     }
   }
 
@@ -440,7 +440,7 @@ public class SvnLineCommand extends SvnCommand {
           throw new SvnBindException(e);
         }
       } else {
-        LOG.warn("Could not execute cleanup for command " + command.getCommandText());
+        LOG.info("Could not execute cleanup for command " + command.getCommandText());
       }
     }
   }
