@@ -461,7 +461,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   protected HighlightInfoHolder createInfoHolder(final PsiFile file) {
-    final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
+    final HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
     return new CustomHighlightInfoHolder(file, getColorsScheme(), filters);
   }
 
