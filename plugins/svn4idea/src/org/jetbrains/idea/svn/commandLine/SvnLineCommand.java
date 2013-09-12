@@ -427,16 +427,20 @@ public class SvnLineCommand extends SvnCommand {
   private static void cleanup(String exePath, SvnCommand command, File base) throws SvnBindException {
     if (command.isManuallyDestroyed() && command.getCommandName().isWriteable()) {
       File wcRoot = SvnUtil.getWorkingCopyRootNew(base);
-      if (wcRoot == null) {
-        throw new SvnBindException("Can not find working copy root for: " + base.getPath());
-      }
 
-      final SvnSimpleCommand cleanupCommand = new SvnSimpleCommand(wcRoot, SvnCommandName.cleanup, exePath);
-      try {
-        cleanupCommand.run();
-      }
-      catch (VcsException e) {
-        throw new SvnBindException(e);
+      // not all commands require cleanup - for instance, some commands operate only with repository - like "svn info <url>"
+      // TODO: check if we could "configure" commands (or make command to explicitly ask) if cleanup is required - not to search
+      // TODO: working copy root each time
+      if (wcRoot != null) {
+        final SvnSimpleCommand cleanupCommand = new SvnSimpleCommand(wcRoot, SvnCommandName.cleanup, exePath);
+        try {
+          cleanupCommand.run();
+        }
+        catch (VcsException e) {
+          throw new SvnBindException(e);
+        }
+      } else {
+        LOG.warn("Could not execute cleanup for command " + command.getCommandText());
       }
     }
   }
@@ -476,6 +480,8 @@ public class SvnLineCommand extends SvnCommand {
           final String trim = text.trim();
           // should end in 1 second
           errorReceived.set(true);
+          // TODO: destroy process here is called despite --non-interactive flag (so it is called even for 1.8) and then unnecessary
+          // TODO: cleanup is invoked - fix this
           if (trim.startsWith(UNABLE_TO_CONNECT)) {
             // wait for 3 lines of text then
             if (myErrCnt >= 3) {
