@@ -558,6 +558,7 @@
 
     <!-- User skeletons -->
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsModuleMembersProvider"/>
+    <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsClassMembersProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsTypeProvider"/>
 
     <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
