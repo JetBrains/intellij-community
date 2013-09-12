@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
@@ -109,9 +110,9 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
           }
         });
         PsiResolveHelperImpl resolveHelper = (PsiResolveHelperImpl)JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
+        final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(finalParameter);
         final Pair<PsiType, ConstraintType> constraint =
-          resolveHelper.getSubstitutionForTypeParameterConstraint(typeParameter, innerReturnType, type, false,
-                                                                         PsiUtil.getLanguageLevel(finalParameter));
+          ((PsiOldInferenceHelper)resolveHelper.getInferenceHelper(languageLevel)).getSubstitutionForTypeParameterConstraint(typeParameter, innerReturnType, type, false, languageLevel);
         if (constraint != null) return constraint;
       }
     }
