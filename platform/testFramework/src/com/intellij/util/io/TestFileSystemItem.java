@@ -41,6 +41,11 @@ public class TestFileSystemItem {
     assertDirectoryEqual(file, "/");
   }
 
+  public void assertFileEqual(File file) {
+    TestFileSystemItem fileItem = myChildren.values().iterator().next();
+    fileItem.assertFileEqual(file, "/");
+  }
+
   private void assertDirectoryEqual(File file, String relativePath) {
     final File[] actualChildren = file.listFiles();
     Set<String> notFound = new HashSet<String>(myChildren.keySet());
@@ -60,7 +65,7 @@ public class TestFileSystemItem {
     try {
       Assert.assertEquals("in " + relativePath, myName, file.getName());
       if (myArchive) {
-        final File dirForExtracted = FileUtil.createTempDirectory("extracted_archive", null,false);
+        final File dirForExtracted = FileUtil.createTempDirectory("extracted_archive", null, false);
         ZipUtil.extract(file, dirForExtracted, null);
         assertDirectoryEqual(dirForExtracted, relativePath);
         FileUtil.delete(dirForExtracted);

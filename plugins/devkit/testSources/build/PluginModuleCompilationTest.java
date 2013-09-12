@@ -25,6 +25,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -33,7 +34,9 @@ import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 
@@ -80,8 +83,8 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
     super.tearDown();
   }
 
-  public void testMakeModule() {
-    Module module = setupPluginProject();
+  public void testMakeSimpleModule() {
+    Module module = setupSimplePluginProject();
     make(module);
     assertOutput(module, fs().dir("xxx").file("MyAction.class"));
 
@@ -95,16 +98,69 @@ public class PluginModuleCompilationTest extends BaseCompilerTestCase {
     .build().assertDirectoryEqual(sandbox);
   }
 
-  public void testRebuild() {
-    setupPluginProject();
+  public void testRebuildSimpleProject() {
+    setupSimplePluginProject();
     CompilationLog log = rebuild();
     assertTrue("Rebuild finished with warnings: " + Arrays.toString(log.getWarnings()), log.getWarnings().length == 0);
   }
 
-  private Module setupPluginProject() {
+  public void testPrepareSimpleProjectForDeployment() {
+    Module module = setupSimplePluginProject();
+    rebuild();
+    prepareForDeployment(module);
+
+    File outputFile = new File(getProjectBasePath() + "/pluginProject.jar");
+    assertTrue(outputFile + " not found", outputFile.exists());
+    fs()
+      .archive("pluginProject.jar")
+         .dir("META-INF").file("plugin.xml").file("MANIFEST.MF").end()
+         .dir("xxx").file("MyAction.class")
+    .build().assertFileEqual(outputFile);
+  }
+
+  public void testBuildProjectWithJpsModule() {
+    Module module = setupPluginProjectWithJpsModule();
+    rebuild();
+    prepareForDeployment(module);
+
+    File outputFile = new File(getProjectBasePath() + "/pluginProject.zip");
+    assertTrue(outputFile + " not found", outputFile.exists());
+    fs()
+      .archive("pluginProject.zip")
+        .dir("pluginProject")
+         .dir("lib")
+            .archive("pluginProject.jar")
+               .dir("META-INF").file("plugin.xml").file("MANIFEST.MF").end()
+               .dir("xxx").file("MyAction.class").end()
+               .end()
+            .dir("jps")
+               .archive("jps-plugin.jar")
+                  .file("Builder.class")
+
+    .build().assertFileEqual(outputFile);
+  }
+
+  private static void prepareForDeployment(Module module) {
+    List<String> errorMessages = new ArrayList<String>();
+    PrepareToDeployAction.doPrepare(module, errorMessages, new ArrayList<String>());
+    assertTrue("Building plugin zip finished with errors: " + errorMessages, errorMessages.isEmpty());
+  }
+
+  private Module setupSimplePluginProject() {
     copyToProject("plugins/devkit/testData/build/simple");
     Module module = loadModule(getProjectBasePath() + "/pluginProject.iml");
     readJdomExternalizables((ModuleImpl)module);
+    return module;
+  }
+
+  private Module setupPluginProjectWithJpsModule() {
+    copyToProject("plugins/devkit/testData/build/withJpsModule");
+    Module module = loadModule(getProjectBasePath() + "/pluginProject.iml");
+    readJdomExternalizables((ModuleImpl)module);
+    loadModuleComponentState(module, PluginBuildConfiguration.getInstance(module));
+    Module jpsModule = loadModule(getProjectBasePath() + "/jps-plugin/jps-plugin.iml");
+    readJdomExternalizables((ModuleImpl)jpsModule);
+    ModuleRootModificationUtil.setModuleSdk(jpsModule, getTestProjectJdk());
     return module;
   }
 }
