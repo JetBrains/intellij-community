@@ -17,7 +17,7 @@ package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
-import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -36,7 +36,7 @@ import javax.swing.*;
 public class XInspectDialog extends DialogWrapper {
   private final XValueHintTreeComponent myTreePanel;
 
-  public XInspectDialog(XDebugSession session, XDebuggerEditorsProvider editorsProvider, XSourcePosition sourcePosition, @NotNull String name, @NotNull XValue value) {
+  public XInspectDialog(XStackFrameAwareSession session, XDebuggerEditorsProvider editorsProvider, XSourcePosition sourcePosition, @NotNull String name, @NotNull XValue value) {
     super(session.getProject(), false);
 
     setTitle(XDebuggerBundle.message("inspect.value.dialog.title", name));

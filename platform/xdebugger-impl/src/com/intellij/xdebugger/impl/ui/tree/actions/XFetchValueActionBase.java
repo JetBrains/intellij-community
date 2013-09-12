@@ -25,8 +25,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchMessageNode;
@@ -133,7 +133,7 @@ public abstract class XFetchValueActionBase extends AnAction {
   }
 
   private static final class CopyValueEvaluationCallback implements XFullValueEvaluator.XFullValueEvaluationCallback {
-    private final XDebugSession session;
+    private final XStackFrameAwareSession session;
 
     private final int valueIndex;
     private final ValueCollector valueCollector;
@@ -142,7 +142,7 @@ public abstract class XFetchValueActionBase extends AnAction {
     private volatile boolean canceled;
     private final Semaphore semaphore;
 
-    public CopyValueEvaluationCallback(XDebugSession session, ValueCollector valueCollector) {
+    public CopyValueEvaluationCallback(XStackFrameAwareSession session, ValueCollector valueCollector) {
       this.session = session;
       this.valueCollector = valueCollector;
       valueIndex = valueCollector.acquire();

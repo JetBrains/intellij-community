@@ -29,13 +29,15 @@ import java.util.List;
  */
 public class XRemoveWatchAction extends XWatchesTreeActionBase {
   protected boolean isEnabled(final AnActionEvent e, @NotNull XDebuggerTree tree) {
-    return !getSelectedNodes(tree, XDebuggerTreeNode.class).isEmpty();
+    return !getSelectedNodes(tree, XDebuggerTreeNode.class).isEmpty() && (tree.getSession() instanceof XDebugSessionImpl);
   }
 
   @Override
   protected void perform(AnActionEvent e, XDebuggerTree tree) {
     List<? extends XDebuggerTreeNode> nodes = getSelectedNodes(tree, XDebuggerTreeNode.class);
-    XDebugSessionTab tab = ((XDebugSessionImpl)tree.getSession()).getSessionTab();
-    tab.getWatchesView().removeWatches(nodes);
+    if (tree.getSession() instanceof XDebugSessionImpl) {
+      XDebugSessionTab tab = ((XDebugSessionImpl)tree.getSession()).getSessionTab();
+      tab.getWatchesView().removeWatches(nodes);
+    }
   }
 }

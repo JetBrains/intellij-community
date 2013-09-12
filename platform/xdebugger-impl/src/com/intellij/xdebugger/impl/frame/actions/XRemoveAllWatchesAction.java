@@ -27,12 +27,14 @@ import org.jetbrains.annotations.NotNull;
 public class XRemoveAllWatchesAction extends XWatchesTreeActionBase {
   @Override
   protected boolean isEnabled(AnActionEvent e, @NotNull XDebuggerTree tree) {
-    return tree.getRoot().getChildCount() > 0;
+    return tree.getRoot().getChildCount() > 0 && (tree.getSession() instanceof XDebugSessionImpl);
   }
 
   @Override
   protected void perform(AnActionEvent e, XDebuggerTree tree) {
-    XDebugSessionTab tab = ((XDebugSessionImpl)tree.getSession()).getSessionTab();
-    tab.getWatchesView().removeAllWatches();
+    if (tree.getSession() instanceof XDebugSessionImpl) {
+      XDebugSessionTab tab = ((XDebugSessionImpl)tree.getSession()).getSessionTab();
+      tab.getWatchesView().removeAllWatches();
+    }
   }
 }
