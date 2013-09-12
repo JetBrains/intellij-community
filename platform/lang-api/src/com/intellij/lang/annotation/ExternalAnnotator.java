@@ -34,10 +34,19 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
   public InitialInfoType collectionInformation(@NotNull PsiFile file) {
     return null;
   }
-  
+
+  /**
+   * @deprecated use {@link com.intellij.lang.annotation.ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)}
+   */
   @Nullable
+  @Deprecated()
   public InitialInfoType collectInformation(@NotNull PsiFile file, @NotNull Editor editor) {
     return collectionInformation(file);
+  }
+
+  @Nullable
+  public InitialInfoType collectInformation(@NotNull PsiFile file, @NotNull Editor editor, boolean hasErrors) {
+    return hasErrors ? null : collectionInformation(file);
   }
 
   // Lengthy annotation goes here

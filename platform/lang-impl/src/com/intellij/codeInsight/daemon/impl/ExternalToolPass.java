@@ -94,12 +94,13 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
       if (!externalAnnotators.isEmpty()) {
         DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
         boolean errorFound = daemonCodeAnalyzer.getFileStatusMap().wasErrorFound(myDocument);
-        if (errorFound) return;
 
         for(ExternalAnnotator externalAnnotator: externalAnnotators) {
-          externalAnnotator.annotate(psiRoot, myAnnotationHolder);
+          if (!errorFound) {
+            externalAnnotator.annotate(psiRoot, myAnnotationHolder);
+          }
 
-          final Object collectedInfo = externalAnnotator.collectInformation(psiRoot, myEditor);
+          final Object collectedInfo = externalAnnotator.collectInformation(psiRoot, myEditor, errorFound);
           if (collectedInfo != null) {
             myAnnotator2DataMap.put(externalAnnotator, new MyData(psiRoot, collectedInfo));
           }
