@@ -19,6 +19,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.CredentialItem;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.FetchResult;
 import org.eclipse.jgit.transport.URIish;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,11 +145,22 @@ final class GitRepositoryManager extends BaseRepositoryManager {
       @Override
       public void consume(@NotNull ProgressIndicator indicator) throws Exception {
         JGitProgressMonitor progressMonitor = new JGitProgressMonitor(indicator);
-        git.fetch().setRemoveDeletedRefs(true).setProgressMonitor(progressMonitor).setCredentialsProvider(getCredentialsProvider()).call();
+        FetchResult fetchResult = git.fetch().setRemoveDeletedRefs(true).setProgressMonitor(progressMonitor).setCredentialsProvider(getCredentialsProvider()).call();
+        if (LOG.isDebugEnabled()) {
+          String messages = fetchResult.getMessages();
+          if (!StringUtil.isEmptyOrSpaces(messages)) {
+            LOG.debug(messages);
+          }
+        }
 
         int attemptCount = 0;
         do {
-          MergeResult.MergeStatus status = git.merge().include(getUpstreamBranchRef()).setFastForward(MergeCommand.FastForwardMode.FF_ONLY).call().getMergeStatus();
+          MergeResult mergeResult = git.merge().include(getUpstreamBranchRef()).setFastForward(MergeCommand.FastForwardMode.FF_ONLY).call();
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(mergeResult.toString());
+          }
+
+          MergeResult.MergeStatus status = mergeResult.getMergeStatus();
           if (status.isSuccessful()) {
             rebase(progressMonitor);
             return;
