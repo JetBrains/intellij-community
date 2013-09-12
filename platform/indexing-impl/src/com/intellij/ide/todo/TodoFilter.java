@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoPattern;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
