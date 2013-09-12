@@ -1150,11 +1150,22 @@ public class MavenProjectsTree {
     }
   }
 
+  @TestOnly
   public void resolve(@NotNull Project project,
                       @NotNull MavenProject mavenProject,
                       @NotNull MavenGeneralSettings generalSettings,
                       @NotNull MavenEmbeddersManager embeddersManager,
                       @NotNull MavenConsole console,
+                      @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
+    resolve(project, mavenProject, generalSettings, embeddersManager, console, new ResolveContext(), process);
+  }
+
+  public void resolve(@NotNull Project project,
+                      @NotNull MavenProject mavenProject,
+                      @NotNull MavenGeneralSettings generalSettings,
+                      @NotNull MavenEmbeddersManager embeddersManager,
+                      @NotNull MavenConsole console,
+                      @NotNull ResolveContext context,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE);
     embedder.customizeForResolve(getWorkspaceMap(), console, process);
@@ -1164,7 +1175,7 @@ public class MavenProjectsTree {
       process.setText(ProjectBundle.message("maven.resolving.pom", mavenProject.getDisplayName()));
       process.setText2("");
       Pair<MavenProjectChanges, NativeMavenProjectHolder> resolveResult =
-        mavenProject.resolve(project, generalSettings, embedder, new MavenProjectReader(), myProjectLocator);
+        mavenProject.resolve(project, generalSettings, embedder, new MavenProjectReader(), myProjectLocator, context);
 
       fireProjectResolved(Pair.create(mavenProject, resolveResult.first), resolveResult.second);
     }

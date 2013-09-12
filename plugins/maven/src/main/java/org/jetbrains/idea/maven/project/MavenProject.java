@@ -578,7 +578,8 @@ public class MavenProject {
                                                                      @NotNull MavenGeneralSettings generalSettings,
                                                                      @NotNull MavenEmbedderWrapper embedder,
                                                                      @NotNull MavenProjectReader reader,
-                                                                     @NotNull MavenProjectReaderProjectLocator locator)
+                                                                     @NotNull MavenProjectReaderProjectLocator locator,
+                                                                     @NotNull ResolveContext context)
     throws MavenProcessCanceledException {
     MavenProjectReaderResult result = reader.resolveProject(generalSettings,
                                                             embedder,
@@ -589,7 +590,7 @@ public class MavenProject {
 
     if (result.nativeMavenProject != null) {
       for (MavenImporter eachImporter : getSuitableImporters()) {
-        eachImporter.resolve(project, this, result.nativeMavenProject, embedder);
+        eachImporter.resolve(project, this, result.nativeMavenProject, embedder, context);
       }
     }
     return Pair.create(changes, result.nativeMavenProject);

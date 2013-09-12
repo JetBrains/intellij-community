@@ -729,6 +729,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           toResolve = new LinkedHashSet<MavenProject>(myProjectsToResolve);
           myProjectsToResolve.clear();
         }
+        final ResolveContext context = new ResolveContext();
 
         Iterator<MavenProject> it = toResolve.iterator();
         while (it.hasNext()) {
@@ -741,7 +742,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           };
 
           myResolvingProcessor.scheduleTask(
-            new MavenProjectsProcessorResolvingTask(each, myProjectsTree, getGeneralSettings(), onCompletion));
+            new MavenProjectsProcessorResolvingTask(each, myProjectsTree, getGeneralSettings(), onCompletion, context));
         }
       }
     });

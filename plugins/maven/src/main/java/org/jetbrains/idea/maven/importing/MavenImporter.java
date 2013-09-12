@@ -107,7 +107,8 @@ public abstract class MavenImporter {
   public void resolve(Project project,
                       MavenProject mavenProject,
                       NativeMavenProjectHolder nativeMavenProject,
-                      MavenEmbedderWrapper embedder)
+                      MavenEmbedderWrapper embedder,
+                      ResolveContext context)
     throws MavenProcessCanceledException {
   }
 
