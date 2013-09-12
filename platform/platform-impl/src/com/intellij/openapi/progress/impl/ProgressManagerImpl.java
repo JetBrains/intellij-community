@@ -218,11 +218,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   }
 
   @Override
-  public ProgressIndicator getProgressIndicator() {
-    return myThreadIndicator.get();
-  }
-
-  @Override
   public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process,
                                                      @NotNull String progressTitle,
                                                      boolean canBeCanceled,

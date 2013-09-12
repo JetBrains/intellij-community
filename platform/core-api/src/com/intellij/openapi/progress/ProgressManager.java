@@ -59,7 +59,9 @@ public abstract class ProgressManager {
   public abstract void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException;
   public abstract <T> T runProcess(@NotNull Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException;
 
-  public abstract ProgressIndicator getProgressIndicator();
+  public ProgressIndicator getProgressIndicator() {
+    return myThreadIndicator.get();
+  }
 
   protected static volatile boolean ourNeedToCheckCancel = false;
   public static void checkCanceled() throws ProcessCanceledException {
