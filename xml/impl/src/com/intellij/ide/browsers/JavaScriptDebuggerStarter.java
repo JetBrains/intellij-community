@@ -6,7 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Don't implement directly, use {@link com.intellij.javascript.debugger.execution.BaseJavaScriptDebuggerStarter}
+ * Don't implement - consider to implement {@link com.jetbrains.javascript.debugger.FileUrlMapper} instead of providing mappings directly
+ * If you still want to implement - don't implement directly, use {@link com.intellij.javascript.debugger.execution.BaseJavaScriptDebuggerStarter}
  */
 public interface JavaScriptDebuggerStarter<RC extends RunConfiguration, U> {
   boolean isApplicable(@NotNull RunConfiguration runConfiguration);
@@ -15,7 +16,7 @@ public interface JavaScriptDebuggerStarter<RC extends RunConfiguration, U> {
   void start(@NotNull String url, @NotNull RC runConfiguration, @NotNull U userData);
 
   final class Util {
-    static final ExtensionPointName<JavaScriptDebuggerStarter> EP_NAME = ExtensionPointName.create("com.intellij.javaScriptDebuggerStarter");
+    static final ExtensionPointName<JavaScriptDebuggerStarter> EP_NAME = ExtensionPointName.create("org.jetbrains.javaScriptDebuggerStarter");
     private static final Object NULL_OBJECT = new Object();
 
     @Nullable
