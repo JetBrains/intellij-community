@@ -22,7 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnApplicationSettings;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.portable.SvnkitSvnWcClient;
@@ -139,7 +139,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     }
   }
 
-  private void parseResult(final ISVNInfoHandler handler, File base, String result) throws SVNException {
+  private void parseResult(@NotNull final ISVNInfoHandler handler, @Nullable File base, @Nullable String result) throws SVNException {
     if (StringUtil.isEmpty(result)) {
       return;
     }
@@ -199,10 +199,9 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     List<String> parameters = new ArrayList<String>();
 
     fillParameters(path, pegRevision, revision, depth, parameters);
-    File base = new File(SvnApplicationSettings.getInstance().getCommandLinePath());
-    String result = CommandUtil.runSimple(SvnCommandName.info, SvnVcs.getInstance(myProject), base, url, parameters).getOutput();
+    String result = CommandUtil.runSimple(SvnCommandName.info, SvnVcs.getInstance(myProject), null, url, parameters).getOutput();
 
-    parseResult(handler, base, result);
+    parseResult(handler, null, result);
   }
 
   @Override

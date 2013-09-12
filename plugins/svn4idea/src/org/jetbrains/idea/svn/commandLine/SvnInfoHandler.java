@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -39,7 +40,7 @@ import java.util.*;
  * Time: 1:00 PM
  */
 public class SvnInfoHandler extends DefaultHandler {
-  private final File myBase;
+  @Nullable private final File myBase;
   private final Consumer<SVNInfo> myInfoConsumer;
   private Map<File, SVNInfo> myResultsMap;
   private SvnInfoStructure myPending;
@@ -47,7 +48,7 @@ public class SvnInfoHandler extends DefaultHandler {
   private final List<ElementHandlerBase> myParseStack;
   private final StringBuilder mySb;
 
-  public SvnInfoHandler(File base, final Consumer<SVNInfo> infoConsumer) {
+  public SvnInfoHandler(@Nullable File base, final Consumer<SVNInfo> infoConsumer) {
     myBase = base;
     myInfoConsumer = infoConsumer;
     myPending = createPending();
@@ -870,9 +871,9 @@ public class SvnInfoHandler extends DefaultHandler {
   }
 
   private static class Entry extends ElementHandlerBase {
-    private final File myBase;
+    @Nullable private final File myBase;
 
-    private Entry(final File base) {
+    private Entry(@Nullable final File base) {
       super(new String[]{"url", "relative-url", "lock", "repository","wc-info","commit","conflict","tree-conflict"}, new String[]{});
       myBase = base;
     }
@@ -882,10 +883,12 @@ public class SvnInfoHandler extends DefaultHandler {
       final String kind = attributes.getValue("kind");
       assertSAX(! StringUtil.isEmptyOrSpaces(kind));
       structure.myKind = SVNNodeKind.parseKind(kind);
-      
-      final String path = attributes.getValue("path");
-      assertSAX(! StringUtil.isEmptyOrSpaces(path));
-      structure.myFile = new File(myBase, path);
+
+      if (myBase != null) {
+        final String path = attributes.getValue("path");
+        assertSAX(!StringUtil.isEmptyOrSpaces(path));
+        structure.myFile = new File(myBase, path);
+      }
 
       final String revision = attributes.getValue("revision");
       assertSAX(! StringUtil.isEmptyOrSpaces(revision));

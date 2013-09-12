@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import org.apache.subversion.javahl.ConflictDescriptor;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.portable.ConflictActionConvertor;
 import org.jetbrains.idea.svn.portable.IdeaSVNInfo;
 import org.tmatesoft.svn.core.*;
@@ -33,7 +34,7 @@ import java.util.Date;
  * Time: 2:11 PM
  */
 public class SvnInfoStructure {
-  public File myFile;
+  @Nullable public File myFile;
   public String relativeUrl;
   public SVNURL myUrl;
   public SVNURL myRootURL;
@@ -84,6 +85,8 @@ public class SvnInfoStructure {
       return null;
     }
     else {
+      assert myFile != null;
+
       final SVNConflictAction action = ConflictActionConvertor.create(ConflictDescriptor.Action.valueOf(myTreeConflict.myAction));
       final SVNConflictReason reason = parseConflictReason(myTreeConflict.myReason);
       //final SVNConflictReason reason = ConflictReasonConvertor.convert(ConflictDescriptor.Reason.valueOf(myTreeConflict.myReason));
