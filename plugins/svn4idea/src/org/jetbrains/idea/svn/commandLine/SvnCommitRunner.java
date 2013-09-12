@@ -81,7 +81,17 @@ public class SvnCommitRunner {
                                                 myCommandListener, myAuthenticationCallback, ArrayUtil.toStringArray(parameters));
     myCommandListener.throwExceptionIfOccurred();
 
-    return myCommandListener.getCommittedRevision();
+    return validateRevisionNumber();
+  }
+
+  private long validateRevisionNumber() throws VcsException {
+    long revision = myCommandListener.getCommittedRevision();
+
+    if (revision < 0) {
+      throw new VcsException("Wrong committed revision number: " + revision);
+    }
+
+    return revision;
   }
 
   public static class CommandListener extends LineCommandListener {

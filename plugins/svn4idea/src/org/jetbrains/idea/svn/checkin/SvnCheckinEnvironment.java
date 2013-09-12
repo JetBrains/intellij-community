@@ -48,8 +48,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.commandLine.SvnBindClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
+import org.jetbrains.idea.svn.commandLine.SvnCommitRunner;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -249,22 +249,26 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
 
     final IdeaSvnkitBasedAuthenticationCallback authenticationCallback = new IdeaSvnkitBasedAuthenticationCallback(mySvnVcs);
-    try {
-      final SvnBindClient client = new SvnBindClient(SvnApplicationSettings.getInstance().getCommandLinePath(), new Convertor<File[], SVNURL>() {
-        @Override
-        public SVNURL convert(File[] o) {
-          SVNInfo info = o.length > 0 ? mySvnVcs.getInfo(o[0]) : null;
+    IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());
+    String cmdPath = SvnApplicationSettings.getInstance().getCommandLinePath();
+    Convertor<File[], SVNURL> urlProvider = new Convertor<File[], SVNURL>() {
+      @Override
+      public SVNURL convert(File[] o) {
+        SVNInfo info = o.length > 0 ? mySvnVcs.getInfo(o[0]) : null;
 
-          if (info == null || info.getURL() == null) {
-            LOG.warn("Could not resolve repository url for commit. Paths - " + Arrays.toString(o));
-          }
-
-          return info != null ? info.getURL() : null;
+        if (info == null || info.getURL() == null) {
+          LOG.warn("Could not resolve repository url for commit. Paths - " + Arrays.toString(o));
         }
-      });
-      client.setAuthenticationCallback(authenticationCallback);
-      client.setHandler(new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator()));
-      final long revision = client.commit(ArrayUtil.toObjectArray(committables, File.class), comment, false, false);
+
+        return info != null ? info.getURL() : null;
+      }
+    };
+
+    try {
+      SvnCommitRunner runner = new SvnCommitRunner(cmdPath, handler, authenticationCallback);
+      final long revision =
+        runner.commit(ArrayUtil.toObjectArray(committables, File.class), comment, SVNDepth.EMPTY, false, false, null, null, urlProvider);
+
       reportCommittedRevisions(feedback, String.valueOf(revision));
     }
     catch (VcsException e) {
