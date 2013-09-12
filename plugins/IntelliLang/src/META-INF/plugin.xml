@@ -30,7 +30,8 @@
       <category>Language Injection</category>
     </intentionAction>
 
-    <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.CustomErrorElementFilter"/>
+    <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
+    <daemon.highlightInfoFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
 
     <projectConfigurable instance="org.intellij.plugins.intelliLang.InjectionsSettingsUI"/>
 
