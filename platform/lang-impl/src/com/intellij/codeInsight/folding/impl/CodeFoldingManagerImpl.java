@@ -33,10 +33,7 @@ import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -159,7 +156,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
             // Show only the non-displayed top part of the target fold region
             int endOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(new VisualPosition(endVisualLine, 0)));
-            TextRange textRange = new TextRange(textOffset, endOffset);
+            TextRange textRange = new UnfairTextRange(textOffset, endOffset);
             hint = EditorFragmentComponent.showEditorFragmentHint(editor, textRange, true, true);
             myCurrentFold = fold;
             myCurrentHint = hint;
