@@ -26,6 +26,8 @@ public class StartBrowserPanel extends JPanel {
         myStartJavaScriptDebuggerCheckBox.setEnabled(selected);
       }
     });
+
+    myStartJavaScriptDebuggerCheckBox.setVisible(JavaScriptDebuggerStarter.Util.EP_NAME.getExtensions().length > 0);
   }
 
   public boolean isSelected() {
