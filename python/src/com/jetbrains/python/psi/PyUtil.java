@@ -125,6 +125,7 @@ public class PyUtil {
     List<T> result = new SmartList<T>();
     for (PsiElement child : element.getChildren()) {
       if (instanceOf(child, aClass)) {
+        //noinspection unchecked
         result.add((T)child);
       }
       else {
