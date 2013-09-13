@@ -97,7 +97,6 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
     FileOutputStream out = new FileOutputStream(file);
     try {
       FileUtil.copy(content, size, out);
-
     }
     finally {
       out.close();

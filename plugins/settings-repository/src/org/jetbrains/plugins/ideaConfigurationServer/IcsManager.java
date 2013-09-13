@@ -41,6 +41,11 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
   private static final String PROJECT_ID_KEY = "IDEA_SERVER_PROJECT_ID";
 
+  private static final String WORKSPACE_VERSION_FILE = StoragePathMacros.WORKSPACE_FILE + XmlElementStorage.VERSION_FILE_SUFFIX;
+  // todo must be configurable - should be in Storage annotation
+  private static final String STAT_FILE = StoragePathMacros.APP_CONFIG + "/statistics.application.usages.xml";
+  private static final String STAT_VERSION_FILE = STAT_FILE + XmlElementStorage.VERSION_FILE_SUFFIX;
+
   public static final String PLUGIN_NAME = "Idea Configuration Server";
 
   private final IcsSettings settings = new IcsSettings();
@@ -126,8 +131,17 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
       @Override
       public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+        if (!isShareable(fileSpec)) {
+          return;
+        }
+
         repositoryManager.deleteAsync(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
         commitAlarm.cancelAndRequest();
+      }
+
+      @Override
+      protected boolean isShareable(@NotNull String fileSpec) {
+        return !fileSpec.equals(STAT_FILE) && !fileSpec.equals(STAT_VERSION_FILE);
       }
     };
     StateStorageManager storageManager = ((ApplicationImpl)application).getStateStore().getStateStorageManager();
@@ -141,31 +155,11 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     String projectId = getProjectId(project);
     manager.registerStreamProvider(new ICSStreamProvider(projectId), RoamingType.PER_PLATFORM);
     manager.registerStreamProvider(new ICSStreamProvider(projectId) {
-      private static final String WORKSPACE_VERSION_FILE = StoragePathMacros.WORKSPACE_FILE + XmlElementStorage.VERSION_FILE_SUFFIX;
-
       @Override
-      public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
-        if (isShareable(fileSpec)) {
-          super.saveContent(fileSpec, content, size, roamingType, async);
-        }
-      }
-
-      private boolean isShareable(String fileSpec) {
+      protected boolean isShareable(@NotNull String fileSpec) {
         return settings.shareProjectWorkspace || (!fileSpec.equals(StoragePathMacros.WORKSPACE_FILE) && !fileSpec.equals(WORKSPACE_VERSION_FILE));
       }
-
-      @Nullable
-      @Override
-      public InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException {
-        return isShareable(fileSpec) ? super.loadContent(fileSpec, roamingType) : null;
-      }
     }, RoamingType.PER_USER);
-  }
-
-  public void startPing() {
-  }
-
-  public void stopPing() {
   }
 
   public void connectAndUpdateRepository() {
@@ -263,8 +257,16 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       this.projectId = projectId;
     }
 
+    protected boolean isShareable(@NotNull String fileSpec) {
+      return true;
+    }
+
     @Override
     public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+      if (!isShareable(fileSpec)) {
+        return;
+      }
+
       repositoryManager.write(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId), content, size, async);
       commitAlarm.cancelAndRequest();
     }
@@ -272,6 +274,10 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     @Override
     @Nullable
     public InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException {
+      if (!isShareable(fileSpec)) {
+        return null;
+      }
+
       return repositoryManager.read(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
     }
 
@@ -299,6 +305,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
     @Override
     public void initComponent() {
+      // todo find normal way to register our widget
       WindowManager.getInstance().addListener(new WindowManagerListener() {
         @Override
         public void frameCreated(IdeFrame frame) {
@@ -309,13 +316,10 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
         public void beforeFrameReleased(IdeFrame frame) {
         }
       });
-
-      getInstance().startPing();
     }
 
     @Override
     public void disposeComponent() {
-      getInstance().stopPing();
     }
 
     @Override
