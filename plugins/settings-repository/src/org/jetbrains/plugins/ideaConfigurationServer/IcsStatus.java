@@ -1,5 +1,5 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
-public enum IdeaConfigurationServerStatus {
+public enum IcsStatus {
   OPEN_FAILED, UPDATE_FAILED, OPENED
 }

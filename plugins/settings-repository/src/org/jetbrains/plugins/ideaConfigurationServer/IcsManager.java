@@ -53,7 +53,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
   private RepositoryManager repositoryManager;
 
-  private IdeaConfigurationServerStatus status;
+  private IcsStatus status;
 
   protected final SingleAlarm commitAlarm = new SingleAlarm(new Runnable() {
     @Override
@@ -102,12 +102,12 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     return new File(PathManager.getSystemPath(), "ideaConfigurationServer");
   }
 
-  public IdeaConfigurationServerStatus getStatus() {
+  public IcsStatus getStatus() {
     return status;
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public void setStatus(@NotNull IdeaConfigurationServerStatus value) {
+  public void setStatus(@NotNull IcsStatus value) {
     if (status != value) {
       status = value;
       ApplicationManager.getApplication().getMessageBus().syncPublisher(StatusListener.TOPIC).statusChanged(value);
@@ -166,7 +166,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   public void connectAndUpdateRepository() {
     try {
       repositoryManager = new GitRepositoryManager();
-      setStatus(IdeaConfigurationServerStatus.OPENED);
+      setStatus(IcsStatus.OPENED);
       if (settings.updateOnStart) {
         repositoryManager.updateRepository();
       }
@@ -176,7 +176,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
         LOG.error(e);
       }
       finally {
-        setStatus(getStatus() == IdeaConfigurationServerStatus.OPENED ? IdeaConfigurationServerStatus.UPDATE_FAILED : IdeaConfigurationServerStatus.OPEN_FAILED);
+        setStatus(getStatus() == IcsStatus.OPENED ? IcsStatus.UPDATE_FAILED : IcsStatus.OPEN_FAILED);
       }
     }
 
@@ -292,7 +292,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
     @Override
     public boolean isEnabled() {
-      return status == IdeaConfigurationServerStatus.OPENED;
+      return status == IcsStatus.OPENED;
     }
 
     @Override

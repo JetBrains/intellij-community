@@ -27,7 +27,7 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
   public void install(@NotNull final StatusBar statusBar) {
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(StatusListener.TOPIC, new StatusListener() {
       @Override
-      public void statusChanged(IdeaConfigurationServerStatus status) {
+      public void statusChanged(IcsStatus status) {
         Application app = ApplicationManager.getApplication();
         if (app.isDispatchThread()) {
           statusBar.updateWidget(ID());
@@ -69,7 +69,7 @@ public class IcsStatusBarWidget implements StatusBarWidget, StatusBarWidget.Icon
     };
   }
 
-  private static Icon getStatusIcon(@NotNull IdeaConfigurationServerStatus status) {
+  private static Icon getStatusIcon(@NotNull IcsStatus status) {
     switch (status) {
       case OPEN_FAILED:
       case UPDATE_FAILED:
