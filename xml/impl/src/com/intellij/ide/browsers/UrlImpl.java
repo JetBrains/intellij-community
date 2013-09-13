@@ -3,7 +3,6 @@ package com.intellij.ide.browsers;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,23 +65,17 @@ public final class UrlImpl implements Url {
 
   @Override
   public String toDecodedForm(boolean skipQueryAndFragment) {
-    StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append(scheme).append("://");
-      if (authority != null) {
-        builder.append(authority);
-      }
-      if (path != null) {
-        builder.append(getPath());
-      }
-      if (!skipQueryAndFragment && parameters != null) {
-        builder.append(parameters);
-      }
-      return builder.toString();
+    StringBuilder builder = new StringBuilder().append(scheme).append("://");
+    if (authority != null) {
+      builder.append(authority);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
+    if (path != null) {
+      builder.append(getPath());
     }
+    if (!skipQueryAndFragment && parameters != null) {
+      builder.append(parameters);
+    }
+    return builder.toString();
   }
 
   @Override

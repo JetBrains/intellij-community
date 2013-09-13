@@ -23,6 +23,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TextAccessor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -53,6 +54,12 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
     installPathCompletion(fileChooserDescriptor);
   }
 
+  public void addBrowseFolderListener(@NotNull TextBrowseFolderListener listener) {
+    listener.setOwnerComponent(this);
+    addBrowseFolderListener(null, listener, true);
+    installPathCompletion(listener.gFileChooserDescriptor());
+  }
+
   protected void installPathCompletion(final FileChooserDescriptor fileChooserDescriptor) {
     installPathCompletion(fileChooserDescriptor, null);
   }
@@ -71,10 +78,12 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   /**
    * @return trimmed text
    */
+  @Override
   public String getText(){
     return getTextField().getText();
   }
 
+  @Override
   public void setText(final String text){
     getTextField().setText(text);
   }
@@ -106,6 +115,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
       super(browseActionListener);
     }
 
+    @Override
     protected void installPathCompletion(final FileChooserDescriptor fileChooserDescriptor) {
     }
   }
