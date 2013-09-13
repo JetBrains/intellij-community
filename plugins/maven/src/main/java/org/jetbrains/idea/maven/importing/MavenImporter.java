@@ -104,12 +104,21 @@ public abstract class MavenImporter {
     return null;
   }
 
+  @Deprecated
+  public void resolve(Project project,
+                      MavenProject mavenProject,
+                      NativeMavenProjectHolder nativeMavenProject,
+                      MavenEmbedderWrapper embedder)
+    throws MavenProcessCanceledException {
+  }
+
   public void resolve(Project project,
                       MavenProject mavenProject,
                       NativeMavenProjectHolder nativeMavenProject,
                       MavenEmbedderWrapper embedder,
                       ResolveContext context)
     throws MavenProcessCanceledException {
+    resolve(project, mavenProject, nativeMavenProject, embedder);
   }
 
   public abstract void preProcess(Module module,
