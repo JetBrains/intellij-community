@@ -36,6 +36,7 @@ import org.gradle.wrapper.WrapperConfiguration;
 import org.gradle.wrapper.WrapperExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -88,7 +89,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
         final String linkedProjectPath = getConfigPath(module);
         if (linkedProjectPath == null) return null;
         final GradleProjectSettings settings = GradleSettings.getInstance(module.getProject()).getLinkedProjectSettings(linkedProjectPath);
-        if (settings == null) return null;
+        if (settings == null || settings.getDistributionType() != DistributionType.DEFAULT_WRAPPED) return null;
         if (settings.isDisableWrapperSourceDistributionNotification()) return null;
         if (isWrapperDistributionWithSourcesUsed(linkedProjectPath)) return null;
 
