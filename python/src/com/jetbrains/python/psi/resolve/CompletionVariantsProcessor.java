@@ -16,6 +16,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,8 +51,9 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
           hasNoCustomDecorators((PyFunction)object) &&
           !isSingleArgDecoratorCall(myContext, (PyFunction)object)) {
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
-        final PyParameterList parameterList = ((PyFunction)object).getParameterList();
-        final String params = StringUtil.join(parameterList.getParameters(), new Function<PyParameter, String>() {
+        final TypeEvalContext context = TypeEvalContext.userInitiated(myContext != null ? myContext.getContainingFile() : null);
+        final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)object, context);
+        final String params = StringUtil.join(parameters, new Function<PyParameter, String>() {
           @Override
           public String fun(PyParameter pyParameter) {
             return pyParameter.getName();
