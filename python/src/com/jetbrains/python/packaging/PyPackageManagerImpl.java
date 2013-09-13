@@ -71,7 +71,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final int OK = 0;
   public static final int ERROR_WRONG_USAGE = 1;
   public static final int ERROR_NO_PIP = 2;
-  public static final int ERROR_NO_DISTRIBUTE = 3;
+  public static final int ERROR_NO_SETUPTOOLS = 3;
   public static final int ERROR_INVALID_SDK = -1;
   public static final int ERROR_TOOL_NOT_FOUND = -2;
   public static final int ERROR_TIMEOUT = -3;
@@ -97,9 +97,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final String UNINSTALL = "uninstall";
   public static final String UNTAR = "untar";
 
-  // Bundled package management tools
-  public static final String DISTRIBUTE = "distribute-0.6.27";
-  public static final String PIP = "pip-1.1";
+  // Bundled versions of  package management tools
+  public static final String SETUPTOOLS_VERSION = "1.1.5";
+  public static final String PIP_VERSION = "1.4.1";
+
+  public static final String SETUPTOOLS = PACKAGE_SETUPTOOLS + "-" + SETUPTOOLS_VERSION;
+  public static final String PIP = PACKAGE_PIP + "-" + PIP_VERSION;
 
   private List<PyPackage> myPackagesCache = null;
   private Map<String, Set<PyPackage>> myDependenciesCache = null;
@@ -604,7 +607,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (useGlobalSite) {
         args.add("--system-site-packages");
       }
-      args.addAll(list("--never-download", "--distribute", destinationDir));
+      args.add(destinationDir);
       runPythonHelper(VIRTUALENV, args);
     }
 
@@ -619,7 +622,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         final ProjectJdkImpl tmpSdk = new ProjectJdkImpl("", PythonSdkType.getInstance());
         tmpSdk.setHomePath(path);
         final PyPackageManagerImpl manager = new PyPackageManagerImpl(tmpSdk);
-        manager.installManagement(DISTRIBUTE);
+        manager.installManagement(SETUPTOOLS);
         manager.installManagement(PIP);
       }
     }
