@@ -26,22 +26,22 @@ import java.util.Set;
  * @author yole
  */
 public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
-  public static final String INSTALL_DISTRIBUTE = "installDistribute";
+  public static final String INSTALL_SETUPTOOLS = "installSetuptools";
   public static final String INSTALL_PIP = "installPip";
   public static final String CREATE_VENV = "createVEnv";
 
-  private boolean myHasDistribute;
+  private boolean myHasSetuptools;
   private boolean myHasPip = true;
 
   public PyInstalledPackagesPanel(Project project, PackagesNotificationPanel area) {
     super(project, area);
 
-    myNotificationArea.addLinkHandler(INSTALL_DISTRIBUTE, new Runnable() {
+    myNotificationArea.addLinkHandler(INSTALL_SETUPTOOLS, new Runnable() {
       @Override
       public void run() {
         final Sdk sdk = getSelectedSdk();
         if (sdk != null) {
-          installManagementTool(sdk, PyPackageManagerImpl.DISTRIBUTE);
+          installManagementTool(sdk, PyPackageManagerImpl.SETUPTOOLS);
         }
       }
     });
@@ -69,9 +69,9 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         PyExternalProcessException exc = null;
         try {
           PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(selectedSdk);
-          myHasDistribute = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_DISTRIBUTE) != null;
-          if (!myHasDistribute) {
-            myHasDistribute = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_SETUPTOOLS) != null;
+          myHasSetuptools = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_SETUPTOOLS) != null;
+          if (!myHasSetuptools) {
+            myHasSetuptools = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_DISTRIBUTE) != null;
           }
           myHasPip = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_PIP) != null;
         }
@@ -98,18 +98,18 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
                   if (retCode == PyPackageManagerImpl.ERROR_NO_PIP) {
                     myHasPip = false;
                   }
-                  else if (retCode == PyPackageManagerImpl.ERROR_NO_DISTRIBUTE) {
-                    myHasDistribute = false;
+                  else if (retCode == PyPackageManagerImpl.ERROR_NO_SETUPTOOLS) {
+                    myHasSetuptools = false;
                   }
                   else {
                     text = externalProcessException.getMessage();
                   }
-                  final boolean hasPackagingTools = myHasPip && myHasDistribute;
+                  final boolean hasPackagingTools = myHasPip && myHasSetuptools;
                   allowCreateVirtualEnv &= !hasPackagingTools;
                 }
                 if (text == null) {
-                  if (!myHasDistribute) {
-                    text = "Python package management tools not found. <a href=\"" + INSTALL_DISTRIBUTE + "\">Install 'distribute'</a>";
+                  if (!myHasSetuptools) {
+                    text = "Python package management tools not found. <a href=\"" + INSTALL_SETUPTOOLS + "\">Install 'setuptools'</a>";
                   }
                   else if (!myHasPip) {
                     text = "Python packaging tool 'pip' not found. <a href=\"" + INSTALL_PIP + "\">Install 'pip'</a>";
@@ -172,7 +172,10 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         return false;
       }
     }
-    if ("pip".equals(pkg.getName()) || "distribute".equals(pkg.getName())) {
+    final String name = pkg.getName();
+    if (PyPackageManagerImpl.PACKAGE_PIP.equals(name) ||
+        PyPackageManagerImpl.PACKAGE_SETUPTOOLS.equals(name) ||
+        PyPackageManagerImpl.PACKAGE_DISTRIBUTE.equals(name)) {
       return false;
     }
     return true;

@@ -5,7 +5,7 @@ import os
 
 ERROR_WRONG_USAGE = 1
 ERROR_NO_PIP = 2
-ERROR_NO_DISTRIBUTE = 3
+ERROR_NO_SETUPTOOLS = 3
 ERROR_EXCEPTION = 4
 
 def exit(retcode):
@@ -42,7 +42,7 @@ def do_list():
     try:
         import pkg_resources
     except ImportError:
-        error("Python package management tool 'setuptools' or 'distribute' not found", ERROR_NO_DISTRIBUTE)
+        error("Python package management tool 'setuptools' or 'distribute' not found", ERROR_NO_SETUPTOOLS)
     for pkg in pkg_resources.working_set:
         requires = ':'.join([str(x) for x in pkg.requires()])
         sys.stdout.write('\t'.join([pkg.project_name, pkg.version, pkg.location, requires])+chr(10))
