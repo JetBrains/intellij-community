@@ -86,7 +86,7 @@ class Build {
   def projectBuilder
   def buildNumber
   def system_selector
-  def teamcity_buildType_id
+  //def teamcity_buildType_id
   def ant = new AntBuilder()
   def ch
   def usedJars
