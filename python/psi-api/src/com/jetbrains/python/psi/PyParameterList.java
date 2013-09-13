@@ -39,14 +39,6 @@ public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParame
    */
   boolean hasKeywordContainer();
 
-  /**
-   * Checks is this parameter list is the same or is a superset of another parameter list.
-   * (The reverse is only true is the lists are the same.)
-   * @param another what to compare to
-   * @return true if this list is a superset of another.
-   */
-  boolean isCompatibleTo(@NotNull PyParameterList another);
-
   String getPresentableText(boolean includeDefaultValue);
 
   @Nullable

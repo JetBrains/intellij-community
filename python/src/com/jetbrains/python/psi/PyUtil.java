@@ -1298,4 +1298,77 @@ public class PyUtil {
     }
     return Arrays.asList(callable.getParameterList().getParameters());
   }
+
+  public static boolean isSignatureCompatibleTo(@NotNull Callable callable, @NotNull Callable otherCallable,
+                                                @NotNull TypeEvalContext context) {
+    final List<PyParameter> parameters = getParameters(callable, context);
+    final List<PyParameter> otherParameters = getParameters(otherCallable, context);
+    final int optionalCount = optionalParametersCount(parameters);
+    final int otherOptionalCount = optionalParametersCount(otherParameters);
+    final int requiredCount = requiredParametersCount(callable, parameters);
+    final int otherRequiredCount = requiredParametersCount(otherCallable, otherParameters);
+    if (hasPositionalContainer(otherParameters) || hasKeywordContainer(otherParameters)) {
+      if (otherParameters.size() == specialParametersCount(otherCallable, otherParameters)) {
+        return true;
+      }
+    }
+    if (hasPositionalContainer(parameters) || hasKeywordContainer(parameters)) {
+      return requiredCount <= otherRequiredCount;
+    }
+    return requiredCount <= otherRequiredCount && parameters.size() >= otherParameters.size() && optionalCount >= otherOptionalCount;
+  }
+
+  private static int optionalParametersCount(@NotNull List<PyParameter> parameters) {
+    int n = 0;
+    for (PyParameter parameter : parameters) {
+      if (parameter.getDefaultValue() != null) {
+        n++;
+      }
+    }
+    return n;
+  }
+
+  private static int requiredParametersCount(@NotNull Callable callable, @NotNull List<PyParameter> parameters) {
+    return parameters.size() - optionalParametersCount(parameters) - specialParametersCount(callable, parameters);
+  }
+
+  private static int specialParametersCount(@NotNull Callable callable, @NotNull List<PyParameter> parameters) {
+    int n = 0;
+    if (hasPositionalContainer(parameters)) {
+      n++;
+    }
+    if (hasKeywordContainer(parameters)) {
+      n++;
+    }
+    if (callable.asMethod() != null) {
+      n++;
+    }
+    else {
+      if (parameters.size() > 0) {
+        final PyParameter first = parameters.get(0);
+        if (PyNames.CANONICAL_SELF.equals(first.getName())) {
+          n++;
+        }
+      }
+    }
+    return n;
+  }
+
+  private static boolean hasPositionalContainer(@NotNull List<PyParameter> parameters) {
+    for (PyParameter parameter : parameters) {
+      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isPositionalContainer()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasKeywordContainer(@NotNull List<PyParameter> parameters) {
+    for (PyParameter parameter : parameters) {
+      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isKeywordContainer()) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
