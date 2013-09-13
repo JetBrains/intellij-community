@@ -179,7 +179,8 @@ public class PyOverrideImplementUtil {
     if (anno != null) {
       pyFunctionBuilder.annotation(anno.getText());
     }
-    final PyParameter[] baseParams = baseFunction.getParameterList().getParameters();
+    final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getContainingFile());
+    final List<PyParameter> baseParams = PyUtil.getParameters(baseFunction, context);
     for (PyParameter parameter : baseParams) {
       pyFunctionBuilder.parameter(parameter.getText());
     }
@@ -211,7 +212,6 @@ public class PyOverrideImplementUtil {
       statementBody.append(PyNames.PASS);
     }
     else {
-      final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getContainingFile());
       if (!PyNames.INIT.equals(baseFunction.getName()) && baseFunction.getReturnType(context, null) != PyNoneType.INSTANCE) {
         statementBody.append("return ");
       }
