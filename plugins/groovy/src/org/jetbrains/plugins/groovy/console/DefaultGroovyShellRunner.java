@@ -27,8 +27,11 @@ import org.jetbrains.plugins.groovy.config.AbstractConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
+
+import java.io.File;
 
 /**
  * @author Sergey Evdokimov
@@ -45,7 +48,19 @@ public class DefaultGroovyShellRunner extends GroovyShellRunner {
   @Override
   public JavaParameters createJavaParameters(@NotNull Module module) throws ExecutionException {
     JavaParameters res = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
-    DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "org.codehaus.groovy.tools.shell.Main", !hasGroovyAll(module), true);
+    boolean useBundled = !hasGroovyAll(module);
+    DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "org.codehaus.groovy.tools.shell.Main", false, true);
+    if (useBundled) {
+      String parent = GroovyUtils.getBundledGroovyJar().getParent();
+      String groovyHome = parent + File.separator + "groovy";
+      File libDir = new File(groovyHome + File.separator + "lib");
+      assert libDir.isDirectory();
+      for (File file : libDir.listFiles()) {
+        res.getClassPath().add(file);
+      }
+
+      GroovyScriptRunner.setGroovyHome(res, groovyHome);
+    }
     res.setWorkingDirectory(getWorkingDirectory(module));
 
     return res;
