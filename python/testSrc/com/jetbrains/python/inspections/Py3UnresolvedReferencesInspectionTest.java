@@ -57,4 +57,13 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   public void testMetaclassMethods() {
     doTest();
   }
+
+  // PY-9011
+  public void testDatetimeDateAttributesOutsideClass() {
+    doMultiFileTest("a.py");
+  }
+
+  public void testObjectNewAttributes() {
+    doTest();
+  }
 }

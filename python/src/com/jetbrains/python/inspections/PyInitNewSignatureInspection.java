@@ -7,7 +7,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -46,13 +46,11 @@ public class PyInitNewSignatureInspection extends PyInspection {
       String the_other_name = PyNames.NEW.equals(init_or_new.getName()) ? PyNames.INIT : PyNames.NEW;
       PyFunction the_other = cls.findMethodByName(the_other_name, true);
       if (the_other == null || builtins.getClass("object") == the_other.getContainingClass()) return;
-      final PyParameterList closer_list = init_or_new.getParameterList();
-      final PyParameterList farther_list = the_other.getParameterList();
-      if (! farther_list.isCompatibleTo(closer_list) &&
-          ! closer_list.isCompatibleTo(farther_list) &&
-          closer_list.getContainingFile() == cls.getContainingFile()
+      if (!PyUtil.isSignatureCompatibleTo(the_other, init_or_new, myTypeEvalContext) &&
+          !PyUtil.isSignatureCompatibleTo(init_or_new, the_other, myTypeEvalContext) &&
+          init_or_new.getContainingFile() == cls.getContainingFile()
       ) {
-        registerProblem(closer_list, PyNames.NEW.equals(init_or_new.getName()) ?
+        registerProblem(init_or_new.getParameterList(), PyNames.NEW.equals(init_or_new.getName()) ?
                                      PyBundle.message("INSP.new.incompatible.to.init") :
                                      PyBundle.message("INSP.init.incompatible.to.new")
         );
