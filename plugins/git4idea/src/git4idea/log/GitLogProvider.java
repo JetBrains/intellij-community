@@ -46,12 +46,14 @@ public class GitLogProvider implements VcsLogProvider {
 
   private static final Logger LOG = Logger.getInstance(GitLogProvider.class);
 
-  private final Project myProject;
+  @NotNull private final Project myProject;
   @NotNull private final GitRepositoryManager myRepositoryManager;
+  @NotNull private final VcsLogRefSorter myRefSorter;
 
   public GitLogProvider(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager) {
     myProject = project;
     myRepositoryManager = repositoryManager;
+    myRefSorter = new GitLogRefSorter(myRepositoryManager);
   }
 
   @NotNull
@@ -129,6 +131,12 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public VcsKey getSupportedVcs() {
     return GitVcs.getKey();
+  }
+
+  @NotNull
+  @Override
+  public VcsLogRefSorter getRefSorter() {
+    return myRefSorter;
   }
 
 }

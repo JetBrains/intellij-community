@@ -12,7 +12,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogProvider;
-import org.hanuna.gitalk.common.compressedlist.VcsLogLogger;
+import com.intellij.vcs.log.VcsLogLogger;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;

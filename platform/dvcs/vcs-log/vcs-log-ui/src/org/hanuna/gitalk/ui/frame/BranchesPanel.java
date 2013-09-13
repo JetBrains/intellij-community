@@ -2,7 +2,9 @@ package org.hanuna.gitalk.ui.frame;
 
 import com.google.common.collect.Ordering;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
@@ -17,10 +19,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Panel with branch labels, above the graph.
@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class BranchesPanel extends JPanel {
 
-  private final VcsLogDataHolder myUiController;
+  private final VcsLogDataHolder myDataHolder;
   private final VcsLogUI myUI;
 
   private List<VcsRef> myRefs;
@@ -37,8 +37,8 @@ public class BranchesPanel extends JPanel {
 
   private Map<Integer, VcsRef> myRefPositions = new HashMap<Integer, VcsRef>();
 
-  public BranchesPanel(@NotNull VcsLogDataHolder logController, @NotNull VcsLogUI UI) {
-    myUiController = logController;
+  public BranchesPanel(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUI UI) {
+    myDataHolder = dataHolder;
     myUI = UI;
     myRefs = getRefsToDisplayOnPanel();
     myRefPainter = new RefPainter(myUI.getColorManager());
@@ -81,7 +81,7 @@ public class BranchesPanel extends JPanel {
   }
 
   private List<VcsRef> getRefsToDisplayOnPanel() {
-    Collection<VcsRef> allRefs = myUiController.getDataPack().getRefsModel().getAllRefs();
+    Collection<VcsRef> allRefs = myDataHolder.getDataPack().getRefsModel().getAllRefs();
     final List<VcsRef> localRefs = ContainerUtil.filter(allRefs, new Condition<VcsRef>() {
       @Override
       public boolean value(VcsRef ref) {
@@ -89,18 +89,40 @@ public class BranchesPanel extends JPanel {
       }
     });
 
-    return ContainerUtil.filter(allRefs, new Condition<VcsRef>() {
+    List<VcsRef> refsToShow = ContainerUtil.filter(allRefs, new Condition<VcsRef>() {
       @Override
       public boolean value(VcsRef ref) {
         if (ref.getType() == VcsRef.RefType.REMOTE_BRANCH) {
-          return !thereIsLocalRefOfHash(ref.getCommitHash(), localRefs);
+          return thereIsLocalRefOfHash(ref.getCommitHash(), localRefs);
         }
-        if (ref.getType().isBranch()) {
+        if (ref.getType().isLocalOrHead()) {
           return true;
         }
         return false;
       }
     });
+
+    // TODO sort roots as well
+    // TODO improve UI for multiple roots case
+    return sortReferences(refsToShow);
+  }
+
+  private List<VcsRef> sortReferences(List<VcsRef> refsToShow) {
+    List<VcsRef> sortedRefs = new ArrayList<VcsRef>(refsToShow.size());
+    MultiMap<VirtualFile, VcsRef> map = groupByRoot(refsToShow);
+    for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : map.entrySet()) {
+      List<VcsRef> sortedRefsForRoot = myDataHolder.getLogProvider(entry.getKey()).getRefSorter().sort(entry.getValue());
+      sortedRefs.addAll(sortedRefsForRoot);
+    }
+    return sortedRefs;
+  }
+
+  private static MultiMap<VirtualFile, VcsRef> groupByRoot(Collection<VcsRef> refs) {
+    MultiMap<VirtualFile, VcsRef> map = MultiMap.create();
+    for (VcsRef ref : refs) {
+      map.putValue(ref.getRoot(), ref);
+    }
+    return map;
   }
 
   private static boolean thereIsLocalRefOfHash(Hash commitHash, List<VcsRef> localRefs) {

@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
-import org.hanuna.gitalk.common.compressedlist.VcsLogLogger;
+import com.intellij.vcs.log.VcsLogLogger;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.graph.elements.GraphElement;

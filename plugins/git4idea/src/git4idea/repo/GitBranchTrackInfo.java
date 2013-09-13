@@ -28,7 +28,7 @@ public class GitBranchTrackInfo {
   @NotNull private final GitRemoteBranch myRemoteBranch;
   private final boolean myMerge;
 
-  GitBranchTrackInfo(@NotNull GitLocalBranch localBranch, @NotNull GitRemoteBranch remoteBranch, boolean merge) {
+  public GitBranchTrackInfo(@NotNull GitLocalBranch localBranch, @NotNull GitRemoteBranch remoteBranch, boolean merge) {
     myLocalBranch = localBranch;
     myRemoteBranch = remoteBranch;
     myMerge = merge;

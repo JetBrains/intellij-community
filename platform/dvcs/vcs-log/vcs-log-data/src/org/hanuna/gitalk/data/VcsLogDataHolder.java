@@ -29,7 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
-import org.hanuna.gitalk.common.compressedlist.VcsLogLogger;
+import com.intellij.vcs.log.VcsLogLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -277,4 +277,10 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
   public boolean isAllLogReady() {
     return myAllLog != null;
   }
+
+  @NotNull
+  public VcsLogProvider getLogProvider(@NotNull VirtualFile root) {
+    return myLogProviders.get(root);
+  }
+
 }

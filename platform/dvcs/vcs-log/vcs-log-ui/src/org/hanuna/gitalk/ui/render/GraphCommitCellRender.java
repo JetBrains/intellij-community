@@ -1,7 +1,10 @@
 package org.hanuna.gitalk.ui.render;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsRef;
+import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.hanuna.gitalk.ui.VcsLogColorManager;
 import org.hanuna.gitalk.ui.render.painters.GraphCellPainter;
@@ -17,6 +20,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 import static org.hanuna.gitalk.ui.render.PrintParameters.HEIGHT_CELL;
 import static org.hanuna.gitalk.ui.render.PrintParameters.WIDTH_NODE;
@@ -29,13 +33,17 @@ public class GraphCommitCellRender implements TableCellRenderer {
   public static final Color MARKED_BACKGROUND = new Color(0xB6, 0xE4, 0xFF);
   public static final Color APPLIED_BACKGROUND = new Color(0x92, 0xF5, 0x8F);
 
-  private final GraphCellPainter graphPainter;
-  private final RefPainter refPainter;
-  private ExtDefaultCellRender cellRender = new ExtDefaultCellRender();
+  @NotNull private final GraphCellPainter graphPainter;
+  @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final RefPainter refPainter;
+  @NotNull private final ExtDefaultCellRender cellRender;
 
-  public GraphCommitCellRender(GraphCellPainter graphPainter, @NotNull VcsLogColorManager colorManager) {
+  public GraphCommitCellRender(@NotNull GraphCellPainter graphPainter, @NotNull VcsLogDataHolder logDataHolder,
+                               @NotNull VcsLogColorManager colorManager) {
     this.graphPainter = graphPainter;
+    myDataHolder = logDataHolder;
     refPainter = new RefPainter(colorManager);
+    cellRender = new ExtDefaultCellRender();
   }
 
   protected int getLeftPadding(JTable table, @Nullable Object value) {
@@ -78,7 +86,12 @@ public class GraphCommitCellRender implements TableCellRenderer {
 
     int countCells = cell.getPrintCell().countCell();
     int padding = countCells * WIDTH_NODE;
-    refPainter.draw(g2, cell.getRefsToThisCommit(), padding);
+    List<VcsRef> refs = cell.getRefsToThisCommit();
+    if (!refs.isEmpty()) {
+      VirtualFile root = refs.iterator().next().getRoot(); // all refs are from the same commit => they have the same root
+      refs = myDataHolder.getLogProvider(root).getRefSorter().sort(refs);
+    }
+    refPainter.draw(g2, refs, padding);
 
     g.drawImage(image, 0, 0, null);
   }

@@ -7,7 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
-import org.hanuna.gitalk.common.compressedlist.VcsLogLogger;
+import com.intellij.vcs.log.VcsLogLogger;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;

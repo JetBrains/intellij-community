@@ -2,6 +2,7 @@ package org.hanuna.gitalk.ui.frame;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBTextField;
@@ -100,9 +101,15 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       else {
         myLoadingPanel.stopLoading();
         myDataPanel.setData(commitData);
-        myRefsPanel.setRefs(myLogDataHolder.getDataPack().getRefsModel().refsToCommit(hash));
+        myRefsPanel.setRefs(sortRefs(hash, node.getBranch().getRepositoryRoot()));
       }
     }
+  }
+
+  @NotNull
+  private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
+    List<VcsRef> refs = myLogDataHolder.getDataPack().getRefsModel().refsToCommit(hash);
+    return myLogDataHolder.getLogProvider(root).getRefSorter().sort(refs);
   }
 
   private static class DataPanel extends JPanel {

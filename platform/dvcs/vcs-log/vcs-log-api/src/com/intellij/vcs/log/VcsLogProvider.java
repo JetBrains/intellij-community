@@ -53,4 +53,11 @@ public interface VcsLogProvider {
   @NotNull
   VcsKey getSupportedVcs();
 
+  /**
+   * Returns the {@link VcsLogRefSorter} which will be used to identify positions of references in the log table, on the branches panel,
+   * and on the details panel.
+   */
+  @NotNull
+  VcsLogRefSorter getRefSorter();
+
 }

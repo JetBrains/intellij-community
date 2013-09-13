@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.common.compressedlist;
+package com.intellij.vcs.log;
 
 import com.intellij.openapi.diagnostic.Logger;
 
