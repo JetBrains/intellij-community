@@ -106,7 +106,7 @@ class Build {
   }
 
   def init () {
-    projectBuilder.stage("Cleaning, creating folders, initializing timestamps")
+//    projectBuilder.stage("Cleaning, creating folders, initializing timestamps")
     utils.loadProject()
 
     if (steps.clear) {
