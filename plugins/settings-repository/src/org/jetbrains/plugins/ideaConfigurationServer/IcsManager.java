@@ -55,8 +55,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       ProgressManager.getInstance().run(new Task.Backgroundable(null, "Pushing to ICS server") {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          ActionCallback callback = repositoryManager.commit();
-          awaitCallback(indicator, callback, "Pushing to ICS server");
+          awaitCallback(indicator, repositoryManager.commit(), "Pushing to ICS server");
         }
       });
     }

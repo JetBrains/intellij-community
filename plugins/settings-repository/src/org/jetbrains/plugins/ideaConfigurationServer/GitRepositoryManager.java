@@ -87,11 +87,11 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     return !StringUtil.isEmptyOrSpaces(git.getRepository().getConfig().getString("remote", "origin", "url"));
   }
 
-  private void addFilesToGit() throws IOException {
+  private boolean addFilesToGit() throws IOException {
     AddCommand addCommand;
     synchronized (filesToAdd) {
       if (filesToAdd.isEmpty()) {
-        return;
+        return false;
       }
 
       addCommand = git.add();
@@ -107,6 +107,8 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     catch (GitAPIException e) {
       throw new IOException(e);
     }
+
+    return true;
   }
 
   @Override
@@ -119,10 +121,19 @@ final class GitRepositoryManager extends BaseRepositoryManager {
   public ActionCallback commit() {
     return execute(new ThrowableConsumer<ProgressIndicator, Exception>() {
       @Override
-      public void consume(ProgressIndicator indicator) throws Exception {
-        addFilesToGit();
-        PersonIdent ident = new PersonIdent(ApplicationInfoEx.getInstanceEx().getFullApplicationName(), "dev@null.org");
-        git.commit().setAuthor(ident).setCommitter(ident).setMessage("").call();
+      public void consume(@NotNull ProgressIndicator indicator) throws Exception {
+        boolean someFilesWereModified = addFilesToGit();
+        if (!isFirstCommitAfterApplicationStart && !someFilesWereModified && !someFilesWereRemoved) {
+          LOG.debug("skip scheduled commit, nothing to commit (fast check)");
+          return;
+        }
+
+        someFilesWereRemoved = false;
+        
+        PersonIdent author = new PersonIdent(git.getRepository());
+        PersonIdent committer = new PersonIdent(ApplicationInfoEx.getInstanceEx().getFullApplicationName(), author.getEmailAddress());
+        git.commit().setAuthor(author).setCommitter(committer).setAll(isFirstCommitAfterApplicationStart).setMessage("").call();
+        isFirstCommitAfterApplicationStart = false;
       }
     }, new EmptyProgressIndicator());
   }

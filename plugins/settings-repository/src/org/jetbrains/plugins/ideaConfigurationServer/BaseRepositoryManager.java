@@ -25,6 +25,10 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
 
   // avoid FS recursive scan
   protected final Set<String> filesToAdd = new THashSet<String>();
+  protected boolean someFilesWereRemoved;
+
+  // application could be terminated incorrectly (force quit), so, we should ensure that modified files will be added to index on first commit after application start
+  protected boolean isFirstCommitAfterApplicationStart = true;
 
   protected final QueueProcessor<ThrowableRunnable<Exception>> taskProcessor = new QueueProcessor<ThrowableRunnable<Exception>>(new Consumer<ThrowableRunnable<Exception>>() {
     @Override
@@ -131,6 +135,7 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
           }
         }
 
+        someFilesWereRemoved = true;
         doDelete(path);
       }
     });
