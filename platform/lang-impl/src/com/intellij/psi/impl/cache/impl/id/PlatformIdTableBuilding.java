@@ -73,7 +73,7 @@ public abstract class PlatformIdTableBuilding {
     }
 
     final DataIndexer<TodoIndexEntry, Integer, FileContent> extIndexer;
-    if (fileType instanceof SubstitutedFileType) {
+    if (fileType instanceof SubstitutedFileType && !((SubstitutedFileType)fileType).isSameFileType()) {
       SubstitutedFileType sft = (SubstitutedFileType)fileType;
       extIndexer =
         new CompositeTodoIndexer(getTodoIndexer(sft.getOriginalFileType(), virtualFile), getTodoIndexer(sft.getFileType(), virtualFile));
