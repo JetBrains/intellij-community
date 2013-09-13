@@ -40,8 +40,9 @@ public class InferenceVariablesOrder {
       final InferenceGraphNode<InferenceVariable> node = nodes.get(var);
       for (InferenceBound inferenceBound : InferenceBound.values()) {
         for (PsiType bound : var.getBounds(inferenceBound)) {
-          final InferenceVariable dependentVariable = session.getInferenceVariable(bound);
-          if (dependentVariable != null) {
+          final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
+          session.collectDependencies(bound, dependencies);
+          for (InferenceVariable dependentVariable : dependencies) {
             final InferenceGraphNode<InferenceVariable> dependency = nodes.get(dependentVariable);
             if (dependency != null) {
               node.addDependency(dependency);

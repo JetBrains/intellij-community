@@ -156,7 +156,11 @@ public class InferenceSession {
   }
 
   public boolean isProperType(@NotNull PsiType type) {
-    return type.accept(new PsiTypeVisitor<Boolean>() {
+    return collectDependencies(type, null);
+  }
+
+  public boolean collectDependencies(@NotNull PsiType type, @Nullable final Set<InferenceVariable> dependencies) {
+    final Boolean isProper = type.accept(new PsiTypeVisitor<Boolean>() {
       @Nullable
       @Override
       public Boolean visitType(PsiType type) {
@@ -182,6 +186,10 @@ public class InferenceSession {
       public Boolean visitClassType(PsiClassType classType) {
         final InferenceVariable inferenceVariable = getInferenceVariable(classType);
         if (inferenceVariable != null) {
+          if (dependencies != null) {
+            dependencies.add(inferenceVariable);
+            return true;
+          }
           return false;
         }
         for (PsiType psiType : classType.getParameters()) {
@@ -190,6 +198,7 @@ public class InferenceSession {
         return true;
       }
     });
+    return dependencies != null ? !dependencies.isEmpty() : isProper;
   }
 
   private void repeatInferencePhases() {
