@@ -45,8 +45,8 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private PsiField myField;
   private final PsiReferenceExpression myRefExpr;
   private final boolean myInlineThisOnly;
-  private boolean mySearchInCommentsAndStrings;
-  private boolean mySearchForTextOccurrences;
+  private final boolean mySearchInCommentsAndStrings;
+  private final boolean mySearchForTextOccurrences;
 
   public InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, boolean isInlineThisOnly) {
     this(field, project, ref, isInlineThisOnly, false, false);
@@ -66,6 +66,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     mySearchForTextOccurrences = searchForTextOccurrences;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new InlineViewDescriptor(myField);
@@ -86,6 +87,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myRefExpr)};
@@ -124,24 +126,26 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     return usages.toArray(new UsageInfo[usages.size()]);
   }
 
+  @Override
   protected void refreshElements(PsiElement[] elements) {
     LOG.assertTrue(elements.length == 1 && elements[0] instanceof PsiField);
     myField = (PsiField)elements[0];
   }
 
+  @Override
   protected void performRefactoring(UsageInfo[] usages) {
     PsiExpression initializer = myField.getInitializer();
     LOG.assertTrue(initializer != null);
 
-    PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(myField.getProject()).getConstantEvaluationHelper();
     initializer = normalize ((PsiExpression)initializer.copy());
     for (UsageInfo info : usages) {
       if (info instanceof UsageFromJavaDoc) continue;
       if (info instanceof NonCodeUsageInfo) continue;
       final PsiElement element = info.getElement();
+      if (element == null) continue;
       try {
         if (element instanceof PsiExpression) {
-          inlineExpressionUsage((PsiExpression)element, evalHelper, initializer);
+          inlineExpressionUsage((PsiExpression)element, initializer);
         }
         else {
           PsiImportStaticStatement importStaticStatement = PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class);
@@ -165,7 +169,6 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   }
 
   private void inlineExpressionUsage(PsiExpression expr,
-                                     final PsiConstantEvaluationHelper evalHelper,
                                      PsiExpression initializer1) throws IncorrectOperationException {
     if (myField.isWritable()) {
       myField.normalizeDeclaration();
@@ -211,10 +214,12 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     return expression;
   }
 
+  @Override
   protected String getCommandName() {
     return RefactoringBundle.message("inline.field.command", DescriptiveNameUtil.getDescriptiveName(myField));
   }
 
+  @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
@@ -265,6 +270,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     return PsiUtil.isAccessedForWriting(expr);
   }
 
+  @Override
   @NotNull
   protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
     if (myInlineThisOnly) {
