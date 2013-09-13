@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.impl.source.resolve.InferenceGraphNode;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder;
 import com.intellij.util.Function;
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -35,13 +35,13 @@ public class TarjanTest extends TestCase {
   public void testResultGraph() throws Exception {
     
 
-    final List<List<InferenceGraphNode<Integer>>> tarjan = InferenceGraphNode.tarjan(Arrays.asList(initNodes()));
-    final String messages = StringUtil.join(tarjan, new Function<List<InferenceGraphNode<Integer>>, String>() {
+    final List<List<InferenceVariablesOrder.InferenceGraphNode<Integer>>> tarjan = InferenceVariablesOrder.tarjan(Arrays.asList(initNodes()));
+    final String messages = StringUtil.join(tarjan, new Function<List<InferenceVariablesOrder.InferenceGraphNode<Integer>>, String>() {
       @Override
-      public String fun(List<InferenceGraphNode<Integer>> nodes) {
-        return StringUtil.join(nodes, new Function<InferenceGraphNode<Integer>, String>() {
+      public String fun(List<InferenceVariablesOrder.InferenceGraphNode<Integer>> nodes) {
+        return StringUtil.join(nodes, new Function<InferenceVariablesOrder.InferenceGraphNode<Integer>, String>() {
           @Override
-          public String fun(InferenceGraphNode<Integer> node) {
+          public String fun(InferenceVariablesOrder.InferenceGraphNode<Integer> node) {
             return String.valueOf(node.getValue());
           }
         }, ",");
@@ -54,10 +54,10 @@ public class TarjanTest extends TestCase {
                         "[2],[1]\n" +
                         "[4],[3]", messages);
 
-    final ArrayList<InferenceGraphNode<Integer>> acyclicNodes = InferenceGraphNode.initNodes(Arrays.asList(initNodes()));
-    final String aMessages = StringUtil.join(acyclicNodes, new Function<InferenceGraphNode<Integer>, String>() {
+    final ArrayList<InferenceVariablesOrder.InferenceGraphNode<Integer>> acyclicNodes = InferenceVariablesOrder.initNodes(Arrays.asList(initNodes()));
+    final String aMessages = StringUtil.join(acyclicNodes, new Function<InferenceVariablesOrder.InferenceGraphNode<Integer>, String>() {
       @Override
-      public String fun(InferenceGraphNode<Integer> node) {
+      public String fun(InferenceVariablesOrder.InferenceGraphNode<Integer> node) {
         return String.valueOf(node.getValue());
       }
     }, ",");
@@ -67,10 +67,10 @@ public class TarjanTest extends TestCase {
   }
 
   //{1:[2],2:[1,5],3:[4],4:[3,5],5:[6],6:[7],7:[8],8:[6,9],9:[]}
-  private static InferenceGraphNode<Integer>[] initNodes() {
-    InferenceGraphNode<Integer>[] nodes = new InferenceGraphNode[9];
+  private static InferenceVariablesOrder.InferenceGraphNode<Integer>[] initNodes() {
+    InferenceVariablesOrder.InferenceGraphNode<Integer>[] nodes = new InferenceVariablesOrder.InferenceGraphNode[9];
     for (int i = 0; i < nodes.length; i++) {
-      nodes[i] = new InferenceGraphNode<Integer>(i + 1);
+      nodes[i] = new InferenceVariablesOrder.InferenceGraphNode<Integer>(i + 1);
     }
 
     nodes[0].getDependencies().add(nodes[1]);

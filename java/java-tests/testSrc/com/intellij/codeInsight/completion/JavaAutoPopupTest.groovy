@@ -1506,5 +1506,14 @@ class X extends Foo {
     assert myFixture.lookupElementStrings == ['public int getField']
   }
 
+  public void "test finishing class reference property value completion with dot opens autopopup"() {
+    myFixture.configureByText "a.properties", "myprop=ja<caret>"
+    type 'v'
+    myFixture.assertPreferredCompletionItems 0, 'java'
+    lookup.focusDegree = LookupImpl.FocusDegree.FOCUSED
+    type '.'
+    myFixture.checkResult 'myprop=java.<caret>'
+    assert lookup
+  }
 
 }

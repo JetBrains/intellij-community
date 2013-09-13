@@ -23,14 +23,17 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class CoreLanguageLevelProjectExtension extends LanguageLevelProjectExtension {
+  private LanguageLevel myLanguageLevel = LanguageLevel.HIGHEST;
+
   @NotNull
   @Override
   public LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_6;
+    return myLanguageLevel;
   }
 
   @Override
   public void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    myLanguageLevel = languageLevel;
   }
 
   @Override

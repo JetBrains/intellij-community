@@ -57,6 +57,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
     myMessageBus = bus;
   }
 
+  @Override
   public synchronized void registerToolWindowCapability(@NotNull String groupId, @NotNull String toolWindowId) {
     myToolWindowCapable.put(groupId, toolWindowId);
   }
@@ -98,6 +99,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
     final List<NotificationSettings> result = new ArrayList<NotificationSettings>(myIdToSettingsMap.values());
 
     Collections.sort(result, new Comparator<NotificationSettings>() {
+      @Override
       public int compare(NotificationSettings o1, NotificationSettings o2) {
         return o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
       }
@@ -117,19 +119,23 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
     return settings == null ? new NotificationSettings(groupId, NotificationDisplayType.BALLOON, true) : settings;
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "NotificationsConfiguration";
   }
 
+  @Override
   public void initComponent() {
     myMessageBus.connect().subscribe(TOPIC, this);
   }
 
+  @Override
   public synchronized void disposeComponent() {
     myIdToSettingsMap.clear();
   }
 
+  @Override
   public void register(@NotNull final String groupDisplayName, @NotNull final NotificationDisplayType displayType) {
     register(groupDisplayName, displayType, true);
   }
@@ -156,9 +162,11 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
     return myIdToSettingsMap.containsKey(id);
   }
 
+  @Override
   public void notify(@NotNull Notification notification) {
   }
 
+  @Override
   public synchronized Element getState() {
     @NonNls Element element = new Element("NotificationsConfiguration");
     for (NotificationSettings settings : myIdToSettingsMap.values()) {
@@ -175,9 +183,10 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
     return element;
   }
 
+  @Override
   public synchronized void loadState(final Element state) {
     myIdToSettingsMap.clear();
-    for (@NonNls Element child : (Iterable<? extends Element>)state.getChildren("notification")) {
+    for (@NonNls Element child : state.getChildren("notification")) {
       final NotificationSettings settings = NotificationSettings.load(child);
       if (settings != null) {
         final String id = settings.getGroupId();
@@ -185,7 +194,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
         myIdToSettingsMap.put(id, settings);
       }
     }
-    for (@NonNls Element child : (Iterable<? extends Element>)state.getChildren("toolWindow")) {
+    for (@NonNls Element child : state.getChildren("toolWindow")) {
       String group = child.getAttributeValue("group");
       if (group != null && !myToolWindowCapable.containsKey(group)) {
         myToolWindowCapable.put(group, null);

@@ -73,9 +73,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     myIgnoreAssertions = ignoreAssertions;
     PsiManager manager = codeFragment.getManager();
     GlobalSearchScope scope = codeFragment.getResolveScope();
-    myRuntimeException = myFactory.createTypeValue(PsiType.getJavaLangRuntimeException(manager, scope), Nullness.NOT_NULL);
-    myError = myFactory.createTypeValue(PsiType.getJavaLangError(manager, scope), Nullness.NOT_NULL);
-    myNpe = JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName(JAVA_LANG_NULL_POINTER_EXCEPTION, scope);
+    myRuntimeException = myFactory.createTypeValue(createClassType(manager, scope, JAVA_LANG_RUNTIME_EXCEPTION), Nullness.NOT_NULL);
+    myError = myFactory.createTypeValue(createClassType(manager, scope, JAVA_LANG_ERROR), Nullness.NOT_NULL);
+    myNpe = createClassType(manager, scope, JAVA_LANG_NULL_POINTER_EXCEPTION);
     myFields = new HashSet<DfaVariableValue>();
     myCatchStack = new Stack<CatchDescriptor>();
     myCurrentFlow = new ControlFlow(myFactory);
@@ -92,6 +92,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new ReturnInstruction());
 
     return myCurrentFlow;
+  }
+
+  private static PsiClassType createClassType(PsiManager manager, GlobalSearchScope scope, String fqn) {
+    PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqn, scope);
+    if (aClass != null) return JavaPsiFacade.getElementFactory(manager.getProject()).createType(aClass);
+    return JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName(fqn, scope);
   }
 
   private boolean myRecursionStopper = false;
@@ -1157,7 +1163,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
       if (!shortCircuit) {
         if (i > 0) {
-          combineStackBooleans(false, operand);
+          combineStackBooleans(true, operand);
         }
         continue;
       }

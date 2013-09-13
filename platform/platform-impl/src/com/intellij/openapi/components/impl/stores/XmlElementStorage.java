@@ -41,6 +41,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.XmlElementStorage");
 
   @NonNls private static final String ATTR_NAME = "name";
+  public static final String VERSION_FILE_SUFFIX = ".ver";
 
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull private final String myRootElementName;
@@ -440,14 +441,14 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
             for (RoamingType roamingType : RoamingType.values()) {
               if (roamingType != RoamingType.DISABLED) {
                 try {
-                  Document copy = (Document)getDocumentToSave().clone();
+                  Document copy = getDocumentToSave().clone();
                   filterComponentsDisabledForRoaming(copy.getRootElement(), roamingType);
 
                   if (!copy.getRootElement().getChildren().isEmpty()) {
                     StorageUtil.sendContent(myStreamProvider, myFileSpec, copy, roamingType, true);
                     Document versionDoc = createVersionDocument(copy);
                     if (!versionDoc.getRootElement().getChildren().isEmpty()) {
-                      StorageUtil.sendContent(myStreamProvider, myFileSpec + ".ver", versionDoc, roamingType, true);
+                      StorageUtil.sendContent(myStreamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
                     }
                   }
                 }
@@ -515,7 +516,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   private Map<String, Long> loadVersions(Document copy) {
     THashMap<String, Long> result = new THashMap<String, Long>();
-
     List list = copy.getRootElement().getChildren(StorageData.COMPONENT);
     for (Object o : list) {
       if (o instanceof Element) {
@@ -529,7 +529,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
         }
       }
     }
-
     return result;
   }
 

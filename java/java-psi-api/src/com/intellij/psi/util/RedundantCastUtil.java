@@ -638,10 +638,21 @@ public class RedundantCastUtil {
   }
 
   private static boolean wrapperCastChangeSemantics(PsiExpression operand, PsiExpression otherOperand, PsiExpression toCast) {
-    boolean isPrimitiveComparisonWithCast = TypeConversionUtil.isPrimitiveAndNotNull(operand.getType()) ||
-                                            TypeConversionUtil.isPrimitiveAndNotNull(otherOperand.getType());
-    boolean isPrimitiveComparisonWithoutCast = TypeConversionUtil.isPrimitiveAndNotNull(toCast.getType()) ||
-                                               TypeConversionUtil.isPrimitiveAndNotNull(otherOperand.getType());
+    final boolean isPrimitiveComparisonWithCast;
+    final boolean isPrimitiveComparisonWithoutCast;
+
+    if (TypeConversionUtil.isPrimitiveAndNotNull(otherOperand.getType())) {
+      // IDEA-111450: A primitive comparison requires one primitive operand and one primitive or wrapper operand.
+      isPrimitiveComparisonWithCast = TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(operand.getType());
+      isPrimitiveComparisonWithoutCast = TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(toCast.getType());
+    }
+    else {
+      // We do not check whether `otherOperand` is a wrapper, because a reference-to-primitive cast has a
+      // side effect regardless of whether we end up doing a primitive or reference comparison.
+      isPrimitiveComparisonWithCast = TypeConversionUtil.isPrimitiveAndNotNull(operand.getType());
+      isPrimitiveComparisonWithoutCast = TypeConversionUtil.isPrimitiveAndNotNull(toCast.getType());
+    }
+
     // wrapper casted to primitive vs wrapper comparison
     return isPrimitiveComparisonWithCast != isPrimitiveComparisonWithoutCast;
   }

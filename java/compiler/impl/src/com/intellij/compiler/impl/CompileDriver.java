@@ -61,7 +61,10 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
@@ -895,7 +898,7 @@ public class CompileDriver {
       if (!outputs.isEmpty()) {
         final ProgressIndicator indicator = compileContext.getProgressIndicator();
         indicator.setText("Synchronizing output directories...");
-        lfs.refreshIoFiles(outputs, false, false, null);
+        lfs.refreshIoFiles(outputs, _status == ExitStatus.CANCELLED, false, null);
         indicator.setText("");
       }
       if (compileContext.isAnnotationProcessorsEnabled()) {

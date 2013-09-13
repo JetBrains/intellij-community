@@ -1,5 +1,6 @@
 package com.intellij.compilerOutputIndex.impl.quickInheritance;
 
+import com.intellij.compilerOutputIndex.api.descriptor.HashSetDataExternalizer;
 import com.intellij.compilerOutputIndex.api.fs.AsmUtil;
 import com.intellij.compilerOutputIndex.api.indexer.CompilerOutputBaseIndex;
 import com.intellij.compilerOutputIndex.api.indexer.CompilerOutputIndexer;
@@ -10,7 +11,6 @@ import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.compilerOutputIndex.api.descriptor.HashSetKeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
@@ -30,7 +30,7 @@ public class QuickMethodsIndex extends CompilerOutputBaseIndex<String, Set<Strin
   }
 
   public QuickMethodsIndex() {
-    super(new EnumeratorStringDescriptor(), new HashSetKeyDescriptor<String>(new EnumeratorStringDescriptor()));
+    super(new EnumeratorStringDescriptor(), new HashSetDataExternalizer<String>(new EnumeratorStringDescriptor()));
   }
 
   @Override

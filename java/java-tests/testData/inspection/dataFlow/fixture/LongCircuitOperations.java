@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 class X {
 
   int foo(String d1, String d2) {
@@ -7,7 +9,7 @@ class X {
 
   }
   void foo2(String d1, String d2) {
-    if(<warning descr="Condition 'd1 == null & d1 != null' is always 'true'">d1 == null & d1 != null</warning>)
+    if(<warning descr="Condition 'd1 == null & d1 != null' is always 'false'">d1 == null & d1 != null</warning>)
       System.out.println("impossible");
 
   }
@@ -17,3 +19,16 @@ class X {
   }
 }
 
+class Doo {
+
+  void zoo(@NotNull Object t, @NotNull Object s) {
+  }
+
+
+  private void goo(Object t, Object t2) {
+    if (t != null & t2 != null) {
+      zoo(t, t2);
+    }
+  }
+
+}

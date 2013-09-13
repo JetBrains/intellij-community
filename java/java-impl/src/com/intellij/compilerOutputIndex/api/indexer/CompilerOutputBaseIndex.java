@@ -48,7 +48,7 @@ public abstract class CompilerOutputBaseIndex<K, V> {
       if (!IndexInfrastructure.getIndexRootDir(indexId).exists()) {
         rewriteIndex.set(true);
       }
-      final File storageFile = IndexInfrastructure.getStorageFile(indexId);
+      final File storageFile = getStorageFile(indexId);
       final MapIndexStorage<K, V> indexStorage = new MapIndexStorage<K, V>(storageFile, myKeyDescriptor, myValueExternalizer, 1024);
       index = new MapReduceIndex<K, V, ClassReader>(indexId, getIndexer(), indexStorage);
       index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
@@ -61,7 +61,7 @@ public abstract class CompilerOutputBaseIndex<K, V> {
             }
             catch (IOException e) {
               failCause = e;
-              FileUtil.delete(IndexInfrastructure.getInputIndexStorageFile(getIndexId()));
+              FileUtil.delete(getInputIndexStorageFile(getIndexId()));
               rewriteIndex.set(true);
             }
           }

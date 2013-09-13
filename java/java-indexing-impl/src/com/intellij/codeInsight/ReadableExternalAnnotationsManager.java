@@ -19,12 +19,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsManager {
@@ -56,19 +56,10 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
   @NotNull
   protected List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
-    List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(libraryFile);
     List<VirtualFile> result = new ArrayList<VirtualFile>();
-    VirtualFileManager vfManager = VirtualFileManager.getInstance();
-    for (OrderEntry entry : entries) {
-      if (entry instanceof ModuleOrderEntry) {
-        continue;
-      }
-      final String[] externalUrls = AnnotationOrderRootType.getUrls(entry);
-      for (String url : externalUrls) {
-        VirtualFile root = vfManager.findFileByUrl(url);
-        if (root != null) {
-          result.add(root);
-        }
+    for (OrderEntry entry : fileIndex.getOrderEntriesForFile(libraryFile)) {
+      if (!(entry instanceof ModuleOrderEntry)) {
+        Collections.addAll(result, AnnotationOrderRootType.getFiles(entry));
       }
     }
     return result;
