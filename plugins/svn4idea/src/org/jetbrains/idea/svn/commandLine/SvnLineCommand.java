@@ -116,7 +116,7 @@ public class SvnLineCommand extends SvnCommand {
                                                             final SVNURL url,
                                                             SvnCommandName commandName,
                                                             final LineCommandListener listener,
-                                                            @Nullable AuthenticationCallback authenticationCallback,
+                                                            @NotNull AuthenticationCallback authenticationCallback,
                                                             String... parameters) throws SvnBindException {
     File base = firstFile != null ? (firstFile.isDirectory() ? firstFile : firstFile.getParentFile()) : null;
     base = SvnBindUtil.correctUpToExistingParent(base);
@@ -127,10 +127,8 @@ public class SvnLineCommand extends SvnCommand {
 
     try {
       // for IDEA proxy case
-      if (authenticationCallback != null) {
-        writeIdeaConfig2SubversionConfig(authenticationCallback, base);
-        configDir = authenticationCallback.getSpecialConfigDir();
-      }
+      writeIdeaConfig2SubversionConfig(authenticationCallback, base);
+      configDir = authenticationCallback.getSpecialConfigDir();
 
       while (true) {
         final String exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
@@ -147,17 +145,15 @@ public class SvnLineCommand extends SvnCommand {
           if (command.myErr.length() > 0) {
             // handle authentication
             final String errText = command.myErr.toString().trim();
-            if (authenticationCallback != null) {
-              final AuthCallbackCase callback = createCallback(errText, authenticationCallback, base, url);
-              if (callback != null) {
-                cleanup(exePath, command, base);
-                if (callback.getCredentials(errText)) {
-                  if (authenticationCallback.getSpecialConfigDir() != null) {
-                    configDir = authenticationCallback.getSpecialConfigDir();
-                  }
-                  parameters = updateParameters(callback, parameters);
-                  continue;
+            final AuthCallbackCase callback = createCallback(errText, authenticationCallback, base, url);
+            if (callback != null) {
+              cleanup(exePath, command, base);
+              if (callback.getCredentials(errText)) {
+                if (authenticationCallback.getSpecialConfigDir() != null) {
+                  configDir = authenticationCallback.getSpecialConfigDir();
                 }
+                parameters = updateParameters(callback, parameters);
+                continue;
               }
             }
             throw new SvnBindException(errText);
@@ -212,7 +208,7 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  private static AuthCallbackCase createCallback(final String errText, final AuthenticationCallback callback, final File base, final SVNURL url) {
+  private static AuthCallbackCase createCallback(final String errText, @NotNull final AuthenticationCallback callback, final File base, final SVNURL url) {
     if (errText.startsWith(CERTIFICATE_ERROR)) {
       return new CertificateCallbackCase(callback, base);
     }
@@ -251,7 +247,7 @@ public class SvnLineCommand extends SvnCommand {
     protected SVNAuthentication myAuthentication;
     protected SVNURL myUrl;
 
-    protected UsernamePasswordCallback(AuthenticationCallback callback, File base, SVNURL url) {
+    protected UsernamePasswordCallback(@NotNull AuthenticationCallback callback, File base, SVNURL url) {
       super(callback, base);
       myUrl = url;
     }
@@ -305,7 +301,8 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static class ProxyCallback extends AuthCallbackCase {
-    protected ProxyCallback(AuthenticationCallback callback, File base) {
+
+    protected ProxyCallback(@NotNull AuthenticationCallback callback, File base) {
       super(callback, base);
     }
 
@@ -316,7 +313,8 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static class CredentialsCallback extends AuthCallbackCase {
-    protected CredentialsCallback(AuthenticationCallback callback, File base) {
+
+    protected CredentialsCallback(@NotNull AuthenticationCallback callback, File base) {
       super(callback, base);
     }
 
@@ -345,7 +343,7 @@ public class SvnLineCommand extends SvnCommand {
   private static class CertificateCallbackCase extends AuthCallbackCase {
     private boolean accepted;
 
-    private CertificateCallbackCase(AuthenticationCallback callback, File base) {
+    private CertificateCallbackCase(@NotNull AuthenticationCallback callback, File base) {
       super(callback, base);
     }
 
@@ -411,10 +409,10 @@ public class SvnLineCommand extends SvnCommand {
 
   private static abstract class AuthCallbackCase {
     protected boolean myTried = false;
-    protected final AuthenticationCallback myAuthenticationCallback;
+    @NotNull protected final AuthenticationCallback myAuthenticationCallback;
     protected final File myBase;
 
-    protected AuthCallbackCase(AuthenticationCallback callback, final File base) {
+    protected AuthCallbackCase(@NotNull AuthenticationCallback callback, final File base) {
       myAuthenticationCallback = callback;
       myBase = base;
     }
@@ -607,7 +605,8 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static class PassphraseCallback extends AuthCallbackCase {
-    public PassphraseCallback(AuthenticationCallback callback, File base) {
+
+    public PassphraseCallback(@NotNull AuthenticationCallback callback, File base) {
       super(callback, base);
     }
 

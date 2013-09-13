@@ -39,11 +39,11 @@ import java.util.*;
  */
 public class SvnCommitRunner {
 
-  @Nullable private final AuthenticationCallback myAuthenticationCallback;
+  @NotNull private final AuthenticationCallback myAuthenticationCallback;
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.commandLine.SvnCommitRunner");
   private SvnCommitRunner.CommandListener myCommandListener;
 
-  public SvnCommitRunner(@Nullable CommitEventHandler handler, @Nullable AuthenticationCallback authenticationCallback) {
+  public SvnCommitRunner(@Nullable CommitEventHandler handler, @NotNull AuthenticationCallback authenticationCallback) {
     myCommandListener = new CommandListener(handler);
     myAuthenticationCallback = authenticationCallback;
   }
