@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -74,6 +75,8 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
     if (operands.length == 0) return;
 
     final PsiFile file = operands[0].getContainingFile();
+
+    if (!(file instanceof GroovyFileBase)) return;
 
     new InjectionProcessor(myConfiguration, mySupport, operands) {
       @Override
