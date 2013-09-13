@@ -8,6 +8,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,7 @@ public class PyMethodOverridingInspection extends PyInspection {
         if (psiElement instanceof PyFunction) {
           final PyFunction baseMethod = (PyFunction)psiElement;
           final PyClass baseClass = baseMethod.getContainingClass();
-          if (!function.getParameterList().isCompatibleTo(baseMethod.getParameterList())) {
+          if (!PyUtil.isSignatureCompatibleTo(function, baseMethod, myTypeEvalContext)) {
             final String msg = PyBundle.message("INSP.signature.mismatch",
                                                 cls.getName() + "." + name + "()",
                                                 baseClass != null ? baseClass.getName() : "");

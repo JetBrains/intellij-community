@@ -64,6 +64,11 @@ public class PyMethodOverridingInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-10229
+  public void testInstanceCheck() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
     myFixture.enableInspections(PyMethodOverridingInspection.class);

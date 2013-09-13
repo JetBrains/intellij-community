@@ -57,8 +57,8 @@ public class PyPropertyDefinitionInspection extends PyInspection {
 
     private LanguageLevel myLevel;
     private List<PyClass> myStringClasses;
-    private PyParameterList myOneParamList;
-    private PyParameterList myTwoParamList; // arglist with two args, 'self' and 'value'
+    private PyFunction myOneParamFunction;
+    private PyFunction myTwoParamFunction; // arglist with two args, 'self' and 'value'
 
     public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
       super(holder, session);
@@ -83,9 +83,9 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       PyClass object_class = builtins.getClass("object");
       if (object_class != null) {
         final PyFunction method_repr = object_class.findMethodByName("__repr__", false);
-        if (method_repr != null) myOneParamList = method_repr.getParameterList();
+        if (method_repr != null) myOneParamFunction = method_repr;
         final PyFunction method_delattr = object_class.findMethodByName("__delattr__", false);
-        if (method_delattr != null) myTwoParamList = method_delattr.getParameterList();
+        if (method_delattr != null) myTwoParamFunction = method_delattr;
       }
     }
 
@@ -235,8 +235,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       if (callable != null) {
         // signature: at least two params, more optionals ok; first arg 'self'
         final PyParameterList param_list = callable.getParameterList();
-        final PyParameterList two_parameters_list = myTwoParamList;
-        if (two_parameters_list != null && !param_list.isCompatibleTo(two_parameters_list)) {
+        if (myTwoParamFunction != null && !PyUtil.isSignatureCompatibleTo(callable, myTwoParamFunction, myTypeEvalContext)) {
           registerProblem(being_checked, PyBundle.message("INSP.setter.signature.advice"));
         }
         checkForSelf(param_list);
@@ -254,8 +253,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
 
     private void checkOneParameter(Callable callable, PsiElement being_checked, boolean is_getter) {
       final PyParameterList param_list = callable.getParameterList();
-      final PyParameterList one_parameter_list = myOneParamList;
-      if (one_parameter_list != null && ! param_list.isCompatibleTo(one_parameter_list)) {
+      if (myOneParamFunction != null && !PyUtil.isSignatureCompatibleTo(callable, myOneParamFunction, myTypeEvalContext)) {
         if (is_getter) registerProblem(being_checked, PyBundle.message("INSP.getter.signature.advice"));
         else registerProblem(being_checked, PyBundle.message("INSP.deleter.signature.advice"));
       }
