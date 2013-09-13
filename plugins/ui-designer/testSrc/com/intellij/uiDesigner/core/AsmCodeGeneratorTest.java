@@ -31,6 +31,7 @@ import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
+import com.sun.tools.javac.Main;
 import gnu.trove.TIntObjectHashMap;
 import junit.framework.TestCase;
 import org.jetbrains.asm4.ClassWriter;
@@ -110,19 +111,24 @@ public class AsmCodeGeneratorTest extends TestCase {
     String tmpPath = FileUtil.getTempDirectory();
     String formPath = testDataPath + formFileName;
     String javaPath = testDataPath + className + ".java";
-    com.sun.tools.javac.Main.compile(new String[] { "-d", tmpPath, javaPath } );
+    final int rc = Main.compile(new String[]{"-d", tmpPath, javaPath});
+    
+    assertEquals(0, rc);
 
-    String classPath = tmpPath + "/" + className + ".class";
+    final String classPath = tmpPath + "/" + className + ".class";
+    final File classFile = new File(classPath);
+    
+    assertTrue(classFile.exists());
+    
     final LwRootContainer rootContainer = loadFormData(formPath);
-    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassFinder, myNestedFormLoader, false,
-                                                                new ClassWriter(ClassWriter.COMPUTE_FRAMES));
-    final FileInputStream classStream = new FileInputStream(classPath);
+    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassFinder, myNestedFormLoader, false, new ClassWriter(ClassWriter.COMPUTE_FRAMES));
+    final FileInputStream classStream = new FileInputStream(classFile);
     try {
       codeGenerator.patchClass(classStream);
     }
     finally {
       classStream.close();
-      FileUtil.delete(new File(classPath));
+      FileUtil.delete(classFile);
       final File[] inners = new File(tmpPath).listFiles(new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
