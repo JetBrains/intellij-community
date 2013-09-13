@@ -5,6 +5,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
@@ -242,6 +243,14 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
+        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().saveSettings();
+          }
+        }, ModalityState.any());
+        commitAlarm.cancel();
+
         repositoryManager.commit();
         repositoryManager.pull(indicator);
         ActionCallback lastActionCallback = repositoryManager.push(indicator);

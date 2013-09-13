@@ -164,6 +164,11 @@ final class GitRepositoryManager extends BaseRepositoryManager {
           }
         }
 
+        if (fetchResult.getTrackingRefUpdates().isEmpty()) {
+          // nothing to merge
+          return;
+        }
+
         int attemptCount = 0;
         do {
           MergeResult mergeResult = git.merge().include(getUpstreamBranchRef()).setFastForward(MergeCommand.FastForwardMode.FF_ONLY).call();
