@@ -12,7 +12,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.MessageType;
@@ -865,7 +865,7 @@ public class PyUtil {
 
   @NotNull
   public static Collection<VirtualFile> getSourceRoots(@NotNull PsiElement foothold) {
-    final Module module = ModuleUtil.findModuleForPsiElement(foothold);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(foothold);
     if (module != null) {
       return getSourceRoots(module);
     }
