@@ -1,7 +1,6 @@
 package com.jetbrains.env.python;
 
 import com.google.common.collect.Sets;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -25,10 +24,6 @@ import java.util.Set;
  * @author vlan
  */
 public class PyPackagingTest extends PyEnvTestCase {
-  private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
-  public static final String PIP_VERSION = "1.1";
-  public static final String DISTRIBUTE_VERSION = "0.6.27";
-
   @Override
   public void runPythonTest(PyTestTask testTask) {
     if (PyEnvTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
@@ -49,7 +44,7 @@ public class PyPackagingTest extends PyEnvTestCase {
         }
         catch (PyExternalProcessException e) {
           final int retcode = e.getRetcode();
-          if (retcode != PyPackageManagerImpl.ERROR_NO_PIP && retcode != PyPackageManagerImpl.ERROR_NO_DISTRIBUTE) {
+          if (retcode != PyPackageManagerImpl.ERROR_NO_PIP && retcode != PyPackageManagerImpl.ERROR_NO_SETUPTOOLS) {
             fail(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()));
           }
         }
@@ -78,14 +73,14 @@ public class PyPackagingTest extends PyEnvTestCase {
           assertTrue(PythonSdkType.isVirtualEnv(venvSdk));
           assertInstanceOf(PythonSdkFlavor.getPlatformIndependentFlavor(venvSdk.getHomePath()), VirtualEnvSdkFlavor.class);
           final List<PyPackage> packages = ((PyPackageManagerImpl)PyPackageManagerImpl.getInstance(venvSdk)).getPackages();
-          final PyPackage distribute = findPackage("distribute", packages);
-          assertNotNull(distribute);
-          assertEquals("distribute", distribute.getName());
-          assertEquals(DISTRIBUTE_VERSION, distribute.getVersion());
+          final PyPackage setuptools = findPackage("setuptools", packages);
+          assertNotNull(setuptools);
+          assertEquals("setuptools", setuptools.getName());
+          assertEquals(PyPackageManagerImpl.SETUPTOOLS_VERSION, setuptools.getVersion());
           final PyPackage pip = findPackage("pip", packages);
           assertNotNull(pip);
           assertEquals("pip", pip.getName());
-          assertEquals(PIP_VERSION, pip.getVersion());
+          assertEquals(PyPackageManagerImpl.PIP_VERSION, pip.getVersion());
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -121,7 +116,7 @@ public class PyPackagingTest extends PyEnvTestCase {
           final PyPackage pip1 = findPackage("pip", packages1);
           assertNotNull(pip1);
           assertEquals("pip", pip1.getName());
-          assertEquals(PIP_VERSION, pip1.getVersion());
+          assertEquals(PyPackageManagerImpl.PIP_VERSION, pip1.getVersion());
           manager.uninstall(list(pip1));
           final List<PyPackage> packages3 = manager.getPackages();
           final PyPackage pip2 = findPackage("pip", packages3);
