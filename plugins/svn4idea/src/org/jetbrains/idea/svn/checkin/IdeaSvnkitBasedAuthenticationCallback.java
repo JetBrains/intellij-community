@@ -26,6 +26,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.commandLine.AuthenticationCallback;
@@ -69,47 +70,44 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   }
 
   @Override
-  public boolean authenticateFor(String realm, File file, boolean previousFailed, boolean passwordRequest) {
-    final File base = getExistingParent(file);
-    if (base == null) return false;
-    final SVNURL url = SvnUtil.getCommittedURL(myVcs, base);
-    if (url == null) return false;
-
-    return new CredentialsAuthenticator(myVcs).tryAuthenticate(realm, url, file, previousFailed, passwordRequest);
+  public boolean authenticateFor(String realm, SVNURL repositoryUrl, boolean previousFailed, boolean passwordRequest) {
+    if (repositoryUrl == null) {
+      return false;
+    }
+    return new CredentialsAuthenticator(myVcs).tryAuthenticate(realm, repositoryUrl, previousFailed, passwordRequest);
   }
 
   @Nullable
   @Override
-  public SVNAuthentication requestCredentials(@Nullable SVNURL url, String type) {
+  public SVNAuthentication requestCredentials(SVNURL repositoryUrl, String type) {
     SVNAuthentication authentication =
-      url != null ? myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getProvider().requestClientAuthentication(
-        type, url, url.toDecodedString(), null, null, true) : null;
+      repositoryUrl != null ? myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getProvider().requestClientAuthentication(
+        type, repositoryUrl, repositoryUrl.toDecodedString(), null, null, true) : null;
 
     if (authentication == null) {
-      LOG.warn("Could not get authentication. Type - " + type + ", Url - " + url);
+      LOG.warn("Could not get authentication. Type - " + type + ", Url - " + repositoryUrl);
     }
 
     return authentication;
   }
 
   @Override
-  public boolean acceptSSLServerCertificate(final File file, final String realm) {
-    final File base = getExistingParent(file);
-    if (base == null) return false;
-    final SVNURL url = SvnUtil.getCommittedURL(myVcs, base);
-    if (url == null) return false;
+  public boolean acceptSSLServerCertificate(final SVNURL repositoryUrl, final String realm) {
+    if (repositoryUrl == null) {
+      return false;
+    }
 
-    return new SSLServerCertificateAuthenticator(myVcs).tryAuthenticate(url, realm);
+    return new SSLServerCertificateAuthenticator(myVcs).tryAuthenticate(repositoryUrl, realm);
   }
 
   @Override
-  public void clearPassiveCredentials(String realm, File file, boolean password) {
-    final File base = getExistingParent(file);
-    if (base == null) return;
-    final SVNURL url = SvnUtil.getCommittedURL(myVcs, base);
-    if (url == null) return;
+  public void clearPassiveCredentials(String realm, SVNURL repositoryUrl, boolean password) {
+    if (repositoryUrl == null) {
+      return;
+    }
+
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
-    final List<String> kinds = getKinds(url, password);
+    final List<String> kinds = getKinds(repositoryUrl, password);
 
     for (String kind : kinds) {
       configuration.clearCredentials(kind, realm);
@@ -124,24 +122,24 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   }
 
   @Override
-  public boolean persistDataToTmpConfig(final File baseFile) throws IOException, URISyntaxException {
-    final File base = getExistingParent(baseFile);
-    if (base == null) return false;
-    final SVNURL url = SvnUtil.getCommittedURL(myVcs, base);
-    if (url == null) return false;
+  public boolean persistDataToTmpConfig(final SVNURL repositoryUrl) throws IOException, URISyntaxException {
+    // TODO: Make repositoryUrl @NotNull after SvnLineCommand.runWithAuthenticationAttempt refactored
+    if (repositoryUrl == null) {
+      return false;
+    }
 
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
     initTmpDir(configuration);
 
-    final Proxy proxy = getIdeaDefinedProxy(url);
+    final Proxy proxy = getIdeaDefinedProxy(repositoryUrl);
     if (proxy != null){
-      SvnConfiguration.putProxyIntoServersFile(myTempDirectory, url.getHost(), proxy);
+      SvnConfiguration.putProxyIntoServersFile(myTempDirectory, repositoryUrl.getHost(), proxy);
     }
     return true;
   }
 
   @Nullable
-  private static Proxy getIdeaDefinedProxy(final SVNURL url) throws URISyntaxException {
+  private static Proxy getIdeaDefinedProxy(@NotNull final SVNURL url) throws URISyntaxException {
     final List<Proxy> proxies = CommonProxy.getInstance().select(new URI(url.toString()));
     if (proxies != null && ! proxies.isEmpty()) {
       for (Proxy proxy : proxies) {
@@ -154,15 +152,14 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   }
 
   @Override
-  public boolean askProxyCredentials(File baseFile) {
-    final File base = getExistingParent(baseFile);
-    if (base == null) return false;
-    final SVNURL url = SvnUtil.getCommittedURL(myVcs, base);
-    if (url == null) return false;
+  public boolean askProxyCredentials(SVNURL repositoryUrl) {
+    if (repositoryUrl == null) {
+      return false;
+    }
 
     final Proxy proxy;
     try {
-      proxy = getIdeaDefinedProxy(url);
+      proxy = getIdeaDefinedProxy(repositoryUrl);
     }
     catch (URISyntaxException e) {
       LOG.info(e);
@@ -182,9 +179,10 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     final InetSocketAddress address = (InetSocketAddress)proxy.address();
     final PasswordAuthentication authentication;
     try {
-      authentication = Authenticator.requestPasswordAuthentication(url.getHost(), address.getAddress(),
-                                                                   url.getPort(), url.getProtocol(), url.getHost(), url.getProtocol(),
-                                                                   new URL(url.toString()), Authenticator.RequestorType.PROXY);
+      authentication = Authenticator
+        .requestPasswordAuthentication(repositoryUrl.getHost(), address.getAddress(), repositoryUrl.getPort(), repositoryUrl.getProtocol(),
+                                       repositoryUrl.getHost(), repositoryUrl.getProtocol(), new URL(repositoryUrl.toString()),
+                                       Authenticator.RequestorType.PROXY);
     } catch (MalformedURLException e) {
       LOG.info(e);
       return false;
@@ -199,19 +197,9 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         PopupUtil.showBalloonForActiveComponent("Failed to authenticate to proxy: " + e.getMessage(), MessageType.ERROR);
         return false;
       }
-      return SvnConfiguration.putProxyCredentialsIntoServerFile(myTempDirectory, url.getHost(), authentication);
+      return SvnConfiguration.putProxyCredentialsIntoServerFile(myTempDirectory, repositoryUrl.getHost(), authentication);
     }
     return false;
-  }
-
-  @Override
-  public boolean acceptSSLServerCertificate(final String url, final String realm) {
-    try {
-      return new SSLServerCertificateAuthenticator(myVcs).tryAuthenticate(SVNURL.parseURIEncoded(url), realm);
-    }
-    catch (SVNException e) {
-      return false;
-    }
   }
 
   public void reset() {
@@ -462,14 +450,12 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     private String myRealm2;
     private SVNURL myUrl;
     private SVNAuthentication myAuthentication;
-    private File myFile;
 
     protected CredentialsAuthenticator(SvnVcs vcs) {
       super(vcs);
     }
 
-    public boolean tryAuthenticate(String realm, SVNURL url, File file, boolean previousFailed, boolean passwordRequest) {
-      myFile = file;
+    public boolean tryAuthenticate(String realm, SVNURL url, boolean previousFailed, boolean passwordRequest) {
       realm = realm == null ? url.getHost() : realm;
       myRealm = realm;
       myUrl = url;
@@ -487,7 +473,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     protected SVNAuthentication getWithPassive(SvnAuthenticationManager passive) throws SVNException {
       final SVNAuthentication impl = getWithPassiveImpl(passive);
       if (impl != null && ! checkAuthOk(impl)) {
-        clearPassiveCredentials(myRealm, myFile, impl instanceof SVNPasswordAuthentication);  //clear passive also take into acconut ssl filepath
+        clearPassiveCredentials(myRealm, myUrl, impl instanceof SVNPasswordAuthentication);  //clear passive also take into acconut ssl filepath
         return null;
       }
       return impl;
@@ -568,15 +554,6 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       return true;
     }
     return false;
-  }
-
-  private File getExistingParent(final File file) {
-    File current = file;
-    while (current != null) {
-      if (current.exists()) return current;
-      current = current.getParentFile();
-    }
-    return null;
   }
 
   private static List<String> getKinds(final SVNURL url, boolean passwordRequest) {

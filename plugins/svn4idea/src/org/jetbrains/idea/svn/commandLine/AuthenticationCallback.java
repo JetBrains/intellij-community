@@ -45,23 +45,23 @@ public interface AuthenticationCallback {
    * Authenticate for realm and base file belonging to corresponding working copy
    *
    * @param realm - realm that should be used for credential retrieval/storage.
-   * @param base - file target of the operation
+   * @param repositoryUrl
    * @param previousFailed - whether previous credentials were correct
    * @param passwordRequest - if true, password should be asked. Otherwise that may be a certificate (determined by the protocol)
    * @return false if authentication canceled or was unsuccessful
    */
-  boolean authenticateFor(@Nullable String realm, File base, boolean previousFailed, boolean passwordRequest);
+  boolean authenticateFor(@Nullable String realm, SVNURL repositoryUrl, boolean previousFailed, boolean passwordRequest);
 
   /**
    * Provides authentication information to access given url by authentication protocol identified by type.
    * For instance, username/password for http/svn protocols. SSL client certificate for two way SSL protocol.
    *
-   * @param url  url to item in repository
+   * @param repositoryUrl
    * @param type authentication protocol type with svn specific values, like "svn.simple" for http.
    * @return
    */
   @Nullable
-  SVNAuthentication requestCredentials(@Nullable SVNURL url, String type);
+  SVNAuthentication requestCredentials(SVNURL repositoryUrl, String type);
 
   /**
    * @return config directory if TMP was created
@@ -72,29 +72,20 @@ public interface AuthenticationCallback {
   /**
    * Ask user or read from memory storage whether server certificate should be accepted
    *
-   * @param url - that we used for request
+   * @param repositoryUrl
    * @param realm - realm that should be used for credential retrieval/storage.
    * @return true is certificate was accepted
    */
-  boolean acceptSSLServerCertificate(String url, final String realm);
-
-  /**
-   * Ask user or read from memory storage whether server certificate should be accepted
-   *
-   * @param file - that we used for request
-   * @param realm - realm that should be used for credential retrieval/storage.
-   * @return true is certificate was accepted
-   */
-  boolean acceptSSLServerCertificate(File file, final String realm);
+  boolean acceptSSLServerCertificate(SVNURL repositoryUrl, final String realm);
 
   /**
    * Clear credentials stored anywhere - in case they were not full, wrong or anything else
    *
    * @param realm - required that credential
-   * @param base - file used in command
+   * @param repositoryUrl
    * @param password - whether password credential should be deleted or certificate, if protocol might demand certificate
    */
-  void clearPassiveCredentials(String realm, File base, boolean password);
+  void clearPassiveCredentials(String realm, SVNURL repositoryUrl, boolean password);
 
   /**
    * @return true if there's something from IDEA config that should be persisted into Subversion tmp config directory
@@ -106,19 +97,22 @@ public interface AuthenticationCallback {
   /**
    * writes IDEA config settings (that should be written) into tmp config directory
    * (now it's IDEA proxy settings)
+   *
+   * @param repositoryUrl
    * @return true if have written data, false if wasn't able to determine parameters etc
    * @throws IOException
    * @throws URISyntaxException
    */
-  boolean persistDataToTmpConfig(File baseFile) throws IOException, URISyntaxException;
+  boolean persistDataToTmpConfig(SVNURL repositoryUrl) throws IOException, URISyntaxException;
 
   /**
    * Ask for IDEA-defined proxy credentials, using standard authenticator
    * Store data into tmp config
    *
+   * @param repositoryUrl
    * @return false if authentication was canceled or related calculations were unsuccessful
    */
-  boolean askProxyCredentials(File base);
+  boolean askProxyCredentials(SVNURL repositoryUrl);
 
   void reset();
 }

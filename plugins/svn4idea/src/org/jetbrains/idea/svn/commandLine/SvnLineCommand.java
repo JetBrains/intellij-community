@@ -113,7 +113,7 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   public static SvnLineCommand runWithAuthenticationAttempt(final File firstFile,
-                                                            final SVNURL url,
+                                                            @Nullable final SVNURL repositoryUrl,
                                                             SvnCommandName commandName,
                                                             final LineCommandListener listener,
                                                             @NotNull AuthenticationCallback authenticationCallback,
@@ -127,7 +127,7 @@ public class SvnLineCommand extends SvnCommand {
 
     try {
       // for IDEA proxy case
-      writeIdeaConfig2SubversionConfig(authenticationCallback, base);
+      writeIdeaConfig2SubversionConfig(authenticationCallback, repositoryUrl);
       configDir = authenticationCallback.getSpecialConfigDir();
 
       while (true) {
@@ -145,7 +145,7 @@ public class SvnLineCommand extends SvnCommand {
           if (command.myErr.length() > 0) {
             // handle authentication
             final String errText = command.myErr.toString().trim();
-            final AuthCallbackCase callback = createCallback(errText, authenticationCallback, base, url);
+            final AuthCallbackCase callback = createCallback(errText, authenticationCallback, repositoryUrl);
             if (callback != null) {
               cleanup(exePath, command, base);
               if (callback.getCredentials(errText)) {
@@ -190,10 +190,11 @@ public class SvnLineCommand extends SvnCommand {
     return ArrayUtil.toStringArray(p);
   }
 
-  private static void writeIdeaConfig2SubversionConfig(@NotNull AuthenticationCallback authenticationCallback, @NotNull File base) throws SvnBindException {
+  private static void writeIdeaConfig2SubversionConfig(@NotNull AuthenticationCallback authenticationCallback,
+                                                       @Nullable SVNURL repositoryUrl) throws SvnBindException {
     if (authenticationCallback.haveDataForTmpConfig()) {
       try {
-        if (! authenticationCallback.persistDataToTmpConfig(base)) {
+        if (!authenticationCallback.persistDataToTmpConfig(repositoryUrl)) {
           throw new SvnBindException("Can not persist " + ApplicationNamesInfo.getInstance().getProductName() +
                                      " HTTP proxy information into tmp config directory");
         }
@@ -208,35 +209,37 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  private static AuthCallbackCase createCallback(final String errText, @NotNull final AuthenticationCallback callback, final File base, final SVNURL url) {
+  private static AuthCallbackCase createCallback(final String errText,
+                                                 @NotNull final AuthenticationCallback callback,
+                                                 final SVNURL url) {
     if (errText.startsWith(CERTIFICATE_ERROR)) {
-      return new CertificateCallbackCase(callback, base);
+      return new CertificateCallbackCase(callback, url);
     }
     if (errText.startsWith(AUTHENTICATION_REALM)) {
-      return new CredentialsCallback(callback, base);
+      return new CredentialsCallback(callback, url);
     }
     if (errText.startsWith(PASSPHRASE_FOR)) {
-      return new PassphraseCallback(callback, base);
+      return new PassphraseCallback(callback, url);
     }
     if (errText.startsWith(UNABLE_TO_CONNECT) && errText.contains(CANNOT_AUTHENTICATE_TO_PROXY)) {
-      return new ProxyCallback(callback, base);
+      return new ProxyCallback(callback, url);
     }
     // http/https protocol invalid credentials
     if (errText.contains(AUTHENTICATION_FAILED_MESSAGE)) {
-      return new UsernamePasswordCallback(callback, base, url);
+      return new UsernamePasswordCallback(callback, url);
     }
     // messages could be "Can't get password", "Can't get username or password"
     if (errText.contains(INVALID_CREDENTIALS_FOR_SVN_PROTOCOL) && errText.contains(PASSWORD_STRING)) {
       // svn protocol invalid credentials
-      return new UsernamePasswordCallback(callback, base, url);
+      return new UsernamePasswordCallback(callback, url);
     }
     // https one-way protocol untrusted server certificate
     if (errText.contains(UNTRUSTED_SERVER_CERTIFICATE)) {
-      return new CertificateCallbackCase(callback, base);
+      return new CertificateCallbackCase(callback, url);
     }
     // https two-way protocol invalid client certificate
     if (errText.contains(ACCESS_TO_PREFIX) && errText.contains(FORBIDDEN_STATUS)) {
-      return new TwoWaySslCallback(callback, base, url);
+      return new TwoWaySslCallback(callback, url);
     }
     return null;
   }
@@ -245,11 +248,9 @@ public class SvnLineCommand extends SvnCommand {
   // authentication realm (just url) - so we could not create temp cache
   private static class UsernamePasswordCallback extends AuthCallbackCase {
     protected SVNAuthentication myAuthentication;
-    protected SVNURL myUrl;
 
-    protected UsernamePasswordCallback(@NotNull AuthenticationCallback callback, File base, SVNURL url) {
-      super(callback, base);
-      myUrl = url;
+    protected UsernamePasswordCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
+      super(callback, url);
     }
 
     @Override
@@ -302,20 +303,20 @@ public class SvnLineCommand extends SvnCommand {
 
   private static class ProxyCallback extends AuthCallbackCase {
 
-    protected ProxyCallback(@NotNull AuthenticationCallback callback, File base) {
-      super(callback, base);
+    protected ProxyCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
+      super(callback, url);
     }
 
     @Override
     boolean getCredentials(String errText) throws SvnBindException {
-      return myAuthenticationCallback.askProxyCredentials(myBase);
+      return myAuthenticationCallback.askProxyCredentials(myUrl);
     }
   }
 
   private static class CredentialsCallback extends AuthCallbackCase {
 
-    protected CredentialsCallback(@NotNull AuthenticationCallback callback, File base) {
-      super(callback, base);
+    private CredentialsCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
+      super(callback, url);
     }
 
     @Override
@@ -324,10 +325,10 @@ public class SvnLineCommand extends SvnCommand {
         errText.startsWith(AUTHENTICATION_REALM) ? cutFirstLine(errText).substring(AUTHENTICATION_REALM.length()).trim() : null;
       final boolean isPassword = StringUtil.containsIgnoreCase(errText, "password");
       if (myTried) {
-        myAuthenticationCallback.clearPassiveCredentials(realm, myBase, isPassword);
+        myAuthenticationCallback.clearPassiveCredentials(realm, myUrl, isPassword);
       }
       myTried = true;
-      if (myAuthenticationCallback.authenticateFor(realm, myBase, myAuthenticationCallback.getSpecialConfigDir() != null, isPassword)) {
+      if (myAuthenticationCallback.authenticateFor(realm, myUrl, myAuthenticationCallback.getSpecialConfigDir() != null, isPassword)) {
         return true;
       }
       throw new SvnBindException("Authentication canceled for realm: " + realm);
@@ -343,8 +344,8 @@ public class SvnLineCommand extends SvnCommand {
   private static class CertificateCallbackCase extends AuthCallbackCase {
     private boolean accepted;
 
-    private CertificateCallbackCase(@NotNull AuthenticationCallback callback, File base) {
-      super(callback, base);
+    protected CertificateCallbackCase(@NotNull AuthenticationCallback callback, SVNURL url) {
+      super(callback, url);
     }
 
     @Override
@@ -360,7 +361,7 @@ public class SvnLineCommand extends SvnCommand {
         throw new SvnBindException("Can not detect authentication realm name: " + errText);
       }
       realm = realm.substring(idx1 + 1, idx2);
-      if (! myTried && myAuthenticationCallback.acceptSSLServerCertificate(myBase, realm)) {
+      if (! myTried && myAuthenticationCallback.acceptSSLServerCertificate(myUrl, realm)) {
         accepted = true;
         myTried = true;
         return true;
@@ -380,8 +381,8 @@ public class SvnLineCommand extends SvnCommand {
 
   private static class TwoWaySslCallback extends UsernamePasswordCallback {
 
-    protected TwoWaySslCallback(AuthenticationCallback callback, File base, SVNURL url) {
-      super(callback, base, url);
+    protected TwoWaySslCallback(AuthenticationCallback callback, SVNURL url) {
+      super(callback, url);
     }
 
     @Override
@@ -408,13 +409,13 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static abstract class AuthCallbackCase {
+    protected final SVNURL myUrl;
     protected boolean myTried = false;
     @NotNull protected final AuthenticationCallback myAuthenticationCallback;
-    protected final File myBase;
 
-    protected AuthCallbackCase(@NotNull AuthenticationCallback callback, final File base) {
+    protected AuthCallbackCase(@NotNull AuthenticationCallback callback, SVNURL url) {
       myAuthenticationCallback = callback;
-      myBase = base;
+      myUrl = url;
     }
 
     abstract boolean getCredentials(final String errText) throws SvnBindException;
@@ -606,8 +607,8 @@ public class SvnLineCommand extends SvnCommand {
 
   private static class PassphraseCallback extends AuthCallbackCase {
 
-    public PassphraseCallback(@NotNull AuthenticationCallback callback, File base) {
-      super(callback, base);
+    protected PassphraseCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
+      super(callback, url);
     }
 
     @Override
@@ -617,7 +618,7 @@ public class SvnLineCommand extends SvnCommand {
         myAuthenticationCallback.clearPassiveCredentials(null, myBase);
       }*/
       myTried = true;
-      if (myAuthenticationCallback.authenticateFor(null, myBase, myAuthenticationCallback.getSpecialConfigDir() != null, false)) {
+      if (myAuthenticationCallback.authenticateFor(null, myUrl, myAuthenticationCallback.getSpecialConfigDir() != null, false)) {
         return true;
       }
       throw new SvnBindException("Authentication canceled for : " + errText.substring(PASSPHRASE_FOR.length()));
