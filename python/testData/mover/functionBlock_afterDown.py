@@ -6,5 +6,5 @@ class A:
     def baz(self):
         pass
 
-    <selection>def<caret> bar(self):
+    <selection><caret>def bar(self):
       pass</selection>

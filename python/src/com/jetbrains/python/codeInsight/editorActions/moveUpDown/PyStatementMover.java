@@ -10,10 +10,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,13 +26,37 @@ public class PyStatementMover extends LineMover {
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
     if (!(file instanceof PyFile)) return false;
     final int offset = editor.getCaretModel().getOffset();
-    PsiElement elementToMove = PyUtil.findNonWhitespaceAtOffset(file, offset);
-    if (elementToMove == null) return false;
-    elementToMove = getCommentOrStatement(editor.getDocument(), elementToMove);
-    info.toMove = new MyLineRange(elementToMove);
-    info.toMove2 = getDestinationScope(file, editor, elementToMove, down);
+    final SelectionModel selectionModel = editor.getSelectionModel();
+
+    if (!selectionModel.hasSelection()) {
+      PsiElement elementToMove = PyUtil.findNonWhitespaceAtOffset(file, offset);
+      if (elementToMove == null) return false;
+      elementToMove = getCommentOrStatement(editor.getDocument(), elementToMove);
+      info.toMove = new MyLineRange(elementToMove, elementToMove);
+      info.toMove2 = getDestinationScope(file, editor, elementToMove, down);
+    }
+    else {
+      final int start = selectionModel.getSelectionStart();
+      final int end = selectionModel.getSelectionEnd() - 1;
+      PsiElement elementToMove1 = PyUtil.findNonWhitespaceAtOffset(file, start);
+      PsiElement elementToMove2 = PyUtil.findNonWhitespaceAtOffset(file, end);
+      if (elementToMove1 == null || elementToMove2 == null) return false;
+      elementToMove1 = getCommentOrStatement(editor.getDocument(), elementToMove1);
+      elementToMove2 = getCommentOrStatement(editor.getDocument(), elementToMove2);
+
+      if (PsiTreeUtil.isAncestor(elementToMove1, elementToMove2, false)) {
+        elementToMove2 = elementToMove1;
+      }
+      else if (PsiTreeUtil.isAncestor(elementToMove2, elementToMove1, false)) {
+        elementToMove1 = elementToMove2;
+      }
+      info.toMove = new MyLineRange(elementToMove1, elementToMove2);
+      info.toMove2 = getDestinationScope(file, editor, down ? elementToMove2 : elementToMove1, down);
+
+    }
     info.indentTarget = false;
     info.indentSource = false;
+
     return true;
   }
 
@@ -43,7 +64,6 @@ public class PyStatementMover extends LineMover {
   private static LineRange getDestinationScope(@NotNull final PsiFile file, @NotNull final Editor editor,
                                                @NotNull final PsiElement elementToMove, boolean down) {
     final Document document = file.getViewProvider().getDocument();
-
     if (document == null) return null;
 
     final int offset = down ? elementToMove.getTextRange().getEndOffset() : elementToMove.getTextRange().getStartOffset();
@@ -230,6 +250,7 @@ public class PyStatementMover extends LineMover {
                                                   int lineEndOffset, boolean down) {
     PsiElement destination = elementToMove.getContainingFile().findElementAt(lineEndOffset);
     if (destination == null) return null;
+    if (destination instanceof PsiComment) return destination;
     PsiElement sibling = down ? PsiTreeUtil.getNextSiblingOfType(elementToMove, PyStatement.class) :
                   PsiTreeUtil.getPrevSiblingOfType(elementToMove, PyStatement.class);
     if (elementToMove instanceof PyClass) {
@@ -241,7 +262,7 @@ public class PyStatementMover extends LineMover {
       else destination = null;
     }
     else {
-      destination = getCommentOrStatement(document, destination);
+      destination = getCommentOrStatement(document, sibling == null ? destination : sibling);
     }
     return destination;
   }
@@ -269,75 +290,205 @@ public class PyStatementMover extends LineMover {
       PostprocessReformattingAspect.getInstance(editor.getProject()).disablePostprocessFormattingInside(new Runnable() {
         @Override
         public void run() {
-          final PsiElement elementToMove = ((MyLineRange)toMove).myElement;
+          final PsiElement startToMove = ((MyLineRange)toMove).myStartElement;
+          final PsiElement endToMove = ((MyLineRange)toMove).myEndElement;
+          final PsiFile file = startToMove.getContainingFile();
           final SelectionModel selectionModel = editor.getSelectionModel();
           final CaretModel caretModel = editor.getCaretModel();
-          final int shift = caretModel.getOffset() - elementToMove.getTextOffset();
-          final boolean hasSelection = selectionModel.hasSelection();
-          final int selectionStart = selectionModel.getSelectionStart();
-          final int selectionEnd = selectionModel.getSelectionEnd();
-          final int selectionShift = selectionStart - elementToMove.getTextOffset();
 
+          final int selectionStart = selectionModel.getSelectionStart();
+          boolean isSelectionStartAtCaret = caretModel.getOffset() == selectionStart;
+          final SelectionContainer selectionLen = getSelectionLenContainer(editor, ((MyLineRange)toMove));
+
+          int shift = getCaretShift(startToMove, endToMove, caretModel, isSelectionStartAtCaret);
+
+          final boolean hasSelection = selectionModel.hasSelection();
           int offset;
           if (((ScopeRange)toMove2).isTheSameLevel()) {
             offset = moveTheSameLevel((ScopeRange)toMove2, (MyLineRange)toMove);
           }
           else {
-            offset = moveInOut(((MyLineRange)toMove).myElement, editor, info);
+            offset = moveInOut(((MyLineRange)toMove), editor, info);
           }
-
-          final int documentLength = editor.getDocument().getTextLength();
-          int newCaretOffset = offset + shift;
-          if (newCaretOffset >= documentLength) newCaretOffset = documentLength;
-          caretModel.moveToOffset(newCaretOffset);
+          restoreCaretAndSelection(file, editor, isSelectionStartAtCaret, hasSelection, selectionLen,
+                                   shift, offset, (MyLineRange)toMove);
           info.toMove2 = info.toMove;   //do not move further
-          if (hasSelection) {
-            int newSelectionStart = offset + selectionShift;
-            int newSelectionEnd = newSelectionStart + selectionEnd - selectionStart;
-            if (newSelectionEnd >= documentLength)
-              newSelectionEnd = documentLength;
-            selectionModel.setSelection(newSelectionStart, newSelectionEnd);
-          }
         }
       });
     }
 
   }
 
-  private static int moveTheSameLevel(@NotNull final ScopeRange toMove2, @NotNull final MyLineRange toMove) {
-    final PsiElement anchor = toMove2.getAnchor();
-    final PsiElement elementToMove = toMove.myElement;
+  private static SelectionContainer getSelectionLenContainer(@NotNull final Editor editor, @NotNull final MyLineRange toMove) {
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    final PsiElement startToMove = toMove.myStartElement;
+    final PsiElement endToMove = toMove.myEndElement;
+    final int selectionStart = selectionModel.getSelectionStart();
+    final int selectionEnd = selectionModel.getSelectionEnd();
 
-    final PsiElement anchorCopy = anchor.copy();
-    final PsiElement addedElement = anchor.replace(elementToMove);
-    elementToMove.replace(anchorCopy);
+    final TextRange range = startToMove.getTextRange();
+    final int column = editor.offsetToLogicalPosition(selectionStart).column;
+    final int additionalSelection = range.getStartOffset() > selectionStart ? range.getStartOffset() - selectionStart : 0;
+    if (startToMove == endToMove) return new SelectionContainer(selectionEnd - range.getStartOffset(), additionalSelection, column == 0);
+    int len = range.getStartOffset() <= selectionStart ? range.getEndOffset() - selectionStart : startToMove.getTextLength();
 
-    return addedElement.getTextOffset();
+    PsiElement tmp = startToMove.getNextSibling();
+    while (tmp != endToMove && tmp != null) {
+      if (!(tmp instanceof PsiWhiteSpace))
+        len += tmp.getTextLength();
+      tmp = tmp.getNextSibling();
+    }
+    len = len + selectionEnd - endToMove.getTextOffset();
+
+    return new SelectionContainer(len, additionalSelection, column == 0);
   }
 
-  private static int moveInOut(@NotNull final PsiElement elementToMove, @NotNull final Editor editor, @NotNull final MoveInfo info) {
+  private static void restoreCaretAndSelection(@NotNull final PsiFile file, @NotNull final Editor editor, boolean selectionStartAtCaret,
+                                               boolean hasSelection, @NotNull final SelectionContainer selectionContainer, int shift,
+                                               int offset, @NotNull final MyLineRange toMove) {
+    final Document document = editor.getDocument();
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    final CaretModel caretModel = editor.getCaretModel();
+    Integer selectionLen = selectionContainer.myLen;
+    final PsiElement at = file.findElementAt(offset);
+    if (at != null) {
+      final PsiElement added = getCommentOrStatement(document, at);
+      int size = toMove.size;
+      if (size > 1) {
+        PsiElement tmp = added.getNextSibling();
+        while (size > 1 && tmp != null) {
+          if (tmp instanceof PsiWhiteSpace) {
+            if (!selectionStartAtCaret)
+              shift += tmp.getTextLength();
+            selectionLen += tmp.getTextLength();
+          }
+          tmp = tmp.getNextSibling();
+          size -= 1;
+        }
+      }
+      if (shift < 0) shift = 0;
+      final int column = editor.offsetToLogicalPosition(added.getTextRange().getStartOffset()).column;
+      if (selectionContainer.myAtTheBeginning || column < selectionContainer.myAdditional) {
+        selectionLen += column;
+      }
+      else {
+        selectionLen += selectionContainer.myAdditional;
+      }
+      if (selectionContainer.myAtTheBeginning && selectionStartAtCaret)
+        shift = -column;
+    }
+
+    final int documentLength = document.getTextLength();
+    int newCaretOffset = offset + shift;
+    if (newCaretOffset >= documentLength) newCaretOffset = documentLength;
+    caretModel.moveToOffset(newCaretOffset);
+
+    if (hasSelection) {
+      if (selectionStartAtCaret) {
+        int newSelectionEnd = newCaretOffset + selectionLen;
+        selectionModel.setSelection(newCaretOffset, newSelectionEnd);
+      }
+      else {
+        int newSelectionStart = newCaretOffset - selectionLen;
+        selectionModel.setSelection(newSelectionStart, newCaretOffset);
+      }
+    }
+  }
+
+  private static int getCaretShift(PsiElement startToMove, PsiElement endToMove, CaretModel caretModel, boolean selectionStartAtCaret) {
+    int shift;
+    if (selectionStartAtCaret) {
+      shift = caretModel.getOffset() - startToMove.getTextRange().getStartOffset();
+    }
+    else {
+      shift = caretModel.getOffset();
+      if (startToMove != endToMove) {
+        shift += startToMove.getTextLength();
+
+        PsiElement tmp = startToMove.getNextSibling();
+        while (tmp != endToMove && tmp != null) {
+          if (!(tmp instanceof PsiWhiteSpace))
+            shift += tmp.getTextLength();
+          tmp = tmp.getNextSibling();
+        }
+      }
+
+      shift -= endToMove.getTextOffset();
+    }
+    return shift;
+  }
+
+  private static int moveTheSameLevel(@NotNull final ScopeRange toMove2, @NotNull final MyLineRange toMove) {
+    final PsiElement anchor = toMove2.getAnchor();
+    final PsiElement anchorCopy = anchor.copy();
+    PsiElement startToMove = toMove.myStartElement;
+    final PsiElement endToMove = toMove.myEndElement;
+
+    final PsiElement parent = anchor.getParent();
+    PsiElement tmp = startToMove.getNextSibling();
+
+    if (startToMove != endToMove && tmp != null) {
+      parent.addRangeAfter(tmp, endToMove, anchor);
+    }
+
+    PsiElement startCopy = startToMove.copy();
+    startToMove.replace(anchorCopy);
+    final PsiElement addedElement = anchor.replace(startCopy);
+
+    if (startToMove != endToMove && tmp != null) {
+      parent.deleteChildRange(tmp, endToMove);
+    }
+
+    return addedElement.getTextRange().getStartOffset();
+  }
+
+  private static int moveInOut(@NotNull final MyLineRange toMove, @NotNull final Editor editor, @NotNull final MoveInfo info) {
     boolean removePass = false;
     final ScopeRange toMove2 = (ScopeRange)info.toMove2;
     final PsiElement scope = toMove2.getScope();
     final PsiElement anchor = toMove2.getAnchor();
     final Project project = scope.getProject();
 
-    if (scope instanceof PyStatementList && !(elementToMove instanceof PsiComment)) {
+    final PsiElement startElement = toMove.myStartElement;
+    final PsiElement endElement = toMove.myEndElement;
+    PsiElement parent = startElement.getParent();
+
+    if (scope instanceof PyStatementList && !(startElement == endElement && startElement instanceof PsiComment)) {
       final PyStatement[] statements = ((PyStatementList)scope).getStatements();
       if (statements.length == 1 && statements[0] == anchor && statements[0] instanceof PyPassStatement) {
         removePass = true;
       }
     }
-    final PsiElement addedElement = toMove2.isAddBefore() ? scope.addBefore(elementToMove, anchor) : scope.addAfter(elementToMove, anchor);
-    addPassStatement(elementToMove, project);
 
+    final PsiElement addedElement;
+    PsiElement nextSibling = startElement.getNextSibling();
+    if (toMove2.isAddBefore()) {
+      PsiElement tmp = endElement.getPrevSibling();
+      if (startElement != endElement && tmp != null) {
+        addedElement = scope.addRangeBefore(startElement, tmp, anchor);
+        scope.addBefore(endElement, anchor);
+      }
+      else {
+        addedElement = scope.addBefore(endElement, anchor);
+      }
+    }
+    else {
+      if (startElement != endElement) {
+        scope.addRangeAfter(nextSibling, endElement, anchor);
+      }
+      addedElement = scope.addAfter(startElement, anchor);
+    }
+    addPassStatement(toMove, project);
 
-    elementToMove.delete();
+    if (startElement != endElement && nextSibling != null) {
+      parent.deleteChildRange(nextSibling, endElement);
+    }
+    startElement.delete();
 
     final int addedElementLine = editor.getDocument().getLineNumber(addedElement.getTextOffset());
     final PsiFile file = scope.getContainingFile();
 
-    adjustLineIndents(editor, scope, project, addedElement);
+    adjustLineIndents(editor, scope, project, addedElement, toMove.size);
 
     if (removePass) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -348,23 +499,25 @@ public class PyStatementMover extends LineMover {
           final int endOffset = document.getLineCount() <= lineNumber + 1 ? document.getLineEndOffset(lineNumber)
                                                                           : document.getLineStartOffset(lineNumber + 1);
           document.deleteString(document.getLineStartOffset(lineNumber), endOffset);
-          PsiDocumentManager.getInstance(elementToMove.getProject()).commitAllDocuments();
+          PsiDocumentManager.getInstance(startElement.getProject()).commitAllDocuments();
         }
       });
     }
 
     int offset = addedElement.getTextRange().getStartOffset();
-    if ((addedElement instanceof PsiComment || addedElement instanceof PyPassStatement) && offset == 0) {  // PsiComment gets broken after adjust indent
-      final PsiElement psiElement = PyUtil.findNonWhitespaceAtOffset(file, editor.getDocument().getLineEndOffset(addedElementLine) - 1);
+    int newLine = editor.getDocument().getLineNumber(offset);
+    if (newLine != addedElementLine && !removePass) {  // PsiComment gets broken after adjust indent
+      PsiElement psiElement = PyUtil.findNonWhitespaceAtOffset(file, editor.getDocument().getLineEndOffset(addedElementLine) - 1);
       if (psiElement != null) {
-        offset = psiElement.getTextOffset();
+        psiElement = getCommentOrStatement(editor.getDocument(), psiElement);
+        offset = psiElement.getTextRange().getStartOffset();
       }
     }
     return offset;
   }
 
   private static void adjustLineIndents(@NotNull final Editor editor, @NotNull final PsiElement scope, @NotNull final Project project,
-                                        @NotNull final PsiElement addedElement) {
+                                        @NotNull final PsiElement addedElement, int size) {
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     final Document document = editor.getDocument();
 
@@ -372,35 +525,79 @@ public class PyStatementMover extends LineMover {
       int line1 = editor.offsetToLogicalPosition(scope.getTextRange().getStartOffset()).line;
       int line2 = editor.offsetToLogicalPosition(scope.getTextRange().getEndOffset()).line;
       codeStyleManager.adjustLineIndent(scope.getContainingFile(),
-                                        new TextRange(document.getLineStartOffset(line1), document.getLineStartOffset(line2)));
+                                        new TextRange(document.getLineStartOffset(line1), document.getLineEndOffset(line2)));
     }
     else {
       int line1 = editor.offsetToLogicalPosition(addedElement.getTextRange().getStartOffset()).line;
-      int line2 = editor.offsetToLogicalPosition(addedElement.getTextRange().getEndOffset()).line;
+      PsiElement end = addedElement;
+      while (size > 0) {
+        PsiElement tmp = end.getNextSibling();
+        if (tmp == null) break;
+        size -= 1;
+        end = tmp;
+      }
+      int endOffset = end.getTextRange().getEndOffset();
+      int line2 = editor.offsetToLogicalPosition(endOffset).line;
       codeStyleManager.adjustLineIndent(scope.getContainingFile(),
-                                        new TextRange(document.getLineStartOffset(line1), document.getLineStartOffset(line2)));
+                                        new TextRange(document.getLineStartOffset(line1), document.getLineEndOffset(line2)));
     }
   }
 
-  private static void addPassStatement(@NotNull final PsiElement elementToMove, @NotNull final Project project) {
-    final PyStatementList initialScope = getStatementList(elementToMove);
-    if (initialScope != null && !(elementToMove instanceof PsiComment)) {
-      if (initialScope.getStatements().length == 1) {
+  private static void addPassStatement(@NotNull final MyLineRange toMove, @NotNull final Project project) {
+    final PsiElement startElement = toMove.myStartElement;
+    final PsiElement endElement = toMove.myEndElement;
+    final PyStatementList initialScope = getStatementList(startElement);
+
+    if (initialScope != null && !(startElement == endElement && startElement instanceof PsiComment)) {
+      if (initialScope.getStatements().length == toMove.statementsSize) {
         final PyPassStatement passStatement = PyElementGenerator.getInstance(project).createPassStatement();
         initialScope.addAfter(passStatement, initialScope.getStatements()[initialScope.getStatements().length - 1]);
       }
     }
   }
 
-  // use to keep element
+  // use to keep elements
   static class MyLineRange extends LineRange {
-    public PsiElement myElement;
-    public MyLineRange(@NotNull PsiElement element) {
-      super(element);
-      myElement = element;
+    private PsiElement myStartElement;
+    private PsiElement myEndElement;
+    int size = 0;
+    int statementsSize = 0;
+
+    public MyLineRange(@NotNull PsiElement start, PsiElement end) {
+      super(start, end);
+      myStartElement = start;
+      myEndElement = end;
+
+      if (myStartElement == myEndElement) {
+        size = 1;
+        statementsSize = 1;
+      }
+      else {
+        PsiElement counter = myStartElement;
+        while (counter != myEndElement && counter != null) {
+          size += 1;
+          if (!(counter instanceof PsiWhiteSpace) && !(counter instanceof PsiComment))
+            statementsSize += 1;
+          counter = counter.getNextSibling();
+        }
+        size += 1;
+        if (!(counter instanceof PsiWhiteSpace) && !(counter instanceof PsiComment))
+          statementsSize += 1;
+      }
     }
   }
 
+  static class SelectionContainer {
+    private int myLen;
+    private int myAdditional;
+    private boolean myAtTheBeginning;
+
+    public SelectionContainer(int len, int additional, boolean atTheBeginning) {
+      myLen = len;
+      myAdditional = additional;
+      myAtTheBeginning = atTheBeginning;
+    }
+  }
   // Use when element scope changed
   static class ScopeRange extends LineRange {
     private PsiElement myScope;

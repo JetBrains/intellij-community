@@ -3,7 +3,7 @@ class A:
     def foo(self):
         pass
 
-    <selection>def<caret> bar(self):
+    <selection><caret>def bar(self):
       pass</selection>
 
     def baz(self):

@@ -188,7 +188,52 @@ public class PyStatementMoverTest extends PyTestCase {
   public void testLastComment1() {   //PY-6408
     doTest();
   }
+
   public void testMultiCompound() {   //PY-7658
+    doTest();
+  }
+
+  public void testMultiLineSelection() {
+    doTest();
+  }
+
+  public void testMultiLineSelection1() {
+    doTest();
+  }
+
+  public void testMultiLineSelection2() {
+    doTest();
+  }
+
+  public void testMultiLineSelection3() {
+    doTest();
+  }
+
+  public void testMultiLineSelection4() {
+    doTest();
+  }
+
+  public void testMultiLineSelection5() {             //0
+    doTest();
+  }
+
+  public void testMultiLineSelection6() {
+    doTest();
+  }
+
+  public void testMultiLineSelection7() {
+    doTest();
+  }
+
+  public void testMultiLineSelection8() {
+    doTest();
+  }
+
+  public void testMultiLineSelection9() {
+    doTest();
+  }
+
+  public void testMultiLineSelection10() {
     doTest();
   }
 
