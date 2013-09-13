@@ -15,6 +15,7 @@
  */
 package hg4idea.test.history;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import hg4idea.test.HgPlatformTest;
@@ -40,6 +41,9 @@ public class HgHistoryTest extends HgPlatformTest {
   protected void setUp() throws Exception {
     super.setUp();
     cd(myRepository);
+    File hgrc = new File(new File(myRepository.getPath(), ".hg"), "hgrc");
+    FileUtil.appendToFile(hgrc, "[extensions]\n" +
+                                "largefiles=!\n");
     touch(names[0], "f1");
     myRepository.refresh(false, true);
     hg("add " + names[0]);

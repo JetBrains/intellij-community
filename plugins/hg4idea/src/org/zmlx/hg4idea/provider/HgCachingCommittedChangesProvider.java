@@ -336,8 +336,8 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
     HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
+    hgLogCommand.setFollowCopies(true);
     List<String> args = new ArrayList<String>();
-    args.add("--follow");
     args.add("--rev");
     args.add(revision);
     final List<HgFileRevision> revisions;
