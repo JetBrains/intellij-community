@@ -198,14 +198,14 @@ class Build {
     projectBuilder.stage("- Scrambling - finished -")
   }
 
-  private lastPinnedBuild() {
-    "http://buildserver/httpAuth/repository/download/" + teamcity_buildType_id + "/.lastPinned"
+//  private lastPinnedBuild() {
+//    "http://buildserver/httpAuth/repository/download/" + teamcity_buildType_id + "/.lastPinned"
     //[vo] uncomment ans test
     //"http://buildserver/httpAuth/repository/download/${this."teamcity.buildType.id"}/.lastPinned"
-  }
+//  }
 
   private getPreviousLogs() {
-    def removeZip = "${lastPinnedBuild()}/logs.zip"
+    def removeZip = "${utils.lastPinnedBuild()}/logs.zip"
     def localZip = "${paths.sandbox}/prevBuild/logs.zip"
     ant.mkdir(dir: "${paths.sandbox}/prevBuild")
     ant.get(src: removeZip,
