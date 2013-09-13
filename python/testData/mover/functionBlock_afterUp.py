@@ -1,6 +1,6 @@
 class A:
 
-    <selection>def<caret> bar(self):
+    <selection><caret>def bar(self):
       pass</selection>
 
     def foo(self):
