@@ -174,17 +174,6 @@ class Build {
       def prevBuildLog = "$paths.sandbox/prevBuild/logs/ChangeLog.txt"
       if (!new File(prevBuildLog).exists()) prevBuildLog = null
       def inc = prevBuildLog != null ? "looseChangeLogFileIn=\"${prevBuildLog}\"" : ""
-
-
-      copyAndPatchFile("$home/build/conf/script.zkm.stub", "${paths.sandbox}/script.zkm",
-                       ["CLASSES": "\"${target}/lib/rubymine.jar\"", "SCRAMBLED_CLASSES": "${target}/lib", "INCREMENTAL": ""])
-      ant.mkdir(dir: "$paths.artifacts/rubymine.unscrambled")
-      ant.copy(file: "$target/lib/rubymine.jar", todir: "$paths.artifacts/rubymine.unscrambled", overwrite: "true")
-
-      zkmScramble("$paths.sandbox/script.zkm", "$target/lib", "rubymine.jar", ["$paths.distAll/lib"])
-
-
-
       utils.copyAndPatchFile("$home/build/conf/script.zkm.stub", "$paths.sandbox/script.zkm",
                        ["CLASSES": "\"${args.jarPath}/${args.jarName}\"",
                         "SCRAMBLED_CLASSES": args.jarPath, "INCREMENTAL": inc])
@@ -195,10 +184,6 @@ class Build {
       utils.notifyArtifactBuilt("$unscrambledPath/${args.jarName}")
 
       ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName)
-
-
-
-
       ant.zip(destfile: "${paths.artifacts}/logs.zip") {
         fileset(file: "ChangeLog.txt")
         fileset(file: "ZKM_log.txt")
