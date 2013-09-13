@@ -106,7 +106,6 @@ class Build {
   }
 
   def init () {
-//    projectBuilder.stage("Cleaning, creating folders, initializing timestamps")
     utils.loadProject()
 
     if (steps.clear) {
@@ -176,7 +175,8 @@ class Build {
       if (!new File(prevBuildLog).exists()) prevBuildLog = null
       def inc = prevBuildLog != null ? "looseChangeLogFileIn=\"${prevBuildLog}\"" : ""
       utils.copyAndPatchFile("$home/build/conf/script.zkm.stub", "$paths.sandbox/script.zkm",
-                       ["CLASSES": "\"${args.jarPath}/${args.jarName}\"", "SCRAMBLED_CLASSES": args.jarPath, "INCREMENTAL": inc])
+                       ["CLASSES": "\"${args.jarPath}/${args.jarName}\"",
+                        "SCRAMBLED_CLASSES": args.jarPath, "INCREMENTAL": inc])
 
       ant.mkdir(dir: "${paths.artifacts}/${args.jarName}.unscrambled")
       def unscrambledPath = "${paths.artifacts}/${args.jarName}.unscramble"
