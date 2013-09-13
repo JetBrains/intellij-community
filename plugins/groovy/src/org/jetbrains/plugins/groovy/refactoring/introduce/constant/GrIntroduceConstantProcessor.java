@@ -27,6 +27,7 @@ import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -172,7 +173,7 @@ public class GrIntroduceConstantProcessor {
       PsiUtil.escalateVisibility(field, replaced);
     }
     if (replaced instanceof GrReferenceExpression) {
-      org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster.shortenReference((GrReferenceExpression)replaced);
+      GrReferenceAdjuster.shortenReference((GrReferenceExpression)replaced);
     }
     if (isOriginal) {
       updateCaretPosition(replaced);
@@ -184,7 +185,7 @@ public class GrIntroduceConstantProcessor {
   private static GrReferenceExpression createRefExpression(@NotNull GrField field, @NotNull PsiElement place) {
     final PsiClass containingClass = field.getContainingClass();
     assert containingClass != null;
-    final String refText = containingClass.getQualifiedName() + "." + field.getName();
+    final String refText = containingClass.getQualifiedName() != null ? containingClass.getQualifiedName() + "." + field.getName() : field.getName();
     return GroovyPsiElementFactory.getInstance(place.getProject()).createReferenceExpressionFromText(refText, place);
   }
 
