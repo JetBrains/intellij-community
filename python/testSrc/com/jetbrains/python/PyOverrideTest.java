@@ -97,4 +97,13 @@ public class PyOverrideTest extends PyTestCase {
   public void testKwargs() {  // PY-7401
     doTest3k();
   }
+
+  // PY-10229
+  public void testInstanceCheck() {
+    myFixture.configureByFile("override/" + getTestName(true) + ".py");
+    final PyClass cls = getTopLevelClass(0);
+    final PyFunction method = cls.findMethodByName("__instancecheck__", true);
+    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), cls, Collections.singletonList(new PyMethodMember(method)));
+    myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+  }
 }
