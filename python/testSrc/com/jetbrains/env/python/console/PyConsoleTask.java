@@ -14,13 +14,21 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueGroup;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
 import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
+import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import javax.swing.tree.TreeNode;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
@@ -327,6 +335,22 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     myConsoleView.executeInConsole(command);
     mySemaphore.acquire(p + 1);
     //waitForOutput(">>> " + command);
+  }
+
+  protected boolean hasValue(String varName, String value) throws PyDebuggerException {
+    XValueChildrenList l = myCommunication.loadFrame();
+
+    if (l == null) {
+      return false;
+    }
+    for (int i = 0; i < l.size(); i++) {
+      String name = l.getName(i);
+      if (varName.equals(name)) {
+        return value.equals(((PyDebugValue)l.getValue(i)).getValue());
+      }
+    }
+
+    return false;
   }
 
   protected void input(String text) {

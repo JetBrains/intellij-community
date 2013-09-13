@@ -74,4 +74,19 @@ public class PythonConsoleTest extends PyEnvTestCase {
       }
     });
   }
+
+
+  public void testVariablesView() throws Exception {
+    runPythonTest(new PyConsoleTask() {
+      @Override
+      public void testing() throws Exception {
+        exec("x = 1");
+        exec("print(x)");
+        waitForOutput("1");
+        
+        assertTrue("Variable has wrong value", 
+                   hasValue("x", "1"));
+      }
+    });
+  }
 }
