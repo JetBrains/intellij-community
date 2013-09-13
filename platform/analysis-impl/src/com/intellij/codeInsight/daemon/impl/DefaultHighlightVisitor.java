@@ -163,7 +163,9 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
 
   private void visitErrorElement(final PsiErrorElement element) {
     for(HighlightErrorFilter errorFilter: myErrorFilters) {
-      if (!errorFilter.shouldHighlightErrorElement(element)) return;
+      if (!errorFilter.shouldHighlightErrorElement(element)) {
+        return;
+      }
     }
     HighlightInfo info = createErrorElementInfo(element);
     myHolder.add(info);

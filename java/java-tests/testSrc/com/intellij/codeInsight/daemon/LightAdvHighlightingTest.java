@@ -384,4 +384,9 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testStaticMethodCalls() {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
+  public void testInsane() throws IOException {
+    configureFromFileText("x.java", "class X { \nxxxx\n }");
+    List<HighlightInfo> infos = highlightErrors();
+    assertTrue(infos.size() != 0);
+  }
 }

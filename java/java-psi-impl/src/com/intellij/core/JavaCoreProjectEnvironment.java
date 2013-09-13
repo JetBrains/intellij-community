@@ -75,6 +75,7 @@ public class JavaCoreProjectEnvironment  extends CoreProjectEnvironment {
     return new CorePackageIndex();
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   public void addJarToClassPath (File path) {
     assert path.isFile();
 
