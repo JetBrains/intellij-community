@@ -198,7 +198,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     }
 
     @Override
-    protected void onFileChoosen(final VirtualFile chosenFile) {
+    protected void onFileChoosen(@NotNull final VirtualFile chosenFile) {
       String oldText = myDirectoryTextField.getText();
       super.onFileChoosen(chosenFile);
       final VcsDescriptor wrapper = (VcsDescriptor) myVCSComboBox.getSelectedItem();
