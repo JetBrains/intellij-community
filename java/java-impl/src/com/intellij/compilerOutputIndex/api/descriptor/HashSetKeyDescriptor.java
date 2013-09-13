@@ -38,10 +38,6 @@ public class HashSetKeyDescriptor<K> implements KeyDescriptor<Set<K>> {
     return set;
   }
 
-  public static <K> HashSetKeyDescriptor<K> of(final DataExternalizer<K> keyDataExternalizer) {
-    return new HashSetKeyDescriptor<K>(keyDataExternalizer);
-  }
-
   @Override
   public int getHashCode(final Set<K> value) {
     return value.hashCode();
