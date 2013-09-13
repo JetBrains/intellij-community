@@ -516,7 +516,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   private Map<String, Long> loadVersions(Document copy) {
     THashMap<String, Long> result = new THashMap<String, Long>();
-
     List list = copy.getRootElement().getChildren(StorageData.COMPONENT);
     for (Object o : list) {
       if (o instanceof Element) {
@@ -530,7 +529,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
         }
       }
     }
-
     return result;
   }
 
