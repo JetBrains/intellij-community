@@ -31,6 +31,7 @@
           <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-1.8-20130830160653+0000.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/gradle-wrapper-1.8-20130830160653+0000.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/gradle-plugins-1.8-20130830160653+0000.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-build-setup-1.8-20130830160653+0000.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
@@ -270,7 +271,9 @@
           <root url="jar://$MODULE_DIR$/lib/guava-11.0.2.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.ideaLibSources/guava-11.0.2-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">

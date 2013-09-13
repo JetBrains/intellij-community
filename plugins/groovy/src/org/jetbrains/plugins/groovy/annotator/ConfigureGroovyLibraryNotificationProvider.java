@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
@@ -74,6 +75,9 @@ public class ConfigureGroovyLibraryNotificationProvider extends EditorNotificati
   public EditorNotificationPanel createNotificationPanel(VirtualFile file, FileEditor fileEditor) {
     try {
       if (!supportedFileTypes.contains(file.getFileType())) return null;
+      // do not show the panel for Gradle build scripts
+      // expecting groovy library to always be available at the gradle distribution
+      if (StringUtil.endsWith(file.getName(), ".gradle")) return null;
       if (CompilerManager.getInstance(myProject).isExcludedFromCompilation(file)) return null;
 
       final Module module = ModuleUtil.findModuleForFile(file, myProject);

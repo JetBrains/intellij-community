@@ -1,5 +1,9 @@
 package org.jetbrains.plugins.gradle.service;
 
+import com.google.common.base.Optional;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
@@ -13,6 +17,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import org.gradle.StartParameter;
+import org.gradle.api.tasks.wrapper.Wrapper;
+import org.gradle.util.DistributionLocator;
+import org.gradle.util.GradleVersion;
+import org.gradle.wrapper.PathAssembler;
+import org.gradle.wrapper.WrapperConfiguration;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,12 +30,16 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 import org.jetbrains.plugins.gradle.util.GradleLog;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -54,23 +68,29 @@ public class GradleInstallationManager {
 
   @NotNull private final PlatformFacade myPlatformFacade;
   @Nullable private Ref<File> myCachedGradleHomeFromPath;
+  @NotNull private final LoadingCache<Key, Optional<File>> gradleHomeCache;
 
   public GradleInstallationManager(@NotNull PlatformFacade facade) {
     myPlatformFacade = facade;
+    gradleHomeCache = CacheBuilder.newBuilder()
+      .maximumSize(500)
+      .expireAfterWrite(3, TimeUnit.SECONDS)
+      .build(
+        new CacheLoader<Key, Optional<File>>() {
+          public Optional<File> load(Key key) throws Exception {
+            return Optional.fromNullable(doGetGradleHome(key.project, key.linkedProjectPath));
+          }
+        });
   }
 
   /**
    * Allows to get file handles for the gradle binaries to use.
    *
-   * @param project           target project
-   * @param linkedProjectPath path to the target external project's config
+   * @param gradleHome gradle sdk home
    * @return file handles for the gradle binaries; <code>null</code> if gradle is not discovered
    */
   @Nullable
-  public Collection<File> getAllLibraries(@Nullable Project project, @NotNull String linkedProjectPath) {
-
-    // Manually defined gradle home
-    File gradleHome = getGradleHome(project, linkedProjectPath);
+  public Collection<File> getAllLibraries(@Nullable File gradleHome) {
 
     if (gradleHome == null || !gradleHome.isDirectory()) {
       return null;
@@ -100,6 +120,16 @@ public class GradleInstallationManager {
     return result.isEmpty() ? null : result;
   }
 
+  @Nullable
+  public File getGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
+    try {
+      return gradleHomeCache.get(new Key(project, linkedProjectPath)).orNull();
+    }
+    catch (ExecutionException e) {
+      return null;
+    }
+  }
+
   /**
    * Tries to return file handle that points to the gradle installation home.
    *
@@ -108,8 +138,44 @@ public class GradleInstallationManager {
    * @return file handle that points to the gradle installation home (if any)
    */
   @Nullable
-  public File getGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
-    File result = getManuallyDefinedGradleHome(project, linkedProjectPath);
+  private File doGetGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
+    if (project == null) {
+      return null;
+    }
+    GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath);
+    if (settings == null) {
+      return null;
+    }
+
+    File candidate = null;
+    if (settings.getDistributionType() != null) {
+      switch (settings.getDistributionType()) {
+        case LOCAL:
+          if (settings.getGradleHome() != null) {
+            candidate = new File(settings.getGradleHome());
+          }
+          break;
+        case DEFAULT_WRAPPED:
+          WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(linkedProjectPath);
+          candidate = getWrappedGradleHome(linkedProjectPath, wrapperConfiguration);
+          break;
+        case WRAPPED:
+          // not supported yet
+          break;
+        case BUNDLED:
+          WrapperConfiguration bundledWrapperSettings = new WrapperConfiguration();
+          DistributionLocator distributionLocator = new DistributionLocator();
+          bundledWrapperSettings.setDistribution(distributionLocator.getDistributionFor(GradleVersion.current()));
+          candidate = getWrappedGradleHome(linkedProjectPath, bundledWrapperSettings);
+          break;
+      }
+    }
+
+    File result = null;
+    if (candidate != null) {
+      result = isGradleSdkHome(candidate) ? candidate : null;
+    }
+
     if (result != null) {
       return result;
     }
@@ -166,30 +232,6 @@ public class GradleInstallationManager {
 
     final File home = getGradleHome(project, linkedProjectPath);
     return home == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(home);
-  }
-
-  /**
-   * Allows to ask for user-defined path to gradle.
-   *
-   * @param project target project to use (if any)
-   * @return path to the gradle distribution (if the one is explicitly configured)
-   */
-  @Nullable
-  public File getManuallyDefinedGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
-    if (project == null) {
-      return null;
-    }
-    GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath);
-    if (settings == null) {
-      return null;
-    }
-
-    String path = settings.getGradleHome();
-    if (path == null) {
-      return null;
-    }
-    File candidate = new File(path);
-    return isGradleSdkHome(candidate) ? candidate : null;
   }
 
   /**
@@ -361,7 +403,13 @@ public class GradleInstallationManager {
       if (StringUtil.isEmpty(path)) {
         continue;
       }
-      final Collection<File> libraries = getAllLibraries(project, path);
+      File gradleHome = getGradleHome(module.getProject(), path);
+
+      if (gradleHome == null || !gradleHome.isDirectory()) {
+        continue;
+      }
+
+      final Collection<File> libraries = getAllLibraries(gradleHome);
       if (libraries == null) {
         continue;
       }
@@ -376,8 +424,89 @@ public class GradleInstallationManager {
           }
         }
       }
+
+      File src = new File(gradleHome, "src");
+      if (src.isDirectory()) {
+        final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByIoFile(src);
+        if (virtualFile != null) {
+          result.add(0, virtualFile);
+        }
+      }
+
       return result;
     }
     return null;
+  }
+
+  private File getWrappedGradleHome(String linkedProjectPath, @Nullable final WrapperConfiguration wrapperConfiguration) {
+    if (wrapperConfiguration == null) {
+      return null;
+    }
+    File gradleSystemDir;
+
+    if (Wrapper.PathBase.PROJECT.name().equals(wrapperConfiguration.getDistributionBase())) {
+      gradleSystemDir = new File(linkedProjectPath, ".gradle");
+    }
+    else {
+      gradleSystemDir = StartParameter.DEFAULT_GRADLE_USER_HOME;
+    }
+    if (!gradleSystemDir.isDirectory()) {
+      return null;
+    }
+
+    PathAssembler.LocalDistribution localDistribution = new PathAssembler(gradleSystemDir).getDistribution(wrapperConfiguration);
+
+    if (localDistribution.getDistributionDir() == null) {
+      return null;
+    }
+
+    File[] distFiles = localDistribution.getDistributionDir().listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File f) {
+        return f.isDirectory() && StringUtil.startsWith(f.getName(), "gradle-");
+      }
+    });
+
+    return distFiles == null || distFiles.length == 0 ? null : distFiles[0];
+  }
+
+  private static class Key {
+    @Nullable private Project project;
+    @NotNull private String linkedProjectPath;
+
+    Key(Project project, @NotNull String linkedProjectPath) {
+      this.project = project;
+      this.linkedProjectPath = linkedProjectPath;
+    }
+
+    @Nullable
+    public Project getProject() {
+      return project;
+    }
+
+    @NotNull
+    public String getLinkedProjectPath() {
+      return linkedProjectPath;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Key key = (Key)o;
+
+      if (!linkedProjectPath.equals(key.linkedProjectPath)) return false;
+      if (project != null ? !project.equals(key.project) : key.project != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = project != null ? project.hashCode() : 0;
+      result = 31 * result + linkedProjectPath.hashCode();
+      return result;
+    }
   }
 }

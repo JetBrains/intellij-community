@@ -2,21 +2,26 @@ package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.GradleScript;
+import org.gradle.wrapper.WrapperConfiguration;
+import org.gradle.wrapper.WrapperExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -28,7 +33,6 @@ import java.util.Properties;
  */
 public class GradleUtil {
 
-  private static final String WRAPPER_VERSION_PROPERTY_KEY = "distributionUrl";
   private static final String LAST_USED_GRADLE_HOME_KEY    = "last.used.gradle.home";
 
   private GradleUtil() {
@@ -54,77 +58,46 @@ public class GradleUtil {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static boolean isGradleDefaultWrapperFilesExist(@Nullable String gradleProjectPath) {
-    return !StringUtil.isEmpty(getWrapperDistribution(gradleProjectPath));
+    return getWrapperConfiguration(gradleProjectPath) != null;
   }
 
   /**
-   * Tries to parse what gradle version should be used with gradle wrapper for the gradle project located at the given path. 
+   * Tries to retrieve what settings should be used with gradle wrapper for the gradle project located at the given path.
    *
    * @param gradleProjectPath  target gradle project config's (*.gradle) path or config file's directory path.
-   * @return                   gradle version should be used with gradle wrapper for the gradle project located at the given path
+   * @return                   gradle wrapper settings should be used with gradle wrapper for the gradle project located at the given path
    *                           if any; <code>null</code> otherwise
    */
   @Nullable
-  public static String getWrapperDistribution(@Nullable String gradleProjectPath) {
-    if (gradleProjectPath == null) {
-      return null;
-    }
-    File file = new File(gradleProjectPath);
+  public static WrapperConfiguration getWrapperConfiguration(@Nullable String gradleProjectPath) {
+    final VirtualFile wrapperPropertiesFile = findWrapperPropertiesFile(gradleProjectPath);
+    if (wrapperPropertiesFile == null) return null;
 
-    // There is a possible case that given path points to a gradle script (*.gradle) but it's also possible that
-    // it references script's directory. We want to provide flexibility here.
-    File gradleDir;
-    if (file.isFile()) {
-      gradleDir = new File(file.getParentFile(), "gradle");
-    }
-    else {
-      gradleDir = new File(file, "gradle");
-    }
-    if (!gradleDir.isDirectory()) {
-      return null;
-    }
-
-    File wrapperDir = new File(gradleDir, "wrapper");
-    if (!wrapperDir.isDirectory()) {
-      return null;
-    }
-
-    File[] candidates = wrapperDir.listFiles(new FileFilter() {
-      @Override
-      public boolean accept(File candidate) {
-        return candidate.isFile() && candidate.getName().endsWith(".properties");
-      }
-    });
-    if (candidates == null) {
-      GradleLog.LOG.warn("No *.properties file is found at the gradle wrapper directory " + wrapperDir.getAbsolutePath());
-      return null;
-    }
-    else if (candidates.length != 1) {
-      GradleLog.LOG.warn(String.format(
-        "%d *.properties files instead of one have been found at the wrapper directory (%s): %s",
-        candidates.length, wrapperDir.getAbsolutePath(), Arrays.toString(candidates)
-      ));
-      return null;
-    }
-
-    Properties props = new Properties();
+    final WrapperConfiguration wrapperConfiguration = new WrapperConfiguration();
+    final Properties props = new Properties();
     BufferedReader reader = null;
     try {
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      reader = new BufferedReader(new FileReader(candidates[0]));
+      reader = new BufferedReader(new FileReader(wrapperPropertiesFile.getPath()));
       props.load(reader);
-      String distribution = props.getProperty(WRAPPER_VERSION_PROPERTY_KEY);
-      if (StringUtil.isEmpty(distribution)) {
-        return null;
+      String distributionUrl = props.getProperty(WrapperExecutor.DISTRIBUTION_URL_PROPERTY);
+      if(StringUtil.isEmpty(distributionUrl)) {
+        throw new ExternalSystemException("Wrapper 'distributionUrl' property does not exist!");
+      } else {
+        wrapperConfiguration.setDistribution(new URI(distributionUrl));
       }
-      String shortName = StringUtil.getShortName(distribution, '/');
-      return StringUtil.trimEnd(shortName, ".zip");
+      String distributionPath = props.getProperty(WrapperExecutor.DISTRIBUTION_PATH_PROPERTY);
+      if(!StringUtil.isEmpty(distributionPath)) {
+        wrapperConfiguration.setDistributionPath(distributionPath);
+      }
+      String distPathBase = props.getProperty(WrapperExecutor.DISTRIBUTION_BASE_PROPERTY);
+      if(!StringUtil.isEmpty(distPathBase)) {
+        wrapperConfiguration.setDistributionBase(distPathBase);
+      }
+      return wrapperConfiguration;
     }
-    catch (IOException e) {
+    catch (Exception e) {
       GradleLog.LOG.warn(
-        String.format("I/O exception on reading gradle wrapper properties file at '%s'", candidates[0].getAbsolutePath()),
-        e
-      );
+        String.format("I/O exception on reading gradle wrapper properties file at '%s'", wrapperPropertiesFile.getPath()), e);
     }
     finally {
       if (reader != null) {
@@ -214,5 +187,51 @@ public class GradleUtil {
     if (gradleHomePath != null) {
       PropertiesComponent.getInstance().setValue(LAST_USED_GRADLE_HOME_KEY, gradleHomePath);
     }
+  }
+
+  @Nullable
+  public static VirtualFile findWrapperPropertiesFile(@Nullable String gradleProjectPath) {
+    if (gradleProjectPath == null) {
+      return null;
+    }
+    File file = new File(gradleProjectPath);
+
+    // There is a possible case that given path points to a gradle script (*.gradle) but it's also possible that
+    // it references script's directory. We want to provide flexibility here.
+    File gradleDir;
+    if (file.isFile()) {
+      gradleDir = new File(file.getParentFile(), "gradle");
+    }
+    else {
+      gradleDir = new File(file, "gradle");
+    }
+    if (!gradleDir.isDirectory()) {
+      return null;
+    }
+
+    File wrapperDir = new File(gradleDir, "wrapper");
+    if (!wrapperDir.isDirectory()) {
+      return null;
+    }
+
+    File[] candidates = wrapperDir.listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File candidate) {
+        return candidate.isFile() && candidate.getName().endsWith(".properties");
+      }
+    });
+    if (candidates == null) {
+      GradleLog.LOG.warn("No *.properties file is found at the gradle wrapper directory " + wrapperDir.getAbsolutePath());
+      return null;
+    }
+    else if (candidates.length != 1) {
+      GradleLog.LOG.warn(String.format(
+        "%d *.properties files instead of one have been found at the wrapper directory (%s): %s",
+        candidates.length, wrapperDir.getAbsolutePath(), Arrays.toString(candidates)
+      ));
+      return null;
+    }
+
+    return LocalFileSystem.getInstance().findFileByIoFile(candidates[0]);
   }
 }
