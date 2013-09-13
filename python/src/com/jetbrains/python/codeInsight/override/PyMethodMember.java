@@ -6,12 +6,13 @@ import com.intellij.codeInsight.generation.PsiElementMemberChooserObject;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Alexey.Ivanov
@@ -20,7 +21,14 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
   private final String myFullName;
   private static String buildNameFor(final PyElement element) {
     if (element instanceof PyFunction) {
-      return element.getName() + ((PyFunction)element).getParameterList().getText();
+      final TypeEvalContext context = TypeEvalContext.userInitiated(element.getContainingFile());
+      final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)element, context);
+      return element.getName() + "(" + StringUtil.join(parameters, new Function<PyParameter, String>() {
+        @Override
+        public String fun(PyParameter parameter) {
+          return PyUtil.getReadableRepr(parameter, false);
+        }
+      }, ", ") + ")";
     }
     if (element instanceof PyClass && PyNames.FAKE_OLD_BASE.equals(element.getName())) {
       return "<old-style class>";
