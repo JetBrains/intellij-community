@@ -12,6 +12,7 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,6 +37,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myProject = configuration.getProject();
 
     FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+      @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         return file.isDirectory() || file.getExtension() == null || Comparing.equal(file.getExtension(), "py");
       }
@@ -46,7 +48,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
       new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>("Select Script", "", myScriptTextField, myProject,
                                                                            chooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
 
-        protected void onFileChoosen(VirtualFile chosenFile) {
+        @Override
+        protected void onFileChoosen(@NotNull VirtualFile chosenFile) {
           super.onFileChoosen(chosenFile);
           myCommonOptionsForm.setWorkingDirectory(chosenFile.getParent().getPath());
         }
@@ -61,22 +64,27 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     return myRootPanel;
   }
 
+  @Override
   public AbstractPythonRunConfigurationParams getBaseParams() {
     return myCommonOptionsForm;
   }
 
+  @Override
   public String getScriptName() {
     return FileUtil.toSystemIndependentName(myScriptTextField.getText().trim());
   }
 
+  @Override
   public void setScriptName(String scriptName) {
     myScriptTextField.setText(scriptName == null ? "" : FileUtil.toSystemDependentName(scriptName));
   }
 
+  @Override
   public String getScriptParameters() {
     return myScriptParametersTextField.getText().trim();
   }
 
+  @Override
   public void setScriptParameters(String scriptParameters) {
     myScriptParametersTextField.setText(scriptParameters);
   }
