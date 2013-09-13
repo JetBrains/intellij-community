@@ -1,7 +1,6 @@
 package com.intellij.compilerOutputIndex.api.descriptor;
 
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -12,11 +11,10 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
  */
-public class ArrayListKeyDescriptor<E> implements KeyDescriptor<List<E>> {
-
+public class ArrayListDataExternalizer<E> implements DataExternalizer<List<E>> {
   private final DataExternalizer<E> myDataExternalizer;
 
-  public ArrayListKeyDescriptor(final DataExternalizer<E> dataExternalizer) {
+  public ArrayListDataExternalizer(final DataExternalizer<E> dataExternalizer) {
     myDataExternalizer = dataExternalizer;
   }
 
@@ -36,15 +34,5 @@ public class ArrayListKeyDescriptor<E> implements KeyDescriptor<List<E>> {
       list.add(myDataExternalizer.read(in));
     }
     return list;
-  }
-
-  @Override
-  public int getHashCode(final List<E> value) {
-    return value.hashCode();
-  }
-
-  @Override
-  public boolean isEqual(final List<E> val1, final List<E> val2) {
-    return val1.equals(val2);
   }
 }

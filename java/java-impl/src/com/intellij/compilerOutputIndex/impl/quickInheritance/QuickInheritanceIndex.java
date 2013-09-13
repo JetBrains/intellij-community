@@ -12,7 +12,7 @@ import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.compilerOutputIndex.api.descriptor.HashSetKeyDescriptor;
+import com.intellij.compilerOutputIndex.api.descriptor.HashSetDataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.ClassVisitor;
@@ -31,7 +31,7 @@ public class QuickInheritanceIndex extends CompilerOutputBaseIndex<String, Set<S
   }
 
   public QuickInheritanceIndex() {
-    super(new EnumeratorStringDescriptor(), new HashSetKeyDescriptor<String>(new EnumeratorStringDescriptor()));
+    super(new EnumeratorStringDescriptor(), new HashSetDataExternalizer<String>(new EnumeratorStringDescriptor()));
   }
 
   @Override

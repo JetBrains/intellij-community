@@ -2,7 +2,7 @@ package com.intellij.compilerOutputIndex.impl.callingLocation;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
-import com.intellij.compilerOutputIndex.api.descriptor.ArrayListKeyDescriptor;
+import com.intellij.compilerOutputIndex.api.descriptor.ArrayListDataExternalizer;
 import com.intellij.compilerOutputIndex.api.indexer.CompilerOutputBaseIndex;
 import com.intellij.compilerOutputIndex.api.indexer.CompilerOutputIndexer;
 import com.intellij.compilerOutputIndex.impl.MethodIncompleteSignature;
@@ -29,7 +29,7 @@ public class MethodCallingLocationIndex extends CompilerOutputBaseIndex<MethodNa
 
   public MethodCallingLocationIndex() {
     super(MethodNameAndQualifier.createKeyDescriptor(),
-          new ArrayListKeyDescriptor<CallingLocation>(CallingLocation.createDataExternalizer()));
+          new ArrayListDataExternalizer<CallingLocation>(CallingLocation.createDataExternalizer()));
   }
 
   @Override

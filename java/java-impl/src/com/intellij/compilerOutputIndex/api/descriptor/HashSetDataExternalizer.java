@@ -1,7 +1,6 @@
 package com.intellij.compilerOutputIndex.api.descriptor;
 
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -12,19 +11,18 @@ import java.util.Set;
 /**
  * @author Dmitry Batkovich
  */
-public class HashSetKeyDescriptor<K> implements KeyDescriptor<Set<K>> {
+public class HashSetDataExternalizer<K> implements DataExternalizer<Set<K>> {
+  private final DataExternalizer<K> myDataExternalizer;
 
-  private final DataExternalizer<K> keyDataExternalizer;
-
-  public HashSetKeyDescriptor(final DataExternalizer<K> keyDataExternalizer) {
-    this.keyDataExternalizer = keyDataExternalizer;
+  public HashSetDataExternalizer(final DataExternalizer<K> myDataExternalizer) {
+    this.myDataExternalizer = myDataExternalizer;
   }
 
   @Override
   public void save(final DataOutput out, final Set<K> set) throws IOException {
     out.writeInt(set.size());
     for (final K k : set) {
-      keyDataExternalizer.save(out, k);
+      myDataExternalizer.save(out, k);
     }
   }
 
@@ -33,18 +31,8 @@ public class HashSetKeyDescriptor<K> implements KeyDescriptor<Set<K>> {
     final int size = in.readInt();
     final HashSet<K> set = new HashSet<K>(size);
     for (int i = 0; i < size; i++) {
-      set.add(keyDataExternalizer.read(in));
+      set.add(myDataExternalizer.read(in));
     }
     return set;
-  }
-
-  @Override
-  public int getHashCode(final Set<K> value) {
-    return value.hashCode();
-  }
-
-  @Override
-  public boolean isEqual(final Set<K> val1, final Set<K> val2) {
-    return val1.equals(val2);
   }
 }

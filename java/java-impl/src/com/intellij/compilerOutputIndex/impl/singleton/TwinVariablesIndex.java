@@ -3,7 +3,7 @@ package com.intellij.compilerOutputIndex.impl.singleton;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.intellij.codeInsight.completion.methodChains.ChainCompletionStringUtil;
-import com.intellij.compilerOutputIndex.api.descriptor.ArrayListKeyDescriptor;
+import com.intellij.compilerOutputIndex.api.descriptor.ArrayListDataExternalizer;
 import com.intellij.compilerOutputIndex.api.fs.AsmUtil;
 import com.intellij.compilerOutputIndex.api.indexer.CompilerOutputBaseIndex;
 import com.intellij.compilerOutputIndex.api.indexer.CompilerOutputIndexUtil;
@@ -30,7 +30,7 @@ public class TwinVariablesIndex extends CompilerOutputBaseIndex<String, List<Int
   }
 
   public TwinVariablesIndex() {
-    super(new EnumeratorStringDescriptor(), new ArrayListKeyDescriptor<Integer>(EnumeratorIntegerDescriptor.INSTANCE));
+    super(new EnumeratorStringDescriptor(), new ArrayListDataExternalizer<Integer>(EnumeratorIntegerDescriptor.INSTANCE));
   }
 
   @Override
