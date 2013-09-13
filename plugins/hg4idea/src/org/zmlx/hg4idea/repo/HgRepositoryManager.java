@@ -1,7 +1,6 @@
 package org.zmlx.hg4idea.repo;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
-import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,7 +11,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 /**
  * @author Nadya Zabrodina
  */
-public class HgRepositoryManager extends AbstractRepositoryManager<HgRepository> implements RepositoryManager<HgRepository> {
+public class HgRepositoryManager extends AbstractRepositoryManager<HgRepository> {
 
   public HgRepositoryManager(@NotNull Project project,
                              @NotNull ProjectLevelVcsManager vcsManager) {

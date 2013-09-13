@@ -16,7 +16,6 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
-import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -26,12 +25,10 @@ import git4idea.GitUtil;
 import git4idea.roots.GitRootScanner;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.CountDownLatch;
-
 /**
  * @author Kirill Likhodedov
  */
-public class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> implements RepositoryManager<GitRepository> {
+public class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
 
   @NotNull private final GitPlatformFacade myPlatformFacade;
 
