@@ -71,10 +71,10 @@ public class RefManagerImpl extends RefManager {
 
   private Map<Module, RefModule> myModules;
   private final ProjectIterator myProjectIterator;
-  private boolean myDeclarationsFound;
+  private volatile boolean myDeclarationsFound;
   private final PsiManager myPsiManager;
 
-  private boolean myIsInProcess = false;
+  private volatile boolean myIsInProcess = false;
 
   private final List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<RefGraphAnnotator>();
   private GlobalInspectionContext myContext;
