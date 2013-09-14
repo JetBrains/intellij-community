@@ -741,8 +741,6 @@ private boolean isUnderTeamCity() {
 }
 
 private lastPinnedBuild() {
-//  "http://buildserver/httpAuth/repository/download/" + teamcity_buildType_id + "/.lastPinned"
-//[vo] uncomment ans test
 "http://buildserver/httpAuth/repository/download/${this."teamcity.buildType.id"}/.lastPinned"
 }
 

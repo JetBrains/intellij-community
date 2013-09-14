@@ -17,9 +17,6 @@ package org.intellij.util
 
 import org.jetbrains.jps.LayoutInfo
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
-//import org.jetbrains.jps.gant.JpsGantTool
-//import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
-
 
 class Paths {
   final projectHome
@@ -44,7 +41,6 @@ class Paths {
     projectHome = new File(home).getCanonicalPath()
     buildDir = "$projectHome/build"
     sandbox = "$projectHome/out/$productCode"
-//    sandbox = "$projectHome/out/release"
 
     classesTarget = "$sandbox/classes"
     distAll = "${sandbox}/layout"
@@ -86,7 +82,6 @@ class Build {
   def projectBuilder
   def buildNumber
   def system_selector
-  //def teamcity_buildType_id
   def ant = new AntBuilder()
   def ch
   def usedJars
@@ -120,7 +115,6 @@ class Build {
     layouts = utils.includeFile(home + "/build/scripts/layouts.gant")
     community_layouts = utils.includeFile(home + "/community/build/scripts/layouts.gant")
     libLicenses = utils.includeFile(home + "/community/build/scripts/libLicenses.gant")
-//    resources()
   }
 
   def zip() {
@@ -148,6 +142,7 @@ class Build {
     }
   }
 
+  // [vo] IDEA specific. need to relocate
   def layout(){
     projectBuilder.stage("- layout -")
     if (steps.layout) {
@@ -183,8 +178,7 @@ class Build {
       ant.copy(file: "$args.jarPath/${args.jarName}", todir: unscrambledPath)
       utils.notifyArtifactBuilt("$unscrambledPath/${args.jarName}")
 
-      //[VO] common solution
-      //ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName)
+//      ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName)
       ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName, ["$paths.distAll/lib"])
 
       ant.zip(destfile: "${paths.artifacts}/logs.zip") {
@@ -200,12 +194,6 @@ class Build {
     }
     projectBuilder.stage("- Scrambling - finished -")
   }
-
-//  private lastPinnedBuild() {
-//    "http://buildserver/httpAuth/repository/download/" + teamcity_buildType_id + "/.lastPinned"
-    //[vo] uncomment ans test
-    //"http://buildserver/httpAuth/repository/download/${this."teamcity.buildType.id"}/.lastPinned"
-//  }
 
   private getPreviousLogs() {
     def removeZip = "${utils.lastPinnedBuild()}/logs.zip"
@@ -226,6 +214,7 @@ class Build {
     }
   }
 
+  //[vo] IDEA specific
   def install() {
     projectBuilder.stage("- layoutShared -")
     layouts.layoutShared(layout_args, paths.distAll)
