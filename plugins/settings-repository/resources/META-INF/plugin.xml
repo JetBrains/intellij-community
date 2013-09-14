@@ -3,8 +3,8 @@
   <id>org.jetbrains.plugins.ideaConfigurationServer</id>
   <description>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers</description>
   <version>2.0</version>
-  <vendor>JetBrains</vendor>
-  <idea-version since-build="132"/>
+  <idea-version since-build="132.200"/>
+  <!--<vendor>JetBrains</vendor>-->
 
   <application-components>
     <component>
@@ -16,4 +16,10 @@
     <ApplicationLoadListener implementation="org.jetbrains.plugins.ideaConfigurationServer.IcsManager"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
+
+  <actions>
+    <action id="Ics.Sync" class="org.jetbrains.plugins.ideaConfigurationServer.actions.SyncAction" text="Sync ICS Repository...">
+      <add-to-group group-id="VcsGroup"/>
+    </action>
+  </actions>
 </idea-plugin>

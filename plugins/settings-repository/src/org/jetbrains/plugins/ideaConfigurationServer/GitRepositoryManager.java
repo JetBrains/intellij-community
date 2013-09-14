@@ -52,7 +52,7 @@ final class GitRepositoryManager extends BaseRepositoryManager {
   @Nullable
   @Override
   public String getRemoteRepositoryUrl() {
-    return StringUtil.nullize(git.getRepository().getConfig().getString("remote", "origin", "url"));
+    return StringUtil.nullize(git.getRepository().getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL));
   }
 
   @Override

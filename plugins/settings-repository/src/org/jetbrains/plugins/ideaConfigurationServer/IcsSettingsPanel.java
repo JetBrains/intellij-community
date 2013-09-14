@@ -17,7 +17,7 @@ public class IcsSettingsPanel extends DialogWrapper {
   private JTextField urlTextField;
   private JCheckBox updateRepositoryFromRemoteCheckBox;
   private JCheckBox shareProjectWorkspaceCheckBox;
-  private JButton syncButton;
+  private final JButton syncButton;
 
   public IcsSettingsPanel() {
     super(true);
@@ -29,18 +29,30 @@ public class IcsSettingsPanel extends DialogWrapper {
     shareProjectWorkspaceCheckBox.setSelected(settings.shareProjectWorkspace);
     urlTextField.setText(icsManager.getRepositoryManager().getRemoteRepositoryUrl());
 
+    syncButton = new JButton("Sync now\u2026");
+    syncButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        saveRemoteRepositoryUrl();
+        IcsManager.getInstance().sync();
+      }
+    });
+    updateSyncButtonState();
+
     urlTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        if (syncButton != null) {
-          syncButton.setEnabled(!StringUtil.isEmptyOrSpaces(urlTextField.getText()));
-        }
+        updateSyncButtonState();
       }
     });
 
     setTitle(IcsManager.PLUGIN_NAME + " Settings");
     setResizable(false);
     init();
+  }
+
+  private void updateSyncButtonState() {
+    syncButton.setEnabled(!StringUtil.isEmptyOrSpaces(urlTextField.getText()));
   }
 
   @Nullable
@@ -71,15 +83,6 @@ public class IcsSettingsPanel extends DialogWrapper {
   @Override
   protected JComponent createSouthPanel() {
     JComponent southPanel = super.createSouthPanel();
-
-    syncButton = new JButton("Sync now\u2026");
-    syncButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        saveRemoteRepositoryUrl();
-        IcsManager.getInstance().sync();
-      }
-    });
     assert southPanel != null;
     southPanel.add(syncButton, BorderLayout.WEST);
     return southPanel;
