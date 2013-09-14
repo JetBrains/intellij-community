@@ -74,8 +74,7 @@ public class StubTreeBuilder {
           else {
             stubFileElementType = null;
           }
-          // do the shouldBuildStubFor() check once again for substituted stubFileElementType
-          if (stubFileElementType != null && stubFileElementType.shouldBuildStubFor(inputData.getFile())) {
+          if (stubFileElementType != null) {
             data = stubFileElementType.getBuilder().buildStubTree(psi);
           }
         }
