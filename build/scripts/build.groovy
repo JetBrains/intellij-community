@@ -15,7 +15,7 @@
  */
 package org.intellij.util
 
-import org.jetbrains.jps.LayoutInfo
+//import org.jetbrains.jps.LayoutInfo
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 
 class Paths {
@@ -142,24 +142,6 @@ class Build {
     }
   }
 
-  // [vo] IDEA specific. need to relocate
-  def layout(){
-    projectBuilder.stage("- layout -")
-    if (steps.layout) {
-      LayoutInfo layoutInfo = layouts.layoutFull(paths.distJars)
-      ultimate_utils.layoutUpdater(paths.artifacts)
-      ultimate_utils.layoutInternalUtilities(paths.artifacts)
-      layouts.layout_duplicates(paths.artifacts, "duplicates.jar")
-      layouts.layout_core_upsource(home, paths.artifacts_core_upsource)
-      utils.notifyArtifactBuilt(paths.artifacts_core_upsource)
-      libLicenses.generateLicensesTable("${paths.artifacts}/third-party-libraries.txt", layoutInfo.usedModules)
-      def jpsArtifactsPath = "$paths.artifacts/jps"
-      ant.mkdir(dir: jpsArtifactsPath)
-      layouts.layoutJps(home, jpsArtifactsPath)
-      utils.notifyArtifactBuilt(jpsArtifactsPath)
-    }
-  }
-
   def scramble (Map args) {
     projectBuilder.stage("- scramble -")
     if (utils.isUnderTeamCity()) {
@@ -212,30 +194,6 @@ class Build {
         }
       }
     }
-  }
-
-  //[vo] IDEA specific
-  def install() {
-    projectBuilder.stage("- layoutShared -")
-    layouts.layoutShared(layout_args, paths.distAll)
-
-    projectBuilder.stage("- layoutWin -")
-    layouts.layoutWin(layout_args, paths.distWin)
-
-    projectBuilder.stage("- layoutUnix -")
-    layouts.layoutUnix(layout_args, paths.distUnix)
-
-    projectBuilder.stage("- layoutMac -")
-    layouts.layoutMac(layout_args, paths.distMac)
-
-    projectBuilder.stage("- buildNSISs -")
-    buildWinInstallation()
-
-    projectBuilder.stage("- targz -")
-    utils.buildTeamServer()
-
-    projectBuilder.stage("- checkLibLicenses -")
-    libLicenses.checkLibLicenses();
   }
 
   // should be optimized to allow using for all IDEA based builds
