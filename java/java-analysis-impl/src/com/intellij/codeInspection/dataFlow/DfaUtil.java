@@ -31,7 +31,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Gregory.Shrago
@@ -137,16 +140,22 @@ public class DfaUtil {
           DfaVariableValue variableValue = entry.getKey();
           final PsiExpression psiExpression = state.myExpression;
           if (psiExpression != null && variableValue.getQualifier() == null) {
-            myValues.put(variableValue.getPsiVariable(), psiExpression);
+            PsiModifierListOwner element = variableValue.getPsiVariable();
+            if (element instanceof PsiVariable) {
+              myValues.put((PsiVariable)element, psiExpression);
+            }
           }
         }
         DfaValue value = instruction.getValue();
         if (value instanceof DfaVariableValue && ((DfaVariableValue)value).getQualifier() == null) {
-          if (memState.isNotNull((DfaVariableValue)value)) {
-            myNotNulls.add(((DfaVariableValue)value).getPsiVariable());
-          }
-          if (memState.isNull(value)) {
-            myNulls.add(((DfaVariableValue)value).getPsiVariable());
+          PsiModifierListOwner element = ((DfaVariableValue)value).getPsiVariable();
+          if (element instanceof PsiVariable) {
+            if (memState.isNotNull((DfaVariableValue)value)) {
+              myNotNulls.add((PsiVariable)element);
+            }
+            if (memState.isNull(value)) {
+              myNulls.add((PsiVariable)element);
+            }
           }
         }
       }

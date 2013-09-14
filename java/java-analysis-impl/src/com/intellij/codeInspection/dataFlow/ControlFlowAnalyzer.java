@@ -1760,7 +1760,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     PsiElement target = refExpr.resolve();
-    PsiVariable var = getAccessedVariable(target);
+    PsiModifierListOwner var = getAccessedVariable(target);
     if (var == null) {
       return null;
     }
@@ -1775,7 +1775,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       return result;
     }
 
-    if (DfaPsiUtil.isFinalField(var) || DfaPsiUtil.isPlainMutableField(var)) {
+    if (!(var instanceof PsiField) || !var.hasModifierProperty(PsiModifier.TRANSIENT) && !var.hasModifierProperty(PsiModifier.VOLATILE)) {
       DfaVariableValue qualifierValue = createChainedVariableValue(qualifier);
       if (qualifierValue != null) {
         return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, qualifierValue, accessMethod);
@@ -1785,14 +1785,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Nullable
-  private static PsiVariable getAccessedVariable(final PsiElement target) {
+  private static PsiModifierListOwner getAccessedVariable(final PsiElement target) {
     if (target instanceof PsiVariable) {
       return (PsiVariable)target;
     }
     if (target instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)target;
-      if (PropertyUtil.isSimpleGetter(method)) {
-        return PropertyUtil.getSimplyReturnedField(method, PropertyUtil.getSingleReturnValue(method));
+      if (PropertyUtil.isSimplePropertyGetter((PsiMethod)target)) {
+        return (PsiMethod)target;
       }
     }
     return null;

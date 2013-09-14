@@ -296,6 +296,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       else if (value instanceof DfaBoxedValue) {
         getVariableState(var).setNullable(false);
+        applyCondition(compareToNull(var, true));
       }
     }
 
