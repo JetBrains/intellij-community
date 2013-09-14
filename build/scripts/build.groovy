@@ -183,7 +183,10 @@ class Build {
       ant.copy(file: "$args.jarPath/${args.jarName}", todir: unscrambledPath)
       utils.notifyArtifactBuilt("$unscrambledPath/${args.jarName}")
 
-      ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName)
+      //[VO] common solution
+      //ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName)
+      ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName, ["$paths.distAll/lib"])
+
       ant.zip(destfile: "${paths.artifacts}/logs.zip") {
         fileset(file: "ChangeLog.txt")
         fileset(file: "ZKM_log.txt")
