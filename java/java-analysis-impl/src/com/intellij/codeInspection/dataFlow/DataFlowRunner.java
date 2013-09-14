@@ -210,18 +210,18 @@ public class DataFlowRunner {
   }
 
   private void registerNestedClosures(DfaInstructionState instructionState, PsiClass nestedClass) {
-    DfaMemoryStateImpl closureState = createClosureState(instructionState.getMemoryState());
+    DfaMemoryState state = instructionState.getMemoryState();
     for (PsiMethod method : nestedClass.getMethods()) {
       PsiCodeBlock body = method.getBody();
       if (body != null) {
-        myNestedClosures.putValue(body, closureState);
+        myNestedClosures.putValue(body, createClosureState(state));
       }
     }
     for (PsiClassInitializer initializer : nestedClass.getInitializers()) {
-      myNestedClosures.putValue(initializer.getBody(), closureState);
+      myNestedClosures.putValue(initializer.getBody(), createClosureState(state));
     }
     for (PsiField field : nestedClass.getFields()) {
-      myNestedClosures.putValue(field, closureState);
+      myNestedClosures.putValue(field, createClosureState(state));
     }
   }
 
