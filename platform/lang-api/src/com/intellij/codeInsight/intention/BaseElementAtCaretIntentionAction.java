@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
 
     useElementToTheLeft = false;
     final PsiElement elementToTheRight = getElementToTheRight(editor, file);
-    if (elementToTheRight == null) {
-      return false;
-    }
-
-    if (isAvailable(project, editor, elementToTheRight)) {
+    if (elementToTheRight != null && isAvailable(project, editor, elementToTheRight)) {
       return true;
     }
 
