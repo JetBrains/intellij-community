@@ -42,5 +42,9 @@ public class a  {
     int i1='d';
     <error descr="Incompatible types. Found: 'long', required: 'int'">int i2 = 1L;</error>
 
+    Integer destination = 25;
+    <error descr="Incompatible types. Found: 'double', required: 'java.lang.Integer'">destination += 2.0</error>;
+    Byte b = 1;
+    <error descr="Incompatible types. Found: 'int', required: 'java.lang.Byte'">b -= 1</error>;
   }
 }

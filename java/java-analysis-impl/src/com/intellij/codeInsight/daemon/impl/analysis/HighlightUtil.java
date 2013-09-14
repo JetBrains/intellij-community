@@ -361,7 +361,6 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   static HighlightInfo checkAssignmentCompatibleTypes(@NotNull PsiAssignmentExpression assignment) {
-    if (!"=".equals(assignment.getOperationSign().getText())) return null;
     PsiExpression lExpr = assignment.getLExpression();
     PsiExpression rExpr = assignment.getRExpression();
     if (rExpr == null) return null;
@@ -369,16 +368,27 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiType rType = rExpr.getType();
     if (rType == null) return null;
 
-    HighlightInfo highlightInfo = checkAssignability(lType, rType, rExpr, assignment);
+    final IElementType sign = assignment.getOperationTokenType();
+    HighlightInfo highlightInfo;
+    if (JavaTokenType.EQ.equals(sign)) {
+      highlightInfo = checkAssignability(lType, rType, rExpr, assignment);
+    }
+    else {
+      // 15.26.2. Compound Assignment Operators
+      final IElementType opSign = TypeConversionUtil.convertEQtoOperation(sign);
+      final PsiType type = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opSign, true);
+      if (type == null || lType == null || TypeConversionUtil.areTypesConvertible(type, lType)) {
+        return null;
+      }
+      highlightInfo = createIncompatibleTypeHighlightInfo(lType, type, assignment.getTextRange(), 0);
+    }
     if (highlightInfo == null) {
       return null;
     }
-
     registerChangeVariableTypeFixes(lExpr, rType, highlightInfo);
     if (lType != null) {
       registerChangeVariableTypeFixes(rExpr, lType, highlightInfo);
     }
-
     return highlightInfo;
   }
 
