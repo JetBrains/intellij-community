@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
@@ -83,65 +82,6 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
       }
     }
     return false;
-  }
-
-  public boolean isCompatibleTo(@NotNull PyParameterList other) {
-    PyParameter[] params = getParameters();
-    final PyParameter[] otherParams = other.getParameters();
-    final int optionalCount = optionalParametersCount(params);
-    final int otherOptionalCount = optionalParametersCount(otherParams);
-    final int requiredCount = requiredParametersCount(this);
-    final int otherRequiredCount = requiredParametersCount(other);
-    if (other.hasPositionalContainer() || other.hasKeywordContainer()) {
-      if (otherParams.length == specialParametersCount(other)) {
-        return true;
-      }
-    }
-    if (hasPositionalContainer() || hasKeywordContainer()) {
-      return requiredCount <= otherRequiredCount;
-    }
-    return requiredCount <= otherRequiredCount && params.length >= otherParams.length && optionalCount >= otherOptionalCount;
-  }
-
-  private static int optionalParametersCount(@NotNull PyParameter[] parameters) {
-    int n = 0;
-    for (PyParameter parameter : parameters) {
-      if (parameter.getDefaultValue() != null) {
-        n++;
-      }
-    }
-    return n;
-  }
-
-  private static int specialParametersCount(@NotNull PyParameterList parameterList) {
-    int n = 0;
-    if (parameterList.hasPositionalContainer()) {
-      n++;
-    }
-    if (parameterList.hasKeywordContainer()) {
-      n++;
-    }
-    final PyFunction function = parameterList.getContainingFunction();
-    if (function != null) {
-      if (function.asMethod() != null) {
-        n++;
-      }
-    }
-    else {
-      final PyParameter[] parameters = parameterList.getParameters();
-      if (parameters.length > 0) {
-        final PyParameter first = parameters[0];
-        if (PyNames.CANONICAL_SELF.equals(first.getName())) {
-          n++;
-        }
-      }
-    }
-    return n;
-  }
-
-  private static int requiredParametersCount(@NotNull PyParameterList parameterList) {
-    final PyParameter[] parameters = parameterList.getParameters();
-    return parameters.length - optionalParametersCount(parameters) - specialParametersCount(parameterList);
   }
 
   @Override

@@ -179,7 +179,8 @@ public class PyOverrideImplementUtil {
     if (anno != null) {
       pyFunctionBuilder.annotation(anno.getText());
     }
-    final PyParameter[] baseParams = baseFunction.getParameterList().getParameters();
+    final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getContainingFile());
+    final List<PyParameter> baseParams = PyUtil.getParameters(baseFunction, context);
     for (PyParameter parameter : baseParams) {
       pyFunctionBuilder.parameter(parameter.getText());
     }
@@ -211,7 +212,6 @@ public class PyOverrideImplementUtil {
       statementBody.append(PyNames.PASS);
     }
     else {
-      final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getContainingFile());
       if (!PyNames.INIT.equals(baseFunction.getName()) && baseFunction.getReturnType(context, null) != PyNoneType.INSTANCE) {
         statementBody.append("return ");
       }
@@ -220,7 +220,9 @@ public class PyOverrideImplementUtil {
         statementBody.append("(");
         final LanguageLevel langLevel = ((PyFile)pyClass.getContainingFile()).getLanguageLevel();
         if (!langLevel.isPy3K()) {
-          statementBody.append(pyClass.getName()).append(", ").append(PyUtil.getFirstParameterName(baseFunction));
+          final String baseFirstName = !baseParams.isEmpty() ? baseParams.get(0).getName() : null;
+          final String firstName = baseFirstName != null ? baseFirstName : PyNames.CANONICAL_SELF;
+          statementBody.append(pyClass.getName()).append(", ").append(firstName);
         }
         statementBody.append(").").append(baseFunction.getName()).append("(");
         if (parameters.size() > 0) {
