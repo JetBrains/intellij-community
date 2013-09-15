@@ -285,6 +285,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(block);
 
     for (PsiStatement statement : block.getStatements()) {
+      statement.accept(this);
+    }
+
+    for (PsiStatement statement : block.getStatements()) {
       if (statement instanceof PsiDeclarationStatement) {
         for (PsiElement declaration : ((PsiDeclarationStatement)statement).getDeclaredElements()) {
           if (declaration instanceof PsiVariable) {
@@ -292,7 +296,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           }
         }
       }
-      statement.accept(this);
     }
 
     finishElement(block);
