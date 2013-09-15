@@ -436,8 +436,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
         if (ret instanceof String) {
           return parseVars((String)ret, null);
         }
-        else if (ret instanceof Object[]) {
-          throw new PyDebuggerException(((Object[])ret)[0].toString());
+        else {
+          checkError(ret);
         }
       }
       catch (XmlRpcException e) {
@@ -464,8 +464,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
         if (ret instanceof String) {
           return parseVars((String)ret, var);
         }
-        else if (ret instanceof Object[]) {
-          throw new PyDebuggerException(((Object[])ret)[0].toString());
+        else {
+          checkError(ret);
         }
       }
       catch (XmlRpcException e) {
@@ -479,11 +479,18 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public void changeVariable(PyDebugValue variable, String value) throws PyDebuggerException {
     if (myClient != null) {
       try {
-        myClient.execute(CHANGE_VARIABLE, new Object[]{variable.getEvaluationExpression(), value});
+        Object ret = myClient.execute(CHANGE_VARIABLE, new Object[]{variable.getEvaluationExpression(), value});
+        checkError(ret);
       }
       catch (XmlRpcException e) {
         throw new PyDebuggerException("Get change variable", e);
       }
+    }
+  }
+
+  private static void checkError(Object ret) throws PyDebuggerException {
+    if (ret instanceof Object[] && ((Object[])ret).length == 1) {
+      throw new PyDebuggerException(((Object[])ret)[0].toString());
     }
   }
 }
