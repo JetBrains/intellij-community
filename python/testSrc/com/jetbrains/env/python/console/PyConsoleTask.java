@@ -342,6 +342,11 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     PyDebugValue val = getValue(varName);
     return val != null && value.equals(val.getValue());
   }
+
+  protected void setValue(String varName, String value) throws PyDebuggerException {
+    PyDebugValue val = getValue(varName);
+    myCommunication.changeVariable(val, value);
+  }
   
   protected PyDebugValue getValue(String varName) throws PyDebuggerException {
     XValueChildrenList l = myCommunication.loadFrame();
