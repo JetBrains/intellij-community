@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -663,7 +664,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     }.queue();
   }
 
-  private class ShowVarsAction extends ToggleAction {
+  private class ShowVarsAction extends ToggleAction implements DumbAware {
     private boolean mySelected = false;
 
     public ShowVarsAction() {
