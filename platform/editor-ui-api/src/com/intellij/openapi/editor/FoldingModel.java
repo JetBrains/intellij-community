@@ -86,4 +86,8 @@ public interface FoldingModel {
   void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion);
 
   void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation);
+
+  boolean addListener(@NotNull FoldingListener listener);
+
+  boolean removeListener(@NotNull FoldingListener listener);
 }

@@ -18,7 +18,7 @@ package com.intellij.injected.editor;
 
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
-import com.intellij.openapi.editor.ex.FoldingListener;
+import com.intellij.openapi.editor.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
