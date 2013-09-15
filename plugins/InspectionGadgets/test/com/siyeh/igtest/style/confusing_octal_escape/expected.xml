@@ -27,4 +27,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Confusing octal escape sequence</problem_class>
     <description>Octal escape sequence &lt;code&gt;\01&lt;/code&gt; immediately followed by digit #loc</description>
   </problem>
+
+  <problem>
+    <file>ConfusingOctalEscape.java</file>
+    <line>27</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Confusing octal escape sequence</problem_class>
+    <description>Octal escape sequence &lt;code&gt;\44&lt;/code&gt; immediately followed by digit #loc</description>
+  </problem>
 </problems>
