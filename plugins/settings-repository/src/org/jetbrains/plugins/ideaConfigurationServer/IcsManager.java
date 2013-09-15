@@ -124,7 +124,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
     connectAndUpdateRepository();
 
-    ICSStreamProvider streamProvider = new ICSStreamProvider(null) {
+    IcsStreamProvider streamProvider = new IcsStreamProvider(null) {
       @Override
       public String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         return repositoryManager.listSubFileNames(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
@@ -154,8 +154,8 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   public void registerProjectLevelProviders(Project project) {
     StateStorageManager manager = ((ProjectEx)project).getStateStore().getStateStorageManager();
     String projectId = getProjectId(project);
-    manager.registerStreamProvider(new ICSStreamProvider(projectId), RoamingType.PER_PLATFORM);
-    manager.registerStreamProvider(new ICSStreamProvider(projectId) {
+    manager.registerStreamProvider(new IcsStreamProvider(projectId), RoamingType.PER_PLATFORM);
+    manager.registerStreamProvider(new IcsStreamProvider(projectId) {
       @Override
       protected boolean isShareable(@NotNull String fileSpec) {
         return settings.shareProjectWorkspace || (!fileSpec.equals(StoragePathMacros.WORKSPACE_FILE) && !fileSpec.equals(WORKSPACE_VERSION_FILE));
@@ -237,8 +237,9 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   public void dispose() {
   }
 
-  public void sync() {
+  public ActionCallback sync() {
     commitAlarm.cancel();
+    final ActionCallback actionCallback = new ActionCallback(3);
     ProgressManager.getInstance().run(new Task.Modal(null, "Syncing Idea Configuration", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -251,18 +252,19 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
         }, ModalityState.any());
         commitAlarm.cancel();
 
-        repositoryManager.commit();
-        repositoryManager.pull(indicator);
-        ActionCallback lastActionCallback = repositoryManager.push(indicator);
+        repositoryManager.commit().notify(actionCallback);
+        repositoryManager.pull(indicator).notify(actionCallback);
+        ActionCallback lastActionCallback = repositoryManager.push(indicator).notify(actionCallback);
         awaitCallback(indicator, lastActionCallback, "Syncing Idea Configuration");
       }
     });
+    return actionCallback;
   }
 
-  private class ICSStreamProvider implements StreamProvider {
+  private class IcsStreamProvider implements StreamProvider {
     private final String projectId;
 
-    public ICSStreamProvider(@Nullable String projectId) {
+    public IcsStreamProvider(@Nullable String projectId) {
       this.projectId = projectId;
     }
 

@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +36,17 @@ public class IcsSettingsPanel extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         saveRemoteRepositoryUrl();
-        IcsManager.getInstance().sync();
+        IcsManager.getInstance().sync().doWhenDone(new Runnable() {
+          @Override
+          public void run() {
+            Messages.showInfoMessage(getContentPane(), IcsBundle.message("sync.done.message"), IcsBundle.message("sync.done.title"));
+          }
+        }).doWhenRejected(new Consumer<String>() {
+          @Override
+          public void consume(String error) {
+            Messages.showErrorDialog(getContentPane(), IcsBundle.message("sync.rejected.message", StringUtil.notNullize(error, "Internal error")), IcsBundle.message("sync.rejected.title"));
+          }
+        });
       }
     });
     updateSyncButtonState();

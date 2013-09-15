@@ -18,8 +18,8 @@
   </extensions>
 
   <actions>
-    <action id="Ics.Sync" class="org.jetbrains.plugins.ideaConfigurationServer.actions.SyncAction" text="Sync ICS Repository...">
-      <add-to-group group-id="VcsGroup"/>
+    <action id="Ics.Sync" class="org.jetbrains.plugins.ideaConfigurationServer.actions.SyncAction">
+      <add-to-group group-id="VcsGroups"/>
     </action>
   </actions>
 </idea-plugin>
