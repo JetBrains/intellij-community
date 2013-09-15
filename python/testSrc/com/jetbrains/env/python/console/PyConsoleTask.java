@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import javax.swing.tree.TreeNode;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -338,19 +339,33 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   protected boolean hasValue(String varName, String value) throws PyDebuggerException {
+    PyDebugValue val = getValue(varName);
+    return val != null && value.equals(val.getValue());
+  }
+  
+  protected PyDebugValue getValue(String varName) throws PyDebuggerException {
     XValueChildrenList l = myCommunication.loadFrame();
 
     if (l == null) {
-      return false;
+      return null;
     }
     for (int i = 0; i < l.size(); i++) {
       String name = l.getName(i);
       if (varName.equals(name)) {
-        return value.equals(((PyDebugValue)l.getValue(i)).getValue());
+        return (PyDebugValue)l.getValue(i);
       }
     }
-
-    return false;
+    
+    return null;
+  }
+  
+  protected List<String> getCompoundValueChildren(PyDebugValue value) throws PyDebuggerException {
+    XValueChildrenList list = myCommunication.loadVariable(value);
+    List<String> result = Lists.newArrayList();
+    for (int i = 0; i<list.size(); i++) {
+      result.add(((PyDebugValue)list.getValue(i)).getValue());
+    }
+    return result;
   }
 
   protected void input(String text) {

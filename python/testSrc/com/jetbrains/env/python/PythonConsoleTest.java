@@ -1,10 +1,13 @@
 package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.env.python.console.PyConsoleTask;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import org.junit.Assert;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -86,6 +89,21 @@ public class PythonConsoleTest extends PyEnvTestCase {
         
         assertTrue("Variable has wrong value", 
                    hasValue("x", "1"));
+      }
+    });
+  }
+
+  public void testCompoundVariable() throws Exception {
+    runPythonTest(new PyConsoleTask() {
+      @Override
+      public void testing() throws Exception {
+        exec("x = [1, 2, 3]");
+        exec("print(x)");
+        waitForOutput("[1, 2, 3]");
+
+        List<String> values = getCompoundValueChildren(getValue("x"));
+        Collections.sort(values);
+        assertContainsElements(values, "1", "2", "3", "3");
       }
     });
   }
