@@ -785,7 +785,6 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   }
 })
 
-/*
 binding.setVariable("additionalCompilation", { ->
   projectBuilder.stage("step - additionalCompilationStep")
   if (isDefined("additionalCompilationStep")) {
@@ -795,6 +794,7 @@ binding.setVariable("additionalCompilation", { ->
   }
 })
 
+/*
 def buildTeamServer() {
   executeExternalAnt(["dist.jars": paths.distJars,
                        "dist.teamserver": "$paths.sandbox/dist.teamserver"],
