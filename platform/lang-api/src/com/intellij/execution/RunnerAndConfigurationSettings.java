@@ -134,6 +134,10 @@ public interface RunnerAndConfigurationSettings {
    */
   void checkSettings(@Nullable Executor executor) throws RuntimeConfigurationException;
 
+  /**
+   * Checks if this configuration supports running on the provided target (see {@link ExecutionTarget} for details).
+   * @param target target provided by {@link ExecutionTargetProvider}
+   */
   boolean canRunOn(@NotNull ExecutionTarget target);
 
   /**
