@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package org.intellij.util
-
-//import org.jetbrains.jps.LayoutInfo
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 
 class Paths {
@@ -23,10 +21,10 @@ class Paths {
   final buildDir
   final sandbox
   final classesTarget
-  def distWin
   final distWinZip
-  def distAll
   final distJars
+  def distWin
+  def distAll
   def distUnix
   def distMac
   final distDev
@@ -36,10 +34,10 @@ class Paths {
   final ideaConfig
   def jdkHome
 
-  def Paths(String home, String productCode) {
+  def Paths(String home, String product) {
     projectHome = new File(home).getCanonicalPath()
     buildDir = "$projectHome/build"
-    sandbox = "$projectHome/out/$productCode"
+    sandbox = "$projectHome/out/" + product.toLowerCase()
     classesTarget = "$sandbox/classes"
     distAll = "${sandbox}/layout"
     distWin = "${sandbox}/win"
@@ -89,10 +87,11 @@ class Build {
   Script community_layouts
   Script libLicenses
 
-  Build(String arg_home, JpsGantProjectBuilder prjBuilder, String arg_productCode){
+  Build(String arg_home, JpsGantProjectBuilder prjBuilder, String arg_product){
     home = arg_home
     projectBuilder = prjBuilder
-    paths = new Paths(home, arg_productCode)
+    product = arg_product
+    paths = new Paths(home, product)
     steps = new Steps()
   }
 
