@@ -353,7 +353,6 @@ public class HighlightUtil extends HighlightUtilBase {
                                                  JavaHighlightUtil.formatType(rType));
 
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(assignment).descriptionAndTooltip(message).create();
-      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createChangeToAppendFix(eqOpSign, lType, assignment));
     }
     return errorResult;
   }
@@ -381,6 +380,7 @@ public class HighlightUtil extends HighlightUtilBase {
         return null;
       }
       highlightInfo = createIncompatibleTypeHighlightInfo(lType, type, assignment.getTextRange(), 0);
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createChangeToAppendFix(sign, lType, assignment));
     }
     if (highlightInfo == null) {
       return null;
