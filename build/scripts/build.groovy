@@ -37,11 +37,9 @@ class Paths {
   def jdkHome
 
   def Paths(String home, String productCode) {
-    // move IDEA specific field to release script
     projectHome = new File(home).getCanonicalPath()
     buildDir = "$projectHome/build"
     sandbox = "$projectHome/out/$productCode"
-
     classesTarget = "$sandbox/classes"
     distAll = "${sandbox}/layout"
     distWin = "${sandbox}/win"
@@ -51,9 +49,7 @@ class Paths {
     distWinZip = "$sandbox/dist.win.zip"
     distDev = "$sandbox/dist.dev"
     artifacts = "$sandbox/artifacts"
-
     artifacts_core_upsource = "$artifacts/core-upsource"
-
     ideaSystem = "$sandbox/system"
     ideaConfig = "$sandbox/config"
   }
@@ -102,7 +98,6 @@ class Build {
 
   def init () {
     utils.loadProject()
-
     if (steps.clear) {
       projectBuilder.stage("Cleaning up sandbox folder")
       utils.forceDelete(paths.sandbox)
@@ -126,7 +121,7 @@ class Build {
 
   def compile(Map args) {
     paths.jdkHome = args.jdk
-    projectBuilder.stage("- Compilation -")
+    projectBuilder.stage("- Compile -")
     if (steps.compile) {
       projectBuilder.arrangeModuleCyclesOutputs = true
       projectBuilder.targetFolder = paths.classesTarget
@@ -138,13 +133,14 @@ class Build {
         usedJars = ultimate_utils.buildModules(modules, args.module_libs)
       }
       projectBuilder.stage("- additionalCompilation -")
-      utils.additionalCompilation()
+      ultimate_utils.additionalCompilation()
     }
   }
 
   def scramble (Map args) {
     projectBuilder.stage("- scramble -")
-    if (utils.isUnderTeamCity()) {
+    if (steps.scramble) {
+      if (ultimate_utils.isUnderTeamCity()) {
       projectBuilder.stage("Scrambling - getPreviousLogs")
       getPreviousLogs()
       projectBuilder.stage("Scrambling - prevBuildLog")
@@ -171,14 +167,13 @@ class Build {
       ant.delete(file: "ChangeLog.txt")
       ant.delete(file: "ZKM_log.txt")
     }
-    else {
-      projectBuilder.info("teamcity.buildType.id is not defined. Incremental scrambling is disabled")
+      else {
+        projectBuilder.info("teamcity.buildType.id is not defined. Incremental scrambling is disabled")
+      }
     }
-    projectBuilder.stage("- Scrambling - finished -")
   }
-
   private getPreviousLogs() {
-    def removeZip = "${utils.lastPinnedBuild()}/logs.zip"
+    def removeZip = "${ultimate_utils.lastPinnedBuild()}/logs.zip"
     def localZip = "${paths.sandbox}/prevBuild/logs.zip"
     ant.mkdir(dir: "${paths.sandbox}/prevBuild")
     ant.get(src: removeZip,
@@ -194,12 +189,5 @@ class Build {
         }
       }
     }
-  }
-
-  // should be optimized to allow using for all IDEA based builds
-  def buildWinInstallation(){
-    ultimate_utils.buildNSIS([paths.distAll, paths.distJars, paths.distWin],
-                             "$home/build/conf/nsis/strings.nsi", "$home/build/conf/nsis/paths.nsi",
-                             "${product}-")
   }
 }

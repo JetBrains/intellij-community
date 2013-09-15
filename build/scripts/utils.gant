@@ -736,13 +736,14 @@ private void fixIdeaPropertiesEol(List paths, String eol) {
   }
 }
 
+/*
 private boolean isUnderTeamCity() {
   return isDefined("teamcity.buildType.id")
 }
 
 private lastPinnedBuild() {
 "http://buildserver/httpAuth/repository/download/${this."teamcity.buildType.id"}/.lastPinned"
-}
+}*/
 
 
 binding.setVariable("buildWinLauncher", { String ch, String inputPath, String outputPath, String appInfo,
@@ -784,21 +785,20 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   }
 })
 
+/*
 binding.setVariable("additionalCompilation", { ->
   projectBuilder.stage("step - additionalCompilationStep")
   if (isDefined("additionalCompilationStep")) {
-    projectBuilder.stage("step - additionalCompilationStep - do it")
     projectBuilder.info("Using additional compilation step: " + additionalCompilationStep)
     def script = includeFile(additionalCompilationStep)
     script.doCustomCompile();
   }
-  projectBuilder.stage("step - additionalCompilationStep - finished")
 })
 
 def buildTeamServer() {
   executeExternalAnt(["dist.jars": paths.distJars,
                        "dist.teamserver": "$paths.sandbox/dist.teamserver"],
                      "$home/build/release_teamcity.xml")
-}
+}*/
 
 
