@@ -118,7 +118,7 @@ public class SvnExecutableChecker extends ExecutableValidator {
         final String[] parts = versionText.split("\\.");
 
         if (parts.length >= 3) {
-          result = new Version(getInt(parts[2]), getInt(parts[1]), getInt(parts[0]));
+          result = new Version(getInt(parts[0]), getInt(parts[1]), getInt(parts[2]));
         }
       }
     }

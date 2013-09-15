@@ -7,7 +7,7 @@ public class Version {
   public final int minor;
   public final int bugfix;
 
-  public Version(int bugfix, int minor, int major) {
+  public Version(int major, int minor, int bugfix) {
     this.bugfix = bugfix;
     this.minor = minor;
     this.major = major;

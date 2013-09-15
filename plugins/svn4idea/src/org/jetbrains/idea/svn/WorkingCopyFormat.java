@@ -23,12 +23,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public enum WorkingCopyFormat {
 
-  ONE_DOT_THREE(4, false, false, false, SvnBundle.message("dialog.show.svn.map.table.version13.text"), new Version(0, 3, 1)),
-  ONE_DOT_FOUR(8, false, false, false, SvnBundle.message("dialog.show.svn.map.table.version14.text"), new Version(0, 4, 1)),
-  ONE_DOT_FIVE(9, true, true, false, SvnBundle.message("dialog.show.svn.map.table.version15.text"), new Version(0, 5, 1)),
-  ONE_DOT_SIX(10, true, true, true, SvnBundle.message("dialog.show.svn.map.table.version16.text"), new Version(0, 6, 1)),
-  ONE_DOT_SEVEN(12, true, true, true, SvnBundle.message("dialog.show.svn.map.table.version17.text"), new Version(0, 7, 1)),
-  ONE_DOT_EIGHT(12, true, true, true, SvnBundle.message("dialog.show.svn.map.table.version18.text"), new Version(0, 8, 1)),
+  ONE_DOT_THREE(4, false, false, false, SvnBundle.message("dialog.show.svn.map.table.version13.text"), new Version(1, 3, 0)),
+  ONE_DOT_FOUR(8, false, false, false, SvnBundle.message("dialog.show.svn.map.table.version14.text"), new Version(1, 4, 0)),
+  ONE_DOT_FIVE(9, true, true, false, SvnBundle.message("dialog.show.svn.map.table.version15.text"), new Version(1, 5, 0)),
+  ONE_DOT_SIX(10, true, true, true, SvnBundle.message("dialog.show.svn.map.table.version16.text"), new Version(1, 6, 0)),
+  ONE_DOT_SEVEN(12, true, true, true, SvnBundle.message("dialog.show.svn.map.table.version17.text"), new Version(1, 7, 0)),
+  ONE_DOT_EIGHT(12, true, true, true, SvnBundle.message("dialog.show.svn.map.table.version18.text"), new Version(1, 8, 0)),
   UNKNOWN(0, false, false, false, "unknown", new Version(0, 0, 0));
 
   public static final int INTERNAL_FORMAT_17 = 29;
