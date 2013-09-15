@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -45,7 +44,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
 
   private final Map<String, NotificationSettings> myIdToSettingsMap = new LinkedHashMap<String, NotificationSettings>();
-  private final Map<String, String> myToolWindowCapable = new java.util.LinkedHashMap<String, String>();
+  private final Map<String, String> myToolWindowCapable = new LinkedHashMap<String, String>();
   private final MessageBus myMessageBus;
   public boolean SHOW_BALLOONS = true;
 
@@ -96,16 +95,15 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   }
 
   private synchronized NotificationSettings[] _getAllSettings() {
-    final List<NotificationSettings> result = new ArrayList<NotificationSettings>(myIdToSettingsMap.values());
-
-    Collections.sort(result, new Comparator<NotificationSettings>() {
+    Collection<NotificationSettings> settings = myIdToSettingsMap.values();
+    NotificationSettings[] result = settings.toArray(new NotificationSettings[settings.size()]);
+    Arrays.sort(result, new Comparator<NotificationSettings>() {
       @Override
       public int compare(NotificationSettings o1, NotificationSettings o2) {
         return o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
       }
     });
-
-    return result.toArray(new NotificationSettings[result.size()]);
+    return result;
   }
 
   @Nullable

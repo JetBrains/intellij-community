@@ -124,20 +124,24 @@ public class DfaVariableState implements Cloneable {
   public String toString() {
     @NonNls StringBuilder buf = new StringBuilder();
 
-    buf.append("instanceof ");
-    for (Iterator<DfaTypeValue> iterator = myInstanceofValues.iterator(); iterator.hasNext();) {
-      DfaTypeValue dfaTypeValue = iterator.next();
-      buf.append("{").append(dfaTypeValue).append("}");
-      if (iterator.hasNext()) buf.append(", ");
+    if (!myInstanceofValues.isEmpty()) {
+      buf.append("instanceof ");
+      for (Iterator<DfaTypeValue> iterator = myInstanceofValues.iterator(); iterator.hasNext();) {
+        DfaTypeValue dfaTypeValue = iterator.next();
+        buf.append("{").append(dfaTypeValue).append("}");
+        if (iterator.hasNext()) buf.append(", ");
+      }
     }
 
-    buf.append("not instanceof ");
-    for (Iterator<DfaTypeValue> iterator = myNotInstanceofValues.iterator(); iterator.hasNext();) {
-      DfaTypeValue dfaTypeValue = iterator.next();
-      buf.append("{").append(dfaTypeValue).append("}");
-      if (iterator.hasNext()) buf.append(", ");
+    if (!myNotInstanceofValues.isEmpty()) {
+      buf.append("not instanceof ");
+      for (Iterator<DfaTypeValue> iterator = myNotInstanceofValues.iterator(); iterator.hasNext();) {
+        DfaTypeValue dfaTypeValue = iterator.next();
+        buf.append("{").append(dfaTypeValue).append("}");
+        if (iterator.hasNext()) buf.append(", ");
+      }
     }
-    buf.append(", nullable=").append(myNullability);
+    buf.append(myNullability);
     return buf.toString();
   }
 

@@ -53,7 +53,7 @@ public class DfaVariableValue extends DfaValue {
       return createVariableValue(myVariable, myVariable.getType(), isNegated, null, null);
     }
     @NotNull
-    public DfaVariableValue createVariableValue(PsiVariable myVariable,
+    public DfaVariableValue createVariableValue(PsiModifierListOwner myVariable,
                                                 @Nullable PsiType varType, boolean isNegated, @Nullable DfaVariableValue qualifier, @Nullable PsiMethod accessMethod) {
       mySharedInstance.myVariable = myVariable;
       mySharedInstance.myIsNegated = isNegated;
@@ -91,7 +91,7 @@ public class DfaVariableValue extends DfaValue {
 
   }
 
-  private PsiVariable myVariable;
+  private PsiModifierListOwner myVariable;
   private PsiType myVarType;
   private PsiMethod myAccessMethod;
   @Nullable private DfaVariableValue myQualifier;
@@ -99,7 +99,7 @@ public class DfaVariableValue extends DfaValue {
   private Nullness myInherentNullability;
   private DfaTypeValue myTypeValue;
 
-  private DfaVariableValue(PsiVariable variable, PsiType varType, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier, PsiMethod accessMethod) {
+  private DfaVariableValue(PsiModifierListOwner variable, PsiType varType, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier, PsiMethod accessMethod) {
     super(factory);
     myVariable = variable;
     myIsNegated = isNegated;
@@ -121,7 +121,7 @@ public class DfaVariableValue extends DfaValue {
   }
 
   @Nullable
-  public PsiVariable getPsiVariable() {
+  public PsiModifierListOwner getPsiVariable() {
     return myVariable;
   }
 
@@ -142,7 +142,7 @@ public class DfaVariableValue extends DfaValue {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     if (myVariable == null) return "$currentException";
-    return (myIsNegated ? "!" : "") + myVariable.getName() + (myQualifier == null ? "" : "|" + myQualifier.toString());
+    return (myIsNegated ? "!" : "") + ((PsiNamedElement)myVariable).getName() + (myQualifier == null ? "" : "|" + myQualifier.toString());
   }
 
   private boolean hardEquals(DfaVariableValue aVar) {
@@ -176,13 +176,13 @@ public class DfaVariableValue extends DfaValue {
       return nullability;
     }
 
-    PsiVariable var = getPsiVariable();
+    PsiModifierListOwner var = getPsiVariable();
     nullability = DfaPsiUtil.getElementNullability(getVariableType(), var);
     if (nullability != Nullness.UNKNOWN) {
       return nullability;
     }
 
-    if (var != null && DfaPsiUtil.isFinalField(var)) {
+    if (var instanceof PsiField && DfaPsiUtil.isFinalField((PsiVariable)var)) {
       List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers((PsiField)var);
       if (initializers.isEmpty()) {
         return Nullness.UNKNOWN;

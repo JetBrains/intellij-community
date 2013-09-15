@@ -255,6 +255,7 @@ public class FileChooserDescriptor implements Cloneable {
     return this;
   }
 
+  @Override
   public final Object clone() {
     try {
       return super.clone();

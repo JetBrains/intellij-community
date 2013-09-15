@@ -767,7 +767,7 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesFileNameDecorator"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ui.WolfChangesFileNameDecorator"/>
 
-    <filePasteProvider implementation="com.intellij.ide.FileListPasteProvider"/>
+    <filePasteProvider implementation="com.intellij.ide.FileListPasteProvider" id="fileList"/>
 
     <definitionsSearch implementation="com.intellij.pom.PomDefinitionSearch"/>
     <definitionsSearch implementation="com.intellij.xml.impl.schema.SchemaDefinitionsSearch"/>

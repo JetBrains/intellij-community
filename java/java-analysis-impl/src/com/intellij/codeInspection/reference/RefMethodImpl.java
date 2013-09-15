@@ -79,6 +79,26 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Override
+  public void add(RefEntity child) {
+    if (child instanceof RefParameter) {
+      return;
+    }
+    super.add(child);
+  }
+
+  @Override
+  public List<RefEntity> getChildren() {
+    List<RefEntity> superChildren = super.getChildren();
+    if (myParameters == null) return superChildren;
+    if (superChildren == null || superChildren.isEmpty()) return Arrays.<RefEntity>asList(myParameters);
+    
+    List<RefEntity> allChildren = new ArrayList<RefEntity>(superChildren.size() + myParameters.length);
+    allChildren.addAll(superChildren);
+    Collections.addAll(allChildren, myParameters);
+    return allChildren;
+  }
+
+  @Override
   protected void initialize() {
     final PsiMethod method = (PsiMethod)getElement();
     LOG.assertTrue(method != null);

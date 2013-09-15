@@ -43,10 +43,14 @@ public final class HgVersion implements Comparable<HgVersion> {
    */
   public static final HgVersion MIN = new HgVersion(1, 9, 1);
   public static final HgVersion AMEND_SUPPORTED = new HgVersion(2, 2, 0);
-  public static final HgVersion BUILD_IN_FUNCTION_SUPPORTED = new HgVersion(2, 6, 0);
+
   // before 2.3 build in func not supported
   // since 2.3 - 2.5.3 hg has bug with join function with file_copies
   // see http://mercurial.808500.n3.nabble.com/Bug-3887-New-hg-log-template-quot-rev-join-file-copies-n-quot-prints-literal-quot-sourcename-quot-fos-td4000129.html
+  public static final HgVersion BUILD_IN_FUNCTION_SUPPORTED = new HgVersion(2, 6, 0);
+
+  //see http://selenic.com/pipermail/mercurial-devel/2013-May/051209.html  fixed since 2.7
+  private static final HgVersion LARGEFILES_WITH_FOLLOW_SUPPORTED = new HgVersion(2, 7, 0);
 
   /**
    * Special version which indicates, that Hg version information is unavailable.
@@ -114,6 +118,10 @@ public final class HgVersion implements Comparable<HgVersion> {
 
   public boolean isBuildInFunctionSupported() {
     return !isNull() && compareTo(BUILD_IN_FUNCTION_SUPPORTED) >= 0;
+  }
+
+  public boolean isLargeFilesWithFollowSupported() {
+    return !isNull() && compareTo(LARGEFILES_WITH_FOLLOW_SUPPORTED) >= 0;
   }
 
   /**

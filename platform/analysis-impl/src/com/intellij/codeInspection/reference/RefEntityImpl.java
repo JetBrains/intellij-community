@@ -79,7 +79,7 @@ public abstract class RefEntityImpl implements RefEntity {
 
   public void add(RefEntity child) {
     if (myChildren == null) {
-      myChildren = new ArrayList<RefEntity>();
+      myChildren = new ArrayList<RefEntity>(1);
     }
 
     myChildren.add(child);

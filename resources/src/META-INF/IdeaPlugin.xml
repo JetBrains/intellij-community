@@ -1334,7 +1334,7 @@
     <editorNavigation implementation="com.intellij.javadoc.JavadocNavigationDelegate"/>
     <enterHandlerDelegate implementation="com.intellij.javadoc.EnterInJavadocParamDescriptionHandler"/>
 
-    <filePasteProvider implementation="com.intellij.ide.JavaFilePasteProvider"/>
+    <filePasteProvider implementation="com.intellij.ide.JavaFilePasteProvider" order="before fileList"/>
 
     <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
     <testCreator language="JAVA" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>

@@ -16,12 +16,12 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -64,26 +64,17 @@ public class JavaSettingsStep extends SdkSettingsStep {
 
   private void addSourcePath(SettingsStep settingsStep) {
     Project project = settingsStep.getContext().getProject();
-    ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
-      new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(
-        IdeBundle.message("prompt.select.source.directory"), null, mySourcePath, project, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
-        TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT)
-      {
-        @Override
-        protected void onFileChoosen(VirtualFile chosenFile) {
-          String contentEntryPath = myModuleBuilder.getContentEntryPath();
-          String path = chosenFile.getPath();
-          if (contentEntryPath != null) {
-
-            int i = StringUtil.commonPrefixLength(contentEntryPath, path);
-            mySourcePath.setText(path.substring(i));
-          }
-          else {
-            mySourcePath.setText(path);
-          }
-        }
-      };
-    mySourcePath.addBrowseFolderListener(project, listener);
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    descriptor.setTitle(IdeBundle.message("prompt.select.source.directory"));
+    mySourcePath.addBrowseFolderListener(new TextBrowseFolderListener(descriptor, project) {
+      @NotNull
+      @Override
+      protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+        String contentEntryPath = myModuleBuilder.getContentEntryPath();
+        String path = chosenFile.getPath();
+        return contentEntryPath == null ? path : path.substring(StringUtil.commonPrefixLength(contentEntryPath, path));
+      }
+    });
     myCreateSourceRoot.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

@@ -56,7 +56,6 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager {
-
   public NotificationsManagerImpl() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new MyNotificationListener(null));
   }
@@ -64,6 +63,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   @Override
   public void expire(@NotNull final Notification notification) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         EventLog.expireNotification(notification);
       }

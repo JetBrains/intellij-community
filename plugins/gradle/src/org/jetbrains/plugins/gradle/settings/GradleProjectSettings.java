@@ -26,7 +26,8 @@ import org.jetbrains.annotations.Nullable;
 public class GradleProjectSettings extends ExternalProjectSettings {
 
   @Nullable private String myGradleHome;
-  @Nullable  private DistributionType distributionType;
+  @Nullable private DistributionType distributionType;
+  private boolean disableWrapperSourceDistributionNotification;
 
   @Nullable
   public String getGradleHome() {
@@ -46,6 +47,14 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     this.distributionType = distributionType;
   }
 
+  public boolean isDisableWrapperSourceDistributionNotification() {
+    return disableWrapperSourceDistributionNotification;
+  }
+
+  public void setDisableWrapperSourceDistributionNotification(boolean disableWrapperSourceDistributionNotification) {
+    this.disableWrapperSourceDistributionNotification = disableWrapperSourceDistributionNotification;
+  }
+
   @NotNull
   @Override
   public ExternalProjectSettings clone() {
@@ -53,6 +62,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     copyTo(result);
     result.myGradleHome = myGradleHome;
     result.distributionType = distributionType;
+    result.disableWrapperSourceDistributionNotification = disableWrapperSourceDistributionNotification;
     return result;
   }
 }

@@ -296,6 +296,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       else if (value instanceof DfaBoxedValue) {
         getVariableState(var).setNullable(false);
+        applyCondition(compareToNull(var, true));
       }
     }
 
@@ -510,13 +511,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public boolean isNull(DfaValue dfaValue) {
     if (dfaValue instanceof DfaTypeValue && ((DfaTypeValue)dfaValue).isNotNull()) return false;
+    
+    if (dfaValue instanceof DfaConstValue) return ((DfaConstValue)dfaValue).getConstant() == null;
 
-    if (dfaValue instanceof DfaVariableValue || dfaValue instanceof DfaConstValue) {
-      DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
-      Integer c1Index = getOrCreateEqClassIndex(dfaValue);
-      Integer c2Index = getOrCreateEqClassIndex(dfaNull);
-
-      return c1Index != null && c1Index.equals(c2Index);
+    if (dfaValue instanceof DfaVariableValue) {
+      int c1Index = getEqClassIndex(dfaValue);
+      return c1Index >= 0 && c1Index == getEqClassIndex(myFactory.getConstFactory().getNull());
     }
 
     return false;
@@ -529,16 +529,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
-    Integer c1Index = getOrCreateEqClassIndex(dfaVar);
-    Integer c2Index = getOrCreateEqClassIndex(dfaNull);
-    if (c1Index == null || c2Index == null) {
+    int c1Index = getEqClassIndex(dfaVar);
+    int c2Index = getEqClassIndex(dfaNull);
+    if (c1Index < 0 || c2Index < 0) {
       return false;
     }
 
     long[] pairs = myDistinctClasses.toArray();
     for (long pair : pairs) {
-      if (c1Index.equals(low(pair)) && c2Index.equals(high(pair)) ||
-          c1Index.equals(high(pair)) && c2Index.equals(low(pair))) {
+      if (c1Index == low(pair) && c2Index == high(pair) ||
+          c1Index == high(pair) && c2Index == low(pair)) {
         return true;
       }
     }

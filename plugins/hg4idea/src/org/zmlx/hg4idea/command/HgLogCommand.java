@@ -101,15 +101,15 @@ public class HgLogCommand {
 
     String template;
     boolean shouldParseOldTemplate = false;
+    HgVcs vcs = HgVcs.getInstance(myProject);
+    if (vcs == null) {
+      LOG.info("Vcs couldn't be null for project");
+      return Collections.emptyList();
+    }
     if (!includeFiles) {
       template = HgChangesetUtil.makeTemplate(SHORT_TEMPLATE_ITEMS);
     }
     else {
-      HgVcs vcs = HgVcs.getInstance(myProject);
-      if (vcs == null) {
-        LOG.info("Vcs couldn't be null for project");
-        return Collections.emptyList();
-      }
       if (!vcs.getVersion().isBuildInFunctionSupported()) {
         template = HgChangesetUtil.makeTemplate(LONG_TEMPLATE_FOR_OLD_VERSIONS);
         shouldParseOldTemplate = true;
@@ -123,7 +123,8 @@ public class HgLogCommand {
 
     FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(myProject));
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
-    HgCommandResult result = execute(hgFile.getRepo(), template, limit, originalHgFile, argsForCmd);
+    HgCommandResult result =
+      execute(hgFile.getRepo(), template, limit, originalHgFile, argsForCmd, vcs.getVersion().isLargeFilesWithFollowSupported());
 
     final List<HgFileRevision> revisions = new LinkedList<HgFileRevision>();
     if (result == null) {
@@ -230,17 +231,23 @@ public class HgLogCommand {
 
   @Nullable
   private HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, HgFile hgFile,
-                                  @Nullable List<String> argsForCmd) {
+                                  @Nullable List<String> argsForCmd, boolean largeFilesWithFollowSupported) {
     List<String> arguments = new LinkedList<String>();
-    if (myFollowCopies) {
-      arguments.add("--follow");
-    }
     if (myIncludeRemoved) {
       // There is a bug in mercurial that causes --follow --removed <file> to cause
       // an error (http://mercurial.selenic.com/bts/issue2139). Avoid this combination
       // for now, preferring to use --follow over --removed.
       if (!(myFollowCopies && myLogFile)) {
         arguments.add("--removed");
+      }
+    }
+    if (myFollowCopies) {
+      arguments.add("--follow");
+      //workaround: --follow  options doesn't work with largefiles extension, so we need to switch off this extension in log command
+      //see http://selenic.com/pipermail/mercurial-devel/2013-May/051209.html  fixed since 2.7
+      if (!largeFilesWithFollowSupported) {
+        arguments.add("--config");
+        arguments.add("extensions.largefiles=!");
       }
     }
     arguments.add("--template");

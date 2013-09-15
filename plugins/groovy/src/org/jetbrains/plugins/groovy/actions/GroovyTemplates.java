@@ -29,7 +29,7 @@ public interface GroovyTemplates {
   @NonNls String GROOVY_DSL_SCRIPT = "GroovyDslScript.gdsl";
   @NonNls String GANT_SCRIPT = "GantScript.gant";
   @NonNls String GROOVY_SERVER_PAGE = "GroovyServerPage.gsp";
-  @NonNls String GROOVY_FROM_USAGE_METHOD_BODY = "New Method Body.groovy";
+  @NonNls String GROOVY_FROM_USAGE_METHOD_BODY = "Groovy New Method Body.groovy";
   @NonNls String GROOVY_JUNIT_TEST_METHOD_GROOVY = "Groovy JUnit Test Method.groovy";
   @NonNls String GROOVY_JUNIT_SET_UP_METHOD_GROOVY = "Groovy JUnit SetUp Method.groovy";
   @NonNls String GROOVY_JUNIT_TEAR_DOWN_METHOD_GROOVY = "Groovy JUnit TearDown Method.groovy";

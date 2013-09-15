@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,15 +77,17 @@ public class ConfusingOctalEscapeInspection extends BaseInspection {
         }
         escapeStart = nextChar - 1;
         int length = 1;
+        // see JLS 3.10.6. Escape Sequences for Character and String Literals
+        boolean zeroToThree = false;
         while (escapeStart + length < textLength) {
           final char c = text.charAt(escapeStart + length);
-          if (!Character.isDigit(c)) {
+          if (c < '0' || c > '9') {
             break;
           }
-          if (c == (int)'8' || c == (int)'9') {
-            registerErrorAtOffset(expression, escapeStart, length);
-            break;
-          } else if (length > 3) {
+          if (length == 1 && (c == '0' || c == '1' || c == '2' || c == '3')) {
+            zeroToThree = true;
+          }
+          if (c == '8' || c == '9' || (length > 2 && !zeroToThree) || length > 3) {
             registerErrorAtOffset(expression, escapeStart, length);
             break;
           }

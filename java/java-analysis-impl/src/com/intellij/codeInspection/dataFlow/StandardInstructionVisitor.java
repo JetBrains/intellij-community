@@ -115,7 +115,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
-      final PsiVariable psiVariable = var.getPsiVariable();
+      final PsiModifierListOwner psiVariable = var.getPsiVariable();
       if (DfaPsiUtil.getElementNullability(var.getVariableType(), psiVariable) == Nullness.NOT_NULL) {
         if (!memState.checkNotNullable(dfaSource)) {
           onAssigningToNotNullableVariable(instruction);

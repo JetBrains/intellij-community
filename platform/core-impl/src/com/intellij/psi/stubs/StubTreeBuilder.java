@@ -61,16 +61,21 @@ public class StubTreeBuilder {
         psi.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, contentAsText);
 
         try {
+          IStubFileElementType stubFileElementType;
           if (type instanceof IStubFileElementType) {
-            data = ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
+            stubFileElementType = (IStubFileElementType)type;
           }
           else if (languageFileType instanceof SubstitutedFileType) {
-            SubstitutedFileType substituted = (SubstitutedFileType) languageFileType;
+            SubstitutedFileType substituted = (SubstitutedFileType)languageFileType;
             LanguageFileType original = (LanguageFileType)substituted.getOriginalFileType();
             final IFileElementType originalType = LanguageParserDefinitions.INSTANCE.forLanguage(original.getLanguage()).getFileNodeType();
-            if (originalType instanceof IStubFileElementType) {
-              data = ((IStubFileElementType)originalType).getBuilder().buildStubTree(psi);
-            }
+            stubFileElementType = originalType instanceof IStubFileElementType ? (IStubFileElementType)originalType : null;
+          }
+          else {
+            stubFileElementType = null;
+          }
+          if (stubFileElementType != null) {
+            data = stubFileElementType.getBuilder().buildStubTree(psi);
           }
         }
         finally {

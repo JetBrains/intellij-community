@@ -408,6 +408,22 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     };
   }
 
+  @NotNull
+  protected String convertElementText(@NotNull String originalElementText) {
+    String res = originalElementText;
+
+    int i = res.indexOf(':');
+    if (i >= 0) {
+      res = res.substring(0, i);
+    }
+    i = res.indexOf('(');
+    if (i >= 0) {
+      res = res.substring(0, i);
+    }
+
+    return res;
+  }
+
   protected void installSpeedSearch() {
     final TreeSpeedSearch treeSpeedSearch = new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
       @Override
@@ -417,14 +433,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         if (lastPathComponent == null) return null;
         String text = lastPathComponent.getDelegate().getText();
         if (text != null) {
-          int i = text.indexOf(':');
-          if (i >= 0) {
-            text = text.substring(0, i);
-          }
-          i = text.indexOf('(');
-          if (i >= 0) {
-            text = text.substring(0, i);
-          }
+          text = convertElementText(text);
         }
         return text;
       }

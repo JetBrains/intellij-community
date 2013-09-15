@@ -45,6 +45,7 @@ import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import gnu.trove.TIntArrayList;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -59,10 +60,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -161,6 +159,26 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
+    myTree.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (KeyEvent.VK_ENTER == e.getKeyCode()) {
+          if (myTree.getSelectionCount() <= 1) {
+            Object lastPathComponent = myTree.getLastSelectedPathComponent();
+            if (!(lastPathComponent instanceof DefaultMutableTreeNode)) {
+              return;
+            }
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
+            if (!node.isLeaf()) {
+              return;
+            }
+          }
+          myDoubleClickHandler.run();
+          e.consume();
+        }
+      }
+    });
+
     new ClickListener() {
       @Override
       public boolean onClick(MouseEvent e, int clickCount) {
@@ -181,19 +199,16 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       }
     }.installOn(myList);
 
-    new ClickListener() {
+    new DoubleClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
-        final int row = myTree.getRowForLocation(e.getPoint().x, e.getPoint().y);
-        if (row >= 0) {
-          final Rectangle baseRect = myTree.getRowBounds(row);
-          baseRect.setSize(checkboxWidth, baseRect.height);
-          if (!baseRect.contains(e.getPoint()) && clickCount == 2) {
-            myDoubleClickHandler.run();
-            return true;
-          }
-        }
-        return false;
+      protected boolean onDoubleClick(MouseEvent e) {
+        final TreePath clickPath = myTree.getUI() instanceof WideSelectionTreeUI
+                                   ? myTree.getClosestPathForLocation(e.getX(), e.getY())
+                                   : myTree.getPathForLocation(e.getX(), e.getY());
+        if (clickPath == null) return false;
+
+        myDoubleClickHandler.run();
+        return true;
       }
     }.installOn(myTree);
 

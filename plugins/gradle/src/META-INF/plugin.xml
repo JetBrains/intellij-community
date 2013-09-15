@@ -68,13 +68,14 @@
                 conditionClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactoryCondition"/>
     <lang.documentationProvider language="Groovy"
                                 implementationClass="org.jetbrains.plugins.gradle.documentation.GradleDocumentationProvider"/>
+    <editorNotificationProvider implementation="org.jetbrains.plugins.gradle.codeInsight.UseDistributionWithSourcesNotificationProvider"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
     <positionManagerDelegate implementation="org.jetbrains.plugins.gradle.config.GradlePositionManager"/>
     <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
     <defaultImportContributor implementation="org.jetbrains.plugins.gradle.config.GradleDefaultImportContributor"/>
-    <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.gradle.config.GradleGroovyConfigNotification"/>
     <variableEnhancer order="first" implementation="org.jetbrains.plugins.gradle.service.resolve.GradleClosureAsAnonymousParameterEnhancer"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleConfigurationsNonCodeMembersContributor"/>
