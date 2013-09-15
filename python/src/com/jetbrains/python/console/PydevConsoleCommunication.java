@@ -436,6 +436,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
         if (ret instanceof String) {
           return parseVars((String)ret, null);
         }
+        else if (ret instanceof Object[]) {
+          throw new PyDebuggerException(((Object[])ret)[0].toString());
+        }
       }
       catch (XmlRpcException e) {
         throw new PyDebuggerException("Get frame from console failed", e);
@@ -460,6 +463,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
         Object ret = myClient.execute(GET_VARIABLE, new Object[]{GetVariableCommand.composeName(var)});
         if (ret instanceof String) {
           return parseVars((String)ret, var);
+        }
+        else if (ret instanceof Object[]) {
+          throw new PyDebuggerException(((Object[])ret)[0].toString());
         }
       }
       catch (XmlRpcException e) {
