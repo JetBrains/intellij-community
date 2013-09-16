@@ -33,10 +33,6 @@ public class BaseUpdateCommandListener extends LineCommandListener {
   }
 
   @Override
-  public void baseDirectory(File file) {
-  }
-
-  @Override
   public void onLineAvailable(String line, Key outputType) {
     if (ProcessOutputTypes.STDOUT.equals(outputType)) {
       final SVNEvent event = converter.convert(line);

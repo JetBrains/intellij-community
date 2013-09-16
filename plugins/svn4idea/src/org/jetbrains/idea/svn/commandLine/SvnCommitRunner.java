@@ -76,6 +76,7 @@ public class SvnCommitRunner {
     Arrays.sort(paths);
     CommandUtil.put(parameters, paths);
 
+    myCommandListener.setBaseDirectory(SvnBindUtil.correctUpToExistingParent(paths[0]));
     SvnLineCommand.runWithAuthenticationAttempt(paths[0], urlProvider.convert(paths), SvnCommandName.ci,
                                                 myCommandListener, myAuthenticationCallback, ArrayUtil.toStringArray(parameters));
     myCommandListener.throwExceptionIfOccurred();
@@ -113,8 +114,7 @@ public class SvnCommitRunner {
       return myCommittedRevision;
     }
 
-    @Override
-    public void baseDirectory(File file) {
+    public void setBaseDirectory(@NotNull File file) {
       myBase = file;
     }
 

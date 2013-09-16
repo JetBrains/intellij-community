@@ -121,8 +121,6 @@ public class SvnLineCommand extends SvnCommand {
     File base = firstFile != null ? (firstFile.isDirectory() ? firstFile : firstFile.getParentFile()) : null;
     base = SvnBindUtil.correctUpToExistingParent(base);
 
-    listener.baseDirectory(base);
-
     File configDir = null;
 
     try {
