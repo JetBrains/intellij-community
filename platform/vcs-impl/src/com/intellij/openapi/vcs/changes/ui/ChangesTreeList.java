@@ -162,7 +162,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     myTree.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (KeyEvent.VK_ENTER == e.getKeyCode()) {
+        if (KeyEvent.VK_ENTER == e.getKeyCode() && e.getModifiers() == 0) {
           if (myTree.getSelectionCount() <= 1) {
             Object lastPathComponent = myTree.getLastSelectedPathComponent();
             if (!(lastPathComponent instanceof DefaultMutableTreeNode)) {
