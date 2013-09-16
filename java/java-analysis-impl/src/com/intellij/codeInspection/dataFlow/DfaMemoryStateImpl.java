@@ -838,10 +838,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void doFlush(DfaVariableValue varPlain) {
-    DfaVariableValue varNegated = varPlain.createNegated();
+    DfaVariableValue varNegated = varPlain.getNegatedValue();
 
     final int idPlain = varPlain.getID();
-    final int idNegated = varNegated.getID();
+    final int idNegated = varNegated == null ? -1 : varNegated.getID();
 
     int size = myEqClasses.size();
     int interruptCount = 0;
@@ -855,7 +855,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
         int cl = varClass.get(i);
         DfaValue value = myFactory.getValue(cl);
-        if (mine(idPlain, value) || mine(idNegated, value)) {
+        if (mine(idPlain, value) || idNegated >= 0 && mine(idNegated, value)) {
           varClass.remove(i);
           break;
         }
@@ -882,7 +882,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     myVariableStates.remove(varPlain);
-    myVariableStates.remove(varNegated);
+    if (varNegated != null) {
+      myVariableStates.remove(varNegated);
+    }
   }
 
   @Nullable private static DfaConstValue asConstantValue(DfaValue value) {
