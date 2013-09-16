@@ -17,10 +17,10 @@
 package com.intellij.execution;
 
 import com.intellij.execution.actions.RunContextAction;
+import com.intellij.execution.impl.HackyDataContext;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -245,7 +245,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     @Override
     public void actionPerformed(final AnActionEvent e) {
       final DataContext dataContext = e.getDataContext();
-      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      final Project project = e.getProject();
       if (project == null || project.isDisposed()) {
         return;
       }
@@ -255,7 +255,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
-      ExecutionManager.getInstance(project).restartRunProfile(project, myExecutor, target, configuration, (RunContentDescriptor)null);
+      ExecutionManager.getInstance(project).restartRunProfile(project, HackyDataContext.hackIfNeed(dataContext), myExecutor, target, configuration, null);
     }
   }
 }

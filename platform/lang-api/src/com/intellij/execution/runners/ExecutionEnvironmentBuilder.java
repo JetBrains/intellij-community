@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,7 @@ public final class ExecutionEnvironmentBuilder {
   @Nullable private String myRunnerId;
   private boolean myAssignNewId;
   @NotNull private final Executor myExecutor;
+  @Nullable private DataContext myDataContext;
 
   public ExecutionEnvironmentBuilder(@NotNull Project project, @NotNull Executor executor) {
     myProject = project;
@@ -108,13 +110,18 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
-  public ExecutionEnvironmentBuilder setRunnerId(String runnerId) {
+  public ExecutionEnvironmentBuilder setRunnerId(@Nullable String runnerId) {
     myRunnerId = runnerId;
     return this;
   }
 
   public ExecutionEnvironmentBuilder assignNewId() {
     myAssignNewId = true;
+    return this;
+  }
+
+  public ExecutionEnvironmentBuilder setDataContext(@Nullable DataContext dataContext) {
+    myDataContext = dataContext;
     return this;
   }
 
@@ -125,6 +132,9 @@ public final class ExecutionEnvironmentBuilder {
                                myRunnerAndConfigurationSettings, myRunnerId);
     if (myAssignNewId) {
       environment.assignNewExecutionId();
+    }
+    if (myDataContext != null) {
+      environment.setDataContext(myDataContext);
     }
     return environment;
   }

@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -48,6 +49,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   @Nullable private RunContentDescriptor myContentToReuse;
   @Nullable private String myRunnerId;
   private long myExecutionId = 0;
+  @Nullable private DataContext myDataContext;
 
   @TestOnly
   public ExecutionEnvironment() {
@@ -202,5 +204,14 @@ public class ExecutionEnvironment extends UserDataHolderBase {
       return myContentToReuse.getDisplayName();
     }
     return super.toString();
+  }
+
+  void setDataContext(@NotNull DataContext dataContext) {
+    myDataContext = dataContext;
+  }
+
+  @Nullable
+  public DataContext getDataContext() {
+    return myDataContext;
   }
 }

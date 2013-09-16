@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.tools;
+package com.intellij.execution.impl;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +33,7 @@ import java.util.Map;
  *
  * @author Konstantin Bulenkov
  */
-class HackyDataContext implements DataContext {
+public class HackyDataContext implements DataContext {
   private static final DataKey[] keys = {
     PlatformDataKeys.PROJECT,
     PlatformDataKeys.PROJECT_FILE_DIRECTORY,
@@ -41,10 +45,15 @@ class HackyDataContext implements DataContext {
 
 
   private final Map<String, Object> values = new HashMap<String, Object>();
-  private final AnActionEvent myActionEvent;
 
-  public HackyDataContext(DataContext context, AnActionEvent e) {
-    myActionEvent = e;
+  @NotNull
+  public static HackyDataContext hackIfNeed(@NotNull DataContext context) {
+    if (context instanceof HackyDataContext)
+      return (HackyDataContext)context;
+    return new HackyDataContext(context);
+  }
+
+  private HackyDataContext(DataContext context) {
     for (DataKey key : keys) {
       values.put(key.getName(), key.getData(context));
     }
@@ -58,9 +67,5 @@ class HackyDataContext implements DataContext {
     //noinspection UseOfSystemOutOrSystemErr
     System.out.println("Please add " + dataId + " key in " + getClass().getName());
     return null;
-  }
-
-  AnActionEvent getActionEvent() {
-    return myActionEvent;
   }
 }
