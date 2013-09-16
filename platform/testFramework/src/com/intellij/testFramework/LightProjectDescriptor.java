@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public interface LightProjectDescriptor {
   Sdk getSdk();
   void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry);
 
-  LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor() {
+  class Empty implements LightProjectDescriptor {
     @Override
     public ModuleType getModuleType() {
       return EmptyModuleType.getInstance();
@@ -44,5 +44,7 @@ public interface LightProjectDescriptor {
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
     }
-  };
+  }
+
+  LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new Empty();
 }
