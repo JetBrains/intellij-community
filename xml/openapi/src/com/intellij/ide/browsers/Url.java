@@ -3,6 +3,8 @@ package com.intellij.ide.browsers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
+
 public interface Url {
   @NotNull
   String getPath();
@@ -27,4 +29,7 @@ public interface Url {
   String getParametersPart();
 
   boolean equalsIgnoreParameters(@Nullable Url url);
+
+  @NotNull
+  URI toJavaUriWithoutParameters();
 }

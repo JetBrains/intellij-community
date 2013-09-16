@@ -80,6 +80,22 @@ public final class UrlImpl implements Url {
 
   @Override
   @NotNull
+  public URI toJavaUriWithoutParameters() {
+    try {
+      String externalPath = path;
+      boolean inLocalFileSystem = isInLocalFileSystem();
+      if (inLocalFileSystem && SystemInfo.isWindows && externalPath.charAt(0) != '/') {
+        externalPath = '/' + externalPath;
+      }
+      return new URI(scheme, inLocalFileSystem ? "" : authority, externalPath, null, null);
+    }
+    catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  @NotNull
   public String toExternalForm(boolean skipQueryAndFragment) {
     if (parameters == null || !skipQueryAndFragment) {
       if (raw != null) {
@@ -90,19 +106,7 @@ public final class UrlImpl implements Url {
       return externalFormWithoutParameters;
     }
 
-    String result;
-    try {
-      String externalPath = path;
-      boolean inLocalFileSystem = isInLocalFileSystem();
-      if (inLocalFileSystem && SystemInfo.isWindows && externalPath.charAt(0) != '/') {
-        externalPath = '/' + externalPath;
-      }
-      result = new URI(scheme, inLocalFileSystem ? "" : authority, externalPath, null, null).toASCIIString();
-    }
-    catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
-
+    String result = toJavaUriWithoutParameters().toASCIIString();
     if (skipQueryAndFragment) {
       externalFormWithoutParameters = result;
       if (parameters == null) {
