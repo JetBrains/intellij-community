@@ -80,9 +80,26 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   @Nullable
   @Override
   public SVNAuthentication requestCredentials(SVNURL repositoryUrl, String type) {
-    SVNAuthentication authentication =
-      repositoryUrl != null ? myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getProvider().requestClientAuthentication(
-        type, repositoryUrl, repositoryUrl.toDecodedString(), null, null, true) : null;
+    SVNAuthentication authentication = null;
+
+    if (repositoryUrl != null) {
+      String realm = repositoryUrl.toDecodedString();
+      Object data = SvnConfiguration.RUNTIME_AUTH_CACHE.getData(type, realm);
+
+      if (data != null && data instanceof SVNAuthentication) {
+        // we already have credentials in memory cache
+        authentication = (SVNAuthentication)data;
+      } else {
+        // ask user for credentials
+        authentication = myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getProvider()
+          .requestClientAuthentication(type, repositoryUrl, realm, null, null, true);
+
+        if (authentication != null) {
+          // save user credentials to memory cache
+          myVcs.getSvnConfiguration().acknowledge(type, realm, authentication);
+        }
+      }
+    }
 
     if (authentication == null) {
       LOG.warn("Could not get authentication. Type - " + type + ", Url - " + repositoryUrl);
