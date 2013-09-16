@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
@@ -14,9 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class BaseRepositoryManager implements RepositoryManager {
   protected static final Logger LOG = Logger.getInstance(BaseRepositoryManager.class);
@@ -61,7 +58,7 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
   }
 
   @Override
-  public void write(@NotNull final String path, @NotNull final InputStream content, final long size, boolean async) {
+  public void write(@NotNull final String path, @NotNull final InputStream content, final int size, boolean async) {
     synchronized (filesToAdd) {
       filesToAdd.add(path);
     }
@@ -77,13 +74,13 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
             }
           }
 
-          doWrite(path, content, (int)size);
+          doWrite(path, content, size);
         }
       });
     }
     else {
       try {
-        doWrite(path, content, (int)size);
+        doWrite(path, content, size);
       }
       catch (IOException e) {
         LOG.error(e);
@@ -105,17 +102,17 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
 
   @NotNull
   @Override
-  public String[] listSubFileNames(@NotNull String path) {
+  public Collection<String> listSubFileNames(@NotNull String path) {
     File[] files = new File(dir, path).listFiles();
     if (files == null || files.length == 0) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return Collections.emptyList();
     }
 
     List<String> result = new ArrayList<String>(files.length);
     for (File file : files) {
       result.add(file.getName());
     }
-    return ArrayUtil.toStringArray(result);
+    return result;
   }
 
   @Override

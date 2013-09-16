@@ -14,7 +14,6 @@ import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemesManagerFactory;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -26,7 +25,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.WindowManagerListener;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SingleAlarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,14 +122,15 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     connectAndUpdateRepository();
 
     IcsStreamProvider streamProvider = new IcsStreamProvider(null) {
+      @NotNull
       @Override
-      public String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+      public Collection<String> listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         return repositoryManager.listSubFileNames(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
       }
 
       @Override
       public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-        if (!isShareable(fileSpec)) {
+        if (!isShareable(fileSpec, roamingType)) {
           return;
         }
 
@@ -140,26 +139,24 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       }
 
       @Override
-      protected boolean isShareable(@NotNull String fileSpec) {
+      protected boolean isShareable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         return !fileSpec.equals(STAT_FILE) && !fileSpec.equals(STAT_VERSION_FILE);
       }
     };
-    StateStorageManager storageManager = ((ApplicationImpl)application).getStateStore().getStateStorageManager();
-    storageManager.registerStreamProvider(streamProvider, RoamingType.PER_USER);
-    storageManager.registerStreamProvider(streamProvider, RoamingType.PER_PLATFORM);
-    storageManager.registerStreamProvider(streamProvider, RoamingType.GLOBAL);
+    ((ApplicationImpl)application).getStateStore().getStateStorageManager().registerStreamProvider(streamProvider);
   }
 
   public void registerProjectLevelProviders(Project project) {
     StateStorageManager manager = ((ProjectEx)project).getStateStore().getStateStorageManager();
     String projectId = getProjectId(project);
-    manager.registerStreamProvider(new IcsStreamProvider(projectId), RoamingType.PER_PLATFORM);
     manager.registerStreamProvider(new IcsStreamProvider(projectId) {
       @Override
-      protected boolean isShareable(@NotNull String fileSpec) {
-        return settings.shareProjectWorkspace || (!fileSpec.equals(StoragePathMacros.WORKSPACE_FILE) && !fileSpec.equals(WORKSPACE_VERSION_FILE));
+      protected boolean isShareable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+        return roamingType != RoamingType.PER_USER ||
+               settings.shareProjectWorkspace ||
+               (!fileSpec.equals(StoragePathMacros.WORKSPACE_FILE) && !fileSpec.equals(WORKSPACE_VERSION_FILE));
       }
-    }, RoamingType.PER_USER);
+    });
   }
 
   public void connectAndUpdateRepository() {
@@ -260,20 +257,20 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     return actionCallback;
   }
 
-  private class IcsStreamProvider implements StreamProvider {
+  private class IcsStreamProvider extends com.intellij.openapi.components.impl.stores.StreamProvider {
     private final String projectId;
 
     public IcsStreamProvider(@Nullable String projectId) {
       this.projectId = projectId;
     }
 
-    protected boolean isShareable(@NotNull String fileSpec) {
+    protected boolean isShareable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
       return true;
     }
 
     @Override
-    public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
-      if (!isShareable(fileSpec)) {
+    public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+      if (!isShareable(fileSpec, roamingType)) {
         return;
       }
 
@@ -284,7 +281,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     @Override
     @Nullable
     public InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException {
-      if (!isShareable(fileSpec)) {
+      if (!isShareable(fileSpec, roamingType)) {
         return null;
       }
 
@@ -294,11 +291,6 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     @Override
     public boolean isEnabled() {
       return status == IcsStatus.OPENED;
-    }
-
-    @Override
-    public String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
     @Override
