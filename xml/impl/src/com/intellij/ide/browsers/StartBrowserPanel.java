@@ -2,7 +2,7 @@ package com.intellij.ide.browsers;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -45,7 +45,7 @@ public class StartBrowserPanel {
     myRoot.addAncestorListener(new AncestorListenerAdapter() {
       @Override
       public void ancestorAdded(AncestorEvent event) {
-        Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myUrlField));
+        Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myUrlField));
         assert project != null;
         setupUrlField(myUrlField, project);
       }
