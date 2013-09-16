@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.navigation.EfficientChooseByNameContributor;
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class DefaultClassNavigationContributor implements EfficientChooseByNameContributor, GotoClassContributor {
+public class DefaultClassNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
   @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {

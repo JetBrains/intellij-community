@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.navigation.EfficientChooseByNameContributor;
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -30,7 +30,7 @@ import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultFileNavigationContributor implements EfficientChooseByNameContributor, DumbAware {
+public class DefaultFileNavigationContributor implements ChooseByNameContributorEx, DumbAware {
 
   @Override
   @NotNull
