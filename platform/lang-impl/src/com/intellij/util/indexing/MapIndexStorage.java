@@ -141,32 +141,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
 
     myMap = map;
 
-    myKeyHashToVirtualFileMapping = myBuildKeyHashToVirtualFileMapping ? new PersistentBTreeEnumerator<int[]>(getProjectFile(), new KeyDescriptor<int[]>() {
-      @Override
-      public void save(DataOutput out, int[] value) throws IOException {
-        DataInputOutputUtil.writeINT(out, value[0]);
-        DataInputOutputUtil.writeINT(out, value[1]);
-      }
-
-      @Override
-      public int[] read(DataInput in) throws IOException {
-        return new int[] {DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in)};
-      }
-
-      @Override
-      public int getHashCode(int[] value) {
-        return value[0] * 31 + value[1];
-      }
-
-      @Override
-      public boolean isEqual(int[] val1, int[] val2) {
-        return val1[0] == val2[0] && val1[1] == val2[1];
-      }
-    }, 4096) {
-      protected boolean serializationEquivalenceIsExhausting() {
-        return true;
-      }
-    }: null;
+    myKeyHashToVirtualFileMapping = myBuildKeyHashToVirtualFileMapping ? new KeyHash2VirtualFileEnumerator(getProjectFile()) : null;
   }
 
   private File getProjectFile() {
@@ -365,4 +340,36 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
+  private static class IntPairInArrayKeyDescriptor implements KeyDescriptor<int[]> {
+    @Override
+    public void save(DataOutput out, int[] value) throws IOException {
+      DataInputOutputUtil.writeINT(out, value[0]);
+      DataInputOutputUtil.writeINT(out, value[1]);
+    }
+
+    @Override
+    public int[] read(DataInput in) throws IOException {
+      return new int[] {DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in)};
+    }
+
+    @Override
+    public int getHashCode(int[] value) {
+      return value[0] * 31 + value[1];
+    }
+
+    @Override
+    public boolean isEqual(int[] val1, int[] val2) {
+      return val1[0] == val2[0] && val1[1] == val2[1];
+    }
+  }
+
+  private static class KeyHash2VirtualFileEnumerator extends PersistentBTreeEnumerator<int[]> {
+    public KeyHash2VirtualFileEnumerator(File projectFile) throws IOException {
+      super(projectFile, new IntPairInArrayKeyDescriptor(), 4096);
+    }
+
+    protected boolean serializationEquivalenceIsExhausting() {
+      return true;
+    }
+  }
 }
