@@ -15,8 +15,11 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -85,28 +88,40 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       // very unrealistic
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not find existing parent file"));
     }
-    issueCommand(path.getAbsolutePath(), pegRevision, revision, depth, changeLists, handler, base);
+    issueCommand(path, pegRevision, revision, depth, changeLists, handler, base);
   }
 
-  private void issueCommand(String path, SVNRevision pegRevision,
+  private void issueCommand(File path, SVNRevision pegRevision,
                             SVNRevision revision,
                             SVNDepth depth,
                             Collection changeLists,
                             final ISVNInfoHandler handler, File base) throws SVNException {
-    final SvnSimpleCommand command = SvnCommandFactory.createSimpleCommand(myProject, base, SvnCommandName.info);
     List<String> parameters = new ArrayList<String>();
 
-    fillParameters(path, pegRevision, revision, depth, parameters);
+    fillParameters(path.getAbsolutePath(), pegRevision, revision, depth, parameters);
     // TODO: Fix this check - update corresponding parameters in SvnWcClientI
     CommandUtil.putChangeLists(parameters, changeLists);
-    command.addParameters(parameters);
 
-    parseResult(handler, base, execute(command));
+    parseResult(handler, base, execute(parameters, path));
   }
 
-  private String execute(SvnSimpleCommand command) throws SVNException {
+  private String execute(@NotNull List<String> parameters, @NotNull File path) throws SVNException {
+    // workaround: separately capture command output - used in exception handling logic to overcome svn 1.8 issue (see below)
+    final ProcessOutput output = new ProcessOutput();
+    LineCommandListener listener = new LineCommandListener() {
+      @Override
+      public void onLineAvailable(String line, Key outputType) {
+        if (outputType == ProcessOutputTypes.STDOUT) {
+          output.appendStdout(line);
+        }
+      }
+    };
+
     try {
-      return command.run();
+      SvnCommand command =
+        CommandUtil.execute(SvnVcs.getInstance(myProject), SvnTarget.fromFile(path), SvnCommandName.info, parameters, listener);
+
+      return command.getOutput();
     }
     catch (VcsException e) {
       final String text = e.getMessage();
@@ -118,11 +133,11 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
       // not a working copy exception
       // "E155007: '' is not a working copy"
       if (notEmpty && text.contains("is not a working copy")) {
-        if (StringUtil.isNotEmpty(command.getOutput())) {
+        if (StringUtil.isNotEmpty(output.getStdout())) {
           // workaround: as in subversion 1.8 "svn info" on a working copy root outputs such error for parent folder,
           // if there are files with conflicts.
           // but the requested info is still in the output except root closing tag
-          return command.getOutput() + "</info>";
+          return output.getStdout() + "</info>";
         } else {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, e), e);
         }
