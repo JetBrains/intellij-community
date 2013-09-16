@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -120,7 +121,7 @@ public class ColoredOutputTypeRegistry {
 
   private Color getAnsiColor(final int value) {
     if (value == 7) {
-      return Color.WHITE;
+      return JBColor.WHITE;
     }
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(myAnsiColorKeys[value]).getForegroundColor();
   }
