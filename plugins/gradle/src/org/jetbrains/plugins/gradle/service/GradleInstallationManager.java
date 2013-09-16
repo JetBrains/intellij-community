@@ -1,9 +1,5 @@
 package org.jetbrains.plugins.gradle.service;
 
-import com.google.common.base.Optional;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
@@ -38,8 +34,6 @@ import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -68,19 +62,9 @@ public class GradleInstallationManager {
 
   @NotNull private final PlatformFacade myPlatformFacade;
   @Nullable private Ref<File> myCachedGradleHomeFromPath;
-  @NotNull private final LoadingCache<Key, Optional<File>> gradleHomeCache;
 
   public GradleInstallationManager(@NotNull PlatformFacade facade) {
     myPlatformFacade = facade;
-    gradleHomeCache = CacheBuilder.newBuilder()
-      .maximumSize(500)
-      .expireAfterWrite(3, TimeUnit.SECONDS)
-      .build(
-        new CacheLoader<Key, Optional<File>>() {
-          public Optional<File> load(Key key) throws Exception {
-            return Optional.fromNullable(doGetGradleHome(key.project, key.linkedProjectPath));
-          }
-        });
   }
 
   /**
@@ -122,12 +106,7 @@ public class GradleInstallationManager {
 
   @Nullable
   public File getGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
-    try {
-      return gradleHomeCache.get(new Key(project, linkedProjectPath)).orNull();
-    }
-    catch (ExecutionException e) {
-      return null;
-    }
+    return doGetGradleHome(project, linkedProjectPath);
   }
 
   /**
@@ -139,6 +118,7 @@ public class GradleInstallationManager {
    */
   @Nullable
   private File doGetGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
+    System.out.println("!!! doGetGradleHome !!! " + linkedProjectPath);
     if (project == null) {
       return null;
     }
@@ -468,45 +448,5 @@ public class GradleInstallationManager {
     });
 
     return distFiles == null || distFiles.length == 0 ? null : distFiles[0];
-  }
-
-  private static class Key {
-    @Nullable private Project project;
-    @NotNull private String linkedProjectPath;
-
-    Key(Project project, @NotNull String linkedProjectPath) {
-      this.project = project;
-      this.linkedProjectPath = linkedProjectPath;
-    }
-
-    @Nullable
-    public Project getProject() {
-      return project;
-    }
-
-    @NotNull
-    public String getLinkedProjectPath() {
-      return linkedProjectPath;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Key key = (Key)o;
-
-      if (!linkedProjectPath.equals(key.linkedProjectPath)) return false;
-      if (project != null ? !project.equals(key.project) : key.project != null) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = project != null ? project.hashCode() : 0;
-      result = 31 * result + linkedProjectPath.hashCode();
-      return result;
-    }
   }
 }
