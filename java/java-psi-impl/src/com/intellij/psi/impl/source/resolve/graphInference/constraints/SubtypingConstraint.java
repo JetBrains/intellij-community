@@ -80,12 +80,14 @@ public class SubtypingConstraint implements ConstraintFormula {
           }
   
           if (!(myS instanceof PsiClassType)) return false;
-          final PsiClassType.ClassResolveResult SResult = ((PsiClassType)myS).resolveGenerics();
-          final PsiClass SClass = SResult.getElement();
-          if (!((PsiClassType)myT).hasParameters()) {
-            return SClass == CClass;//todo 
+          PsiClassType.ClassResolveResult SResult = ((PsiClassType)myS).resolveGenerics();
+          PsiClass SClass = SResult.getElement();
+          if (SClass instanceof PsiAnonymousClass) {
+            final PsiClassType baseClassType = ((PsiAnonymousClass)SClass).getBaseClassType();
+            SResult = baseClassType.resolveGenerics();
+            SClass = SResult.getElement();
           }
-          final PsiSubstitutor tSubstitutor = SClass != null ? TypeConversionUtil.getClassSubstitutor(SClass,CClass,  TResult.getSubstitutor()) : null;
+          final PsiSubstitutor tSubstitutor = SClass != null ? TypeConversionUtil.getClassSubstitutor(SClass, CClass, TResult.getSubstitutor()) : null;
           final PsiSubstitutor sSubstitutor = SResult.getSubstitutor();
           if (tSubstitutor != null) {
             for (PsiTypeParameter parameter : SClass.getTypeParameters()) {
