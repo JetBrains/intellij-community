@@ -74,7 +74,7 @@ public class InferenceSession {
       for (int i = 0; i < args.length; i++) {
         PsiType parameterType = mySiteSubstitutor.substitute(parameters[i < parameters.length ? i : parameters.length - 1].getType());
         if (parameterType instanceof PsiEllipsisType) {
-          if (args.length != parameters.length || !(args[i].getType() instanceof PsiArrayType)) {
+          if (args.length != parameters.length || args[i] != null && !(args[i].getType() instanceof PsiArrayType)) {
             parameterType = ((PsiEllipsisType)parameterType).getComponentType();
           }
         }
