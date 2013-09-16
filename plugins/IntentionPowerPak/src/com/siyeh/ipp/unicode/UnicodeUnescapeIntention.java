@@ -73,7 +73,7 @@ public class UnicodeUnescapeIntention extends Intention {
       final int max = Math.min(7, textLength);
       for (int i = 0; i < max; i++) {
         if (i + 5 >= textLength) {
-          //return false;
+          return false;
         }
         if (text.charAt(i) == '\\' &&
             text.charAt(i + 1) == 'u' &&
