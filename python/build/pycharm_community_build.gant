@@ -102,7 +102,10 @@ target('default': "Build artifacts") {
 
   zipSources(home, paths.artifacts)
 
-  def usedJars = buildModules(modules, ["python/lib"])
+  def normalizedHome = ch.replace('\\', '/')
+  def normalizedPythonHome = pythonCommunityHome.replace('\\', '/')
+  def approvedJars = ["$normalizedHome/lib/", "$normalizedPythonHome/lib/", "$normalizedHome/xml/relaxng/lib/"]
+  def usedJars = buildModulesAndCollectUsedJars(modules, approvedJars, [])
 
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_ce"), false).each {
