@@ -54,6 +54,6 @@ public class JqlFileType extends LanguageFileType {
   @Nullable
   @Override
   public Icon getIcon() {
-    return TasksIcons.JIRA;
+    return TasksIcons.Jira;
   }
 }

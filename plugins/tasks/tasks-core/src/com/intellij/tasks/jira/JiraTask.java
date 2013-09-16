@@ -74,7 +74,7 @@ public class JiraTask extends Task {
     String iconUrl = issueType.getIconUrl();
     // iconUrl will be null in JIRA versions prior 5.x.x
     final Icon icon = iconUrl == null
-                      ? TasksIcons.JIRA
+                      ? TasksIcons.Jira
                       : isClosed() ? CachedIconLoader.getDisabledIcon(iconUrl) : CachedIconLoader.getIcon(iconUrl);
     return icon != null ? icon : TasksIcons.Other;
   }

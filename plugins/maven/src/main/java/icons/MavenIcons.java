@@ -14,6 +14,7 @@ public class MavenIcons {
   }
 
   public static final Icon ChildrenProjects = load("/images/childrenProjects.png"); // 12x12
+  public static final Icon ExecuteMavenGoal = load("/images/executeMavenGoal.png"); // 16x16
   public static final Icon MavenLogo = load("/images/mavenLogo.png"); // 16x16
   public static final Icon MavenPlugin = load("/images/mavenPlugin.png"); // 16x16
   public static final Icon MavenProject = load("/images/mavenProject.png"); // 16x16
@@ -26,5 +27,4 @@ public class MavenIcons {
   public static final Icon ProfilesClosed = load("/images/profilesClosed.png"); // 16x16
   public static final Icon ToolWindowMaven = load("/images/toolWindowMaven.png"); // 13x13
   public static final Icon UpdateFolders = load("/images/updateFolders.png"); // 16x16
-  public static final Icon ExecuteMavenGoal = load("/images/executeMavenGoal.png"); // 16x16
 }
