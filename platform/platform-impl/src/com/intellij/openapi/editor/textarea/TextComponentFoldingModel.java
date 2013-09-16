@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingListener;
 import com.intellij.openapi.editor.FoldingModel;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,5 +66,15 @@ public class TextComponentFoldingModel implements FoldingModel {
 
   @Override
   public void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation) {
+  }
+
+  @Override
+  public boolean addListener(@NotNull FoldingListener listener) {
+    return false;
+  }
+
+  @Override
+  public boolean removeListener(@NotNull FoldingListener listener) {
+    return false;
   }
 }
