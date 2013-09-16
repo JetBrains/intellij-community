@@ -78,7 +78,9 @@ public class InferenceSession {
             parameterType = ((PsiEllipsisType)parameterType).getComponentType();
           }
         }
-        myConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
+        if (args[i] != null) {
+          myConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
+        }
       }
     }
 
