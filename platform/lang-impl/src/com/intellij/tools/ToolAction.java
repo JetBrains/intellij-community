@@ -16,6 +16,7 @@
 
 package com.intellij.tools;
 
+import com.intellij.execution.impl.HackyDataContext;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -75,7 +76,7 @@ public class ToolAction extends AnAction implements DumbAware {
   static boolean runTool(String actionId, DataContext context, @Nullable AnActionEvent e, long executionId, @Nullable ProcessListener processListener) {
     Tool tool = findTool(actionId, context);
     if (tool != null) {
-      return tool.execute(e, new HackyDataContext(context, e), executionId, processListener);
+      return tool.execute(e, HackyDataContext.hackIfNeed(context), executionId, processListener);
     }
     return false;
   }
