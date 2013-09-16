@@ -104,7 +104,7 @@ public class StorageData {
 
       if (element.getAttribute(NAME) == null) element.setAttribute(NAME, componentName);
 
-      rootElement.addContent((Element)element.clone());
+      rootElement.addContent(element.clone());
     }
 
     return rootElement;
@@ -131,17 +131,15 @@ public class StorageData {
     element.setName(COMPONENT);
 
     //componentName should be first!
-    final List attributes = new ArrayList(element.getAttributes());
-    for (Object attribute : attributes) {
-      Attribute attr = (Attribute)attribute;
-      element.removeAttribute(attr);
+    final List<Attribute> attributes = new ArrayList<Attribute>(element.getAttributes());
+    for (Attribute attribute : attributes) {
+      element.removeAttribute(attribute);
     }
 
     element.setAttribute(NAME, componentName);
 
-    for (Object attribute : attributes) {
-      Attribute attr = (Attribute)attribute;
-      element.setAttribute(attr.getName(), attr.getValue());
+    for (Attribute attribute : attributes) {
+      element.setAttribute(attribute.getName(), attribute.getValue());
     }
 
     myComponentStates.put(componentName, element);
