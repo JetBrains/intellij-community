@@ -64,6 +64,7 @@ public class GitCommand {
   public static final GitCommand STATUS = read("status");
   public static final GitCommand TAG = read("tag");
   public static final GitCommand UPDATE_INDEX = write("update-index");
+  public static final GitCommand DESCRIBE = read("describe");
 
   /**
    * Name of environment variable that specifies editor for the git

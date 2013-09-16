@@ -52,6 +52,7 @@ public class GitVcsPanel {
   private JBCheckBox mySyncBranchControl;
   private JCheckBox myAutoCommitOnCherryPick;
   private JBCheckBox myWarnAboutCrlf;
+  private JBCheckBox myShowRecentTag;
 
   public GitVcsPanel(@NotNull Project project) {
     myVcs = GitVcs.getInstance(project);
@@ -122,6 +123,7 @@ public class GitVcsPanel {
     mySyncBranchControl.setSelected(settings.getSyncSetting() == GitBranchSyncSetting.SYNC);
     myAutoCommitOnCherryPick.setSelected(settings.isAutoCommitOnCherryPick());
     myWarnAboutCrlf.setSelected(settings.warnAboutCrlf());
+    myShowRecentTag.setSelected(settings.showRecentTag());
   }
 
   /**
@@ -135,7 +137,8 @@ public class GitVcsPanel {
            !settings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
            ((settings.getSyncSetting() == GitBranchSyncSetting.SYNC) != mySyncBranchControl.isSelected() ||
            settings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected() ||
-           settings.warnAboutCrlf() != myWarnAboutCrlf.isSelected());
+           settings.warnAboutCrlf() != myWarnAboutCrlf.isSelected() ||
+           settings.showRecentTag() != myShowRecentTag.isSelected());
   }
 
   /**
@@ -154,6 +157,7 @@ public class GitVcsPanel {
     settings.setSyncSetting(mySyncBranchControl.isSelected() ? GitBranchSyncSetting.SYNC : GitBranchSyncSetting.DONT);
     settings.setAutoCommitOnCherryPick(myAutoCommitOnCherryPick.isSelected());
     settings.setWarnAboutCrlf(myWarnAboutCrlf.isSelected());
+    settings.setShowRecentTag(myShowRecentTag.isSelected());
   }
 
 }
