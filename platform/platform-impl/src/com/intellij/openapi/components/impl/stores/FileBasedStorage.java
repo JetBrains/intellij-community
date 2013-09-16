@@ -170,6 +170,7 @@ public class FileBasedStorage extends XmlElementStorage {
         throw new StateStorageException("It seems like some macros were not expanded for path: " + myFile.getPath());
       }
 
+      LOG.assertTrue(myFile != null);
       myCachedVirtualFile = StorageUtil.save(myFile, getDocumentToSave(), this);
     }
 

@@ -63,6 +63,7 @@ public class StorageUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
 
   private static final boolean DUMP_COMPONENT_STATES = SystemProperties.getBooleanProperty("idea.log.externally.changed.component.states", false);
+  @SuppressWarnings("SpellCheckingInspection")
   private static final SimpleDateFormat LOG_DIR_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
   private StorageUtil() { }
@@ -76,6 +77,7 @@ public class StorageUtil {
     }
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         macros.removeAll(getMacrosFromExistingNotifications(project));
 
@@ -90,6 +92,7 @@ public class StorageUtil {
                            "and " + productName + " cannot restore those paths.";
           new UnknownMacroNotification("Load Error", "Load error: undefined path variables", content, NotificationType.ERROR,
                                        new NotificationListener() {
+                                         @Override
                                          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
                                            ((ProjectEx)project).checkUnknownMacros(true);
                                          }
