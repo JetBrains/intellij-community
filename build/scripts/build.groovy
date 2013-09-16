@@ -141,39 +141,36 @@ class Build {
     projectBuilder.stage("- scramble -")
     if (steps.scramble) {
       if (ultimate_utils.isUnderTeamCity()) {
-      projectBuilder.stage("Scrambling - getPreviousLogs")
-      getPreviousLogs()
-      projectBuilder.stage("Scrambling - prevBuildLog")
-      def prevBuildLog = "$paths.sandbox/prevBuild/logs/ChangeLog.txt"
-      if (!new File(prevBuildLog).exists()) prevBuildLog = null
-      def inc = prevBuildLog != null ? "looseChangeLogFileIn=\"${prevBuildLog}\"" : ""
-      utils.copyAndPatchFile("$home/build/conf/script.zkm.stub", "$paths.sandbox/script.zkm",
+        projectBuilder.stage("Scrambling - getPreviousLogs")
+        getPreviousLogs()
+        projectBuilder.stage("Scrambling - prevBuildLog")
+        def prevBuildLog = "$paths.sandbox/prevBuild/logs/ChangeLog.txt"
+        if (!new File(prevBuildLog).exists()) prevBuildLog = null
+        def inc = prevBuildLog != null ? "looseChangeLogFileIn=\"${prevBuildLog}\"" : ""
+        utils.copyAndPatchFile("$home/build/conf/script.zkm.stub", "$paths.sandbox/script.zkm",
                        ["CLASSES": "\"${args.jarPath}/${args.jarName}\"",
                         "SCRAMBLED_CLASSES": args.jarPath, "INCREMENTAL": inc])
 
-      ant.mkdir(dir: "$paths.artifacts/${args.jarName}.unscrambled")
-      def unscrambledPath = "$paths.artifacts/${args.jarName}.unscramble"
-      ant.copy(file: "$args.jarPath/${args.jarName}", todir: unscrambledPath)
-      utils.notifyArtifactBuilt("$unscrambledPath/${args.jarName}")
+        ant.mkdir(dir: "$paths.artifacts/${args.jarName}.unscrambled")
+        def unscrambledPath = "$paths.artifacts/${args.jarName}.unscramble"
+        ant.copy(file: "$args.jarPath/${args.jarName}", todir: unscrambledPath)
+        utils.notifyArtifactBuilt("$unscrambledPath/${args.jarName}")
 
-      // [vo] the following call is different from prodcut to product
-      // [vo] to think how it can optimize
-      // IDEA
-      // ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName)
-      // WebStorm
-      ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName, ["$paths.distAll/lib"])
-      // PhpStorm
-      //ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", "$paths.distAll/lib", "phpstorm.jar", ["$paths.distAll/plugins/php/lib"])
-
+        // [vo] the following call is different from prodcut to product
+        if ( args.extraLibDirs != "") {
+          ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName, args.extraLibDirs)
+        } else {
+          ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName)
+        }
 
         ant.zip(destfile: "${paths.artifacts}/logs.zip") {
-        fileset(file: "ChangeLog.txt")
-        fileset(file: "ZKM_log.txt")
-        fileset(file: "${paths.sandbox}/script.zkm")
+          fileset(file: "ChangeLog.txt")
+          fileset(file: "ZKM_log.txt")
+          fileset(file: "${paths.sandbox}/script.zkm")
+        }
+        ant.delete(file: "ChangeLog.txt")
+        ant.delete(file: "ZKM_log.txt")
       }
-      ant.delete(file: "ChangeLog.txt")
-      ant.delete(file: "ZKM_log.txt")
-    }
       else {
         projectBuilder.info("teamcity.buildType.id is not defined. Incremental scrambling is disabled")
       }
