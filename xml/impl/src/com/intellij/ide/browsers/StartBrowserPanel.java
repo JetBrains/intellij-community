@@ -1,9 +1,5 @@
 package com.intellij.ide.browsers;
 
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -31,18 +27,8 @@ public class StartBrowserPanel {
     myStartJavaScriptDebuggerCheckBox.setVisible(JavaScriptDebuggerStarter.Util.EP_NAME.getExtensions().length > 0);
   }
 
-  @NotNull
   public JPanel getComponent() {
     return myRoot;
-  }
-
-  @NotNull
-  public String getUrl() {
-    return myStartupPage.getText().trim();
-  }
-
-  public void setUrl(@Nullable String url) {
-    myStartupPage.setText(StringUtil.notNullize(url));
   }
 
   public void clearBorder() {
@@ -71,6 +57,10 @@ public class StartBrowserPanel {
 
   public BrowserSelector getBrowserSelector() {
     return myBrowserSelector;
+  }
+
+  public JTextField getStartupPageField() {
+    return myStartupPage;
   }
 
   private void createUIComponents() {
