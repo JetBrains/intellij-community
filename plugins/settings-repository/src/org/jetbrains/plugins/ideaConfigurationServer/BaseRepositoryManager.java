@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
@@ -90,6 +91,12 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
 
   private void doWrite(String path, InputStream content, int size) throws IOException {
     File file = new File(dir, path);
+
+    if (content instanceof BufferExposingByteArrayInputStream) {
+      FileUtil.writeToFile(file, ((BufferExposingByteArrayInputStream)content).getInternalBuffer(), 0, size);
+      return;
+    }
+
     FileUtil.createParentDirs(file);
     FileOutputStream out = new FileOutputStream(file);
     try {
