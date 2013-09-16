@@ -427,13 +427,7 @@ public class SvnLineCommand extends SvnCommand {
       // TODO: check if we could "configure" commands (or make command to explicitly ask) if cleanup is required - not to search
       // TODO: working copy root each time
       if (wcRoot != null) {
-        final SvnSimpleCommand cleanupCommand = new SvnSimpleCommand(wcRoot, SvnCommandName.cleanup, exePath);
-        try {
-          cleanupCommand.run();
-        }
-        catch (VcsException e) {
-          throw new SvnBindException(e);
-        }
+        runCommand(exePath, SvnCommandName.cleanup, new SvnCommitRunner.CommandListener(null), wcRoot, null);
       } else {
         LOG.info("Could not execute cleanup for command " + command.getCommandText());
       }
