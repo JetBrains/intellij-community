@@ -20,7 +20,7 @@
           <verticalTextPosition value="0"/>
         </properties>
       </component>
-      <component id="8d247" class="javax.swing.JTextField" binding="myStartupPage">
+      <component id="8d247" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myUrlField">
         <constraints>
           <grid row="1" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="150" height="-1"/>
