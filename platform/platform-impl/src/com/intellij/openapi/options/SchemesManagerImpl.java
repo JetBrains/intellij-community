@@ -407,7 +407,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     if (scheme != null && (!myDeletedNames.contains(scheme.getName()) || forceAdd)) {
       T existing = findSchemeByName(scheme.getName());
       if (existing != null) {
-        if (!Comparing.equal(existing, scheme)) {
+        if (!Comparing.equal(existing.getClass(), scheme.getClass())) {
           LOG.warn("'" + scheme.getName() + "' " + existing.getClass().getSimpleName() + " replaced with " + scheme.getClass().getSimpleName());
         }
 
