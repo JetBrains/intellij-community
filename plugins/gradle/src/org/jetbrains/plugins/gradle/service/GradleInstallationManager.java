@@ -399,11 +399,11 @@ public class GradleInstallationManager {
     }
 
     for (Module module : myPlatformFacade.getModules(project)) {
-      String path = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-      if (StringUtil.isEmpty(path)) {
+      String rootProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+      if (StringUtil.isEmpty(rootProjectPath)) {
         continue;
       }
-      File gradleHome = getGradleHome(module.getProject(), path);
+      File gradleHome = getGradleHome(module.getProject(), rootProjectPath);
 
       if (gradleHome == null || !gradleHome.isDirectory()) {
         continue;

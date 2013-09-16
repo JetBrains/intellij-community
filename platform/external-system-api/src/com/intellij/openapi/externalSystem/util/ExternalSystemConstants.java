@@ -26,6 +26,7 @@ public class ExternalSystemConstants {
 
   @NonNls @NotNull public static final String EXTERNAL_SYSTEM_ID_KEY  = "external.system.id";
   @NonNls @NotNull public static final String LINKED_PROJECT_PATH_KEY = "external.linked.project.path";
+  @NonNls @NotNull public static final String ROOT_PROJECT_PATH_KEY = "external.root.project.path";
 
   @NonNls @NotNull public static final String TOOL_WINDOW_TOOLBAR_ACTIONS_GROUP_ID = "ExternalSystem.ToolWindow.Toolbar";
   @NonNls @NotNull public static final String TREE_ACTIONS_GROUP_ID                = "ExternalSystem.Tree.Context";

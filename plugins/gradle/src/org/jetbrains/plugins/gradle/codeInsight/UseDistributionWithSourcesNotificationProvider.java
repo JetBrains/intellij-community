@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
@@ -45,6 +46,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
@@ -86,12 +88,12 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
 
         final Module module = ModuleUtilCore.findModuleForFile(file, myProject);
         if (module == null) return null;
-        final String linkedProjectPath = getConfigPath(module);
-        if (linkedProjectPath == null) return null;
-        final GradleProjectSettings settings = GradleSettings.getInstance(module.getProject()).getLinkedProjectSettings(linkedProjectPath);
+        final String rootProjectPath = getRootProjectPath(module);
+        if (rootProjectPath == null) return null;
+        final GradleProjectSettings settings = GradleSettings.getInstance(module.getProject()).getLinkedProjectSettings(rootProjectPath);
         if (settings == null || settings.getDistributionType() != DistributionType.DEFAULT_WRAPPED) return null;
         if (settings.isDisableWrapperSourceDistributionNotification()) return null;
-        if (isWrapperDistributionWithSourcesUsed(linkedProjectPath)) return null;
+        if (isWrapperDistributionWithSourcesUsed(rootProjectPath)) return null;
 
         final EditorNotificationPanel panel = new EditorNotificationPanel();
         panel.setText(GradleBundle.message("gradle.notifications.use.distribution.with.sources"));
@@ -105,7 +107,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
         panel.createActionLabel(GradleBundle.message("gradle.notifications.apply.suggestion"), new Runnable() {
           @Override
           public void run() {
-            updateWrapperConfiguration(linkedProjectPath);
+            updateWrapperConfiguration(rootProjectPath);
             EditorNotifications.getInstance(module.getProject()).updateAllNotifications();
           }
         });
@@ -140,7 +142,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
       wrapperProperties.setProperty(WrapperExecutor.ZIP_STORE_BASE_PROPERTY, wrapperConfiguration.getZipBase());
       wrapperProperties.setProperty(WrapperExecutor.ZIP_STORE_PATH_PROPERTY, wrapperConfiguration.getZipPath());
       GUtil.saveProperties(wrapperProperties, new File(wrapperPropertiesFile.getPath()));
-      wrapperPropertiesFile.refresh(true, false);
+      LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(wrapperPropertiesFile));
     }
     catch (Exception e) {
       LOG.error(e);
@@ -156,13 +158,13 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
   }
 
   @Nullable
-  private static String getConfigPath(@NotNull Module module) {
+  private static String getRootProjectPath(@NotNull Module module) {
     String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
     if (externalSystemId == null || !GradleConstants.SYSTEM_ID.toString().equals(externalSystemId)) {
       return null;
     }
 
-    String path = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+    String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
     return StringUtil.isEmpty(path) ? null : path;
   }
 }

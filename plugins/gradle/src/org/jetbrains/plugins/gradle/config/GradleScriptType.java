@@ -213,12 +213,11 @@ public class GradleScriptType extends GroovyScriptType {
         if (module == null) {
           throw new CantRunException("Target module is undefined");
         }
-        String linkedProjectPath = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-        if (StringUtil.isEmpty(linkedProjectPath)) {
+        String rootProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+        if (StringUtil.isEmpty(rootProjectPath)) {
           throw new CantRunException(String.format("Module '%s' is not backed by gradle", module.getName()));
         }
-        assert linkedProjectPath != null;
-        final VirtualFile gradleHome = libraryManager.getGradleHome(module, project, linkedProjectPath);
+        final VirtualFile gradleHome = libraryManager.getGradleHome(module, project, rootProjectPath);
         assert gradleHome != null;
 
         params.setMainClass(findMainClass(gradleHome, script, project));

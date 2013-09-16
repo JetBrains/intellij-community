@@ -130,12 +130,11 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
 
   @Nullable
   private ClassLoader createGradleClassLoader(@NotNull Module module) {
-    String linkedProjectPath = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-    if (StringUtil.isEmpty(linkedProjectPath)) {
+    String rootProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+    if (StringUtil.isEmpty(rootProjectPath)) {
       return null;
     }
-    assert linkedProjectPath != null;
-    final VirtualFile sdkHome = myLibraryManager.getGradleHome(module, module.getProject(), linkedProjectPath);
+    final VirtualFile sdkHome = myLibraryManager.getGradleHome(module, module.getProject(), rootProjectPath);
     if (sdkHome == null) {
       return null;
     }
