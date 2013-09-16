@@ -29,6 +29,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="antlayout" exported="" />
+    <orderEntry type="module" module-name="util" exported="" />
   </component>
 </module>
 
