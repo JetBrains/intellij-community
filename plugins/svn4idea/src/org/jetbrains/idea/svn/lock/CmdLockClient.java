@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ public class CmdLockClient extends BaseSvnClient implements LockClient {
     parameters.add("--message");
     parameters.add(message);
 
-    SvnCommand command = CommandUtil.execute(myVcs, SvnCommandName.lock, parameters, null);
+    SvnCommand command = CommandUtil.execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.lock, parameters, null);
     handleCommandCompletion(command, file, SVNEventAction.LOCKED, SVNEventAction.LOCK_FAILED, handler);
   }
 
@@ -39,7 +40,7 @@ public class CmdLockClient extends BaseSvnClient implements LockClient {
   public void unlock(@NotNull File file, boolean force, @Nullable ISVNEventHandler handler) throws VcsException {
     List<String> parameters = prepareParameters(file, force);
 
-    SvnCommand command = CommandUtil.execute(myVcs, SvnCommandName.unlock, parameters, null);
+    SvnCommand command = CommandUtil.execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.unlock, parameters, null);
     handleCommandCompletion(command, file, SVNEventAction.UNLOCKED, SVNEventAction.UNLOCK_FAILED, handler);
   }
 

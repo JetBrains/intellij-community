@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,7 @@ import org.jetbrains.idea.svn.portable.SvnStatusClientI;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -107,7 +109,13 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
 
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored, changeLists);
 
-    SvnLineCommand command = CommandUtil.runSimple(SvnCommandName.st, SvnVcs.getInstance(myProject), base, null, parameters);
+    SvnCommand command;
+    try {
+      command = CommandUtil.execute(SvnVcs.getInstance(myProject), SvnTarget.fromFile(path), SvnCommandName.st, parameters, null);
+    }
+    catch (VcsException e) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+    }
     parseResult(path, revision, handler, base, infoBase, command);
     return 0;
   }

@@ -40,13 +40,16 @@ public class CmdCheckoutClient extends BaseSvnClient implements CheckoutClient {
     CommandUtil.put(parameters, ignoreExternals, "--ignore-externals");
     parameters.add("--force"); // this is to conform to currently used SVNKit behavior - allowUnversionedObstructions
 
-    run(destination, handler, parameters);
+    run(source, destination, handler, parameters);
   }
 
-  private void run(@NotNull File destination, @Nullable ISVNEventHandler handler, @NotNull List<String> parameters) throws VcsException {
+  private void run(@NotNull SvnTarget source,
+                   @NotNull File destination,
+                   @Nullable ISVNEventHandler handler,
+                   @NotNull List<String> parameters) throws VcsException {
     BaseUpdateCommandListener listener = new BaseUpdateCommandListener(destination, handler);
 
-    CommandUtil.execute(myVcs, SvnCommandName.checkout, parameters, null, listener);
+    CommandUtil.execute(myVcs, source, SvnCommandName.checkout, parameters, listener);
 
     listener.throwWrappedIfException();
   }

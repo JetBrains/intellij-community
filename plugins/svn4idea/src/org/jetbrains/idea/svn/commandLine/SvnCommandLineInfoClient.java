@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -199,9 +200,15 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     List<String> parameters = new ArrayList<String>();
 
     fillParameters(path, pegRevision, revision, depth, parameters);
-    String result = CommandUtil.runSimple(SvnCommandName.info, SvnVcs.getInstance(myProject), null, url, parameters).getOutput();
+    SvnCommand command;
+    try {
+      command = CommandUtil.execute(SvnVcs.getInstance(myProject), SvnTarget.fromURL(url), SvnCommandName.info, parameters, null);
+    }
+    catch (VcsException e) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+    }
 
-    parseResult(handler, null, result);
+    parseResult(handler, null, command.getOutput());
   }
 
   @Override

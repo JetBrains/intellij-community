@@ -7,6 +7,7 @@ import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -23,6 +24,6 @@ public class CmdCleanupClient extends BaseSvnClient implements CleanupClient {
     List<String> parameters = new ArrayList<String>();
 
     CommandUtil.put(parameters, path);
-    CommandUtil.execute(myVcs, SvnCommandName.cleanup, parameters, null);
+    CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.cleanup, parameters, null);
   }
 }

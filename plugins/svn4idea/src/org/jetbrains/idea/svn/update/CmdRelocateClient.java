@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -23,6 +24,6 @@ public class CmdRelocateClient extends BaseSvnClient implements RelocateClient {
     parameters.add(toPrefix);
     CommandUtil.put(parameters, copyRoot, false);
 
-    CommandUtil.execute(myVcs, SvnCommandName.relocate, parameters, null);
+    CommandUtil.execute(myVcs, SvnTarget.fromFile(copyRoot), SvnCommandName.relocate, parameters, null);
   }
 }

@@ -112,15 +112,12 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  public static SvnLineCommand runWithAuthenticationAttempt(final File firstFile,
+  public static SvnLineCommand runWithAuthenticationAttempt(@NotNull final File workingDirectory,
                                                             @Nullable final SVNURL repositoryUrl,
                                                             SvnCommandName commandName,
                                                             final LineCommandListener listener,
                                                             @NotNull AuthenticationCallback authenticationCallback,
                                                             String... parameters) throws SvnBindException {
-    File base = firstFile != null ? (firstFile.isDirectory() ? firstFile : firstFile.getParentFile()) : null;
-    base = SvnBindUtil.correctUpToExistingParent(base);
-
     File configDir = null;
 
     try {
@@ -130,7 +127,7 @@ public class SvnLineCommand extends SvnCommand {
 
       while (true) {
         final String exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
-        final SvnLineCommand command = runCommand(exePath, commandName, listener, base, configDir, parameters);
+        final SvnLineCommand command = runCommand(exePath, commandName, listener, workingDirectory, configDir, parameters);
         final Integer exitCode = command.myExitCode.get();
 
         // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
@@ -145,7 +142,7 @@ public class SvnLineCommand extends SvnCommand {
             final String errText = command.myErr.toString().trim();
             final AuthCallbackCase callback = createCallback(errText, authenticationCallback, repositoryUrl);
             if (callback != null) {
-              cleanup(exePath, command, base);
+              cleanup(exePath, command, workingDirectory);
               if (callback.getCredentials(errText)) {
                 if (authenticationCallback.getSpecialConfigDir() != null) {
                   configDir = authenticationCallback.getSpecialConfigDir();
@@ -422,9 +419,9 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  private static void cleanup(String exePath, SvnCommand command, File base) throws SvnBindException {
+  private static void cleanup(String exePath, SvnCommand command, @NotNull File workingDirectory) throws SvnBindException {
     if (command.isManuallyDestroyed() && command.getCommandName().isWriteable()) {
-      File wcRoot = SvnUtil.getWorkingCopyRootNew(base);
+      File wcRoot = SvnUtil.getWorkingCopyRootNew(workingDirectory);
 
       // not all commands require cleanup - for instance, some commands operate only with repository - like "svn info <url>"
       // TODO: check if we could "configure" commands (or make command to explicitly ask) if cleanup is required - not to search

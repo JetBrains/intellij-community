@@ -8,6 +8,7 @@ import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnBindUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class CmdChangeListClient extends BaseSvnClient implements ChangeListClie
 
     // for now parsing of the output is not required as command is executed only for one file
     // and will be either successful or exception will be thrown
-    CommandUtil.execute(myVcs, SvnCommandName.changelist, parameters, null);
+    CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.changelist, parameters, null);
   }
 
   @Override
@@ -42,6 +43,6 @@ public class CmdChangeListClient extends BaseSvnClient implements ChangeListClie
 
     // for now parsing of the output is not required as command is executed only for one file
     // and will be either successful or exception will be thrown
-    CommandUtil.execute(myVcs, SvnCommandName.changelist, parameters, null);
+    CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.changelist, parameters, null);
   }
 }
