@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ public class LossyEncodingTest extends LightDaemonAnalyzerTestCase {
     backspace();
     doTestConfiguredFile(true, false, null);
   }
+
   public void testNativeConversion() throws Exception {
     configureFromFileText("x.properties","a=<caret>v");
     EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(null, true);
@@ -117,16 +118,16 @@ public class LossyEncodingTest extends LightDaemonAnalyzerTestCase {
     doTestConfiguredFile(true, false, null);
   }
 
-  public static final String THREE_NOTORIOUS_RUSSIAN_LETTERS = "\u0416\u041e\u041f";
   public void testDetectWrongEncoding() throws Exception {
-    configureFromFileText("Win1251.txt", THREE_NOTORIOUS_RUSSIAN_LETTERS);
+    String threeNotoriousRussianLetters = "\u0416\u041e\u041f";
+    configureFromFileText("Win1251.txt", threeNotoriousRussianLetters);
     VirtualFile virtualFile = getFile().getVirtualFile();
     assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
     Charset WINDOWS_1251 = Charset.forName("windows-1251");
     virtualFile.setCharset(WINDOWS_1251);
     FileDocumentManager.getInstance().saveAllDocuments();
     assertEquals(WINDOWS_1251, virtualFile.getCharset());
-    assertEquals(THREE_NOTORIOUS_RUSSIAN_LETTERS, new String(virtualFile.contentsToByteArray(), WINDOWS_1251));
+    assertEquals(threeNotoriousRussianLetters, new String(virtualFile.contentsToByteArray(), WINDOWS_1251));
     virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
 
     doHighlighting();
