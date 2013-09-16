@@ -449,6 +449,7 @@
     <typeProvider implementation="com.jetbrains.pyramid.codeInsight.PyramidTypeProvider"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.pyramid.templates.ref.ChameleonTokenSetContributor"/>
     <visitorFilter language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonTemplateVisitorFilter"/>
+    <pyClassMembersProvider implementation="com.jetbrains.pyramid.codeInsight.PyramidRequestClassMembersProvider"/>
   </extensions>
 
   <project-components>
