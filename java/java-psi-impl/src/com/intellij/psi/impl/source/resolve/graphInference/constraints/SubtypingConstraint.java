@@ -154,4 +154,26 @@ public class SubtypingConstraint implements ConstraintFormula {
     }
     return true;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    SubtypingConstraint that = (SubtypingConstraint)o;
+
+    if (myIsRefTypes != that.myIsRefTypes) return false;
+    if (!myS.equals(that.myS)) return false;
+    if (!myT.equals(that.myT)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myS.hashCode();
+    result = 31 * result + myT.hashCode();
+    result = 31 * result + (myIsRefTypes ? 1 : 0);
+    return result;
+  }
 }

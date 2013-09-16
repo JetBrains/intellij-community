@@ -83,4 +83,24 @@ public class ExpressionCompatibilityConstraint implements ConstraintFormula {
     
     return true;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ExpressionCompatibilityConstraint that = (ExpressionCompatibilityConstraint)o;
+
+    if (!myExpression.equals(that.myExpression)) return false;
+    if (!myT.equals(that.myT)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myExpression.hashCode();
+    result = 31 * result + myT.hashCode();
+    return result;
+  }
 }

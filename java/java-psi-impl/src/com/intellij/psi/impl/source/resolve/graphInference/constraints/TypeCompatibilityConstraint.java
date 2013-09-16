@@ -58,4 +58,24 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
     constraints.add(new SubtypingConstraint(myT, myS, true));
     return true;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    TypeCompatibilityConstraint that = (TypeCompatibilityConstraint)o;
+
+    if (!myS.equals(that.myS)) return false;
+    if (!myT.equals(that.myT)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myT.hashCode();
+    result = 31 * result + myS.hashCode();
+    return result;
+  }
 }
