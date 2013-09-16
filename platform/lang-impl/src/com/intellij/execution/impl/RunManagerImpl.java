@@ -320,7 +320,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
                                List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
     final RunConfiguration configuration = settings.getConfiguration();
 
-    String existingId = findConfigurationIdByUniqueName(settings.getUniqueID());
+    String existingId = findExistingConfigurationId(settings);
     String newId = settings.getUniqueID();
     RunnerAndConfigurationSettings existingSettings = null;
 
@@ -420,7 +420,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @Nullable
   public RunnerAndConfigurationSettings getSelectedConfiguration() {
     if (mySelectedConfigurationId == null && myLoadedSelectedConfigurationUniqueName != null) {
-      setSelectedConfigurationId(findConfigurationIdByUniqueName(myLoadedSelectedConfigurationUniqueName));
+      setSelectedConfigurationId(myLoadedSelectedConfigurationUniqueName);
     }
     return mySelectedConfigurationId == null ? null : myConfigurations.get(mySelectedConfigurationId);
   }
@@ -702,16 +702,15 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         }
       }
       for (String name : list) {
-        String id = findConfigurationIdByUniqueName(name);
-        if (id != null) {
-          myRecentlyUsedTemporaries.add(myConfigurations.get(id).getConfiguration());
-        }
+        RunnerAndConfigurationSettings settings = myConfigurations.get(name);
+        if (settings != null)
+          myRecentlyUsedTemporaries.add(settings.getConfiguration());
       }
     }
     myOrdered = false;
 
     myLoadedSelectedConfigurationUniqueName = parentNode.getAttributeValue(SELECTED_ATTR);
-    setSelectedConfigurationId(findConfigurationIdByUniqueName(myLoadedSelectedConfigurationUniqueName));
+    setSelectedConfigurationId(myLoadedSelectedConfigurationUniqueName);
 
     fireBeforeRunTasksUpdated();
     fireRunConfigurationSelected();
@@ -730,26 +729,17 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       }
     }
 
-    setSelectedConfigurationId(findConfigurationIdByUniqueName(myLoadedSelectedConfigurationUniqueName));
+    setSelectedConfigurationId(myLoadedSelectedConfigurationUniqueName);
 
     fireRunConfigurationSelected();
   }
 
   @Nullable
-  private String findConfigurationIdByUniqueName(@Nullable String selectedUniqueName) {
-    if (selectedUniqueName != null) {
-      for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
-        if (selectedUniqueName.equals(each.getUniqueID())) {
-          return each.getUniqueID();
-        }
-      }
-      //migration code 11.08.2013
-      for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
-        RunConfiguration config = each.getConfiguration();
-        String uniqueName = config.getType().getDisplayName() + "." + config.getName() +
-        (config instanceof UnknownRunConfiguration ? config.getUniqueID() : "");
-        if (selectedUniqueName.equals(uniqueName)) {
-          return each.getUniqueID();
+  private String findExistingConfigurationId(@Nullable RunnerAndConfigurationSettings settings) {
+    if (settings != null) {
+      for (Map.Entry<String, RunnerAndConfigurationSettings> entry : myConfigurations.entrySet()) {
+        if (entry.getValue() == settings) {
+          return entry.getKey();
         }
       }
     }
