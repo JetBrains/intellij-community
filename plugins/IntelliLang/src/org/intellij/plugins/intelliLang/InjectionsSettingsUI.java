@@ -29,7 +29,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -39,7 +38,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.ui.*;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,7 +56,6 @@ import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
-import com.intellij.psi.injection.ReferenceInjector;
 import org.jdom.Document;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +74,7 @@ import java.util.List;
 /**
  * @author Gregory.Shrago
  */
-public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonDefaultProjectConfigurable, Configurable.NoScroll {
+public class InjectionsSettingsUI implements SearchableConfigurable.Parent, Configurable.NoScroll {
 
   private final Project myProject;
   private final CfgInfo[] myInfos;
@@ -234,6 +234,12 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
     });
 
     new AnAction("Toggle") {
+      @Override
+      public void update(AnActionEvent e) {
+        SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myInjectionsTable);
+        e.getPresentation().setEnabled(supply == null || !supply.isPopupActive());
+      }
+
       @Override
       public void actionPerformed(final AnActionEvent e) {
         performToggleAction();
