@@ -584,4 +584,14 @@ public class ExpressionUtils {
     }
     return false;
   }
+
+  public static boolean isNegative(@NotNull PsiExpression expression) {
+    final PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiPrefixExpression)) {
+      return false;
+    }
+    final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
+    final IElementType tokenType = prefixExpression.getOperationTokenType();
+    return JavaTokenType.MINUS.equals(tokenType);
+  }
 }

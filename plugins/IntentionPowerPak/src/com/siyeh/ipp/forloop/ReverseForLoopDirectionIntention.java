@@ -19,11 +19,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
-import com.siyeh.ipp.psiutils.ExpressionUtils;
 import com.siyeh.ipp.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
