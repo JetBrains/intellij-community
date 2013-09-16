@@ -435,35 +435,33 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     private void saveForProviders(final Integer hash) {
-      if (myProviderUpToDateHash == null || !myProviderUpToDateHash.equals(hash)) {
-        try {
-          if (!myIsProjectSettings) {
-            for (RoamingType roamingType : RoamingType.values()) {
-              if (roamingType != RoamingType.DISABLED) {
-                try {
-                  Document copy = getDocumentToSave().clone();
-                  filterComponentsDisabledForRoaming(copy.getRootElement(), roamingType);
+      if (!myIsProjectSettings || (myProviderUpToDateHash != null && myProviderUpToDateHash.equals(hash))) {
+        return;
+      }
 
-                  if (!copy.getRootElement().getChildren().isEmpty()) {
-                    StorageUtil.sendContent(myStreamProvider, myFileSpec, copy, roamingType, true);
-                    Document versionDoc = createVersionDocument(copy);
-                    if (!versionDoc.getRootElement().getChildren().isEmpty()) {
-                      StorageUtil.sendContent(myStreamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
-                    }
-                  }
-                }
-                catch (IOException e) {
-                  LOG.warn(e);
+      try {
+        for (RoamingType roamingType : RoamingType.values()) {
+          if (roamingType != RoamingType.DISABLED) {
+            try {
+              Document copy = getDocumentToSave().clone();
+              filterComponentsDisabledForRoaming(copy.getRootElement(), roamingType);
+
+              if (!copy.getRootElement().getChildren().isEmpty()) {
+                StorageUtil.sendContent(myStreamProvider, myFileSpec, copy, roamingType, true);
+                Document versionDoc = createVersionDocument(copy);
+                if (!versionDoc.getRootElement().getChildren().isEmpty()) {
+                  StorageUtil.sendContent(myStreamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
                 }
               }
-
+            }
+            catch (IOException e) {
+              LOG.warn(e);
             }
           }
         }
-        finally {
-          myProviderUpToDateHash = hash;
-        }
-
+      }
+      finally {
+        myProviderUpToDateHash = hash;
       }
     }
 
