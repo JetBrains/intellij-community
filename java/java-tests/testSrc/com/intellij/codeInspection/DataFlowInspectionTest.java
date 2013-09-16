@@ -293,6 +293,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testLongCircuitOperations() { doTest(); }
   public void testUnconditionalForLoop() { doTest(); }
   public void testAnonymousMethodIndependence() { doTest(); }
+  public void testAnonymousFieldIndependence() { doTest(); }
   
   public void _testNullCheckBeforeInstanceof() { doTest(); }
 }

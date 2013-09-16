@@ -27,6 +27,7 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
@@ -56,6 +57,7 @@ public class DfaVariableValue extends DfaValue {
     public DfaVariableValue createVariableValue(PsiModifierListOwner myVariable,
                                                 @Nullable PsiType varType, boolean isNegated, @Nullable DfaVariableValue qualifier, @Nullable PsiMethod accessMethod) {
       mySharedInstance.myVariable = myVariable;
+      mySharedInstance.myVarType = varType;
       mySharedInstance.myIsNegated = isNegated;
       mySharedInstance.myQualifier = qualifier;
       mySharedInstance.myAccessMethod = accessMethod;
@@ -147,6 +149,7 @@ public class DfaVariableValue extends DfaValue {
 
   private boolean hardEquals(DfaVariableValue aVar) {
     return aVar.myVariable == myVariable &&
+           Comparing.equal(aVar.myVarType, myVarType) &&
            aVar.myIsNegated == myIsNegated &&
            aVar.myAccessMethod == myAccessMethod &&
            (myQualifier == null ? aVar.myQualifier == null : myQualifier.hardEquals(aVar.myQualifier));
