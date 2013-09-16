@@ -156,10 +156,17 @@ class Build {
       ant.copy(file: "$args.jarPath/${args.jarName}", todir: unscrambledPath)
       utils.notifyArtifactBuilt("$unscrambledPath/${args.jarName}")
 
-//      ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName)
+      // [vo] the following call is different from prodcut to product
+      // [vo] to think how it can optimize
+      // IDEA
+      // ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName)
+      // WebStorm
       ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName, ["$paths.distAll/lib"])
+      // PhpStorm
+      //ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", "$paths.distAll/lib", "phpstorm.jar", ["$paths.distAll/plugins/php/lib"])
 
-      ant.zip(destfile: "${paths.artifacts}/logs.zip") {
+
+        ant.zip(destfile: "${paths.artifacts}/logs.zip") {
         fileset(file: "ChangeLog.txt")
         fileset(file: "ZKM_log.txt")
         fileset(file: "${paths.sandbox}/script.zkm")
@@ -172,6 +179,7 @@ class Build {
       }
     }
   }
+
   private getPreviousLogs() {
     def removeZip = "${ultimate_utils.lastPinnedBuild()}/logs.zip"
     def localZip = "${paths.sandbox}/prevBuild/logs.zip"
