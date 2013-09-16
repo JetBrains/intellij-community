@@ -90,7 +90,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     @Override
-    public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+    public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
       for (StreamProvider streamProvider : getStreamProviders()) {
         try {
           if (streamProvider.isEnabled()) {
@@ -126,12 +126,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       }
 
       return null;
-    }
-
-    @NotNull
-    @Override
-    public String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
     @Override

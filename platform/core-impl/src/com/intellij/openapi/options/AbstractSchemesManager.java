@@ -21,8 +21,9 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.UniqueNameGenerator;
-import org.jetbrains.annotations.Nullable;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -130,6 +131,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
     String schemeName = scheme.getName();
     Scheme toDelete = findSchemeToDelete(schemeName);
 
+    //noinspection SuspiciousMethodCalls
     mySchemes.remove(toDelete);
     if (myCurrentScheme == toDelete) {
       myCurrentScheme = null;
@@ -156,7 +158,7 @@ public abstract class AbstractSchemesManager<T extends Scheme, E extends Externa
   }
 
   public Collection<String> getAllSchemeNames(Collection<T> schemes) {
-    Set<String> names = new HashSet<String>();
+    Set<String> names = new THashSet<String>();
     for (T scheme : schemes) {
       names.add(scheme.getName());
     }

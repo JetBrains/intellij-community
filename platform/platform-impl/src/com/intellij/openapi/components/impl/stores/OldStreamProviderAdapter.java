@@ -2,12 +2,14 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.options.CurrentUserHolder;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public final class OldStreamProviderAdapter extends StreamProvider implements CurrentUserHolder {
   final com.intellij.openapi.options.StreamProvider myProvider;
@@ -24,7 +26,7 @@ public final class OldStreamProviderAdapter extends StreamProvider implements Cu
   }
 
   @Override
-  public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+  public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
     if (myRoamingType == roamingType) {
       myProvider.saveContent(fileSpec, content, size, roamingType, async);
     }
@@ -38,8 +40,13 @@ public final class OldStreamProviderAdapter extends StreamProvider implements Cu
 
   @NotNull
   @Override
-  public String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-    return myRoamingType == roamingType ? myProvider.listSubFiles(fileSpec, roamingType) : ArrayUtil.EMPTY_STRING_ARRAY;
+  public List<String> listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+    if (myRoamingType == roamingType) {
+      return Arrays.asList(myProvider.listSubFiles(fileSpec, roamingType));
+    }
+    else {
+      return Collections.emptyList();
+    }
   }
 
   @Override

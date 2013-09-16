@@ -97,14 +97,14 @@ public class CompoundShelfFileProcessor {
     return result;
   }
 
-  public List<String> getServerFiles() {
+  public Collection<String> getServerFiles() {
     Collection<String> result = new LinkedHashSet<String>();
     for (StreamProvider serverStreamProvider : myServerStreamProviders) {
       if (serverStreamProvider.isEnabled()) {
         ContainerUtil.addAll(result, serverStreamProvider.listSubFiles(FILE_SPEC, RoamingType.PER_USER));
       }
     }
-    return new ArrayList<String>(result);
+    return result;
   }
 
   public String copyFileFromServer(final String serverFileName, final List<String> localFileNames) {
@@ -137,7 +137,7 @@ public class CompoundShelfFileProcessor {
     return serverFileName;
   }
 
-  public String renameFileOnServer(final String serverFileName, final List<String> serverFileNames, final List<String> localFileNames) {
+  public String renameFileOnServer(final String serverFileName, final Collection<String> serverFileNames, final Collection<String> localFileNames) {
     String newName = getNewFileName(serverFileName, serverFileNames, localFileNames);
     String oldFilePath = FILE_SPEC + serverFileName;
     String newFilePath = FILE_SPEC + newName;
@@ -168,12 +168,11 @@ public class CompoundShelfFileProcessor {
     }
   }
 
-  private static void copyFileContentToProviders(final String newFilePath, final StreamProvider serverStreamProvider, final File file)
-      throws IOException {
+  private static void copyFileContentToProviders(final String newFilePath, final StreamProvider serverStreamProvider, final File file) throws IOException {
     FileInputStream input = new FileInputStream(file);
     try {
       if (serverStreamProvider.isEnabled()) {
-        serverStreamProvider.saveContent(newFilePath, input, file.length(), RoamingType.PER_USER, true);
+        serverStreamProvider.saveContent(newFilePath, input, (int)file.length(), RoamingType.PER_USER, true);
       }
     }
     finally {
@@ -191,7 +190,7 @@ public class CompoundShelfFileProcessor {
     }
   }
 
-  private static String getNewFileName(final String serverFileName, final List<String> serverFileNames, final List<String> localFileNames) {
+  private static String getNewFileName(final String serverFileName, final Collection<String> serverFileNames, Collection<String> localFileNames) {
     String name = FileUtil.getNameWithoutExtension(serverFileName);
     String ext = FileUtilRt.getExtension(serverFileName);
     for (int i = 1; ;i++) {

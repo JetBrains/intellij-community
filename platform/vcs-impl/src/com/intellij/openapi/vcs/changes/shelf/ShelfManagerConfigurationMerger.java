@@ -51,7 +51,7 @@ public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
     Map<String, ShelvedChangeList> serverFileToChangeList = collectChanges(serverElement);
     Map<String, ShelvedChangeList> localFileToChangeList = collectChanges(localElement);
 
-    List<String> serverFileNames = myFileProcessor.getServerFiles();
+    Collection<String> serverFileNames = myFileProcessor.getServerFiles();
     List<String> localFileNames = myFileProcessor.getLocalFiles();
 
     Collection<String> serverChangeListFiles = new HashSet<String>();
@@ -68,7 +68,7 @@ public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
           newFileName = myFileProcessor.copyFileFromServer(serverFileName, localFileNames);
         }
         else {
-          newFileName = myFileProcessor.renameFileOnServer(serverFileName, serverFileNames,localFileNames );
+          newFileName = myFileProcessor.renameFileOnServer(serverFileName, serverFileNames, localFileNames );
         }
       }
       changeList.PATH = new File(myFileProcessor.getBaseIODir(),newFileName).getAbsolutePath();

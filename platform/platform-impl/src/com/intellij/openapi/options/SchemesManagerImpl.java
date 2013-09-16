@@ -300,28 +300,27 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private Collection<E> readSchemesFromProviders() {
     Collection<E> result = new ArrayList<E>();
     for (StreamProvider provider : getEnabledProviders()) {
-      String[] paths = provider.listSubFiles(myFileSpec, myRoamingType);
-      for (String subpath : paths) {
-        if (!subpath.equals(DELETED_XML)) {
+      for (String subPath : provider.listSubFiles(myFileSpec, myRoamingType)) {
+        if (!subPath.equals(DELETED_XML)) {
           try {
-            final Document subDocument = StorageUtil.loadDocument(provider.loadContent(getFileFullPath(subpath), myRoamingType));
+            final Document subDocument = StorageUtil.loadDocument(provider.loadContent(getFileFullPath(subPath), myRoamingType));
             if (subDocument != null) {
               E scheme = readScheme(subDocument);
               boolean fileRenamed = false;
               T existing = findSchemeByName(scheme.getName());
               if (existing != null && existing instanceof ExternalizableScheme) {
                 String currentFileName = ((ExternalizableScheme)existing).getExternalInfo().getCurrentFileName();
-                if (currentFileName != null && !currentFileName.equals(subpath)) {
-                  deleteServerFiles(subpath);
-                  subpath = currentFileName;
+                if (currentFileName != null && !currentFileName.equals(subPath)) {
+                  deleteServerFiles(subPath);
+                  subPath = currentFileName;
                   fileRenamed = true;
                 }
 
               }
-              String fileName = checkFileNameIsFree(subpath, scheme.getName());
+              String fileName = checkFileNameIsFree(subPath, scheme.getName());
 
-              if (!fileRenamed && !fileName.equals(subpath)) {
-                deleteServerFiles(subpath);
+              if (!fileRenamed && !fileName.equals(subPath)) {
+                deleteServerFiles(subPath);
               }
 
               if (scheme != null) {
@@ -364,16 +363,16 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return _file;
   }
 
-  private String checkFileNameIsFree(final String subpath, final String schemeName) {
+  private String checkFileNameIsFree(final String subPath, final String schemeName) {
     for (Scheme scheme : mySchemes) {
       if (scheme instanceof ExternalizableScheme) {
         ExternalInfo externalInfo = ((ExternalizableScheme)scheme).getExternalInfo();
         String name = externalInfo.getCurrentFileName();
         if (name != null) {
           String fileName = name + mySchemeExtension;
-          if (fileName.equals(subpath) && !Comparing.equal(schemeName, scheme.getName())) {
+          if (fileName.equals(subPath) && !Comparing.equal(schemeName, scheme.getName())) {
             return createUniqueFileName(collectAllFileNames(), UniqueFileNamesProvider.convertName(schemeName));
-            /*VirtualFile oldFile = myVFSBaseDir.findChild(subpath);
+            /*VirtualFile oldFile = myVFSBaseDir.findChild(subPath);
             if (oldFile != null) {
               oldFile.copy(this, myVFSBaseDir, uniqueFileName + EXT);
             }
@@ -383,7 +382,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       }
     }
 
-    return subpath;
+    return subPath;
   }
 
   private Collection<String> collectAllFileNames() {
