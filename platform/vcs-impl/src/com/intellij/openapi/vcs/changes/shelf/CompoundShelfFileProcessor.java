@@ -19,15 +19,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -45,13 +44,12 @@ public class CompoundShelfFileProcessor {
 
   public CompoundShelfFileProcessor(final String subdirName) {
     mySubdirName = subdirName;
-    myServerStreamProviders = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders(RoamingType.PER_USER);
+    myServerStreamProviders = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders();
 
     FILE_SPEC = "$ROOT_CONFIG$/" + subdirName + "/";
     myShelfPath = PathManager.getConfigPath() + File.separator + mySubdirName;
   }
 
-  @TestOnly
   public CompoundShelfFileProcessor(final StreamProvider[] serverStreamProviders, final String shelfPath) {
     myServerStreamProviders = serverStreamProviders;
     myShelfPath = shelfPath;

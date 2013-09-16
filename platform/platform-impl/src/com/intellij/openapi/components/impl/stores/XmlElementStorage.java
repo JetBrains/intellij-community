@@ -19,7 +19,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -76,7 +75,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected XmlElementStorage(@Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
                               @NotNull Disposable parentDisposable,
                               @NotNull String rootElementName,
-                              StreamProvider streamProvider,
+                              @Nullable StreamProvider streamProvider,
                               String fileSpec,
                               ComponentRoamingManager componentRoamingManager, ComponentVersionProvider localComponentVersionsProvider) {
     myPathMacroSubstitutor = pathMacroSubstitutor;
@@ -165,7 +164,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       loadState(result, document.getRootElement());
     }
 
-    if (!myIsProjectSettings && useProvidersData && myStreamProvider.isEnabled()) {
+    if (myStreamProvider != null && !myIsProjectSettings && useProvidersData && myStreamProvider.isEnabled()) {
       for (RoamingType roamingType : RoamingType.values()) {
         if (roamingType != RoamingType.DISABLED && roamingType != RoamingType.GLOBAL) {
           loadProviderData(result, roamingType);
@@ -177,6 +176,10 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   private void loadProviderData(StorageData result, RoamingType roamingType) {
+    if (myStreamProvider == null) {
+      return;
+    }
+
     try {
       final Document sharedDocument = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec, roamingType));
       if (sharedDocument != null) {
@@ -435,35 +438,33 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     private void saveForProviders(final Integer hash) {
-      if (myProviderUpToDateHash == null || !myProviderUpToDateHash.equals(hash)) {
-        try {
-          if (!myIsProjectSettings) {
-            for (RoamingType roamingType : RoamingType.values()) {
-              if (roamingType != RoamingType.DISABLED) {
-                try {
-                  Document copy = getDocumentToSave().clone();
-                  filterComponentsDisabledForRoaming(copy.getRootElement(), roamingType);
+      if (myStreamProvider == null || myIsProjectSettings || (myProviderUpToDateHash != null && myProviderUpToDateHash.equals(hash))) {
+        return;
+      }
 
-                  if (!copy.getRootElement().getChildren().isEmpty()) {
-                    StorageUtil.sendContent(myStreamProvider, myFileSpec, copy, roamingType, true);
-                    Document versionDoc = createVersionDocument(copy);
-                    if (!versionDoc.getRootElement().getChildren().isEmpty()) {
-                      StorageUtil.sendContent(myStreamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
-                    }
-                  }
-                }
-                catch (IOException e) {
-                  LOG.warn(e);
+      try {
+        for (RoamingType roamingType : RoamingType.values()) {
+          if (roamingType != RoamingType.DISABLED) {
+            try {
+              Document copy = getDocumentToSave().clone();
+              filterComponentsDisabledForRoaming(copy.getRootElement(), roamingType);
+
+              if (!copy.getRootElement().getChildren().isEmpty()) {
+                StorageUtil.sendContent(myStreamProvider, myFileSpec, copy, roamingType, true);
+                Document versionDoc = createVersionDocument(copy);
+                if (!versionDoc.getRootElement().getChildren().isEmpty()) {
+                  StorageUtil.sendContent(myStreamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
                 }
               }
-
+            }
+            catch (IOException e) {
+              LOG.warn(e);
             }
           }
         }
-        finally {
-          myProviderUpToDateHash = hash;
-        }
-
+      }
+      finally {
+        myProviderUpToDateHash = hash;
       }
     }
 
@@ -609,6 +610,10 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   private void loadProviderVersions() {
+    if (myStreamProvider == null) {
+      return;
+    }
+
     myProviderVersions = new THashMap<String, Long>();
     for (RoamingType type : RoamingType.values()) {
       Document doc = null;

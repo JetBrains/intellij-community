@@ -16,7 +16,6 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,32 +24,6 @@ import java.io.InputStream;
 
 public interface StreamProvider {
   StreamProvider[] EMPTY_ARRAY = new StreamProvider[0];
-
-  StreamProvider DEFAULT = new StreamProvider() {
-    @Override
-    public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
-
-    }
-
-    @Override
-    public InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException {
-      return null;
-    }
-
-    @Override
-    public String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-
-    @Override
-    public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return false;
-    }
-  };
 
   void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException;
 

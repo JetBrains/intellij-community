@@ -26,7 +26,6 @@ import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -256,12 +255,14 @@ public class StorageUtil {
   }
 
   public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, Document copy, @NotNull RoamingType type, boolean async) throws IOException {
+    if (!provider.isEnabled()) {
+      return;
+    }
+
     byte[] content = printDocument(copy);
     ByteArrayInputStream in = new ByteArrayInputStream(content);
     try {
-      if (provider.isEnabled()) {
-        provider.saveContent(fileSpec, in, content.length, type, async);
-      }
+      provider.saveContent(fileSpec, in, content.length, type, async);
     }
     finally {
       in.close();

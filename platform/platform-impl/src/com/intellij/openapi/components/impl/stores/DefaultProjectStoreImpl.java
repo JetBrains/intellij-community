@@ -50,7 +50,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   @Nullable
   Element getStateCopy() {
     final Element element = myProjectManager.getDefaultProjectRootElement();
-    return element != null ? (Element)element.clone() : null;
+    return element != null ? element.clone() : null;
   }
 
 
@@ -70,7 +70,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     final Document document = _d;
 
     final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor(), componentManager,
-                                                            ROOT_TAG_NAME, StreamProvider.DEFAULT, "", ComponentRoamingManager.getInstance(),
+                                                            ROOT_TAG_NAME, null, "", ComponentRoamingManager.getInstance(),
                                                             ComponentVersionProvider.EMPTY) {
       @Override
       @Nullable
@@ -166,7 +166,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       @Override
       @Nullable
       public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation)
-      throws StateStorageException {
+        throws StateStorageException {
         return storage;
       }
 
@@ -176,12 +176,18 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Override
-      public void unregisterStreamProvider(final StreamProvider streamProvider, final RoamingType roamingType) {
+      public void registerStreamProvider(@NotNull com.intellij.openapi.components.impl.stores.StreamProvider streamProvider) {
+        throw new UnsupportedOperationException("Method registerStreamProvider not implemented in " + getClass());
+      }
+
+      @Override
+      public void unregisterStreamProvider(@NotNull com.intellij.openapi.components.impl.stores.StreamProvider streamProvider) {
         throw new UnsupportedOperationException("Method unregisterStreamProvider not implemented in " + getClass());
       }
+
       @NotNull
       @Override
-      public StreamProvider[] getStreamProviders(@NotNull RoamingType roamingType) {
+      public com.intellij.openapi.components.impl.stores.StreamProvider[] getStreamProviders() {
         throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
       }
 
@@ -192,7 +198,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       @Override
       public void reset() {
-
       }
     };
   }
