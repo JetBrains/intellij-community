@@ -384,7 +384,7 @@ public class HighlightClassUtil {
     }
 
     PsiClass aClass = (PsiClass)keyword.getParent();
-    if (PsiUtilCore.hasErrorElementChild(aClass) || aClass.getQualifiedName() == null && !aClass.isInterface()) {
+    if (PsiUtilCore.hasErrorElementChild(aClass)) {
       return null;
     }
 
