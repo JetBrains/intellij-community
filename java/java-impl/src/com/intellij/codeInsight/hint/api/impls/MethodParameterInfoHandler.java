@@ -23,7 +23,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
@@ -216,7 +215,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   private static PsiSubstitutor getCandidateInfoSubstitutor(CandidateInfo candidate) {
     return candidate instanceof MethodCandidateInfo && ((MethodCandidateInfo)candidate).isInferencePossible()
-                                 ? ((MethodCandidateInfo)candidate).inferTypeArguments(CompletionParameterTypeInferencePolicy.INSTANCE)
+                                 ? ((MethodCandidateInfo)candidate).inferTypeArguments(CompletionParameterTypeInferencePolicy.INSTANCE, true)
                                  : candidate.getSubstitutor();
   }
 

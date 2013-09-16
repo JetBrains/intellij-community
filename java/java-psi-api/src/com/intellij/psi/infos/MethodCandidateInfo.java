@@ -20,6 +20,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
@@ -80,7 +81,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   private int getApplicabilityLevelInner() {
     if (myArgumentTypes == null) return ApplicabilityLevel.NOT_APPLICABLE;
 
-    int level = PsiUtil.getApplicabilityLevel(getElement(), getSubstitutor(), myArgumentTypes, myLanguageLevel);
+    int level = PsiUtil.getApplicabilityLevel(getElement(), getSubstitutor(!Registry.is("enable.graph.inference", false)), myArgumentTypes, myLanguageLevel);
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable()) level = ApplicabilityLevel.NOT_APPLICABLE;
     return level;
   }
@@ -100,15 +101,19 @@ public class MethodCandidateInfo extends CandidateInfo{
   
   @Override
   public PsiSubstitutor getSubstitutor() {
-    if (myCalcedSubstitutor == null) {
+    return getSubstitutor(true);
+  }
+  
+  public PsiSubstitutor getSubstitutor(boolean includeReturnConstraint) {
+    if (myCalcedSubstitutor == null || !includeReturnConstraint) {
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
         final RecursionGuard.StackStamp stackStamp = PsiDiamondType.ourDiamondGuard.markStack();
 
-        final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
+        final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
 
-         if (!stackStamp.mayCacheNow()) {
+         if (!stackStamp.mayCacheNow() || !includeReturnConstraint) {
           return inferredSubstitutor;
         }
 
@@ -151,15 +156,15 @@ public class MethodCandidateInfo extends CandidateInfo{
     return (PsiMethod)super.getElement();
   }
 
-  public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy) {
+  public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
     return inferTypeArguments(policy, myArgumentList instanceof PsiExpressionList
                                       ? ((PsiExpressionList)myArgumentList).getExpressions()
-                                      : PsiExpression.EMPTY_ARRAY);
+                                      : PsiExpression.EMPTY_ARRAY, includeReturnConstraint);
   }
 
   public PsiSubstitutor inferSubstitutorFromArgs(@NotNull ParameterTypeInferencePolicy policy, final PsiExpression[] arguments) {
     if (myTypeArguments == null) {
-      return inferTypeArguments(policy, arguments);
+      return inferTypeArguments(policy, arguments, true);
     }
     else {
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
@@ -175,14 +180,17 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy,
-                                           @NotNull PsiExpression[] arguments) {
+                                           @NotNull PsiExpression[] arguments, 
+                                           boolean includeReturnConstraint) {
     Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> map = CURRENT_CANDIDATE.get();
     if (map == null) {
       map = new ConcurrentWeakHashMap<PsiElement, Pair<PsiMethod, PsiSubstitutor>>();
       CURRENT_CANDIDATE.set(map);
     }
     final PsiMethod method = getElement();
-    final Pair<PsiMethod, PsiSubstitutor> alreadyThere = map.put(myArgumentList, Pair.create(method, super.getSubstitutor()));
+    final Pair<PsiMethod, PsiSubstitutor> alreadyThere = includeReturnConstraint
+                                                         ? map.put(myArgumentList, Pair.create(method, super.getSubstitutor())) 
+                                                         : null;
     try {
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
