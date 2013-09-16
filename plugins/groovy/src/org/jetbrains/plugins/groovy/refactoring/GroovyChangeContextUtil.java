@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
@@ -68,15 +69,11 @@ public class GroovyChangeContextUtil {
         }
       }
     }
-    else {
-//      final GrClassTypeElement typeElement = (GrClassTypeElement)element;
-      final PsiReference ref = element.getReference();
-      if (ref != null) {
-        final PsiElement resolvedElement = ref.resolve();
-        element.putCopyableUserData(KEY_ENCODED, KEY_ENCODED);
-        if (resolvedElement instanceof PsiClass && !PsiTreeUtil.isContextAncestor(scope, resolvedElement, false)) {
-          element.putCopyableUserData(REF_TO_CLASS, (PsiClass)resolvedElement);
-        }
+    else if (element instanceof GrCodeReferenceElement) {
+      final PsiElement resolvedElement = ((GrCodeReferenceElement)element).resolve();
+      element.putCopyableUserData(KEY_ENCODED, KEY_ENCODED);
+      if (resolvedElement instanceof PsiClass && !PsiTreeUtil.isContextAncestor(scope, resolvedElement, false)) {
+        element.putCopyableUserData(REF_TO_CLASS, (PsiClass)resolvedElement);
       }
     }
 
