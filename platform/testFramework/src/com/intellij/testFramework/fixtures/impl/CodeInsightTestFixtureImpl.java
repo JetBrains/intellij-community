@@ -125,7 +125,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings({"TestMethodWithIncorrectSignature", "JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention"})
+@SuppressWarnings({"TestMethodWithIncorrectSignature", "JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention", "TestOnlyProblems"})
 public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsightTestFixture {
 
   @NonNls private static final String PROFILE = "Configurable";
@@ -330,7 +330,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       configureByFilesInner(filePaths);
     }
     try {
-      return collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings);
+      return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -378,7 +378,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     for (Trinity<PsiFile, Editor, ExpectedHighlightingData> trinity : datas) {
       myEditor = trinity.second;
       myFile = trinity.first;
-      elapsed += collectAndCheckHighlightings(trinity.third);
+      elapsed += collectAndCheckHighlighting(trinity.third);
     }
     return elapsed;
   }
@@ -386,7 +386,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public long checkHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
     try {
-      return collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings);
+      return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -410,7 +410,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                final VirtualFile file) {
     openFileInEditor(file);
     try {
-      return collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings);
+      return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -426,7 +426,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
         if (checkSymbolNames) data.checkSymbolNames();
         data.init();
-        collectAndCheckHighlightings(data);
+        collectAndCheckHighlighting(data);
         return this;
       }
     };
@@ -1408,19 +1408,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return instance.openTextEditor(new OpenFileDescriptor(project, file, 0), false);
   }
 
-  private long collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings)
-    throws Exception {
-    ExpectedHighlightingData data =
-      new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, getHostFile());
+  private long collectAndCheckHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Exception {
+    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, getHostFile());
     data.init();
-    return collectAndCheckHighlightings(data);
+    return collectAndCheckHighlighting(data);
   }
 
   private PsiFile getHostFile() {
     return InjectedLanguageUtil.getTopLevelFile(myFile);
   }
 
-  private long collectAndCheckHighlightings(@NotNull ExpectedHighlightingData data) {
+  private long collectAndCheckHighlighting(@NotNull ExpectedHighlightingData data) {
     final Project project = getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
