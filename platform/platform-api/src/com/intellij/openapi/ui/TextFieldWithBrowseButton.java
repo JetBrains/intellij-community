@@ -23,6 +23,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TextAccessor;
+import com.intellij.ui.TextComponentUndoProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public TextFieldWithBrowseButton(ActionListener browseActionListener) {
     this(new JTextField(10/* to prevent field to be infinitely resized in grid-box layouts */), browseActionListener);
+    new TextComponentUndoProvider(getTextField());
   }
 
   public void addBrowseFolderListener(@Nullable String title, @Nullable String description, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
