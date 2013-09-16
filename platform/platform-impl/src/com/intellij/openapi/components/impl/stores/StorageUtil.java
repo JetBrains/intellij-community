@@ -31,6 +31,8 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -170,32 +172,25 @@ public class StorageUtil {
     return LocalFileSystem.getInstance().findFileByIoFile(ioFile);
   }
 
-  public static byte[] printDocument(@NotNull Document document) throws StateStorageException {
-    try {
-      return printDocumentToString(document, SystemProperties.getLineSeparator()).getBytes(CharsetToolkit.UTF8);
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new StateStorageException(e);
-    }
-  }
-
   /**
    * @return pair.first - file contents (null if file does not exist), pair.second - file line separators
    */
-  public static Pair<String, String> loadFile(@Nullable final VirtualFile file) throws IOException {
-    if (file == null || !file.exists()) return Pair.create(null, SystemProperties.getLineSeparator());
+  private static Pair<String, String> loadFile(@Nullable final VirtualFile file) throws IOException {
+    if (file == null || !file.exists()) {
+      return Pair.create(null, SystemProperties.getLineSeparator());
+    }
 
     String fileText = new String(file.contentsToByteArray(), CharsetToolkit.UTF8);
-    final int ndx = fileText.indexOf('\n');
-    return Pair.create(fileText, ndx == -1
+    final int index = fileText.indexOf('\n');
+    return Pair.create(fileText, index == -1
                                  ? SystemProperties.getLineSeparator()
-                                 : ndx - 1 >= 0 ? fileText.charAt(ndx - 1) == '\r' ? "\r\n" : "\n" : "\n");
+                                 : index - 1 >= 0 ? fileText.charAt(index - 1) == '\r' ? "\r\n" : "\n" : "\n");
   }
 
   public static boolean contentEquals(@NotNull final Document document, @NotNull final VirtualFile file) {
     try {
       final Pair<String, String> pair = loadFile(file);
-      return pair.first != null && pair.first.equals(printDocumentToString(document, pair.second));
+      return pair.first != null && pair.first.equals(JDOMUtil.writeDocument(document, pair.second));
     }
     catch (IOException e) {
       LOG.debug(e);
@@ -212,10 +207,6 @@ public class StorageUtil {
       LOG.debug(e);
       return false;
     }
-  }
-
-  public static String printDocumentToString(@NotNull Document document, final String lineSeparator) {
-    return JDOMUtil.writeDocument(document, lineSeparator);
   }
 
   static String printElement(final Element element, final String lineSeparator) throws StateStorageException {
@@ -257,15 +248,28 @@ public class StorageUtil {
     }
   }
 
-  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, Document copy, @NotNull RoamingType type, boolean async) throws IOException {
+  public static BufferExposingByteArrayOutputStream documentToBytes(@NotNull Document document, boolean useSystemLineSeparator) throws IOException {
+    BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(512);
+    OutputStreamWriter writer = new OutputStreamWriter(out, CharsetToolkit.UTF8_CHARSET);
+    try {
+      JDOMUtil.writeDocument(document, writer, useSystemLineSeparator ? SystemProperties.getLineSeparator() : "\n");
+      return out;
+    }
+    finally {
+      writer.close();
+    }
+  }
+
+  public static void sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Document copy, @NotNull RoamingType type, boolean async) throws IOException {
     if (!provider.isEnabled()) {
       return;
     }
 
-    byte[] content = printDocument(copy);
-    ByteArrayInputStream in = new ByteArrayInputStream(content);
+    // we should use standard line-separator (\n) - stream provider can share file content on any OS
+    BufferExposingByteArrayOutputStream content = documentToBytes(copy, false);
+    BufferExposingByteArrayInputStream in = new BufferExposingByteArrayInputStream(content.getInternalBuffer(), content.size());
     try {
-      provider.saveContent(fileSpec, in, content.length, type, async);
+      provider.saveContent(fileSpec, in, content.size(), type, async);
     }
     finally {
       in.close();

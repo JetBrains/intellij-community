@@ -426,7 +426,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     private void saveForProviders(final Integer hash) {
-      if (myStreamProvider == null || myIsProjectSettings || (myProviderUpToDateHash != null && myProviderUpToDateHash.equals(hash))) {
+      if (myStreamProvider == null || !myStreamProvider.isEnabled() || myIsProjectSettings || (myProviderUpToDateHash != null && myProviderUpToDateHash.equals(hash))) {
         return;
       }
 
@@ -504,16 +504,13 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   private TObjectLongHashMap<String> loadVersions(Document copy) {
     TObjectLongHashMap<String> result = new TObjectLongHashMap<String>();
-    List list = copy.getRootElement().getChildren(StorageData.COMPONENT);
-    for (Object o : list) {
-      if (o instanceof Element) {
-        Element component = (Element)o;
-        String name = component.getAttributeValue(ATTR_NAME);
-        if (name != null) {
-          long version = myLocalVersionProvider.getVersion(name);
-          if (version > 0) {
-            result.put(name, version);
-          }
+    List<Element> list = copy.getRootElement().getChildren(StorageData.COMPONENT);
+    for (Element component : list) {
+      String name = component.getAttributeValue(ATTR_NAME);
+      if (name != null) {
+        long version = myLocalVersionProvider.getVersion(name);
+        if (version > 0) {
+          result.put(name, version);
         }
       }
     }

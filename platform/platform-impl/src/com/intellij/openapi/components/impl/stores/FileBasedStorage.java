@@ -137,7 +137,6 @@ public class FileBasedStorage extends XmlElementStorage {
     myProviderVersions = null;
   }
 
-
   private class FileSaveSession extends MySaveSession {
     protected FileSaveSession(MyExternalizationSession externalizationSession) {
       super(externalizationSession);
