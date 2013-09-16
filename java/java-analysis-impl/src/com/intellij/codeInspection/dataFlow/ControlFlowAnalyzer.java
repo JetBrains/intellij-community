@@ -23,7 +23,6 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -1433,7 +1432,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (resolved != null) {
       final PsiAnnotation contractAnno = findContractAnnotation(resolved);
       if (contractAnno != null) {
-        final Project project = expression.getProject();
         return CachedValuesManager.getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
           @Nullable
           @Override
@@ -1768,10 +1766,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       return null;
     }
 
-    PsiMethod accessMethod = target instanceof PsiMethod ? (PsiMethod)target : null;
     PsiExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null) {
-      DfaVariableValue result = myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null, accessMethod);
+      DfaVariableValue result = myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null);
       if (var instanceof PsiField) {
         myFields.add(result);
       }
@@ -1781,7 +1778,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (!(var instanceof PsiField) || !var.hasModifierProperty(PsiModifier.TRANSIENT) && !var.hasModifierProperty(PsiModifier.VOLATILE)) {
       DfaVariableValue qualifierValue = createChainedVariableValue(qualifier);
       if (qualifierValue != null) {
-        return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, qualifierValue, accessMethod);
+        return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, qualifierValue);
       }
     }
     return null;
