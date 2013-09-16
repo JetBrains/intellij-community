@@ -26,10 +26,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectLongHashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -67,7 +67,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   private Object mySession;
   private final PicoContainer myPicoContainer;
 
-  private Map<String, Long> myComponentVersions;
+  private TObjectLongHashMap<String> myComponentVersions;
   private final Object myComponentVersionsLock = new Object();
 
   private String myVersionsFilePath;
@@ -314,8 +314,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Override
   public long getVersion(String name) {
-    Map<String, Long> versions = getComponentVersions();
-    return versions.containsKey(name) ? versions.get(name).longValue() : 0;
+    return getComponentVersions().get(name);
   }
 
   @TestOnly
@@ -327,8 +326,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     isDirty = false;
   }
 
-  private Map<String, Long> loadVersions() {
-    THashMap<String, Long> result = new THashMap<String, Long>();
+  private TObjectLongHashMap<String> loadVersions() {
+    TObjectLongHashMap<String> result = new TObjectLongHashMap<String>();
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
       try {
@@ -353,21 +352,16 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return myVersionsFilePath;
   }
 
-  public static void loadComponentVersions(Map<String, Long> result, Document document) {
-    List componentObjects = document.getRootElement().getChildren("component");
-    for (Object componentObj : componentObjects) {
-      if (componentObj instanceof Element) {
-        Element componentEl = (Element)componentObj;
-        String name = componentEl.getAttributeValue("name");
-        String version = componentEl.getAttributeValue("version");
-
-        if (name != null && version != null) {
-          try {
-            result.put(name, Long.parseLong(version));
-          }
-          catch (NumberFormatException e) {
-            //ignore
-          }
+  public static void loadComponentVersions(TObjectLongHashMap<String> result, Document document) {
+    List<Element> componentObjects = document.getRootElement().getChildren("component");
+    for (Element component : componentObjects) {
+      String name = component.getAttributeValue("name");
+      String version = component.getAttributeValue("version");
+      if (name != null && version != null) {
+        try {
+          result.put(name, Long.parseLong(version));
+        }
+        catch (NumberFormatException ignored) {
         }
       }
     }
@@ -598,7 +592,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
-  private Map<String, Long> getComponentVersions() {
+  private TObjectLongHashMap<String> getComponentVersions() {
     synchronized (myComponentVersionsLock) {
       if (myComponentVersions == null) {
         myComponentVersions = loadVersions();
@@ -607,12 +601,12 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
-  public static Element createComponentVersionsXml(Map<String, Long> versions) {
+  public static Element createComponentVersionsXml(TObjectLongHashMap<String> versions) {
     Element root = new Element("versions");
-    String[] componentNames = ArrayUtil.toStringArray(versions.keySet());
+    Object[] componentNames = versions.keys();
     Arrays.sort(componentNames);
-
-    for (String name : componentNames) {
+    for (Object key : componentNames) {
+      String name = (String)key;
       long version = versions.get(name);
       if (version != 0) {
         Element element = new Element("component");

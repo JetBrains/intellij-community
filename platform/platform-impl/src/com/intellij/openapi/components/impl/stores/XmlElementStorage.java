@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectLongHashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -60,7 +61,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   private final ComponentVersionProvider myLocalVersionProvider;
   private final ComponentVersionProvider myRemoteVersionProvider;
 
-  protected Map<String, Long> myProviderVersions = null;
+  protected TObjectLongHashMap<String> myProviderVersions = null;
 
   protected ComponentVersionListener myListener = new ComponentVersionListener(){
     @Override
@@ -88,15 +89,13 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     myLocalVersionProvider = localComponentVersionsProvider;
 
-    myRemoteVersionProvider = new ComponentVersionProvider(){
+    myRemoteVersionProvider = new ComponentVersionProvider() {
       @Override
       public long getVersion(String name) {
         if (myProviderVersions == null) {
           loadProviderVersions();
         }
-
-        return myProviderVersions.containsKey(name) ? myProviderVersions.get(name).longValue() : 0;
-
+        return myProviderVersions.get(name);
       }
 
       @Override
@@ -515,8 +514,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return new Document(StateStorageManagerImpl.createComponentVersionsXml(loadVersions(copy)));
   }
 
-  private Map<String, Long> loadVersions(Document copy) {
-    THashMap<String, Long> result = new THashMap<String, Long>();
+  private TObjectLongHashMap<String> loadVersions(Document copy) {
+    TObjectLongHashMap<String> result = new TObjectLongHashMap<String>();
     List list = copy.getRootElement().getChildren(StorageData.COMPONENT);
     for (Object o : list) {
       if (o instanceof Element) {
@@ -524,7 +523,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
         String name = component.getAttributeValue(ATTR_NAME);
         if (name != null) {
           long version = myLocalVersionProvider.getVersion(name);
-          if (version != 0) {
+          if (version > 0) {
             result.put(name, version);
           }
         }
@@ -614,7 +613,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       return;
     }
 
-    myProviderVersions = new THashMap<String, Long>();
+    myProviderVersions = new TObjectLongHashMap<String>();
     for (RoamingType type : RoamingType.values()) {
       Document doc = null;
       if (myStreamProvider.isEnabled()) {
