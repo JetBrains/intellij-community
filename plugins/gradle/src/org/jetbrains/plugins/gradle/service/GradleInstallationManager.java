@@ -118,7 +118,6 @@ public class GradleInstallationManager {
    */
   @Nullable
   private File doGetGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
-    System.out.println("!!! doGetGradleHome !!! " + linkedProjectPath);
     if (project == null) {
       return null;
     }

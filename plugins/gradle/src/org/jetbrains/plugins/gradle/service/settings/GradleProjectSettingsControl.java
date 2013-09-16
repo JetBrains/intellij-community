@@ -152,9 +152,9 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
     myUseWrapperButton = new JBRadioButton(GradleBundle.message("gradle.settings.text.use.default_wrapper.configured"));
     myUseWrapperButton.addActionListener(listener);
-    myUseWrapperWithVerificationButton = new JBRadioButton(GradleBundle.message("gradle.settings.text.use.wrapper.with_verification"));
+    myUseWrapperWithVerificationButton = new JBRadioButton(GradleBundle.message("gradle.settings.text.use.customizable_wrapper"));
     myUseWrapperWithVerificationButton.addActionListener(listener);
-    myUseWrapperVerificationLabel = new JBLabel(GradleBundle.message("gradle.settings.text.wrapper.verification.compatibility"));
+    myUseWrapperVerificationLabel = new JBLabel(GradleBundle.message("gradle.settings.text.wrapper.customization.compatibility"));
     myUseWrapperVerificationLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.MINI));
     myUseWrapperVerificationLabel.setIcon(UIUtil.getBalloonInformationIcon());
 
