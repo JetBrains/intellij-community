@@ -61,18 +61,29 @@ public class InferenceIncorporationPhase {
 
       upDown(eqBounds, upperBounds);
       upDown(lowerBounds, eqBounds);
-
-      crossVariables(inferenceVariable, upperBounds, lowerBounds, InferenceBound.LOWER);
-      crossVariables(inferenceVariable, lowerBounds, upperBounds, InferenceBound.UPPER);
-
-      eqCrossVariables(inferenceVariable, eqBounds);
     }
+  }
+
+  boolean isFullyIncorporated() {
+    boolean needFurtherIncorporation = false;
+    for (InferenceVariable inferenceVariable : mySession.getInferenceVariables()) {
+      if (inferenceVariable.getInstantiation() != null) continue;
+      final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
+      final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
+      final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
+      needFurtherIncorporation |= crossVariables(inferenceVariable, upperBounds, lowerBounds, InferenceBound.LOWER);
+      needFurtherIncorporation |= crossVariables(inferenceVariable, lowerBounds, upperBounds, InferenceBound.UPPER);
+
+      needFurtherIncorporation |= eqCrossVariables(inferenceVariable, eqBounds);
+    }
+    return !needFurtherIncorporation;
   }
 
   /**
    * a = b imply every bound of a matches a bound of b and vice versa
    */
-  private void eqCrossVariables(InferenceVariable inferenceVariable, List<PsiType> eqBounds) {
+  private boolean eqCrossVariables(InferenceVariable inferenceVariable, List<PsiType> eqBounds) {
+    boolean needFurtherIncorporation = false;
     for (PsiType eqBound : eqBounds) {
       final InferenceVariable inferenceVar = mySession.getInferenceVariable(eqBound);
       if (inferenceVar != null) {
@@ -81,45 +92,48 @@ public class InferenceIncorporationPhase {
         for (InferenceBound inferenceBound : InferenceBound.values()) {
           for (PsiType bound : inferenceVariable.getBounds(inferenceBound)) {
             if (mySession.getInferenceVariable(bound) != inferenceVar) {
-              inferenceVar.addBound(bound, inferenceBound);
+              needFurtherIncorporation |= inferenceVar.addBound(bound, inferenceBound);
             }
           }
           for (PsiType bound : inferenceVar.getBounds(inferenceBound)) {
             if (mySession.getInferenceVariable(bound) != inferenceVariable) {
-              inferenceVariable.addBound(bound, inferenceBound);
+              needFurtherIncorporation |= inferenceVariable.addBound(bound, inferenceBound);
             }
           }
         }
       }
     }
+    return needFurtherIncorporation;
   }
 
   /**
    * a < b & S <: a & b <: T imply S <: b & a <: T 
    */
-  private void crossVariables(InferenceVariable inferenceVariable,
-                              List<PsiType> upperBounds,
-                              List<PsiType> lowerBounds,
-                              InferenceBound inferenceBound) {
+  private boolean crossVariables(InferenceVariable inferenceVariable,
+                                 List<PsiType> upperBounds,
+                                 List<PsiType> lowerBounds,
+                                 InferenceBound inferenceBound) {
 
     final InferenceBound oppositeBound = inferenceBound == InferenceBound.LOWER 
                                                            ? InferenceBound.UPPER 
                                                            : InferenceBound.LOWER;
+    boolean result = false;
     for (PsiType upperBound : upperBounds) {
       final InferenceVariable inferenceVar = mySession.getInferenceVariable(upperBound);
       if (inferenceVar != null) {
         if (inferenceVar.isCaptured()) continue;
         //todo inferenceVar.addBound(inferenceVariable.qType, inferenceBound);
         for (PsiType lowerBound : lowerBounds) {
-          inferenceVar.addBound(lowerBound, inferenceBound);
+          result |= inferenceVar.addBound(lowerBound, inferenceBound);
         }
 
         
         for (PsiType varUpperBound : inferenceVar.getBounds(oppositeBound)) {
-          inferenceVariable.addBound(varUpperBound, oppositeBound);
+          result |= inferenceVariable.addBound(varUpperBound, oppositeBound);
         }
       }
     }
+    return result;
   }
 
   /**

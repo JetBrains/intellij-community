@@ -38,6 +38,7 @@ public class InferenceSession {
 
   private final PsiSubstitutor mySiteSubstitutor;
   private PsiManager myManager;
+  private int myConstraintIdx = 0;
 
   private final InferenceIncorporationPhase myIncorporationPhase = new InferenceIncorporationPhase(this);
 
@@ -202,30 +203,30 @@ public class InferenceSession {
   }
 
   private void repeatInferencePhases() {
-    if (!reduceConstraints()) {
-      //inference error occurred
-      return;
-    }
+    do {
+      if (!reduceConstraints()) {
+        //inference error occurred
+        return;
+      }
+      myIncorporationPhase.incorporate();
 
-    myIncorporationPhase.incorporate();
+    } while (!myIncorporationPhase.isFullyIncorporated() || myConstraintIdx < myConstraints.size());
 
-    if (!myConstraints.isEmpty()) {
-      repeatInferencePhases();
-    } else {
-      resolveBounds();
-    }
+    resolveBounds();
   }
 
   private boolean reduceConstraints() {
     List<ConstraintFormula> newConstraints = new ArrayList<ConstraintFormula>();
-    for (Iterator<ConstraintFormula> iterator = myConstraints.iterator(); iterator.hasNext(); ) {
-      ConstraintFormula constraint = iterator.next();
+    for (int i = myConstraintIdx; i < myConstraints.size(); i++) {
+      ConstraintFormula constraint = myConstraints.get(i);
       if (!constraint.reduce(this, newConstraints)) {
         return false;
       }
-      iterator.remove();
     }
-    myConstraints.addAll(newConstraints);
+    myConstraintIdx = myConstraints.size();
+    for (ConstraintFormula constraint : newConstraints) {
+      addConstraint(constraint);
+    }
     return true;
   }
 
@@ -244,7 +245,7 @@ public class InferenceSession {
               lub = lowerBound;
             }
             else {
-              lub = GenericsUtil.getLeastUpperBound(lowerBound, lub, myManager);
+              lub = GenericsUtil.getLeastUpperBound(lub, lowerBound, myManager);
             }
           }
         }
@@ -284,6 +285,8 @@ public class InferenceSession {
   }
 
   public void addConstraint(ConstraintFormula constraint) {
-    myConstraints.add(constraint);
+    if (!myConstraints.contains(constraint)) {
+        myConstraints.add(constraint);
+      }
   }
 }
