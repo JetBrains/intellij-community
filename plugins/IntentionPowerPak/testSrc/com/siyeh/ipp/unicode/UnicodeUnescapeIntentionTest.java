@@ -3,9 +3,13 @@ package com.siyeh.ipp.unicode;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
+/**
+ * @see com.siyeh.ipp.unicode.UnicodeUnescapeIntention
+ */
 public class UnicodeUnescapeIntentionTest extends IPPTestCase {
 
   public void testSimple() { doTest(); }
+  public void testNoException() { assertIntentionNotAvailable(); }
 
   @Override
   protected String getRelativePath() {

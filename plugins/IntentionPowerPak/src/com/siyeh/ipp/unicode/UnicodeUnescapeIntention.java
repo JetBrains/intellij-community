@@ -69,8 +69,12 @@ public class UnicodeUnescapeIntention extends Intention {
       final Document document = editor.getDocument();
       final int offset = caretModel.getOffset();
       final String text = document.getText(new TextRange(Math.max(offset - 6, 0), Math.min(offset + 6, document.getTextLength())));
-      final int max = Math.min(7, text.length());
+      final int textLength = text.length();
+      final int max = Math.min(7, textLength);
       for (int i = 0; i < max; i++) {
+        if (i + 5 >= textLength) {
+          //return false;
+        }
         if (text.charAt(i) == '\\' &&
             text.charAt(i + 1) == 'u' &&
             StringUtil.isHexDigit(text.charAt(i + 2)) &&
