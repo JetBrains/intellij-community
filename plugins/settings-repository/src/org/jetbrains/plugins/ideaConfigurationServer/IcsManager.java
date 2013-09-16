@@ -58,10 +58,10 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   protected final SingleAlarm commitAlarm = new SingleAlarm(new Runnable() {
     @Override
     public void run() {
-      ProgressManager.getInstance().run(new Task.Backgroundable(null, "Pushing to ICS server") {
+      ProgressManager.getInstance().run(new Task.Backgroundable(null, IcsBundle.message("task.push.title")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          awaitCallback(indicator, repositoryManager.commit(), "Pushing to ICS server");
+          awaitCallback(indicator, repositoryManager.commit(), getTitle());
         }
       });
     }
@@ -71,7 +71,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     while (!callback.isProcessed()) {
       try {
         //noinspection BusyWait
-        Thread.sleep(300);
+        Thread.sleep(100);
       }
       catch (InterruptedException e) {
         break;
@@ -106,7 +106,6 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     return status;
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   public void setStatus(@NotNull IcsStatus value) {
     if (status != value) {
       status = value;
@@ -240,7 +239,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   public ActionCallback sync() {
     commitAlarm.cancel();
     final ActionCallback actionCallback = new ActionCallback(3);
-    ProgressManager.getInstance().run(new Task.Modal(null, "Syncing Idea Configuration", true) {
+    ProgressManager.getInstance().run(new Task.Modal(null, IcsBundle.message("task.sync.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
@@ -255,7 +254,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
         repositoryManager.commit().notify(actionCallback);
         repositoryManager.pull(indicator).notify(actionCallback);
         ActionCallback lastActionCallback = repositoryManager.push(indicator).notify(actionCallback);
-        awaitCallback(indicator, lastActionCallback, "Syncing Idea Configuration");
+        awaitCallback(indicator, lastActionCallback, getTitle());
       }
     });
     return actionCallback;
