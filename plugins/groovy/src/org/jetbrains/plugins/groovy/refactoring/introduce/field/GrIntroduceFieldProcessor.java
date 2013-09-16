@@ -191,17 +191,19 @@ public class GrIntroduceFieldProcessor {
                                  null;
     assert container != null;
 
-    final GrStatement anchor;
+    final PsiElement anchor;
     if (settings.removeLocalVar()) {
       GrVariable variable = GrIntroduceHandlerBase.resolveLocalVar(context);
       anchor = PsiTreeUtil.getParentOfType(variable, GrStatement.class);
     }
     else {
-      anchor = (GrStatement)GrIntroduceHandlerBase.findAnchor(context.getOccurrences(), container);
+      anchor = GrIntroduceHandlerBase.findAnchor(context.getOccurrences(), container);
+      GrIntroduceHandlerBase.assertStatement(anchor, context.getOccurrences(), context.getScope());
     }
 
-    generateAssignment(field, anchor, container);
+    generateAssignment(field, (GrStatement)anchor, container);
   }
+
 
   void initializeInConstructor(@NotNull GrVariable field) {
     final PsiClass scope = (PsiClass)context.getScope();

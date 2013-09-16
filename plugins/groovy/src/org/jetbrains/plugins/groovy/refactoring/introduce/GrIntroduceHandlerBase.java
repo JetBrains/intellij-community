@@ -16,11 +16,13 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -78,6 +80,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
  * @author Maxim.Medvedev
  */
 public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSettings, Scope extends PsiElement> implements RefactoringActionHandler {
+  private static final Logger LOG = Logger.getInstance(GrIntroduceHandlerBase.class);
+
   public static final Function<GrExpression, String> GR_EXPRESSION_RENDERER = new Function<GrExpression, String>() {
     @Override
     public String fun(@NotNull GrExpression expr) {
@@ -626,6 +630,22 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
     return candidate;
   }
+
+  public static void assertStatement(PsiElement anchor, PsiElement[] occurrences, PsiElement scope) {
+    if (!(anchor instanceof GrStatement)) {
+      StringBuilder error = new StringBuilder("scope:");
+      error.append(scope.getText());
+      error.append("\n---------------------------------------\n\n");
+      error.append("occurrences: ");
+      for (PsiElement occurrence : occurrences) {
+        error.append(occurrence.getText());
+        error.append("\n------------------\n");
+      }
+
+      LogMessageEx.error(LOG, "cannot find anchor for variable", error.toString());
+    }
+  }
+
 
   @Nullable
   private static PsiElement findContainingStatement(@Nullable PsiElement candidate) {

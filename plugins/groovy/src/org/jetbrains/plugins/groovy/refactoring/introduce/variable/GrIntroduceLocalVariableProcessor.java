@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -209,18 +208,7 @@ public class GrIntroduceLocalVariableProcessor {
   @NotNull
   private GrStatement getAnchor(PsiElement[] replaced, PsiElement replacedExpression) {
     PsiElement anchor = GrIntroduceHandlerBase.findAnchor(replaced, GroovyRefactoringUtil.getEnclosingContainer(replacedExpression));
-    if (!(anchor instanceof GrStatement)) {
-      StringBuilder error = new StringBuilder("scope:");
-      error.append(myContext.getScope().getText());
-      error.append("\n---------------------------------------\n\n");
-      error.append("occurrences: ");
-      for (PsiElement occurrence : myOccurrences) {
-        error.append(occurrence.getText());
-        error.append("\n------------------\n");
-      }
-
-      LogMessageEx.error(LOG, "cannot find anchor for variable", error.toString());
-    }
+    GrIntroduceHandlerBase.assertStatement(anchor, myOccurrences, myContext.getScope());
     return (GrStatement)anchor;
   }
 
