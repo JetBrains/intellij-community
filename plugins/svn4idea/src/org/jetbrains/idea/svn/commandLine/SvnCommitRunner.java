@@ -20,13 +20,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.Convertor;
 import org.apache.subversion.javahl.types.Revision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.*;
@@ -39,13 +38,14 @@ import java.util.*;
  */
 public class SvnCommitRunner {
 
-  @NotNull private final AuthenticationCallback myAuthenticationCallback;
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.commandLine.SvnCommitRunner");
-  private SvnCommitRunner.CommandListener myCommandListener;
 
-  public SvnCommitRunner(@Nullable CommitEventHandler handler, @NotNull AuthenticationCallback authenticationCallback) {
+  private SvnCommitRunner.CommandListener myCommandListener;
+  private SvnVcs myVcs;
+
+  public SvnCommitRunner(@NotNull SvnVcs vcs, @Nullable CommitEventHandler handler) {
+    myVcs = vcs;
     myCommandListener = new CommandListener(handler);
-    myAuthenticationCallback = authenticationCallback;
   }
 
   public long commit(File[] paths,
@@ -54,7 +54,7 @@ public class SvnCommitRunner {
                      boolean noUnlock,
                      boolean keepChangelist,
                      Collection<String> changelists,
-                     Map revpropTable, Convertor<File[], SVNURL> urlProvider) throws VcsException {
+                     Map revpropTable) throws VcsException {
     if (paths.length == 0) return Revision.SVN_INVALID_REVNUM;
 
     final List<String> parameters = new ArrayList<String>();
@@ -77,8 +77,7 @@ public class SvnCommitRunner {
     CommandUtil.put(parameters, paths);
 
     myCommandListener.setBaseDirectory(SvnBindUtil.correctUpToExistingParent(paths[0]));
-    SvnLineCommand.runWithAuthenticationAttempt(paths[0], urlProvider.convert(paths), SvnCommandName.ci,
-                                                myCommandListener, myAuthenticationCallback, ArrayUtil.toStringArray(parameters));
+    CommandUtil.execute(myVcs, SvnTarget.fromFile(paths[0]), SvnCommandName.ci, parameters, myCommandListener);
     myCommandListener.throwExceptionIfOccurred();
 
     return validateRevisionNumber();

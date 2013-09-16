@@ -248,32 +248,17 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       return;
     }
 
-    final IdeaSvnkitBasedAuthenticationCallback authenticationCallback = new IdeaSvnkitBasedAuthenticationCallback(mySvnVcs);
     IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());
-    Convertor<File[], SVNURL> urlProvider = new Convertor<File[], SVNURL>() {
-      @Override
-      public SVNURL convert(File[] o) {
-        SVNInfo info = o.length > 0 ? mySvnVcs.getInfo(o[0]) : null;
-
-        if (info == null || info.getURL() == null) {
-          LOG.warn("Could not resolve repository url for commit. Paths - " + Arrays.toString(o));
-        }
-
-        return info != null ? info.getURL() : null;
-      }
-    };
 
     try {
-      SvnCommitRunner runner = new SvnCommitRunner(handler, authenticationCallback);
+      SvnCommitRunner runner = new SvnCommitRunner(mySvnVcs, handler);
       final long revision =
-        runner.commit(ArrayUtil.toObjectArray(committables, File.class), comment, SVNDepth.EMPTY, false, false, null, null, urlProvider);
+        runner.commit(ArrayUtil.toObjectArray(committables, File.class), comment, SVNDepth.EMPTY, false, false, null, null);
 
       reportCommittedRevisions(feedback, String.valueOf(revision));
     }
     catch (VcsException e) {
       exception.add(e);
-    } finally {
-      authenticationCallback.reset();
     }
   }
 
