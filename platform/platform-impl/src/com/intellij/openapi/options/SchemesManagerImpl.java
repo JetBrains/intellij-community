@@ -45,6 +45,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import com.intellij.openapi.components.impl.stores.StreamProvider;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -105,6 +107,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
   }
 
+  @Override
   @NotNull
   public Collection<E> loadSchemes() {
     if (myVFSBaseDir != null) {
@@ -146,6 +149,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     if (myVFSBaseDir == null && !app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
       myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
       myRefreshAlarm.addRequest(new Runnable(){
+        @Override
         public void run() {
           ensureVFSBaseDir();
         }
@@ -434,6 +438,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     else {
       ApplicationManager.getApplication().invokeLater(
           new Runnable(){
+            @Override
             public void run() {
               String msg = "Cannot read directory: " + myBaseDir.getAbsolutePath() + " directory does not exist";
               Messages.showErrorDialog(msg, "Read Settings");
@@ -495,6 +500,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       catch (final Exception e) {
         ApplicationManager.getApplication().invokeLater(
             new Runnable(){
+              @Override
               public void run() {
                 String msg = "Cannot read scheme " + file.getName() + "  from '" + myFileSpec + "': " + e.getLocalizedMessage();
                 LOG.info(msg, e);
@@ -614,6 +620,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     E scheme;
   }
 
+  @Override
   @NotNull
   public Collection<SharedScheme<E>> loadSharedSchemes(Collection<T> currentSchemeList) {
     StreamProvider[] providers = getProvidersForGlobal();
@@ -692,6 +699,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return myFileSpec + "/" + subPath;
   }
 
+  @Override
   public void exportScheme(final E scheme, final String name, final String description) throws WriteExternalException, IOException {
     StreamProvider[] providers = getProvidersForGlobal();
     if (providers.length == 0) {
@@ -723,6 +731,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return new Document(sharedElement);
   }
 
+  @Override
   public boolean isImportAvailable() {
     StreamProvider[] providers = getProvidersForGlobal();
     if (providers.length == 0) {
@@ -739,17 +748,20 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   private static StreamProvider[] getProvidersForGlobal() {
-    return ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders(RoamingType.GLOBAL);
+    return ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders();
   }
 
+  @Override
   public boolean isExportAvailable() {
     return EXPORT_IS_AVAILABLE;
   }
 
+  @Override
   public boolean isShared(final Scheme scheme) {
     return scheme instanceof ExternalizableScheme && ((ExternalizableScheme)scheme).getExternalInfo().isIsImported();
   }
 
+  @Override
   public void save() throws WriteExternalException {
 
     if (myRefreshAlarm != null) {
@@ -789,6 +801,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     myInsideSave = true;
     try {
       ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable()  {
+        @Override
         public void run() {
           ((NewVirtualFile)myVFSBaseDir).markDirtyRecursively();
           myVFSBaseDir.refresh(false, true);
@@ -805,6 +818,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
       final WriteExternalException[] ex = new WriteExternalException[1];
       ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable() {
+        @Override
         public void run() {
           deleteFilesFromDeletedSchemes();
           try {
@@ -837,6 +851,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
   }
 
+  @Override
   public File getRootDirectory() {
     return myBaseDir;
   }
@@ -893,6 +908,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
             }
             else {
               app.invokeLater(new Runnable(){
+                @Override
                 public void run() {
                   Messages.showErrorDialog("Cannot save scheme '" + eScheme.getName() + ": " + e.getLocalizedMessage(), "Save Settings");
                 }
@@ -981,6 +997,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return result;
   }
 
+  @Override
   protected void onSchemeDeleted(final Scheme toDelete) {
     if (toDelete instanceof ExternalizableScheme) {
       ExternalInfo info = ((ExternalizableScheme)toDelete).getExternalInfo();
@@ -997,6 +1014,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   }
 
+  @Override
   protected void onSchemeAdded(final T scheme) {
     myDeletedNames.remove(scheme.getName());
     if (scheme instanceof ExternalizableScheme) {

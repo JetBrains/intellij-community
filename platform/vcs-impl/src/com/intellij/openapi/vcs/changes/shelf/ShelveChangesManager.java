@@ -26,12 +26,12 @@ import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.progress.AsynchronousExecution;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -86,11 +86,11 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   public ShelveChangesManager(final Project project, final MessageBus bus) {
     super(project);
     myBus = bus;
-    if (!project.isDefault()) {
-      myFileProcessor = new CompoundShelfFileProcessor("shelf");
+    if (project.isDefault()) {
+      myFileProcessor = new CompoundShelfFileProcessor(StreamProvider.EMPTY_ARRAY, PathManager.getConfigPath() + File.separator + "shelf");
     }
     else {
-      myFileProcessor = new CompoundShelfFileProcessor(new StreamProvider[]{}, PathManager.getConfigPath() + File.separator + "shelf");
+      myFileProcessor = new CompoundShelfFileProcessor("shelf");
     }
   }
 

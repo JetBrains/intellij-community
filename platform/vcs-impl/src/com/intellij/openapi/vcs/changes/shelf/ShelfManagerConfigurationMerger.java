@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.XmlConfigurationMerger;
+import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.options.StreamProvider;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +43,7 @@ public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
     myFileProcessor = new CompoundShelfFileProcessor(streamProviders, configPath);
   }
 
+  @Override
   @NotNull
   public Element merge(final Element serverElement, final Element localElement) {
     Map<Date, ShelvedChangeList> result = new LinkedHashMap<Date, ShelvedChangeList>();
@@ -147,6 +148,7 @@ public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
     return result;
   }
 
+  @Override
   public String getComponentName() {
     return "ShelveChangesManager";
   }

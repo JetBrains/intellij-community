@@ -20,7 +20,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -28,7 +27,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.SmartList;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
 import org.jdom.Document;
@@ -50,7 +49,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable, StreamProvider, ComponentVersionProvider {
+public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable, ComponentVersionProvider {
   private static final Logger LOG = Logger.getInstance(StateStorageManagerImpl.class);
 
   private static final boolean ourHeadlessEnvironment;
@@ -71,10 +70,84 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   private Map<String, Long> myComponentVersions;
   private final Object myComponentVersionsLock = new Object();
 
-  private String myVersionsFilePath = null;
+  private String myVersionsFilePath;
 
-  private final MultiMap<RoamingType, StreamProvider> myStreamProviders = new MultiMap<RoamingType, StreamProvider>();
   private boolean isDirty;
+
+  private final List<StreamProvider> myStreamProviders = new SmartList<StreamProvider>();
+
+  private final StreamProvider myCompoundStreamProvider = new StreamProvider() {
+    @Override
+    public boolean isEnabled() {
+      synchronized (myStreamProviders) {
+        for (StreamProvider provider : myStreamProviders) {
+          if (provider.isEnabled()) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+      for (StreamProvider streamProvider : getStreamProviders()) {
+        try {
+          if (streamProvider.isEnabled()) {
+            streamProvider.saveContent(fileSpec, content, size, roamingType, async);
+          }
+        }
+        catch (ConnectException e) {
+          LOG.debug("Cannot send user profile to server: " + e.getLocalizedMessage());
+        }
+        catch (Exception e) {
+          LOG.debug(e);
+        }
+      }
+    }
+
+    @Override
+    public InputStream loadContent(@NotNull final String fileSpec, @NotNull final RoamingType roamingType) throws IOException {
+      for (StreamProvider streamProvider : getStreamProviders()) {
+        try {
+          if (streamProvider.isEnabled()) {
+            InputStream content = streamProvider.loadContent(fileSpec, roamingType);
+            if (content != null) {
+              return content;
+            }
+          }
+        }
+        catch (ConnectException e) {
+          LOG.debug("Cannot send user profile o server: " + e.getLocalizedMessage());
+        }
+        catch (Exception e) {
+          LOG.debug(e);
+        }
+      }
+
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+
+    @Override
+    public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+      for (StreamProvider streamProvider : getStreamProviders()) {
+        try {
+          if (streamProvider.isEnabled()) {
+            streamProvider.deleteFile(fileSpec, roamingType);
+          }
+        }
+        catch (Exception e) {
+          LOG.debug(e);
+        }
+      }
+    }
+  };
 
   public StateStorageManagerImpl(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
                                  String rootTagName,
@@ -235,7 +308,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
     }
 
-    return new FileBasedStorage(getMacroSubstitutor(fileSpec), this, expandedFile, fileSpec, myRootTagName, this,
+    return new FileBasedStorage(getMacroSubstitutor(fileSpec), myCompoundStreamProvider, expandedFile, fileSpec, myRootTagName, this,
                                 myPicoContainer, ComponentRoamingManager.getInstance(), this) {
       @Override
       @NotNull
@@ -314,82 +387,13 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     isDirty = true;
   }
 
-  @Override
-  public void saveContent(@NotNull final String fileSpec, @NotNull final InputStream content, final long size, @NotNull final RoamingType roamingType, boolean async) {
-    for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
-      try {
-        if (streamProvider.isEnabled()) {
-          streamProvider.saveContent(fileSpec, content, size, roamingType, async);
-        }
-      }
-      catch (ConnectException e) {
-        LOG.debug("Cannot send user profile to server: " + e.getLocalizedMessage());
-      }
-      catch (Exception e) {
-        LOG.debug(e);
-      }
-    }
-  }
-
-  @Override
-  public void deleteFile(@NotNull final String fileSpec, @NotNull final RoamingType roamingType) {
-    for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
-      try {
-        if (streamProvider.isEnabled()) {
-          streamProvider.deleteFile(fileSpec, roamingType);
-        }
-      }
-      catch (Exception e) {
-        LOG.debug(e);
-      }
-    }
-  }
-
   @NotNull
   @Override
-  public StreamProvider[] getStreamProviders(@NotNull RoamingType type) {
+  public StreamProvider[] getStreamProviders() {
     synchronized (myStreamProviders) {
-      Collection<StreamProvider> providers = myStreamProviders.get(type);
-      return providers.isEmpty() ? EMPTY_ARRAY : providers.toArray(new StreamProvider[providers.size()]);
+      Collection<StreamProvider> providers = myStreamProviders;
+      return providers.isEmpty() ? StreamProvider.EMPTY_ARRAY : providers.toArray(new StreamProvider[providers.size()]);
     }
-  }
-
-  @Override
-  public InputStream loadContent(@NotNull final String fileSpec, @NotNull final RoamingType roamingType) throws IOException {
-    for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
-      try {
-        if (streamProvider.isEnabled()) {
-          InputStream content = streamProvider.loadContent(fileSpec, roamingType);
-
-          if (content != null) return content;
-        }
-      }
-      catch (ConnectException e) {
-        LOG.debug("Cannot send user profile o server: " + e.getLocalizedMessage());
-      }
-      catch (Exception e) {
-        LOG.debug(e);
-      }
-    }
-
-    return null;
-  }
-
-  @Override
-  public String[] listSubFiles(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
-  }
-
-  @Override
-  public boolean isEnabled() {
-    synchronized (myStreamProviders) {
-      for (StreamProvider provider : myStreamProviders.values()) {
-        if (provider.isEnabled()) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
@@ -562,16 +566,23 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Override
-  public void registerStreamProvider(StreamProvider streamProvider, final RoamingType type) {
+  public void registerStreamProvider(com.intellij.openapi.options.StreamProvider streamProvider, final RoamingType type) {
     synchronized (myStreamProviders) {
-      myStreamProviders.putValue(type, streamProvider);
+      myStreamProviders.add(new OldStreamProviderAdapter(streamProvider, type));
     }
   }
 
   @Override
-  public void unregisterStreamProvider(StreamProvider streamProvider, final RoamingType roamingType) {
+  public void registerStreamProvider(@NotNull StreamProvider streamProvider) {
     synchronized (myStreamProviders) {
-      myStreamProviders.removeValue(roamingType, streamProvider);
+      myStreamProviders.add(streamProvider);
+    }
+  }
+
+  @Override
+  public void unregisterStreamProvider(@NotNull StreamProvider streamProvider) {
+    synchronized (myStreamProviders) {
+      myStreamProviders.remove(streamProvider);
     }
   }
 

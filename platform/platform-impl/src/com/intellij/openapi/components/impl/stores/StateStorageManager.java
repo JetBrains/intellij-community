@@ -60,10 +60,12 @@ public interface StateStorageManager {
 
   void registerStreamProvider(StreamProvider streamProvider, final RoamingType type);
 
-  void unregisterStreamProvider(StreamProvider streamProvider, final RoamingType roamingType);
+  void registerStreamProvider(@NotNull com.intellij.openapi.components.impl.stores.StreamProvider streamProvider);
+
+  void unregisterStreamProvider(@NotNull com.intellij.openapi.components.impl.stores.StreamProvider streamProvider);
 
   @NotNull
-  StreamProvider[] getStreamProviders(@NotNull RoamingType roamingType);
+  com.intellij.openapi.components.impl.stores.StreamProvider[] getStreamProviders();
 
   void reset();
 
