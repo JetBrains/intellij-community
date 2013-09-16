@@ -1,12 +1,10 @@
 package com.intellij.ide.browsers;
 
-import com.intellij.util.ui.UIUtil;
-
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class StartBrowserPanel extends JPanel {
+public class StartBrowserPanel {
   private JCheckBox myStartBrowserCheckBox;
   private JComponent myBrowserComboBox;
 
@@ -16,6 +14,7 @@ public class StartBrowserPanel extends JPanel {
   private BrowserSelector myBrowserSelector;
 
   private JPanel myRoot;
+  private JLabel urlFieldLabel;
 
   public StartBrowserPanel() {
     myStartBrowserCheckBox.addActionListener(new ActionListener() {
@@ -28,6 +27,14 @@ public class StartBrowserPanel extends JPanel {
     myStartJavaScriptDebuggerCheckBox.setVisible(JavaScriptDebuggerStarter.Util.EP_NAME.getExtensions().length > 0);
   }
 
+  public JPanel getComponent() {
+    return myRoot;
+  }
+
+  public void clearBorder() {
+    myRoot.setBorder(null);
+  }
+
   public boolean isSelected() {
     return myStartBrowserCheckBox.isSelected();
   }
@@ -38,8 +45,10 @@ public class StartBrowserPanel extends JPanel {
   }
 
   private void setPanelEnabled(boolean enabled) {
-    UIUtil.setEnabled(myRoot, enabled, true);
-    myStartBrowserCheckBox.setEnabled(true);
+    myBrowserComboBox.setEnabled(enabled);
+    myStartJavaScriptDebuggerCheckBox.setEnabled(enabled);
+    myStartupPage.setEnabled(enabled);
+    urlFieldLabel.setEnabled(enabled);
   }
 
   public JCheckBox getStartJavaScriptDebuggerCheckBox() {
@@ -52,10 +61,6 @@ public class StartBrowserPanel extends JPanel {
 
   public JTextField getStartupPageField() {
     return myStartupPage;
-  }
-
-  public JPanel getRoot() {
-    return myRoot;
   }
 
   private void createUIComponents() {
