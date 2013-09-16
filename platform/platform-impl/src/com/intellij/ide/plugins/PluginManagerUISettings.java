@@ -24,6 +24,8 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -41,6 +43,7 @@ import javax.swing.*;
 )
 public class PluginManagerUISettings implements PersistentStateComponent<Element>, PerformInBackgroundOption {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerUISettings");
+  private static final SkipDefaultValuesSerializationFilters FILTERS = new SkipDefaultValuesSerializationFilters();
 
   public int AVAILABLE_SORT_COLUMN_ORDER = SortOrder.ASCENDING.ordinal();
 
@@ -67,31 +70,21 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
 
   public Element getState() {
     Element element = new Element("state");
-    try {
-      DefaultJDOMExternalizer.writeExternal(this, element);
-      mySplitterProportionsData.writeExternal(element);
+    XmlSerializer.serializeInto(this, element, FILTERS);
+    XmlSerializer.serializeInto(mySplitterProportionsData, element, FILTERS);
 
-      final Element availableProportions = new Element(AVAILABLE_PROPORTIONS);
-      myAvailableSplitterProportionsData.writeExternal(availableProportions);
-      element.addContent(availableProportions);
-    }
-    catch (WriteExternalException e) {
-      LOG.info(e);
-    }
+    final Element availableProportions = new Element(AVAILABLE_PROPORTIONS);
+    XmlSerializer.serializeInto(myAvailableSplitterProportionsData, availableProportions, FILTERS);
+    element.addContent(availableProportions);
     return element;
   }
 
   public void loadState(final Element element) {
-    try {
-      DefaultJDOMExternalizer.readExternal(this, element);
-      mySplitterProportionsData.readExternal(element);
-      final Element availableProportionsElement = element.getChild(AVAILABLE_PROPORTIONS);
-      if (availableProportionsElement != null) {
-        myAvailableSplitterProportionsData.readExternal(availableProportionsElement);
-      }
-    }
-    catch (InvalidDataException e) {
-      LOG.info(e);
+    XmlSerializer.deserializeInto(this, element);
+    XmlSerializer.deserializeInto(mySplitterProportionsData, element);
+    final Element availableProportionsElement = element.getChild(AVAILABLE_PROPORTIONS);
+    if (availableProportionsElement != null) {
+      XmlSerializer.deserializeInto(myAvailableSplitterProportionsData, availableProportionsElement);
     }
   }
 
