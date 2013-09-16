@@ -85,7 +85,7 @@ public class InferenceSession {
     if (parent instanceof PsiCallExpression) {
       final Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> map = MethodCandidateInfo.CURRENT_CANDIDATE.get();
       if (map != null) {
-        final Pair<PsiMethod, PsiSubstitutor> pair = map.get(parent);
+        final Pair<PsiMethod, PsiSubstitutor> pair = map.get(((PsiCallExpression)parent).getArgumentList());
         if (pair != null) {
           initReturnTypeConstraint(pair.first, (PsiCallExpression)parent);
         }
