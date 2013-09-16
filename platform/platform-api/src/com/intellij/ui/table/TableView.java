@@ -117,7 +117,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
         columnHeaderRenderer = defaultRenderer;
       }
       final Component headerComponent = columnHeaderRenderer == null? null :
-        columnHeaderRenderer.getTableCellRendererComponent(this, column.getHeaderValue(), false, false, 0, 0);
+        columnHeaderRenderer.getTableCellRendererComponent(this, column.getHeaderValue(), false, false, 0, i);
 
       if (headerComponent != null) {
         headers[i] = headerComponent.getPreferredSize().width;
