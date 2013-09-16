@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -30,8 +29,7 @@ public class MakeSerializableFix extends InspectionGadgetsFix {
   @Override
   @NotNull
   public String getName() {
-    return InspectionGadgetsBundle.message(
-      "make.class.serializable.quickfix");
+    return InspectionGadgetsBundle.message("make.class.serializable.quickfix");
   }
 
   @NotNull
@@ -41,21 +39,26 @@ public class MakeSerializableFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor)
-    throws IncorrectOperationException {
+  public void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement nameElement = descriptor.getPsiElement();
-    final PsiClass containingClass =
-      ClassUtils.getContainingClass(nameElement);
-    assert containingClass != null;
-    final PsiElementFactory elementFactory =
-      JavaPsiFacade.getElementFactory(project);
+    final PsiClass containingClass = ClassUtils.getContainingClass(nameElement);
+    if (containingClass == null) {
+      return;
+    }
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiJavaCodeReferenceElement referenceElement =
-      elementFactory.createReferenceElementByFQClassName(
-        CommonClassNames.JAVA_IO_SERIALIZABLE, scope);
-    final PsiReferenceList implementsList =
-      containingClass.getImplementsList();
-    assert implementsList != null;
-    implementsList.add(referenceElement);
+      elementFactory.createReferenceElementByFQClassName(CommonClassNames.JAVA_IO_SERIALIZABLE, scope);
+    final PsiReferenceList referenceList;
+    if (containingClass.isInterface()) {
+      referenceList = containingClass.getExtendsList();
+    }
+    else {
+      referenceList = containingClass.getImplementsList();
+    }
+    if (referenceList == null) {
+      return;
+    }
+    referenceList.add(referenceElement);
   }
 }
