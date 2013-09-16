@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,8 +72,7 @@ public class InferenceSession {
 
     if (parameters.length > 0) {
       for (int i = 0; i < args.length; i++) {
-        if (i >= parameters.length) break;
-        PsiType parameterType = mySiteSubstitutor.substitute(parameters[i].getType());
+        PsiType parameterType = mySiteSubstitutor.substitute(parameters[i < parameters.length ? i : parameters.length - 1].getType());
         if (parameterType instanceof PsiEllipsisType) {
           if (args.length != parameters.length || !(args[i].getType() instanceof PsiArrayType)) {
             parameterType = ((PsiEllipsisType)parameterType).getComponentType();
