@@ -83,21 +83,21 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   @Override
   @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitField(PsiField field) {
-        analyzeCodeBlock(field, holder);
+        analyzeCodeBlock(field, holder, isOnTheFly);
       }
 
       @Override
       public void visitMethod(PsiMethod method) {
-        analyzeCodeBlock(method.getBody(), holder);
+        analyzeCodeBlock(method.getBody(), holder, isOnTheFly);
       }
 
       @Override
       public void visitClassInitializer(PsiClassInitializer initializer) {
-        analyzeCodeBlock(initializer.getBody(), holder);
+        analyzeCodeBlock(initializer.getBody(), holder, isOnTheFly);
       }
 
       @Override
@@ -139,13 +139,19 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     return null;
   }
 
-  private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder) {
+  private void analyzeCodeBlock(@Nullable final PsiElement scope, ProblemsHolder holder, final boolean onTheFly) {
     if (scope == null) return;
 
     PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) return;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS) {
+      @Override
+      protected boolean shouldCheckTimeLimit() {
+        if (!onTheFly) return false;
+        return super.shouldCheckTimeLimit();
+      }
+    };
     analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Arrays.asList(dfaRunner.createMemoryState()));
   }
 

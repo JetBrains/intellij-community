@@ -128,12 +128,10 @@ public class DataFlowRunner {
         queue.add(new DfaInstructionState(myInstructions[0], initialState));
       }
 
-      long timeLimit = ourTimeLimit;
-      final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-      WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(timeLimit);
+      WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 42);
       int count = 0;
       while (!queue.isEmpty()) {
-        if (count % 50 == 0 && !unitTestMode && measurer.isTimeOver()) {
+        if (count % 64 == 0 && measurer.isTimeOver()) {
           LOG.debug("Too complex because the analysis took too long");
           psiBlock.putUserData(TOO_EXPENSIVE_HASH, psiBlock.getText().hashCode());
           return RunnerResult.TOO_COMPLEX;
@@ -182,6 +180,10 @@ public class DataFlowRunner {
       }
       return RunnerResult.ABORTED;
     }
+  }
+
+  protected boolean shouldCheckTimeLimit() {
+    return !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   private DfaInstructionState[] acceptInstruction(InstructionVisitor visitor, DfaInstructionState instructionState) {
