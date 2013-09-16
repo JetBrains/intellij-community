@@ -30,11 +30,11 @@ import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DfaVariableValue extends DfaValue {
@@ -42,7 +42,6 @@ public class DfaVariableValue extends DfaValue {
   public static class Factory {
     private final MultiMap<Trinity<Boolean,String,DfaVariableValue>,DfaVariableValue> myExistingVars = new MultiMap<Trinity<Boolean, String, DfaVariableValue>, DfaVariableValue>();
     private final DfaValueFactory myFactory;
-    private final MultiMap<DfaVariableValue, DfaVariableValue> myQualifiersToChainedVariables = new MultiMap<DfaVariableValue, DfaVariableValue>();
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
@@ -52,31 +51,26 @@ public class DfaVariableValue extends DfaValue {
       return createVariableValue(myVariable, myVariable.getType(), isNegated, null);
     }
     @NotNull
-    public DfaVariableValue createVariableValue(PsiModifierListOwner myVariable,
+    public DfaVariableValue createVariableValue(@NotNull PsiModifierListOwner myVariable,
                                                 @Nullable PsiType varType,
                                                 boolean isNegated,
                                                 @Nullable DfaVariableValue qualifier) {
-      String name = myVariable == null ? "" : ((PsiNamedElement)myVariable).getName();
-      Trinity<Boolean,String,DfaVariableValue> key = Trinity.create(isNegated, name, qualifier);
+      Trinity<Boolean,String,DfaVariableValue> key = Trinity.create(isNegated, ((PsiNamedElement)myVariable).getName(), qualifier);
       for (DfaVariableValue aVar : myExistingVars.get(key)) {
         if (aVar.hardEquals(myVariable, varType, isNegated, qualifier)) return aVar;
       }
 
       DfaVariableValue result = new DfaVariableValue(myVariable, varType, isNegated, myFactory, qualifier);
-      if (qualifier != null) {
-        myQualifiersToChainedVariables.putValue(qualifier, result);
-      }
       myExistingVars.putValue(key, result);
+      while (qualifier != null) {
+        qualifier.myDependents.add(result);
+        qualifier = qualifier.getQualifier();
+      }
       return result;
     }
 
     public List<DfaVariableValue> getAllQualifiedBy(DfaVariableValue value) {
-      ArrayList<DfaVariableValue> result = new ArrayList<DfaVariableValue>();
-      for (DfaVariableValue directQualified : myQualifiersToChainedVariables.get(value)) {
-        result.add(directQualified);
-        result.addAll(getAllQualifiedBy(directQualified));
-      }
-      return result;
+      return value.myDependents;
     }
 
   }
@@ -88,8 +82,9 @@ public class DfaVariableValue extends DfaValue {
   private final boolean myIsNegated;
   private Nullness myInherentNullability;
   private final DfaTypeValue myTypeValue;
+  private final List<DfaVariableValue> myDependents = new SmartList<DfaVariableValue>();
 
-  private DfaVariableValue(PsiModifierListOwner variable, PsiType varType, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier) {
+  private DfaVariableValue(@NotNull PsiModifierListOwner variable, PsiType varType, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier) {
     super(factory);
     myVariable = variable;
     myIsNegated = isNegated;
@@ -117,6 +112,11 @@ public class DfaVariableValue extends DfaValue {
     return myIsNegated;
   }
 
+  @Nullable
+  public DfaVariableValue getNegatedValue() {
+    return myNegatedValue;
+  }
+
   @Override
   public DfaVariableValue createNegated() {
     if (myNegatedValue != null) {
@@ -127,7 +127,6 @@ public class DfaVariableValue extends DfaValue {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    if (myVariable == null) return "$currentException";
     return (myIsNegated ? "!" : "") + ((PsiNamedElement)myVariable).getName() + (myQualifier == null ? "" : "|" + myQualifier.toString());
   }
 
