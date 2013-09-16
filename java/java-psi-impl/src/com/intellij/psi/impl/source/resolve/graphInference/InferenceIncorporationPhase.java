@@ -145,7 +145,7 @@ public class InferenceIncorporationPhase {
     for (PsiType upperBound : upperBounds) {
       for (PsiType eqBound : eqBounds) {
         if (!upperBound.equals(eqBound)) {
-          addConstraint(new SubtypingConstraint(eqBound, upperBound, true));
+          addConstraint(new SubtypingConstraint(upperBound, eqBound, true));
         }
       }
     }
@@ -159,7 +159,7 @@ public class InferenceIncorporationPhase {
       for (PsiType lowerBound : lowerBounds) {
         if (mySession.isProperType(upperBound) && mySession.isProperType(lowerBound)) continue;
         if (!upperBound.equals(lowerBound)) {
-          addConstraint(new SubtypingConstraint(lowerBound, upperBound, true));
+          addConstraint(new SubtypingConstraint(upperBound, lowerBound, true));
         }
       }
     }
