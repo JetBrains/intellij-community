@@ -27,7 +27,10 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
 
     // for now parsing of the output is not required as command is executed only for one file
     // and will be either successful or exception will be thrown
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(src), isMove ? SvnCommandName.move : SvnCommandName.copy, parameters, null);
+    // TODO: for now use dst as target, as if using source - then process will be started in the source folder and folder will be locked
+    // TODO: And if resolving working directory to some other folder (i.e. project root) => errors in parsing (info, status) occur, as
+    // TODO: base directory passed to parser do not correspond to working directory, but svn outputs relative paths
+    CommandUtil.execute(myVcs, SvnTarget.fromFile(dst), isMove ? SvnCommandName.move : SvnCommandName.copy, parameters, null);
   }
 
   @Override
