@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Processor;
@@ -1087,6 +1088,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               Point placeToShow = myEditor.logicalPositionToXY(logicalPosition);
               placeToShow.y += myEditor.getLineHeight() * 3 / 2;
 
+              if (SystemInfo.isOracleJvm && UIUtil.isRetina()) {
+                GraphicsUtil.setupFractionalMetrics(graphics);
+              }
               int w = graphics.getFontMetrics().stringWidth(s);
               int a = graphics.getFontMetrics().getAscent();
               int h = myEditor.getLineHeight();

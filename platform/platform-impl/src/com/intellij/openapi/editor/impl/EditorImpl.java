@@ -90,6 +90,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -3333,7 +3334,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       for (int i = start; i < end; i++) {
         final char c = data[i];
-        final int charWidth = metrics.charWidth(c);
+        final int charWidth = GraphicsUtil.charWidth(c, g.getFont());
 
         if (c == ' ') {
           g.fillRect(x + (charWidth >> 1), y, 1, 1);
@@ -3381,7 +3382,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         x = EditorUtil.nextTabStop(x, this);
       }
       else {
-        x += EditorUtil.charWidth(c, fontType, this);
+        x += c == '!' || c == ' ' ? EditorUtil.charWidth('c', fontType, this) : EditorUtil.charWidth(c, fontType, this);
       }
       if (x > clip.x + clip.width) {
         break;
