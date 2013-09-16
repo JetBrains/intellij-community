@@ -7,11 +7,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.FileStatusResultParser;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.SvnCommand;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -41,7 +43,9 @@ public class CmdAddClient extends BaseSvnClient implements AddClient {
     // TODO: handler should be called in parallel with command execution, but this will be in other thread
     // TODO: check if that is ok for current handler implementation
     // TODO: add possibility to invoke "handler.checkCancelled" - process should be killed
-    CommandUtil.execute(myVcs, SvnCommandName.add, parameters, new FileStatusResultParser(CHANGED_PATH, handler, new AddStatusConvertor()));
+    SvnCommand command = CommandUtil.execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.add, parameters, null);
+    FileStatusResultParser parser = new FileStatusResultParser(CHANGED_PATH, handler, new AddStatusConvertor());
+    parser.parse(command.getOutput());
   }
 
   private static List<String> prepareParameters(File file, SVNDepth depth, boolean makeParents, boolean includeIgnored, boolean force) {

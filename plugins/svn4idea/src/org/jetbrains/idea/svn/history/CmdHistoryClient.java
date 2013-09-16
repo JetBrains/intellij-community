@@ -9,13 +9,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.SvnCommand;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.jetbrains.idea.svn.commandLine.SvnLineCommand;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.text.ParseException;
@@ -55,7 +56,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
       prepareCommand(path, startRevision, endRevision, pegRevision, stopOnCopy, discoverChangedPaths, includeMergedRevisions, limit);
 
     try {
-      SvnLineCommand command = CommandUtil.runSimple(SvnCommandName.log, myVcs, path, null, parameters);
+      SvnCommand command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path, pegRevision), SvnCommandName.log, parameters, null);
       // TODO: handler should be called in parallel with command execution, but this will be in other thread
       // TODO: check if that is ok for current handler implementation
       parseOutput(handler, command);
@@ -65,7 +66,7 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     }
   }
 
-  private static void parseOutput(@Nullable ISVNLogEntryHandler handler, @NotNull SvnLineCommand command)
+  private static void parseOutput(@Nullable ISVNLogEntryHandler handler, @NotNull SvnCommand command)
     throws VcsException, SVNException {
     Parser parser = new Parser(handler);
     for (String line : StringUtil.splitByLines(command.getOutput(), false)) {

@@ -20,13 +20,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.Convertor;
 import org.apache.subversion.javahl.types.Revision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.*;
@@ -38,15 +37,15 @@ import java.util.*;
  * Time: 4:56 PM
  */
 public class SvnCommitRunner {
-  private final String myExePath;
-  @Nullable private final AuthenticationCallback myAuthenticationCallback;
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.commandLine.SvnCommitRunner");
-  private SvnCommitRunner.CommandListener myCommandListener;
 
-  public SvnCommitRunner(@NotNull String path, @Nullable CommitEventHandler handler, @Nullable AuthenticationCallback authenticationCallback) {
-    myExePath = path;
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.commandLine.SvnCommitRunner");
+
+  private SvnCommitRunner.CommandListener myCommandListener;
+  private SvnVcs myVcs;
+
+  public SvnCommitRunner(@NotNull SvnVcs vcs, @Nullable CommitEventHandler handler) {
+    myVcs = vcs;
     myCommandListener = new CommandListener(handler);
-    myAuthenticationCallback = authenticationCallback;
   }
 
   public long commit(File[] paths,
@@ -55,7 +54,7 @@ public class SvnCommitRunner {
                      boolean noUnlock,
                      boolean keepChangelist,
                      Collection<String> changelists,
-                     Map revpropTable, Convertor<File[], SVNURL> urlProvider) throws VcsException {
+                     Map revpropTable) throws VcsException {
     if (paths.length == 0) return Revision.SVN_INVALID_REVNUM;
 
     final List<String> parameters = new ArrayList<String>();
@@ -77,11 +76,21 @@ public class SvnCommitRunner {
     Arrays.sort(paths);
     CommandUtil.put(parameters, paths);
 
-    SvnLineCommand.runWithAuthenticationAttempt(myExePath, paths[0], urlProvider.convert(paths), SvnCommandName.ci,
-                                                myCommandListener, myAuthenticationCallback, ArrayUtil.toStringArray(parameters));
+    myCommandListener.setBaseDirectory(SvnBindUtil.correctUpToExistingParent(paths[0]));
+    CommandUtil.execute(myVcs, SvnTarget.fromFile(paths[0]), SvnCommandName.ci, parameters, myCommandListener);
     myCommandListener.throwExceptionIfOccurred();
 
-    return myCommandListener.getCommittedRevision();
+    return validateRevisionNumber();
+  }
+
+  private long validateRevisionNumber() throws VcsException {
+    long revision = myCommandListener.getCommittedRevision();
+
+    if (revision < 0) {
+      throw new VcsException("Wrong committed revision number: " + revision);
+    }
+
+    return revision;
   }
 
   public static class CommandListener extends LineCommandListener {
@@ -104,8 +113,7 @@ public class SvnCommitRunner {
       return myCommittedRevision;
     }
 
-    @Override
-    public void baseDirectory(File file) {
+    public void setBaseDirectory(@NotNull File file) {
       myBase = file;
     }
 

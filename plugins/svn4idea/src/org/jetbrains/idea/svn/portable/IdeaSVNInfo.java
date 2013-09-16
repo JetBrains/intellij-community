@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.portable;
 
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -36,7 +37,7 @@ public class IdeaSVNInfo extends SVNInfo {
   private final Date myCorrectCommittedDate;
   private final Date myCorrectTextDate;
 
-  public IdeaSVNInfo(File file,
+  public IdeaSVNInfo(@Nullable File file,
                      SVNURL url,
                      SVNURL rootURL,
                      long revision,

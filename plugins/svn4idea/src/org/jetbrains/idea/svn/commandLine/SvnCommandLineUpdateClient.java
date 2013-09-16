@@ -17,15 +17,14 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
 import org.jetbrains.idea.svn.portable.SvnSvnkitUpdateClient;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -46,9 +45,11 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
   private final Project myProject;
   private final VirtualFile myCommonAncestor;
   private boolean myIgnoreExternals;
+  private SvnVcs myVcs;
 
   public SvnCommandLineUpdateClient(final SvnVcs vcs, VirtualFile commonAncestor) {
     super(vcs.createUpdateClient());
+    myVcs = vcs;
     myProject = vcs.getProject();
     myCommonAncestor = commonAncestor;
   }
@@ -89,12 +90,9 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
     final List<String> parameters = prepareParameters(paths, revision, depth, allowUnversionedObstructions, depthIsSticky, makeParents);
     final BaseUpdateCommandListener listener = createCommandListener(paths, updatedToRevision, base);
     try {
-      SvnLineCommand.runWithAuthenticationAttempt(SvnApplicationSettings.getInstance().getCommandLinePath(),
-                                                  base, info.getURL(), SvnCommandName.up, listener,
-                                                  new IdeaSvnkitBasedAuthenticationCallback(SvnVcs.getInstance(myProject)),
-                                                  ArrayUtil.toStringArray(parameters));
+      CommandUtil.execute(myVcs, SvnTarget.fromFile(base), SvnCommandName.up, parameters, listener);
     }
-    catch (SvnBindException e) {
+    catch (VcsException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
     }
 

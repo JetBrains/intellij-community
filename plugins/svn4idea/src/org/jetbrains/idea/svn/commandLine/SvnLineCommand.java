@@ -28,6 +28,7 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -111,55 +112,55 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  public static SvnLineCommand runWithAuthenticationAttempt(final String exePath,
-                                                            final File firstFile,
-                                                            final SVNURL url,
+  public static SvnLineCommand runWithAuthenticationAttempt(@NotNull final File workingDirectory,
+                                                            @Nullable final SVNURL repositoryUrl,
                                                             SvnCommandName commandName,
                                                             final LineCommandListener listener,
-                                                            @Nullable AuthenticationCallback authenticationCallback,
+                                                            @NotNull AuthenticationCallback authenticationCallback,
                                                             String... parameters) throws SvnBindException {
-    File base = firstFile != null ? (firstFile.isDirectory() ? firstFile : firstFile.getParentFile()) : null;
-    base = SvnBindUtil.correctUpToExistingParent(base);
-
-    listener.baseDirectory(base);
-
     File configDir = null;
 
     try {
       // for IDEA proxy case
-      if (authenticationCallback != null) {
-        writeIdeaConfig2SubversionConfig(authenticationCallback, base);
-        configDir = authenticationCallback.getSpecialConfigDir();
-      }
+      writeIdeaConfig2SubversionConfig(authenticationCallback, repositoryUrl);
+      configDir = authenticationCallback.getSpecialConfigDir();
 
       while (true) {
-        final SvnLineCommand command = runCommand(exePath, commandName, listener, base, configDir, parameters);
+        final String exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
+        final SvnLineCommand command = runCommand(exePath, commandName, listener, workingDirectory, configDir, parameters);
         final Integer exitCode = command.myExitCode.get();
 
-        // could be situations when exit code = 0, but there is info "warning" in error stream
-        // for instance, for "svn status" on non-working copy folder
-        if (exitCode != 0) {
+        // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
+        // on non-working copy folder
+        // TODO: synchronization does not work well in all cases - sometimes exit code is not yet set and null returned - fix synchronization
+        // here we treat null exit code as some non-zero exit code
+        if (exitCode == null || exitCode != 0) {
+          logNullExitCode(command, exitCode);
+
           if (command.myErr.length() > 0) {
             // handle authentication
             final String errText = command.myErr.toString().trim();
-            if (authenticationCallback != null) {
-              final AuthCallbackCase callback = createCallback(errText, authenticationCallback, base, url);
-              if (callback != null) {
-                cleanup(exePath, command, base);
-                if (callback.getCredentials(errText)) {
-                  if (authenticationCallback.getSpecialConfigDir() != null) {
-                    configDir = authenticationCallback.getSpecialConfigDir();
-                  }
-                  parameters = updateParameters(callback, parameters);
-                  continue;
+            final AuthCallbackCase callback = createCallback(errText, authenticationCallback, repositoryUrl);
+            if (callback != null) {
+              cleanup(exePath, command, workingDirectory);
+              if (callback.getCredentials(errText)) {
+                if (authenticationCallback.getSpecialConfigDir() != null) {
+                  configDir = authenticationCallback.getSpecialConfigDir();
                 }
+                parameters = updateParameters(callback, parameters);
+                continue;
               }
             }
             throw new SvnBindException(errText);
           } else {
-            throw new SvnBindException("Svn process exited with error code: " + exitCode);
+            // no errors found in error stream => we treat null exitCode as successful, otherwise exception is thrown
+            if (exitCode != null) {
+              // here exitCode != null && exitCode != 0
+              throw new SvnBindException("Svn process exited with error code: " + exitCode);
+            }
           }
         } else if (command.myErr.length() > 0) {
+          // here exitCode == 0, but some warnings are in error stream
           LOG.info("Detected warning - " + command.myErr);
         }
         return command;
@@ -171,6 +172,12 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
+  private static void logNullExitCode(@NotNull SvnLineCommand command, @Nullable Integer exitCode) {
+    if (exitCode == null) {
+      LOG.info("Null exit code returned, but not errors detected " + command.getCommandText());
+    }
+  }
+
   private static String[] updateParameters(AuthCallbackCase callback, String[] parameters) {
     List<String> p = new ArrayList<String>(Arrays.asList(parameters));
 
@@ -178,10 +185,11 @@ public class SvnLineCommand extends SvnCommand {
     return ArrayUtil.toStringArray(p);
   }
 
-  private static void writeIdeaConfig2SubversionConfig(@NotNull AuthenticationCallback authenticationCallback, @NotNull File base) throws SvnBindException {
+  private static void writeIdeaConfig2SubversionConfig(@NotNull AuthenticationCallback authenticationCallback,
+                                                       @Nullable SVNURL repositoryUrl) throws SvnBindException {
     if (authenticationCallback.haveDataForTmpConfig()) {
       try {
-        if (! authenticationCallback.persistDataToTmpConfig(base)) {
+        if (!authenticationCallback.persistDataToTmpConfig(repositoryUrl)) {
           throw new SvnBindException("Can not persist " + ApplicationNamesInfo.getInstance().getProductName() +
                                      " HTTP proxy information into tmp config directory");
         }
@@ -196,35 +204,37 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  private static AuthCallbackCase createCallback(final String errText, final AuthenticationCallback callback, final File base, final SVNURL url) {
+  private static AuthCallbackCase createCallback(final String errText,
+                                                 @NotNull final AuthenticationCallback callback,
+                                                 final SVNURL url) {
     if (errText.startsWith(CERTIFICATE_ERROR)) {
-      return new CertificateCallbackCase(callback, base);
+      return new CertificateCallbackCase(callback, url);
     }
     if (errText.startsWith(AUTHENTICATION_REALM)) {
-      return new CredentialsCallback(callback, base);
+      return new CredentialsCallback(callback, url);
     }
     if (errText.startsWith(PASSPHRASE_FOR)) {
-      return new PassphraseCallback(callback, base);
+      return new PassphraseCallback(callback, url);
     }
     if (errText.startsWith(UNABLE_TO_CONNECT) && errText.contains(CANNOT_AUTHENTICATE_TO_PROXY)) {
-      return new ProxyCallback(callback, base);
+      return new ProxyCallback(callback, url);
     }
     // http/https protocol invalid credentials
     if (errText.contains(AUTHENTICATION_FAILED_MESSAGE)) {
-      return new UsernamePasswordCallback(callback, base, url);
+      return new UsernamePasswordCallback(callback, url);
     }
     // messages could be "Can't get password", "Can't get username or password"
     if (errText.contains(INVALID_CREDENTIALS_FOR_SVN_PROTOCOL) && errText.contains(PASSWORD_STRING)) {
       // svn protocol invalid credentials
-      return new UsernamePasswordCallback(callback, base, url);
+      return new UsernamePasswordCallback(callback, url);
     }
     // https one-way protocol untrusted server certificate
     if (errText.contains(UNTRUSTED_SERVER_CERTIFICATE)) {
-      return new CertificateCallbackCase(callback, base);
+      return new CertificateCallbackCase(callback, url);
     }
     // https two-way protocol invalid client certificate
     if (errText.contains(ACCESS_TO_PREFIX) && errText.contains(FORBIDDEN_STATUS)) {
-      return new TwoWaySslCallback(callback, base, url);
+      return new TwoWaySslCallback(callback, url);
     }
     return null;
   }
@@ -233,11 +243,9 @@ public class SvnLineCommand extends SvnCommand {
   // authentication realm (just url) - so we could not create temp cache
   private static class UsernamePasswordCallback extends AuthCallbackCase {
     protected SVNAuthentication myAuthentication;
-    protected SVNURL myUrl;
 
-    protected UsernamePasswordCallback(AuthenticationCallback callback, File base, SVNURL url) {
-      super(callback, base);
-      myUrl = url;
+    protected UsernamePasswordCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
+      super(callback, url);
     }
 
     @Override
@@ -289,19 +297,21 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static class ProxyCallback extends AuthCallbackCase {
-    protected ProxyCallback(AuthenticationCallback callback, File base) {
-      super(callback, base);
+
+    protected ProxyCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
+      super(callback, url);
     }
 
     @Override
     boolean getCredentials(String errText) throws SvnBindException {
-      return myAuthenticationCallback.askProxyCredentials(myBase);
+      return myAuthenticationCallback.askProxyCredentials(myUrl);
     }
   }
 
   private static class CredentialsCallback extends AuthCallbackCase {
-    protected CredentialsCallback(AuthenticationCallback callback, File base) {
-      super(callback, base);
+
+    private CredentialsCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
+      super(callback, url);
     }
 
     @Override
@@ -310,10 +320,10 @@ public class SvnLineCommand extends SvnCommand {
         errText.startsWith(AUTHENTICATION_REALM) ? cutFirstLine(errText).substring(AUTHENTICATION_REALM.length()).trim() : null;
       final boolean isPassword = StringUtil.containsIgnoreCase(errText, "password");
       if (myTried) {
-        myAuthenticationCallback.clearPassiveCredentials(realm, myBase, isPassword);
+        myAuthenticationCallback.clearPassiveCredentials(realm, myUrl, isPassword);
       }
       myTried = true;
-      if (myAuthenticationCallback.authenticateFor(realm, myBase, myAuthenticationCallback.getSpecialConfigDir() != null, isPassword)) {
+      if (myAuthenticationCallback.authenticateFor(realm, myUrl, myAuthenticationCallback.getSpecialConfigDir() != null, isPassword)) {
         return true;
       }
       throw new SvnBindException("Authentication canceled for realm: " + realm);
@@ -329,8 +339,8 @@ public class SvnLineCommand extends SvnCommand {
   private static class CertificateCallbackCase extends AuthCallbackCase {
     private boolean accepted;
 
-    private CertificateCallbackCase(AuthenticationCallback callback, File base) {
-      super(callback, base);
+    protected CertificateCallbackCase(@NotNull AuthenticationCallback callback, SVNURL url) {
+      super(callback, url);
     }
 
     @Override
@@ -346,7 +356,7 @@ public class SvnLineCommand extends SvnCommand {
         throw new SvnBindException("Can not detect authentication realm name: " + errText);
       }
       realm = realm.substring(idx1 + 1, idx2);
-      if (! myTried && myAuthenticationCallback.acceptSSLServerCertificate(myBase, realm)) {
+      if (! myTried && myAuthenticationCallback.acceptSSLServerCertificate(myUrl, realm)) {
         accepted = true;
         myTried = true;
         return true;
@@ -366,8 +376,8 @@ public class SvnLineCommand extends SvnCommand {
 
   private static class TwoWaySslCallback extends UsernamePasswordCallback {
 
-    protected TwoWaySslCallback(AuthenticationCallback callback, File base, SVNURL url) {
-      super(callback, base, url);
+    protected TwoWaySslCallback(AuthenticationCallback callback, SVNURL url) {
+      super(callback, url);
     }
 
     @Override
@@ -394,13 +404,13 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static abstract class AuthCallbackCase {
+    protected final SVNURL myUrl;
     protected boolean myTried = false;
-    protected final AuthenticationCallback myAuthenticationCallback;
-    protected final File myBase;
+    @NotNull protected final AuthenticationCallback myAuthenticationCallback;
 
-    protected AuthCallbackCase(AuthenticationCallback callback, final File base) {
+    protected AuthCallbackCase(@NotNull AuthenticationCallback callback, SVNURL url) {
       myAuthenticationCallback = callback;
-      myBase = base;
+      myUrl = url;
     }
 
     abstract boolean getCredentials(final String errText) throws SvnBindException;
@@ -409,19 +419,17 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  private static void cleanup(String exePath, SvnCommand command, File base) throws SvnBindException {
+  private static void cleanup(String exePath, SvnCommand command, @NotNull File workingDirectory) throws SvnBindException {
     if (command.isManuallyDestroyed() && command.getCommandName().isWriteable()) {
-      File wcRoot = SvnUtil.getWorkingCopyRootNew(base);
-      if (wcRoot == null) {
-        throw new SvnBindException("Can not find working copy root for: " + base.getPath());
-      }
+      File wcRoot = SvnUtil.getWorkingCopyRootNew(workingDirectory);
 
-      final SvnSimpleCommand cleanupCommand = new SvnSimpleCommand(wcRoot, SvnCommandName.cleanup, exePath);
-      try {
-        cleanupCommand.run();
-      }
-      catch (VcsException e) {
-        throw new SvnBindException(e);
+      // not all commands require cleanup - for instance, some commands operate only with repository - like "svn info <url>"
+      // TODO: check if we could "configure" commands (or make command to explicitly ask) if cleanup is required - not to search
+      // TODO: working copy root each time
+      if (wcRoot != null) {
+        runCommand(exePath, SvnCommandName.cleanup, new SvnCommitRunner.CommandListener(null), wcRoot, null);
+      } else {
+        LOG.info("Could not execute cleanup for command " + command.getCommandText());
       }
     }
   }
@@ -461,6 +469,8 @@ public class SvnLineCommand extends SvnCommand {
           final String trim = text.trim();
           // should end in 1 second
           errorReceived.set(true);
+          // TODO: destroy process here is called despite --non-interactive flag (so it is called even for 1.8) and then unnecessary
+          // TODO: cleanup is invoked - fix this
           if (trim.startsWith(UNABLE_TO_CONNECT)) {
             // wait for 3 lines of text then
             if (myErrCnt >= 3) {
@@ -585,8 +595,9 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static class PassphraseCallback extends AuthCallbackCase {
-    public PassphraseCallback(AuthenticationCallback callback, File base) {
-      super(callback, base);
+
+    protected PassphraseCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
+      super(callback, url);
     }
 
     @Override
@@ -596,7 +607,7 @@ public class SvnLineCommand extends SvnCommand {
         myAuthenticationCallback.clearPassiveCredentials(null, myBase);
       }*/
       myTried = true;
-      if (myAuthenticationCallback.authenticateFor(null, myBase, myAuthenticationCallback.getSpecialConfigDir() != null, false)) {
+      if (myAuthenticationCallback.authenticateFor(null, myUrl, myAuthenticationCallback.getSpecialConfigDir() != null, false)) {
         return true;
       }
       throw new SvnBindException("Authentication canceled for : " + errText.substring(PASSPHRASE_FOR.length()));

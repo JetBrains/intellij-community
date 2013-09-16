@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,6 +25,6 @@ public class CmdDeleteClient extends BaseSvnClient implements DeleteClient {
 
     // for now parsing of the output is not required as command is executed only for one file
     // and will be either successful or exception will be thrown
-    CommandUtil.execute(myVcs, SvnCommandName.delete, parameters, null);
+    CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.delete, parameters, null);
   }
 }

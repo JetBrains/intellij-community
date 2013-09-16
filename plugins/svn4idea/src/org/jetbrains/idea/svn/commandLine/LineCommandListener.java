@@ -17,8 +17,6 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.vcs.LineProcessEventListenerAdapter;
 
-import java.io.File;
-
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
@@ -27,8 +25,6 @@ import java.io.File;
  */
 public abstract class LineCommandListener extends LineProcessEventListenerAdapter {
   private boolean myCanceled;
-
-  public abstract void baseDirectory(final File file);
 
   public void cancel() {
     myCanceled = true;
