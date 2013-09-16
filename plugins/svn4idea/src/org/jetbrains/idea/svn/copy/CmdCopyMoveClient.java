@@ -22,7 +22,7 @@ public class CmdCopyMoveClient extends BaseSvnClient implements CopyMoveClient {
     List<String> parameters = new ArrayList<String>();
 
     CommandUtil.put(parameters, src);
-    CommandUtil.put(parameters, dst);
+    CommandUtil.put(parameters, dst, false);
     CommandUtil.put(parameters, makeParents, "--parents");
 
     // for now parsing of the output is not required as command is executed only for one file
