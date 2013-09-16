@@ -95,6 +95,16 @@ public class PsiPolyExpressionUtil {
 
       @Nullable
       @Override
+      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+        final PsiType bound = wildcardType.getBound();
+        if (bound != null) {
+          return bound.accept(this);
+        }
+        return false;
+      }
+
+      @Nullable
+      @Override
       public Boolean visitClassType(PsiClassType classType) {
         for (PsiType type : classType.getParameters()) {
           if (type.accept(this)) return true;
