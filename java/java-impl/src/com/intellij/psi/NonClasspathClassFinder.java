@@ -90,10 +90,9 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     if(myUseExtendedScope) {
       scope = addNonClasspathScope(myProject, scope);
     }
+    final String relPath = qualifiedName.replace('.', '/');
     for (final VirtualFile classRoot : classRoots) {
       if (scope.contains(classRoot)) {
-        final String relPath = qualifiedName.replace('.', '/');
-
         if (myCheckForSources) {
           final VirtualFile classSrcFile = classRoot.findFileByRelativePath(relPath + JavaFileType.DOT_DEFAULT_EXTENSION);
           if (classSrcFile != null && classSrcFile.isValid()) {
