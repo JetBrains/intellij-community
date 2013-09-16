@@ -950,7 +950,7 @@ public class ExpectedTypesProvider {
         PsiSubstitutor substitutor;
         if (candidateInfo instanceof MethodCandidateInfo) {
           final MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
-          substitutor = info.inferTypeArguments(policy, args);
+          substitutor = info.inferTypeArguments(policy, args, true);
           if (!info.isStaticsScopeCorrect() && method != null && !method.hasModifierProperty(PsiModifier.STATIC)) continue;
         }
         else {
@@ -959,7 +959,7 @@ public class ExpectedTypesProvider {
         inferMethodCallArgumentTypes(argument, forCompletion, args, index, method, substitutor, array);
 
         if (leftArgs != null && candidateInfo instanceof MethodCandidateInfo) {
-          substitutor = ((MethodCandidateInfo)candidateInfo).inferTypeArguments(policy, leftArgs);
+          substitutor = ((MethodCandidateInfo)candidateInfo).inferTypeArguments(policy, leftArgs, true);
           inferMethodCallArgumentTypes(argument, forCompletion, leftArgs, index, method, substitutor, array);
         }
       }

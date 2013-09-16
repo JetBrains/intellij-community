@@ -53,6 +53,7 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                            @NotNull PsiElement parent,
                                            @NotNull ParameterTypeInferencePolicy policy,
                                            @NotNull LanguageLevel languageLevel) {
+    if (typeParameters.length == 0) return partialSubstitutor;
     return new InferenceSession(typeParameters, parameters, arguments, partialSubstitutor, parent, myManager).infer();
   }
 
@@ -62,6 +63,7 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                            @NotNull PsiType[] leftTypes,
                                            @NotNull PsiType[] rightTypes,
                                            @NotNull LanguageLevel languageLevel) {
+    if (typeParameters.length == 0) return PsiSubstitutor.EMPTY;
     return new InferenceSession(typeParameters, leftTypes, rightTypes, PsiSubstitutor.EMPTY, myManager).infer();
   }
 

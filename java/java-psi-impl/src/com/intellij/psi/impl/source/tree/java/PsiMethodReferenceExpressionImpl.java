@@ -323,7 +323,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                                                argumentList != null ? argumentList.getExpressionTypes() : null, getTypeArguments(),
                                                getLanguageLevel()) {
                   @Override
-                  public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy) {
+                  public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
                     return inferTypeArgumentsFromInterfaceMethod(signature, interfaceMethodReturnType, method, substitutor, languageLevel);
                   }
                 };

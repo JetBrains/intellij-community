@@ -101,4 +101,24 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     }
     return false;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    TypeEqualityConstraint that = (TypeEqualityConstraint)o;
+
+    if (!myS.equals(that.myS)) return false;
+    if (!myT.equals(that.myT)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myT.hashCode();
+    result = 31 * result + myS.hashCode();
+    return result;
+  }
 }
