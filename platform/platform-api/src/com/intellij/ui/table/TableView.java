@@ -112,8 +112,12 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
       final ColumnInfo columnInfo = columns[i];
       final TableColumn column = getColumnModel().getColumn(i);
 
-      final Component headerComponent = defaultRenderer == null? null :
-        defaultRenderer.getTableCellRendererComponent(this, column.getHeaderValue(), false, false, 0, 0);
+      TableCellRenderer columnHeaderRenderer = column.getHeaderRenderer();
+      if (columnHeaderRenderer == null) {
+        columnHeaderRenderer = defaultRenderer;
+      }
+      final Component headerComponent = columnHeaderRenderer == null? null :
+        columnHeaderRenderer.getTableCellRendererComponent(this, column.getHeaderValue(), false, false, 0, 0);
 
       if (headerComponent != null) {
         headers[i] = headerComponent.getPreferredSize().width;
