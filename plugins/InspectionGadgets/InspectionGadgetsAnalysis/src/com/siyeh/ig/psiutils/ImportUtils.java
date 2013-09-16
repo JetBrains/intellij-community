@@ -591,7 +591,7 @@ public class ImportUtils {
       }
       super.visitReferenceElement(reference);
 
-      if (reference.getQualifier() != null || reference.getParameterList() != null) return;
+      if (reference.getQualifier() != null) return;
 
       final PsiElement element = reference.resolve();
       if (!(element instanceof PsiClass) || element instanceof PsiTypeParameter) {
