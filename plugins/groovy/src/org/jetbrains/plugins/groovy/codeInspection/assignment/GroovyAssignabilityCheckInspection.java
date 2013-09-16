@@ -125,7 +125,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (PsiUtil.isRawClassMemberAccess(expression)) return;
       if (checkForImplicitEnumAssigning(expectedType, expression, expression)) return;
       final PsiType rType = expression.getType();
-      if (rType == null || rType == PsiType.VOID) return;
+      if (rType == null) return;
 
       if (!TypesUtil.isAssignable(expectedType, rType, expression)) {
         final List<LocalQuickFix> fixes = ContainerUtil.newArrayList();
@@ -219,7 +219,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         final PsiType returnType = PsiImplUtil.inferReturnType(expression);
         final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(expression);
         if (flowOwner != null && returnType != null && returnType != PsiType.VOID) {
-          if (ControlFlowUtils.isReturnValue(expression, flowOwner) && !isNewInstanceInitialingByTuple(expression)) {
+          if (ControlFlowUtils.isReturnValue(expression, flowOwner) &&
+              !isNewInstanceInitialingByTuple(expression) &&
+              expression.getType() != PsiType.VOID) {
             checkAssignability(returnType, expression, getExpressionPartToHighlight(expression));
           }
         }

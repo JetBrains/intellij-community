@@ -783,4 +783,20 @@ interface X {
 X <warning>x</warning> = {print 2}
 ''')
   }
+
+  void testVoidMethodAssignability() {
+    testHighlighting('''\
+void foo() {}
+
+def <warning>foo</warning> = foo()
+
+def bar() {
+  foo() //no warning
+}
+
+def zoo() {
+  <warning>return</warning> foo()
+}
+''')
+  }
 }
