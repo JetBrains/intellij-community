@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -63,6 +64,9 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       String ns = nsInfo.get(i);
       if (StringUtil.isNotEmpty(ns)) {
         lookupElement = lookupElement.withTypeText(ns, true);
+      }
+      if (descriptor instanceof PsiPresentableMetaData) {
+        lookupElement = lookupElement.withIcon(((PsiPresentableMetaData)descriptor).getIcon());
       }
       if (xmlExtension.useXmlTagInsertHandler()) {
         elements.add(lookupElement.withInsertHandler(XmlTagInsertHandler.INSTANCE));
