@@ -131,10 +131,9 @@ class Build {
       else{
         usedJars = ultimate_utils.buildModules(modules, args.module_libs)
       }
-    }
       projectBuilder.stage("- additionalCompilation -")
       utils.additionalCompilation()
-  // [VO] uncomment it  }
+    }
   }
 
   def scramble (Map args) {
