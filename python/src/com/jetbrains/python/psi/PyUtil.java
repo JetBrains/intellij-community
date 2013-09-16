@@ -12,7 +12,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.MessageType;
@@ -125,6 +125,7 @@ public class PyUtil {
     List<T> result = new SmartList<T>();
     for (PsiElement child : element.getChildren()) {
       if (instanceOf(child, aClass)) {
+        //noinspection unchecked
         result.add((T)child);
       }
       else {
@@ -865,7 +866,7 @@ public class PyUtil {
 
   @NotNull
   public static Collection<VirtualFile> getSourceRoots(@NotNull PsiElement foothold) {
-    final Module module = ModuleUtil.findModuleForPsiElement(foothold);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(foothold);
     if (module != null) {
       return getSourceRoots(module);
     }
@@ -1297,5 +1298,78 @@ public class PyUtil {
       }
     }
     return Arrays.asList(callable.getParameterList().getParameters());
+  }
+
+  public static boolean isSignatureCompatibleTo(@NotNull Callable callable, @NotNull Callable otherCallable,
+                                                @NotNull TypeEvalContext context) {
+    final List<PyParameter> parameters = getParameters(callable, context);
+    final List<PyParameter> otherParameters = getParameters(otherCallable, context);
+    final int optionalCount = optionalParametersCount(parameters);
+    final int otherOptionalCount = optionalParametersCount(otherParameters);
+    final int requiredCount = requiredParametersCount(callable, parameters);
+    final int otherRequiredCount = requiredParametersCount(otherCallable, otherParameters);
+    if (hasPositionalContainer(otherParameters) || hasKeywordContainer(otherParameters)) {
+      if (otherParameters.size() == specialParametersCount(otherCallable, otherParameters)) {
+        return true;
+      }
+    }
+    if (hasPositionalContainer(parameters) || hasKeywordContainer(parameters)) {
+      return requiredCount <= otherRequiredCount;
+    }
+    return requiredCount <= otherRequiredCount && parameters.size() >= otherParameters.size() && optionalCount >= otherOptionalCount;
+  }
+
+  private static int optionalParametersCount(@NotNull List<PyParameter> parameters) {
+    int n = 0;
+    for (PyParameter parameter : parameters) {
+      if (parameter.getDefaultValue() != null) {
+        n++;
+      }
+    }
+    return n;
+  }
+
+  private static int requiredParametersCount(@NotNull Callable callable, @NotNull List<PyParameter> parameters) {
+    return parameters.size() - optionalParametersCount(parameters) - specialParametersCount(callable, parameters);
+  }
+
+  private static int specialParametersCount(@NotNull Callable callable, @NotNull List<PyParameter> parameters) {
+    int n = 0;
+    if (hasPositionalContainer(parameters)) {
+      n++;
+    }
+    if (hasKeywordContainer(parameters)) {
+      n++;
+    }
+    if (callable.asMethod() != null) {
+      n++;
+    }
+    else {
+      if (parameters.size() > 0) {
+        final PyParameter first = parameters.get(0);
+        if (PyNames.CANONICAL_SELF.equals(first.getName())) {
+          n++;
+        }
+      }
+    }
+    return n;
+  }
+
+  private static boolean hasPositionalContainer(@NotNull List<PyParameter> parameters) {
+    for (PyParameter parameter : parameters) {
+      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isPositionalContainer()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasKeywordContainer(@NotNull List<PyParameter> parameters) {
+    for (PyParameter parameter : parameters) {
+      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isKeywordContainer()) {
+        return true;
+      }
+    }
+    return false;
   }
 }

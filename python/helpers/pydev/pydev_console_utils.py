@@ -14,6 +14,11 @@ except:
     import queue as _queue
 
 try:
+    from pydevd_exec import Exec
+except:
+    from pydevd_exec2 import Exec
+
+try:
     if USE_LIB_COPY:
         import _pydev_thread as thread
     else:
@@ -23,6 +28,8 @@ except:
 
 import pydevd_xml
 import pydevd_vars
+
+from pydevd_utils import *
 
 #=======================================================================================================================
 # Null
@@ -369,7 +376,4 @@ class BaseInterpreterInterface:
         return xml
 
     def changeVariable(self, attr, value):
-        try:
-            Exec('%s=%s' % (attr, value), self.getNamespace(), self.getNamespace())
-        except:
-            pass
+        Exec('%s=%s' % (attr, value), self.getNamespace(), self.getNamespace())

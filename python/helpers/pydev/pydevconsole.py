@@ -267,7 +267,7 @@ def start_server(host, port, interpreter):
     from pydev_imports import SimpleXMLRPCServer
 
     try:
-        server = SimpleXMLRPCServer((host, port), logRequests=False)
+        server = SimpleXMLRPCServer((host, port), logRequests=False, allow_none=True)
 
     except:
         sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, client_port))
