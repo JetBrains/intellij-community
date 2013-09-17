@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,16 +34,12 @@ public class FileInfo {
   private static final int FILE_ATTRIBUTE_DEVICE = 0x0040;
   private static final int FILE_ATTRIBUTE_REPARSE_POINT = 0x0400;  // is set only for symlinks
 
-  private String name;
-  private int attributes;
-  private long timestamp;
-  private long length;
+  @SuppressWarnings("UnusedDeclaration") private String name;
+  @SuppressWarnings("UnusedDeclaration") private int attributes;
+  @SuppressWarnings("UnusedDeclaration") private long timestamp;
+  @SuppressWarnings("UnusedDeclaration") private long length;
 
   public String getName() {
-    return name;
-  }
-
-  public String toString() {
     return name;
   }
 
@@ -58,5 +54,10 @@ public class FileInfo {
     final boolean isWritable = !isSet(attributes, FILE_ATTRIBUTE_READONLY);
     final long javaTimestamp = timestamp / 10000 - 11644473600000l;
     return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, length, javaTimestamp, isWritable);
+  }
+
+  @Override
+  public String toString() {
+    return name;
   }
 }

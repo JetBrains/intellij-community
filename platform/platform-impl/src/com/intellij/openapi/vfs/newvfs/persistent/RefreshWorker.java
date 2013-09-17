@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,14 +80,23 @@ public class RefreshWorker {
       root.markClean();
       return;
     }
-    if (rootAttributes != null && rootAttributes.isDirectory()) {
+    else if (rootAttributes.isDirectory()) {
       fs = PersistentFS.replaceWithNativeFS(fs);
     }
-    myRefreshQueue.addLast(Pair.create(root, rootAttributes));
-    PersistentFS persistence = PersistentFS.getInstance();
 
-    main:
-    while (!myRefreshQueue.isEmpty() && !myCancelled) {
+    myRefreshQueue.addLast(Pair.create(root, rootAttributes));
+    try {
+      processQueue(fs, PersistentFS.getInstance());
+    }
+    catch (RefreshCancelledException e) {
+      LOG.debug("refresh cancelled");
+    }
+  }
+
+  private void processQueue(NewVirtualFileSystem fs, PersistentFS persistence) throws RefreshCancelledException {
+    while (!myRefreshQueue.isEmpty()) {
+      checkCancelled();
+
       Pair<NewVirtualFile, FileAttributes> pair = myRefreshQueue.pullFirst();
       NewVirtualFile file = pair.first;
       boolean fileDirty = file.isDirty();
@@ -110,12 +120,12 @@ public class RefreshWorker {
         VirtualDirectoryImpl dir = (VirtualDirectoryImpl)file;
         boolean fullSync = dir.allChildrenLoaded();
         if (fullSync) {
-          Set<String> currentNames = newHashSet(persistence.list(file));
-          Set<String> upToDateNames = newHashSet(VfsUtil.filterNames(fs.list(file)));
+          String[] currentNames = persistence.list(file);
+          String[] upToDateNames = VfsUtil.filterNames(fs.list(file));
           Set<String> newNames = newHashSet(upToDateNames);
-          newNames.removeAll(currentNames);
+          ContainerUtil.removeAll(newNames, currentNames);
           Set<String> deletedNames = newHashSet(currentNames);
-          deletedNames.removeAll(upToDateNames);
+          ContainerUtil.removeAll(deletedNames, upToDateNames);
           debug(LOG, "current=%s +%s -%s", currentNames, newNames, deletedNames);
 
           for (String name : deletedNames) {
@@ -123,10 +133,10 @@ public class RefreshWorker {
           }
 
           for (String name : newNames) {
-            if (myCancelled) break main;
+            checkCancelled();
             FileAttributes childAttributes = fs.getAttributes(new FakeVirtualFile(file, name));
             if (childAttributes != null) {
-              scheduleCreation(file, name, childAttributes.isDirectory());
+              scheduleCreation(file, name, childAttributes.isDirectory(), false);
             }
             else {
               LOG.warn("fs=" + fs + " dir=" + file + " name=" + name);
@@ -134,7 +144,7 @@ public class RefreshWorker {
           }
 
           for (VirtualFile child : file.getChildren()) {
-            if (myCancelled) break main;
+            checkCancelled();
             if (!deletedNames.contains(child.getName())) {
               FileAttributes childAttributes = fs.getAttributes(child);
               if (childAttributes != null) {
@@ -151,7 +161,7 @@ public class RefreshWorker {
           Collection<VirtualFile> cachedChildren = file.getCachedChildren();
           debug(LOG, "cached=%s", cachedChildren);
           for (VirtualFile child : cachedChildren) {
-            if (myCancelled) break main;
+            checkCancelled();
             FileAttributes childAttributes = fs.getAttributes(child);
             if (childAttributes != null) {
               checkAndScheduleChildRefresh(file, child, childAttributes);
@@ -164,13 +174,13 @@ public class RefreshWorker {
           List<String> names = dir.getSuspiciousNames();
           debug(LOG, "suspicious=%s", names);
           for (String name : names) {
-            if (myCancelled) break main;
+            checkCancelled();
             if (name.isEmpty()) continue;
 
             VirtualFile fake = new FakeVirtualFile(file, name);
             FileAttributes childAttributes = fs.getAttributes(fake);
             if (childAttributes != null) {
-              scheduleCreation(file, name, childAttributes.isDirectory());
+              scheduleCreation(file, name, childAttributes.isDirectory(), false);
             }
           }
         }
@@ -213,6 +223,14 @@ public class RefreshWorker {
     }
   }
 
+  private static class RefreshCancelledException extends RuntimeException { }
+
+  private void checkCancelled() {
+    if (myCancelled) {
+      throw new RefreshCancelledException();
+    }
+  }
+
   private void checkAndScheduleChildRefresh(@NotNull VirtualFile parent,
                                             @NotNull VirtualFile child,
                                             @NotNull FileAttributes childAttributes) {
@@ -236,14 +254,14 @@ public class RefreshWorker {
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       scheduleDeletion(child);
-      scheduleReCreation(parent, child.getName(), upToDateIsDirectory);
+      scheduleCreation(parent, child.getName(), upToDateIsDirectory, true);
       return true;
     }
 
     return false;
   }
 
-  private void scheduleAttributeChange(@NotNull VirtualFile file, String property, Object current, Object upToDate) {
+  private void scheduleAttributeChange(@NotNull VirtualFile file, @NotNull String property, Object current, Object upToDate) {
     debug(LOG, "update '%s' file=%s", property, file);
     myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
   }
@@ -253,19 +271,15 @@ public class RefreshWorker {
     myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
   }
 
-  private void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory) {
+  private void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory, boolean isReCreation) {
     debug(LOG, "create parent=%s name=%s dir=%b", parent, childName, isDirectory);
-    myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true, false));
-  }
-
-  private void scheduleReCreation(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory) {
-    debug(LOG, "re-create parent=%s name=%s dir=%b", parent, childName, isDirectory);
-    myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true, true));
+    myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true, isReCreation));
   }
 
   private void scheduleDeletion(@Nullable VirtualFile file) {
-    if (file == null) return;
-    debug(LOG, "delete file=%s", file);
-    myEvents.add(new VFileDeleteEvent(null, file, true));
+    if (file != null) {
+      debug(LOG, "delete file=%s", file);
+      myEvents.add(new VFileDeleteEvent(null, file, true));
+    }
   }
 }
