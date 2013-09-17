@@ -69,6 +69,12 @@ public class VersionCompareTest extends TestCase {
     assertEquals(0, StringUtil.compareVersionNumbers("1.0.0", "1.0"));
     assertEquals(0, StringUtil.compareVersionNumbers("1.0.0", "1"));
 
+    assertEquals(0, StringUtil.compareVersionNumbers("1.0.0", "1.0."));
+    assertEquals(0, StringUtil.compareVersionNumbers("1.0.0", "1."));
+    
+    assertEquals(0, StringUtil.compareVersionNumbers("1.0.", "1.0.0"));
+    assertEquals(0, StringUtil.compareVersionNumbers("1.", "1.0.0"));
+
     assertEquals(0, StringUtil.compareVersionNumbers("1.0", "1.0.0"));
     assertEquals(0, StringUtil.compareVersionNumbers("1", "1.0.0"));
 
@@ -81,6 +87,12 @@ public class VersionCompareTest extends TestCase {
     assertTrue(StringUtil.compareVersionNumbers("1.0.a", "1") > 0);
     assertTrue(StringUtil.compareVersionNumbers("1.0", "1.0.a") < 0);
     assertTrue(StringUtil.compareVersionNumbers("1", "1.0.a") < 0);
+
+    assertTrue(StringUtil.compareVersionNumbers("1.0.+", "1.0") > 0);
+    assertTrue(StringUtil.compareVersionNumbers("1.0", "1.0.+") < 0);
+
+    assertTrue(StringUtil.compareVersionNumbers("1.0.00", "1.0") == 0);
+    assertTrue(StringUtil.compareVersionNumbers("1.0.01", "1") > 0);
   }
 
   public void testWord () {
