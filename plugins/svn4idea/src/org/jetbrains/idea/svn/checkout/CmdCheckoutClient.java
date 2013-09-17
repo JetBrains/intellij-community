@@ -34,7 +34,7 @@ public class CmdCheckoutClient extends BaseSvnClient implements CheckoutClient {
     // TODO: check format
 
     CommandUtil.put(parameters, source);
-    CommandUtil.put(parameters, destination);
+    CommandUtil.put(parameters, destination, false);
     CommandUtil.put(parameters, depth);
     CommandUtil.put(parameters, revision);
     CommandUtil.put(parameters, ignoreExternals, "--ignore-externals");
