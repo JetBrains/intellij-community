@@ -39,7 +39,7 @@ public class JavaResourceRootEditHandler extends JavaResourceRootEditHandlerBase
   @NotNull
   @Override
   public Icon getRootIcon() {
-    return AllIcons.Nodes.ResourceBundle;
+    return AllIcons.Modules.ResourcesRoot;
   }
 
   @NotNull

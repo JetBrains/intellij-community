@@ -687,12 +687,14 @@ public class AllIcons {
     public static final Icon Merge = IconLoader.getIcon("/modules/merge.png"); // 16x16
     public static final Icon ModulesNode = IconLoader.getIcon("/modules/modulesNode.png"); // 16x16
     public static final Icon Output = IconLoader.getIcon("/modules/output.png"); // 16x16
+    public static final Icon ResourcesRoot = IconLoader.getIcon("/modules/resourcesRoot.png"); // 16x16
     public static final Icon SetPackagePrefix = IconLoader.getIcon("/modules/setPackagePrefix.png"); // 9x9
     public static final Icon SetPackagePrefixRollover = IconLoader.getIcon("/modules/setPackagePrefixRollover.png"); // 9x9
     public static final Icon SourceFolder = IconLoader.getIcon("/modules/sourceFolder.png"); // 16x16
     public static final Icon SourceRoot = IconLoader.getIcon("/modules/sourceRoot.png"); // 16x16
     public static final Icon Sources = IconLoader.getIcon("/modules/sources.png"); // 16x16
     public static final Icon Split = IconLoader.getIcon("/modules/split.png"); // 16x16
+    public static final Icon TestResourcesRoot = IconLoader.getIcon("/modules/testResourcesRoot.png"); // 16x16
     public static final Icon TestRoot = IconLoader.getIcon("/modules/testRoot.png"); // 16x16
     public static final Icon TestSourceFolder = IconLoader.getIcon("/modules/testSourceFolder.png"); // 16x16
     
