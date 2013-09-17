@@ -30,6 +30,7 @@ public class GraphicsUtil {
   private static final Graphics2D ourGraphics = new BufferedImage(1,1,BufferedImage.TYPE_INT_ARGB).createGraphics();
   static {
     setupFractionalMetrics(ourGraphics);
+    setupAntialiasing(ourGraphics, true, true);
   }
 
   public static void setupFractionalMetrics(Graphics g) {
@@ -41,6 +42,7 @@ public class GraphicsUtil {
   }
 
   public static int stringWidth(String text, Font font) {
+    setupAntialiasing(ourGraphics, true, true);
     return ourGraphics.getFontMetrics(font).stringWidth(text);
   }
 
