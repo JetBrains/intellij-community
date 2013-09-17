@@ -38,7 +38,7 @@ public class InferenceSession {
   private final List<ConstraintFormula> myConstraints = new ArrayList<ConstraintFormula>();
   private final List<ConstraintFormula> myDelayedConstraints = new ArrayList<ConstraintFormula>();
 
-  private final PsiSubstitutor mySiteSubstitutor;
+  private PsiSubstitutor mySiteSubstitutor;
   private PsiManager myManager;
   private int myConstraintIdx = 0;
 
@@ -100,17 +100,16 @@ public class InferenceSession {
   public PsiSubstitutor infer() {
     repeatInferencePhases();
  
-    PsiSubstitutor substitutor = mySiteSubstitutor;
     for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
       final PsiTypeParameter typeParameter = inferenceVariable.getParameter();
       PsiType instantiation = inferenceVariable.getInstantiation();
       if (instantiation == null) {
         //failed inference
-        instantiation = JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
+        mySiteSubstitutor = mySiteSubstitutor
+          .put(typeParameter, JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter));
       }
-      substitutor = substitutor.put(typeParameter, instantiation);
     }
-    return substitutor;
+    return mySiteSubstitutor;
   }
 
   private void initBounds(PsiTypeParameter[] typeParameters) {
@@ -240,42 +239,56 @@ public class InferenceSession {
       for (InferenceVariable inferenceVariable : variables) {
 
         if (inferenceVariable.getInstantiation() != null) continue;
+        PsiType bound = null;
         final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
-        if (!eqBounds.isEmpty()) {
-          inferenceVariable.setInstantiation(eqBounds.get(0));
-          continue;
-        }
-
-        final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
-        PsiType lub = null;
-        for (PsiType lowerBound : lowerBounds) {
-          if (isProperType(lowerBound)) {
-            if (lub == null) {
-              lub = lowerBound;
-            }
-            else {
-              lub = GenericsUtil.getLeastUpperBound(lub, lowerBound, myManager);
-            }
+        for (PsiType eqBound : eqBounds) {
+          eqBound = mySiteSubstitutor.substitute(eqBound);
+          if (isProperType(eqBound)) {
+            bound = eqBound;
+            break;
           }
         }
-        if (lub != null) {
-          inferenceVariable.setInstantiation(lub);
-        }
-        else {
-          PsiType glb = null;
-          for (PsiType upperBound : inferenceVariable.getBounds(InferenceBound.UPPER)) {
-            if (isProperType(upperBound)) {
-              if (glb == null) {
-                glb = upperBound;
+        if (bound != null) {
+          inferenceVariable.setInstantiation(bound);
+        } else {
+          final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
+          PsiType lub = null;
+          for (PsiType lowerBound : lowerBounds) {
+            lowerBound = mySiteSubstitutor.substitute(lowerBound);
+            if (isProperType(lowerBound)) {
+              if (lub == null) {
+                lub = lowerBound;
               }
               else {
-                glb = GenericsUtil.getGreatestLowerBound(glb, upperBound);
+                lub = GenericsUtil.getLeastUpperBound(lub, lowerBound, myManager);
               }
             }
           }
-          if (glb != null) {
-            inferenceVariable.setInstantiation(glb);
+          if (lub != null) {
+            inferenceVariable.setInstantiation(lub);
           }
+          else {
+            PsiType glb = null;
+            for (PsiType upperBound : inferenceVariable.getBounds(InferenceBound.UPPER)) {
+              upperBound = mySiteSubstitutor.substitute(upperBound);
+              if (isProperType(upperBound)) {
+                if (glb == null) {
+                  glb = upperBound;
+                }
+                else {
+                  glb = GenericsUtil.getGreatestLowerBound(glb, upperBound);
+                }
+              }
+            }
+            if (glb != null) {
+              inferenceVariable.setInstantiation(glb);
+            }
+          }
+        }
+
+        final PsiType instantiation = inferenceVariable.getInstantiation();
+        if (instantiation != null) {
+          mySiteSubstitutor = mySiteSubstitutor.put(inferenceVariable.getParameter(), instantiation);
         }
       }
     }
