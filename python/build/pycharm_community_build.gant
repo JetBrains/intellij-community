@@ -1,6 +1,7 @@
 import org.jetbrains.jps.LayoutInfo
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+
 setProperty("home", guessHome(this as Script))
 
 includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
@@ -108,6 +109,28 @@ target('default': "Build artifacts") {
   def approvedJars = ["$normalizedHome/lib/", "$normalizedPythonHome/lib/", "$normalizedHome/xml/relaxng/lib/"]
   def usedJars = buildModulesAndCollectUsedJars(modules, approvedJars, [])
 
+  layoutCommunity(paths, usedJars)
+
+
+  buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
+  /*
+  buildNSIS([paths.distAll, paths.distWin],
+            "$home/python/build/strings.nsi", "$home/python/build/paths.nsi",
+            "pycharm", false, true, system_selector)
+  */
+
+  String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
+  buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
+
+  /*
+  String macAppRoot = isEap() ? "PyCharm ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm.app"
+  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
+  signMacZip("pycharm")
+  buildDmg("pycharm", "${home}/python/build/DMG_background.png")
+  */
+}
+
+public layoutCommunity(Paths paths, Set usedJars) {
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_ce"), false).each {
       ant.pathelement(location: it)
@@ -127,43 +150,22 @@ target('default': "Build artifacts") {
   generateLicensesTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
 
   def egg = buildDebuggerEgg(paths.sandbox, "$home/python", buildName)
-  ant.copy(file: egg, todir: paths.distAll)
+  ant.copy(file: egg, todir: target)
   def eggPy3k = buildDebuggerEggPy3K(paths.sandbox, "$home/python", buildName)
-  ant.copy(file: eggPy3k, todir: paths.distAll)
+  ant.copy(file: eggPy3k, todir: target)
 
   layoutWin(args, paths.distWin)
   layoutUnix(args, paths.distUnix)
   layoutMac(args, paths.distMac)
 
-  ant.echo(message: buildName, file: "${paths.sandbox}/layout/build.txt")
+  ant.echo(message: buildName, file: "${paths.distAll}/build.txt")
 
-  /*
   def launcher = "${paths.distWin}/bin/pycharm.exe"
   List resourcePaths = ["$home/community/community-resources/src",
     "$home/community/platform/icons/src",
-    "$home/python/resources",
-    "$home/python/community/resources"]
-  buildWinLauncher("$home/community", "$home/community/bin/WinLauncher/WinLauncher.exe", launcher,
-                   appInfoFile(), "$home/python/build/pycharm_launcher.properties", system_selector, resourcePaths)
-  signExe(launcher)
-  */
-
-  buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
-  /*
-  buildNSIS([paths.distAll, paths.distWin],
-            "$home/python/build/strings.nsi", "$home/python/build/paths.nsi",
-            "pycharm", false, true, system_selector)
-  */
-
-  String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
-  buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
-
-  /*
-  String macAppRoot = isEap() ? "PyCharm ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm.app"
-  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
-  signMacZip("pycharm")
-  buildDmg("pycharm", "${home}/python/build/DMG_background.png")
-  */
+    "$pythonCommunityHome/resources"]
+  buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
+                   appInfoFile(), "$pythonCommunityHome/build/pycharm_community_launcher.properties", system_selector, resourcePaths)
 }
 
 private layoutPlugins(layouts) {
