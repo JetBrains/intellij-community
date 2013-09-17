@@ -24,7 +24,7 @@ import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -76,7 +76,7 @@ public class GroovyShellAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
 
     boolean enabled = project != null && !getGroovyCompatibleModules(project).isEmpty();
 
@@ -86,7 +86,7 @@ public class GroovyShellAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
 
     CompilerManager.getInstance(project).make(new CompileStatusNotification() {
@@ -105,7 +105,7 @@ public class GroovyShellAction extends DumbAwareAction {
     });
   }
 
-  private void runGroovyShell(Project project) {
+  private static void runGroovyShell(Project project) {
     List<Module> modules = new ArrayList<Module>();
     final Map<Module, String> versions = new HashMap<Module, String>();
 
@@ -159,7 +159,7 @@ public class GroovyShellAction extends DumbAwareAction {
     JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(project);
   }
 
-  private void doRun(final Module module) {
+  private static void doRun(final Module module) {
     final GroovyShellRunner shellRunner = GroovyShellRunner.getAppropriateRunner(module);
     if (shellRunner == null) return;
 
@@ -220,7 +220,7 @@ public class GroovyShellAction extends DumbAwareAction {
     }
     catch (ExecutionException e1) {
       LOG.info(e1);
-      Messages.showErrorDialog(module.getProject(), e1.getMessage(), "Cannot run Groovy Shell");
+      Messages.showErrorDialog(module.getProject(), e1.getMessage(), "Cannot Run Groovy Shell");
     }
   }
 
