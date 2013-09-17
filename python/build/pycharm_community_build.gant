@@ -146,15 +146,19 @@ target('default': "Build artifacts") {
   buildWinLauncher("$home/community", "$home/community/bin/WinLauncher/WinLauncher.exe", launcher,
                    appInfoFile(), "$home/python/build/pycharm_launcher.properties", system_selector, resourcePaths)
   signExe(launcher)
+  */
 
   buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
+  /*
   buildNSIS([paths.distAll, paths.distWin],
             "$home/python/build/strings.nsi", "$home/python/build/paths.nsi",
             "pycharm", false, true, system_selector)
+  */
 
-  String tarRoot = isEap() ? "pycharm-$buildNumber" : "pycharm-${p("component.version.major")}.${p("component.version.minor")}"
+  String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
 
+  /*
   String macAppRoot = isEap() ? "PyCharm ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm.app"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
   signMacZip("pycharm")
