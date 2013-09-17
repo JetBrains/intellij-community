@@ -43,12 +43,12 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
     super(field, browseActionListener);
     if (ApplicationManager.getApplication() != null) {
       installPathCompletion(FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
+      new TextComponentUndoProvider(getTextField());
     }
   }
 
   public TextFieldWithBrowseButton(ActionListener browseActionListener) {
     this(new JTextField(10/* to prevent field to be infinitely resized in grid-box layouts */), browseActionListener);
-    new TextComponentUndoProvider(getTextField());
   }
 
   public void addBrowseFolderListener(@Nullable String title, @Nullable String description, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
