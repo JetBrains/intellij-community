@@ -101,11 +101,19 @@ public class CommandUtil {
 
   public static void put(@NotNull List<String> parameters, @NotNull String path, @Nullable SVNRevision pegRevision) {
     StringBuilder builder = new StringBuilder(path);
-    // always add '@' to correctly handle paths that contain '@' symbol
-    builder.append("@");
 
-    if (pegRevision != null && !SVNRevision.UNDEFINED.equals(pegRevision) && !SVNRevision.WORKING.equals(pegRevision) &&
-        pegRevision.isValid() && pegRevision.getNumber() != 0) {
+    boolean hasAtSymbol = path.contains("@");
+    boolean hasPegRevision = pegRevision != null &&
+                             !SVNRevision.UNDEFINED.equals(pegRevision) &&
+                             !SVNRevision.WORKING.equals(pegRevision) &&
+                             pegRevision.isValid() &&
+                             pegRevision.getNumber() != 0;
+
+    if (hasPegRevision || hasAtSymbol) {
+      // add '@' to correctly handle paths that contain '@' symbol
+      builder.append("@");
+    }
+    if (hasPegRevision) {
       builder.append(pegRevision);
     }
 
