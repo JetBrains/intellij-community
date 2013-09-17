@@ -76,7 +76,7 @@ public class JavaModuleSourceRootEditHandler extends JavaSourceRootEditHandlerBa
 
   @NotNull
   @Override
-  public String getUnmarkRootActionName() {
+  public String getUnmarkRootButtonText() {
     return ProjectBundle.message("module.paths.unmark.source.tooltip");
   }
 }

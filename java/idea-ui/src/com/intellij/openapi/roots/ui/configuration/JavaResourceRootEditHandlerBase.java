@@ -38,9 +38,10 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
     return null;
   }
 
+  @Nullable
   @Override
-  public boolean showMarkActionOnToolbar() {
-    return false;
+  public String getMarkRootGroupName() {
+    return "Resources";
   }
 
   @Nullable

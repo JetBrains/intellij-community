@@ -42,7 +42,7 @@ public class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntry
     myEntryTreeEditor = entryEditor;
     myEditHandler = editHandler;
     final Presentation templatePresentation = getTemplatePresentation();
-    templatePresentation.setText(editHandler.getRootTypeName());
+    templatePresentation.setText(editHandler.getMarkRootButtonText());
     templatePresentation.setDescription(ProjectBundle.message("module.toggle.sources.action.description", editHandler.getRootTypeName()));
     templatePresentation.setIcon(editHandler.getRootIcon());
   }
@@ -85,11 +85,5 @@ public class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntry
         contentEntryEditor.removeSourceFolder(sourceFolder);
       }
     }
-  }
-
-  @Override
-  public void update(final AnActionEvent e) {
-    super.update(e);
-    e.getPresentation().setVisible(!e.getPlace().equals(ContentEntryTreeEditor.TOOLBAR_PLACE) || myEditHandler.showMarkActionOnToolbar());
   }
 }

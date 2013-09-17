@@ -75,7 +75,13 @@ public class JavaTestSourceRootEditHandler extends JavaSourceRootEditHandlerBase
 
   @NotNull
   @Override
-  public String getUnmarkRootActionName() {
+  public String getMarkRootButtonText() {
+    return "Tests";
+  }
+
+  @NotNull
+  @Override
+  public String getUnmarkRootButtonText() {
     return ProjectBundle.message("module.paths.unmark.tests.tooltip");
   }
 }

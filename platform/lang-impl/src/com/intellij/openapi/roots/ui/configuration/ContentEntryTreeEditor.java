@@ -58,7 +58,9 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -100,13 +102,26 @@ public class ContentEntryTreeEditor {
   }
 
   protected void createEditingActions() {
-    for (ModuleSourceRootEditHandler<?> editor : myEditHandlers) {
+    Map<String, DefaultActionGroup> groups = new HashMap<String, DefaultActionGroup>();
+    for (final ModuleSourceRootEditHandler<?> editor : myEditHandlers) {
       ToggleSourcesStateAction action = new ToggleSourcesStateAction(myTree, this, editor);
       CustomShortcutSet shortcutSet = editor.getMarkRootShortcutSet();
       if (shortcutSet != null) {
         action.registerCustomShortcutSet(shortcutSet, myTree);
       }
-      myEditingActionsGroup.add(action);
+      String groupName = editor.getMarkRootGroupName();
+      if (groupName != null) {
+        DefaultActionGroup group = groups.get(groupName);
+        if (group == null) {
+          group = new MarkSourceToggleActionsGroup(groupName, editor.getRootIcon());
+          groups.put(groupName, group);
+          myEditingActionsGroup.add(group);
+        }
+        group.add(action);
+      }
+      else {
+        myEditingActionsGroup.add(action);
+      }
     }
 
     setupExcludedAction();
@@ -217,6 +232,18 @@ public class ContentEntryTreeEditor {
           }
         }
       }
+    }
+  }
+
+  private static class MarkSourceToggleActionsGroup extends DefaultActionGroup {
+    public MarkSourceToggleActionsGroup(String groupName, final Icon rootIcon) {
+      super(groupName, true);
+      getTemplatePresentation().setIcon(rootIcon);
+    }
+
+    @Override
+    public boolean displayTextInToolbar() {
+      return true;
     }
   }
 

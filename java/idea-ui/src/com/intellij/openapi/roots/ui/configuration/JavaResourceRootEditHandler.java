@@ -56,7 +56,7 @@ public class JavaResourceRootEditHandler extends JavaResourceRootEditHandlerBase
 
   @NotNull
   @Override
-  public String getUnmarkRootActionName() {
+  public String getUnmarkRootButtonText() {
     return "Unmark Resource";
   }
 }
