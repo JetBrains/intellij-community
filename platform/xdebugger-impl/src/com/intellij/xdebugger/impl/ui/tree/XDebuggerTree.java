@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
@@ -64,7 +65,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
           text = ((XDebuggerTreeNode)node).getText().toString();
         }
       }
-      return text != null ? text : "";
+      return StringUtil.notNullize(text);
     }
   };
   private final DefaultTreeModel myTreeModel;
@@ -113,7 +114,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
         }
       }
     });
-    new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
+    new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER, true);
 
     final ActionManager actionManager = ActionManager.getInstance();
     addMouseListener(new PopupHandler() {
